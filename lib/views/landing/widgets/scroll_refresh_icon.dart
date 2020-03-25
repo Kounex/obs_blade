@@ -1,30 +1,64 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
   final double barStretchOffset;
 
   ScrollRefreshIcon(
-      {@required this.expandedBarHeight, @required this.barStretchOffset});
+      {@required expandedBarHeight, @required this.barStretchOffset})
+      : expandedBarHeight = expandedBarHeight + 28.0;
 
   @override
   _ScrollRefreshIconState createState() => _ScrollRefreshIconState();
 }
 
-class _ScrollRefreshIconState extends State<ScrollRefreshIcon> {
-  double _barHeight;
+class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
+    with SingleTickerProviderStateMixin {
+  AnimationController _animController;
+  Animation<double> _scaleAnimation;
+  bool _didAnimate = false;
+
+  @override
+  initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(curve: Curves.bounceInOut, parent: _animController),
+    );
+  }
 
   double _getRefreshOpacity(double currentBarHeight) {
-    double opacity = (currentBarHeight - _barHeight) / widget.barStretchOffset;
-    return opacity > 1.0 ? 1.0 : opacity;
+    double opacity = pow(
+            1.4,
+            0.2 * (currentBarHeight - widget.expandedBarHeight) -
+                (widget.barStretchOffset / 6)) -
+        0.01;
+    return opacity > 1.0 ? 1.0 : opacity < 0.0 ? 0.0 : opacity;
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (_barHeight == null) {
-          _barHeight = constraints.maxHeight;
+        if (constraints.maxHeight - widget.expandedBarHeight >=
+                widget.barStretchOffset &&
+            !_animController.isAnimating &&
+            !_didAnimate) {
+          _didAnimate = true;
+          HapticFeedback.selectionClick();
+          _animController.forward().then((_) => _animController.animateTo(0.5));
+        }
+        if (constraints.maxHeight - widget.expandedBarHeight <
+                widget.barStretchOffset &&
+            _didAnimate) {
+          _didAnimate = false;
+          _animController.animateTo(0.0);
         }
         return Padding(
           padding: EdgeInsets.only(top: widget.expandedBarHeight / 2),
@@ -38,9 +72,16 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon> {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.arrow_downward,
-                  color: Colors.black,
+                child: AnimatedBuilder(
+                  animation: _animController,
+                  builder: (context, child) => ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: child,
+                  ),
+                  child: Icon(
+                    Icons.arrow_downward,
+                    color: Colors.black,
+                  ),
                 ),
               ),
             ),
