@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/landing.dart';
-import 'package:obs_station/views/landing/widgets/auto_discovery.dart';
-import 'package:obs_station/views/landing/widgets/connect_form.dart';
-import 'package:obs_station/views/landing/widgets/refresher_app_bar.dart';
+import 'package:obs_station/views/landing/widgets/auto_discovery/auto_discovery.dart';
+import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
+import 'package:obs_station/views/landing/widgets/refresher_app_bar/refresher_app_bar.dart';
 
 class LandingView extends StatelessWidget {
   @override

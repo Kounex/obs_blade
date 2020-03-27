@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/landing.dart';
+import 'package:obs_station/shared/fade_inner.dart';
 import 'package:obs_station/utils/network_helper.dart';
 import 'package:ping_discover_network/ping_discover_network.dart';
 
@@ -38,9 +39,11 @@ class AutoDiscovery extends StatelessWidget {
                       alignment: Alignment.center,
                       padding: EdgeInsets.only(left: 24.0, right: 24.0),
                       height: 150.0,
-                      child: Text(
-                        'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nPull down to try again!',
-                        textAlign: TextAlign.center,
+                      child: FadeInner(
+                        child: Text(
+                          'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nPull down to try again!',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     );
                   } else if (snapshot.hasError) {
@@ -48,9 +51,11 @@ class AutoDiscovery extends StatelessWidget {
                       alignment: Alignment.center,
                       padding: EdgeInsets.only(left: 24.0, right: 24.0),
                       height: 150.0,
-                      child: Text(
-                        'Could not finish autodiscovery! Make sure you are connected to your local network!\n\nPull down to try again!',
-                        textAlign: TextAlign.center,
+                      child: FadeInner(
+                        child: Text(
+                          'Could not finish autodiscovery! Make sure you are connected to your local network!\n\nPull down to try again!',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     );
                   }

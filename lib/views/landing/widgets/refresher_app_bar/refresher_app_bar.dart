@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/views/landing/widgets/scroll_refresh_icon.dart';
+import 'package:obs_station/views/landing/widgets/refresher_app_bar/scroll_refresh_icon.dart';
 
 class RefresherAppBar extends StatelessWidget {
   final double expandedHeight;
