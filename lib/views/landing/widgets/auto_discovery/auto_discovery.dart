@@ -26,15 +26,20 @@ class AutoDiscovery extends StatelessWidget {
             height: 0.0,
           ),
           MobxWidgetProvider<LandingStore>(builder: (context, landingStore) {
-            return FutureBuilder<List<NetworkAddress>>(
-              future: landingStore.obsNetworkAddresses,
+            return FutureBuilder<List<String>>(
+              future: landingStore.obsAutodiscoverIPs,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
                   if (snapshot.hasData) {
-                    List<NetworkAddress> result = snapshot.data
-                        .where((networkAddress) => networkAddress.exists)
-                        .toList();
-                    if (result.length > 0) {}
+                    if (snapshot.data.length > 0) {
+                      return FadeInner(
+                        child: Column(
+                          children: snapshot.data
+                              .map((availableObsIP) => Text(availableObsIP))
+                              .toList(),
+                        ),
+                      );
+                    }
                     return Container(
                       alignment: Alignment.center,
                       padding: EdgeInsets.only(left: 24.0, right: 24.0),

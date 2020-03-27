@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:get_ip/get_ip.dart';
 import 'package:mobx/mobx.dart';
 import 'package:ping_discover_network/ping_discover_network.dart';
@@ -12,17 +15,28 @@ class NetworkHelper {
     ).toList();
   }
 
-  static Future<Stream<dynamic>> getOBSWebsocketStream() async {
+  static Future<List<String>> getAvailableOBSIPs(
+      {Duration timeout = const Duration(seconds: 5)}) async {
     String baseIP = (await GetIp.ipAddress).split('.').take(3).join('.');
-    int ipCount = 0;
-    Future.doWhile(() {
-      IOWebSocketChannel.connect("ws://$baseIP.${ipCount.toString()}:4444")
-          .stream
-          .listen(
-            ((event) => print(event.toString())),
-            onError: (error) => print(error.toString()),
-          );
-      ipCount++;
+    List<int> availableIPs = [];
+
+    List.generate(256, (index) {
+      IOWebSocketChannel channel =
+          IOWebSocketChannel.connect("ws://$baseIP.${index.toString()}:4444");
+
+      channel.stream.listen(
+        ((event) {
+          if (json.decode(event)['error'] != null) {
+            availableIPs.add(index);
+          }
+        }),
+      );
+
+      channel.sink.add(json.encode('GetAuthRequired'));
     });
+
+    await Future.delayed(timeout);
+
+    return availableIPs.map((i) => '$baseIP.$i').toList();
   }
 }

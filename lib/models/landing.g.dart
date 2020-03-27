@@ -26,24 +26,24 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$_refreshableAtom, name: '${_$_refreshableAtom.name}_set');
   }
 
-  final _$_obsNetworkAddressesAtom =
-      Atom(name: '_LandingStore._obsNetworkAddresses');
+  final _$_obsAutodiscoverIPsAtom =
+      Atom(name: '_LandingStore._obsAutodiscoverIPs');
 
   @override
-  Future<List<NetworkAddress>> get _obsNetworkAddresses {
-    _$_obsNetworkAddressesAtom.context
-        .enforceReadPolicy(_$_obsNetworkAddressesAtom);
-    _$_obsNetworkAddressesAtom.reportObserved();
-    return super._obsNetworkAddresses;
+  Future<List<String>> get _obsAutodiscoverIPs {
+    _$_obsAutodiscoverIPsAtom.context
+        .enforceReadPolicy(_$_obsAutodiscoverIPsAtom);
+    _$_obsAutodiscoverIPsAtom.reportObserved();
+    return super._obsAutodiscoverIPs;
   }
 
   @override
-  set _obsNetworkAddresses(Future<List<NetworkAddress>> value) {
-    _$_obsNetworkAddressesAtom.context.conditionallyRunInAction(() {
-      super._obsNetworkAddresses = value;
-      _$_obsNetworkAddressesAtom.reportChanged();
-    }, _$_obsNetworkAddressesAtom,
-        name: '${_$_obsNetworkAddressesAtom.name}_set');
+  set _obsAutodiscoverIPs(Future<List<String>> value) {
+    _$_obsAutodiscoverIPsAtom.context.conditionallyRunInAction(() {
+      super._obsAutodiscoverIPs = value;
+      _$_obsAutodiscoverIPsAtom.reportChanged();
+    }, _$_obsAutodiscoverIPsAtom,
+        name: '${_$_obsAutodiscoverIPsAtom.name}_set');
   }
 
   final _$_LandingStoreActionController =
@@ -60,10 +60,10 @@ mixin _$LandingStore on _LandingStore, Store {
   }
 
   @override
-  void updateObsNetworkAddresses() {
+  void updateObsAutodiscoverIPs() {
     final _$actionInfo = _$_LandingStoreActionController.startAction();
     try {
-      return super.updateObsNetworkAddresses();
+      return super.updateObsAutodiscoverIPs();
     } finally {
       _$_LandingStoreActionController.endAction(_$actionInfo);
     }

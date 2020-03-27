@@ -11,14 +11,13 @@ class LandingView extends StatelessWidget {
   Widget build(BuildContext context) {
     //NetworkHelper.getOBSWebsocketStream();
     return MobxStatefulProvider<LandingStore>(
-        initFunction: (landingStore) =>
-            landingStore.updateObsNetworkAddresses(),
+        initFunction: (landingStore) => landingStore.updateObsAutodiscoverIPs(),
         builder: (context, landingStore) {
           return Scaffold(
             body: Listener(
               onPointerUp: (_) {
                 if (landingStore.refreshable) {
-                  landingStore.updateObsNetworkAddresses();
+                  landingStore.updateObsAutodiscoverIPs();
                 }
               },
               child: CustomScrollView(
