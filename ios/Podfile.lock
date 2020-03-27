@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - get_ip (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - get_ip (from `.symlinks/plugins/get_ip/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  get_ip:
+    :path: ".symlinks/plugins/get_ip/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  get_ip: c063133e0a399ae4089048c90d6a232cb2344846
+
+PODFILE CHECKSUM: c34e2287a9ccaa606aeceab922830efb9a6ff69a
+
+COCOAPODS: 1.9.0

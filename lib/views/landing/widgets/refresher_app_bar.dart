@@ -5,13 +5,12 @@ class RefresherAppBar extends StatelessWidget {
   final double expandedHeight;
   final double stretchTriggerOffset;
   final String imagePath;
-  final Future<void> onStretchTrigger;
 
-  RefresherAppBar(
-      {this.expandedHeight,
-      this.stretchTriggerOffset,
-      @required this.imagePath,
-      @required this.onStretchTrigger});
+  RefresherAppBar({
+    this.expandedHeight,
+    this.stretchTriggerOffset,
+    @required this.imagePath,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,6 @@ class RefresherAppBar extends StatelessWidget {
       expandedHeight: this.expandedHeight,
       stretch: true,
       stretchTriggerOffset: this.stretchTriggerOffset,
-      onStretchTrigger: () => this.onStretchTrigger,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
         title: ScrollRefreshIcon(
