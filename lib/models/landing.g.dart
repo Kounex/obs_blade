@@ -26,31 +26,11 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$_refreshableAtom, name: '${_$_refreshableAtom.name}_set');
   }
 
-  final _$_fetchingObsNetworkAddressesAtom =
-      Atom(name: '_LandingStore._fetchingObsNetworkAddresses');
-
-  @override
-  bool get _fetchingObsNetworkAddresses {
-    _$_fetchingObsNetworkAddressesAtom.context
-        .enforceReadPolicy(_$_fetchingObsNetworkAddressesAtom);
-    _$_fetchingObsNetworkAddressesAtom.reportObserved();
-    return super._fetchingObsNetworkAddresses;
-  }
-
-  @override
-  set _fetchingObsNetworkAddresses(bool value) {
-    _$_fetchingObsNetworkAddressesAtom.context.conditionallyRunInAction(() {
-      super._fetchingObsNetworkAddresses = value;
-      _$_fetchingObsNetworkAddressesAtom.reportChanged();
-    }, _$_fetchingObsNetworkAddressesAtom,
-        name: '${_$_fetchingObsNetworkAddressesAtom.name}_set');
-  }
-
   final _$_obsNetworkAddressesAtom =
       Atom(name: '_LandingStore._obsNetworkAddresses');
 
   @override
-  ObservableList<NetworkAddress> get _obsNetworkAddresses {
+  Future<List<NetworkAddress>> get _obsNetworkAddresses {
     _$_obsNetworkAddressesAtom.context
         .enforceReadPolicy(_$_obsNetworkAddressesAtom);
     _$_obsNetworkAddressesAtom.reportObserved();
@@ -58,21 +38,12 @@ mixin _$LandingStore on _LandingStore, Store {
   }
 
   @override
-  set _obsNetworkAddresses(ObservableList<NetworkAddress> value) {
+  set _obsNetworkAddresses(Future<List<NetworkAddress>> value) {
     _$_obsNetworkAddressesAtom.context.conditionallyRunInAction(() {
       super._obsNetworkAddresses = value;
       _$_obsNetworkAddressesAtom.reportChanged();
     }, _$_obsNetworkAddressesAtom,
         name: '${_$_obsNetworkAddressesAtom.name}_set');
-  }
-
-  final _$updateObsNetworkAddressesAsyncAction =
-      AsyncAction('updateObsNetworkAddresses');
-
-  @override
-  Future<void> updateObsNetworkAddresses() {
-    return _$updateObsNetworkAddressesAsyncAction
-        .run(() => super.updateObsNetworkAddresses());
   }
 
   final _$_LandingStoreActionController =
@@ -89,10 +60,10 @@ mixin _$LandingStore on _LandingStore, Store {
   }
 
   @override
-  void setFetchingObsNetworkAddresses(bool fetchingObsNetworkAddresses) {
+  void updateObsNetworkAddresses() {
     final _$actionInfo = _$_LandingStoreActionController.startAction();
     try {
-      return super.setFetchingObsNetworkAddresses(fetchingObsNetworkAddresses);
+      return super.updateObsNetworkAddresses();
     } finally {
       _$_LandingStoreActionController.endAction(_$actionInfo);
     }
