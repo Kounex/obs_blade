@@ -1,10 +1,11 @@
 import 'package:get_ip/get_ip.dart';
+import 'package:mobx/mobx.dart';
 import 'package:ping_discover_network/ping_discover_network.dart';
 import 'package:web_socket_channel/io.dart';
 
 class NetworkHelper {
   static Future<List<NetworkAddress>> getOBSNetworkAddresses() async {
-    return NetworkAnalyzer.discover(
+    return NetworkAnalyzer.discover2(
       (await GetIp.ipAddress).split('.').take(3).join('.'),
       4444,
       timeout: Duration(milliseconds: 5000),

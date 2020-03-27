@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mobx_provider/mobx_provider.dart';
+import 'package:obs_station/models/landing.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
@@ -19,7 +21,6 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     with SingleTickerProviderStateMixin {
   AnimationController _animController;
   Animation<double> _scaleAnimation;
-  bool _didAnimate = false;
 
   @override
   initState() {
@@ -44,50 +45,54 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxHeight - widget.expandedBarHeight >=
-                widget.barStretchOffset &&
-            !_animController.isAnimating &&
-            !_didAnimate) {
-          _didAnimate = true;
-          HapticFeedback.selectionClick();
-          _animController.forward().then((_) => _animController.animateTo(0.5));
-        }
-        if (constraints.maxHeight - widget.expandedBarHeight <
-                widget.barStretchOffset &&
-            _didAnimate) {
-          _didAnimate = false;
-          _animController.animateTo(0.0);
-        }
-        return Padding(
-          padding: EdgeInsets.only(top: widget.expandedBarHeight / 2),
-          child: Align(
-            child: Opacity(
-              opacity: _getRefreshOpacity(constraints.maxHeight),
-              child: Container(
-                width: 32.0,
-                height: 32.0,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: AnimatedBuilder(
-                  animation: _animController,
-                  builder: (context, child) => ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: child,
+    return MobxStatefulProvider<LandingStore>(builder: (context, landingStore) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxHeight - widget.expandedBarHeight >=
+                  widget.barStretchOffset &&
+              !_animController.isAnimating &&
+              !landingStore.refreshable) {
+            landingStore.setRefreshable(true);
+            HapticFeedback.selectionClick();
+            _animController
+                .forward()
+                .then((_) => _animController.animateTo(0.5));
+          }
+          if (constraints.maxHeight - widget.expandedBarHeight <
+                  widget.barStretchOffset &&
+              landingStore.refreshable) {
+            landingStore.setRefreshable(false);
+            _animController.animateTo(0.0);
+          }
+          return Padding(
+            padding: EdgeInsets.only(top: widget.expandedBarHeight / 2),
+            child: Align(
+              child: Opacity(
+                opacity: _getRefreshOpacity(constraints.maxHeight),
+                child: Container(
+                  width: 32.0,
+                  height: 32.0,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.arrow_downward,
-                    color: Colors.black,
+                  child: AnimatedBuilder(
+                    animation: _animController,
+                    builder: (context, child) => ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: child,
+                    ),
+                    child: Icon(
+                      Icons.arrow_downward,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    });
   }
 }
