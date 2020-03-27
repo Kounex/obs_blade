@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/landing.dart';
-import 'package:obs_station/utils/network_helper.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery.dart';
 import 'package:obs_station/views/landing/widgets/connect_form.dart';
 import 'package:obs_station/views/landing/widgets/refresher_app_bar.dart';
@@ -19,7 +18,6 @@ class LandingView extends StatelessWidget {
             body: Listener(
               onPointerUp: (_) {
                 if (landingStore.refreshable) {
-                  print('LOOOOOL');
                   landingStore.updateObsNetworkAddresses();
                 }
               },

@@ -12,29 +12,18 @@ abstract class _LandingStore extends MobxBase with Store {
   @observable
   bool _refreshable = false;
   @observable
-  bool _fetchingObsNetworkAddresses = false;
-  @observable
-  ObservableList<NetworkAddress> _obsNetworkAddresses;
+  Future<List<NetworkAddress>> _obsNetworkAddresses;
 
   bool get refreshable => _refreshable;
 
-  bool get fetchingObsNetworkAddresses => _fetchingObsNetworkAddresses;
-
-  List<NetworkAddress> get obsNetworkAddresses => _obsNetworkAddresses.toList();
+  Future<List<NetworkAddress>> get obsNetworkAddresses => _obsNetworkAddresses;
 
   @action
   void setRefreshable(bool refreshable) => _refreshable = refreshable;
 
   @action
-  void setFetchingObsNetworkAddresses(bool fetchingObsNetworkAddresses) =>
-      _fetchingObsNetworkAddresses = fetchingObsNetworkAddresses;
-
-  @action
-  Future<void> updateObsNetworkAddresses() async {
-    _fetchingObsNetworkAddresses = true;
-    _obsNetworkAddresses = ObservableList<NetworkAddress>.of(
-        await NetworkHelper.getOBSNetworkAddresses());
-    _fetchingObsNetworkAddresses = false;
+  void updateObsNetworkAddresses() async {
+    _obsNetworkAddresses = NetworkHelper.getOBSNetworkAddresses();
   }
 
   @override
