@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_station/utils/network_helper.dart';
 
 class SessionTile extends StatelessWidget {
   final String ip;
@@ -16,6 +17,7 @@ class SessionTile extends StatelessWidget {
       ),
       title: Text(this.ip),
       trailing: Icon(CupertinoIcons.right_chevron),
+      onTap: () => NetworkHelper.establishWebSocket(),
     );
   }
 }

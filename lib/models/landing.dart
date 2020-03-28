@@ -1,7 +1,6 @@
 import 'package:mobx/mobx.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/utils/network_helper.dart';
-import 'package:ping_discover_network/ping_discover_network.dart';
 
 // Include generated file
 part 'landing.g.dart';

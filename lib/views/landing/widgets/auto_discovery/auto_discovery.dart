@@ -24,6 +24,7 @@ class AutoDiscovery extends StatelessWidget {
                 );
               }
               return Container(
+                padding: EdgeInsets.only(left: 24.0, right: 24.0),
                 alignment: Alignment.center,
                 height: 150.0,
                 child: FadeInner(
@@ -35,11 +36,12 @@ class AutoDiscovery extends StatelessWidget {
               );
             } else if (snapshot.hasError) {
               return Container(
+                padding: EdgeInsets.only(left: 24.0, right: 24.0),
                 alignment: Alignment.center,
                 height: 150.0,
                 child: FadeInner(
                   child: Text(
-                    'Could not finish autodiscovery! Make sure you are connected to your local network!\n\nPull down to try again!',
+                    'Network error occured! Make sure you are connected to your local network!\n\nPull down to try again!',
                     textAlign: TextAlign.center,
                   ),
                 ),

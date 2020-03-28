@@ -44,6 +44,8 @@ class LandingView extends StatelessWidget {
                                   child: landingStore.manualMode
                                       ? Padding(
                                           padding: const EdgeInsets.only(
+                                              left: 24.0,
+                                              right: 24.0,
                                               bottom: 12.0),
                                           child: ConnectForm(),
                                         )

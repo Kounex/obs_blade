@@ -8,28 +8,54 @@ class ConnectForm extends StatefulWidget {
 
 class _ConnectFormState extends State<ConnectForm> {
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController _ip = TextEditingController();
+  TextEditingController _port = TextEditingController(text: '4444');
+  TextEditingController _pw = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
       child: Column(
         children: <Widget>[
-          TextFormField(
-            decoration: InputDecoration(hintText: 'IP Address'),
-            validator: (text) {
-              List<String> ip = text.split('.');
-              if (ip.length == 4 &&
-                  ip.every((part) =>
-                      part.length > 0 &&
-                      part.length < 4 &&
-                      int.tryParse(part) != null &&
-                      int.parse(part) <= 255)) {
-                return null;
-              }
-              return 'Not an IP address';
-            },
+          Row(
+            children: <Widget>[
+              Flexible(
+                flex: 3,
+                child: TextFormField(
+                  controller: _ip,
+                  decoration: InputDecoration(hintText: 'IP Address'),
+                  validator: (text) {
+                    List<String> ip = text.split('.');
+                    if (ip.length == 4 &&
+                        ip.every((part) =>
+                            part.length > 0 &&
+                            part.length < 4 &&
+                            int.tryParse(part) != null &&
+                            int.parse(part) <= 255)) {
+                      return null;
+                    }
+                    return 'Not an IP address';
+                  },
+                ),
+              ),
+              Flexible(
+                flex: 1,
+                child: TextFormField(
+                  controller: _port,
+                  decoration: InputDecoration(hintText: 'Port'),
+                  validator: (text) {
+                    int port = int.tryParse(text);
+                    if (port != null && port > 0 && port <= 65535) {
+                      return null;
+                    }
+                    return 'Not a valid Port';
+                  },
+                ),
+              ),
+            ],
           ),
           TextFormField(
+            controller: _pw,
             decoration: InputDecoration(hintText: 'Password'),
           ),
           Padding(
@@ -41,7 +67,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   child: Text('Connect'),
                   onPressed: () {
                     if (_formKey.currentState.validate()) {
-                      print('YEEES');
+                      // TODO: connection
                     }
                   },
                 ),
