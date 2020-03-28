@@ -41,6 +41,7 @@ dependencies:
     ping_discover_network: ^0.2.0+1
     get_ip: ^0.4.0
     web_socket_channel: ^1.1.0
+    socket_io_client: ^0.9.9
 
 dev_dependencies:
     flutter_test:
