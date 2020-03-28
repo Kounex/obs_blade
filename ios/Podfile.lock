@@ -1,21 +1,34 @@
 PODS:
-  - Flutter (1.0.0)
-  - get_ip (0.0.1):
+  - connectivity (0.0.1):
     - Flutter
+    - Reachability
+  - connectivity_macos (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - Reachability (3.2)
 
 DEPENDENCIES:
+  - connectivity (from `.symlinks/plugins/connectivity/ios`)
+  - connectivity_macos (from `.symlinks/plugins/connectivity_macos/ios`)
   - Flutter (from `Flutter`)
-  - get_ip (from `.symlinks/plugins/get_ip/ios`)
+
+SPEC REPOS:
+  trunk:
+    - Reachability
 
 EXTERNAL SOURCES:
+  connectivity:
+    :path: ".symlinks/plugins/connectivity/ios"
+  connectivity_macos:
+    :path: ".symlinks/plugins/connectivity_macos/ios"
   Flutter:
     :path: Flutter
-  get_ip:
-    :path: ".symlinks/plugins/get_ip/ios"
 
 SPEC CHECKSUMS:
+  connectivity: 6e94255659cc86dcbef1d452ad3e0491bb1b3e75
+  connectivity_macos: e2e9731b6b22dda39eb1b128f6969d574460e191
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
-  get_ip: c063133e0a399ae4089048c90d6a232cb2344846
+  Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
 
 PODFILE CHECKSUM: c34e2287a9ccaa606aeceab922830efb9a6ff69a
 

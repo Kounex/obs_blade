@@ -35,8 +35,7 @@ class SwitcherCard extends StatelessWidget {
             height: 0.0,
           ),
           Padding(
-            padding:
-                const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 12.0),
+            padding: const EdgeInsets.only(left: 24.0, right: 24.0),
             child: AnimatedSwitcher(
               duration: Duration(milliseconds: 200),
               child: this.child,

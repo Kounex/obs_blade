@@ -39,9 +39,8 @@ dependencies:
     # network stuff
     tcp_scanner: ^1.1.1
     ping_discover_network: ^0.2.0+1
-    get_ip: ^0.4.0
+    connectivity: ^0.4.8+2
     web_socket_channel: ^1.1.0
-    dns: ^0.1.3
 
 dev_dependencies:
     flutter_test:

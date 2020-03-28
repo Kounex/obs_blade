@@ -42,7 +42,11 @@ class LandingView extends StatelessWidget {
                                       ? 'Connection'
                                       : 'Autodiscover',
                                   child: landingStore.manualMode
-                                      ? ConnectForm()
+                                      ? Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 12.0),
+                                          child: ConnectForm(),
+                                        )
                                       : AutoDiscovery(),
                                 ),
                                 Positioned(
@@ -50,7 +54,7 @@ class LandingView extends StatelessWidget {
                                   top: 6.0,
                                   child: CupertinoButton(
                                     child: Text(landingStore.manualMode
-                                        ? 'Autodiscover'
+                                        ? 'Auto'
                                         : 'Manual'),
                                     onPressed: () =>
                                         landingStore.toggleManualMode(),
