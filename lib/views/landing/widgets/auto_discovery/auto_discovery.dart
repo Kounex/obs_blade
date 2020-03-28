@@ -3,6 +3,7 @@ import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/landing.dart';
 import 'package:obs_station/shared/fade_inner.dart';
 import 'package:obs_station/utils/network_helper.dart';
+import 'package:obs_station/views/landing/widgets/auto_discovery/session_tile.dart';
 import 'package:ping_discover_network/ping_discover_network.dart';
 
 class AutoDiscovery extends StatelessWidget {
@@ -35,7 +36,8 @@ class AutoDiscovery extends StatelessWidget {
                       return FadeInner(
                         child: Column(
                           children: snapshot.data
-                              .map((availableObsIP) => Text(availableObsIP))
+                              .map((availableObsIP) =>
+                                  SessionTile(ip: availableObsIP))
                               .toList(),
                         ),
                       );

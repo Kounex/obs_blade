@@ -26,10 +26,11 @@ class NetworkHelper {
 
       channel.stream.listen(
         ((event) {
-          if (json.decode(event)['error'] != null) {
-            availableIPs.add(index);
-          }
+          print(event);
+          availableIPs.add(index);
+          channel.sink.close();
         }),
+        onError: (_) => channel.sink.close(),
       );
 
       channel.sink.add(json.encode('GetAuthRequired'));

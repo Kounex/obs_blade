@@ -35,7 +35,7 @@ class LandingView extends StatelessWidget {
                           child: AutoDiscovery(),
                         ),
                         Container(
-                          padding: EdgeInsets.all(24.0),
+                          padding: EdgeInsets.only(left: 32.0, right: 32.0),
                           child: ConnectForm(),
                         )
                       ],
