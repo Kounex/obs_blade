@@ -5,6 +5,7 @@ import 'package:obs_station/models/landing.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery/auto_discovery.dart';
 import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
 import 'package:obs_station/views/landing/widgets/refresher_app_bar/refresher_app_bar.dart';
+import 'package:obs_station/views/landing/widgets/switcher_card/switcher_card.dart';
 
 class LandingView extends StatelessWidget {
   @override
@@ -32,11 +33,32 @@ class LandingView extends StatelessWidget {
                       [
                         Padding(
                           padding: const EdgeInsets.all(24.0),
-                          child: AutoDiscovery(),
-                        ),
-                        Container(
-                          padding: EdgeInsets.only(left: 32.0, right: 32.0),
-                          child: ConnectForm(),
+                          child: MobxWidgetProvider<LandingStore>(
+                              builder: (context, landingStore) {
+                            return Stack(
+                              children: <Widget>[
+                                SwitcherCard(
+                                  title: landingStore.manualMode
+                                      ? 'Connection'
+                                      : 'Autodiscover',
+                                  child: landingStore.manualMode
+                                      ? ConnectForm()
+                                      : AutoDiscovery(),
+                                ),
+                                Positioned(
+                                  right: 12.0,
+                                  top: 6.0,
+                                  child: CupertinoButton(
+                                    child: Text(landingStore.manualMode
+                                        ? 'Autodiscover'
+                                        : 'Manual'),
+                                    onPressed: () =>
+                                        landingStore.toggleManualMode(),
+                                  ),
+                                )
+                              ],
+                            );
+                          }),
                         )
                       ],
                     ),

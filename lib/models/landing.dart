@@ -13,10 +13,14 @@ abstract class _LandingStore extends MobxBase with Store {
   bool _refreshable = false;
   @observable
   Future<List<String>> _obsAutodiscoverIPs;
+  @observable
+  bool _manualMode = false;
 
   bool get refreshable => _refreshable;
 
   Future<List<String>> get obsAutodiscoverIPs => _obsAutodiscoverIPs;
+
+  bool get manualMode => _manualMode;
 
   @action
   void setRefreshable(bool refreshable) => _refreshable = refreshable;
@@ -25,6 +29,10 @@ abstract class _LandingStore extends MobxBase with Store {
   void updateObsAutodiscoverIPs() {
     _obsAutodiscoverIPs = NetworkHelper.getAvailableOBSIPs();
   }
+
+  @action
+  void toggleManualMode([bool manualMode]) =>
+      _manualMode = manualMode != null ? manualMode : !_manualMode;
 
   @override
   void dispose() {}
