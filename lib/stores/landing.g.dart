@@ -104,10 +104,10 @@ mixin _$LandingStore on _LandingStore, Store {
   }
 
   @override
-  void updateAutodiscoverConnections({bool manual = false}) {
+  void updateAutodiscoverConnections() {
     final _$actionInfo = _$_LandingStoreActionController.startAction();
     try {
-      return super.updateAutodiscoverConnections(manual: manual);
+      return super.updateAutodiscoverConnections();
     } finally {
       _$_LandingStoreActionController.endAction(_$actionInfo);
     }

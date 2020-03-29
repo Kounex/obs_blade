@@ -36,10 +36,9 @@ abstract class _LandingStore extends MobxBase with Store {
       _autodiscoverPort = autodiscoverPort;
 
   @action
-  void updateAutodiscoverConnections({bool manual = false}) {
+  void updateAutodiscoverConnections() {
     int port = int.tryParse(autodiscoverPort);
     if (port != null && port > 0 && port <= 65535) {
-      if (manual) HapticFeedback.lightImpact();
       _autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(port: port);
     }
   }

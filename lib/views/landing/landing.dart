@@ -18,7 +18,7 @@ class LandingView extends StatelessWidget {
             body: Listener(
               onPointerUp: (_) {
                 if (landingStore.refreshable) {
-                  landingStore.updateAutodiscoverConnections(manual: true);
+                  landingStore.updateAutodiscoverConnections();
                 }
               },
               child: CustomScrollView(

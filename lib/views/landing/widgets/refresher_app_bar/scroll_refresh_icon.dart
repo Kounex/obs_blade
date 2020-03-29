@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/stores/landing.dart';
 
@@ -51,6 +52,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
                   widget.barStretchOffset &&
               !_animController.isAnimating &&
               !landingStore.refreshable) {
+            HapticFeedback.lightImpact();
             landingStore.setRefreshable(true);
             _animController
                 .forward()
