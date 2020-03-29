@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobx_provider/mobx_provider.dart';
-import 'package:obs_station/models/landing.dart';
+import 'package:obs_station/stores/landing.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;

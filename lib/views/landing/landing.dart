@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobx_provider/mobx_provider.dart';
-import 'package:obs_station/models/landing.dart';
+import 'package:obs_station/stores/landing.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery/auto_discovery.dart';
 import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
 import 'package:obs_station/views/landing/widgets/refresher_app_bar/refresher_app_bar.dart';
@@ -12,13 +12,14 @@ class LandingView extends StatelessWidget {
   Widget build(BuildContext context) {
     //NetworkHelper.getOBSWebsocketStream();
     return MobxStatefulProvider<LandingStore>(
-        initFunction: (landingStore) => landingStore.updateObsAutodiscoverIPs(),
+        initFunction: (landingStore) =>
+            landingStore.updateObsAutodiscoverConnections(),
         builder: (context, landingStore) {
           return Scaffold(
             body: Listener(
               onPointerUp: (_) {
                 if (landingStore.refreshable) {
-                  landingStore.updateObsAutodiscoverIPs();
+                  landingStore.updateObsAutodiscoverConnections();
                 }
               },
               child: CustomScrollView(

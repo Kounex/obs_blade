@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/utils/network_helper.dart';
 
 class SessionTile extends StatelessWidget {
-  final String ip;
+  final Connection connection;
 
-  SessionTile({@required this.ip});
+  SessionTile({@required this.connection});
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +16,9 @@ class SessionTile extends StatelessWidget {
             fontFamily: CupertinoIcons.iconFont,
             fontPackage: CupertinoIcons.iconFontPackage),
       ),
-      title: Text(this.ip),
+      title: Text(this.connection.ip),
       trailing: Icon(CupertinoIcons.right_chevron),
-      onTap: () => NetworkHelper.establishWebSocket(),
+      onTap: () => NetworkHelper.establishWebSocket(this.connection),
     );
   }
 }

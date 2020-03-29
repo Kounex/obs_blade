@@ -26,24 +26,24 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$_refreshableAtom, name: '${_$_refreshableAtom.name}_set');
   }
 
-  final _$_obsAutodiscoverIPsAtom =
-      Atom(name: '_LandingStore._obsAutodiscoverIPs');
+  final _$_obsAutodiscoverConnectionsAtom =
+      Atom(name: '_LandingStore._obsAutodiscoverConnections');
 
   @override
-  Future<List<String>> get _obsAutodiscoverIPs {
-    _$_obsAutodiscoverIPsAtom.context
-        .enforceReadPolicy(_$_obsAutodiscoverIPsAtom);
-    _$_obsAutodiscoverIPsAtom.reportObserved();
-    return super._obsAutodiscoverIPs;
+  Future<List<Connection>> get _obsAutodiscoverConnections {
+    _$_obsAutodiscoverConnectionsAtom.context
+        .enforceReadPolicy(_$_obsAutodiscoverConnectionsAtom);
+    _$_obsAutodiscoverConnectionsAtom.reportObserved();
+    return super._obsAutodiscoverConnections;
   }
 
   @override
-  set _obsAutodiscoverIPs(Future<List<String>> value) {
-    _$_obsAutodiscoverIPsAtom.context.conditionallyRunInAction(() {
-      super._obsAutodiscoverIPs = value;
-      _$_obsAutodiscoverIPsAtom.reportChanged();
-    }, _$_obsAutodiscoverIPsAtom,
-        name: '${_$_obsAutodiscoverIPsAtom.name}_set');
+  set _obsAutodiscoverConnections(Future<List<Connection>> value) {
+    _$_obsAutodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
+      super._obsAutodiscoverConnections = value;
+      _$_obsAutodiscoverConnectionsAtom.reportChanged();
+    }, _$_obsAutodiscoverConnectionsAtom,
+        name: '${_$_obsAutodiscoverConnectionsAtom.name}_set');
   }
 
   final _$_manualModeAtom = Atom(name: '_LandingStore._manualMode');
@@ -77,10 +77,10 @@ mixin _$LandingStore on _LandingStore, Store {
   }
 
   @override
-  void updateObsAutodiscoverIPs() {
+  void updateObsAutodiscoverConnections() {
     final _$actionInfo = _$_LandingStoreActionController.startAction();
     try {
-      return super.updateObsAutodiscoverIPs();
+      return super.updateObsAutodiscoverConnections();
     } finally {
       _$_LandingStoreActionController.endAction(_$actionInfo);
     }

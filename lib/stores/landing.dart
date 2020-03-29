@@ -1,5 +1,6 @@
 import 'package:mobx/mobx.dart';
 import 'package:mobx_provider/mobx_provider.dart';
+import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/utils/network_helper.dart';
 
 // Include generated file
@@ -11,13 +12,14 @@ abstract class _LandingStore extends MobxBase with Store {
   @observable
   bool _refreshable = false;
   @observable
-  Future<List<String>> _obsAutodiscoverIPs;
+  Future<List<Connection>> _obsAutodiscoverConnections;
   @observable
   bool _manualMode = false;
 
   bool get refreshable => _refreshable;
 
-  Future<List<String>> get obsAutodiscoverIPs => _obsAutodiscoverIPs;
+  Future<List<Connection>> get obsAutodiscoverConnections =>
+      _obsAutodiscoverConnections;
 
   bool get manualMode => _manualMode;
 
@@ -25,8 +27,8 @@ abstract class _LandingStore extends MobxBase with Store {
   void setRefreshable(bool refreshable) => _refreshable = refreshable;
 
   @action
-  void updateObsAutodiscoverIPs() {
-    _obsAutodiscoverIPs = NetworkHelper.getAvailableOBSIPs();
+  void updateObsAutodiscoverConnections() {
+    _obsAutodiscoverConnections = NetworkHelper.getAvailableOBSIPs();
   }
 
   @action

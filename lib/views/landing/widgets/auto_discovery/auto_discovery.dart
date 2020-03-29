@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobx_provider/mobx_provider.dart';
-import 'package:obs_station/models/landing.dart';
+import 'package:obs_station/models/connection.dart';
+import 'package:obs_station/stores/landing.dart';
 import 'package:obs_station/shared/fade_inner.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery/session_tile.dart';
 
@@ -8,8 +9,8 @@ class AutoDiscovery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MobxWidgetProvider<LandingStore>(builder: (context, landingStore) {
-      return FutureBuilder<List<String>>(
-        future: landingStore.obsAutodiscoverIPs,
+      return FutureBuilder<List<Connection>>(
+        future: landingStore.obsAutodiscoverConnections,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
@@ -18,7 +19,10 @@ class AutoDiscovery extends StatelessWidget {
                   child: Column(
                     children: snapshot.data
                         .map(
-                            (availableObsIP) => SessionTile(ip: availableObsIP))
+                          (availableObsConnection) => SessionTile(
+                            connection: availableObsConnection,
+                          ),
+                        )
                         .toList(),
                   ),
                 );

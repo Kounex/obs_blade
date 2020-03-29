@@ -1,18 +1,18 @@
 import 'dart:async';
 
 import 'package:connectivity/connectivity.dart';
+import 'package:obs_station/models/connection.dart';
 
 import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
 
 class NetworkHelper {
-  static Future<void> establishWebSocket(String ip, int port,
-      [String password]) async {
-    IOWebSocketChannel channel =
-        IOWebSocketChannel.connect('ws://$ip:${port.toString()}');
+  static Future<void> establishWebSocket(Connection connection) async {
+    IOWebSocketChannel channel = IOWebSocketChannel.connect(
+        'ws://${connection.ip}:${connection.port.toString()}');
   }
 
-  static Future<List<String>> getAvailableOBSIPs({int port = 4444}) async {
+  static Future<List<Connection>> getAvailableOBSIPs({int port = 4444}) async {
     String baseIP =
         (await Connectivity().getWifiIP()).split('.').take(3).join('.');
     List<int> availableIPs = [];
@@ -26,6 +26,6 @@ class NetworkHelper {
         ? availableIPs.add(int.parse(r.host.split('.').last))
         : null);
 
-    return availableIPs.map((i) => '$baseIP.$i').toList();
+    return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
   }
 }
