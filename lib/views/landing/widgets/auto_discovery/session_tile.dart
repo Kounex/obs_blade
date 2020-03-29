@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/utils/network_helper.dart';
 import 'package:obs_station/utils/styling_helper.dart';
+import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
 
 class SessionTile extends StatelessWidget {
   final Connection connection;
@@ -11,13 +11,16 @@ class SessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        StylingHelper.CUPERTINO_MACBOOK_ICON,
-      ),
+    return ExpansionTile(
+      leading: Icon(StylingHelper.CUPERTINO_MACBOOK_ICON),
       title: Text(this.connection.ip),
-      trailing: Icon(CupertinoIcons.right_chevron),
-      onTap: () => NetworkHelper.establishWebSocket(this.connection),
+      children: <Widget>[
+        Divider(),
+        Padding(
+          padding: const EdgeInsets.only(left: 24.0, right: 24, bottom: 12),
+          child: ConnectForm(connection: this.connection),
+        )
+      ],
     );
   }
 }
