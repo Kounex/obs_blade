@@ -20,10 +20,12 @@ class _ConnectFormState extends State<ConnectForm> {
           Row(
             children: <Widget>[
               Flexible(
-                flex: 3,
+                flex: 7,
                 child: TextFormField(
                   controller: _ip,
-                  decoration: InputDecoration(hintText: 'IP Address'),
+                  decoration: InputDecoration(
+                    labelText: 'IP Address',
+                  ),
                   validator: (text) {
                     List<String> ip = text.split('.');
                     if (ip.length == 4 &&
@@ -38,11 +40,14 @@ class _ConnectFormState extends State<ConnectForm> {
                   },
                 ),
               ),
+              Spacer(),
               Flexible(
-                flex: 1,
+                flex: 2,
                 child: TextFormField(
                   controller: _port,
-                  decoration: InputDecoration(hintText: 'Port'),
+                  decoration: InputDecoration(
+                    labelText: 'Port',
+                  ),
                   validator: (text) {
                     int port = int.tryParse(text);
                     if (port != null && port > 0 && port <= 65535) {
@@ -56,7 +61,7 @@ class _ConnectFormState extends State<ConnectForm> {
           ),
           TextFormField(
             controller: _pw,
-            decoration: InputDecoration(hintText: 'Password'),
+            decoration: InputDecoration(labelText: 'Password'),
           ),
           Padding(
             padding: const EdgeInsets.only(top: 24.0),
