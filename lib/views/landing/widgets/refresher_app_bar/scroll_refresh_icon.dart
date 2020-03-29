@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/stores/landing.dart';
 
@@ -53,7 +52,6 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
               !_animController.isAnimating &&
               !landingStore.refreshable) {
             landingStore.setRefreshable(true);
-            HapticFeedback.selectionClick();
             _animController
                 .forward()
                 .then((_) => _animController.animateTo(0.5));

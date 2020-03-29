@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:mobx/mobx.dart';
 import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/connection.dart';
@@ -12,14 +13,18 @@ abstract class _LandingStore extends MobxBase with Store {
   @observable
   bool _refreshable = false;
   @observable
-  Future<List<Connection>> _obsAutodiscoverConnections;
+  Future<List<Connection>> _autodiscoverConnections;
+  @observable
+  String _autodiscoverPort = '4444';
   @observable
   bool _manualMode = false;
 
   bool get refreshable => _refreshable;
 
+  String get autodiscoverPort => _autodiscoverPort;
+
   Future<List<Connection>> get obsAutodiscoverConnections =>
-      _obsAutodiscoverConnections;
+      _autodiscoverConnections;
 
   bool get manualMode => _manualMode;
 
@@ -27,8 +32,16 @@ abstract class _LandingStore extends MobxBase with Store {
   void setRefreshable(bool refreshable) => _refreshable = refreshable;
 
   @action
-  void updateObsAutodiscoverConnections() {
-    _obsAutodiscoverConnections = NetworkHelper.getAvailableOBSIPs();
+  void setAutodiscoverPort(String autodiscoverPort) =>
+      _autodiscoverPort = autodiscoverPort;
+
+  @action
+  void updateAutodiscoverConnections({bool manual = false}) {
+    int port = int.tryParse(autodiscoverPort);
+    if (port != null && port > 0 && port <= 65535) {
+      if (manual) HapticFeedback.lightImpact();
+      _autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(port: port);
+    }
   }
 
   @action

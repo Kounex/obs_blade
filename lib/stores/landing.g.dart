@@ -26,24 +26,41 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$_refreshableAtom, name: '${_$_refreshableAtom.name}_set');
   }
 
-  final _$_obsAutodiscoverConnectionsAtom =
-      Atom(name: '_LandingStore._obsAutodiscoverConnections');
+  final _$_autodiscoverConnectionsAtom =
+      Atom(name: '_LandingStore._autodiscoverConnections');
 
   @override
-  Future<List<Connection>> get _obsAutodiscoverConnections {
-    _$_obsAutodiscoverConnectionsAtom.context
-        .enforceReadPolicy(_$_obsAutodiscoverConnectionsAtom);
-    _$_obsAutodiscoverConnectionsAtom.reportObserved();
-    return super._obsAutodiscoverConnections;
+  Future<List<Connection>> get _autodiscoverConnections {
+    _$_autodiscoverConnectionsAtom.context
+        .enforceReadPolicy(_$_autodiscoverConnectionsAtom);
+    _$_autodiscoverConnectionsAtom.reportObserved();
+    return super._autodiscoverConnections;
   }
 
   @override
-  set _obsAutodiscoverConnections(Future<List<Connection>> value) {
-    _$_obsAutodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
-      super._obsAutodiscoverConnections = value;
-      _$_obsAutodiscoverConnectionsAtom.reportChanged();
-    }, _$_obsAutodiscoverConnectionsAtom,
-        name: '${_$_obsAutodiscoverConnectionsAtom.name}_set');
+  set _autodiscoverConnections(Future<List<Connection>> value) {
+    _$_autodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
+      super._autodiscoverConnections = value;
+      _$_autodiscoverConnectionsAtom.reportChanged();
+    }, _$_autodiscoverConnectionsAtom,
+        name: '${_$_autodiscoverConnectionsAtom.name}_set');
+  }
+
+  final _$_autodiscoverPortAtom = Atom(name: '_LandingStore._autodiscoverPort');
+
+  @override
+  String get _autodiscoverPort {
+    _$_autodiscoverPortAtom.context.enforceReadPolicy(_$_autodiscoverPortAtom);
+    _$_autodiscoverPortAtom.reportObserved();
+    return super._autodiscoverPort;
+  }
+
+  @override
+  set _autodiscoverPort(String value) {
+    _$_autodiscoverPortAtom.context.conditionallyRunInAction(() {
+      super._autodiscoverPort = value;
+      _$_autodiscoverPortAtom.reportChanged();
+    }, _$_autodiscoverPortAtom, name: '${_$_autodiscoverPortAtom.name}_set');
   }
 
   final _$_manualModeAtom = Atom(name: '_LandingStore._manualMode');
@@ -77,10 +94,20 @@ mixin _$LandingStore on _LandingStore, Store {
   }
 
   @override
-  void updateObsAutodiscoverConnections() {
+  void setAutodiscoverPort(String autodiscoverPort) {
     final _$actionInfo = _$_LandingStoreActionController.startAction();
     try {
-      return super.updateObsAutodiscoverConnections();
+      return super.setAutodiscoverPort(autodiscoverPort);
+    } finally {
+      _$_LandingStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void updateAutodiscoverConnections({bool manual = false}) {
+    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    try {
+      return super.updateAutodiscoverConnections(manual: manual);
     } finally {
       _$_LandingStoreActionController.endAction(_$actionInfo);
     }

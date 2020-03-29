@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/utils/network_helper.dart';
+import 'package:obs_station/utils/styling_helper.dart';
 
 class SessionTile extends StatelessWidget {
   final Connection connection;
@@ -12,9 +13,7 @@ class SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(
-        const IconData(0xf390,
-            fontFamily: CupertinoIcons.iconFont,
-            fontPackage: CupertinoIcons.iconFontPackage),
+        StylingHelper.CUPERTINO_MACBOOK_ICON,
       ),
       title: Text(this.connection.ip),
       trailing: Icon(CupertinoIcons.right_chevron),

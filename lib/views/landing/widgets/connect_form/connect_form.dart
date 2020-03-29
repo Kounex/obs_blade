@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:obs_station/shared/question_mark_tooltip.dart';
+import 'package:obs_station/utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
   @override
@@ -11,6 +12,7 @@ class _ConnectFormState extends State<ConnectForm> {
   TextEditingController _ip = TextEditingController();
   TextEditingController _port = TextEditingController(text: '4444');
   TextEditingController _pw = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -26,18 +28,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   decoration: InputDecoration(
                     labelText: 'IP Address',
                   ),
-                  validator: (text) {
-                    List<String> ip = text.split('.');
-                    if (ip.length == 4 &&
-                        ip.every((part) =>
-                            part.length > 0 &&
-                            part.length < 4 &&
-                            int.tryParse(part) != null &&
-                            int.parse(part) <= 255)) {
-                      return null;
-                    }
-                    return 'Not an IP address';
-                  },
+                  validator: (text) => ValidationHelper.ipValidation(text),
                 ),
               ),
               Spacer(),
@@ -48,13 +39,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   decoration: InputDecoration(
                     labelText: 'Port',
                   ),
-                  validator: (text) {
-                    int port = int.tryParse(text);
-                    if (port != null && port > 0 && port <= 65535) {
-                      return null;
-                    }
-                    return 'Not a valid Port';
-                  },
+                  validator: (text) => ValidationHelper.portValidation(text),
                 ),
               ),
             ],
@@ -78,7 +63,9 @@ class _ConnectFormState extends State<ConnectForm> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 192.0),
-                  child: QuestionMarkTooltip(),
+                  child: QuestionMarkTooltip(
+                      message:
+                          'Password is optional. You have to set it manually in the OBS WebSocket Plugin. It is highly recommended though!'),
                 ),
               ],
             ),

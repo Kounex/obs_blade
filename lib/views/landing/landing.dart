@@ -10,16 +10,15 @@ import 'package:obs_station/views/landing/widgets/switcher_card/switcher_card.da
 class LandingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    //NetworkHelper.getOBSWebsocketStream();
     return MobxStatefulProvider<LandingStore>(
         initFunction: (landingStore) =>
-            landingStore.updateObsAutodiscoverConnections(),
+            landingStore.updateAutodiscoverConnections(),
         builder: (context, landingStore) {
           return Scaffold(
             body: Listener(
               onPointerUp: (_) {
                 if (landingStore.refreshable) {
-                  landingStore.updateObsAutodiscoverConnections();
+                  landingStore.updateAutodiscoverConnections(manual: true);
                 }
               },
               child: CustomScrollView(
