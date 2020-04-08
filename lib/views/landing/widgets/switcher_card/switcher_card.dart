@@ -35,7 +35,9 @@ class SwitcherCard extends StatelessWidget {
             height: 0.0,
           ),
           AnimatedSwitcher(
-              duration: Duration(milliseconds: 200), child: this.child)
+            duration: Duration(milliseconds: 200),
+            child: this.child,
+          ),
         ],
       ),
     );

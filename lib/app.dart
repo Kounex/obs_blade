@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_station/stores/landing.dart';
+import 'package:obs_station/stores/network.dart';
 
 import 'package:obs_station/utils/routing_helper.dart';
 import 'package:obs_station/views/landing/landing.dart';
@@ -16,8 +17,15 @@ class App extends StatelessWidget {
         ),
       ),
       routes: RoutingHelper.routes,
-      home: Provider<LandingStore>(
-        create: (_) => LandingStore(),
+      home: MultiProvider(
+        providers: [
+          Provider<LandingStore>(
+            create: (_) => LandingStore(),
+          ),
+          Provider<NetworkStore>(
+            create: (_) => NetworkStore(),
+          ),
+        ],
         child: LandingView(),
       ),
     );

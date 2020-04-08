@@ -7,10 +7,8 @@ import 'package:obs_station/stores/landing.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
-  final double barStretchOffset;
 
-  ScrollRefreshIcon(
-      {@required expandedBarHeight, @required this.barStretchOffset})
+  ScrollRefreshIcon({@required expandedBarHeight})
       : expandedBarHeight = expandedBarHeight + 28.0;
 
   @override
@@ -34,22 +32,23 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     );
   }
 
-  double _getRefreshOpacity(double currentBarHeight) {
+  double _getRefreshOpacity(double barStretchOffset, double currentBarHeight) {
     double opacity = pow(
             1.4,
             0.2 * (currentBarHeight - widget.expandedBarHeight) -
-                (widget.barStretchOffset / 6)) -
-        0.01;
+                (barStretchOffset / 6)) -
+        0.1;
     return opacity > 1.0 ? 1.0 : opacity < 0.0 ? 0.0 : opacity;
   }
 
   @override
   Widget build(BuildContext context) {
+    double barStretchOffset = MediaQuery.of(context).size.height / 15;
     return MobxStatefulProvider<LandingStore>(builder: (context, landingStore) {
       return LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxHeight - widget.expandedBarHeight >=
-                  widget.barStretchOffset &&
+                  barStretchOffset &&
               !_animController.isAnimating &&
               !landingStore.refreshable) {
             HapticFeedback.lightImpact();
@@ -59,7 +58,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
                 .then((_) => _animController.animateTo(0.5));
           }
           if (constraints.maxHeight - widget.expandedBarHeight <
-                  widget.barStretchOffset &&
+                  barStretchOffset &&
               landingStore.refreshable) {
             landingStore.setRefreshable(false);
             _animController.animateTo(0.0);
@@ -68,7 +67,8 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
             padding: EdgeInsets.only(top: widget.expandedBarHeight / 2),
             child: Align(
               child: Opacity(
-                opacity: _getRefreshOpacity(constraints.maxHeight),
+                opacity:
+                    _getRefreshOpacity(barStretchOffset, constraints.maxHeight),
                 child: Container(
                   width: 32.0,
                   height: 32.0,
