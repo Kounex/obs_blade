@@ -9,115 +9,115 @@ part of 'network.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$NetworkStore on _NetworkStore, Store {
-  final _$_autodiscoverConnectionsAtom =
-      Atom(name: '_NetworkStore._autodiscoverConnections');
+  final _$autodiscoverConnectionsAtom =
+      Atom(name: '_NetworkStore.autodiscoverConnections');
 
   @override
-  Future<List<Connection>> get _autodiscoverConnections {
-    _$_autodiscoverConnectionsAtom.context
-        .enforceReadPolicy(_$_autodiscoverConnectionsAtom);
-    _$_autodiscoverConnectionsAtom.reportObserved();
-    return super._autodiscoverConnections;
+  Future<List<Connection>> get autodiscoverConnections {
+    _$autodiscoverConnectionsAtom.context
+        .enforceReadPolicy(_$autodiscoverConnectionsAtom);
+    _$autodiscoverConnectionsAtom.reportObserved();
+    return super.autodiscoverConnections;
   }
 
   @override
-  set _autodiscoverConnections(Future<List<Connection>> value) {
-    _$_autodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
-      super._autodiscoverConnections = value;
-      _$_autodiscoverConnectionsAtom.reportChanged();
-    }, _$_autodiscoverConnectionsAtom,
-        name: '${_$_autodiscoverConnectionsAtom.name}_set');
+  set autodiscoverConnections(Future<List<Connection>> value) {
+    _$autodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
+      super.autodiscoverConnections = value;
+      _$autodiscoverConnectionsAtom.reportChanged();
+    }, _$autodiscoverConnectionsAtom,
+        name: '${_$autodiscoverConnectionsAtom.name}_set');
   }
 
-  final _$_autodiscoverPortAtom = Atom(name: '_NetworkStore._autodiscoverPort');
+  final _$autodiscoverPortAtom = Atom(name: '_NetworkStore.autodiscoverPort');
 
   @override
-  String get _autodiscoverPort {
-    _$_autodiscoverPortAtom.context.enforceReadPolicy(_$_autodiscoverPortAtom);
-    _$_autodiscoverPortAtom.reportObserved();
-    return super._autodiscoverPort;
-  }
-
-  @override
-  set _autodiscoverPort(String value) {
-    _$_autodiscoverPortAtom.context.conditionallyRunInAction(() {
-      super._autodiscoverPort = value;
-      _$_autodiscoverPortAtom.reportChanged();
-    }, _$_autodiscoverPortAtom, name: '${_$_autodiscoverPortAtom.name}_set');
-  }
-
-  final _$_obsWebSocketAtom = Atom(name: '_NetworkStore._obsWebSocket');
-
-  @override
-  IOWebSocketChannel get _obsWebSocket {
-    _$_obsWebSocketAtom.context.enforceReadPolicy(_$_obsWebSocketAtom);
-    _$_obsWebSocketAtom.reportObserved();
-    return super._obsWebSocket;
+  String get autodiscoverPort {
+    _$autodiscoverPortAtom.context.enforceReadPolicy(_$autodiscoverPortAtom);
+    _$autodiscoverPortAtom.reportObserved();
+    return super.autodiscoverPort;
   }
 
   @override
-  set _obsWebSocket(IOWebSocketChannel value) {
-    _$_obsWebSocketAtom.context.conditionallyRunInAction(() {
-      super._obsWebSocket = value;
-      _$_obsWebSocketAtom.reportChanged();
-    }, _$_obsWebSocketAtom, name: '${_$_obsWebSocketAtom.name}_set');
+  set autodiscoverPort(String value) {
+    _$autodiscoverPortAtom.context.conditionallyRunInAction(() {
+      super.autodiscoverPort = value;
+      _$autodiscoverPortAtom.reportChanged();
+    }, _$autodiscoverPortAtom, name: '${_$autodiscoverPortAtom.name}_set');
   }
 
-  final _$_connectionWasInProgressAtom =
-      Atom(name: '_NetworkStore._connectionWasInProgress');
+  final _$activeSessionAtom = Atom(name: '_NetworkStore.activeSession');
 
   @override
-  bool get _connectionWasInProgress {
-    _$_connectionWasInProgressAtom.context
-        .enforceReadPolicy(_$_connectionWasInProgressAtom);
-    _$_connectionWasInProgressAtom.reportObserved();
-    return super._connectionWasInProgress;
-  }
-
-  @override
-  set _connectionWasInProgress(bool value) {
-    _$_connectionWasInProgressAtom.context.conditionallyRunInAction(() {
-      super._connectionWasInProgress = value;
-      _$_connectionWasInProgressAtom.reportChanged();
-    }, _$_connectionWasInProgressAtom,
-        name: '${_$_connectionWasInProgressAtom.name}_set');
-  }
-
-  final _$_connectionInProgressAtom =
-      Atom(name: '_NetworkStore._connectionInProgress');
-
-  @override
-  bool get _connectionInProgress {
-    _$_connectionInProgressAtom.context
-        .enforceReadPolicy(_$_connectionInProgressAtom);
-    _$_connectionInProgressAtom.reportObserved();
-    return super._connectionInProgress;
+  Session get activeSession {
+    _$activeSessionAtom.context.enforceReadPolicy(_$activeSessionAtom);
+    _$activeSessionAtom.reportObserved();
+    return super.activeSession;
   }
 
   @override
-  set _connectionInProgress(bool value) {
-    _$_connectionInProgressAtom.context.conditionallyRunInAction(() {
-      super._connectionInProgress = value;
-      _$_connectionInProgressAtom.reportChanged();
-    }, _$_connectionInProgressAtom,
-        name: '${_$_connectionInProgressAtom.name}_set');
+  set activeSession(Session value) {
+    _$activeSessionAtom.context.conditionallyRunInAction(() {
+      super.activeSession = value;
+      _$activeSessionAtom.reportChanged();
+    }, _$activeSessionAtom, name: '${_$activeSessionAtom.name}_set');
   }
 
-  final _$_connectedAtom = Atom(name: '_NetworkStore._connected');
+  final _$connectedAtom = Atom(name: '_NetworkStore.connected');
 
   @override
-  bool get _connected {
-    _$_connectedAtom.context.enforceReadPolicy(_$_connectedAtom);
-    _$_connectedAtom.reportObserved();
-    return super._connected;
+  bool get connected {
+    _$connectedAtom.context.enforceReadPolicy(_$connectedAtom);
+    _$connectedAtom.reportObserved();
+    return super.connected;
   }
 
   @override
-  set _connected(bool value) {
-    _$_connectedAtom.context.conditionallyRunInAction(() {
-      super._connected = value;
-      _$_connectedAtom.reportChanged();
-    }, _$_connectedAtom, name: '${_$_connectedAtom.name}_set');
+  set connected(bool value) {
+    _$connectedAtom.context.conditionallyRunInAction(() {
+      super.connected = value;
+      _$connectedAtom.reportChanged();
+    }, _$connectedAtom, name: '${_$connectedAtom.name}_set');
+  }
+
+  final _$connectionWasInProgressAtom =
+      Atom(name: '_NetworkStore.connectionWasInProgress');
+
+  @override
+  bool get connectionWasInProgress {
+    _$connectionWasInProgressAtom.context
+        .enforceReadPolicy(_$connectionWasInProgressAtom);
+    _$connectionWasInProgressAtom.reportObserved();
+    return super.connectionWasInProgress;
+  }
+
+  @override
+  set connectionWasInProgress(bool value) {
+    _$connectionWasInProgressAtom.context.conditionallyRunInAction(() {
+      super.connectionWasInProgress = value;
+      _$connectionWasInProgressAtom.reportChanged();
+    }, _$connectionWasInProgressAtom,
+        name: '${_$connectionWasInProgressAtom.name}_set');
+  }
+
+  final _$connectionInProgressAtom =
+      Atom(name: '_NetworkStore.connectionInProgress');
+
+  @override
+  bool get connectionInProgress {
+    _$connectionInProgressAtom.context
+        .enforceReadPolicy(_$connectionInProgressAtom);
+    _$connectionInProgressAtom.reportObserved();
+    return super.connectionInProgress;
+  }
+
+  @override
+  set connectionInProgress(bool value) {
+    _$connectionInProgressAtom.context.conditionallyRunInAction(() {
+      super.connectionInProgress = value;
+      _$connectionInProgressAtom.reportChanged();
+    }, _$connectionInProgressAtom,
+        name: '${_$connectionInProgressAtom.name}_set');
   }
 
   final _$setOBSWebSocketAsyncAction = AsyncAction('setOBSWebSocket');
@@ -153,8 +153,19 @@ mixin _$NetworkStore on _NetworkStore, Store {
   }
 
   @override
+  void closeSession() {
+    final _$actionInfo = _$_NetworkStoreActionController.startAction();
+    try {
+      return super.closeSession();
+    } finally {
+      _$_NetworkStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
-    final string = '';
+    final string =
+        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},activeSession: ${activeSession.toString()},connected: ${connected.toString()},connectionWasInProgress: ${connectionWasInProgress.toString()},connectionInProgress: ${connectionInProgress.toString()}';
     return '{$string}';
   }
 }

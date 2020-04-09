@@ -1,28 +1,21 @@
 import 'package:mobx/mobx.dart';
-import 'package:mobx_provider/mobx_provider.dart';
+import 'package:obs_station/types/mixins/short_provider.dart';
 
 // Include generated file
 part 'landing.g.dart';
 
-class LandingStore = _LandingStore with _$LandingStore;
+class LandingStore = _LandingStore with _$LandingStore, ShortProvider;
 
-abstract class _LandingStore extends MobxBase with Store {
+abstract class _LandingStore with Store {
   @observable
-  bool _refreshable = false;
+  bool refreshable = false;
   @observable
-  bool _manualMode = false;
-
-  bool get refreshable => _refreshable;
-
-  bool get manualMode => _manualMode;
+  bool manualMode = false;
 
   @action
-  void setRefreshable(bool refreshable) => _refreshable = refreshable;
+  void setRefreshable(bool refreshable) => this.refreshable = refreshable;
 
   @action
   void toggleManualMode([bool manualMode]) =>
-      _manualMode = manualMode != null ? manualMode : !_manualMode;
-
-  @override
-  void dispose() {}
+      this.manualMode = manualMode != null ? manualMode : !this.manualMode;
 }

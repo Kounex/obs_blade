@@ -3,8 +3,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/connection.dart';
+import 'package:obs_station/models/session.dart';
 import 'package:obs_station/utils/network_helper.dart';
 import 'package:web_socket_channel/io.dart';
 
@@ -12,65 +12,50 @@ part 'network.g.dart';
 
 class NetworkStore = _NetworkStore with _$NetworkStore;
 
-abstract class _NetworkStore extends MobxBase with Store {
+abstract class _NetworkStore with Store {
   @observable
-  Future<List<Connection>> _autodiscoverConnections;
+  Future<List<Connection>> autodiscoverConnections;
   @observable
-  String _autodiscoverPort = '4444';
-
-  @observable
-  IOWebSocketChannel _obsWebSocket;
+  String autodiscoverPort = '4444';
 
   @observable
-  bool _connectionWasInProgress = false;
+  Session activeSession;
   @observable
-  bool _connectionInProgress = false;
+  bool connected = false;
+
   @observable
-  bool _connected = false;
-
-  String get autodiscoverPort => _autodiscoverPort;
-
-  Future<List<Connection>> get obsAutodiscoverConnections =>
-      _autodiscoverConnections;
-
-  IOWebSocketChannel get obsWebSocket => _obsWebSocket;
-
-  bool get connectionWasInProgress => _connectionWasInProgress;
-
-  bool get connectionInProgress => _connectionInProgress;
-
-  bool get connected => _connected;
+  bool connectionWasInProgress = false;
+  @observable
+  bool connectionInProgress = false;
 
   @action
   void setAutodiscoverPort(String autodiscoverPort) =>
-      _autodiscoverPort = autodiscoverPort;
+      this.autodiscoverPort = autodiscoverPort;
 
   @action
   void updateAutodiscoverConnections() {
     int port = int.tryParse(autodiscoverPort);
     if (port != null && port > 0 && port <= 65535) {
-      _autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(port: port);
+      this.autodiscoverConnections =
+          NetworkHelper.getAvailableOBSIPs(port: port);
     }
   }
 
   @action
   Future<void> setOBSWebSocket(Connection connection,
       {Duration timeout = const Duration(seconds: 3)}) async {
-    if (_obsWebSocket != null) {
-      _obsWebSocket.sink.close();
-      _obsWebSocket = null;
-      _connected = false;
+    this.closeSession();
+    if (!this.connectionWasInProgress) {
+      this.connectionWasInProgress = true;
     }
-    if (!_connectionWasInProgress) {
-      _connectionWasInProgress = true;
-    }
-    _connectionInProgress = true;
-    _obsWebSocket = NetworkHelper.establishWebSocket(connection);
+    this.connectionInProgress = true;
+    this.activeSession =
+        Session(NetworkHelper.establishWebSocket(connection), connection);
     Completer<bool> authCompleter = Completer();
     bool authRequired;
 
     StreamSubscription subscription;
-    subscription = _obsWebSocket.stream.listen(
+    subscription = this.activeSession.socket.stream.listen(
       (event) {
         authRequired = json.decode(event)['authRequired'];
         authCompleter.complete(true);
@@ -79,7 +64,7 @@ abstract class _NetworkStore extends MobxBase with Store {
       onDone: () => print('done'),
       onError: (error) => print(error),
     );
-    _obsWebSocket.sink.add(
+    this.activeSession.socket.sink.add(
         json.encode({'request-type': 'GetAuthRequired', 'message-id': '0'}));
 
     bool connected = await Future.any([
@@ -92,13 +77,20 @@ abstract class _NetworkStore extends MobxBase with Store {
     print('connected: $connected');
     if (connected) {
       print('auth required: $authRequired');
-      _connected = true;
+      this.connected = true;
     } else {
-      _obsWebSocket = null;
+      this.activeSession = null;
     }
-    _connectionInProgress = false;
+    this.connectionInProgress = false;
   }
 
-  @override
-  void dispose() {}
+  @action
+  void closeSession() {
+    if (this.activeSession != null) {
+      this.activeSession.socket.sink.close();
+      this.activeSession = null;
+      this.connected = false;
+      this.connectionWasInProgress = false;
+    }
+  }
 }

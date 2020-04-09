@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 
-class FadeInner extends StatefulWidget {
+class Fader extends StatefulWidget {
   final Widget child;
   final Duration duration;
+  final Duration showDuration;
 
-  FadeInner(
-      {@required this.child,
-      this.duration = const Duration(milliseconds: 200)});
+  Fader({
+    @required this.child,
+    this.duration = const Duration(milliseconds: 200),
+    this.showDuration,
+  });
 
   @override
-  _FadeInnerState createState() => _FadeInnerState();
+  _FaderState createState() => _FaderState();
 }
 
-class _FadeInnerState extends State<FadeInner>
-    with SingleTickerProviderStateMixin {
+class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
   AnimationController _controller;
   Animation<double> _animation;
 
@@ -30,6 +32,9 @@ class _FadeInnerState extends State<FadeInner>
   @override
   Widget build(BuildContext context) {
     _controller.forward();
+    if (widget.showDuration != null) {
+      Future.delayed(widget.showDuration, () => _controller.reverse());
+    }
     return FadeTransition(
       opacity: _animation,
       child: this.widget.child,

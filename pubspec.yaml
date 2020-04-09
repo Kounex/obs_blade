@@ -28,8 +28,8 @@ dependencies:
     # state management and DI
     provider: ^4.0.4
     mobx: ^1.1.1
+    flutter_mobx: ^1.1.0
     flutter_mobx_helpers: ^1.0.1
-    mobx_provider: ^0.0.2+1
     mobx_codegen: ^1.0.3
 
     # json serializable together with mobx

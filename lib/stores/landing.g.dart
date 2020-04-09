@@ -9,38 +9,38 @@ part of 'landing.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$LandingStore on _LandingStore, Store {
-  final _$_refreshableAtom = Atom(name: '_LandingStore._refreshable');
+  final _$refreshableAtom = Atom(name: '_LandingStore.refreshable');
 
   @override
-  bool get _refreshable {
-    _$_refreshableAtom.context.enforceReadPolicy(_$_refreshableAtom);
-    _$_refreshableAtom.reportObserved();
-    return super._refreshable;
+  bool get refreshable {
+    _$refreshableAtom.context.enforceReadPolicy(_$refreshableAtom);
+    _$refreshableAtom.reportObserved();
+    return super.refreshable;
   }
 
   @override
-  set _refreshable(bool value) {
-    _$_refreshableAtom.context.conditionallyRunInAction(() {
-      super._refreshable = value;
-      _$_refreshableAtom.reportChanged();
-    }, _$_refreshableAtom, name: '${_$_refreshableAtom.name}_set');
+  set refreshable(bool value) {
+    _$refreshableAtom.context.conditionallyRunInAction(() {
+      super.refreshable = value;
+      _$refreshableAtom.reportChanged();
+    }, _$refreshableAtom, name: '${_$refreshableAtom.name}_set');
   }
 
-  final _$_manualModeAtom = Atom(name: '_LandingStore._manualMode');
+  final _$manualModeAtom = Atom(name: '_LandingStore.manualMode');
 
   @override
-  bool get _manualMode {
-    _$_manualModeAtom.context.enforceReadPolicy(_$_manualModeAtom);
-    _$_manualModeAtom.reportObserved();
-    return super._manualMode;
+  bool get manualMode {
+    _$manualModeAtom.context.enforceReadPolicy(_$manualModeAtom);
+    _$manualModeAtom.reportObserved();
+    return super.manualMode;
   }
 
   @override
-  set _manualMode(bool value) {
-    _$_manualModeAtom.context.conditionallyRunInAction(() {
-      super._manualMode = value;
-      _$_manualModeAtom.reportChanged();
-    }, _$_manualModeAtom, name: '${_$_manualModeAtom.name}_set');
+  set manualMode(bool value) {
+    _$manualModeAtom.context.conditionallyRunInAction(() {
+      super.manualMode = value;
+      _$manualModeAtom.reportChanged();
+    }, _$manualModeAtom, name: '${_$manualModeAtom.name}_set');
   }
 
   final _$_LandingStoreActionController =
@@ -68,7 +68,8 @@ mixin _$LandingStore on _LandingStore, Store {
 
   @override
   String toString() {
-    final string = '';
+    final string =
+        'refreshable: ${refreshable.toString()},manualMode: ${manualMode.toString()}';
     return '{$string}';
   }
 }

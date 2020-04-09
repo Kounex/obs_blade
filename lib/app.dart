@@ -23,7 +23,11 @@ class App extends StatelessWidget {
             create: (_) => LandingStore(),
           ),
           Provider<NetworkStore>(
-            create: (_) => NetworkStore(),
+            create: (_) {
+              NetworkStore networkStore = NetworkStore();
+              networkStore.updateAutodiscoverConnections();
+              return networkStore;
+            },
           ),
         ],
         child: LandingView(),
