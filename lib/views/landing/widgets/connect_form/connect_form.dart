@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobx_provider/mobx_provider.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/shared/question_mark_tooltip.dart';
+import 'package:obs_station/stores/network.dart';
 import 'package:obs_station/utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
@@ -67,13 +69,18 @@ class _ConnectFormState extends State<ConnectForm> {
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
-                RaisedButton(
-                  child: Text('Connect'),
-                  onPressed: () {
-                    if (_formKey.currentState.validate()) {
-                      // TODO: connection
-                    }
-                  },
+                MobxStatefulProvider<NetworkStore>(
+                  builder: (context, networkStore) => RaisedButton(
+                    child: Text('Connect'),
+                    onPressed: () {
+                      if (_formKey.currentState.validate()) {
+                        networkStore.setOBSWebSocket(
+                          widget.connection ??
+                              Connection(_ip.text, int.parse(_port.text)),
+                        );
+                      }
+                    },
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 192.0),

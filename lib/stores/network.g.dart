@@ -46,6 +46,89 @@ mixin _$NetworkStore on _NetworkStore, Store {
     }, _$_autodiscoverPortAtom, name: '${_$_autodiscoverPortAtom.name}_set');
   }
 
+  final _$_obsWebSocketAtom = Atom(name: '_NetworkStore._obsWebSocket');
+
+  @override
+  IOWebSocketChannel get _obsWebSocket {
+    _$_obsWebSocketAtom.context.enforceReadPolicy(_$_obsWebSocketAtom);
+    _$_obsWebSocketAtom.reportObserved();
+    return super._obsWebSocket;
+  }
+
+  @override
+  set _obsWebSocket(IOWebSocketChannel value) {
+    _$_obsWebSocketAtom.context.conditionallyRunInAction(() {
+      super._obsWebSocket = value;
+      _$_obsWebSocketAtom.reportChanged();
+    }, _$_obsWebSocketAtom, name: '${_$_obsWebSocketAtom.name}_set');
+  }
+
+  final _$_connectionWasInProgressAtom =
+      Atom(name: '_NetworkStore._connectionWasInProgress');
+
+  @override
+  bool get _connectionWasInProgress {
+    _$_connectionWasInProgressAtom.context
+        .enforceReadPolicy(_$_connectionWasInProgressAtom);
+    _$_connectionWasInProgressAtom.reportObserved();
+    return super._connectionWasInProgress;
+  }
+
+  @override
+  set _connectionWasInProgress(bool value) {
+    _$_connectionWasInProgressAtom.context.conditionallyRunInAction(() {
+      super._connectionWasInProgress = value;
+      _$_connectionWasInProgressAtom.reportChanged();
+    }, _$_connectionWasInProgressAtom,
+        name: '${_$_connectionWasInProgressAtom.name}_set');
+  }
+
+  final _$_connectionInProgressAtom =
+      Atom(name: '_NetworkStore._connectionInProgress');
+
+  @override
+  bool get _connectionInProgress {
+    _$_connectionInProgressAtom.context
+        .enforceReadPolicy(_$_connectionInProgressAtom);
+    _$_connectionInProgressAtom.reportObserved();
+    return super._connectionInProgress;
+  }
+
+  @override
+  set _connectionInProgress(bool value) {
+    _$_connectionInProgressAtom.context.conditionallyRunInAction(() {
+      super._connectionInProgress = value;
+      _$_connectionInProgressAtom.reportChanged();
+    }, _$_connectionInProgressAtom,
+        name: '${_$_connectionInProgressAtom.name}_set');
+  }
+
+  final _$_connectedAtom = Atom(name: '_NetworkStore._connected');
+
+  @override
+  bool get _connected {
+    _$_connectedAtom.context.enforceReadPolicy(_$_connectedAtom);
+    _$_connectedAtom.reportObserved();
+    return super._connected;
+  }
+
+  @override
+  set _connected(bool value) {
+    _$_connectedAtom.context.conditionallyRunInAction(() {
+      super._connected = value;
+      _$_connectedAtom.reportChanged();
+    }, _$_connectedAtom, name: '${_$_connectedAtom.name}_set');
+  }
+
+  final _$setOBSWebSocketAsyncAction = AsyncAction('setOBSWebSocket');
+
+  @override
+  Future<void> setOBSWebSocket(Connection connection,
+      {Duration timeout = const Duration(seconds: 3)}) {
+    return _$setOBSWebSocketAsyncAction
+        .run(() => super.setOBSWebSocket(connection, timeout: timeout));
+  }
+
   final _$_NetworkStoreActionController =
       ActionController(name: '_NetworkStore');
 
