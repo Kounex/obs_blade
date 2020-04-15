@@ -75,8 +75,7 @@ class _ConnectFormState extends State<ConnectForm> {
                     if (_formKey.currentState.validate()) {
                       Provider.of<NetworkStore>(context, listen: false)
                           .setOBSWebSocket(
-                        widget.connection ??
-                            Connection(_ip.text, int.parse(_port.text)),
+                        Connection(_ip.text, int.parse(_port.text), _pw.text),
                       );
                     }
                   },

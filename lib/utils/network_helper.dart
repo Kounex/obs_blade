@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
+import 'package:crypto/crypto.dart';
 import 'package:obs_station/models/connection.dart';
 
 import 'package:tcp_scanner/tcp_scanner.dart';
@@ -28,5 +30,30 @@ class NetworkHelper {
         : null);
 
     return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
+  }
+
+  static String getAuthResponse(Connection connection) {
+    String secretString = '${connection.pw}${connection.salt}';
+    Digest secretHash = sha256.convert(utf8.encode(secretString));
+    String secret = Base64Codec().encode(secretHash.bytes);
+
+    String authResponseString = '$secret${connection.challenge}';
+    Digest authResponseHash = sha256.convert(utf8.encode(authResponseString));
+    String authResponse = Base64Codec().encode(authResponseHash.bytes);
+
+    return authResponse;
+    /*
+    password = "supersecretpassword"
+challenge = "ztTBnnuqrqaKDzRM3xcVdbYm"
+salt = "PZVbYpvAnZut2SS6JNJytDm9"
+
+secret_string = password + salt
+secret_hash = binary_sha256(secret_string)
+secret = base64_encode(secret_hash)
+
+auth_response_string = secret + challenge
+auth_response_hash = binary_sha256(auth_response_string)
+auth_response = base64_encode(auth_response_hash)
+    */
   }
 }
