@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/shared/basic/question_mark_tooltip.dart';
-import 'package:obs_station/stores/network.dart';
+import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/utils/validation_helper.dart';
 import 'package:provider/provider.dart';
 

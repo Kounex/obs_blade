@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_station/stores/landing.dart';
-import 'package:obs_station/stores/network.dart';
+import 'package:obs_station/stores/views/landing.dart';
+import 'package:obs_station/stores/shared/network.dart';
 
 import 'package:obs_station/utils/routing_helper.dart';
 import 'package:obs_station/views/landing/landing.dart';

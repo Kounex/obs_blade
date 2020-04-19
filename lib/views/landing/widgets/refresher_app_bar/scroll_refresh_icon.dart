@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_station/stores/landing.dart';
+import 'package:obs_station/stores/views/landing.dart';
 import 'package:provider/provider.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
