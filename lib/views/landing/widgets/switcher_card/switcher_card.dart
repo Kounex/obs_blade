@@ -32,6 +32,13 @@ class SwitcherCard extends StatelessWidget {
       ),
       child: AnimatedSwitcher(
         duration: Duration(milliseconds: 200),
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SizeTransition(
+            sizeFactor: animation.drive(Tween(begin: 0.8, end: 1.0)),
+            child: child,
+          ),
+        ),
         child: this.child,
       ),
     );
