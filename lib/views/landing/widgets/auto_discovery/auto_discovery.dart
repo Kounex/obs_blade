@@ -18,6 +18,8 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 
   @override
   Widget build(BuildContext context) {
+    NetworkStore networkStore = Provider.of<NetworkStore>(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -38,11 +40,9 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   child: TextFormField(
                     textAlign: TextAlign.center,
                     controller: TextEditingController(
-                        text: Provider.of<NetworkStore>(context, listen: false)
-                            .autodiscoverPort),
+                        text: networkStore.autodiscoverPort),
                     onChanged: (text) {
-                      Provider.of<NetworkStore>(context, listen: false)
-                          .setAutodiscoverPort(text);
+                      networkStore.setAutodiscoverPort(text);
                       _formKey.currentState.validate();
                     },
                     validator: (text) => ValidationHelper.portValidation(text),
@@ -57,8 +57,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
         ),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
-            future: Provider.of<NetworkStore>(context, listen: false)
-                .autodiscoverConnections,
+            future: networkStore.autodiscoverConnections,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasData) {

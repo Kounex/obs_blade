@@ -18,10 +18,12 @@ import 'package:provider/provider.dart';
 class LandingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    NetworkStore networkStore = Provider.of<NetworkStore>(context);
+    LandingStore landingStore = Provider.of<LandingStore>(context);
+
     return ObserverListener(
       listener: (_) {
-        if (Provider.of<NetworkStore>(context, listen: false)
-            .connectionInProgress) {
+        if (networkStore.connectionInProgress) {
           OverlayHandler.showStatusOverlay(
             context: context,
             showDuration: Duration(seconds: 5),
@@ -38,17 +40,15 @@ class LandingView extends StatelessWidget {
               ],
             ),
           );
-        } else if (Provider.of<NetworkStore>(context, listen: false)
-                .connectionWasInProgress &&
-            !Provider.of<NetworkStore>(context, listen: false)
-                .connectionInProgress) {
+        } else if (networkStore.connectionWasInProgress &&
+            !networkStore.connectionInProgress) {
           OverlayHandler.showStatusOverlay(
             context: context,
             replaceIfActive: true,
             content: Align(
               alignment: Alignment.center,
               child: Text(
-                Provider.of<NetworkStore>(context, listen: false).connected
+                networkStore.connected
                     ? 'WebSocket connection established!'
                     : 'Couldn\'t connect to a WebSocket!',
                 textAlign: TextAlign.center,
@@ -60,9 +60,8 @@ class LandingView extends StatelessWidget {
       child: Scaffold(
         body: Listener(
           onPointerUp: (_) {
-            if (Provider.of<LandingStore>(context, listen: false).refreshable) {
-              Provider.of<NetworkStore>(context, listen: false)
-                  .updateAutodiscoverConnections();
+            if (landingStore.refreshable) {
+              networkStore.updateAutodiscoverConnections();
             }
           },
           child: CustomScrollView(
@@ -78,18 +77,18 @@ class LandingView extends StatelessWidget {
                       builder: (context) => Stack(
                         children: <Widget>[
                           SwitcherCard(
-                            title: Provider.of<LandingStore>(context,
-                                        listen: false)
-                                    .manualMode
+                            title: landingStore.manualMode
                                 ? 'Connection'
                                 : 'Autodiscover',
-                            child: Provider.of<LandingStore>(context,
-                                        listen: false)
-                                    .manualMode
+                            child: landingStore.manualMode
                                 ? Padding(
                                     padding: const EdgeInsets.only(
                                         left: 24.0, right: 24.0, bottom: 12.0),
-                                    child: ConnectForm(),
+                                    child: ConnectForm(
+                                      connection:
+                                          landingStore.typedInConnection,
+                                      saveCredentials: true,
+                                    ),
                                   )
                                 : AutoDiscovery(),
                           ),
@@ -97,23 +96,15 @@ class LandingView extends StatelessWidget {
                             right: 36.0,
                             top: 30.0,
                             child: CupertinoButton(
-                              child: Text(Provider.of<LandingStore>(context,
-                                          listen: false)
-                                      .manualMode
-                                  ? 'Auto'
-                                  : 'Manual'),
-                              onPressed: () => Provider.of<LandingStore>(
-                                      context,
-                                      listen: false)
-                                  .toggleManualMode(),
+                              child: Text(
+                                  landingStore.manualMode ? 'Auto' : 'Manual'),
+                              onPressed: () => landingStore.toggleManualMode(),
                             ),
                           )
                         ],
                       ),
                     ),
                     Observer(builder: (context) {
-                      NetworkStore networkStore =
-                          Provider.of<NetworkStore>(context);
                       return networkStore.connected
                           ? Fader(
                               child: BaseCard(

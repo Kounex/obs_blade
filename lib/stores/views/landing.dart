@@ -1,4 +1,5 @@
 import 'package:mobx/mobx.dart';
+import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/types/mixins/short_provider.dart';
 
 // Include generated file
@@ -11,6 +12,8 @@ abstract class _LandingStore with Store {
   bool refreshable = false;
   @observable
   bool manualMode = false;
+
+  Connection typedInConnection = Connection('', 4444, '');
 
   @action
   void setRefreshable(bool refreshable) => this.refreshable = refreshable;
