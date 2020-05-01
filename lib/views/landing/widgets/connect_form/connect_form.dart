@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/shared/basic/question_mark_tooltip.dart';
 import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/stores/views/landing.dart';
+import 'package:obs_station/types/classes/responses/base.dart';
+import 'package:obs_station/types/enums/response_status.dart';
 import 'package:obs_station/utils/validation_helper.dart';
 import 'package:provider/provider.dart';
 
@@ -23,7 +27,9 @@ class _ConnectFormState extends State<ConnectForm> {
   TextEditingController _port;
   TextEditingController _pw;
 
-  bool obscurePWText = true;
+  bool _obscurePWText = true;
+
+  StreamController<BaseResponse> _connectResponse = StreamController();
 
   @override
   void initState() {
@@ -37,6 +43,7 @@ class _ConnectFormState extends State<ConnectForm> {
   @override
   Widget build(BuildContext context) {
     LandingStore landingStore = Provider.of<LandingStore>(context);
+    NetworkStore networkStore = Provider.of<NetworkStore>(context);
 
     return Form(
       key: _formKey,
@@ -78,24 +85,33 @@ class _ConnectFormState extends State<ConnectForm> {
               ),
             ],
           ),
-          StatefulBuilder(builder: (context, innerState) {
-            return TextFormField(
-              controller: _pw,
-              onChanged: (pw) => widget.saveCredentials
-                  ? landingStore.typedInConnection.pw = pw
-                  : null,
-              obscureText: obscurePWText,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                suffixIcon: IconButton(
-                  icon: Icon(
-                      obscurePWText ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () =>
-                      innerState(() => obscurePWText = !obscurePWText),
+          StreamBuilder<BaseResponse>(
+            stream: _connectResponse.stream,
+            builder: (context, snapshot) => StatefulBuilder(
+              builder: (context, innerState) => TextFormField(
+                key: Key('error'),
+                controller: _pw,
+                onChanged: (pw) => widget.saveCredentials
+                    ? landingStore.typedInConnection.pw = pw
+                    : null,
+                obscureText: _obscurePWText,
+                decoration: InputDecoration(
+                  errorText: snapshot.hasData &&
+                          snapshot.data.status != ResponseStatus.OK.text
+                      ? 'Wrong password'
+                      : null,
+                  labelText: 'Password',
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePWText
+                        ? Icons.visibility
+                        : Icons.visibility_off),
+                    onPressed: () =>
+                        innerState(() => _obscurePWText = !_obscurePWText),
+                  ),
                 ),
               ),
-            );
-          }),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(top: 24.0),
             child: Stack(
@@ -105,10 +121,12 @@ class _ConnectFormState extends State<ConnectForm> {
                   child: Text('Connect'),
                   onPressed: () {
                     if (_formKey.currentState.validate()) {
-                      Provider.of<NetworkStore>(context, listen: false)
+                      networkStore
                           .setOBSWebSocket(
-                        Connection(_ip.text, int.parse(_port.text), _pw.text),
-                      );
+                            Connection(
+                                _ip.text, int.parse(_port.text), _pw.text),
+                          )
+                          .then((response) => _connectResponse.add(response));
                     }
                   },
                 ),

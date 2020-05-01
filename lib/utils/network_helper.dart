@@ -11,9 +11,7 @@ import 'package:web_socket_channel/io.dart';
 class NetworkHelper {
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
-        'ws://${connection.ip}:${connection.port.toString()}',
-        pingInterval: Duration(seconds: 5),
-      );
+          'ws://${connection.ip}:${connection.port.toString()}');
 
   static Future<List<Connection>> getAvailableOBSIPs({int port = 4444}) async {
     String baseIP =

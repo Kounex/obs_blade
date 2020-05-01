@@ -10,27 +10,27 @@ import 'package:provider/provider.dart';
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData.dark().copyWith(
-        cupertinoOverrideTheme: CupertinoThemeData(
-          textTheme: CupertinoTextThemeData(primaryColor: Colors.white),
+    return MultiProvider(
+      providers: [
+        Provider<LandingStore>(
+          create: (_) => LandingStore(),
         ),
-      ),
-      routes: RoutingHelper.routes,
-      home: MultiProvider(
-        providers: [
-          Provider<LandingStore>(
-            create: (_) => LandingStore(),
+        Provider<NetworkStore>(
+          create: (_) {
+            NetworkStore networkStore = NetworkStore();
+            networkStore.updateAutodiscoverConnections();
+            return networkStore;
+          },
+        ),
+      ],
+      child: MaterialApp(
+        theme: ThemeData.dark().copyWith(
+          cupertinoOverrideTheme: CupertinoThemeData(
+            textTheme: CupertinoTextThemeData(primaryColor: Colors.white),
           ),
-          Provider<NetworkStore>(
-            create: (_) {
-              NetworkStore networkStore = NetworkStore();
-              networkStore.updateAutodiscoverConnections();
-              return networkStore;
-            },
-          ),
-        ],
-        child: LandingView(),
+        ),
+        initialRoute: AppRoutingKeys.LANDING.route,
+        routes: RoutingHelper.routes,
       ),
     );
   }

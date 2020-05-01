@@ -63,21 +63,23 @@ mixin _$NetworkStore on _NetworkStore, Store {
     }, _$activeSessionAtom, name: '${_$activeSessionAtom.name}_set');
   }
 
-  final _$connectedAtom = Atom(name: '_NetworkStore.connected');
+  final _$connectionResponseAtom =
+      Atom(name: '_NetworkStore.connectionResponse');
 
   @override
-  bool get connected {
-    _$connectedAtom.context.enforceReadPolicy(_$connectedAtom);
-    _$connectedAtom.reportObserved();
-    return super.connected;
+  BaseResponse get connectionResponse {
+    _$connectionResponseAtom.context
+        .enforceReadPolicy(_$connectionResponseAtom);
+    _$connectionResponseAtom.reportObserved();
+    return super.connectionResponse;
   }
 
   @override
-  set connected(bool value) {
-    _$connectedAtom.context.conditionallyRunInAction(() {
-      super.connected = value;
-      _$connectedAtom.reportChanged();
-    }, _$connectedAtom, name: '${_$connectedAtom.name}_set');
+  set connectionResponse(BaseResponse value) {
+    _$connectionResponseAtom.context.conditionallyRunInAction(() {
+      super.connectionResponse = value;
+      _$connectionResponseAtom.reportChanged();
+    }, _$connectionResponseAtom, name: '${_$connectionResponseAtom.name}_set');
   }
 
   final _$connectionWasInProgressAtom =
@@ -123,7 +125,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
   final _$setOBSWebSocketAsyncAction = AsyncAction('setOBSWebSocket');
 
   @override
-  Future<void> setOBSWebSocket(Connection connection,
+  Future<BaseResponse> setOBSWebSocket(Connection connection,
       {Duration timeout = const Duration(seconds: 3)}) {
     return _$setOBSWebSocketAsyncAction
         .run(() => super.setOBSWebSocket(connection, timeout: timeout));
@@ -165,7 +167,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
   @override
   String toString() {
     final string =
-        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},activeSession: ${activeSession.toString()},connected: ${connected.toString()},connectionWasInProgress: ${connectionWasInProgress.toString()},connectionInProgress: ${connectionInProgress.toString()}';
+        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},activeSession: ${activeSession.toString()},connectionResponse: ${connectionResponse.toString()},connectionWasInProgress: ${connectionWasInProgress.toString()},connectionInProgress: ${connectionInProgress.toString()}';
     return '{$string}';
   }
 }

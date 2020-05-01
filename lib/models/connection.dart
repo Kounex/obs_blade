@@ -1,4 +1,5 @@
 class Connection {
+  String name;
   String ip;
   int port;
   String pw;

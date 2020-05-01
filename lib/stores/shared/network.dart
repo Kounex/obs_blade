@@ -5,7 +5,10 @@ import 'dart:convert';
 import 'package:mobx/mobx.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/models/session.dart';
+import 'package:obs_station/types/classes/responses/base.dart';
+import 'package:obs_station/types/classes/responses/get_auth_required.dart';
 import 'package:obs_station/types/enums/request_type.dart';
+import 'package:obs_station/types/enums/response_status.dart';
 import 'package:obs_station/utils/network_helper.dart';
 
 part 'network.g.dart';
@@ -21,11 +24,7 @@ abstract class _NetworkStore with Store {
   @observable
   Session activeSession;
   @observable
-  bool authRequired = false;
-  @observable
-  bool wrongPW = false;
-  @observable
-  bool connected = false;
+  BaseResponse connectionResponse;
 
   @observable
   bool connectionWasInProgress = false;
@@ -46,7 +45,7 @@ abstract class _NetworkStore with Store {
   }
 
   @action
-  Future<void> setOBSWebSocket(Connection connection,
+  Future<BaseResponse> setOBSWebSocket(Connection connection,
       {Duration timeout = const Duration(seconds: 3)}) async {
     this.closeSession();
     if (!this.connectionWasInProgress) {
@@ -55,27 +54,28 @@ abstract class _NetworkStore with Store {
     this.connectionInProgress = true;
     this.activeSession =
         Session(NetworkHelper.establishWebSocket(connection), connection);
-    Completer<bool> authCompleter = Completer();
+    Completer<BaseResponse> authCompleter = Completer();
 
-    StreamSubscription subscription;
-    subscription = this.activeSession.socket.stream.listen(
+    this.activeSession.socketStreamSubscription =
+        this.activeSession.socket.stream.listen(
       (event) {
-        print(event);
-        Map<String, dynamic> result = json.decode(event);
-        switch (RequestType.values[int.parse(result['message-id'])]) {
+        dynamic jsonObject = json.decode(event);
+        BaseResponse response = BaseResponse(jsonObject);
+        switch (RequestType.values[response.messageID]) {
           case RequestType.GetAuthRequired:
-            this.authRequired = result['authRequired'];
-            this.activeSession.connection.challenge = result['challenge'];
-            this.activeSession.connection.salt = result['salt'];
-            if (this.authRequired) {
+            GetAuthRequiredResponse getAuthResponse =
+                GetAuthRequiredResponse(jsonObject);
+            this.activeSession.connection.challenge = getAuthResponse.challenge;
+            this.activeSession.connection.salt = getAuthResponse.salt;
+            if (getAuthResponse.authRequired) {
               this.makeRequest(RequestType.Authenticate,
                   {'auth': NetworkHelper.getAuthResponse(connection)});
             } else {
-              authCompleter.complete(true);
+              authCompleter.complete(response);
             }
             break;
           case RequestType.Authenticate:
-            authCompleter.complete(result['status'] == 'ok' ? true : false);
+            authCompleter.complete(response);
             break;
         }
       },
@@ -83,18 +83,19 @@ abstract class _NetworkStore with Store {
       onError: (error) => print(error),
     );
     this.makeRequest(RequestType.GetAuthRequired);
-    this.connected = await Future.any([
-      authCompleter.future,
+    this.connectionResponse = await Future.any([
+      authCompleter.future.then((value) => value),
       Future.delayed(timeout, () {
-        subscription.cancel();
-        return false;
+        this.activeSession.socketStreamSubscription.cancel();
+        return BaseResponse({'status': 'error', 'error': 'timeout'});
       })
     ]);
-    print('connected: ${this.connected}');
-    if (!this.connected) {
+    print('connected: ${this.connectionResponse.status == "ok"}');
+    if (this.connectionResponse.status != ResponseStatus.OK.text) {
       this.activeSession = null;
     }
     this.connectionInProgress = false;
+    return this.connectionResponse;
   }
 
   @action
@@ -102,16 +103,16 @@ abstract class _NetworkStore with Store {
     if (this.activeSession != null) {
       this.activeSession.socket.sink.close();
       this.activeSession = null;
-      this.connected = false;
       this.connectionWasInProgress = false;
+      this.connectionResponse = null;
     }
   }
 
   bool makeRequest(RequestType request, [Map<String, dynamic> fields]) {
     if (this.activeSession != null) {
       this.activeSession.socket.sink.add(json.encode({
-            'request-type': request.type,
             'message-id': request.index.toString(),
+            'request-type': request.type,
             if (fields != null) ...fields
           }));
       return true;

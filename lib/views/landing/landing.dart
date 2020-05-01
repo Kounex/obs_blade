@@ -8,7 +8,9 @@ import 'package:obs_station/shared/animator/fader.dart';
 import 'package:obs_station/shared/basic/base_card.dart';
 import 'package:obs_station/stores/views/landing.dart';
 import 'package:obs_station/stores/shared/network.dart';
+import 'package:obs_station/types/enums/response_status.dart';
 import 'package:obs_station/utils/overlay_handler.dart';
+import 'package:obs_station/utils/routing_helper.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery/auto_discovery.dart';
 import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
 import 'package:obs_station/views/landing/widgets/refresher_app_bar/refresher_app_bar.dart';
@@ -42,19 +44,28 @@ class LandingView extends StatelessWidget {
           );
         } else if (networkStore.connectionWasInProgress &&
             !networkStore.connectionInProgress) {
-          OverlayHandler.showStatusOverlay(
-            context: context,
-            replaceIfActive: true,
-            content: Align(
-              alignment: Alignment.center,
-              child: Text(
-                networkStore.connected
-                    ? 'WebSocket connection established!'
-                    : 'Couldn\'t connect to a WebSocket!',
-                textAlign: TextAlign.center,
+          if (networkStore.connectionResponse.status ==
+              ResponseStatus.OK.text) {
+            Navigator.pushReplacementNamed(
+                context, AppRoutingKeys.DASHBOARD.route);
+          }
+          if (!networkStore.connectionResponse.error
+              .contains('Authentication')) {
+            OverlayHandler.showStatusOverlay(
+              context: context,
+              replaceIfActive: true,
+              content: Align(
+                alignment: Alignment.center,
+                child: Text(
+                  networkStore.connectionResponse.status ==
+                          ResponseStatus.OK.text
+                      ? 'WebSocket connection established!'
+                      : 'Couldn\'t connect to a WebSocket!',
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-          );
+            );
+          }
         }
       },
       child: Scaffold(
@@ -104,28 +115,32 @@ class LandingView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Observer(builder: (context) {
-                      return networkStore.connected
-                          ? Fader(
-                              child: BaseCard(
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: <Widget>[
-                                    Text(
-                                      networkStore.activeSession.connection.ip,
-                                    ),
-                                    CupertinoButton(
-                                      child: Text('Close'),
-                                      onPressed: () =>
-                                          networkStore.closeSession(),
-                                    )
-                                  ],
+                    Observer(
+                      builder: (context) {
+                        return networkStore.connectionResponse?.status ==
+                                ResponseStatus.OK.text
+                            ? Fader(
+                                child: BaseCard(
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      Text(
+                                        networkStore
+                                            .activeSession.connection.ip,
+                                      ),
+                                      CupertinoButton(
+                                        child: Text('Close'),
+                                        onPressed: () =>
+                                            networkStore.closeSession(),
+                                      )
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            )
-                          : Container();
-                    })
+                              )
+                            : Container();
+                      },
+                    )
                   ],
                 ),
               ),
