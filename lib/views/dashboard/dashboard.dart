@@ -11,8 +11,6 @@ class DashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = Provider.of<NetworkStore>(context);
-    // networkStore.activeSession.socket =
-    //     NetworkHelper.establishWebSocket(networkStore.activeSession.connection);
 
     return Scaffold(
       body: CustomScrollView(
@@ -32,7 +30,8 @@ class DashboardView extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 24.0),
                 child: GestureDetector(
                   child: StreamBuilder<dynamic>(
-                      stream: networkStore.activeSession.socket.stream,
+                      stream:
+                          networkStore.activeSession.socketStreamSubscription,
                       builder: (context, snapshot) {
                         print(snapshot.data);
                         return Column(
