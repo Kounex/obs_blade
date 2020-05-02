@@ -4,6 +4,7 @@ import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/shared/animator/fader.dart';
 import 'package:obs_station/shared/basic/question_mark_tooltip.dart';
 import 'package:obs_station/stores/shared/network.dart';
+import 'package:obs_station/stores/views/landing.dart';
 import 'package:obs_station/utils/validation_helper.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery/session_tile.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = Provider.of<NetworkStore>(context);
+    LandingStore landingStore = Provider.of<LandingStore>(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,9 +41,9 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   child: TextFormField(
                     textAlign: TextAlign.center,
                     controller: TextEditingController(
-                        text: networkStore.autodiscoverPort),
+                        text: landingStore.autodiscoverPort),
                     onChanged: (text) {
-                      networkStore.setAutodiscoverPort(text);
+                      landingStore.setAutodiscoverPort(text);
                       _formKey.currentState.validate();
                     },
                     validator: (text) => ValidationHelper.portValidation(text),
@@ -57,7 +58,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
         ),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
-            future: networkStore.autodiscoverConnections,
+            future: landingStore.autodiscoverConnections,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasData) {

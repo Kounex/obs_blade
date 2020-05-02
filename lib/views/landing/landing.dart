@@ -4,10 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
+import 'package:hive/hive.dart';
+import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/shared/animator/fader.dart';
 import 'package:obs_station/shared/basic/base_card.dart';
+import 'package:obs_station/shared/dialogs/confirmation.dart';
 import 'package:obs_station/stores/views/landing.dart';
 import 'package:obs_station/stores/shared/network.dart';
+import 'package:obs_station/types/enums/hive_keys.dart';
 import 'package:obs_station/types/enums/response_status.dart';
 import 'package:obs_station/utils/overlay_handler.dart';
 import 'package:obs_station/utils/routing_helper.dart';
@@ -72,7 +76,7 @@ class LandingView extends StatelessWidget {
         body: Listener(
           onPointerUp: (_) {
             if (landingStore.refreshable) {
-              networkStore.updateAutodiscoverConnections();
+              landingStore.updateAutodiscoverConnections();
             }
           },
           child: CustomScrollView(
@@ -115,32 +119,6 @@ class LandingView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Observer(
-                      builder: (context) {
-                        return networkStore.connectionResponse?.status ==
-                                ResponseStatus.OK.text
-                            ? Fader(
-                                child: BaseCard(
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: <Widget>[
-                                      Text(
-                                        networkStore
-                                            .activeSession.connection.ip,
-                                      ),
-                                      CupertinoButton(
-                                        child: Text('Close'),
-                                        onPressed: () =>
-                                            networkStore.closeSession(),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : Container();
-                      },
-                    )
                   ],
                 ),
               ),

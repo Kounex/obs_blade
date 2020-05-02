@@ -17,11 +17,6 @@ class NetworkStore = _NetworkStore with _$NetworkStore;
 
 abstract class _NetworkStore with Store {
   @observable
-  Future<List<Connection>> autodiscoverConnections;
-  @observable
-  String autodiscoverPort = '4444';
-
-  @observable
   Session activeSession;
   @observable
   BaseResponse connectionResponse;
@@ -30,19 +25,6 @@ abstract class _NetworkStore with Store {
   bool connectionWasInProgress = false;
   @observable
   bool connectionInProgress = false;
-
-  @action
-  void setAutodiscoverPort(String autodiscoverPort) =>
-      this.autodiscoverPort = autodiscoverPort;
-
-  @action
-  void updateAutodiscoverConnections() {
-    int port = int.tryParse(autodiscoverPort);
-    if (port != null && port > 0 && port <= 65535) {
-      this.autodiscoverConnections =
-          NetworkHelper.getAvailableOBSIPs(port: port);
-    }
-  }
 
   @action
   Future<BaseResponse> setOBSWebSocket(Connection connection,
@@ -56,8 +38,9 @@ abstract class _NetworkStore with Store {
         Session(NetworkHelper.establishWebSocket(connection), connection);
     Completer<BaseResponse> authCompleter = Completer();
 
-    this.activeSession.socketStreamSubscription =
-        this.activeSession.socket.stream.listen(
+    this.activeSession.socketStream =
+        this.activeSession.socket.stream.asBroadcastStream();
+    StreamSubscription subscription = this.activeSession.socketStream.listen(
       (event) {
         dynamic jsonObject = json.decode(event);
         BaseResponse response = BaseResponse(jsonObject);
@@ -86,7 +69,7 @@ abstract class _NetworkStore with Store {
     this.connectionResponse = await Future.any([
       authCompleter.future.then((value) => value),
       Future.delayed(timeout, () {
-        this.activeSession.socketStreamSubscription.cancel();
+        subscription.cancel();
         return BaseResponse({'status': 'error', 'error': 'timeout'});
       })
     ]);

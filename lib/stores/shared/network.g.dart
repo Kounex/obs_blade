@@ -9,43 +9,6 @@ part of 'network.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$NetworkStore on _NetworkStore, Store {
-  final _$autodiscoverConnectionsAtom =
-      Atom(name: '_NetworkStore.autodiscoverConnections');
-
-  @override
-  Future<List<Connection>> get autodiscoverConnections {
-    _$autodiscoverConnectionsAtom.context
-        .enforceReadPolicy(_$autodiscoverConnectionsAtom);
-    _$autodiscoverConnectionsAtom.reportObserved();
-    return super.autodiscoverConnections;
-  }
-
-  @override
-  set autodiscoverConnections(Future<List<Connection>> value) {
-    _$autodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
-      super.autodiscoverConnections = value;
-      _$autodiscoverConnectionsAtom.reportChanged();
-    }, _$autodiscoverConnectionsAtom,
-        name: '${_$autodiscoverConnectionsAtom.name}_set');
-  }
-
-  final _$autodiscoverPortAtom = Atom(name: '_NetworkStore.autodiscoverPort');
-
-  @override
-  String get autodiscoverPort {
-    _$autodiscoverPortAtom.context.enforceReadPolicy(_$autodiscoverPortAtom);
-    _$autodiscoverPortAtom.reportObserved();
-    return super.autodiscoverPort;
-  }
-
-  @override
-  set autodiscoverPort(String value) {
-    _$autodiscoverPortAtom.context.conditionallyRunInAction(() {
-      super.autodiscoverPort = value;
-      _$autodiscoverPortAtom.reportChanged();
-    }, _$autodiscoverPortAtom, name: '${_$autodiscoverPortAtom.name}_set');
-  }
-
   final _$activeSessionAtom = Atom(name: '_NetworkStore.activeSession');
 
   @override
@@ -135,26 +98,6 @@ mixin _$NetworkStore on _NetworkStore, Store {
       ActionController(name: '_NetworkStore');
 
   @override
-  void setAutodiscoverPort(String autodiscoverPort) {
-    final _$actionInfo = _$_NetworkStoreActionController.startAction();
-    try {
-      return super.setAutodiscoverPort(autodiscoverPort);
-    } finally {
-      _$_NetworkStoreActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
-  void updateAutodiscoverConnections() {
-    final _$actionInfo = _$_NetworkStoreActionController.startAction();
-    try {
-      return super.updateAutodiscoverConnections();
-    } finally {
-      _$_NetworkStoreActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
   void closeSession() {
     final _$actionInfo = _$_NetworkStoreActionController.startAction();
     try {
@@ -167,7 +110,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
   @override
   String toString() {
     final string =
-        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},activeSession: ${activeSession.toString()},connectionResponse: ${connectionResponse.toString()},connectionWasInProgress: ${connectionWasInProgress.toString()},connectionInProgress: ${connectionInProgress.toString()}';
+        'activeSession: ${activeSession.toString()},connectionResponse: ${connectionResponse.toString()},connectionWasInProgress: ${connectionWasInProgress.toString()},connectionInProgress: ${connectionInProgress.toString()}';
     return '{$string}';
   }
 }

@@ -5,7 +5,7 @@ import 'package:web_socket_channel/io.dart';
 
 class Session {
   IOWebSocketChannel socket;
-  StreamSubscription socketStreamSubscription;
+  Stream socketStream;
   Connection connection;
 
   Session(this.socket, this.connection);

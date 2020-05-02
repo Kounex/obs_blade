@@ -13,14 +13,14 @@ class App extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<LandingStore>(
-          create: (_) => LandingStore(),
+          create: (_) {
+            LandingStore landingStore = LandingStore();
+            landingStore.updateAutodiscoverConnections();
+            return landingStore;
+          },
         ),
         Provider<NetworkStore>(
-          create: (_) {
-            NetworkStore networkStore = NetworkStore();
-            networkStore.updateAutodiscoverConnections();
-            return networkStore;
-          },
+          create: (_) => NetworkStore(),
         ),
       ],
       child: MaterialApp(

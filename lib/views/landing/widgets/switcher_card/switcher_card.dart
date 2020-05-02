@@ -35,8 +35,11 @@ class SwitcherCard extends StatelessWidget {
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
           child: SizeTransition(
-            sizeFactor: animation.drive(Tween(begin: 0.8, end: 1.0)
-                .chain(CurveTween(curve: Curves.easeOut))),
+            sizeFactor: animation.drive(
+              Tween(begin: 0.8, end: 1.0).chain(
+                CurveTween(curve: Curves.easeOut),
+              ),
+            ),
             child: child,
           ),
         ),

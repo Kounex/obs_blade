@@ -9,6 +9,43 @@ part of 'landing.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$LandingStore on _LandingStore, Store {
+  final _$autodiscoverConnectionsAtom =
+      Atom(name: '_LandingStore.autodiscoverConnections');
+
+  @override
+  Future<List<Connection>> get autodiscoverConnections {
+    _$autodiscoverConnectionsAtom.context
+        .enforceReadPolicy(_$autodiscoverConnectionsAtom);
+    _$autodiscoverConnectionsAtom.reportObserved();
+    return super.autodiscoverConnections;
+  }
+
+  @override
+  set autodiscoverConnections(Future<List<Connection>> value) {
+    _$autodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
+      super.autodiscoverConnections = value;
+      _$autodiscoverConnectionsAtom.reportChanged();
+    }, _$autodiscoverConnectionsAtom,
+        name: '${_$autodiscoverConnectionsAtom.name}_set');
+  }
+
+  final _$autodiscoverPortAtom = Atom(name: '_LandingStore.autodiscoverPort');
+
+  @override
+  String get autodiscoverPort {
+    _$autodiscoverPortAtom.context.enforceReadPolicy(_$autodiscoverPortAtom);
+    _$autodiscoverPortAtom.reportObserved();
+    return super.autodiscoverPort;
+  }
+
+  @override
+  set autodiscoverPort(String value) {
+    _$autodiscoverPortAtom.context.conditionallyRunInAction(() {
+      super.autodiscoverPort = value;
+      _$autodiscoverPortAtom.reportChanged();
+    }, _$autodiscoverPortAtom, name: '${_$autodiscoverPortAtom.name}_set');
+  }
+
   final _$refreshableAtom = Atom(name: '_LandingStore.refreshable');
 
   @override
@@ -47,6 +84,26 @@ mixin _$LandingStore on _LandingStore, Store {
       ActionController(name: '_LandingStore');
 
   @override
+  void setAutodiscoverPort(String autodiscoverPort) {
+    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    try {
+      return super.setAutodiscoverPort(autodiscoverPort);
+    } finally {
+      _$_LandingStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void updateAutodiscoverConnections() {
+    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    try {
+      return super.updateAutodiscoverConnections();
+    } finally {
+      _$_LandingStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void setRefreshable(bool refreshable) {
     final _$actionInfo = _$_LandingStoreActionController.startAction();
     try {
@@ -69,7 +126,7 @@ mixin _$LandingStore on _LandingStore, Store {
   @override
   String toString() {
     final string =
-        'refreshable: ${refreshable.toString()},manualMode: ${manualMode.toString()}';
+        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},refreshable: ${refreshable.toString()},manualMode: ${manualMode.toString()}';
     return '{$string}';
   }
 }
