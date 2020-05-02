@@ -4,9 +4,13 @@ class ConfirmationDialog extends StatelessWidget {
   final String title;
   final String body;
   final VoidCallback onOk;
+  final bool isYesDestructive;
 
   ConfirmationDialog(
-      {@required this.title, @required this.body, @required this.onOk});
+      {@required this.title,
+      @required this.body,
+      @required this.onOk,
+      this.isYesDestructive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -18,13 +22,17 @@ class ConfirmationDialog extends StatelessWidget {
       content: Text(this.body),
       actions: [
         CupertinoDialogAction(
-          child: Text('Yes'),
-          isDestructiveAction: true,
-          onPressed: this.onOk,
+          child: Text('No'),
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(context).pop(),
         ),
         CupertinoDialogAction(
-          child: Text('No'),
-          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Yes'),
+          isDestructiveAction: true,
+          onPressed: () {
+            Navigator.of(context).pop();
+            this.onOk();
+          },
         ),
       ],
     );

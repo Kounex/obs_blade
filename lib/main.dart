@@ -8,6 +8,7 @@ import 'models/connection.dart';
 
 void main() async {
   await Hive.initFlutter();
+  Hive.registerAdapter(ConnectionAdapter());
   await Hive.openBox<Connection>(HiveKeys.SAVED_CONNECTIONS.name);
   runApp(App());
 }

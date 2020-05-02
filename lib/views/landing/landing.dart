@@ -18,6 +18,7 @@ import 'package:obs_station/utils/routing_helper.dart';
 import 'package:obs_station/views/landing/widgets/auto_discovery/auto_discovery.dart';
 import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
 import 'package:obs_station/views/landing/widgets/refresher_app_bar/refresher_app_bar.dart';
+import 'package:obs_station/views/landing/widgets/saved_connections/saved_connections.dart';
 import 'package:obs_station/views/landing/widgets/switcher_card/switcher_card.dart';
 import 'package:provider/provider.dart';
 
@@ -119,6 +120,7 @@ class LandingView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    SavedConnections(),
                   ],
                 ),
               ),

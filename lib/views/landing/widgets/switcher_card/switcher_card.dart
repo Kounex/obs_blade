@@ -23,10 +23,7 @@ class SwitcherCard extends StatelessWidget {
           width: 150.0,
           child: Text(
             this.title,
-            style: Theme.of(context)
-                .textTheme
-                .headline5
-                .copyWith(color: Colors.white),
+            style: Theme.of(context).textTheme.headline5,
           ),
         ),
       ),

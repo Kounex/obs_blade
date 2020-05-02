@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+part 'connection.g.dart';
+
 @HiveType(typeId: 0)
 class Connection extends HiveObject {
   @HiveField(0)
