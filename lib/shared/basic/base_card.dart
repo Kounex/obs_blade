@@ -10,11 +10,13 @@ class BaseCard extends StatelessWidget {
   final bool noPaddingChild;
 
   BaseCard(
-      {@required this.child,
+      {Key key,
+      @required this.child,
       this.title,
       this.titleWidget,
       this.padding = const EdgeInsets.all(24.0),
-      this.noPaddingChild = false});
+      this.noPaddingChild = false})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

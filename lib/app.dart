@@ -4,7 +4,6 @@ import 'package:obs_station/stores/views/landing.dart';
 import 'package:obs_station/stores/shared/network.dart';
 
 import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/views/landing/landing.dart';
 import 'package:provider/provider.dart';
 
 class App extends StatelessWidget {
