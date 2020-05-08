@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/models/session.dart';
@@ -76,6 +77,8 @@ abstract class _NetworkStore with Store {
     print('connected: ${this.connectionResponse.status == "ok"}');
     if (this.connectionResponse.status != ResponseStatus.OK.text) {
       this.activeSession = null;
+    } else {
+      this.activeSession.connection.ssid = await Connectivity().getWifiName();
     }
     this.connectionInProgress = false;
     return this.connectionResponse;

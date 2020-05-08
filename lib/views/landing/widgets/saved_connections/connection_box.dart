@@ -39,6 +39,10 @@ class ConnectionBox extends StatelessWidget {
                     softWrap: false,
                   ),
                 Text(
+                  '(${this.connection.ssid})',
+                  style: Theme.of(context).textTheme.caption,
+                ),
+                Text(
                   '(${this.connection.ip})',
                   style: Theme.of(context).textTheme.caption,
                 ),
@@ -48,40 +52,34 @@ class ConnectionBox extends StatelessWidget {
               builder: (_) => FutureBuilder<List<Connection>>(
                 future: landingStore.autodiscoverConnections,
                 builder: (context, snapshot) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
-                    child: Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: snapshot.hasData &&
-                                snapshot.data.any((discoverConnection) =>
-                                    discoverConnection.ip ==
-                                        this.connection.ip &&
-                                    discoverConnection.port ==
-                                        this.connection.port)
-                            ? [
-                                StatusDot(color: Colors.green),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Text(
-                                    'Reachable',
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                )
-                              ]
-                            : [
-                                StatusDot(),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Text(
-                                    'Not reachable',
-                                    style:
-                                        Theme.of(context).textTheme.bodyText1,
-                                  ),
-                                )
-                              ],
-                      ),
+                  return Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: snapshot.hasData &&
+                              snapshot.data.any((discoverConnection) =>
+                                  discoverConnection.ip == this.connection.ip &&
+                                  discoverConnection.port ==
+                                      this.connection.port)
+                          ? [
+                              StatusDot(color: Colors.green),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Text(
+                                  'Reachable',
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              )
+                            ]
+                          : [
+                              StatusDot(),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Text(
+                                  'Not reachable',
+                                  style: Theme.of(context).textTheme.bodyText1,
+                                ),
+                              )
+                            ],
                     ),
                   );
                 },

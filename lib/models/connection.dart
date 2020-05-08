@@ -11,9 +11,12 @@ class Connection extends HiveObject {
   String ip;
 
   @HiveField(2)
-  int port;
+  String ssid;
 
   @HiveField(3)
+  int port;
+
+  @HiveField(4)
   String pw;
 
   String challenge;

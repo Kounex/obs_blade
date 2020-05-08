@@ -9,7 +9,6 @@ import 'package:obs_station/shared/dialogs/confirmation.dart';
 import 'package:obs_station/shared/dialogs/input.dart';
 import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/types/enums/hive_keys.dart';
-import 'package:obs_station/utils/network_helper.dart';
 import 'package:obs_station/utils/routing_helper.dart';
 import 'package:obs_station/views/dashboard/widgets/live_status/live_status.dart';
 import 'package:provider/provider.dart';
