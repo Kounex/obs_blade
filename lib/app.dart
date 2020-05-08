@@ -24,8 +24,21 @@ class App extends StatelessWidget {
       ],
       child: MaterialApp(
         theme: ThemeData.dark().copyWith(
+          backgroundColor: const Color(0xff101823),
+          scaffoldBackgroundColor: Colors.black, //const Color(0xff181818),
+          canvasColor: const Color(0xff101823),
+          cardColor: const Color(0xff101823),
+          dividerColor: Colors.grey[500],
+          appBarTheme: AppBarTheme(
+            color: const Color(0xff101823),
+          ),
+          buttonTheme: ButtonThemeData(
+            buttonColor: const Color(0xffff4654),
+          ),
           cupertinoOverrideTheme: CupertinoThemeData(
-            textTheme: CupertinoTextThemeData(primaryColor: Colors.white),
+            textTheme: CupertinoTextThemeData(
+              primaryColor: Colors.white,
+            ),
           ),
         ),
         initialRoute: AppRoutingKeys.LANDING.route,
