@@ -29,7 +29,7 @@ class SavedConnections extends StatelessWidget {
                   Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name)
                       .listenable(),
               builder: (context, Box<Connection> box, child) {
-                double height = 200.0;
+                double height = 175.0;
                 double width = 250.0;
                 return CarouselSlider(
                   key: UniqueKey(),
