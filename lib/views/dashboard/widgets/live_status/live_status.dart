@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:obs_station/shared/basic/status_dot.dart';
 import 'package:obs_station/stores/shared/network.dart';
 import 'package:provider/provider.dart';
 
@@ -17,19 +18,12 @@ class LiveStatus extends StatelessWidget {
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 12.0,
-                height: 12.0,
-                decoration: BoxDecoration(
-                  color: snapshot.hasData &&
-                          json.decode(snapshot.data)['update-type'] !=
-                              'StreamStopped'
-                      ? Colors.green
-                      : Colors.red,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(12.0),
-                  ),
-                ),
+              StatusDot(
+                color: snapshot.hasData &&
+                        json.decode(snapshot.data)['update-type'] !=
+                            'StreamStopped'
+                    ? Colors.green
+                    : Colors.red,
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),

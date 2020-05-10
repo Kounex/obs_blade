@@ -24,28 +24,32 @@ class SavedConnections extends StatelessWidget {
           padding: const EdgeInsets.only(top: 18.0),
           child: Container(
             padding: EdgeInsets.only(top: 4.0, bottom: 12.0),
-            height: 175.0,
-            child: SizedBox.expand(
-              child: ValueListenableBuilder(
-                valueListenable:
-                    Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name)
-                        .listenable(),
-                builder: (context, Box<Connection> box, child) =>
-                    CarouselSlider(
+            child: ValueListenableBuilder(
+              valueListenable:
+                  Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name)
+                      .listenable(),
+              builder: (context, Box<Connection> box, child) {
+                double height = 200.0;
+                double width = 250.0;
+                return CarouselSlider(
+                  key: UniqueKey(),
                   options: CarouselOptions(
+                    height: height,
                     autoPlay: false,
                     enlargeCenterPage: true,
                     enableInfiniteScroll: false,
-                    viewportFraction: 1 / 2,
+                    viewportFraction: width / MediaQuery.of(context).size.width,
                   ),
                   items: box.values
                       .map(
-                        (savedConnection) =>
-                            ConnectionBox(connection: savedConnection),
+                        (savedConnection) => ConnectionBox(
+                          connection: savedConnection,
+                          width: width,
+                        ),
                       )
                       .toList(),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ),

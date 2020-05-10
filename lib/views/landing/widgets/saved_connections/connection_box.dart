@@ -10,8 +10,11 @@ import 'package:provider/provider.dart';
 
 class ConnectionBox extends StatelessWidget {
   final Connection connection;
+  final double height;
+  final double width;
 
-  ConnectionBox({@required this.connection});
+  ConnectionBox(
+      {@required this.connection, this.height = 200.0, this.width = 250.0});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +22,7 @@ class ConnectionBox extends StatelessWidget {
     LandingStore landingStore = Provider.of<LandingStore>(context);
 
     return Container(
-      width: 250.0,
+      width: this.width,
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.all(Radius.circular(12.0)),
