@@ -80,8 +80,35 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$manualModeAtom, name: '${_$manualModeAtom.name}_set');
   }
 
+  final _$isCoolAtom = Atom(name: '_LandingStore.isCool');
+
+  @override
+  bool get isCool {
+    _$isCoolAtom.context.enforceReadPolicy(_$isCoolAtom);
+    _$isCoolAtom.reportObserved();
+    return super.isCool;
+  }
+
+  @override
+  set isCool(bool value) {
+    _$isCoolAtom.context.conditionallyRunInAction(() {
+      super.isCool = value;
+      _$isCoolAtom.reportChanged();
+    }, _$isCoolAtom, name: '${_$isCoolAtom.name}_set');
+  }
+
   final _$_LandingStoreActionController =
       ActionController(name: '_LandingStore');
+
+  @override
+  void toggleIsCool() {
+    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    try {
+      return super.toggleIsCool();
+    } finally {
+      _$_LandingStoreActionController.endAction(_$actionInfo);
+    }
+  }
 
   @override
   void setAutodiscoverPort(String autodiscoverPort) {
@@ -126,7 +153,7 @@ mixin _$LandingStore on _LandingStore, Store {
   @override
   String toString() {
     final string =
-        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},refreshable: ${refreshable.toString()},manualMode: ${manualMode.toString()}';
+        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},refreshable: ${refreshable.toString()},manualMode: ${manualMode.toString()},isCool: ${isCool.toString()}';
     return '{$string}';
   }
 }

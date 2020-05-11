@@ -49,6 +49,8 @@ class _ConnectFormState extends State<ConnectForm> {
       key: _formKey,
       child: Column(
         children: <Widget>[
+          FlatButton(
+              onPressed: () => landingStore.toggleIsCool(), child: Text('LOL')),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -89,7 +91,6 @@ class _ConnectFormState extends State<ConnectForm> {
             stream: _connectResponse.stream,
             builder: (context, snapshot) => StatefulBuilder(
               builder: (context, innerState) => TextFormField(
-                key: Key('error'),
                 controller: _pw,
                 onChanged: (pw) => widget.saveCredentials
                     ? landingStore.typedInConnection.pw = pw
