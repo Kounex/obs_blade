@@ -50,6 +50,13 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                 body:
                     'Please choose a name for the connection so you can recognize it later on',
                 onSave: (name) {
+                  // if the challenge is null, we didn't had to connect with a password
+                  // a user might still enter a password, we don't want this password to be
+                  // saved, thats why we set it to null explicitly if the challenge (salt could
+                  // ne used as well) is null
+                  if (networkStore.activeSession.connection.challenge == null) {
+                    networkStore.activeSession.connection.pw = null;
+                  }
                   networkStore.activeSession.connection.name = name;
                   box.add(networkStore.activeSession.connection);
                 },

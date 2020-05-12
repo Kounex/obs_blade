@@ -10,6 +10,7 @@ class SavedConnections extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -20,10 +21,12 @@ class SavedConnections extends StatelessWidget {
           ),
         ),
         Divider(),
-        Padding(
-          padding: const EdgeInsets.only(top: 18.0),
-          child: Container(
-            padding: EdgeInsets.only(top: 4.0, bottom: 12.0),
+        Flexible(
+          fit: FlexFit.loose,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              top: 18.0,
+            ),
             child: ValueListenableBuilder(
               valueListenable:
                   Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name)
@@ -31,24 +34,59 @@ class SavedConnections extends StatelessWidget {
               builder: (context, Box<Connection> box, child) {
                 double height = 175.0;
                 double width = 250.0;
-                return CarouselSlider(
-                  key: UniqueKey(),
-                  options: CarouselOptions(
-                    height: height,
-                    autoPlay: false,
-                    enlargeCenterPage: true,
-                    enableInfiniteScroll: false,
-                    viewportFraction: width / MediaQuery.of(context).size.width,
-                  ),
-                  items: box.values
-                      .map(
-                        (savedConnection) => ConnectionBox(
-                          connection: savedConnection,
-                          width: width,
+                List<Widget> connectionBoxes = box.values
+                    .map(
+                      (savedConnection) => ConnectionBox(
+                        connection: savedConnection,
+                        width: width,
+                      ),
+                    )
+                    .toList();
+                // return SizedBox(
+                //   height: height,
+                //   child: RotatedBox(
+                //     quarterTurns: 3,
+                //     child: ListWheelScrollView(
+                //       clipToSize: false,
+                //       squeeze: 0.9,
+                //       diameterRatio: 1000.0,
+                //       itemExtent: width,
+                //       physics: FixedExtentScrollPhysics(),
+                //       children: box.values
+                //           .map(
+                //             (savedConnection) => RotatedBox(
+                //               quarterTurns: 1,
+                //               child: ConnectionBox(
+                //                 connection: savedConnection,
+                //                 width: width,
+                //               ),
+                //             ),
+                //           )
+                //           .toList(),
+                //     ),
+                //   ),
+                // );
+
+                return MediaQuery.of(context).size.width < width * 2
+                    ? CarouselSlider(
+                        options: CarouselOptions(
+                          height: height,
+                          autoPlay: false,
+                          enlargeCenterPage: true,
+                          enableInfiniteScroll: false,
+                          viewportFraction: width /
+                              (MediaQuery.of(context).size.width -
+                                  MediaQuery.of(context).size.width / 10),
                         ),
+                        items: connectionBoxes,
                       )
-                      .toList(),
-                );
+                    : Center(
+                        child: Wrap(
+                          spacing: 24.0,
+                          runSpacing: 24.0,
+                          children: connectionBoxes,
+                        ),
+                      );
               },
             ),
           ),

@@ -49,8 +49,6 @@ class _ConnectFormState extends State<ConnectForm> {
       key: _formKey,
       child: Column(
         children: <Widget>[
-          FlatButton(
-              onPressed: () => landingStore.toggleIsCool(), child: Text('LOL')),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[

@@ -54,6 +54,7 @@ dependencies:
 
   # fancy done layout shit
   carousel_slider: ^2.1.0
+  flutter_swiper: ^1.1.6
 
 dependency_overrides:
   path: 1.7.0

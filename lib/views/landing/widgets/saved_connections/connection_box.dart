@@ -23,6 +23,7 @@ class ConnectionBox extends StatelessWidget {
 
     return Container(
       width: this.width,
+      height: this.height,
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.all(Radius.circular(12.0)),
@@ -55,34 +56,23 @@ class ConnectionBox extends StatelessWidget {
               builder: (_) => FutureBuilder<List<Connection>>(
                 future: landingStore.autodiscoverConnections,
                 builder: (context, snapshot) {
+                  bool reachable = snapshot.hasData &&
+                      snapshot.data.any((discoverConnection) =>
+                          discoverConnection.ip == this.connection.ip &&
+                          discoverConnection.port == this.connection.port);
                   return Expanded(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: snapshot.hasData &&
-                              snapshot.data.any((discoverConnection) =>
-                                  discoverConnection.ip == this.connection.ip &&
-                                  discoverConnection.port ==
-                                      this.connection.port)
-                          ? [
-                              StatusDot(color: Colors.green),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Text(
-                                  'Reachable',
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              )
-                            ]
-                          : [
-                              StatusDot(),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Text(
-                                  'Not reachable',
-                                  style: Theme.of(context).textTheme.bodyText1,
-                                ),
-                              )
-                            ],
+                      children: [
+                        StatusDot(color: reachable ? Colors.green : Colors.red),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
+                            reachable ? 'Reachable' : 'Not reachable',
+                            style: Theme.of(context).textTheme.bodyText1,
+                          ),
+                        )
+                      ],
                     ),
                   );
                 },

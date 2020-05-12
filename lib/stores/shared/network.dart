@@ -70,12 +70,13 @@ abstract class _NetworkStore with Store {
     this.connectionResponse = await Future.any([
       authCompleter.future.then((value) => value),
       Future.delayed(timeout, () {
-        subscription.cancel();
         return BaseResponse({'status': 'error', 'error': 'timeout'});
       })
     ]);
     print('connected: ${this.connectionResponse.status == "ok"}');
     if (this.connectionResponse.status != ResponseStatus.OK.text) {
+      subscription.cancel();
+      this.activeSession.socket.sink.close();
       this.activeSession = null;
     } else {
       this.activeSession.connection.ssid = await Connectivity().getWifiName();

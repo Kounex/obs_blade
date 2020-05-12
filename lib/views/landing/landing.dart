@@ -86,42 +86,39 @@ class LandingView extends StatelessWidget {
                   delegate: SliverChildListDelegate(
                     [
                       Observer(
-                        builder: (context) {
-                          print('WHAT');
-                          return Stack(
-                            children: <Widget>[
-                              SwitcherCard(
-                                title: landingStore.manualMode
-                                    ? 'Connection'
-                                    : 'Autodiscover',
-                                child: landingStore.manualMode
-                                    ? Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 24.0,
-                                            right: 24.0,
-                                            bottom: 12.0),
-                                        child: ConnectForm(
-                                          connection:
-                                              landingStore.typedInConnection,
-                                          saveCredentials: true,
-                                        ),
-                                      )
-                                    : AutoDiscovery(),
+                        builder: (context) => Stack(
+                          children: <Widget>[
+                            SwitcherCard(
+                              title: landingStore.manualMode
+                                  ? 'Connection'
+                                  : 'Autodiscover',
+                              child: landingStore.manualMode
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 24.0,
+                                          right: 24.0,
+                                          bottom: 12.0),
+                                      child: ConnectForm(
+                                        connection:
+                                            landingStore.typedInConnection,
+                                        saveCredentials: true,
+                                      ),
+                                    )
+                                  : AutoDiscovery(),
+                            ),
+                            Positioned(
+                              right: 36.0,
+                              top: 30.0,
+                              child: CupertinoButton(
+                                child: Text(landingStore.manualMode
+                                    ? 'Auto'
+                                    : 'Manual'),
+                                onPressed: () =>
+                                    landingStore.toggleManualMode(),
                               ),
-                              Positioned(
-                                right: 36.0,
-                                top: 30.0,
-                                child: CupertinoButton(
-                                  child: Text(landingStore.manualMode
-                                      ? 'Auto'
-                                      : 'Manual'),
-                                  onPressed: () =>
-                                      landingStore.toggleManualMode(),
-                                ),
-                              )
-                            ],
-                          );
-                        },
+                            )
+                          ],
+                        ),
                       ),
                       SavedConnections(),
                     ],

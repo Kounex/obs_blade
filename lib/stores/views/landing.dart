@@ -18,13 +18,8 @@ abstract class _LandingStore with Store {
   bool refreshable = false;
   @observable
   bool manualMode = false;
-  @observable
-  bool isCool = false;
 
   Connection typedInConnection = Connection('', 4444, '');
-
-  @action
-  void toggleIsCool() => this.isCool = !this.isCool;
 
   @action
   void setAutodiscoverPort(String autodiscoverPort) =>
