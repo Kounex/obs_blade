@@ -53,7 +53,7 @@ class Stats extends StatelessWidget {
                   label: 'CPU Usage (%)',
                   text: dashboardStore.streamStats?.cpuUsage != null
                       ? ((dashboardStore.streamStats.cpuUsage * 100).round() /
-                              10)
+                              100)
                           .toString()
                       : null,
                   width: 120.0,
