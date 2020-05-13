@@ -26,6 +26,40 @@ mixin _$DashboardStore on _DashboardStore, Store {
     }, _$isLiveAtom, name: '${_$isLiveAtom.name}_set');
   }
 
+  final _$goneLiveInMSAtom = Atom(name: '_DashboardStore.goneLiveInMS');
+
+  @override
+  int get goneLiveInMS {
+    _$goneLiveInMSAtom.context.enforceReadPolicy(_$goneLiveInMSAtom);
+    _$goneLiveInMSAtom.reportObserved();
+    return super.goneLiveInMS;
+  }
+
+  @override
+  set goneLiveInMS(int value) {
+    _$goneLiveInMSAtom.context.conditionallyRunInAction(() {
+      super.goneLiveInMS = value;
+      _$goneLiveInMSAtom.reportChanged();
+    }, _$goneLiveInMSAtom, name: '${_$goneLiveInMSAtom.name}_set');
+  }
+
+  final _$streamStatsAtom = Atom(name: '_DashboardStore.streamStats');
+
+  @override
+  StreamStats get streamStats {
+    _$streamStatsAtom.context.enforceReadPolicy(_$streamStatsAtom);
+    _$streamStatsAtom.reportObserved();
+    return super.streamStats;
+  }
+
+  @override
+  set streamStats(StreamStats value) {
+    _$streamStatsAtom.context.conditionallyRunInAction(() {
+      super.streamStats = value;
+      _$streamStatsAtom.reportChanged();
+    }, _$streamStatsAtom, name: '${_$streamStatsAtom.name}_set');
+  }
+
   final _$activeSceneNameAtom = Atom(name: '_DashboardStore.activeSceneName');
 
   @override
@@ -106,7 +140,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
   @override
   String toString() {
     final string =
-        'isLive: ${isLive.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()}';
+        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()}';
     return '{$string}';
   }
 }

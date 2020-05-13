@@ -15,9 +15,19 @@ class BaseEvent {
   String get recTimecode => this.json['rec-timecode'];
 
   EventType instance(String text) {
-    if (text == 'ScenesChanged') {
-      return EventType.ScenesChanged;
+    switch (text) {
+      case 'StreamStarted':
+        return EventType.StreamStarted;
+      case 'StreamStopping':
+        return EventType.StreamStopping;
+      case 'StreamStatus':
+        return EventType.StreamStatus;
+      case 'ScenesChanged':
+        return EventType.ScenesChanged;
+      case 'SwitchScenes':
+        return EventType.ScenesChanged;
+      default:
+        return null;
     }
-    return null;
   }
 }

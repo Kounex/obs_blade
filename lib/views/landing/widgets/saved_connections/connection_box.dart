@@ -60,19 +60,10 @@ class ConnectionBox extends StatelessWidget {
                       snapshot.data.any((discoverConnection) =>
                           discoverConnection.ip == this.connection.ip &&
                           discoverConnection.port == this.connection.port);
-                  return Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        StatusDot(color: reachable ? Colors.green : Colors.red),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                            reachable ? 'Reachable' : 'Not reachable',
-                            style: Theme.of(context).textTheme.bodyText1,
-                          ),
-                        )
-                      ],
+                  return Center(
+                    child: StatusDot(
+                      color: reachable ? Colors.green : Colors.red,
+                      text: reachable ? 'Reachable' : 'Not reachable',
                     ),
                   );
                 },

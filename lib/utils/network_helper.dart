@@ -4,9 +4,11 @@ import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
 import 'package:obs_station/models/connection.dart';
+import 'package:obs_station/types/enums/request_type.dart';
 
 import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class NetworkHelper {
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
@@ -40,18 +42,14 @@ class NetworkHelper {
     String authResponse = Base64Codec().encode(authResponseHash.bytes);
 
     return authResponse;
-    /*
-    password = "supersecretpassword"
-challenge = "ztTBnnuqrqaKDzRM3xcVdbYm"
-salt = "PZVbYpvAnZut2SS6JNJytDm9"
+  }
 
-secret_string = password + salt
-secret_hash = binary_sha256(secret_string)
-secret = base64_encode(secret_hash)
-
-auth_response_string = secret + challenge
-auth_response_hash = binary_sha256(auth_response_string)
-auth_response = base64_encode(auth_response_hash)
-    */
+  static void makeRequest(WebSocketSink sink, RequestType request,
+      [Map<String, dynamic> fields]) {
+    sink.add(json.encode({
+      'message-id': request.index.toString(),
+      'request-type': request.type,
+      if (fields != null) ...fields
+    }));
   }
 }

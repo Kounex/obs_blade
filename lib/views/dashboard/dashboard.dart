@@ -1,17 +1,20 @@
 import 'package:after_layout/after_layout.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_station/models/connection.dart';
+import 'package:obs_station/shared/basic/status_dot.dart';
 import 'package:obs_station/shared/dialogs/confirmation.dart';
 import 'package:obs_station/shared/dialogs/input.dart';
 import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/stores/views/dashboard.dart';
 import 'package:obs_station/types/enums/hive_keys.dart';
 import 'package:obs_station/types/enums/request_type.dart';
+import 'package:obs_station/utils/network_helper.dart';
 import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/views/dashboard/widgets/live_status/live_status.dart';
 import 'package:obs_station/views/dashboard/widgets/scenes/scenes.dart';
+import 'package:obs_station/views/dashboard/widgets/stats/stats.dart';
 import 'package:provider/provider.dart';
 
 class DashboardView extends StatefulWidget {
@@ -20,6 +23,8 @@ class DashboardView extends StatefulWidget {
 }
 
 class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
+  List<String> _appBarActions = ['Manage Stream', 'Stats'];
+
   @override
   initState() {
     super.initState();
@@ -73,14 +78,16 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
   Widget build(BuildContext context) {
     NetworkStore networkStore = Provider.of<NetworkStore>(context);
 
-    return Provider<DashboardStore>(
-      create: (_) {
-        DashboardStore dashboardStore = DashboardStore();
-        dashboardStore.setNetworkStore(networkStore);
-        networkStore.makeRequest(RequestType.GetSceneList);
-        return dashboardStore;
-      },
-      child: Scaffold(
+    return Provider<DashboardStore>(create: (_) {
+      DashboardStore dashboardStore = DashboardStore();
+      dashboardStore.setNetworkStore(networkStore.activeSession);
+      NetworkHelper.makeRequest(
+          networkStore.activeSession.socket.sink, RequestType.GetSceneList);
+      return dashboardStore;
+    }, builder: (context, child) {
+      DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
+
+      return Scaffold(
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -90,6 +97,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                 children: <Widget>[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       CupertinoButton(
                         child: Text('Close'),
@@ -107,26 +115,91 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 0.0),
-                        child: LiveStatus(),
+                      Container(
+                        width: 150.0,
+                        alignment: Alignment.bottomRight,
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _appBarActions[0],
+                            icon: Container(),
+                            isExpanded: true,
+                            selectedItemBuilder: (_) => [
+                              Container(
+                                alignment: Alignment.centerRight,
+                                child: Icon(
+                                  CupertinoIcons.ellipsis,
+                                  size: 32.0,
+                                ),
+                              )
+                            ],
+                            items: _appBarActions
+                                .map(
+                                  (action) => DropdownMenuItem<String>(
+                                    child: SizedBox(
+                                      width: 150.0,
+                                      child: Text(
+                                        action,
+                                      ),
+                                    ),
+                                    value: action,
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (selection) => print(selection),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  Text('Dashboard'),
+                  Column(
+                    children: <Widget>[
+                      Text('Dashboard'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+                        child: Observer(builder: (_) {
+                          return StatusDot(
+                            size: 8.0,
+                            color: dashboardStore.isLive
+                                ? Colors.green
+                                : Colors.red,
+                            text: dashboardStore.isLive ? 'Live' : 'Not Live',
+                            style: Theme.of(context).textTheme.caption,
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                [
-                  Scenes(),
-                ],
+            SliverPadding(
+              padding: EdgeInsets.only(bottom: 50.0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate(
+                  [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24.0, bottom: 42.0),
+                      child: Scenes(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: Text(
+                        'Stats',
+                        style: Theme.of(context).textTheme.headline4,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Divider(height: 0.0),
+                    ),
+                    Stats(),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
 }

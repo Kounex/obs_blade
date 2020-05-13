@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
+import 'package:obs_station/models/session.dart';
+import 'package:obs_station/models/stream_stats.dart';
 import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/types/classes/base_event.dart';
 import 'package:obs_station/types/classes/responses/base.dart';
@@ -9,6 +11,7 @@ import 'package:obs_station/types/classes/scene.dart';
 import 'package:obs_station/types/enums/event_type.dart';
 import 'package:obs_station/types/enums/request_type.dart';
 import 'package:obs_station/types/mixins/short_provider.dart';
+import 'package:obs_station/utils/network_helper.dart';
 
 // Include generated file
 part 'dashboard.g.dart';
@@ -18,13 +21,17 @@ class DashboardStore = _DashboardStore with _$DashboardStore, ShortProvider;
 abstract class _DashboardStore with Store {
   @observable
   bool isLive = false;
+  @observable
+  int goneLiveInMS;
+  @observable
+  StreamStats streamStats;
 
   @observable
   String activeSceneName;
   @observable
   ObservableList<Scene> scenes;
 
-  NetworkStore networkStore;
+  Session activeSession;
 
   @action
   updateActiveScene(String name) => this.activeSceneName = name;
@@ -32,13 +39,13 @@ abstract class _DashboardStore with Store {
   @action
   setScenes(Iterable<Scene> scenes) => this.scenes = scenes;
 
-  setNetworkStore(NetworkStore networkStore) {
-    this.networkStore = networkStore;
+  setNetworkStore(Session activeSession) {
+    this.activeSession = activeSession;
     this.handleStream();
   }
 
   handleStream() {
-    this.networkStore.activeSession.socketStream.listen((event) {
+    this.activeSession.socketStream.listen((event) {
       Map<String, dynamic> fullJSON = json.decode(event);
       if (fullJSON['update-type'] != null) {
         this.handleEvent(BaseEvent(fullJSON));
@@ -51,13 +58,31 @@ abstract class _DashboardStore with Store {
   @action
   handleEvent(BaseEvent event) {
     switch (event.updateType) {
+      case EventType.StreamStarted:
+        this.isLive = true;
+        this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch;
+        break;
+      case EventType.StreamStopping:
+        this.isLive = false;
+        break;
+      case EventType.StreamStatus:
+        this.streamStats = StreamStats.fromJSON(event.json);
+        if (this.goneLiveInMS == null) {
+          this.isLive = true;
+          this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch -
+              (this.streamStats.totalStreamTime * 1000);
+        }
+        break;
       case EventType.ScenesChanged:
-        this.networkStore.makeRequest(RequestType.GetSceneList);
+        NetworkHelper.makeRequest(
+            this.activeSession.socket.sink, RequestType.GetSceneList);
+        break;
+      case EventType.SwitchScenes:
+        this.activeSceneName = event.json['scene-name'];
         break;
       default:
         break;
     }
-    print(event.json['update-type']);
   }
 
   @action
@@ -66,6 +91,7 @@ abstract class _DashboardStore with Store {
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
             GetSceneListResponse(response.json);
+        this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
         break;
       default:

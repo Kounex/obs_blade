@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class SceneItem {
-  double cy;
-  double cx;
+  num cy;
+  num cx;
 
   /// The point on the source that the item is manipulated from. The sum of 1=Left or 2=Right, and 4=Top or 8=Bottom, or omit to center on that axis.
-  double alignment;
+  num alignment;
   String name;
 
   /// Scene item ID
@@ -19,14 +19,14 @@ class SceneItem {
 
   /// Whether or not this Scene Item is locked and can't be moved around
   bool locked;
-  double sourceCy;
-  double sourceCx;
+  num sourceCy;
+  num sourceCx;
 
   /// Source type. Value is one of the following: "input", "filter", "transition", "scene" or "unknown"
   String type;
-  double volume;
-  double x;
-  double y;
+  num volume;
+  num x;
+  num y;
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
   String parentGroupName;

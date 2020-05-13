@@ -12,6 +12,6 @@ class Scene {
   static Scene fromJSON(Map<String, dynamic> fullJSON) => Scene(
       name: fullJSON['name'],
       sources: (fullJSON['sources'] as List<dynamic>)
-          .map((source) => SceneItem.fromJSON(json.decode(source)))
+          .map((source) => SceneItem.fromJSON(source))
           .toList());
 }

@@ -52,7 +52,9 @@ abstract class _NetworkStore with Store {
             this.activeSession.connection.challenge = getAuthResponse.challenge;
             this.activeSession.connection.salt = getAuthResponse.salt;
             if (getAuthResponse.authRequired) {
-              this.makeRequest(RequestType.Authenticate,
+              NetworkHelper.makeRequest(
+                  this.activeSession.socket.sink,
+                  RequestType.Authenticate,
                   {'auth': NetworkHelper.getAuthResponse(connection)});
             } else {
               authCompleter.complete(response);
@@ -68,7 +70,8 @@ abstract class _NetworkStore with Store {
       onDone: () => print('done'),
       onError: (error) => print(error),
     );
-    this.makeRequest(RequestType.GetAuthRequired);
+    NetworkHelper.makeRequest(
+        this.activeSession.socket.sink, RequestType.GetAuthRequired);
     this.connectionResponse = await Future.any([
       authCompleter.future.then((value) => value),
       Future.delayed(timeout, () {
@@ -96,15 +99,15 @@ abstract class _NetworkStore with Store {
     }
   }
 
-  bool makeRequest(RequestType request, [Map<String, dynamic> fields]) {
-    if (this.activeSession != null) {
-      this.activeSession.socket.sink.add(json.encode({
-            'message-id': request.index.toString(),
-            'request-type': request.type,
-            if (fields != null) ...fields
-          }));
-      return true;
-    }
-    return false;
-  }
+  // bool makeRequest(RequestType request, [Map<String, dynamic> fields]) {
+  //   if (this.activeSession != null) {
+  //     this.activeSession.socket.sink.add(json.encode({
+  //           'message-id': request.index.toString(),
+  //           'request-type': request.type,
+  //           if (fields != null) ...fields
+  //         }));
+  //     return true;
+  //   }
+  //   return false;
+  // }
 }
