@@ -43,7 +43,7 @@ abstract class _NetworkStore with Store {
         this.activeSession.socket.stream.asBroadcastStream();
     StreamSubscription subscription = this.activeSession.socketStream.listen(
       (event) {
-        dynamic jsonObject = json.decode(event);
+        Map<String, dynamic> jsonObject = json.decode(event);
         BaseResponse response = BaseResponse(jsonObject);
         switch (RequestType.values[response.messageID]) {
           case RequestType.GetAuthRequired:
@@ -61,6 +61,8 @@ abstract class _NetworkStore with Store {
           case RequestType.Authenticate:
             authCompleter.complete(response);
             break;
+          default:
+            break;
         }
       },
       onDone: () => print('done'),
@@ -73,9 +75,8 @@ abstract class _NetworkStore with Store {
         return BaseResponse({'status': 'error', 'error': 'timeout'});
       })
     ]);
-    print('connected: ${this.connectionResponse.status == "ok"}');
+    subscription.cancel();
     if (this.connectionResponse.status != ResponseStatus.OK.text) {
-      subscription.cancel();
       this.activeSession.socket.sink.close();
       this.activeSession = null;
     } else {

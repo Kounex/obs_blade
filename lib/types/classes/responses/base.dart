@@ -1,7 +1,7 @@
 import 'package:obs_station/types/enums/response_status.dart';
 
 class BaseResponse {
-  dynamic json;
+  Map<String, dynamic> json;
 
   BaseResponse(this.json);
 

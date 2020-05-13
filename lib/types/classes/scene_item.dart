@@ -19,8 +19,8 @@ class SceneItem {
 
   /// Whether or not this Scene Item is locked and can't be moved around
   bool locked;
-  double source_cy;
-  double source_cx;
+  double sourceCy;
+  double sourceCx;
 
   /// Source type. Value is one of the following: "input", "filter", "transition", "scene" or "unknown"
   String type;
@@ -43,8 +43,8 @@ class SceneItem {
       @required this.render,
       @required this.muted,
       @required this.locked,
-      @required this.source_cy,
-      @required this.source_cx,
+      @required this.sourceCy,
+      @required this.sourceCx,
       @required this.type,
       @required this.volume,
       @required this.x,
@@ -61,8 +61,8 @@ class SceneItem {
       render: json['render'],
       muted: json['muted'],
       locked: json['locked'],
-      source_cy: json['source_cy'],
-      source_cx: json['source_cx'],
+      sourceCy: json['source_cy'],
+      sourceCx: json['source_cx'],
       type: json['type'],
       volume: json['volume'],
       x: json['x'],
