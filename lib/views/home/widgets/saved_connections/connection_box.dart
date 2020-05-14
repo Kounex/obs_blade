@@ -5,7 +5,7 @@ import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/shared/basic/status_dot.dart';
 import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/stores/views/landing.dart';
-import 'package:obs_station/views/landing/widgets/saved_connections/edit_dialog.dart';
+import 'package:obs_station/views/home/widgets/saved_connections/edit_dialog.dart';
 import 'package:provider/provider.dart';
 
 class ConnectionBox extends StatelessWidget {

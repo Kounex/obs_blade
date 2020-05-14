@@ -9,14 +9,14 @@ import 'package:obs_station/stores/shared/network.dart';
 import 'package:obs_station/types/enums/response_status.dart';
 import 'package:obs_station/utils/overlay_handler.dart';
 import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/views/landing/widgets/auto_discovery/auto_discovery.dart';
-import 'package:obs_station/views/landing/widgets/connect_form/connect_form.dart';
-import 'package:obs_station/views/landing/widgets/refresher_app_bar/refresher_app_bar.dart';
-import 'package:obs_station/views/landing/widgets/saved_connections/saved_connections.dart';
-import 'package:obs_station/views/landing/widgets/switcher_card/switcher_card.dart';
+import 'package:obs_station/views/home/widgets/auto_discovery/auto_discovery.dart';
+import 'package:obs_station/views/home/widgets/connect_form/connect_form.dart';
+import 'package:obs_station/views/home/widgets/refresher_app_bar/refresher_app_bar.dart';
+import 'package:obs_station/views/home/widgets/saved_connections/saved_connections.dart';
+import 'package:obs_station/views/home/widgets/switcher_card/switcher_card.dart';
 import 'package:provider/provider.dart';
 
-class LandingView extends StatelessWidget {
+class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = Provider.of<NetworkStore>(context);
@@ -46,7 +46,7 @@ class LandingView extends StatelessWidget {
           if (networkStore.connectionResponse.status ==
               ResponseStatus.OK.text) {
             Navigator.pushReplacementNamed(
-                context, AppRoutingKeys.DASHBOARD.route);
+                context, HomeTabRoutingKeys.DASHBOARD.route);
           }
           if (!networkStore.connectionResponse.error
               .contains('Authentication')) {

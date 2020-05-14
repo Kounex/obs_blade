@@ -110,7 +110,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                             onOk: () {
                               networkStore.closeSession();
                               Navigator.of(context).pushReplacementNamed(
-                                  AppRoutingKeys.LANDING.route);
+                                  HomeTabRoutingKeys.LANDING.route);
                             },
                           ),
                         ),

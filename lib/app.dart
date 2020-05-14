@@ -30,11 +30,14 @@ class App extends StatelessWidget {
           canvasColor: const Color(0xff101823),
           cardColor: const Color(0xff101823),
           dividerColor: Colors.grey[500],
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
           appBarTheme: AppBarTheme(
             color: const Color(0xff101823),
           ),
           buttonTheme: ButtonThemeData(
             buttonColor: const Color(0xffff4654),
+            splashColor: Colors.transparent,
           ),
           cupertinoOverrideTheme: CupertinoThemeData(
             textTheme: CupertinoTextThemeData(
@@ -43,8 +46,8 @@ class App extends StatelessWidget {
             primaryColor: CupertinoColors.systemBlue,
           ),
         ),
-        initialRoute: AppRoutingKeys.LANDING.route,
-        routes: RoutingHelper.routes,
+        initialRoute: AppRoutingKeys.TABS.route,
+        routes: RoutingHelper.appRoutes,
       ),
     );
   }

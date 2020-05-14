@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:obs_station/models/connection.dart';
 import 'package:obs_station/types/enums/hive_keys.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_station/views/landing/widgets/saved_connections/connection_box.dart';
+import 'package:obs_station/views/home/widgets/saved_connections/connection_box.dart';
 
 class SavedConnections extends StatelessWidget {
   @override
