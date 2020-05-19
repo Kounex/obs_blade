@@ -5,9 +5,9 @@ import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/models/session.dart';
-import 'package:obs_station/types/classes/responses/base.dart';
-import 'package:obs_station/types/classes/responses/get_auth_required.dart';
+import 'package:obs_station/types/classes/session.dart';
+import 'package:obs_station/types/classes/stream/responses/base.dart';
+import 'package:obs_station/types/classes/stream/responses/get_auth_required.dart';
 import 'package:obs_station/types/enums/request_type.dart';
 import 'package:obs_station/types/enums/response_status.dart';
 import 'package:obs_station/utils/network_helper.dart';
@@ -41,35 +41,10 @@ abstract class _NetworkStore with Store {
 
     this.activeSession.socketStream =
         this.activeSession.socket.stream.asBroadcastStream();
-    StreamSubscription subscription = this.activeSession.socketStream.listen(
-      (event) {
-        Map<String, dynamic> jsonObject = json.decode(event);
-        BaseResponse response = BaseResponse(jsonObject);
-        switch (RequestType.values[response.messageID]) {
-          case RequestType.GetAuthRequired:
-            GetAuthRequiredResponse getAuthResponse =
-                GetAuthRequiredResponse(jsonObject);
-            this.activeSession.connection.challenge = getAuthResponse.challenge;
-            this.activeSession.connection.salt = getAuthResponse.salt;
-            if (getAuthResponse.authRequired) {
-              NetworkHelper.makeRequest(
-                  this.activeSession.socket.sink,
-                  RequestType.Authenticate,
-                  {'auth': NetworkHelper.getAuthResponse(connection)});
-            } else {
-              authCompleter.complete(response);
-            }
-            break;
-          case RequestType.Authenticate:
-            authCompleter.complete(response);
-            break;
-          default:
-            break;
-        }
-      },
-      onDone: () => print('done'),
-      onError: (error) => print(error),
-    );
+
+    StreamSubscription subscription =
+        _handleInitialWebSocket(connection, authCompleter);
+
     NetworkHelper.makeRequest(
         this.activeSession.socket.sink, RequestType.GetAuthRequired);
     this.connectionResponse = await Future.any([
@@ -78,6 +53,7 @@ abstract class _NetworkStore with Store {
         return BaseResponse({'status': 'error', 'error': 'timeout'});
       })
     ]);
+
     subscription.cancel();
     if (this.connectionResponse.status != ResponseStatus.OK.text) {
       this.activeSession.socket.sink.close();
@@ -99,15 +75,36 @@ abstract class _NetworkStore with Store {
     }
   }
 
-  // bool makeRequest(RequestType request, [Map<String, dynamic> fields]) {
-  //   if (this.activeSession != null) {
-  //     this.activeSession.socket.sink.add(json.encode({
-  //           'message-id': request.index.toString(),
-  //           'request-type': request.type,
-  //           if (fields != null) ...fields
-  //         }));
-  //     return true;
-  //   }
-  //   return false;
-  // }
+  StreamSubscription _handleInitialWebSocket(
+          Connection connection, Completer authCompleter) =>
+      this.activeSession.socketStream.listen(
+        (event) {
+          Map<String, dynamic> jsonObject = json.decode(event);
+          BaseResponse response = BaseResponse(jsonObject);
+          switch (RequestType.values[response.messageID]) {
+            case RequestType.GetAuthRequired:
+              GetAuthRequiredResponse getAuthResponse =
+                  GetAuthRequiredResponse(jsonObject);
+              this.activeSession.connection.challenge =
+                  getAuthResponse.challenge;
+              this.activeSession.connection.salt = getAuthResponse.salt;
+              if (getAuthResponse.authRequired) {
+                NetworkHelper.makeRequest(
+                    this.activeSession.socket.sink,
+                    RequestType.Authenticate,
+                    {'auth': NetworkHelper.getAuthResponse(connection)});
+              } else {
+                authCompleter.complete(response);
+              }
+              break;
+            case RequestType.Authenticate:
+              authCompleter.complete(response);
+              break;
+            default:
+              break;
+          }
+        },
+        onDone: () => print('done'),
+        onError: (error) => print(error),
+      );
 }

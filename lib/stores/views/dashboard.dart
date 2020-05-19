@@ -1,13 +1,12 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import 'package:obs_station/models/session.dart';
-import 'package:obs_station/models/stream_stats.dart';
-import 'package:obs_station/stores/shared/network.dart';
-import 'package:obs_station/types/classes/base_event.dart';
-import 'package:obs_station/types/classes/responses/base.dart';
-import 'package:obs_station/types/classes/responses/get_scene_list.dart';
-import 'package:obs_station/types/classes/scene.dart';
+import 'package:obs_station/types/classes/api/scene.dart';
+import 'package:obs_station/types/classes/api/stream_stats.dart';
+import 'package:obs_station/types/classes/session.dart';
+import 'package:obs_station/types/classes/stream/base_event.dart';
+import 'package:obs_station/types/classes/stream/responses/base.dart';
+import 'package:obs_station/types/classes/stream/responses/get_scene_list.dart';
 import 'package:obs_station/types/enums/event_type.dart';
 import 'package:obs_station/types/enums/request_type.dart';
 import 'package:obs_station/types/mixins/short_provider.dart';
@@ -48,15 +47,15 @@ abstract class _DashboardStore with Store {
     this.activeSession.socketStream.listen((event) {
       Map<String, dynamic> fullJSON = json.decode(event);
       if (fullJSON['update-type'] != null) {
-        this.handleEvent(BaseEvent(fullJSON));
+        _handleEvent(BaseEvent(fullJSON));
       } else {
-        this.handleResponse(BaseResponse(fullJSON));
+        _handleResponse(BaseResponse(fullJSON));
       }
     });
   }
 
   @action
-  handleEvent(BaseEvent event) {
+  _handleEvent(BaseEvent event) {
     switch (event.updateType) {
       case EventType.StreamStarted:
         this.isLive = true;
@@ -86,7 +85,7 @@ abstract class _DashboardStore with Store {
   }
 
   @action
-  handleResponse(BaseResponse response) {
+  _handleResponse(BaseResponse response) {
     switch (RequestType.values[response.messageID]) {
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =

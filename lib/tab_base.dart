@@ -12,12 +12,16 @@ class _TabBaseState extends State<TabBase> {
   int _currentTabIndex = 0;
 
   List<Navigator> _tabViews;
+  List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
 
   @override
   void initState() {
     _tabViews = [
       Navigator(
-        key: GlobalKey(),
+        key: _navigatorKeys[0],
         initialRoute: HomeTabRoutingKeys.LANDING.route,
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
@@ -30,20 +34,7 @@ class _TabBaseState extends State<TabBase> {
         ),
       ),
       Navigator(
-        key: GlobalKey(),
-        initialRoute: InfoTabRoutingKeys.LANDING.route,
-        onGenerateInitialRoutes: (state, route) => [
-          CupertinoPageRoute(
-            builder: RoutingHelper.infoTabRoutes[route],
-          ),
-        ],
-        onGenerateRoute: (routeSettings) => CupertinoPageRoute(
-          builder: RoutingHelper.infoTabRoutes[routeSettings.name],
-          settings: routeSettings,
-        ),
-      ),
-      Navigator(
-        key: GlobalKey(),
+        key: _navigatorKeys[1],
         initialRoute: SettingsTabRoutingKeys.LANDING.route,
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
@@ -75,24 +66,20 @@ class _TabBaseState extends State<TabBase> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentTabIndex,
         onTap: (index) => setState(() {
-          _currentTabIndex = index;
+          if (_currentTabIndex == index) {
+            if (_navigatorKeys[index].currentState.canPop()) {
+              _navigatorKeys[index].currentState.pop();
+            }
+          } else {
+            _currentTabIndex = index;
+          }
         }),
         items: [
           BottomNavigationBarItem(
-            // backgroundColor:
-            //     Theme.of(context).bottomNavigationBarTheme.backgroundColor,
             icon: Icon(CupertinoIcons.home),
             title: Text('Home'),
           ),
           BottomNavigationBarItem(
-            // backgroundColor:
-            //     Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-            icon: Icon(CupertinoIcons.info),
-            title: Text('Info'),
-          ),
-          BottomNavigationBarItem(
-            // backgroundColor:
-            //     Theme.of(context).bottomNavigationBarTheme.backgroundColor,
             icon: Icon(CupertinoIcons.settings),
             title: Text('Settings'),
           ),

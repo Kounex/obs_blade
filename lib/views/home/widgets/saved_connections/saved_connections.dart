@@ -31,10 +31,10 @@ class SavedConnections extends StatelessWidget {
               valueListenable:
                   Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name)
                       .listenable(),
-              builder: (context, Box<Connection> box, child) {
+              builder: (context, Box<Connection> savedConnectionsBox, child) {
                 double height = 175.0;
                 double width = 250.0;
-                List<Widget> connectionBoxes = box.values
+                List<Widget> connectionBoxes = savedConnectionsBox.values
                     .map(
                       (savedConnection) => ConnectionBox(
                         connection: savedConnection,

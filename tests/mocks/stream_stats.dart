@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:obs_station/models/stream_stats.dart';
+import 'package:obs_station/types/classes/api/stream_stats.dart';
 
 class StreamStatsMocker {
   static StreamStats random() => StreamStats(

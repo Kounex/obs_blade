@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:obs_station/models/past_stream_data.dart';
-import 'package:obs_station/models/stream_stats.dart';
+import 'package:obs_station/types/classes/api/stream_stats.dart';
 
 import '../mocks/stream_stats.dart';
 

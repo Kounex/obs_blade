@@ -118,20 +118,20 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
-  dynamic handleEvent(BaseEvent event) {
+  dynamic _handleEvent(BaseEvent event) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction();
     try {
-      return super.handleEvent(event);
+      return super._handleEvent(event);
     } finally {
       _$_DashboardStoreActionController.endAction(_$actionInfo);
     }
   }
 
   @override
-  dynamic handleResponse(BaseResponse response) {
+  dynamic _handleResponse(BaseResponse response) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction();
     try {
-      return super.handleResponse(response);
+      return super._handleResponse(response);
     } finally {
       _$_DashboardStoreActionController.endAction(_$actionInfo);
     }

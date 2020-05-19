@@ -56,6 +56,9 @@ dependencies:
   carousel_slider: ^2.1.0
   flutter_swiper: ^1.1.6
 
+  # sweet icons
+  font_awesome_flutter: ^8.8.1
+
 dependency_overrides:
   path: 1.7.0
   dartx: ^0.3.0

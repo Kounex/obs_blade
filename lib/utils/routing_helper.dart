@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/views/info/info.dart';
+import 'package:obs_station/views/about/about.dart';
 import 'package:obs_station/views/dashboard/dashboard.dart';
 import 'package:obs_station/views/home/home.dart';
 import 'package:obs_station/views/settings/settings.dart';
@@ -13,12 +13,9 @@ enum HomeTabRoutingKeys {
   DASHBOARD,
 }
 
-enum InfoTabRoutingKeys {
-  LANDING,
-}
-
 enum SettingsTabRoutingKeys {
   LANDING,
+  ABOUT,
 }
 
 extension AppRoutingKeysFunctions on AppRoutingKeys {
@@ -35,15 +32,11 @@ extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
       }[this];
 }
 
-extension InfoTabRoutingKeysFunctions on InfoTabRoutingKeys {
-  String get route => {
-        InfoTabRoutingKeys.LANDING: AppRoutingKeys.TABS.route + '/info',
-      }[this];
-}
-
 extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
   String get route => {
         SettingsTabRoutingKeys.LANDING: AppRoutingKeys.TABS.route + '/settings',
+        SettingsTabRoutingKeys.ABOUT:
+            AppRoutingKeys.TABS.route + '/settings/about',
       }[this];
 }
 
@@ -51,19 +44,15 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
 class RoutingHelper {
   static String currentHomeTabRoute = HomeTabRoutingKeys.LANDING.route;
   static String currentSettingsTabRoute = SettingsTabRoutingKeys.LANDING.route;
-  static String currentLibraryTabRoute = InfoTabRoutingKeys.LANDING.route;
 
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
     HomeTabRoutingKeys.LANDING.route: (_) => HomeView(),
     HomeTabRoutingKeys.DASHBOARD.route: (_) => DashboardView(),
   };
 
-  static Map<String, Widget Function(BuildContext)> infoTabRoutes = {
-    InfoTabRoutingKeys.LANDING.route: (_) => InfoView(),
-  };
-
   static Map<String, Widget Function(BuildContext)> settingsTabRoutes = {
     SettingsTabRoutingKeys.LANDING.route: (_) => SettingsView(),
+    SettingsTabRoutingKeys.ABOUT.route: (_) => AboutView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {

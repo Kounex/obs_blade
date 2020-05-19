@@ -1,4 +1,4 @@
-import 'package:obs_station/types/classes/responses/base.dart';
+import 'package:obs_station/types/classes/stream/responses/base.dart';
 
 class GetAuthRequiredResponse extends BaseResponse {
   GetAuthRequiredResponse(json) : super(json);
