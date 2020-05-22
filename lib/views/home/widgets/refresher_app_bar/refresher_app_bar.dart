@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_station/shared/animator/fader.dart';
 import 'package:obs_station/shared/basic/translucent_sliver_app_bar.dart';
 import 'package:obs_station/views/home/widgets/refresher_app_bar/scroll_refresh_icon.dart';
 
@@ -23,19 +24,29 @@ class RefresherAppBar extends StatelessWidget {
           builder: (context, constraints) => Stack(
             alignment: Alignment.bottomCenter,
             children: [
-              AnimatedOpacity(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeInExpo,
-                opacity: constraints.maxHeight -
-                            (MediaQuery.of(context).padding.top - 20) <=
-                        60
-                    ? 1.0
-                    : 0.0,
-                child: Text(
-                  'OBS Station',
-                  style: TextStyle(fontSize: 18.0),
-                ),
-              ),
+              constraints.maxHeight -
+                          (MediaQuery.of(context).padding.top - 20) <=
+                      60
+                  ? Fader(
+                      child: Text(
+                        'OBS Station',
+                        style: TextStyle(fontSize: 18.0),
+                      ),
+                    )
+                  : Container(),
+              //   AnimatedOpacity(
+              //   duration: Duration(milliseconds: 250),
+              //   curve: Curves.easeInOutExpo,
+              //   opacity: constraints.maxHeight -
+              //               (MediaQuery.of(context).padding.top - 20) <=
+              //           60
+              //       ? 1.0
+              //       : 0.0,
+              //   child: Text(
+              //     'OBS Station',
+              //     style: TextStyle(fontSize: 18.0),
+              //   ),
+              // ),
               ScrollRefreshIcon(
                 expandedBarHeight: this.expandedHeight,
               )
