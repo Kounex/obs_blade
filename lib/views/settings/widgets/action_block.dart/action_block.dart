@@ -20,7 +20,7 @@ class ActionBlock extends StatelessWidget {
             entry.leading,
             size: 32.0,
           ),
-          title: Text(entry.title),
+          title: entry.title,
           trailing: entry.navigateTo != null
               ? Icon(CupertinoIcons.right_chevron)
               : entry.trailing,

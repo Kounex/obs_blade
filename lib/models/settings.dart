@@ -6,4 +6,7 @@ part 'settings.g.dart';
 class Settings extends HiveObject {
   @HiveField(0)
   bool trueDark = false;
+
+  @HiveField(1)
+  bool reduceSmearing = false;
 }

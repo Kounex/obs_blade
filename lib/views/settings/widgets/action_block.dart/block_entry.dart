@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class BlockEntry {
   IconData leading;
-  String title;
+  Widget title;
   Widget trailing;
   String navigateTo;
 

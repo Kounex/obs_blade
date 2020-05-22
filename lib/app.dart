@@ -37,7 +37,9 @@ class App extends StatelessWidget {
             accentIconTheme: IconThemeData(),
             backgroundColor: const Color(0xff101823),
             scaffoldBackgroundColor: settingsBox.getAt(0).trueDark
-                ? Color.fromRGBO(5, 5, 5, 1.0)
+                ? settingsBox.get(0).reduceSmearing
+                    ? Color.fromRGBO(5, 5, 5, 1.0)
+                    : Colors.black
                 : Colors.grey[900],
             canvasColor: const Color(0xff101823),
             cardColor: const Color(0xff101823),

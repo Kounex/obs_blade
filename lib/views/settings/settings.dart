@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_station/models/settings.dart';
+import 'package:obs_station/shared/basic/question_mark_tooltip.dart';
 import 'package:obs_station/types/enums/hive_keys.dart';
 import 'package:obs_station/utils/routing_helper.dart';
 import 'package:obs_station/utils/styling_helper.dart';
@@ -36,12 +37,34 @@ class SettingsView extends StatelessWidget {
                     blockEntries: [
                       BlockEntry(
                         leading: StylingHelper.CUPERTINO_SUNGLASSES_ICON,
-                        title: 'True Dark Mode',
+                        title: Text('True Dark Mode'),
                         trailing: CupertinoSwitch(
                           value: settingsBox.get(0).trueDark,
                           onChanged: (_) {
                             settingsBox.get(0).trueDark =
                                 !settingsBox.get(0).trueDark;
+                            settingsBox.get(0).save();
+                          },
+                        ),
+                      ),
+                      BlockEntry(
+                        leading: Icons.opacity,
+                        title: Row(
+                          children: [
+                            Text('Reduce smearing'),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12.0),
+                              child: QuestionMarkTooltip(
+                                  message:
+                                      'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color. Might drain more battery though!'),
+                            ),
+                          ],
+                        ),
+                        trailing: CupertinoSwitch(
+                          value: settingsBox.get(0).reduceSmearing,
+                          onChanged: (_) {
+                            settingsBox.get(0).reduceSmearing =
+                                !settingsBox.get(0).reduceSmearing;
                             settingsBox.get(0).save();
                           },
                         ),
@@ -53,7 +76,7 @@ class SettingsView extends StatelessWidget {
                   blockEntries: [
                     BlockEntry(
                       leading: StylingHelper.CUPERTINO_AT_ICON,
-                      title: 'About',
+                      title: Text('About'),
                       navigateTo: SettingsTabRoutingKeys.ABOUT.route,
                     ),
                   ],
