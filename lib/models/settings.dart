@@ -9,4 +9,9 @@ class Settings extends HiveObject {
 
   @HiveField(1)
   bool reduceSmearing = false;
+
+  void setDefault() {
+    this.trueDark ??= false;
+    this.reduceSmearing ??= false;
+  }
 }

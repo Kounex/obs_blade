@@ -39,10 +39,9 @@ class SettingsView extends StatelessWidget {
                         leading: StylingHelper.CUPERTINO_SUNGLASSES_ICON,
                         title: Text('True Dark Mode'),
                         trailing: CupertinoSwitch(
-                          value: settingsBox.get(0).trueDark,
-                          onChanged: (_) {
-                            settingsBox.get(0).trueDark =
-                                !settingsBox.get(0).trueDark;
+                          value: settingsBox.get(0).trueDark ?? false,
+                          onChanged: (trueDark) {
+                            settingsBox.get(0).trueDark = trueDark;
                             settingsBox.get(0).save();
                           },
                         ),
@@ -61,10 +60,9 @@ class SettingsView extends StatelessWidget {
                           ],
                         ),
                         trailing: CupertinoSwitch(
-                          value: settingsBox.get(0).reduceSmearing,
-                          onChanged: (_) {
-                            settingsBox.get(0).reduceSmearing =
-                                !settingsBox.get(0).reduceSmearing;
+                          value: settingsBox.get(0).reduceSmearing ?? false,
+                          onChanged: (reduceSmearing) {
+                            settingsBox.get(0).reduceSmearing = reduceSmearing;
                             settingsBox.get(0).save();
                           },
                         ),

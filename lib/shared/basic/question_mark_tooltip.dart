@@ -13,7 +13,7 @@ class QuestionMarkTooltip extends StatelessWidget {
       padding: EdgeInsets.all(12.0),
       margin: EdgeInsets.all(32.0),
       preferBelow: false,
-      verticalOffset: 12.0,
+      verticalOffset: 4.0,
       showDuration: Duration(seconds: 5),
       child: Icon(StylingHelper.CUPERTINO_QUESTION_ICON),
     );
