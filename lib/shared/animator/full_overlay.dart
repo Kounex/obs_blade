@@ -45,38 +45,45 @@ class _FullOverlayState extends State<FullOverlay>
     _controller.forward();
     Future.delayed(
         widget.showDuration, () => this.mounted ? _controller.reverse() : null);
-    return Positioned(
-      top: (MediaQuery.of(context).size.height / 2) - 75.0,
-      left: (MediaQuery.of(context).size.width / 2) - 75.0,
-      child: Material(
-        type: MaterialType.transparency,
-        child: AnimatedBuilder(
-            animation: _controller,
-            child: Padding(
-              padding: EdgeInsets.all(12.0),
-              child: widget.content,
-            ),
-            builder: (context, child) {
-              return BackdropFilter(
-                filter:
-                    ImageFilter.blur(sigmaX: _blur.value, sigmaY: _blur.value),
-                child: FadeTransition(
-                  opacity: _opacity,
-                  child: Container(
-                    height: 150.0,
-                    width: 150.0,
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(12.0),
+    return Stack(
+      children: [
+        SizedBox.expand(
+          child: AbsorbPointer(),
+        ),
+        Positioned(
+          top: (MediaQuery.of(context).size.height / 2) - 75.0,
+          left: (MediaQuery.of(context).size.width / 2) - 75.0,
+          child: Material(
+            type: MaterialType.transparency,
+            child: AnimatedBuilder(
+                animation: _controller,
+                child: Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: widget.content,
+                ),
+                builder: (context, child) {
+                  return BackdropFilter(
+                    filter: ImageFilter.blur(
+                        sigmaX: _blur.value, sigmaY: _blur.value),
+                    child: FadeTransition(
+                      opacity: _opacity,
+                      child: Container(
+                        height: 150.0,
+                        width: 150.0,
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(12.0),
+                          ),
+                        ),
+                        child: child,
                       ),
                     ),
-                    child: child,
-                  ),
-                ),
-              );
-            }),
-      ),
+                  );
+                }),
+          ),
+        ),
+      ],
     );
   }
 }

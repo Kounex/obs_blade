@@ -22,7 +22,7 @@ class OverlayHandler {
       }
       OverlayHandler.currentOverlayEntry = OverlayHandler.getStatusOverlay(
           context: context, content: content, showDuration: showDuration);
-      Overlay.of(context).insert(
+      Overlay.of(context, rootOverlay: true).insert(
         OverlayHandler.currentOverlayEntry,
       );
       OverlayHandler.currentOverlayTimer = Timer(

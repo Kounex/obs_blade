@@ -47,7 +47,7 @@ class App extends StatelessWidget {
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             appBarTheme: AppBarTheme(
-              color: const Color(0xff101823),
+              color: const Color(0xaa101823),
             ),
             buttonTheme: ButtonThemeData(
               buttonColor: const Color(0xffff4654),
