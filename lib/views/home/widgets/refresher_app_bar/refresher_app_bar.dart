@@ -25,7 +25,7 @@ class RefresherAppBar extends StatelessWidget {
             children: [
               AnimatedOpacity(
                 duration: Duration(milliseconds: 250),
-                curve: Curves.easeInOutExpo,
+                curve: Curves.easeInExpo,
                 opacity: constraints.maxHeight -
                             (MediaQuery.of(context).padding.top - 20) <=
                         60
