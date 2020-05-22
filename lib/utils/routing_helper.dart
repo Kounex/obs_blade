@@ -42,9 +42,6 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
 
 /// Used to summarize routing tasks and information at one point
 class RoutingHelper {
-  static String currentHomeTabRoute = HomeTabRoutingKeys.LANDING.route;
-  static String currentSettingsTabRoute = SettingsTabRoutingKeys.LANDING.route;
-
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
     HomeTabRoutingKeys.LANDING.route: (_) => HomeView(),
     HomeTabRoutingKeys.DASHBOARD.route: (_) => DashboardView(),

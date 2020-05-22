@@ -36,8 +36,9 @@ class App extends StatelessWidget {
             accentColor: CupertinoColors.systemBlue, // const Color(0xffb777ff),
             accentIconTheme: IconThemeData(),
             backgroundColor: const Color(0xff101823),
-            scaffoldBackgroundColor:
-                settingsBox.getAt(0).trueDark ? Colors.black : Colors.grey[900],
+            scaffoldBackgroundColor: settingsBox.getAt(0).trueDark
+                ? Color.fromRGBO(5, 5, 5, 1.0)
+                : Colors.grey[900],
             canvasColor: const Color(0xff101823),
             cardColor: const Color(0xff101823),
             dividerColor: Colors.grey[500],
@@ -55,6 +56,7 @@ class App extends StatelessWidget {
                 primaryColor: Colors.white,
               ),
               primaryColor: CupertinoColors.systemBlue,
+              barBackgroundColor: const Color(0xaa101823),
             ),
           ),
           initialRoute: AppRoutingKeys.TABS.route,

@@ -25,7 +25,9 @@ class ActionBlock extends StatelessWidget {
               ? Icon(CupertinoIcons.right_chevron)
               : entry.trailing,
           onTap: entry.navigateTo != null
-              ? () => Navigator.of(context).pushNamed(entry.navigateTo)
+              ? () {
+                  Navigator.of(context).pushNamed(entry.navigateTo);
+                }
               : null,
         ),
       );

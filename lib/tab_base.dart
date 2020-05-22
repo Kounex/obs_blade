@@ -13,12 +13,22 @@ class _TabBaseState extends State<TabBase> {
 
   List<Navigator> _tabViews;
   List<GlobalKey<NavigatorState>> _navigatorKeys = [
-    GlobalKey<NavigatorState>(),
-    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(debugLabel: 'home'),
+    GlobalKey<NavigatorState>(debugLabel: 'settings'),
   ];
+  List<HeroController> _heroControllers;
+
+  RectTween _createRectTween(Rect begin, Rect end) {
+    return MaterialRectArcTween(begin: begin, end: end);
+  }
 
   @override
   void initState() {
+    super.initState();
+    _heroControllers = [
+      HeroController(createRectTween: _createRectTween),
+      HeroController(createRectTween: _createRectTween)
+    ];
     _tabViews = [
       Navigator(
         key: _navigatorKeys[0],
@@ -26,12 +36,14 @@ class _TabBaseState extends State<TabBase> {
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.homeTabRoutes[route],
+            settings: RouteSettings(name: route),
           ),
         ],
         onGenerateRoute: (routeSettings) => CupertinoPageRoute(
           builder: RoutingHelper.homeTabRoutes[routeSettings.name],
           settings: routeSettings,
         ),
+        observers: [_heroControllers[0]],
       ),
       Navigator(
         key: _navigatorKeys[1],
@@ -39,15 +51,16 @@ class _TabBaseState extends State<TabBase> {
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.settingsTabRoutes[route],
+            settings: RouteSettings(name: route),
           ),
         ],
         onGenerateRoute: (routeSettings) => CupertinoPageRoute(
           builder: RoutingHelper.settingsTabRoutes[routeSettings.name],
           settings: routeSettings,
         ),
+        observers: [_heroControllers[1]],
       ),
     ];
-    super.initState();
   }
 
   @override
@@ -63,7 +76,7 @@ class _TabBaseState extends State<TabBase> {
             )
             .toList(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: CupertinoTabBar(
         currentIndex: _currentTabIndex,
         onTap: (index) => setState(() {
           if (_currentTabIndex == index) {

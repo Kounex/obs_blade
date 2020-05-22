@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_station/models/settings.dart';
 import 'package:obs_station/types/enums/hive_keys.dart';
@@ -14,11 +13,17 @@ class SettingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // appBar: CupertinoNavigationBar(
+      //       middle: Text('Settings'),
+      //     ),
       body: CustomScrollView(
         slivers: <Widget>[
-          SliverAppBar(
-            pinned: true,
-            title: Text('Settings'),
+          // SliverAppBar(
+          //   pinned: true,
+          //   title: Text('Settings'),
+          // ),
+          CupertinoSliverNavigationBar(
+            largeTitle: Text('Settings'),
           ),
           SliverList(
             delegate: SliverChildListDelegate(
