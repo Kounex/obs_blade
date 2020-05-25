@@ -2,14 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/shared/basic/question_mark_tooltip.dart';
-import 'package:obs_station/stores/shared/network.dart';
-import 'package:obs_station/stores/views/landing.dart';
-import 'package:obs_station/types/classes/stream/responses/base.dart';
-import 'package:obs_station/types/enums/response_status.dart';
-import 'package:obs_station/utils/validation_helper.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../models/connection.dart';
+import '../../../../shared/basic/question_mark_tooltip.dart';
+import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/landing.dart';
+import '../../../../types/classes/stream/responses/base.dart';
+import '../../../../types/enums/response_status.dart';
+import '../../../../utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
   final Connection connection;

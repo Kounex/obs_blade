@@ -1,14 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/models/settings.dart';
-import 'package:obs_station/shared/basic/question_mark_tooltip.dart';
-import 'package:obs_station/types/enums/hive_keys.dart';
-import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/utils/styling_helper.dart';
-import 'package:obs_station/views/settings/widgets/action_block.dart/action_block.dart';
-import 'package:obs_station/views/settings/widgets/action_block.dart/block_entry.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import '../../models/settings.dart';
+import '../../shared/basic/question_mark_tooltip.dart';
+import '../../types/enums/hive_keys.dart';
+import '../../utils/routing_helper.dart';
+import '../../utils/styling_helper.dart';
+import 'widgets/action_block.dart/action_block.dart';
+import 'widgets/action_block.dart/block_entry.dart';
 
 class SettingsView extends StatelessWidget {
   @override

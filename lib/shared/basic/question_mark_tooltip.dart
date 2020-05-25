@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/utils/styling_helper.dart';
+
+import '../../utils/styling_helper.dart';
 
 class QuestionMarkTooltip extends StatelessWidget {
   final String message;

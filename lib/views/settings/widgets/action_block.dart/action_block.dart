@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_station/views/settings/widgets/action_block.dart/block_entry.dart';
-import 'package:obs_station/views/settings/widgets/action_block.dart/light_divider.dart';
+
+import 'block_entry.dart';
+import 'light_divider.dart';
 
 class ActionBlock extends StatelessWidget {
   final List<BlockEntry> blockEntries;

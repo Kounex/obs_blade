@@ -1,9 +1,9 @@
 import 'package:mobx/mobx.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/types/mixins/short_provider.dart';
-import 'package:obs_station/utils/network_helper.dart';
 
-// Include generated file
+import '../../models/connection.dart';
+import '../../types/mixins/short_provider.dart';
+import '../../utils/network_helper.dart';
+
 part 'landing.g.dart';
 
 class LandingStore = _LandingStore with _$LandingStore, ShortProvider;

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/shared/dialogs/confirmation.dart';
+
+import '../../../../models/connection.dart';
+import '../../../../shared/dialogs/confirmation.dart';
 
 class EditConnectionDialog extends StatefulWidget {
   final Connection connection;

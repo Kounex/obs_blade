@@ -3,12 +3,12 @@ import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/types/enums/request_type.dart';
-
 import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+import '../models/connection.dart';
+import '../types/enums/request_type.dart';
 
 class NetworkHelper {
   static IOWebSocketChannel establishWebSocket(Connection connection) =>

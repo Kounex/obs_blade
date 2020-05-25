@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/types/classes/api/scene_item.dart';
+
+import 'scene_item.dart';
 
 class Scene {
   String name;

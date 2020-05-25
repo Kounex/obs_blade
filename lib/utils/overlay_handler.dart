@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:obs_station/shared/animator/full_overlay.dart';
+
+import '../shared/animator/full_overlay.dart';
 
 const Duration kShowDuration = Duration(milliseconds: 2000);
 const Duration kAnimationDuration = Duration(milliseconds: 250);

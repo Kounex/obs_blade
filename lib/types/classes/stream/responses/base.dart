@@ -1,4 +1,4 @@
-import 'package:obs_station/types/enums/response_status.dart';
+import '../../../enums/response_status.dart';
 
 class BaseResponse {
   Map<String, dynamic> json;

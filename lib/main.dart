@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/app.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_station/models/past_stream_data.dart';
-import 'package:obs_station/models/settings.dart';
-import 'package:obs_station/types/enums/hive_keys.dart';
 
+import 'app.dart';
 import 'models/connection.dart';
+import 'models/past_stream_data.dart';
+import 'models/settings.dart';
+import 'types/enums/hive_keys.dart';
 
 void main() async {
   await Hive.initFlutter();

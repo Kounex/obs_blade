@@ -4,17 +4,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
-import 'package:obs_station/stores/views/landing.dart';
-import 'package:obs_station/stores/shared/network.dart';
-import 'package:obs_station/types/enums/response_status.dart';
-import 'package:obs_station/utils/overlay_handler.dart';
-import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/views/home/widgets/auto_discovery/auto_discovery.dart';
-import 'package:obs_station/views/home/widgets/connect_form/connect_form.dart';
-import 'package:obs_station/views/home/widgets/refresher_app_bar/refresher_app_bar.dart';
-import 'package:obs_station/views/home/widgets/saved_connections/saved_connections.dart';
-import 'package:obs_station/views/home/widgets/switcher_card/switcher_card.dart';
 import 'package:provider/provider.dart';
+
+import '../../stores/shared/network.dart';
+import '../../stores/views/landing.dart';
+import '../../types/enums/response_status.dart';
+import '../../utils/overlay_handler.dart';
+import '../../utils/routing_helper.dart';
+import 'widgets/auto_discovery/auto_discovery.dart';
+import 'widgets/connect_form/connect_form.dart';
+import 'widgets/refresher_app_bar/refresher_app_bar.dart';
+import 'widgets/saved_connections/saved_connections.dart';
+import 'widgets/switcher_card/switcher_card.dart';
 
 class HomeView extends StatelessWidget {
   @override

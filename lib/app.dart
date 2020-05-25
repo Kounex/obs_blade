@@ -1,14 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/models/settings.dart';
-import 'package:obs_station/stores/views/landing.dart';
-import 'package:obs_station/stores/shared/network.dart';
-import 'package:obs_station/types/enums/hive_keys.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
-import 'package:obs_station/utils/routing_helper.dart';
 import 'package:provider/provider.dart';
+
+import 'models/settings.dart';
+import 'stores/shared/network.dart';
+import 'stores/views/landing.dart';
+import 'types/enums/hive_keys.dart';
+import 'utils/routing_helper.dart';
 
 class App extends StatelessWidget {
   @override

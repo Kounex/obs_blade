@@ -1,5 +1,5 @@
-import 'package:obs_station/types/classes/api/scene.dart';
-import 'package:obs_station/types/classes/stream/responses/base.dart';
+import '../../api/scene.dart';
+import 'base.dart';
 
 class GetSceneListResponse extends BaseResponse {
   GetSceneListResponse(Map<String, dynamic> json) : super(json);

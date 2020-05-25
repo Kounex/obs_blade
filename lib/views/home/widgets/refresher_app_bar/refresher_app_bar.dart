@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/shared/animator/fader.dart';
-import 'package:obs_station/shared/basic/translucent_sliver_app_bar.dart';
-import 'package:obs_station/views/home/widgets/refresher_app_bar/scroll_refresh_icon.dart';
+
+import '../../../../shared/animator/fader.dart';
+import '../../../../shared/basic/translucent_sliver_app_bar.dart';
+import 'scroll_refresh_icon.dart';
 
 class RefresherAppBar extends StatelessWidget {
   final double expandedHeight;
