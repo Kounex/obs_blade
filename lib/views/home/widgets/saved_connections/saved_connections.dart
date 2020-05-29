@@ -1,10 +1,11 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/types/enums/hive_keys.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_station/views/home/widgets/saved_connections/connection_box.dart';
+
+import '../../../../models/connection.dart';
+import '../../../../types/enums/hive_keys.dart';
+import 'connection_box.dart';
 
 class SavedConnections extends StatelessWidget {
   @override

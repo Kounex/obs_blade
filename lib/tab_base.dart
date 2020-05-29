@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/types/extensions/list.dart';
+
+import 'types/extensions/list.dart';
+import 'utils/routing_helper.dart';
 
 class TabBase extends StatefulWidget {
   @override

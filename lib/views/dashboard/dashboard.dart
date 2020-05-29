@@ -3,19 +3,20 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/shared/basic/status_dot.dart';
-import 'package:obs_station/shared/dialogs/confirmation.dart';
-import 'package:obs_station/shared/dialogs/input.dart';
-import 'package:obs_station/stores/shared/network.dart';
-import 'package:obs_station/stores/views/dashboard.dart';
-import 'package:obs_station/types/enums/hive_keys.dart';
-import 'package:obs_station/types/enums/request_type.dart';
-import 'package:obs_station/utils/network_helper.dart';
-import 'package:obs_station/utils/routing_helper.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/scenes.dart';
-import 'package:obs_station/views/dashboard/widgets/stats/stats.dart';
 import 'package:provider/provider.dart';
+
+import '../../models/connection.dart';
+import '../../shared/basic/status_dot.dart';
+import '../../shared/dialogs/confirmation.dart';
+import '../../shared/dialogs/input.dart';
+import '../../stores/shared/network.dart';
+import '../../stores/views/dashboard.dart';
+import '../../types/enums/hive_keys.dart';
+import '../../types/enums/request_type.dart';
+import '../../utils/network_helper.dart';
+import '../../utils/routing_helper.dart';
+import 'widgets/scenes/scenes.dart';
+import 'widgets/stats/stats.dart';
 
 class DashboardView extends StatefulWidget {
   @override

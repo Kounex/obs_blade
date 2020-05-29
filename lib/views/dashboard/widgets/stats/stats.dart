@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/shared/basic/base_card.dart';
-import 'package:obs_station/stores/views/dashboard.dart';
-import 'package:obs_station/views/dashboard/widgets/stats/formatted_text.dart';
-import 'package:obs_station/views/dashboard/widgets/stats/stats_container.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../stores/views/dashboard.dart';
+import 'formatted_text.dart';
+import 'stats_container.dart';
 
 class Stats extends StatelessWidget {
   @override

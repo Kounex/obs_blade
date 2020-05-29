@@ -1,18 +1,18 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import 'package:obs_station/types/classes/api/scene.dart';
-import 'package:obs_station/types/classes/api/stream_stats.dart';
-import 'package:obs_station/types/classes/session.dart';
-import 'package:obs_station/types/classes/stream/base_event.dart';
-import 'package:obs_station/types/classes/stream/responses/base.dart';
-import 'package:obs_station/types/classes/stream/responses/get_scene_list.dart';
-import 'package:obs_station/types/enums/event_type.dart';
-import 'package:obs_station/types/enums/request_type.dart';
-import 'package:obs_station/types/mixins/short_provider.dart';
-import 'package:obs_station/utils/network_helper.dart';
 
-// Include generated file
+import '../../types/classes/api/scene.dart';
+import '../../types/classes/api/stream_stats.dart';
+import '../../types/classes/session.dart';
+import '../../types/classes/stream/base_event.dart';
+import '../../types/classes/stream/responses/base.dart';
+import '../../types/classes/stream/responses/get_scene_list.dart';
+import '../../types/enums/event_type.dart';
+import '../../types/enums/request_type.dart';
+import '../../types/mixins/short_provider.dart';
+import '../../utils/network_helper.dart';
+
 part 'dashboard.g.dart';
 
 class DashboardStore = _DashboardStore with _$DashboardStore, ShortProvider;

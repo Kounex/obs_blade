@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/stores/views/dashboard.dart';
-import 'package:obs_station/types/enums/request_type.dart';
-import 'package:obs_station/utils/network_helper.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../stores/views/dashboard.dart';
+import '../../../../types/enums/request_type.dart';
+import '../../../../utils/network_helper.dart';
 
 class Scenes extends StatelessWidget {
   @override

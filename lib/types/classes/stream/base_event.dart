@@ -1,4 +1,4 @@
-import 'package:obs_station/types/enums/event_type.dart';
+import '../../enums/event_type.dart';
 
 class BaseEvent {
   Map<String, dynamic> json;

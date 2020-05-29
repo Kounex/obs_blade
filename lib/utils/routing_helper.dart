@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/views/about/about.dart';
-import 'package:obs_station/views/dashboard/dashboard.dart';
-import 'package:obs_station/views/home/home.dart';
-import 'package:obs_station/views/settings/settings.dart';
 
 import '../tab_base.dart';
+import '../views/about/about.dart';
+import '../views/dashboard/dashboard.dart';
+import '../views/home/home.dart';
+import '../views/settings/settings.dart';
 
 enum AppRoutingKeys { TABS }
 

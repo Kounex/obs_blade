@@ -1,16 +1,16 @@
-// Include generated file
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/types/classes/session.dart';
-import 'package:obs_station/types/classes/stream/responses/base.dart';
-import 'package:obs_station/types/classes/stream/responses/get_auth_required.dart';
-import 'package:obs_station/types/enums/request_type.dart';
-import 'package:obs_station/types/enums/response_status.dart';
-import 'package:obs_station/utils/network_helper.dart';
+
+import '../../models/connection.dart';
+import '../../types/classes/session.dart';
+import '../../types/classes/stream/responses/base.dart';
+import '../../types/classes/stream/responses/get_auth_required.dart';
+import '../../types/enums/request_type.dart';
+import '../../types/enums/response_status.dart';
+import '../../utils/network_helper.dart';
 
 part 'network.g.dart';
 

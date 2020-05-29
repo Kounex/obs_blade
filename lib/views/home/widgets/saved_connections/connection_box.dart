@@ -1,12 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/models/connection.dart';
-import 'package:obs_station/shared/basic/status_dot.dart';
-import 'package:obs_station/stores/shared/network.dart';
-import 'package:obs_station/stores/views/landing.dart';
-import 'package:obs_station/views/home/widgets/saved_connections/edit_dialog.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../models/connection.dart';
+import '../../../../shared/basic/status_dot.dart';
+import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/landing.dart';
+import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
   final Connection connection;

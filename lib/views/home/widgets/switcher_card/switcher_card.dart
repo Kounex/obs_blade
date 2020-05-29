@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/shared/basic/base_card.dart';
+
+import '../../../../shared/basic/base_card.dart';
 
 class SwitcherCard extends StatelessWidget {
   final String title;

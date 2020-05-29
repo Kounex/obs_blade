@@ -1,7 +1,8 @@
 import 'dart:math';
 
 import 'package:hive/hive.dart';
-import 'package:obs_station/types/classes/api/stream_stats.dart';
+
+import '../types/classes/api/stream_stats.dart';
 
 part 'past_stream_data.g.dart';
 
