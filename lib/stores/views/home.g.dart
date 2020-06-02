@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'landing.dart';
+part of 'home.dart';
 
 // **************************************************************************
 // StoreGenerator
@@ -8,9 +8,9 @@ part of 'landing.dart';
 
 // ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
-mixin _$LandingStore on _LandingStore, Store {
+mixin _$HomeStore on _HomeStore, Store {
   final _$autodiscoverConnectionsAtom =
-      Atom(name: '_LandingStore.autodiscoverConnections');
+      Atom(name: '_HomeStore.autodiscoverConnections');
 
   @override
   Future<List<Connection>> get autodiscoverConnections {
@@ -29,7 +29,7 @@ mixin _$LandingStore on _LandingStore, Store {
         name: '${_$autodiscoverConnectionsAtom.name}_set');
   }
 
-  final _$autodiscoverPortAtom = Atom(name: '_LandingStore.autodiscoverPort');
+  final _$autodiscoverPortAtom = Atom(name: '_HomeStore.autodiscoverPort');
 
   @override
   String get autodiscoverPort {
@@ -46,7 +46,7 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$autodiscoverPortAtom, name: '${_$autodiscoverPortAtom.name}_set');
   }
 
-  final _$refreshableAtom = Atom(name: '_LandingStore.refreshable');
+  final _$refreshableAtom = Atom(name: '_HomeStore.refreshable');
 
   @override
   bool get refreshable {
@@ -63,7 +63,7 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$refreshableAtom, name: '${_$refreshableAtom.name}_set');
   }
 
-  final _$manualModeAtom = Atom(name: '_LandingStore.manualMode');
+  final _$manualModeAtom = Atom(name: '_HomeStore.manualMode');
 
   @override
   bool get manualMode {
@@ -80,46 +80,45 @@ mixin _$LandingStore on _LandingStore, Store {
     }, _$manualModeAtom, name: '${_$manualModeAtom.name}_set');
   }
 
-  final _$_LandingStoreActionController =
-      ActionController(name: '_LandingStore');
+  final _$_HomeStoreActionController = ActionController(name: '_HomeStore');
 
   @override
   void setAutodiscoverPort(String autodiscoverPort) {
-    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction();
     try {
       return super.setAutodiscoverPort(autodiscoverPort);
     } finally {
-      _$_LandingStoreActionController.endAction(_$actionInfo);
+      _$_HomeStoreActionController.endAction(_$actionInfo);
     }
   }
 
   @override
   void updateAutodiscoverConnections() {
-    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction();
     try {
       return super.updateAutodiscoverConnections();
     } finally {
-      _$_LandingStoreActionController.endAction(_$actionInfo);
+      _$_HomeStoreActionController.endAction(_$actionInfo);
     }
   }
 
   @override
   void setRefreshable(bool refreshable) {
-    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction();
     try {
       return super.setRefreshable(refreshable);
     } finally {
-      _$_LandingStoreActionController.endAction(_$actionInfo);
+      _$_HomeStoreActionController.endAction(_$actionInfo);
     }
   }
 
   @override
   void toggleManualMode([bool manualMode]) {
-    final _$actionInfo = _$_LandingStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction();
     try {
       return super.toggleManualMode(manualMode);
     } finally {
-      _$_LandingStoreActionController.endAction(_$actionInfo);
+      _$_HomeStoreActionController.endAction(_$actionInfo);
     }
   }
 

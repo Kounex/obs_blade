@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../../models/connection.dart';
 import '../../../../shared/basic/question_mark_tooltip.dart';
 import '../../../../stores/shared/network.dart';
-import '../../../../stores/views/landing.dart';
+import '../../../../stores/views/home.dart';
 import '../../../../types/classes/stream/responses/base.dart';
 import '../../../../types/enums/response_status.dart';
 import '../../../../utils/validation_helper.dart';
@@ -43,7 +43,7 @@ class _ConnectFormState extends State<ConnectForm> {
 
   @override
   Widget build(BuildContext context) {
-    LandingStore landingStore = Provider.of<LandingStore>(context);
+    HomeStore landingStore = Provider.of<HomeStore>(context);
     NetworkStore networkStore = Provider.of<NetworkStore>(context);
 
     return Form(

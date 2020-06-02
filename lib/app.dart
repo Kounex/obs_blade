@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'models/settings.dart';
 import 'stores/shared/network.dart';
-import 'stores/views/landing.dart';
+import 'stores/views/home.dart';
 import 'types/enums/hive_keys.dart';
 import 'utils/routing_helper.dart';
 
@@ -15,9 +15,9 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<LandingStore>(
+        Provider<HomeStore>(
           create: (_) {
-            LandingStore landingStore = LandingStore();
+            HomeStore landingStore = HomeStore();
 
             /// Trigger autodiscover on startup
             landingStore.updateAutodiscoverConnections();

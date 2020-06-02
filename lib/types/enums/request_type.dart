@@ -2,7 +2,8 @@ enum RequestType {
   GetAuthRequired,
   Authenticate,
   GetSceneList,
-  SetCurrentScene
+  SetCurrentScene,
+  GetCurrentScene,
 }
 
 extension RequestTypeFunctions on RequestType {
@@ -11,5 +12,6 @@ extension RequestTypeFunctions on RequestType {
         RequestType.Authenticate: 'Authenticate',
         RequestType.GetSceneList: 'GetSceneList',
         RequestType.SetCurrentScene: 'SetCurrentScene',
+        RequestType.GetCurrentScene: 'GetCurrentScene',
       }[this];
 }

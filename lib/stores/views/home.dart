@@ -1,14 +1,13 @@
 import 'package:mobx/mobx.dart';
 
 import '../../models/connection.dart';
-import '../../types/mixins/short_provider.dart';
 import '../../utils/network_helper.dart';
 
-part 'landing.g.dart';
+part 'home.g.dart';
 
-class LandingStore = _LandingStore with _$LandingStore, ShortProvider;
+class HomeStore = _HomeStore with _$HomeStore;
 
-abstract class _LandingStore with Store {
+abstract class _HomeStore with Store {
   @observable
   Future<List<Connection>> autodiscoverConnections;
   @observable

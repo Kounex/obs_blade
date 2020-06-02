@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/fader.dart';
 import '../../../../shared/basic/question_mark_tooltip.dart';
-import '../../../../stores/views/landing.dart';
+import '../../../../stores/views/home.dart';
 import '../../../../utils/validation_helper.dart';
 import 'session_tile.dart';
 
@@ -19,7 +19,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 
   @override
   Widget build(BuildContext context) {
-    LandingStore landingStore = Provider.of<LandingStore>(context);
+    HomeStore landingStore = Provider.of<HomeStore>(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

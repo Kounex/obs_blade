@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../stores/views/landing.dart';
+import '../../../../stores/views/home.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
@@ -44,7 +44,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
 
   @override
   Widget build(BuildContext context) {
-    LandingStore landingStore = Provider.of<LandingStore>(context);
+    HomeStore landingStore = Provider.of<HomeStore>(context);
     double barStretchOffset = MediaQuery.of(context).size.height / 15;
     return LayoutBuilder(
       builder: (context, constraints) {

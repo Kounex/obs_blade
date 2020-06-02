@@ -1,4 +1,4 @@
-import '../../enums/event_type.dart';
+import '../../../enums/event_type.dart';
 
 class BaseEvent {
   Map<String, dynamic> json;
@@ -14,8 +14,8 @@ class BaseEvent {
   /// (Optional): time elapsed between now and recording start (only present if OBS Studio is recording)
   String get recTimecode => this.json['rec-timecode'];
 
-  EventType instance(String text) {
-    switch (text) {
+  EventType instance(String updateType) {
+    switch (updateType) {
       case 'StreamStarted':
         return EventType.StreamStarted;
       case 'StreamStopping':
@@ -25,7 +25,9 @@ class BaseEvent {
       case 'ScenesChanged':
         return EventType.ScenesChanged;
       case 'SwitchScenes':
-        return EventType.ScenesChanged;
+        return EventType.SwitchScenes;
+      case 'TransitionBegin':
+        return EventType.TransitionBegin;
       default:
         return null;
     }

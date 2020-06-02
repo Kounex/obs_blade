@@ -1,3 +1,5 @@
+/// helper class to summarize common validation which are used
+/// in several places
 class ValidationHelper {
   static String portValidation(text) {
     int port = int.tryParse(text);

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_station/shared/basic/translucent_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/connection.dart';
@@ -57,10 +58,9 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                 body:
                     'Please choose a name for the connection so you can recognize it later on',
                 onSave: (name) {
-                  // if the challenge is null, we didn't had to connect with a password
+                  // if the challenge (or salt) is null, we didn't have to connect with a password.
                   // a user might still enter a password, we don't want this password to be
-                  // saved, thats why we set it to null explicitly if the challenge (salt could
-                  // ne used as well) is null
+                  // saved, thats why we set it to null explicitly if thats the case
                   if (networkStore.activeSession.connection.challenge == null) {
                     networkStore.activeSession.connection.pw = null;
                   }
@@ -81,167 +81,168 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
 
     return Provider<DashboardStore>(create: (_) {
       DashboardStore dashboardStore = DashboardStore();
-      dashboardStore.setNetworkStore(networkStore.activeSession);
-      NetworkHelper.makeRequest(
-          networkStore.activeSession.socket.sink, RequestType.GetSceneList);
+
+      // setting the active session and make initial requests
+      // to display data on connect
+      dashboardStore.setActiveSession(networkStore.activeSession);
       return dashboardStore;
     }, builder: (context, child) {
       DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
       return Scaffold(
-        appBar: CupertinoNavigationBar(
-          leading: CupertinoButton(
-            padding: EdgeInsets.all(0.0),
-            child: Text('Close'),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => ConfirmationDialog(
-                title: 'Close Connection',
-                body:
-                    'Are you sure you want to close the current WebSocket connection?',
-                onOk: () {
-                  networkStore.closeSession();
-                  Navigator.of(context)
-                      .pushReplacementNamed(HomeTabRoutingKeys.LANDING.route);
-                },
-              ),
-            ),
-          ),
-          middle: Column(
-            children: <Widget>[
-              Text('Dashboard'),
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-                child: Observer(builder: (_) {
-                  return StatusDot(
-                    size: 8.0,
-                    color: dashboardStore.isLive ? Colors.green : Colors.red,
-                    text: dashboardStore.isLive ? 'Live' : 'Not Live',
-                    style: Theme.of(context).textTheme.caption,
-                  );
-                }),
-              ),
-            ],
-          ),
-          trailing: Container(
-            width: 150.0,
-            alignment: Alignment.bottomRight,
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _appBarActions[0],
-                icon: Container(),
-                isExpanded: true,
-                selectedItemBuilder: (_) => [
-                  Container(
-                    alignment: Alignment.centerRight,
-                    child: Icon(
-                      CupertinoIcons.ellipsis,
-                      size: 32.0,
-                    ),
-                  )
-                ],
-                items: _appBarActions
-                    .map(
-                      (action) => DropdownMenuItem<String>(
-                        child: SizedBox(
-                          width: 150.0,
-                          child: Text(
-                            action,
-                          ),
-                        ),
-                        value: action,
-                      ),
-                    )
-                    .toList(),
-                onChanged: (selection) => print(selection),
-              ),
-            ),
-          ),
-        ),
+        // appBar: CupertinoNavigationBar(
+        //   leading: CupertinoButton(
+        //     padding: EdgeInsets.all(0.0),
+        //     child: Text('Close'),
+        //     onPressed: () => showDialog(
+        //       context: context,
+        //       builder: (_) => ConfirmationDialog(
+        //         title: 'Close Connection',
+        //         body:
+        //             'Are you sure you want to close the current WebSocket connection?',
+        //         onOk: () {
+        //           networkStore.closeSession();
+        //           Navigator.of(context)
+        //               .pushReplacementNamed(HomeTabRoutingKeys.LANDING.route);
+        //         },
+        //       ),
+        //     ),
+        //   ),
+        //   middle: Column(
+        //     children: <Widget>[
+        //       Text('Dashboard'),
+        //       Padding(
+        //         padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+        //         child: Observer(builder: (_) {
+        //           return StatusDot(
+        //             size: 8.0,
+        //             color: dashboardStore.isLive ? Colors.green : Colors.red,
+        //             text: dashboardStore.isLive ? 'Live' : 'Not Live',
+        //             style: Theme.of(context).textTheme.caption,
+        //           );
+        //         }),
+        //       ),
+        //     ],
+        //   ),
+        //   trailing: Container(
+        //     width: 150.0,
+        //     alignment: Alignment.bottomRight,
+        //     child: DropdownButtonHideUnderline(
+        //       child: DropdownButton<String>(
+        //         value: _appBarActions[0],
+        //         icon: Container(),
+        //         isExpanded: true,
+        //         selectedItemBuilder: (_) => [
+        //           Container(
+        //             alignment: Alignment.centerRight,
+        //             child: Icon(
+        //               CupertinoIcons.ellipsis,
+        //               size: 32.0,
+        //             ),
+        //           )
+        //         ],
+        //         items: _appBarActions
+        //             .map(
+        //               (action) => DropdownMenuItem<String>(
+        //                 child: SizedBox(
+        //                   width: 150.0,
+        //                   child: Text(
+        //                     action,
+        //                   ),
+        //                 ),
+        //                 value: action,
+        //               ),
+        //             )
+        //             .toList(),
+        //         onChanged: (selection) => print(selection),
+        //       ),
+        //     ),
+        //   ),
+        // ),
         body: CustomScrollView(
           slivers: [
-            // SliverAppBar(
-            //   pinned: true,
-            //   title: Stack(
-            //     alignment: Alignment.center,
-            //     children: <Widget>[
-            //       Row(
-            //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //         crossAxisAlignment: CrossAxisAlignment.end,
-            //         children: [
-            //           CupertinoButton(
-            //             child: Text('Close'),
-            //             onPressed: () => showDialog(
-            //               context: context,
-            //               builder: (_) => ConfirmationDialog(
-            //                 title: 'Close Connection',
-            //                 body:
-            //                     'Are you sure you want to close the current WebSocket connection?',
-            //                 onOk: () {
-            //                   networkStore.closeSession();
-            //                   Navigator.of(context).pushReplacementNamed(
-            //                       HomeTabRoutingKeys.LANDING.route);
-            //                 },
-            //               ),
-            //             ),
-            //           ),
-            //           Container(
-            //             width: 150.0,
-            //             alignment: Alignment.bottomRight,
-            //             child: DropdownButtonHideUnderline(
-            //               child: DropdownButton<String>(
-            //                 value: _appBarActions[0],
-            //                 icon: Container(),
-            //                 isExpanded: true,
-            //                 selectedItemBuilder: (_) => [
-            //                   Container(
-            //                     alignment: Alignment.centerRight,
-            //                     child: Icon(
-            //                       CupertinoIcons.ellipsis,
-            //                       size: 32.0,
-            //                     ),
-            //                   )
-            //                 ],
-            //                 items: _appBarActions
-            //                     .map(
-            //                       (action) => DropdownMenuItem<String>(
-            //                         child: SizedBox(
-            //                           width: 150.0,
-            //                           child: Text(
-            //                             action,
-            //                           ),
-            //                         ),
-            //                         value: action,
-            //                       ),
-            //                     )
-            //                     .toList(),
-            //                 onChanged: (selection) => print(selection),
-            //               ),
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //       Column(
-            //         children: <Widget>[
-            //           Text('Dashboard'),
-            //           Padding(
-            //             padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-            //             child: Observer(builder: (_) {
-            //               return StatusDot(
-            //                 size: 8.0,
-            //                 color: dashboardStore.isLive
-            //                     ? Colors.green
-            //                     : Colors.red,
-            //                 text: dashboardStore.isLive ? 'Live' : 'Not Live',
-            //                 style: Theme.of(context).textTheme.caption,
-            //               );
-            //             }),
-            //           ),
-            //         ],
-            //       ),
-            //     ],
-            //   ),
-            // ),
+            TransculentSliverAppBar(
+              pinned: true,
+              title: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      CupertinoButton(
+                        child: Text('Close'),
+                        onPressed: () => showDialog(
+                          context: context,
+                          builder: (_) => ConfirmationDialog(
+                            title: 'Close Connection',
+                            body:
+                                'Are you sure you want to close the current WebSocket connection?',
+                            onOk: () {
+                              networkStore.closeSession();
+                              Navigator.of(context).pushReplacementNamed(
+                                  HomeTabRoutingKeys.LANDING.route);
+                            },
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 150.0,
+                        alignment: Alignment.bottomRight,
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _appBarActions[0],
+                            icon: Container(),
+                            isExpanded: true,
+                            selectedItemBuilder: (_) => [
+                              Container(
+                                alignment: Alignment.centerRight,
+                                child: Icon(
+                                  CupertinoIcons.ellipsis,
+                                  size: 32.0,
+                                ),
+                              )
+                            ],
+                            items: _appBarActions
+                                .map(
+                                  (action) => DropdownMenuItem<String>(
+                                    child: SizedBox(
+                                      width: 150.0,
+                                      child: Text(
+                                        action,
+                                      ),
+                                    ),
+                                    value: action,
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (selection) => print(selection),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: <Widget>[
+                      Text('Dashboard'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
+                        child: Observer(builder: (_) {
+                          return StatusDot(
+                            size: 8.0,
+                            color: dashboardStore.isLive
+                                ? Colors.green
+                                : Colors.red,
+                            text: dashboardStore.isLive ? 'Live' : 'Not Live',
+                            style: Theme.of(context).textTheme.caption,
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             SliverPadding(
               padding: EdgeInsets.only(bottom: 50.0),
               sliver: SliverList(

@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../models/connection.dart';
 import '../../../../shared/basic/status_dot.dart';
 import '../../../../stores/shared/network.dart';
-import '../../../../stores/views/landing.dart';
+import '../../../../stores/views/home.dart';
 import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
@@ -20,7 +20,7 @@ class ConnectionBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = Provider.of<NetworkStore>(context);
-    LandingStore landingStore = Provider.of<LandingStore>(context);
+    HomeStore landingStore = Provider.of<HomeStore>(context);
 
     return Container(
       width: this.width,

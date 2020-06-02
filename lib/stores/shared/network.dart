@@ -92,7 +92,7 @@ abstract class _NetworkStore with Store {
                 NetworkHelper.makeRequest(
                     this.activeSession.socket.sink,
                     RequestType.Authenticate,
-                    {'auth': NetworkHelper.getAuthResponse(connection)});
+                    {'auth': NetworkHelper.getAuthRequestContent(connection)});
               } else {
                 authCompleter.complete(response);
               }

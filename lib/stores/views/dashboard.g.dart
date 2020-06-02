@@ -94,28 +94,46 @@ mixin _$DashboardStore on _DashboardStore, Store {
     }, _$scenesAtom, name: '${_$scenesAtom.name}_set');
   }
 
+  final _$currentSceneItemsAtom =
+      Atom(name: '_DashboardStore.currentSceneItems');
+
+  @override
+  ObservableList<SceneItem> get currentSceneItems {
+    _$currentSceneItemsAtom.context.enforceReadPolicy(_$currentSceneItemsAtom);
+    _$currentSceneItemsAtom.reportObserved();
+    return super.currentSceneItems;
+  }
+
+  @override
+  set currentSceneItems(ObservableList<SceneItem> value) {
+    _$currentSceneItemsAtom.context.conditionallyRunInAction(() {
+      super.currentSceneItems = value;
+      _$currentSceneItemsAtom.reportChanged();
+    }, _$currentSceneItemsAtom, name: '${_$currentSceneItemsAtom.name}_set');
+  }
+
+  final _$sceneTransitionDurationMSAtom =
+      Atom(name: '_DashboardStore.sceneTransitionDurationMS');
+
+  @override
+  int get sceneTransitionDurationMS {
+    _$sceneTransitionDurationMSAtom.context
+        .enforceReadPolicy(_$sceneTransitionDurationMSAtom);
+    _$sceneTransitionDurationMSAtom.reportObserved();
+    return super.sceneTransitionDurationMS;
+  }
+
+  @override
+  set sceneTransitionDurationMS(int value) {
+    _$sceneTransitionDurationMSAtom.context.conditionallyRunInAction(() {
+      super.sceneTransitionDurationMS = value;
+      _$sceneTransitionDurationMSAtom.reportChanged();
+    }, _$sceneTransitionDurationMSAtom,
+        name: '${_$sceneTransitionDurationMSAtom.name}_set');
+  }
+
   final _$_DashboardStoreActionController =
       ActionController(name: '_DashboardStore');
-
-  @override
-  dynamic updateActiveScene(String name) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction();
-    try {
-      return super.updateActiveScene(name);
-    } finally {
-      _$_DashboardStoreActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
-  dynamic setScenes(Iterable<Scene> scenes) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction();
-    try {
-      return super.setScenes(scenes);
-    } finally {
-      _$_DashboardStoreActionController.endAction(_$actionInfo);
-    }
-  }
 
   @override
   dynamic _handleEvent(BaseEvent event) {
@@ -140,7 +158,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
   @override
   String toString() {
     final string =
-        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()}';
+        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()},currentSceneItems: ${currentSceneItems.toString()},sceneTransitionDurationMS: ${sceneTransitionDurationMS.toString()}';
     return '{$string}';
   }
 }

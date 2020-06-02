@@ -1,21 +1,24 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
+import 'package:obs_station/types/classes/api/scene_item.dart';
+import 'package:obs_station/types/classes/stream/events/base.dart';
+import 'package:obs_station/types/classes/stream/events/switch_scenes.dart';
+import 'package:obs_station/types/classes/stream/events/transition_begin.dart';
+import 'package:obs_station/types/classes/stream/responses/get_current_scene.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/session.dart';
-import '../../types/classes/stream/base_event.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
-import '../../types/mixins/short_provider.dart';
 import '../../utils/network_helper.dart';
 
 part 'dashboard.g.dart';
 
-class DashboardStore = _DashboardStore with _$DashboardStore, ShortProvider;
+class DashboardStore = _DashboardStore with _$DashboardStore;
 
 abstract class _DashboardStore with Store {
   @observable
@@ -29,18 +32,25 @@ abstract class _DashboardStore with Store {
   String activeSceneName;
   @observable
   ObservableList<Scene> scenes;
+  @observable
+  ObservableList<SceneItem> currentSceneItems;
+
+  @observable
+  int sceneTransitionDurationMS;
 
   Session activeSession;
 
-  @action
-  updateActiveScene(String name) => this.activeSceneName = name;
-
-  @action
-  setScenes(Iterable<Scene> scenes) => this.scenes = scenes;
-
-  setNetworkStore(Session activeSession) {
+  setActiveSession(Session activeSession) {
     this.activeSession = activeSession;
+    this.initialRequests();
     this.handleStream();
+  }
+
+  initialRequests() {
+    NetworkHelper.makeRequest(
+        this.activeSession.socket.sink, RequestType.GetSceneList);
+    NetworkHelper.makeRequest(
+        this.activeSession.socket.sink, RequestType.GetCurrentScene);
   }
 
   handleStream() {
@@ -77,7 +87,14 @@ abstract class _DashboardStore with Store {
             this.activeSession.socket.sink, RequestType.GetSceneList);
         break;
       case EventType.SwitchScenes:
-        this.activeSceneName = event.json['scene-name'];
+        SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
+        this.currentSceneItems = ObservableList.of(switchSceneEvent.sources);
+        break;
+      case EventType.TransitionBegin:
+        TransitionBeginEvent transitionBeginEvent =
+            TransitionBeginEvent(event.json);
+        this.sceneTransitionDurationMS = transitionBeginEvent.duration;
+        this.activeSceneName = transitionBeginEvent.toScene;
         break;
       default:
         break;
@@ -92,6 +109,12 @@ abstract class _DashboardStore with Store {
             GetSceneListResponse(response.json);
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
+        break;
+      case RequestType.GetCurrentScene:
+        GetCurrentSceneResponse getCurrentSceneResponse =
+            GetCurrentSceneResponse(response.json);
+        this.currentSceneItems =
+            ObservableList.of(getCurrentSceneResponse.sources);
         break;
       default:
         break;

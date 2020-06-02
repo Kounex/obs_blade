@@ -7,7 +7,7 @@ import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
 import 'package:provider/provider.dart';
 
 import '../../stores/shared/network.dart';
-import '../../stores/views/landing.dart';
+import '../../stores/views/home.dart';
 import '../../types/enums/response_status.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/routing_helper.dart';
@@ -18,55 +18,57 @@ import 'widgets/saved_connections/saved_connections.dart';
 import 'widgets/switcher_card/switcher_card.dart';
 
 class HomeView extends StatelessWidget {
+  void _handleConnectionAttempt(
+      BuildContext context, NetworkStore networkStore) {
+    if (networkStore.connectionInProgress) {
+      OverlayHandler.showStatusOverlay(
+        context: context,
+        showDuration: Duration(seconds: 5),
+        content: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              strokeWidth: 2.0,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 24.0),
+              child: Text('Connecting...'),
+            ),
+          ],
+        ),
+      );
+    } else if (networkStore.connectionWasInProgress &&
+        !networkStore.connectionInProgress) {
+      if (networkStore.connectionResponse.status == ResponseStatus.OK.text) {
+        Navigator.pushReplacementNamed(
+            context, HomeTabRoutingKeys.DASHBOARD.route);
+      }
+      if (!networkStore.connectionResponse.error.contains('Authentication')) {
+        OverlayHandler.showStatusOverlay(
+          context: context,
+          replaceIfActive: true,
+          content: Align(
+            alignment: Alignment.center,
+            child: Text(
+              networkStore.connectionResponse.status == ResponseStatus.OK.text
+                  ? 'WebSocket connection established!'
+                  : 'Couldn\'t connect to a WebSocket!',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = Provider.of<NetworkStore>(context);
-    LandingStore landingStore = Provider.of<LandingStore>(context);
+    HomeStore landingStore = Provider.of<HomeStore>(context);
 
     return ObserverListener(
       listener: (_) {
-        if (networkStore.connectionInProgress) {
-          OverlayHandler.showStatusOverlay(
-            context: context,
-            showDuration: Duration(seconds: 5),
-            content: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  strokeWidth: 2.0,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 24.0),
-                  child: Text('Connecting...'),
-                ),
-              ],
-            ),
-          );
-        } else if (networkStore.connectionWasInProgress &&
-            !networkStore.connectionInProgress) {
-          if (networkStore.connectionResponse.status ==
-              ResponseStatus.OK.text) {
-            Navigator.pushReplacementNamed(
-                context, HomeTabRoutingKeys.DASHBOARD.route);
-          }
-          if (!networkStore.connectionResponse.error
-              .contains('Authentication')) {
-            OverlayHandler.showStatusOverlay(
-              context: context,
-              replaceIfActive: true,
-              content: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  networkStore.connectionResponse.status ==
-                          ResponseStatus.OK.text
-                      ? 'WebSocket connection established!'
-                      : 'Couldn\'t connect to a WebSocket!',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-        }
+        _handleConnectionAttempt(context, networkStore);
       },
       child: Scaffold(
         body: Listener(
