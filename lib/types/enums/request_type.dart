@@ -4,6 +4,9 @@ enum RequestType {
   GetSceneList,
   SetCurrentScene,
   GetCurrentScene,
+  GetSourcesList,
+  GetSourceTypesList,
+  GetVolume,
 }
 
 extension RequestTypeFunctions on RequestType {
@@ -13,5 +16,10 @@ extension RequestTypeFunctions on RequestType {
         RequestType.GetSceneList: 'GetSceneList',
         RequestType.SetCurrentScene: 'SetCurrentScene',
         RequestType.GetCurrentScene: 'GetCurrentScene',
+        RequestType.GetSourcesList: 'GetSourcesList',
+        RequestType.GetSourceTypesList: 'GetSourceTypesList',
+        RequestType.GetVolume: 'GetVolume',
       }[this];
+
+  // Map<String, Type> fields()
 }

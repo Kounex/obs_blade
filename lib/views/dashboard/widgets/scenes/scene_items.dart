@@ -13,8 +13,14 @@ class SceneItems extends StatelessWidget {
         children: dashboardStore.currentSceneItems != null
             ? dashboardStore.currentSceneItems
                 .map(
-                  (sceneItem) => Text(
-                    sceneItem.name,
+                  (sceneItem) => Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        sceneItem.name,
+                      ),
+                      Text(sceneItem.volume?.toString())
+                    ],
                   ),
                 )
                 .toList()

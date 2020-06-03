@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_station/views/dashboard/widgets/scenes/audio_inputs.dart';
 import 'package:obs_station/views/dashboard/widgets/scenes/scene_items.dart';
 import 'package:provider/provider.dart';
 
@@ -85,8 +86,21 @@ class Scenes extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 24.0),
-            child: SceneItems(),
+            padding: const EdgeInsets.only(top: 42.0),
+            child: Row(
+              children: [
+                Expanded(
+                    child: Padding(
+                  padding: const EdgeInsets.only(left: 42.0, right: 6.0),
+                  child: SceneItems(),
+                )),
+                Expanded(
+                    child: Padding(
+                  padding: const EdgeInsets.only(left: 12.0, right: 42.0),
+                  child: AudioInputs(),
+                ))
+              ],
+            ),
           ),
         ],
       ),
