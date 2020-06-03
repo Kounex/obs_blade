@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../types/classes/api/scene.dart';
@@ -13,8 +12,11 @@ import '../../types/classes/stream/events/transition_begin.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
+import '../../types/classes/stream/responses/get_source_settings.dart';
 import '../../types/classes/stream/responses/get_source_types_list.dart';
 import '../../types/classes/stream/responses/get_sources_list.dart';
+import '../../types/classes/stream/responses/get_volume.dart';
+import '../../types/classes/stream/responses/list_outputs.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
 import '../../utils/network_helper.dart';
@@ -54,10 +56,12 @@ abstract class _DashboardStore with Store {
         this.activeSession.socket.sink, RequestType.GetSceneList);
     NetworkHelper.makeRequest(
         this.activeSession.socket.sink, RequestType.GetCurrentScene);
-    NetworkHelper.makeRequest(
-        this.activeSession.socket.sink, RequestType.GetSourcesList);
+    // NetworkHelper.makeRequest(
+    //     this.activeSession.socket.sink, RequestType.GetSourcesList);
     NetworkHelper.makeRequest(
         this.activeSession.socket.sink, RequestType.GetSourceTypesList);
+    // NetworkHelper.makeRequest(
+    //     this.activeSession.socket.sink, RequestType.ListOutputs);
   }
 
   handleStream() {
@@ -103,6 +107,10 @@ abstract class _DashboardStore with Store {
         this.sceneTransitionDurationMS = transitionBeginEvent.duration;
         this.activeSceneName = transitionBeginEvent.toScene;
         break;
+      case EventType.Exiting:
+        // TODO: OBS has been closed while being connected to the WebSocket
+        // need to go back to landing and inform the user with a dialog etc.
+        break;
       default:
         break;
     }
@@ -122,16 +130,39 @@ abstract class _DashboardStore with Store {
             GetCurrentSceneResponse(response.json);
         this.currentSceneItems =
             ObservableList.of(getCurrentSceneResponse.sources);
+        getCurrentSceneResponse.sources
+            .forEach((sceneItem) => print(sceneItem.type));
         break;
       case RequestType.GetSourcesList:
-        print(response.json);
         GetSourcesListResponse getSourcesListResponse =
             GetSourcesListResponse(response.json);
+        // getSourcesListResponse.sources.forEach((source) {
+        //   print('${source.name}: ${source.typeID}');
+        //   NetworkHelper.makeRequest(this.activeSession.socket.sink,
+        //       RequestType.GetSourceSettings, {'sourceName': source.name});
+        // });
         break;
       case RequestType.GetSourceTypesList:
-        // debugPrint(response.json.toString(), wrapWidth: 1000000);
-        // GetSourceTypesList getSourceTypesList =
-        //     GetSourceTypesList(response.json);
+        GetSourceTypesList getSourceTypesList =
+            GetSourceTypesList(response.json);
+        getSourceTypesList.types
+            .forEach((type) => print('${type.typeID}: ${type.caps.hasAudio}'));
+        break;
+      case RequestType.GetVolume:
+        GetVolumeResponse getVolumeResponse = GetVolumeResponse(response.json);
+        // print('${getVolumeResponse.name}: ${getVolumeResponse.volume}');
+        break;
+      case RequestType.GetSourceSettings:
+        GetSourceSettingsResponse getSourceSettingsResponse =
+            GetSourceSettingsResponse(response.json);
+        // print(
+        //     '${getSourceSettingsResponse.sourceName}: ${getSourceSettingsResponse.sourceSettings}');
+        break;
+      case RequestType.ListOutputs:
+        ListOutputsResponse listOutputsResponse =
+            ListOutputsResponse(response.json);
+        // listOutputsResponse.outputs.forEach(
+        //     (output) => print('${output.name}: ${output.flags.audio}'));
         break;
       default:
         break;

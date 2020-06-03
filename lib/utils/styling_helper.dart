@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
-/// will hold some general styling stuff like "custom" icons or some
+/// Will hold some general styling stuff like "custom" icons or some
 /// app wide layout constraints (if applicable)
 class StylingHelper {
   static const IconData CUPERTINO_MACBOOK_ICON = const IconData(0xf390,

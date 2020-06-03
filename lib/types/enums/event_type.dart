@@ -5,4 +5,5 @@ enum EventType {
   ScenesChanged,
   SwitchScenes,
   TransitionBegin,
+  Exiting,
 }

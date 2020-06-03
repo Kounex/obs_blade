@@ -6,24 +6,24 @@ import '../views/dashboard/dashboard.dart';
 import '../views/home/home.dart';
 import '../views/settings/settings.dart';
 
-/// all routing keys available on root level - for now the whole app
+/// All routing keys available on root level - for now the whole app
 /// is wrapped in tabs and no other root level views (which are not inside
 /// those tabs) are used
 enum AppRoutingKeys { TABS }
 
-/// routing keys for the home tab
+/// Routing keys for the home tab
 enum HomeTabRoutingKeys {
   LANDING,
   DASHBOARD,
 }
 
-/// routing keys for the settings tab
+/// Routing keys for the settings tab
 enum SettingsTabRoutingKeys {
   LANDING,
   ABOUT,
 }
 
-/// extension method for [AppRoutingKeys] enum to get the actual route
+/// Extension method for [AppRoutingKeys] enum to get the actual route
 /// path for an enum
 extension AppRoutingKeysFunctions on AppRoutingKeys {
   String get route => const {
@@ -31,7 +31,7 @@ extension AppRoutingKeysFunctions on AppRoutingKeys {
       }[this];
 }
 
-/// extension method for [HomeTabRoutingKeys] enum to get the actual route
+/// Extension method for [HomeTabRoutingKeys] enum to get the actual route
 /// path for an enum
 extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
   String get route => {
@@ -41,7 +41,7 @@ extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
       }[this];
 }
 
-/// extension method for [SettingsTabRoutingKeys] enum to get the actual route
+/// Extension method for [SettingsTabRoutingKeys] enum to get the actual route
 /// path for an enum
 extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
   String get route => {

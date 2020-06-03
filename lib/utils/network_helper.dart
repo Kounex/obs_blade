@@ -11,13 +11,13 @@ import '../models/connection.dart';
 import '../types/enums/request_type.dart';
 
 class NetworkHelper {
-  /// establish and return an instance of [IOWebSocketChannel] based on the
+  /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port)
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
           'ws://${connection.ip}:${connection.port.toString()}');
 
-  /// initiating an autodiscover process (based on [TCPScanner]) to look for
+  /// Initiating an autodiscover process (based on [TCPScanner]) to look for
   /// applications in the local network which listen on the given port (default
   /// port is 4444)
   static Future<List<Connection>> getAvailableOBSIPs({int port = 4444}) async {
@@ -37,7 +37,7 @@ class NetworkHelper {
     return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
   }
 
-  /// this is the content of the auth field which is needed to correctly
+  /// This is the content of the auth field which is needed to correctly
   /// authenticate with the OBS WebSocket if a password has been set
   static String getAuthRequestContent(Connection connection) {
     String secretString = '${connection.pw}${connection.salt}';
@@ -51,7 +51,7 @@ class NetworkHelper {
     return authResponse;
   }
 
-  /// making a request to the OBS WebSocket to trigger a request being
+  /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
   static void makeRequest(WebSocketSink sink, RequestType request,
       [Map<String, dynamic> fields]) {
