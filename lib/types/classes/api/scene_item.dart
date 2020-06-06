@@ -52,6 +52,12 @@ class SceneItem {
       this.parentGroupName,
       this.groupChildren});
 
+  SceneItem.audio({
+    @required this.name,
+    @required this.volume,
+    @required this.muted,
+  });
+
   static SceneItem fromJSON(Map<String, dynamic> json) => SceneItem(
       cy: json['cy'],
       cx: json['cx'],

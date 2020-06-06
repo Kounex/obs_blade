@@ -29,6 +29,9 @@ enum RequestType {
 
   /// No specified parameters
   ListOutputs,
+
+  /// No specified parameters
+  GetSpecialSources,
 }
 
 extension RequestTypeFunctions on RequestType {
@@ -43,5 +46,6 @@ extension RequestTypeFunctions on RequestType {
         RequestType.GetVolume: 'GetVolume',
         RequestType.GetSourceSettings: 'GetSourceSettings',
         RequestType.ListOutputs: 'ListOutputs',
+        RequestType.GetSpecialSources: 'GetSpecialSources',
       }[this];
 }

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
+import 'package:obs_station/types/classes/api/source_type.dart';
+import 'package:obs_station/types/classes/stream/responses/get_special_sources.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
@@ -40,10 +42,25 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<SceneItem> currentSceneItems;
 
+  // TODO: computed does not trigger on observable update (seems like)
+  @computed
+  ObservableList<SceneItem> get currentAudioSceneItems =>
+      ObservableList.of(currentSceneItems?.where((sceneItem) => this
+              .sourceTypes
+              .any((sourceType) =>
+                  sourceType.caps.hasAudio &&
+                  sourceType.typeID == sceneItem.type)) ??
+          []);
+
+  @observable
+  ObservableList<SceneItem> globalAudioItems = ObservableList();
+
   @observable
   int sceneTransitionDurationMS;
 
   Session activeSession;
+
+  List<SourceType> sourceTypes;
 
   setActiveSession(Session activeSession) {
     this.activeSession = activeSession;
@@ -54,8 +71,6 @@ abstract class _DashboardStore with Store {
   initialRequests() {
     NetworkHelper.makeRequest(
         this.activeSession.socket.sink, RequestType.GetSceneList);
-    NetworkHelper.makeRequest(
-        this.activeSession.socket.sink, RequestType.GetCurrentScene);
     // NetworkHelper.makeRequest(
     //     this.activeSession.socket.sink, RequestType.GetSourcesList);
     NetworkHelper.makeRequest(
@@ -130,12 +145,32 @@ abstract class _DashboardStore with Store {
             GetCurrentSceneResponse(response.json);
         this.currentSceneItems =
             ObservableList.of(getCurrentSceneResponse.sources);
-        getCurrentSceneResponse.sources
-            .forEach((sceneItem) => print(sceneItem.type));
+        break;
+      case RequestType.GetSpecialSources:
+        GetSpecialSourcesResponse getSpecialSourcesResponse =
+            GetSpecialSourcesResponse(response.json);
+        if (getSpecialSourcesResponse.mic1 != null) {
+          NetworkHelper.makeRequest(
+              this.activeSession.socket.sink,
+              RequestType.GetVolume,
+              {'source': getSpecialSourcesResponse.mic1});
+        }
+        if (getSpecialSourcesResponse.mic2 != null) {
+          NetworkHelper.makeRequest(
+              this.activeSession.socket.sink,
+              RequestType.GetVolume,
+              {'source': getSpecialSourcesResponse.mic2});
+        }
+        if (getSpecialSourcesResponse.mic3 != null) {
+          NetworkHelper.makeRequest(
+              this.activeSession.socket.sink,
+              RequestType.GetVolume,
+              {'source': getSpecialSourcesResponse.mic3});
+        }
         break;
       case RequestType.GetSourcesList:
-        GetSourcesListResponse getSourcesListResponse =
-            GetSourcesListResponse(response.json);
+        // GetSourcesListResponse getSourcesListResponse =
+        //     GetSourcesListResponse(response.json);
         // getSourcesListResponse.sources.forEach((source) {
         //   print('${source.name}: ${source.typeID}');
         //   NetworkHelper.makeRequest(this.activeSession.socket.sink,
@@ -145,22 +180,32 @@ abstract class _DashboardStore with Store {
       case RequestType.GetSourceTypesList:
         GetSourceTypesList getSourceTypesList =
             GetSourceTypesList(response.json);
-        getSourceTypesList.types
-            .forEach((type) => print('${type.typeID}: ${type.caps.hasAudio}'));
+        this.sourceTypes = getSourceTypesList.types;
+        NetworkHelper.makeRequest(
+            this.activeSession.socket.sink, RequestType.GetCurrentScene);
+        NetworkHelper.makeRequest(
+            this.activeSession.socket.sink, RequestType.GetSpecialSources);
         break;
       case RequestType.GetVolume:
         GetVolumeResponse getVolumeResponse = GetVolumeResponse(response.json);
-        // print('${getVolumeResponse.name}: ${getVolumeResponse.volume}');
+        if (this.globalAudioItems.every((globalAudioItem) =>
+            globalAudioItem.name != getVolumeResponse.name)) {
+          this.globalAudioItems.add(SceneItem.audio(
+                name: getVolumeResponse.name,
+                volume: getVolumeResponse.volume,
+                muted: getVolumeResponse.muted,
+              ));
+        }
         break;
       case RequestType.GetSourceSettings:
-        GetSourceSettingsResponse getSourceSettingsResponse =
-            GetSourceSettingsResponse(response.json);
+        // GetSourceSettingsResponse getSourceSettingsResponse =
+        //     GetSourceSettingsResponse(response.json);
         // print(
         //     '${getSourceSettingsResponse.sourceName}: ${getSourceSettingsResponse.sourceSettings}');
         break;
       case RequestType.ListOutputs:
-        ListOutputsResponse listOutputsResponse =
-            ListOutputsResponse(response.json);
+        // ListOutputsResponse listOutputsResponse =
+        //     ListOutputsResponse(response.json);
         // listOutputsResponse.outputs.forEach(
         //     (output) => print('${output.name}: ${output.flags.audio}'));
         break;

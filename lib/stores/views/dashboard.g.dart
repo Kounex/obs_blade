@@ -9,6 +9,14 @@ part of 'dashboard.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$DashboardStore on _DashboardStore, Store {
+  Computed<ObservableList<SceneItem>> _$currentAudioSceneItemsComputed;
+
+  @override
+  ObservableList<SceneItem> get currentAudioSceneItems =>
+      (_$currentAudioSceneItemsComputed ??= Computed<ObservableList<SceneItem>>(
+              () => super.currentAudioSceneItems))
+          .value;
+
   final _$isLiveAtom = Atom(name: '_DashboardStore.isLive');
 
   @override
@@ -112,6 +120,23 @@ mixin _$DashboardStore on _DashboardStore, Store {
     }, _$currentSceneItemsAtom, name: '${_$currentSceneItemsAtom.name}_set');
   }
 
+  final _$globalAudioItemsAtom = Atom(name: '_DashboardStore.globalAudioItems');
+
+  @override
+  ObservableList<SceneItem> get globalAudioItems {
+    _$globalAudioItemsAtom.context.enforceReadPolicy(_$globalAudioItemsAtom);
+    _$globalAudioItemsAtom.reportObserved();
+    return super.globalAudioItems;
+  }
+
+  @override
+  set globalAudioItems(ObservableList<SceneItem> value) {
+    _$globalAudioItemsAtom.context.conditionallyRunInAction(() {
+      super.globalAudioItems = value;
+      _$globalAudioItemsAtom.reportChanged();
+    }, _$globalAudioItemsAtom, name: '${_$globalAudioItemsAtom.name}_set');
+  }
+
   final _$sceneTransitionDurationMSAtom =
       Atom(name: '_DashboardStore.sceneTransitionDurationMS');
 
@@ -158,7 +183,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
   @override
   String toString() {
     final string =
-        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()},currentSceneItems: ${currentSceneItems.toString()},sceneTransitionDurationMS: ${sceneTransitionDurationMS.toString()}';
+        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()},currentSceneItems: ${currentSceneItems.toString()},globalAudioItems: ${globalAudioItems.toString()},sceneTransitionDurationMS: ${sceneTransitionDurationMS.toString()},currentAudioSceneItems: ${currentAudioSceneItems.toString()}';
     return '{$string}';
   }
 }
