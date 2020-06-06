@@ -10,21 +10,21 @@ class SceneItems extends StatelessWidget {
 
     return Observer(builder: (_) {
       return Column(
-        children: dashboardStore.currentSceneItems != null
-            ? dashboardStore.currentSceneItems
-                .map(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          ...dashboardStore.currentSceneItems != null
+              ? dashboardStore.currentSceneItems.map(
                   (sceneItem) => Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         sceneItem.name,
                       ),
-                      Text(sceneItem.volume?.toString())
                     ],
                   ),
                 )
-                .toList()
-            : [Text('No Scene Items available')],
+              : [Text('No Scene Items available')]
+        ],
       );
     });
   }

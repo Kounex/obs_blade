@@ -87,18 +87,45 @@ class Scenes extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 42.0),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                    child: Padding(
-                  padding: const EdgeInsets.only(left: 42.0, right: 6.0),
-                  child: SceneItems(),
-                )),
-                Expanded(
-                    child: Padding(
-                  padding: const EdgeInsets.only(left: 12.0, right: 42.0),
-                  child: AudioInputs(),
-                ))
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        color: Theme.of(context).cardColor,
+                        height: 30.0,
+                        alignment: Alignment.center,
+                        child: Text('Sources'),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        color: Theme.of(context).cardColor,
+                        height: 30.0,
+                        alignment: Alignment.center,
+                        child: Text('Audio'),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: SceneItems(),
+                      ),
+                    ),
+                    VerticalDivider(),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: AudioInputs(),
+                      ),
+                    )
+                  ],
+                ),
               ],
             ),
           ),

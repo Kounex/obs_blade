@@ -1,11 +1,10 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import 'package:obs_station/types/classes/api/source_type.dart';
-import 'package:obs_station/types/classes/stream/responses/get_special_sources.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
+import '../../types/classes/api/source_type.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
@@ -14,11 +13,9 @@ import '../../types/classes/stream/events/transition_begin.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
-import '../../types/classes/stream/responses/get_source_settings.dart';
 import '../../types/classes/stream/responses/get_source_types_list.dart';
-import '../../types/classes/stream/responses/get_sources_list.dart';
+import '../../types/classes/stream/responses/get_special_sources.dart';
 import '../../types/classes/stream/responses/get_volume.dart';
-import '../../types/classes/stream/responses/list_outputs.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
 import '../../utils/network_helper.dart';
@@ -44,13 +41,16 @@ abstract class _DashboardStore with Store {
 
   // TODO: computed does not trigger on observable update (seems like)
   @computed
-  ObservableList<SceneItem> get currentAudioSceneItems =>
-      ObservableList.of(currentSceneItems?.where((sceneItem) => this
-              .sourceTypes
-              .any((sourceType) =>
-                  sourceType.caps.hasAudio &&
-                  sourceType.typeID == sceneItem.type)) ??
-          []);
+  ObservableList<SceneItem> get currentAudioSceneItems {
+    print(this.currentSceneItems);
+    return this.currentSceneItems != null
+        ? ObservableList.of(currentSceneItems?.where((sceneItem) => this
+            .sourceTypes
+            .any((sourceType) =>
+                sourceType.caps.hasAudio &&
+                sourceType.typeID == sceneItem.type)))
+        : ObservableList.of([]);
+  }
 
   @observable
   ObservableList<SceneItem> globalAudioItems = ObservableList();
