@@ -120,21 +120,24 @@ mixin _$DashboardStore on _DashboardStore, Store {
     }, _$currentSceneItemsAtom, name: '${_$currentSceneItemsAtom.name}_set');
   }
 
-  final _$globalAudioItemsAtom = Atom(name: '_DashboardStore.globalAudioItems');
+  final _$globalAudioSceneItemsAtom =
+      Atom(name: '_DashboardStore.globalAudioSceneItems');
 
   @override
-  ObservableList<SceneItem> get globalAudioItems {
-    _$globalAudioItemsAtom.context.enforceReadPolicy(_$globalAudioItemsAtom);
-    _$globalAudioItemsAtom.reportObserved();
-    return super.globalAudioItems;
+  ObservableList<SceneItem> get globalAudioSceneItems {
+    _$globalAudioSceneItemsAtom.context
+        .enforceReadPolicy(_$globalAudioSceneItemsAtom);
+    _$globalAudioSceneItemsAtom.reportObserved();
+    return super.globalAudioSceneItems;
   }
 
   @override
-  set globalAudioItems(ObservableList<SceneItem> value) {
-    _$globalAudioItemsAtom.context.conditionallyRunInAction(() {
-      super.globalAudioItems = value;
-      _$globalAudioItemsAtom.reportChanged();
-    }, _$globalAudioItemsAtom, name: '${_$globalAudioItemsAtom.name}_set');
+  set globalAudioSceneItems(ObservableList<SceneItem> value) {
+    _$globalAudioSceneItemsAtom.context.conditionallyRunInAction(() {
+      super.globalAudioSceneItems = value;
+      _$globalAudioSceneItemsAtom.reportChanged();
+    }, _$globalAudioSceneItemsAtom,
+        name: '${_$globalAudioSceneItemsAtom.name}_set');
   }
 
   final _$sceneTransitionDurationMSAtom =
@@ -183,7 +186,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
   @override
   String toString() {
     final string =
-        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()},currentSceneItems: ${currentSceneItems.toString()},globalAudioItems: ${globalAudioItems.toString()},sceneTransitionDurationMS: ${sceneTransitionDurationMS.toString()},currentAudioSceneItems: ${currentAudioSceneItems.toString()}';
+        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()},currentSceneItems: ${currentSceneItems.toString()},globalAudioSceneItems: ${globalAudioSceneItems.toString()},sceneTransitionDurationMS: ${sceneTransitionDurationMS.toString()},currentAudioSceneItems: ${currentAudioSceneItems.toString()}';
     return '{$string}';
   }
 }

@@ -57,7 +57,7 @@ class NetworkHelper {
       [Map<String, dynamic> fields]) {
     sink.add(json.encode({
       'message-id': request.index.toString(),
-      'request-type': request.type,
+      'request-type': request.toString().split('.')[1],
       if (fields != null) ...fields
     }));
   }

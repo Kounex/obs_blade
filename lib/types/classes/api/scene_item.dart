@@ -58,21 +58,24 @@ class SceneItem {
     @required this.muted,
   });
 
-  static SceneItem fromJSON(Map<String, dynamic> json) => SceneItem(
-      cy: json['cy'],
-      cx: json['cx'],
-      alignment: json['alignment'],
-      name: json['name'],
-      id: json['id'],
-      render: json['render'],
-      muted: json['muted'],
-      locked: json['locked'],
-      sourceCy: json['source_cy'],
-      sourceCx: json['source_cx'],
-      type: json['type'],
-      volume: json['volume'],
-      x: json['x'],
-      y: json['y'],
-      parentGroupName: json['parentGroupName'],
-      groupChildren: json['groupChildren']);
+  static SceneItem fromJSON(Map<String, dynamic> json) {
+    print(json);
+    return SceneItem(
+        cy: json['cy'],
+        cx: json['cx'],
+        alignment: json['alignment'],
+        name: json['name'],
+        id: json['id'],
+        render: json['render'],
+        muted: json['muted'] ?? false,
+        locked: json['locked'],
+        sourceCy: json['source_cy'],
+        sourceCx: json['source_cx'],
+        type: json['type'],
+        volume: json['volume'],
+        x: json['x'],
+        y: json['y'],
+        parentGroupName: json['parentGroupName'],
+        groupChildren: json['groupChildren']);
+  }
 }

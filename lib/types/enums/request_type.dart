@@ -1,15 +1,15 @@
 enum RequestType {
+  /**
+   * Requests which serve as 'getter' - we will get a response
+   * with valueable information we want to use in the app so we
+   * create a response class for it
+   */
+
   /// No specified parameters
   GetAuthRequired,
 
-  /// {'auth': String } - Response to the auth challenge (see "Authentication" for more information)
-  Authenticate,
-
   /// No specified parameters
   GetSceneList,
-
-  /// {'scene-name': String } - Name of the scene to switch to
-  SetCurrentScene,
 
   /// No specified parameters
   GetCurrentScene,
@@ -23,6 +23,9 @@ enum RequestType {
   /// {'source': String } - Source name
   GetVolume,
 
+  /// {'source': String } - Source name
+  GetMute,
+
   /// { 'sourceName': String } - Source name
   /// (Optional) { 'sourceType':	String } - Type of the specified source. Useful for type-checking if you expect a specific settings schema
   GetSourceSettings,
@@ -32,20 +35,45 @@ enum RequestType {
 
   /// No specified parameters
   GetSpecialSources,
+
+  /**
+   * Requests which serve as 'setter' - we will set specific parameters
+   * in our request to change something in OBS. We don't need the response
+   * since we don't wait for information after this request, so no response
+   * classes exist for those
+   */
+
+  /// {'auth': String } - Response to the auth challenge (see "Authentication" for more information)
+  Authenticate,
+
+  /// {'scene-name': String } - Name of the scene to switch to
+  SetCurrentScene,
+
+  /// {'source': String } - Source name
+  /// {'volume': double } - Desired volume. Must be between 0.0 and 1.0 for mul, and under 0.0 for dB. Note: OBS will interpret dB values under -100.0 as Inf
+  /// {'useDecibel': bool } - Interperet volume data as decibels instead of amplitude/mul
+  SetVolume,
+
+  /// {'source': String } - Source name
+  /// {'mute': bool } - Desired mute status
+  SetMute,
 }
 
-extension RequestTypeFunctions on RequestType {
-  String get type => const {
-        RequestType.GetAuthRequired: 'GetAuthRequired',
-        RequestType.Authenticate: 'Authenticate',
-        RequestType.GetSceneList: 'GetSceneList',
-        RequestType.SetCurrentScene: 'SetCurrentScene',
-        RequestType.GetCurrentScene: 'GetCurrentScene',
-        RequestType.GetSourcesList: 'GetSourcesList',
-        RequestType.GetSourceTypesList: 'GetSourceTypesList',
-        RequestType.GetVolume: 'GetVolume',
-        RequestType.GetSourceSettings: 'GetSourceSettings',
-        RequestType.ListOutputs: 'ListOutputs',
-        RequestType.GetSpecialSources: 'GetSpecialSources',
-      }[this];
-}
+// extension RequestTypeFunctions on RequestType {
+//   String get type => const {
+//         RequestType.GetAuthRequired: 'GetAuthRequired',
+//         RequestType.GetSceneList: 'GetSceneList',
+//         RequestType.GetCurrentScene: 'GetCurrentScene',
+//         RequestType.GetSourcesList: 'GetSourcesList',
+//         RequestType.GetSourceTypesList: 'GetSourceTypesList',
+//         RequestType.GetVolume: 'GetVolume',
+//         RequestType.GetMute: 'GetMute',
+//         RequestType.GetSourceSettings: 'GetSourceSettings',
+//         RequestType.ListOutputs: 'ListOutputs',
+//         RequestType.GetSpecialSources: 'GetSpecialSources',
+//         RequestType.Authenticate: 'Authenticate',
+//         RequestType.SetCurrentScene: 'SetCurrentScene',
+//         RequestType.SetVolume: 'SetVolume',
+//         RequestType.SetMute: 'SetMute',
+//       }[this];
+// }

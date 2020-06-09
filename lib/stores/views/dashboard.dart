@@ -8,10 +8,13 @@ import '../../types/classes/api/source_type.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
+import '../../types/classes/stream/events/source_mute_state_changed.dart';
+import '../../types/classes/stream/events/source_volume_changed.dart';
 import '../../types/classes/stream/events/switch_scenes.dart';
 import '../../types/classes/stream/events/transition_begin.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
+import '../../types/classes/stream/responses/get_mute.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_source_types_list.dart';
 import '../../types/classes/stream/responses/get_special_sources.dart';
@@ -39,21 +42,18 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<SceneItem> currentSceneItems;
 
-  // TODO: computed does not trigger on observable update (seems like)
   @computed
-  ObservableList<SceneItem> get currentAudioSceneItems {
-    print(this.currentSceneItems);
-    return this.currentSceneItems != null
-        ? ObservableList.of(currentSceneItems?.where((sceneItem) => this
-            .sourceTypes
-            .any((sourceType) =>
-                sourceType.caps.hasAudio &&
-                sourceType.typeID == sceneItem.type)))
-        : ObservableList.of([]);
-  }
+  ObservableList<SceneItem> get currentAudioSceneItems =>
+      this.currentSceneItems != null
+          ? ObservableList.of(currentSceneItems?.where((sceneItem) => this
+              .sourceTypes
+              .any((sourceType) =>
+                  sourceType.caps.hasAudio &&
+                  sourceType.typeID == sceneItem.type)))
+          : ObservableList();
 
   @observable
-  ObservableList<SceneItem> globalAudioItems = ObservableList();
+  ObservableList<SceneItem> globalAudioSceneItems = ObservableList();
 
   @observable
   int sceneTransitionDurationMS;
@@ -115,12 +115,39 @@ abstract class _DashboardStore with Store {
       case EventType.SwitchScenes:
         SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
         this.currentSceneItems = ObservableList.of(switchSceneEvent.sources);
+        currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
+            this.activeSession.socket.sink,
+            RequestType.GetMute,
+            {'source': sceneItem.name}));
+
         break;
       case EventType.TransitionBegin:
         TransitionBeginEvent transitionBeginEvent =
             TransitionBeginEvent(event.json);
         this.sceneTransitionDurationMS = transitionBeginEvent.duration;
         this.activeSceneName = transitionBeginEvent.toScene;
+        break;
+      case EventType.SourceVolumeChanged:
+        SourceVolumeChangedEvent sourceVolumeChangedEvent =
+            SourceVolumeChangedEvent(event.json);
+        [...this.currentSceneItems, ...this.globalAudioSceneItems]
+            .firstWhere((audioSceneItem) =>
+                audioSceneItem.name == sourceVolumeChangedEvent.sourceName)
+            .volume = sourceVolumeChangedEvent.volume;
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.globalAudioSceneItems =
+            ObservableList.of(this.globalAudioSceneItems);
+        break;
+      case EventType.SourceMuteStateChanged:
+        SourceMuteStateChangedEvent sourceMuteStateChangedEvent =
+            SourceMuteStateChangedEvent(event.json);
+        [...this.currentSceneItems, ...this.globalAudioSceneItems]
+            .firstWhere((audioSceneItem) =>
+                audioSceneItem.name == sourceMuteStateChangedEvent.sourceName)
+            .muted = sourceMuteStateChangedEvent.muted;
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.globalAudioSceneItems =
+            ObservableList.of(this.globalAudioSceneItems);
         break;
       case EventType.Exiting:
         // TODO: OBS has been closed while being connected to the WebSocket
@@ -145,6 +172,10 @@ abstract class _DashboardStore with Store {
             GetCurrentSceneResponse(response.json);
         this.currentSceneItems =
             ObservableList.of(getCurrentSceneResponse.sources);
+        currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
+            this.activeSession.socket.sink,
+            RequestType.GetMute,
+            {'source': sceneItem.name}));
         break;
       case RequestType.GetSpecialSources:
         GetSpecialSourcesResponse getSpecialSourcesResponse =
@@ -188,14 +219,22 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.GetVolume:
         GetVolumeResponse getVolumeResponse = GetVolumeResponse(response.json);
-        if (this.globalAudioItems.every((globalAudioItem) =>
+        if (this.globalAudioSceneItems.every((globalAudioItem) =>
             globalAudioItem.name != getVolumeResponse.name)) {
-          this.globalAudioItems.add(SceneItem.audio(
+          this.globalAudioSceneItems.add(SceneItem.audio(
                 name: getVolumeResponse.name,
                 volume: getVolumeResponse.volume,
                 muted: getVolumeResponse.muted,
               ));
         }
+        break;
+      case RequestType.GetMute:
+        GetMuteResponse getMuteResponse = GetMuteResponse(response.json);
+        this
+            .currentSceneItems
+            .firstWhere((sceneItem) => sceneItem.name == getMuteResponse.name)
+            .muted = getMuteResponse.muted;
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
         break;
       case RequestType.GetSourceSettings:
         // GetSourceSettingsResponse getSourceSettingsResponse =
