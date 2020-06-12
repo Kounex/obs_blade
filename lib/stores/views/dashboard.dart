@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_station/types/classes/stream/responses/get_sources_list.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
@@ -203,15 +205,18 @@ abstract class _DashboardStore with Store {
         // GetSourcesListResponse getSourcesListResponse =
         //     GetSourcesListResponse(response.json);
         // getSourcesListResponse.sources.forEach((source) {
-        //   print('${source.name}: ${source.typeID}');
-        //   NetworkHelper.makeRequest(this.activeSession.socket.sink,
-        //       RequestType.GetSourceSettings, {'sourceName': source.name});
+        //   print(response.json);
+        // print('${source.name}: ${source.typeID}');
+        // NetworkHelper.makeRequest(this.activeSession.socket.sink,
+        //     RequestType.GetSourceSettings, {'sourceName': source.name});
         // });
         break;
       case RequestType.GetSourceTypesList:
         GetSourceTypesList getSourceTypesList =
             GetSourceTypesList(response.json);
         this.sourceTypes = getSourceTypesList.types;
+        // (response.json['types'] as List<dynamic>)
+        //     .forEach((type) => print(type['typeId']));
         NetworkHelper.makeRequest(
             this.activeSession.socket.sink, RequestType.GetCurrentScene);
         NetworkHelper.makeRequest(

@@ -9,18 +9,18 @@ class SceneItems extends StatelessWidget {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
     return Observer(builder: (_) {
+      dashboardStore.currentSceneItems
+          ?.forEach((element) => print(element.type));
       return Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           ...dashboardStore.currentSceneItems != null
               ? dashboardStore.currentSceneItems.map(
-                  (sceneItem) => Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        sceneItem.name,
-                      ),
-                    ],
+                  (sceneItem) => ListTile(
+                    leading: Icon(Icons.volume_off),
+                    title: Text(
+                      sceneItem.name,
+                    ),
                   ),
                 )
               : [Text('No Scene Items available')]

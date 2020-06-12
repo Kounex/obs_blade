@@ -59,7 +59,6 @@ class SceneItem {
   });
 
   static SceneItem fromJSON(Map<String, dynamic> json) {
-    print(json);
     return SceneItem(
         cy: json['cy'],
         cx: json['cx'],
