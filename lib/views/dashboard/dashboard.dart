@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/shared/basic/translucent_sliver_app_bar.dart';
+import 'package:obs_station/shared/basic/flutter_modified/translucent_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/connection.dart';
@@ -13,8 +13,6 @@ import '../../shared/dialogs/input.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/dashboard.dart';
 import '../../types/enums/hive_keys.dart';
-import '../../types/enums/request_type.dart';
-import '../../utils/network_helper.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/stats/stats.dart';
@@ -91,6 +89,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
 
       return Scaffold(
         body: CustomScrollView(
+          physics: BouncingScrollPhysics(),
           slivers: [
             TransculentSliverAppBar(
               pinned: true,

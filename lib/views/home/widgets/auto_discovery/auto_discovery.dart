@@ -22,35 +22,39 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
     HomeStore landingStore = Provider.of<HomeStore>(context);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      // mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
+          padding: const EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text('Port for autodiscovery: '),
+              Flexible(
+                child: Text('Port for autodiscovery: '),
+              ),
+              Container(width: 10.0),
               QuestionMarkTooltip(
                   message:
                       'Usually 4444. Can be seen and changed in the WebSocket Plugin settings in OBS (Tools -> WebSocket Plugin)'),
-              Container(width: 25.0),
-              Container(
-                width: 65.0,
-                child: Form(
-                  key: _formKey,
-                  child: TextFormField(
-                    textAlign: TextAlign.center,
-                    controller: TextEditingController(
-                        text: landingStore.autodiscoverPort),
-                    onChanged: (text) {
-                      landingStore.setAutodiscoverPort(text);
-                      _formKey.currentState.validate();
-                    },
-                    validator: (text) => ValidationHelper.portValidation(text),
-                  ),
-                ),
-              ),
             ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.only(bottom: 24.0),
+          width: 65.0,
+          child: Form(
+            key: _formKey,
+            child: TextFormField(
+              textAlign: TextAlign.center,
+              controller:
+                  TextEditingController(text: landingStore.autodiscoverPort),
+              onChanged: (text) {
+                landingStore.setAutodiscoverPort(text);
+                _formKey.currentState.validate();
+              },
+              validator: (text) => ValidationHelper.portValidation(text),
+            ),
           ),
         ),
         Divider(

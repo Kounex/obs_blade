@@ -24,9 +24,10 @@ class NetworkHelper {
     String baseIP =
         (await Connectivity().getWifiIP()).split('.').take(3).join('.');
     List<int> availableIPs = [];
+    List<ScanResult> results = [];
 
-    List<ScanResult> results = await Future.wait<ScanResult>(
-        List.generate(256, (index) => index).map((index) =>
+    results = await Future.wait<ScanResult>(List.generate(256, (index) => index)
+        .map((index) =>
             TCPScanner('$baseIP.${index.toString()}', [port], timeout: 1000)
                 .noIsolateScan()));
 

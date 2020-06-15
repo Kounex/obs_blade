@@ -10,6 +10,7 @@ class AboutView extends StatelessWidget {
         middle: Text('About'),
       ),
       body: CustomScrollView(
+        physics: BouncingScrollPhysics(),
         slivers: <Widget>[],
       ),
     );
