@@ -26,11 +26,11 @@ dependencies:
 
   # custom
   # state management and DI
-  provider: ^4.1.0
-  mobx: ^1.1.1
+  provider: ^4.1.3
+  mobx: ^1.2.1
   flutter_mobx: ^1.1.0
   flutter_mobx_helpers: ^1.0.1
-  mobx_codegen: ^1.0.3
+  path: ^1.7.0
 
   # json serializable together with mobx
   dart_json_mapper: ^1.5.8
@@ -42,12 +42,11 @@ dependencies:
   web_socket_channel: ^1.1.0
 
   #security
-  crypto: ^2.1.4
+  crypto: ^2.1.5
 
   #local persistant stuff
   hive: ^1.4.1+1
   hive_flutter: ^0.3.0+2
-  hive_generator: ^0.7.0+2
 
   # after layout stuff
   after_layout: ^1.0.7+2
@@ -60,8 +59,7 @@ dependencies:
   font_awesome_flutter: ^8.8.1
 
 dependency_overrides:
-  path: 1.7.0
-  dartx: ^0.3.0
+  path: ^1.6.4
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +67,8 @@ dev_dependencies:
 
   # Codegen
   build_runner: ^1.8.0
+  hive_generator: ^0.7.0+2
+  mobx_codegen: ^1.1.0
   # Mock for testing
   mockito: ^4.1.1
 
