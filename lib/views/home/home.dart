@@ -1,15 +1,14 @@
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
+import 'package:obs_station/types/classes/stream/responses/base.dart';
 import 'package:provider/provider.dart';
 
 import '../../stores/shared/network.dart';
 import '../../stores/views/home.dart';
-import '../../types/enums/response_status.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/auto_discovery/auto_discovery.dart';
@@ -40,7 +39,7 @@ class HomeView extends StatelessWidget {
       );
     } else if (networkStore.connectionWasInProgress &&
         !networkStore.connectionInProgress) {
-      if (networkStore.connectionResponse.status == ResponseStatus.OK.text) {
+      if (networkStore.connectionResponse.status == BaseResponse.ok) {
         Navigator.pushReplacementNamed(
             context, HomeTabRoutingKeys.DASHBOARD.route);
       }
@@ -51,7 +50,7 @@ class HomeView extends StatelessWidget {
           content: Align(
             alignment: Alignment.center,
             child: Text(
-              networkStore.connectionResponse.status == ResponseStatus.OK.text
+              networkStore.connectionResponse.status == BaseResponse.ok
                   ? 'WebSocket connection established!'
                   : 'Couldn\'t connect to a WebSocket!',
               textAlign: TextAlign.center,

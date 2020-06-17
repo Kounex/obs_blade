@@ -7,5 +7,6 @@ enum EventType {
   TransitionBegin,
   SourceVolumeChanged,
   SourceMuteStateChanged,
+  SceneItemVisibilityChanged,
   Exiting,
 }

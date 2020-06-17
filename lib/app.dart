@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_station/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 
 import 'models/settings.dart';
@@ -33,24 +34,25 @@ class App extends StatelessWidget {
             Hive.box<Settings>(HiveKeys.SETTINGS.name).listenable(),
         builder: (context, Box<Settings> settingsBox, child) => MaterialApp(
           theme: ThemeData.dark().copyWith(
-            accentColor: CupertinoColors.systemBlue, // const Color(0xffb777ff),
-            accentIconTheme: IconThemeData(),
-            backgroundColor: const Color(0xff101823),
             scaffoldBackgroundColor: settingsBox.getAt(0).trueDark
                 ? settingsBox.get(0).reduceSmearing
-                    ? Color.fromRGBO(5, 5, 5, 1.0)
+                    ? StylingHelper.BLACK_REDUCED_SMEARING
                     : Colors.black
                 : Colors.grey[900],
-            canvasColor: const Color(0xff101823),
-            cardColor: const Color(0xff101823),
+            accentColor: CupertinoColors.systemBlue, // const Color(0xffb777ff),
+            accentIconTheme: IconThemeData(),
+            backgroundColor: StylingHelper.MAIN_BLUE,
+            canvasColor: StylingHelper.MAIN_BLUE,
+            cardColor: StylingHelper.MAIN_BLUE,
+            indicatorColor: CupertinoColors.activeBlue,
             dividerColor: Colors.grey[500],
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             appBarTheme: AppBarTheme(
-              color: const Color(0xaa101823),
+              color: StylingHelper.MAIN_BLUE.withAlpha(170),
             ),
             buttonTheme: ButtonThemeData(
-              buttonColor: const Color(0xffff4654),
+              buttonColor: StylingHelper.MAIN_RED,
               splashColor: Colors.transparent,
             ),
             cupertinoOverrideTheme: CupertinoThemeData(
@@ -58,7 +60,7 @@ class App extends StatelessWidget {
                 primaryColor: Colors.white,
               ),
               primaryColor: CupertinoColors.systemBlue,
-              barBackgroundColor: const Color(0xaa101823),
+              barBackgroundColor: StylingHelper.MAIN_BLUE.withAlpha(170),
             ),
           ),
           initialRoute: AppRoutingKeys.TABS.route,

@@ -57,6 +57,11 @@ enum RequestType {
   /// {'source': String } - Source name
   /// {'mute': bool } - Desired mute status
   SetMute,
+
+  /// {'item': String } - Scene Item name (currently)
+  /// {'name': String } - Scene Item name (new)
+  /// {'visible': bool} - The new visibility of the source. 'true' shows source, 'false' hides source
+  SetSceneItemProperties,
 }
 
 // extension RequestTypeFunctions on RequestType {

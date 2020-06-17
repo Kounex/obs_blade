@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/audio_inputs.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/scene_items.dart';
+import 'package:obs_station/views/dashboard/widgets/scenes/scene_content.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../stores/views/dashboard.dart';
@@ -87,47 +86,7 @@ class Scenes extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(top: 42.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        color: Theme.of(context).cardColor,
-                        height: 30.0,
-                        alignment: Alignment.center,
-                        child: Text('Sources'),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        color: Theme.of(context).cardColor,
-                        height: 30.0,
-                        alignment: Alignment.center,
-                        child: Text('Audio'),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: SceneItems(),
-                      ),
-                    ),
-                    VerticalDivider(),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: AudioInputs(),
-                      ),
-                    )
-                  ],
-                ),
-              ],
-            ),
+            child: SceneContent(),
           ),
         ],
       ),

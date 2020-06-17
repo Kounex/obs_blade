@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_station/types/classes/stream/responses/get_sources_list.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
@@ -10,6 +8,7 @@ import '../../types/classes/api/source_type.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
+import '../../types/classes/stream/events/scene_item_visibility_changed.dart';
 import '../../types/classes/stream/events/source_mute_state_changed.dart';
 import '../../types/classes/stream/events/source_volume_changed.dart';
 import '../../types/classes/stream/events/switch_scenes.dart';
@@ -94,6 +93,7 @@ abstract class _DashboardStore with Store {
 
   @action
   _handleEvent(BaseEvent event) {
+    print(event.json['update-type']);
     switch (event.updateType) {
       case EventType.StreamStarted:
         this.isLive = true;
@@ -150,6 +150,16 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(this.currentSceneItems);
         this.globalAudioSceneItems =
             ObservableList.of(this.globalAudioSceneItems);
+        break;
+      case EventType.SceneItemVisibilityChanged:
+        SceneItemVisibilityChangedEvent sceneItemVisibilityChangedEvent =
+            SceneItemVisibilityChangedEvent(event.json);
+        this
+            .currentSceneItems
+            .firstWhere((sceneItem) =>
+                sceneItem.name == sceneItemVisibilityChangedEvent.itemName)
+            .render = sceneItemVisibilityChangedEvent.itemVisible;
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
         break;
       case EventType.Exiting:
         // TODO: OBS has been closed while being connected to the WebSocket

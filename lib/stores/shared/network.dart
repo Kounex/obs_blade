@@ -9,7 +9,6 @@ import '../../types/classes/session.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_auth_required.dart';
 import '../../types/enums/request_type.dart';
-import '../../types/enums/response_status.dart';
 import '../../utils/network_helper.dart';
 
 part 'network.g.dart';
@@ -55,7 +54,7 @@ abstract class _NetworkStore with Store {
     ]);
 
     subscription.cancel();
-    if (this.connectionResponse.status != ResponseStatus.OK.text) {
+    if (this.connectionResponse.status != BaseResponse.ok) {
       this.activeSession.socket.sink.close();
       this.activeSession = null;
     } else {

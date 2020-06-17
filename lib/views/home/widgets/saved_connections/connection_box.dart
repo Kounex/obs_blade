@@ -76,6 +76,7 @@ class ConnectionBox extends StatelessWidget {
                 RaisedButton(
                     child: Text('Connect'),
                     onPressed: () {
+                      FocusScope.of(context).unfocus();
                       networkStore.setOBSWebSocket(this.connection);
                     }),
                 IconButton(

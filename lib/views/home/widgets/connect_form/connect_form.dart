@@ -9,7 +9,6 @@ import '../../../../shared/basic/question_mark_tooltip.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/home.dart';
 import '../../../../types/classes/stream/responses/base.dart';
-import '../../../../types/enums/response_status.dart';
 import '../../../../utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
@@ -97,7 +96,8 @@ class _ConnectFormState extends State<ConnectForm> {
                 obscureText: _obscurePWText,
                 decoration: InputDecoration(
                   errorText: snapshot.hasData &&
-                          snapshot.data.status != ResponseStatus.OK.text
+                          snapshot.data.error ==
+                              BaseResponse.failedAuthentication
                       ? 'Wrong password'
                       : null,
                   labelText: 'Password',
@@ -121,6 +121,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   child: Text('Connect'),
                   onPressed: () {
                     if (_formKey.currentState.validate()) {
+                      FocusScope.of(context).unfocus();
                       networkStore
                           .setOBSWebSocket(
                             Connection(

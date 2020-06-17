@@ -18,4 +18,10 @@ class StylingHelper {
   static const IconData CUPERTINO_SUNGLASSES_ICON = const IconData(0xf43f,
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
+
+  static const Color MAIN_BLUE = const Color(0xff101823);
+  static const Color MAIN_RED = const Color(0xffff4654);
+
+  static const Color BLACK_REDUCED_SMEARING =
+      const Color.fromRGBO(5, 5, 5, 1.0);
 }

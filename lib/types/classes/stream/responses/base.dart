@@ -1,6 +1,13 @@
-import '../../../enums/response_status.dart';
-
 class BaseResponse {
+  /// Trivial, but just to persist the correct string used for
+  /// ok status so we don't have to guess every time we add
+  /// new calls
+  static String ok = 'ok';
+
+  /// Next all currently used and supported error messages
+  /// so we check them correctly
+  static String failedAuthentication = 'Authentication Failed.';
+
   Map<String, dynamic> json;
 
   BaseResponse(this.json);
@@ -13,5 +20,5 @@ class BaseResponse {
 
   /// An error message accompanying an [error] status
   String get error =>
-      this.status != ResponseStatus.OK.text ? this.json['error'] : null;
+      this.status != BaseResponse.ok ? this.json['error'] : null;
 }
