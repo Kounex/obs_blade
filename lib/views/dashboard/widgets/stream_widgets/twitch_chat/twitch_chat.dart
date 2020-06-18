@@ -8,8 +8,12 @@ class TwitchChat extends StatefulWidget {
   _TwitchChatState createState() => _TwitchChatState();
 }
 
-class _TwitchChatState extends State<TwitchChat> {
+class _TwitchChatState extends State<TwitchChat>
+    with AutomaticKeepAliveClientMixin {
   InAppWebViewController _webController;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
