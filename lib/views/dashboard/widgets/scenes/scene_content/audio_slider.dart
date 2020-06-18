@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_station/types/enums/request_type.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../stores/shared/network.dart';
-import '../../../../types/classes/api/scene_item.dart';
-import '../../../../utils/network_helper.dart';
+import '../../../../../stores/shared/network.dart';
+import '../../../../../types/classes/api/scene_item.dart';
+import '../../../../../types/enums/request_type.dart';
+import '../../../../../utils/network_helper.dart';
 
 class AudioSlider extends StatelessWidget {
   final SceneItem audioSceneItem;

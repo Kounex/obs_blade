@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:obs_station/stores/views/dashboard.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/audio_slider.dart';
 import 'package:provider/provider.dart';
+
+import 'audio_slider.dart';
 
 class AudioInputs extends StatelessWidget {
   @override

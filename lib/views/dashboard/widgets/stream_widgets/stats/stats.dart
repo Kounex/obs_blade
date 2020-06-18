@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../stores/views/dashboard.dart';
+import '../../../../../stores/views/dashboard.dart';
 import 'formatted_text.dart';
 import 'stats_container.dart';
 
@@ -13,7 +13,9 @@ class Stats extends StatelessWidget {
 
     return Center(
       child: Observer(builder: (_) {
-        return Column(
+        // TODO: making this as a carousel just like saved connection if mobile, wrap on tablet
+        return ListView(
+          scrollDirection: Axis.horizontal,
           children: <Widget>[
             StatsContainer(
               title: 'Performance',

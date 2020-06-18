@@ -3,10 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_station/shared/basic/flutter_modified/translucent_sliver_app_bar.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/connection.dart';
+import '../../shared/basic/flutter_modified/translucent_sliver_app_bar.dart';
 import '../../shared/basic/status_dot.dart';
 import '../../shared/dialogs/confirmation.dart';
 import '../../shared/dialogs/input.dart';
@@ -15,7 +15,7 @@ import '../../stores/views/dashboard.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/scenes/scenes.dart';
-import 'widgets/stats/stats.dart';
+import 'widgets/stream_widgets/stream_widgets.dart';
 
 class DashboardView extends StatefulWidget {
   @override
@@ -182,18 +182,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                       padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
                       child: Scenes(),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12.0),
-                      child: Text(
-                        'Stats',
-                        style: Theme.of(context).textTheme.headline4,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Divider(height: 0.0),
-                    ),
-                    Stats(),
+                    StreamWidgets(),
                   ],
                 ),
               ),
