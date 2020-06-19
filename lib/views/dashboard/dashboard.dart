@@ -89,7 +89,6 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
 
       return Scaffold(
         body: CustomScrollView(
-          physics: BouncingScrollPhysics(),
           slivers: [
             TransculentSliverAppBar(
               pinned: true,

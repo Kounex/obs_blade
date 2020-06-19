@@ -19,7 +19,6 @@ class SettingsView extends StatelessWidget {
       //       middle: Text('Settings'),
       //     ),
       body: CustomScrollView(
-        physics: BouncingScrollPhysics(),
         slivers: <Widget>[
           // SliverAppBar(
           //   pinned: true,

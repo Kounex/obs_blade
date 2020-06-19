@@ -13,7 +13,7 @@ class StatsContainer extends StatelessWidget {
     return SizedBox(
       width: MediaQuery.of(context).size.width,
       child: BaseCard(
-        padding: EdgeInsets.only(left: 12.0, right: 38.0),
+        padding: EdgeInsets.only(left: 12.0, right: 12.0),
         titleWidget:
             Text(this.title, style: Theme.of(context).textTheme.headline6),
         child: Wrap(
