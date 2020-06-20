@@ -45,6 +45,14 @@ class AudioSlider extends StatelessWidget {
                     {'source': this.audioSceneItem.name, 'volume': volume}),
               ),
             ),
+            Container(
+              width: 48.0,
+              padding: EdgeInsets.only(right: 12.0),
+              alignment: Alignment.center,
+              child: Text((((this.audioSceneItem.volume * 100).toInt()) / 100)
+                  .toString()
+                  .padRight(4, '0')),
+            ),
           ],
         ),
         // Stack(
