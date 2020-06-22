@@ -21,6 +21,9 @@ class _TwitchChatState extends State<TwitchChat>
     // hard coded my chat
     return InAppWebView(
       initialUrl: 'https://www.twitch.tv/popout/kounex/chat',
+      initialOptions: InAppWebViewGroupOptions(
+        crossPlatform: InAppWebViewOptions(supportZoom: false),
+      ),
       onWebViewCreated: (webController) {
         _webController = webController;
         // _webController.postUrl(

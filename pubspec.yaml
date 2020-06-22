@@ -27,7 +27,7 @@ dependencies:
   # custom
 
   # webview
-  flutter_inappwebview: ^3.3.0+3
+  flutter_inappwebview: ^3.4.0+1
 
   # state management and DI
   provider: ^4.1.3
