@@ -178,7 +178,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                 delegate: SliverChildListDelegate(
                   [
                     Padding(
-                      padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
+                      padding: const EdgeInsets.only(top: 12.0, bottom: 24.0),
                       child: Scenes(),
                     ),
                     StreamWidgets(),
