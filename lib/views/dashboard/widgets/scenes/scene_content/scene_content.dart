@@ -31,23 +31,9 @@ class SceneContent extends StatelessWidget {
                 TabBarView(physics: NeverScrollableScrollPhysics(), children: [
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: Scrollbar(
-                  child: ListView(
-                    physics: ClampingScrollPhysics(),
-                    padding: EdgeInsets.all(0.0),
-                    children: [
-                      SceneItems(),
-                    ],
-                  ),
-                ),
+                child: SceneItems(),
               ),
-              ListView(
-                physics: BouncingScrollPhysics(),
-                padding: EdgeInsets.only(top: 24.0),
-                children: [
-                  AudioInputs(),
-                ],
-              ),
+              AudioInputs(),
             ]),
           )
         ],

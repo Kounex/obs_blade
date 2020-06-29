@@ -4,7 +4,6 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../models/settings.dart';
-import '../../shared/basic/question_mark_tooltip.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';

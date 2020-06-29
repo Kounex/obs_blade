@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/stores/views/dashboard.dart';
-import 'package:obs_station/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../stores/views/dashboard.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatelessWidget {
@@ -12,15 +11,18 @@ class AudioInputs extends StatelessWidget {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
     return Observer(
-      builder: (_) => Column(
+      builder: (_) => ListView(
+        padding: EdgeInsets.only(top: 24.0),
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
-            child: Text(
-              'Global',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
+            child: Align(
+              child: Text(
+                'Global',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ),
@@ -36,11 +38,13 @@ class AudioInputs extends StatelessWidget {
           Divider(),
           Padding(
             padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
-            child: Text(
-              'Scene',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
+            child: Align(
+              child: Text(
+                'Scene',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ),
