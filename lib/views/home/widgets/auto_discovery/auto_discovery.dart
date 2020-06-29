@@ -36,7 +36,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               Container(width: 10.0),
               QuestionMarkTooltip(
                   message:
-                      'Usually 4444. Can be seen and changed in the WebSocket Plugin settings in OBS (Tools -> WebSocket Plugin)'),
+                      'Usually 4444. Can be seen and changed in the WebSocket Plugin settings in OBS\n\n(Tools -> WebSocket Plugin)'),
             ],
           ),
         ),

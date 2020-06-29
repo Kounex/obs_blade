@@ -38,7 +38,7 @@ class SettingsView extends StatelessWidget {
                     blockEntries: [
                       BlockEntry(
                         leading: StylingHelper.CUPERTINO_SUNGLASSES_ICON,
-                        title: Text('True Dark Mode'),
+                        title: 'True Dark Mode',
                         trailing: CupertinoSwitch(
                           value: settingsBox.get(0).trueDark ?? false,
                           onChanged: (trueDark) {
@@ -47,36 +47,35 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
-                      BlockEntry(
-                        leading: Icons.opacity,
-                        title: Row(
-                          children: [
-                            Text('Reduce smearing'),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 12.0),
-                              child: QuestionMarkTooltip(
-                                  message:
-                                      'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color. Might drain more battery though!'),
-                            ),
-                          ],
+                      if (settingsBox.get(0).trueDark)
+                        BlockEntry(
+                          leading: Icons.opacity,
+                          title: 'Reduce smearing',
+                          help:
+                              'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nMight drain more battery though!',
+                          trailing: CupertinoSwitch(
+                            value: settingsBox.get(0).reduceSmearing ?? false,
+                            onChanged: (reduceSmearing) {
+                              settingsBox.get(0).reduceSmearing =
+                                  reduceSmearing;
+                              settingsBox.get(0).save();
+                            },
+                          ),
                         ),
-                        trailing: CupertinoSwitch(
-                          value: settingsBox.get(0).reduceSmearing ?? false,
-                          onChanged: (reduceSmearing) {
-                            settingsBox.get(0).reduceSmearing = reduceSmearing;
-                            settingsBox.get(0).save();
-                          },
-                        ),
-                      ),
                     ],
                   ),
                 ),
                 ActionBlock(
                   blockEntries: [
                     BlockEntry(
+                      leading: CupertinoIcons.book,
+                      title: 'Privacy Policy',
+                      navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
+                    ),
+                    BlockEntry(
                       leading: StylingHelper.CUPERTINO_AT_ICON,
-                      title: Text('About'),
-                      navigateTo: SettingsTabRoutingKeys.ABOUT.route,
+                      title: 'About',
+                      navigateTo: SettingsTabRoutingKeys.About.route,
                     ),
                   ],
                 ),

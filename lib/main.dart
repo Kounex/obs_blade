@@ -27,9 +27,9 @@ void main() async {
   /// Settings is a singleton - therefore not really a use case
   /// for Hive since it persists data in a key value store manner
   /// (like tables) so you usually have several entities for each
-  /// key, but since it is so fast and encrypted and eadsy to use
-  /// we make sure we have an instance form the beginning and we
-  /// won't add additional one, instead save the current one
+  /// key, but since it is so fast and encrypted and easy to use
+  /// we make sure we have an instance from the beginning and we
+  /// won't add an additional one, instead save the current one
   Box<Settings> settingsBox = await Hive.openBox<Settings>(
     HiveKeys.SETTINGS.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,

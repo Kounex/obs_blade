@@ -27,7 +27,7 @@ dependencies:
   # custom
 
   # webview
-  flutter_inappwebview: ^3.4.0+1
+  flutter_inappwebview: ^3.4.0+2
 
   # state management and DI
   provider: ^4.1.3
@@ -35,10 +35,6 @@ dependencies:
   flutter_mobx: ^1.1.0
   flutter_mobx_helpers: ^1.0.1
   path: ^1.7.0
-
-  # json serializable together with mobx
-  dart_json_mapper: ^1.5.8
-  dart_json_mapper_mobx: ^1.2.1
 
   # network stuff
   tcp_scanner: ^1.1.1
@@ -56,7 +52,7 @@ dependencies:
   after_layout: ^1.0.7+2
 
   # fancy done layout shit
-  carousel_slider: ^2.1.0
+  carousel_slider: ^2.2.1
   flutter_swiper: ^1.1.6
 
   # sweet icons

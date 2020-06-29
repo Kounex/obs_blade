@@ -41,7 +41,7 @@ class HomeView extends StatelessWidget {
         !networkStore.connectionInProgress) {
       if (networkStore.connectionResponse.status == BaseResponse.ok) {
         Navigator.pushReplacementNamed(
-            context, HomeTabRoutingKeys.DASHBOARD.route);
+            context, HomeTabRoutingKeys.Dashboard.route);
       }
       if (!networkStore.connectionResponse.error.contains('Authentication')) {
         OverlayHandler.showStatusOverlay(

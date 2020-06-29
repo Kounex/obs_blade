@@ -44,6 +44,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
           Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name);
       showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (context) => ConfirmationDialog(
           title: 'Save Connection',
           body:
@@ -51,6 +52,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
           onOk: () {
             showDialog(
               context: context,
+              barrierDismissible: false,
               builder: (context) => InputDialog(
                 title: 'Save Connection',
                 body:
@@ -103,6 +105,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                         child: Text('Close'),
                         onPressed: () => showDialog(
                           context: context,
+                          barrierDismissible: false,
                           builder: (_) => ConfirmationDialog(
                             title: 'Close Connection',
                             body:
@@ -110,7 +113,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                             onOk: () {
                               networkStore.closeSession();
                               Navigator.of(context).pushReplacementNamed(
-                                  HomeTabRoutingKeys.LANDING.route);
+                                  HomeTabRoutingKeys.Landing.route);
                             },
                           ),
                         ),

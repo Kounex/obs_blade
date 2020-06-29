@@ -33,7 +33,7 @@ class SceneContent extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 8.0, right: 8.0),
                 child: Scrollbar(
                   child: ListView(
-                    physics: BouncingScrollPhysics(),
+                    physics: ClampingScrollPhysics(),
                     padding: EdgeInsets.all(0.0),
                     children: [
                       SceneItems(),

@@ -34,6 +34,7 @@ class App extends StatelessWidget {
             Hive.box<Settings>(HiveKeys.SETTINGS.name).listenable(),
         builder: (context, Box<Settings> settingsBox, child) => MaterialApp(
           theme: ThemeData.dark().copyWith(
+            /// General Theme colors
             scaffoldBackgroundColor: settingsBox.getAt(0).trueDark
                 ? settingsBox.get(0).reduceSmearing
                     ? StylingHelper.BLACK_REDUCED_SMEARING
@@ -48,12 +49,21 @@ class App extends StatelessWidget {
             dividerColor: Colors.grey[500],
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
+
+            /// Inner Widget themes
             appBarTheme: AppBarTheme(
               color: StylingHelper.MAIN_BLUE.withAlpha(170),
             ),
             buttonTheme: ButtonThemeData(
               buttonColor: StylingHelper.MAIN_RED,
               splashColor: Colors.transparent,
+            ),
+            tooltipTheme: TooltipThemeData(
+              decoration: BoxDecoration(
+                color: Colors.grey[800],
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              textStyle: TextStyle(color: Colors.white),
             ),
             cupertinoOverrideTheme: CupertinoThemeData(
               textTheme: CupertinoTextThemeData(
@@ -63,7 +73,7 @@ class App extends StatelessWidget {
               barBackgroundColor: StylingHelper.MAIN_BLUE.withAlpha(170),
             ),
           ),
-          initialRoute: AppRoutingKeys.TABS.route,
+          initialRoute: AppRoutingKeys.Tabs.route,
           routes: RoutingHelper.appRoutes,
         ),
       ),

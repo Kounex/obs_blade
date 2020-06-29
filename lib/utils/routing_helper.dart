@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_station/views/privacy_policy/privacy_policy.dart';
 
 import '../tab_base.dart';
 import '../views/about/about.dart';
@@ -9,25 +10,26 @@ import '../views/settings/settings.dart';
 /// All routing keys available on root level - for now the whole app
 /// is wrapped in tabs and no other root level views (which are not inside
 /// those tabs) are used
-enum AppRoutingKeys { TABS }
+enum AppRoutingKeys { Tabs }
 
 /// Routing keys for the home tab
 enum HomeTabRoutingKeys {
-  LANDING,
-  DASHBOARD,
+  Landing,
+  Dashboard,
 }
 
 /// Routing keys for the settings tab
 enum SettingsTabRoutingKeys {
-  LANDING,
-  ABOUT,
+  Landing,
+  PrivacyPolicy,
+  About,
 }
 
 /// Extension method for [AppRoutingKeys] enum to get the actual route
 /// path for an enum
 extension AppRoutingKeysFunctions on AppRoutingKeys {
   String get route => const {
-        AppRoutingKeys.TABS: '/tabs',
+        AppRoutingKeys.Tabs: '/tabs',
       }[this];
 }
 
@@ -35,9 +37,9 @@ extension AppRoutingKeysFunctions on AppRoutingKeys {
 /// path for an enum
 extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
   String get route => {
-        HomeTabRoutingKeys.LANDING: AppRoutingKeys.TABS.route + '/home',
-        HomeTabRoutingKeys.DASHBOARD:
-            AppRoutingKeys.TABS.route + '/home/dashboard',
+        HomeTabRoutingKeys.Landing: AppRoutingKeys.Tabs.route + '/home',
+        HomeTabRoutingKeys.Dashboard:
+            AppRoutingKeys.Tabs.route + '/home/dashboard',
       }[this];
 }
 
@@ -45,25 +47,28 @@ extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
 /// path for an enum
 extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
   String get route => {
-        SettingsTabRoutingKeys.LANDING: AppRoutingKeys.TABS.route + '/settings',
-        SettingsTabRoutingKeys.ABOUT:
-            AppRoutingKeys.TABS.route + '/settings/about',
+        SettingsTabRoutingKeys.Landing: AppRoutingKeys.Tabs.route + '/settings',
+        SettingsTabRoutingKeys.PrivacyPolicy:
+            AppRoutingKeys.Tabs.route + '/settings/privacy_policy',
+        SettingsTabRoutingKeys.About:
+            AppRoutingKeys.Tabs.route + '/settings/about',
       }[this];
 }
 
 /// Used to summarize routing tasks and information at one point
 class RoutingHelper {
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
-    HomeTabRoutingKeys.LANDING.route: (_) => HomeView(),
-    HomeTabRoutingKeys.DASHBOARD.route: (_) => DashboardView(),
+    HomeTabRoutingKeys.Landing.route: (_) => HomeView(),
+    HomeTabRoutingKeys.Dashboard.route: (_) => DashboardView(),
   };
 
   static Map<String, Widget Function(BuildContext)> settingsTabRoutes = {
-    SettingsTabRoutingKeys.LANDING.route: (_) => SettingsView(),
-    SettingsTabRoutingKeys.ABOUT.route: (_) => AboutView(),
+    SettingsTabRoutingKeys.Landing.route: (_) => SettingsView(),
+    SettingsTabRoutingKeys.PrivacyPolicy.route: (_) => PrivacyPolicyView(),
+    SettingsTabRoutingKeys.About.route: (_) => AboutView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {
-    AppRoutingKeys.TABS.route: (_) => TabBase(),
+    AppRoutingKeys.Tabs.route: (_) => TabBase(),
   };
 }

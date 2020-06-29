@@ -135,7 +135,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   padding: const EdgeInsets.only(left: 192.0),
                   child: QuestionMarkTooltip(
                       message:
-                          'Password is optional. You have to set it manually in the OBS WebSocket Plugin. It is highly recommended though!'),
+                          'Password is optional. You have to set it manually in the OBS WebSocket Plugin.\n\nIt is highly recommended though!'),
                 ),
               ],
             ),

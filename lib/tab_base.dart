@@ -33,7 +33,7 @@ class _TabBaseState extends State<TabBase> {
     _tabViews = [
       Navigator(
         key: _navigatorKeys[0],
-        initialRoute: HomeTabRoutingKeys.LANDING.route,
+        initialRoute: HomeTabRoutingKeys.Landing.route,
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.homeTabRoutes[route],
@@ -48,7 +48,7 @@ class _TabBaseState extends State<TabBase> {
       ),
       Navigator(
         key: _navigatorKeys[1],
-        initialRoute: SettingsTabRoutingKeys.LANDING.route,
+        initialRoute: SettingsTabRoutingKeys.Landing.route,
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.settingsTabRoutes[route],
