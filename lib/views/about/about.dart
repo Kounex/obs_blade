@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'dart:math' as math;
+
 class AboutView extends StatelessWidget {
   final ScrollController controller = ScrollController();
 
@@ -21,18 +23,24 @@ class AboutView extends StatelessWidget {
                   height: 150,
                   color: Colors.red,
                   child: NotificationListener<OverscrollNotification>(
-                    onNotification: (OverscrollNotification value) {
-                      if (value.overscroll < 0 &&
-                          controller.offset + value.overscroll <= 0) {
+                    onNotification: (value) {
+                      if ((controller.offset <=
+                                      controller.position.minScrollExtent &&
+                                  value.overscroll < 0 ||
+                              controller.offset >=
+                                      controller.position.maxScrollExtent &&
+                                  value.overscroll > 0) &&
+                          value.overscroll.abs() > 20.0) {
+                        double damper = 1;
+                        if (controller.offset != 0) {
+                          damper = controller.offset.abs() /
+                              (controller.offset.abs() * 2);
+                        }
+                        controller.jumpTo(
+                            controller.offset + value.overscroll * damper);
+                      } else if (value.overscroll.abs() > 20.0) {
                         controller.jumpTo(controller.offset + value.overscroll);
-                        return true;
                       }
-                      if (controller.offset + value.overscroll >=
-                          controller.position.maxScrollExtent) {
-                        controller.jumpTo(controller.position.maxScrollExtent);
-                        return true;
-                      }
-                      controller.jumpTo(controller.offset + value.overscroll);
                       return true;
                     },
                     child: ListView.builder(
@@ -43,7 +51,7 @@ class AboutView extends StatelessWidget {
                   ),
                 )
               : Text(i.toString()),
-          itemCount: 45,
+          itemCount: 35,
         ),
       ),
     );

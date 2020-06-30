@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -16,27 +15,6 @@ class SceneItems extends StatefulWidget {
 class _SceneItemsState extends State<SceneItems> {
   ScrollController _controller = ScrollController();
 
-  _manageInnerScrollingActive() {
-    print(
-        '${_controller.position.pixels} + ${_controller.position.userScrollDirection}');
-    print((_controller.position.pixels <=
-                _controller.position.minScrollExtent &&
-            _controller.position.userScrollDirection ==
-                ScrollDirection.forward) ||
-        (_controller.position.pixels >= _controller.position.maxScrollExtent &&
-            _controller.position.userScrollDirection ==
-                ScrollDirection.reverse));
-
-    if ((_controller.position.pixels <= _controller.position.minScrollExtent &&
-            _controller.position.userScrollDirection ==
-                ScrollDirection.forward) ||
-        (_controller.position.pixels >= _controller.position.maxScrollExtent &&
-            _controller.position.userScrollDirection ==
-                ScrollDirection.reverse)) {
-    } else {}
-    // print(_absorb);
-  }
-
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
@@ -45,9 +23,12 @@ class _SceneItemsState extends State<SceneItems> {
       dashboardStore.currentSceneItems
           ?.forEach((element) => print(element.type));
       return Scrollbar(
+        controller: _controller,
+        isAlwaysShown: true,
         child: ListView(
+          controller: _controller,
+          physics: BouncingScrollPhysics(),
           padding: EdgeInsets.all(0.0),
-          controller: _controller..addListener(_manageInnerScrollingActive),
           itemExtent: 50.0,
           children: [
             ...dashboardStore.currentSceneItems != null
