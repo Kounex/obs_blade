@@ -10,8 +10,12 @@ class Settings extends HiveObject {
   @HiveField(1)
   bool reduceSmearing = false;
 
+  @HiveField(2)
+  bool enforceTabletMode = false;
+
   void setDefault() {
     this.trueDark ??= false;
     this.reduceSmearing ??= false;
+    this.enforceTabletMode ??= false;
   }
 }

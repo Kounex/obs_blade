@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -78,7 +79,15 @@ class HomeView extends StatelessWidget {
             }
           },
           child: CustomScrollView(
-            physics: BouncingScrollPhysics(),
+            /// Scrolling has a unique behaviour in iOS and macOS where we bounce as soon as
+            /// we reach the end. Since we are using the stretch of [RefresherAppBar], which uses
+            /// [SliverAppBar] internally, to refresh (looking for OBS connections) we need to
+            /// be able to scroll even though we reached the end. To achieve this we need different behaviour
+            /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
+            /// for the first group and [BouncingScrollPhysics] for the second
+            physics: Platform.isIOS || Platform.isMacOS
+                ? AlwaysScrollableScrollPhysics()
+                : BouncingScrollPhysics(),
             slivers: <Widget>[
               RefresherAppBar(
                 expandedHeight: 200.0,

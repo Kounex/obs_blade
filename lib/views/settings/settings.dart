@@ -26,14 +26,14 @@ class SettingsView extends StatelessWidget {
           CupertinoSliverNavigationBar(
             largeTitle: Text('Settings'),
           ),
-          SliverList(
-            delegate: SliverChildListDelegate(
-              [
-                ValueListenableBuilder(
-                  valueListenable:
-                      Hive.box<Settings>(HiveKeys.SETTINGS.name).listenable(),
-                  builder: (context, Box<Settings> settingsBox, child) =>
-                      ActionBlock(
+          ValueListenableBuilder(
+            valueListenable:
+                Hive.box<Settings>(HiveKeys.Settings.name).listenable(),
+            builder: (context, Box<Settings> settingsBox, child) => SliverList(
+              delegate: SliverChildListDelegate(
+                [
+                  ActionBlock(
+                    title: 'Theme',
                     blockEntries: [
                       BlockEntry(
                         leading: StylingHelper.CUPERTINO_SUNGLASSES_ICON,
@@ -63,29 +63,49 @@ class SettingsView extends StatelessWidget {
                         ),
                     ],
                   ),
-                ),
-                ActionBlock(
-                  blockEntries: [
-                    BlockEntry(
-                      leading: CupertinoIcons.book,
-                      title: 'Privacy Policy',
-                      navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
-                    ),
-                    BlockEntry(
-                      leading: StylingHelper.CUPERTINO_AT_ICON,
-                      title: 'About',
-                      navigateTo: SettingsTabRoutingKeys.About.route,
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0, left: 8.0),
-                  child: Text(
-                    'by Kounex',
-                    style: Theme.of(context).textTheme.caption,
+                  ActionBlock(
+                    title: 'Layout',
+                    blockEntries: [
+                      BlockEntry(
+                        leading: CupertinoIcons.padlock,
+                        title: 'Enforce Tablet Mode',
+                        help:
+                            'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough.\n\nIf you want to you can set this manually.\n\nCAUTION: Might not fit your screen!',
+                        trailing: CupertinoSwitch(
+                          value: settingsBox.get(0).enforceTabletMode ?? false,
+                          onChanged: (enforceTabletMode) {
+                            settingsBox.get(0).enforceTabletMode =
+                                enforceTabletMode;
+                            settingsBox.get(0).save();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  ActionBlock(
+                    title: 'Misc.',
+                    blockEntries: [
+                      BlockEntry(
+                        leading: CupertinoIcons.book,
+                        title: 'Privacy Policy',
+                        navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
+                      ),
+                      BlockEntry(
+                        leading: StylingHelper.CUPERTINO_AT_ICON,
+                        title: 'About',
+                        navigateTo: SettingsTabRoutingKeys.About.route,
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 7.0, left: 14.0),
+                    child: Text(
+                      'Version 0.5.0',
+                      style: Theme.of(context).textTheme.caption,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

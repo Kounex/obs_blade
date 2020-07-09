@@ -1,46 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:obs_station/utils/styling_helper.dart';
 
 import 'audio_inputs.dart';
 import 'scene_items.dart';
 
 class SceneContent extends StatelessWidget {
-  final bool tabbed;
-
-  SceneContent({this.tabbed = false});
-
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TabBar(
-            tabs: [
-              Tab(
-                child: Text('Scene Items'),
-              ),
-              Tab(
-                child: Text('Audio'),
-              )
-            ],
+    return Row(
+      children: [
+        Expanded(
+          child: Card(
+            margin: const EdgeInsets.only(left: 24.0, right: 12.0),
+            child: Column(
+              children: [
+                Container(
+                  color: StylingHelper.MAIN_BLUE,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      'Sources',
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle1
+                          .copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Divider(height: 0.0),
+                SizedBox(
+                  height: 250.0,
+                  child: SceneItems(),
+                ),
+              ],
+            ),
           ),
-          SizedBox(
-            height: 250,
-            child:
-                TabBarView(physics: NeverScrollableScrollPhysics(), children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                child: SceneItems(),
-              ),
-              AudioInputs(),
-            ]),
-          )
-        ],
-      ),
+        ),
+        Expanded(
+          child: Card(
+            margin: const EdgeInsets.only(left: 12.0, right: 24.0),
+            child: Column(
+              children: [
+                Container(
+                  color: StylingHelper.MAIN_BLUE,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      'Audio',
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle1
+                          .copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Divider(height: 0.0),
+                SizedBox(
+                  height: 250.0,
+                  child: AudioInputs(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
-    // TODO: 2 modes: above in tabbar if screen width not big (phone) and both
-    // visible if width big enough (tablet) could also be toggleable
     return Column(
       children: [
         Row(
@@ -68,14 +92,14 @@ class SceneContent extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
-                child: SceneItems(),
+                child: SizedBox(height: 250.0, child: SceneItems()),
               ),
             ),
             VerticalDivider(),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
-                child: AudioInputs(),
+                child: SizedBox(height: 250.0, child: AudioInputs()),
               ),
             )
           ],

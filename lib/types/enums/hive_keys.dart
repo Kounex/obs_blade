@@ -1,9 +1,9 @@
-enum HiveKeys { SAVED_CONNECTIONS, PAST_STREAM_DATA, SETTINGS }
+enum HiveKeys { SavedConnections, PastStreamData, Settings }
 
 extension HiveKeysFunctions on HiveKeys {
   String get name => const {
-        HiveKeys.SAVED_CONNECTIONS: 'saved-connections',
-        HiveKeys.PAST_STREAM_DATA: 'past-stream-data',
-        HiveKeys.SETTINGS: 'settings',
+        HiveKeys.SavedConnections: 'saved-connections',
+        HiveKeys.PastStreamData: 'past-stream-data',
+        HiveKeys.Settings: 'settings',
       }[this];
 }

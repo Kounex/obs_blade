@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_station/views/dashboard/widgets/scenes/scene_content/nested_list_manager.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../stores/views/dashboard.dart';
@@ -22,40 +23,42 @@ class _SceneItemsState extends State<SceneItems> {
     return Observer(builder: (_) {
       dashboardStore.currentSceneItems
           ?.forEach((element) => print(element.type));
-      return Scrollbar(
-        controller: _controller,
-        isAlwaysShown: true,
-        child: ListView(
+      return NestedScrollManager(
+        child: Scrollbar(
           controller: _controller,
-          physics: BouncingScrollPhysics(),
-          padding: EdgeInsets.all(0.0),
-          itemExtent: 50.0,
-          children: [
-            ...dashboardStore.currentSceneItems != null
-                ? dashboardStore.currentSceneItems.map(
-                    (sceneItem) => ListTile(
-                      leading: Icon(Icons.filter),
-                      title: Text(
-                        sceneItem.name,
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(
-                          sceneItem.render
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: sceneItem.render ? Colors.white : Colors.red,
+          isAlwaysShown: true,
+          child: ListView(
+            controller: _controller,
+            physics: ClampingScrollPhysics(),
+            padding: EdgeInsets.all(0.0),
+            itemExtent: 50.0,
+            children: [
+              ...dashboardStore.currentSceneItems != null
+                  ? dashboardStore.currentSceneItems.map(
+                      (sceneItem) => ListTile(
+                        leading: Icon(Icons.filter),
+                        title: Text(
+                          sceneItem.name,
                         ),
-                        onPressed: () => NetworkHelper.makeRequest(
-                            dashboardStore.activeSession.socket.sink,
-                            RequestType.SetSceneItemProperties, {
-                          'item': sceneItem.name,
-                          'visible': !sceneItem.render
-                        }),
+                        trailing: IconButton(
+                          icon: Icon(
+                            sceneItem.render
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: sceneItem.render ? Colors.white : Colors.red,
+                          ),
+                          onPressed: () => NetworkHelper.makeRequest(
+                              dashboardStore.activeSession.socket.sink,
+                              RequestType.SetSceneItemProperties, {
+                            'item': sceneItem.name,
+                            'visible': !sceneItem.render
+                          }),
+                        ),
                       ),
-                    ),
-                  )
-                : [Text('No Scene Items available')]
-          ],
+                    )
+                  : [Text('No Scene Items available')]
+            ],
+          ),
         ),
       );
     });

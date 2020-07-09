@@ -30,7 +30,7 @@ class SavedConnections extends StatelessWidget {
             ),
             child: ValueListenableBuilder(
               valueListenable:
-                  Hive.box<Connection>(HiveKeys.SAVED_CONNECTIONS.name)
+                  Hive.box<Connection>(HiveKeys.SavedConnections.name)
                       .listenable(),
               builder: (context, Box<Connection> savedConnectionsBox, child) {
                 double height = 175.0;
@@ -43,31 +43,6 @@ class SavedConnections extends StatelessWidget {
                       ),
                     )
                     .toList();
-                // return SizedBox(
-                //   height: height,
-                //   child: RotatedBox(
-                //     quarterTurns: 3,
-                //     child: ListWheelScrollView(
-                //       clipToSize: false,
-                //       squeeze: 0.9,
-                //       diameterRatio: 1000.0,
-                //       itemExtent: width,
-                //       physics: FixedExtentScrollPhysics(),
-                //       children: box.values
-                //           .map(
-                //             (savedConnection) => RotatedBox(
-                //               quarterTurns: 1,
-                //               child: ConnectionBox(
-                //                 connection: savedConnection,
-                //                 width: width,
-                //               ),
-                //             ),
-                //           )
-                //           .toList(),
-                //     ),
-                //   ),
-                // );
-
                 return MediaQuery.of(context).size.width < width * 2
                     ? CarouselSlider(
                         options: CarouselOptions(

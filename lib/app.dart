@@ -31,9 +31,9 @@ class App extends StatelessWidget {
       ],
       child: ValueListenableBuilder(
         valueListenable:
-            Hive.box<Settings>(HiveKeys.SETTINGS.name).listenable(),
-        builder: (context, Box<Settings> settingsBox, child) => MaterialApp(
-          theme: ThemeData.dark().copyWith(
+            Hive.box<Settings>(HiveKeys.Settings.name).listenable(),
+        builder: (context, Box<Settings> settingsBox, child) {
+          ThemeData theme = ThemeData.dark().copyWith(
             /// General Theme colors
             scaffoldBackgroundColor: settingsBox.getAt(0).trueDark
                 ? settingsBox.get(0).reduceSmearing
@@ -72,10 +72,18 @@ class App extends StatelessWidget {
               primaryColor: CupertinoColors.systemBlue,
               barBackgroundColor: StylingHelper.MAIN_BLUE.withAlpha(170),
             ),
-          ),
-          initialRoute: AppRoutingKeys.Tabs.route,
-          routes: RoutingHelper.appRoutes,
-        ),
+          );
+          // theme = theme.copyWith(
+          //   textTheme: theme.textTheme.copyWith(
+          //     bodyText2: theme.textTheme.bodyText2.copyWith(fontSize: 18.0),
+          //   ),
+          // );
+          return MaterialApp(
+            theme: theme,
+            initialRoute: AppRoutingKeys.Tabs.route,
+            routes: RoutingHelper.appRoutes,
+          );
+        },
       ),
     );
   }

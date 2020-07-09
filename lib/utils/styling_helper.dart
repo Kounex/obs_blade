@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 /// app wide layout constraints (if applicable)
 class StylingHelper {
   /// Width threshold to trigger mobile or tablet view
-  static const double MAX_WIDTH_MOBILE = 900.0;
+  static const double MAX_WIDTH_MOBILE = 700.0;
 
   /// Main colors (primarly used for Themeing)
   static const Color MAIN_BLUE = const Color(0xff101823);

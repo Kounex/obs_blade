@@ -16,11 +16,11 @@ void main() async {
   Hive.registerAdapter(SettingsAdapter());
 
   await Hive.openBox<Connection>(
-    HiveKeys.SAVED_CONNECTIONS.name,
+    HiveKeys.SavedConnections.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
   await Hive.openBox<PastStreamData>(
-    HiveKeys.PAST_STREAM_DATA.name,
+    HiveKeys.PastStreamData.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 
@@ -31,7 +31,7 @@ void main() async {
   /// we make sure we have an instance from the beginning and we
   /// won't add an additional one, instead save the current one
   Box<Settings> settingsBox = await Hive.openBox<Settings>(
-    HiveKeys.SETTINGS.name,
+    HiveKeys.Settings.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
   if (settingsBox.length == 0) {

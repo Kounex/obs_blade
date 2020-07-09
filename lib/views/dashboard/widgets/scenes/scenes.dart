@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_station/models/settings.dart';
+import 'package:obs_station/types/enums/hive_keys.dart';
+import 'package:obs_station/utils/styling_helper.dart';
+import 'package:obs_station/views/dashboard/widgets/scenes/scene_button.dart';
+import 'package:obs_station/views/dashboard/widgets/scenes/scene_content/scene_content_mobile.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../stores/views/dashboard.dart';
-import '../../../../types/enums/request_type.dart';
-import '../../../../utils/network_helper.dart';
 import 'scene_content/scene_content.dart';
 
 class Scenes extends StatelessWidget {
@@ -24,69 +29,23 @@ class Scenes extends StatelessWidget {
                 children: dashboardStore.scenes != null &&
                         dashboardStore.scenes.length > 0
                     ? dashboardStore.scenes
-                        .map(
-                          (scene) => GestureDetector(
-                            onTap: () => NetworkHelper.makeRequest(
-                                dashboardStore.activeSession.socket.sink,
-                                RequestType.SetCurrentScene,
-                                {'scene-name': scene.name}),
-                            child: Stack(
-                              children: [
-                                AnimatedContainer(
-                                  duration: Duration(
-                                      milliseconds: dashboardStore
-                                                      .sceneTransitionDurationMS !=
-                                                  null &&
-                                              dashboardStore
-                                                      .sceneTransitionDurationMS >=
-                                                  0
-                                          ? dashboardStore
-                                              .sceneTransitionDurationMS
-                                          : 0),
-                                  alignment: Alignment.center,
-                                  height: 100.0,
-                                  width: 100.0,
-                                  decoration: BoxDecoration(
-                                    color: dashboardStore.activeSceneName ==
-                                            scene.name
-                                        ? Theme.of(context).accentColor
-                                        : Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Text(
-                                      scene.name,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                                AnimatedContainer(
-                                  duration: Duration(milliseconds: 50),
-                                  height: 100.0,
-                                  width: 100.0,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: dashboardStore.activeSceneName ==
-                                              scene.name
-                                          ? Theme.of(context).accentColor
-                                          : Theme.of(context).cardColor,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12.0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
+                        .map((scene) => SceneButton(scene: scene))
                         .toList()
                     : [Text('No Scenes available')],
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 42.0),
-            child: SceneContent(),
+          ValueListenableBuilder(
+            valueListenable:
+                Hive.box<Settings>(HiveKeys.Settings.name).listenable(),
+            builder: (context, Box<Settings> settingsBox, child) => Padding(
+              padding: const EdgeInsets.only(top: 42.0),
+              child: MediaQuery.of(context).size.width >
+                          StylingHelper.MAX_WIDTH_MOBILE ||
+                      settingsBox.get(0).enforceTabletMode
+                  ? SceneContent()
+                  : SceneContentMobile(),
+            ),
           ),
         ],
       ),
