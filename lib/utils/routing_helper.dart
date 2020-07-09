@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/views/privacy_policy/privacy_policy.dart';
+import 'package:obs_blade/views/privacy_policy/privacy_policy.dart';
 
 import '../tab_base.dart';
 import '../views/about/about.dart';

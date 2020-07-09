@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
-import 'package:obs_station/types/classes/stream/responses/base.dart';
+import 'package:obs_blade/types/classes/stream/responses/base.dart';
 import 'package:provider/provider.dart';
 
 import '../../stores/shared/network.dart';

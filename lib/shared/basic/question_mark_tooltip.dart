@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_station/shared/dialogs/info.dart';
+import 'package:obs_blade/shared/dialogs/info.dart';
 
 import '../../utils/styling_helper.dart';
 import 'flutter_modified/custom_tooltip.dart';

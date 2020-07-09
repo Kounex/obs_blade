@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_station/models/settings.dart';
-import 'package:obs_station/types/enums/hive_keys.dart';
-import 'package:obs_station/utils/styling_helper.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/scene_button.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/scene_content/scene_content_mobile.dart';
+import 'package:obs_blade/models/settings.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_button.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/scene_content_mobile.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../stores/views/dashboard.dart';

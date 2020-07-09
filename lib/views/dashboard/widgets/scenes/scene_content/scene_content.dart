@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_station/utils/styling_helper.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'audio_inputs.dart';
 import 'scene_items.dart';

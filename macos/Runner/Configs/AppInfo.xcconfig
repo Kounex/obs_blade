@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = obs_station
+PRODUCT_NAME = obs_blade
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.kounex.obsStation
+PRODUCT_BUNDLE_IDENTIFIER = com.kounex.obsBlade
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2020 com.kounex. All rights reserved.

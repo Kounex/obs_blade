@@ -1,4 +1,4 @@
-import 'package:obs_station/types/classes/stream/responses/base.dart';
+import 'package:obs_blade/types/classes/stream/responses/base.dart';
 
 /// Get configured special sources like Desktop Audio and Mic/Aux sources
 class GetSpecialSourcesResponse extends BaseResponse {

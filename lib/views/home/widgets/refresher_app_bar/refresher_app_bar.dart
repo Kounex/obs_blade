@@ -30,7 +30,7 @@ class RefresherAppBar extends StatelessWidget {
                       60
                   ? Fader(
                       child: Text(
-                        'OBS Station',
+                        'OBS Blade',
                         style: TextStyle(fontSize: 18.0),
                       ),
                     )
@@ -44,7 +44,7 @@ class RefresherAppBar extends StatelessWidget {
               //       ? 1.0
               //       : 0.0,
               //   child: Text(
-              //     'OBS Station',
+              //     'OBS Blade',
               //     style: TextStyle(fontSize: 18.0),
               //   ),
               // ),

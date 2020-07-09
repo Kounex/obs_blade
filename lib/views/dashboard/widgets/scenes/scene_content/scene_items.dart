@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/views/dashboard/widgets/scenes/scene_content/nested_list_manager.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/nested_list_manager.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../stores/views/dashboard.dart';

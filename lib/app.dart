@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_station/utils/styling_helper.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 
 import 'models/settings.dart';

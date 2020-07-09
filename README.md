@@ -1,4 +1,4 @@
-# OBS Station
+# OBS Blade
 
 [APP_IMAGE]
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_station/stores/views/dashboard.dart';
-import 'package:obs_station/types/classes/api/scene.dart';
-import 'package:obs_station/types/enums/request_type.dart';
-import 'package:obs_station/utils/network_helper.dart';
+import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/types/classes/api/scene.dart';
+import 'package:obs_blade/types/enums/request_type.dart';
+import 'package:obs_blade/utils/network_helper.dart';
 import 'package:provider/provider.dart';
 
 class SceneButton extends StatelessWidget {
