@@ -28,7 +28,7 @@ class ConfirmationDialog extends StatelessWidget {
         ),
         CupertinoDialogAction(
           child: Text('Yes'),
-          isDestructiveAction: true,
+          isDestructiveAction: this.isYesDestructive,
           onPressed: () {
             Navigator.of(context).pop();
             this.onOk();

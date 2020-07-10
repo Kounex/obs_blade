@@ -140,6 +140,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                                 title: 'Close Connection',
                                 body:
                                     'Are you sure you want to close the current WebSocket connection?',
+                                isYesDestructive: true,
                                 onOk: () {
                                   networkStore.closeSession();
                                   Navigator.of(context).pushReplacementNamed(

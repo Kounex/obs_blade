@@ -8,7 +8,7 @@ class InputDialog extends StatefulWidget {
   final String inputPlaceholder;
   final void Function(String) onSave;
 
-  /// Works like validation - return an empty String to tell its valid and otherwise
+  /// Works like validation - return an empty String to tell it is valid and otherwise
   /// the error text which should be displayed (prevents the 'Ok' dialog callback)
   final String Function(String) inputCheck;
 
@@ -48,15 +48,21 @@ class _InputDialogState extends State<InputDialog> {
             padding: const EdgeInsets.only(top: 8.0),
             child: CupertinoTextField(
               controller: _controller
-                ..addListener(() =>
-                    _validationText = widget.inputCheck(_controller.text)),
+                ..addListener(() => setState((() =>
+                    _validationText = widget.inputCheck(_controller.text)))),
               placeholder: widget.inputPlaceholder,
             ),
           ),
-          Text(
-            _validationText,
-            style: TextStyle(
-              color: Colors.red,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(
+                _validationText,
+                style: TextStyle(
+                  color: Colors.red,
+                ),
+              ),
             ),
           )
         ],
@@ -70,7 +76,9 @@ class _InputDialogState extends State<InputDialog> {
         CupertinoDialogAction(
           child: Text('Save'),
           onPressed: () {
-            if (_validationText == null || _validationText.length == 0) {
+            setState(
+                () => _validationText = widget.inputCheck(_controller.text));
+            if (_validationText.length == 0) {
               Navigator.of(context).pop();
               widget.onSave(_controller.text);
             }
