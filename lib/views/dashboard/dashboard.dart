@@ -2,6 +2,7 @@ import 'package:after_layout/after_layout.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 
@@ -41,11 +42,6 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
   List<String> _appBarActions = ['Manage Stream', 'Stats'];
-
-  @override
-  initState() {
-    super.initState();
-  }
 
   @override
   void afterFirstLayout(BuildContext context) {
@@ -108,131 +104,139 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
     return Provider<DashboardStore>(create: (_) {
       DashboardStore dashboardStore = DashboardStore();
 
-      // setting the active session and make initial requests
+      // Setting the active session and make initial requests
       // to display data on connect
       dashboardStore.setActiveSession(networkStore.activeSession);
       return dashboardStore;
     }, builder: (context, child) {
-      DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
+      // DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
-      return Scaffold(
-        body: DashboardScroll(
-          child: Builder(
-            builder: (context) => CustomScrollView(
-              physics: ClampingScrollPhysics(),
-              controller: DashboardScroll.of(context).scrollController,
-              slivers: [
-                TransculentSliverAppBar(
-                  pinned: true,
-                  title: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          CupertinoButton(
-                            child: Text('Close'),
-                            onPressed: () => showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (_) => ConfirmationDialog(
-                                title: 'Close Connection',
-                                body:
-                                    'Are you sure you want to close the current WebSocket connection?',
-                                isYesDestructive: true,
-                                onOk: () {
-                                  networkStore.closeSession();
-                                  Navigator.of(context).pushReplacementNamed(
-                                      HomeTabRoutingKeys.Landing.route);
-                                },
+      return ObserverListener(
+        listener: (_) {
+          if (context.watch<DashboardStore>().obsTerminated)
+            Navigator.of(context)
+                .pushReplacementNamed(HomeTabRoutingKeys.Landing.route);
+        },
+        child: Scaffold(
+          body: DashboardScroll(
+            child: Builder(
+              builder: (context) => CustomScrollView(
+                physics: ClampingScrollPhysics(),
+                controller: DashboardScroll.of(context).scrollController,
+                slivers: [
+                  TransculentSliverAppBar(
+                    pinned: true,
+                    title: Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            CupertinoButton(
+                              child: Text('Close'),
+                              onPressed: () => showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (_) => ConfirmationDialog(
+                                  title: 'Close Connection',
+                                  body:
+                                      'Are you sure you want to close the current WebSocket connection?',
+                                  isYesDestructive: true,
+                                  onOk: () {
+                                    networkStore.closeSession();
+                                    Navigator.of(context).pushReplacementNamed(
+                                        HomeTabRoutingKeys.Landing.route);
+                                  },
+                                ),
                               ),
                             ),
-                          ),
-                          Container(
-                            width: 150.0,
-                            alignment: Alignment.bottomRight,
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _appBarActions[0],
-                                icon: Container(),
-                                isExpanded: true,
-                                selectedItemBuilder: (_) => [
-                                  Container(
-                                    alignment: Alignment.centerRight,
-                                    child: Icon(
-                                      CupertinoIcons.ellipsis,
-                                      size: 32.0,
-                                    ),
-                                  )
-                                ],
-                                items: _appBarActions
-                                    .map(
-                                      (action) => DropdownMenuItem<String>(
-                                        child: SizedBox(
-                                          width: 150.0,
-                                          child: Text(
-                                            action,
-                                          ),
-                                        ),
-                                        value: action,
+                            Container(
+                              width: 150.0,
+                              alignment: Alignment.bottomRight,
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _appBarActions[0],
+                                  icon: Container(),
+                                  isExpanded: true,
+                                  selectedItemBuilder: (_) => [
+                                    Container(
+                                      alignment: Alignment.centerRight,
+                                      child: Icon(
+                                        CupertinoIcons.ellipsis,
+                                        size: 32.0,
                                       ),
                                     )
-                                    .toList(),
-                                onChanged: (selection) => print(selection),
+                                  ],
+                                  items: _appBarActions
+                                      .map(
+                                        (action) => DropdownMenuItem<String>(
+                                          child: SizedBox(
+                                            width: 150.0,
+                                            child: Text(
+                                              action,
+                                            ),
+                                          ),
+                                          value: action,
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (selection) => print(selection),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: <Widget>[
-                          Text('Dashboard'),
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(top: 4.0, bottom: 4.0),
-                            child: Observer(builder: (_) {
-                              return StatusDot(
-                                size: 8.0,
-                                color: dashboardStore.isLive
-                                    ? Colors.green
-                                    : Colors.red,
-                                text:
-                                    dashboardStore.isLive ? 'Live' : 'Not Live',
-                                style: Theme.of(context).textTheme.caption,
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.only(bottom: 50.0),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate(
-                      [
-                        Align(
-                          child: SizedBox(
-                            // width: MediaQuery.of(context).size.width / 100 * 85,
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 12.0, bottom: 24.0),
-                                  child: Scenes(),
-                                ),
-                                StreamWidgets(),
-                              ],
+                          ],
+                        ),
+                        Column(
+                          children: <Widget>[
+                            Text('Dashboard'),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 4.0, bottom: 4.0),
+                              child: Observer(builder: (_) {
+                                return StatusDot(
+                                  size: 8.0,
+                                  color: context.watch<DashboardStore>().isLive
+                                      ? Colors.green
+                                      : Colors.red,
+                                  text: context.watch<DashboardStore>().isLive
+                                      ? 'Live'
+                                      : 'Not Live',
+                                  style: Theme.of(context).textTheme.caption,
+                                );
+                              }),
                             ),
-                          ),
-                        )
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                  SliverPadding(
+                    padding: EdgeInsets.only(bottom: 50.0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(
+                        [
+                          Align(
+                            child: SizedBox(
+                              // width: MediaQuery.of(context).size.width / 100 * 85,
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 12.0, bottom: 24.0),
+                                    child: Scenes(),
+                                  ),
+                                  StreamWidgets(),
+                                ],
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -43,6 +43,9 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<SceneItem> currentSceneItems;
 
+  @observable
+  bool obsTerminated = false;
+
   @computed
   ObservableList<SceneItem> get currentAudioSceneItems =>
       this.currentSceneItems != null
@@ -162,8 +165,7 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(this.currentSceneItems);
         break;
       case EventType.Exiting:
-        // TODO: OBS has been closed while being connected to the WebSocket
-        // need to go back to landing and inform the user with a dialog etc.
+        this.obsTerminated = true;
         break;
       default:
         break;

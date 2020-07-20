@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:after_layout/after_layout.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
+import 'package:obs_blade/shared/dialogs/info.dart';
+import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/stream/responses/base.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +21,38 @@ import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 import 'widgets/switcher_card/switcher_card.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
+  @override
+  _HomeViewState createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> with AfterLayoutMixin {
+  @override
+  void afterFirstLayout(BuildContext context) {
+    _checkIfOBSTerminated(context);
+  }
+
+  void _checkIfOBSTerminated(BuildContext context) {
+    DashboardStore dashboardStore =
+        Provider.of<DashboardStore>(context, listen: false);
+
+    /// false by default, will only be set to true by the 'Exiting' event from
+    /// the OBS instance
+    if (dashboardStore.obsTerminated) {
+      dashboardStore.obsTerminated = false;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => InfoDialog(
+            body:
+                'OBS sent the \'Exiting\' event and therefore should be closed on your machine.'),
+      );
+    }
+  }
+
+  /// Once we recognize a connection attempt inside [ObserverListener] in our build method
+  /// we will check whether the connection was successfull or not and display overlays and / or
+  /// route to the [DashboardView]
   void _handleConnectionAttempt(
       BuildContext context, NetworkStore networkStore) {
     if (networkStore.connectionInProgress) {
@@ -41,9 +75,15 @@ class HomeView extends StatelessWidget {
     } else if (networkStore.connectionWasInProgress &&
         !networkStore.connectionInProgress) {
       if (networkStore.connectionResponse.status == BaseResponse.ok) {
+        OverlayHandler.closeAnyOverlay();
         Navigator.pushReplacementNamed(
             context, HomeTabRoutingKeys.Dashboard.route);
       }
+
+      /// If the error for the connection attempt results in an 'Authentication' error,
+      /// it is due to providing a wrong password (or none at all) and we don't want to
+      /// display an overlay for that - we trigger the validation of the password field
+      /// in our [ConnectForm]
       if (!networkStore.connectionResponse.error.contains('Authentication')) {
         OverlayHandler.showStatusOverlay(
           context: context,
@@ -51,9 +91,7 @@ class HomeView extends StatelessWidget {
           content: Align(
             alignment: Alignment.center,
             child: Text(
-              networkStore.connectionResponse.status == BaseResponse.ok
-                  ? 'WebSocket connection established!'
-                  : 'Couldn\'t connect to a WebSocket!',
+              'Couldn\'t connect to a WebSocket!',
               textAlign: TextAlign.center,
             ),
           ),
@@ -79,7 +117,7 @@ class HomeView extends StatelessWidget {
             }
           },
           child: CustomScrollView(
-            /// Scrolling has a unique behaviour in iOS and macOS where we bounce as soon as
+            /// Scrolling has a unique behaviour on iOS and macOS where we bounce as soon as
             /// we reach the end. Since we are using the stretch of [RefresherAppBar], which uses
             /// [SliverAppBar] internally, to refresh (looking for OBS connections) we need to
             /// be able to scroll even though we reached the end. To achieve this we need different behaviour

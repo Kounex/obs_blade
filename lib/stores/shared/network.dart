@@ -26,6 +26,8 @@ abstract class _NetworkStore with Store {
   @observable
   bool connectionInProgress = false;
 
+  bool obsTerminated = false;
+
   @action
   Future<BaseResponse> setOBSWebSocket(Connection connection,
       {Duration timeout = const Duration(seconds: 3)}) async {
@@ -65,7 +67,8 @@ abstract class _NetworkStore with Store {
   }
 
   @action
-  void closeSession() {
+  void closeSession({bool manually = true}) {
+    this.obsTerminated = !manually;
     if (this.activeSession != null) {
       this.activeSession.socket.sink.close();
       this.activeSession = null;

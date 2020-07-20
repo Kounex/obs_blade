@@ -14,7 +14,9 @@ class OverlayHandler {
   static OverlayEntry currentOverlayEntry;
   static Timer currentOverlayTimer;
 
-  /// Any [content] can be displayed, just needs to be a [Widget]
+  /// Any [content] can be displayed, just needs to be a [Widget]. [replaceIfActive], if true,
+  /// will close any other overlay which may be active right now and display the new one then, otherwise
+  /// the new overlay will be inserted on top
   static void showStatusOverlay(
       {BuildContext context,
       Widget content,
@@ -39,6 +41,9 @@ class OverlayHandler {
       });
     }
   }
+
+  /// Manually close any overlay (if exists)
+  static void closeAnyOverlay() => OverlayHandler.currentOverlayEntry?.remove();
 
   /// Function which actually returns the [OverlayEntry] used in
   /// [OverlayHelper.showStatusOverlay] and doesn't need to be called
