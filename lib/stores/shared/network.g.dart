@@ -6,24 +6,22 @@ part of 'network.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$NetworkStore on _NetworkStore, Store {
   final _$activeSessionAtom = Atom(name: '_NetworkStore.activeSession');
 
   @override
   Session get activeSession {
-    _$activeSessionAtom.context.enforceReadPolicy(_$activeSessionAtom);
-    _$activeSessionAtom.reportObserved();
+    _$activeSessionAtom.reportRead();
     return super.activeSession;
   }
 
   @override
   set activeSession(Session value) {
-    _$activeSessionAtom.context.conditionallyRunInAction(() {
+    _$activeSessionAtom.reportWrite(value, super.activeSession, () {
       super.activeSession = value;
-      _$activeSessionAtom.reportChanged();
-    }, _$activeSessionAtom, name: '${_$activeSessionAtom.name}_set');
+    });
   }
 
   final _$connectionResponseAtom =
@@ -31,18 +29,15 @@ mixin _$NetworkStore on _NetworkStore, Store {
 
   @override
   BaseResponse get connectionResponse {
-    _$connectionResponseAtom.context
-        .enforceReadPolicy(_$connectionResponseAtom);
-    _$connectionResponseAtom.reportObserved();
+    _$connectionResponseAtom.reportRead();
     return super.connectionResponse;
   }
 
   @override
   set connectionResponse(BaseResponse value) {
-    _$connectionResponseAtom.context.conditionallyRunInAction(() {
+    _$connectionResponseAtom.reportWrite(value, super.connectionResponse, () {
       super.connectionResponse = value;
-      _$connectionResponseAtom.reportChanged();
-    }, _$connectionResponseAtom, name: '${_$connectionResponseAtom.name}_set');
+    });
   }
 
   final _$connectionWasInProgressAtom =
@@ -50,19 +45,16 @@ mixin _$NetworkStore on _NetworkStore, Store {
 
   @override
   bool get connectionWasInProgress {
-    _$connectionWasInProgressAtom.context
-        .enforceReadPolicy(_$connectionWasInProgressAtom);
-    _$connectionWasInProgressAtom.reportObserved();
+    _$connectionWasInProgressAtom.reportRead();
     return super.connectionWasInProgress;
   }
 
   @override
   set connectionWasInProgress(bool value) {
-    _$connectionWasInProgressAtom.context.conditionallyRunInAction(() {
+    _$connectionWasInProgressAtom
+        .reportWrite(value, super.connectionWasInProgress, () {
       super.connectionWasInProgress = value;
-      _$connectionWasInProgressAtom.reportChanged();
-    }, _$connectionWasInProgressAtom,
-        name: '${_$connectionWasInProgressAtom.name}_set');
+    });
   }
 
   final _$connectionInProgressAtom =
@@ -70,22 +62,35 @@ mixin _$NetworkStore on _NetworkStore, Store {
 
   @override
   bool get connectionInProgress {
-    _$connectionInProgressAtom.context
-        .enforceReadPolicy(_$connectionInProgressAtom);
-    _$connectionInProgressAtom.reportObserved();
+    _$connectionInProgressAtom.reportRead();
     return super.connectionInProgress;
   }
 
   @override
   set connectionInProgress(bool value) {
-    _$connectionInProgressAtom.context.conditionallyRunInAction(() {
+    _$connectionInProgressAtom.reportWrite(value, super.connectionInProgress,
+        () {
       super.connectionInProgress = value;
-      _$connectionInProgressAtom.reportChanged();
-    }, _$connectionInProgressAtom,
-        name: '${_$connectionInProgressAtom.name}_set');
+    });
   }
 
-  final _$setOBSWebSocketAsyncAction = AsyncAction('setOBSWebSocket');
+  final _$obsTerminatedAtom = Atom(name: '_NetworkStore.obsTerminated');
+
+  @override
+  bool get obsTerminated {
+    _$obsTerminatedAtom.reportRead();
+    return super.obsTerminated;
+  }
+
+  @override
+  set obsTerminated(bool value) {
+    _$obsTerminatedAtom.reportWrite(value, super.obsTerminated, () {
+      super.obsTerminated = value;
+    });
+  }
+
+  final _$setOBSWebSocketAsyncAction =
+      AsyncAction('_NetworkStore.setOBSWebSocket');
 
   @override
   Future<BaseResponse> setOBSWebSocket(Connection connection,
@@ -98,10 +103,22 @@ mixin _$NetworkStore on _NetworkStore, Store {
       ActionController(name: '_NetworkStore');
 
   @override
-  void closeSession() {
-    final _$actionInfo = _$_NetworkStoreActionController.startAction();
+  void closeSession({bool manually = true}) {
+    final _$actionInfo = _$_NetworkStoreActionController.startAction(
+        name: '_NetworkStore.closeSession');
     try {
-      return super.closeSession();
+      return super.closeSession(manually: manually);
+    } finally {
+      _$_NetworkStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  dynamic _handleEvent(BaseEvent event) {
+    final _$actionInfo = _$_NetworkStoreActionController.startAction(
+        name: '_NetworkStore._handleEvent');
+    try {
+      return super._handleEvent(event);
     } finally {
       _$_NetworkStoreActionController.endAction(_$actionInfo);
     }
@@ -109,8 +126,12 @@ mixin _$NetworkStore on _NetworkStore, Store {
 
   @override
   String toString() {
-    final string =
-        'activeSession: ${activeSession.toString()},connectionResponse: ${connectionResponse.toString()},connectionWasInProgress: ${connectionWasInProgress.toString()},connectionInProgress: ${connectionInProgress.toString()}';
-    return '{$string}';
+    return '''
+activeSession: ${activeSession},
+connectionResponse: ${connectionResponse},
+connectionWasInProgress: ${connectionWasInProgress},
+connectionInProgress: ${connectionInProgress},
+obsTerminated: ${obsTerminated}
+    ''';
   }
 }

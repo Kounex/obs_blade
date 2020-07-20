@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_mobx_helpers/flutter_mobx_helpers.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/stream/responses/base.dart';
 import 'package:provider/provider.dart';
 
@@ -33,20 +32,16 @@ class _HomeViewState extends State<HomeView> with AfterLayoutMixin {
   }
 
   void _checkIfOBSTerminated(BuildContext context) {
-    DashboardStore dashboardStore =
-        Provider.of<DashboardStore>(context, listen: false);
-
     /// false by default, will only be set to true by the 'Exiting' event from
     /// the OBS instance
-    if (dashboardStore.obsTerminated) {
-      dashboardStore.obsTerminated = false;
+    if (context.read<NetworkStore>().obsTerminated) {
+      context.read<NetworkStore>().obsTerminated = false;
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => InfoDialog(
-            body:
-                'OBS sent the \'Exiting\' event and therefore should be closed on your machine.'),
+        builder: (context) => InfoDialog(body: 'Your OBS instance terminated!'),
       );
+      context.read<HomeStore>().updateAutodiscoverConnections();
     }
   }
 

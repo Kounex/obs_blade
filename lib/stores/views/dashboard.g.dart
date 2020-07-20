@@ -6,7 +6,7 @@ part of 'dashboard.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$DashboardStore on _DashboardStore, Store {
   Computed<ObservableList<SceneItem>> _$currentAudioSceneItemsComputed;
@@ -14,92 +14,83 @@ mixin _$DashboardStore on _DashboardStore, Store {
   @override
   ObservableList<SceneItem> get currentAudioSceneItems =>
       (_$currentAudioSceneItemsComputed ??= Computed<ObservableList<SceneItem>>(
-              () => super.currentAudioSceneItems))
+              () => super.currentAudioSceneItems,
+              name: '_DashboardStore.currentAudioSceneItems'))
           .value;
 
   final _$isLiveAtom = Atom(name: '_DashboardStore.isLive');
 
   @override
   bool get isLive {
-    _$isLiveAtom.context.enforceReadPolicy(_$isLiveAtom);
-    _$isLiveAtom.reportObserved();
+    _$isLiveAtom.reportRead();
     return super.isLive;
   }
 
   @override
   set isLive(bool value) {
-    _$isLiveAtom.context.conditionallyRunInAction(() {
+    _$isLiveAtom.reportWrite(value, super.isLive, () {
       super.isLive = value;
-      _$isLiveAtom.reportChanged();
-    }, _$isLiveAtom, name: '${_$isLiveAtom.name}_set');
+    });
   }
 
   final _$goneLiveInMSAtom = Atom(name: '_DashboardStore.goneLiveInMS');
 
   @override
   int get goneLiveInMS {
-    _$goneLiveInMSAtom.context.enforceReadPolicy(_$goneLiveInMSAtom);
-    _$goneLiveInMSAtom.reportObserved();
+    _$goneLiveInMSAtom.reportRead();
     return super.goneLiveInMS;
   }
 
   @override
   set goneLiveInMS(int value) {
-    _$goneLiveInMSAtom.context.conditionallyRunInAction(() {
+    _$goneLiveInMSAtom.reportWrite(value, super.goneLiveInMS, () {
       super.goneLiveInMS = value;
-      _$goneLiveInMSAtom.reportChanged();
-    }, _$goneLiveInMSAtom, name: '${_$goneLiveInMSAtom.name}_set');
+    });
   }
 
   final _$streamStatsAtom = Atom(name: '_DashboardStore.streamStats');
 
   @override
   StreamStats get streamStats {
-    _$streamStatsAtom.context.enforceReadPolicy(_$streamStatsAtom);
-    _$streamStatsAtom.reportObserved();
+    _$streamStatsAtom.reportRead();
     return super.streamStats;
   }
 
   @override
   set streamStats(StreamStats value) {
-    _$streamStatsAtom.context.conditionallyRunInAction(() {
+    _$streamStatsAtom.reportWrite(value, super.streamStats, () {
       super.streamStats = value;
-      _$streamStatsAtom.reportChanged();
-    }, _$streamStatsAtom, name: '${_$streamStatsAtom.name}_set');
+    });
   }
 
   final _$activeSceneNameAtom = Atom(name: '_DashboardStore.activeSceneName');
 
   @override
   String get activeSceneName {
-    _$activeSceneNameAtom.context.enforceReadPolicy(_$activeSceneNameAtom);
-    _$activeSceneNameAtom.reportObserved();
+    _$activeSceneNameAtom.reportRead();
     return super.activeSceneName;
   }
 
   @override
   set activeSceneName(String value) {
-    _$activeSceneNameAtom.context.conditionallyRunInAction(() {
+    _$activeSceneNameAtom.reportWrite(value, super.activeSceneName, () {
       super.activeSceneName = value;
-      _$activeSceneNameAtom.reportChanged();
-    }, _$activeSceneNameAtom, name: '${_$activeSceneNameAtom.name}_set');
+    });
   }
 
   final _$scenesAtom = Atom(name: '_DashboardStore.scenes');
 
   @override
   ObservableList<Scene> get scenes {
-    _$scenesAtom.context.enforceReadPolicy(_$scenesAtom);
-    _$scenesAtom.reportObserved();
+    _$scenesAtom.reportRead();
     return super.scenes;
   }
 
   @override
   set scenes(ObservableList<Scene> value) {
-    _$scenesAtom.context.conditionallyRunInAction(() {
+    _$scenesAtom.reportWrite(value, super.scenes, () {
       super.scenes = value;
-      _$scenesAtom.reportChanged();
-    }, _$scenesAtom, name: '${_$scenesAtom.name}_set');
+    });
   }
 
   final _$currentSceneItemsAtom =
@@ -107,17 +98,30 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   @override
   ObservableList<SceneItem> get currentSceneItems {
-    _$currentSceneItemsAtom.context.enforceReadPolicy(_$currentSceneItemsAtom);
-    _$currentSceneItemsAtom.reportObserved();
+    _$currentSceneItemsAtom.reportRead();
     return super.currentSceneItems;
   }
 
   @override
   set currentSceneItems(ObservableList<SceneItem> value) {
-    _$currentSceneItemsAtom.context.conditionallyRunInAction(() {
+    _$currentSceneItemsAtom.reportWrite(value, super.currentSceneItems, () {
       super.currentSceneItems = value;
-      _$currentSceneItemsAtom.reportChanged();
-    }, _$currentSceneItemsAtom, name: '${_$currentSceneItemsAtom.name}_set');
+    });
+  }
+
+  final _$obsTerminatedAtom = Atom(name: '_DashboardStore.obsTerminated');
+
+  @override
+  bool get obsTerminated {
+    _$obsTerminatedAtom.reportRead();
+    return super.obsTerminated;
+  }
+
+  @override
+  set obsTerminated(bool value) {
+    _$obsTerminatedAtom.reportWrite(value, super.obsTerminated, () {
+      super.obsTerminated = value;
+    });
   }
 
   final _$globalAudioSceneItemsAtom =
@@ -125,19 +129,16 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   @override
   ObservableList<SceneItem> get globalAudioSceneItems {
-    _$globalAudioSceneItemsAtom.context
-        .enforceReadPolicy(_$globalAudioSceneItemsAtom);
-    _$globalAudioSceneItemsAtom.reportObserved();
+    _$globalAudioSceneItemsAtom.reportRead();
     return super.globalAudioSceneItems;
   }
 
   @override
   set globalAudioSceneItems(ObservableList<SceneItem> value) {
-    _$globalAudioSceneItemsAtom.context.conditionallyRunInAction(() {
+    _$globalAudioSceneItemsAtom.reportWrite(value, super.globalAudioSceneItems,
+        () {
       super.globalAudioSceneItems = value;
-      _$globalAudioSceneItemsAtom.reportChanged();
-    }, _$globalAudioSceneItemsAtom,
-        name: '${_$globalAudioSceneItemsAtom.name}_set');
+    });
   }
 
   final _$sceneTransitionDurationMSAtom =
@@ -145,19 +146,16 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   @override
   int get sceneTransitionDurationMS {
-    _$sceneTransitionDurationMSAtom.context
-        .enforceReadPolicy(_$sceneTransitionDurationMSAtom);
-    _$sceneTransitionDurationMSAtom.reportObserved();
+    _$sceneTransitionDurationMSAtom.reportRead();
     return super.sceneTransitionDurationMS;
   }
 
   @override
   set sceneTransitionDurationMS(int value) {
-    _$sceneTransitionDurationMSAtom.context.conditionallyRunInAction(() {
+    _$sceneTransitionDurationMSAtom
+        .reportWrite(value, super.sceneTransitionDurationMS, () {
       super.sceneTransitionDurationMS = value;
-      _$sceneTransitionDurationMSAtom.reportChanged();
-    }, _$sceneTransitionDurationMSAtom,
-        name: '${_$sceneTransitionDurationMSAtom.name}_set');
+    });
   }
 
   final _$_DashboardStoreActionController =
@@ -165,7 +163,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   @override
   dynamic _handleEvent(BaseEvent event) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction();
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore._handleEvent');
     try {
       return super._handleEvent(event);
     } finally {
@@ -175,7 +174,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   @override
   dynamic _handleResponse(BaseResponse response) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction();
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore._handleResponse');
     try {
       return super._handleResponse(response);
     } finally {
@@ -185,8 +185,17 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   @override
   String toString() {
-    final string =
-        'isLive: ${isLive.toString()},goneLiveInMS: ${goneLiveInMS.toString()},streamStats: ${streamStats.toString()},activeSceneName: ${activeSceneName.toString()},scenes: ${scenes.toString()},currentSceneItems: ${currentSceneItems.toString()},globalAudioSceneItems: ${globalAudioSceneItems.toString()},sceneTransitionDurationMS: ${sceneTransitionDurationMS.toString()},currentAudioSceneItems: ${currentAudioSceneItems.toString()}';
-    return '{$string}';
+    return '''
+isLive: ${isLive},
+goneLiveInMS: ${goneLiveInMS},
+streamStats: ${streamStats},
+activeSceneName: ${activeSceneName},
+scenes: ${scenes},
+currentSceneItems: ${currentSceneItems},
+obsTerminated: ${obsTerminated},
+globalAudioSceneItems: ${globalAudioSceneItems},
+sceneTransitionDurationMS: ${sceneTransitionDurationMS},
+currentAudioSceneItems: ${currentAudioSceneItems}
+    ''';
   }
 }

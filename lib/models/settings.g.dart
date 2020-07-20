@@ -18,16 +18,19 @@ class SettingsAdapter extends TypeAdapter<Settings> {
     };
     return Settings()
       ..trueDark = fields[0] as bool
-      ..reduceSmearing = fields[1] as bool;
+      ..reduceSmearing = fields[1] as bool
+      ..enforceTabletMode = fields[2] as bool;
   }
 
   @override
   void write(BinaryWriter writer, Settings obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.trueDark)
       ..writeByte(1)
-      ..write(obj.reduceSmearing);
+      ..write(obj.reduceSmearing)
+      ..writeByte(2)
+      ..write(obj.enforceTabletMode);
   }
 }

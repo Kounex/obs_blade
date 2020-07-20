@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/classes/stream/events/base.dart';
+import 'package:obs_blade/types/enums/event_type.dart';
 
 import '../../models/connection.dart';
 import '../../types/classes/session.dart';
@@ -25,7 +27,7 @@ abstract class _NetworkStore with Store {
   bool connectionWasInProgress = false;
   @observable
   bool connectionInProgress = false;
-
+  @observable
   bool obsTerminated = false;
 
   @action
@@ -61,6 +63,7 @@ abstract class _NetworkStore with Store {
       this.activeSession = null;
     } else {
       this.activeSession.connection.ssid = await Connectivity().getWifiName();
+      this.handleStream();
     }
     this.connectionInProgress = false;
     return this.connectionResponse;
@@ -74,6 +77,17 @@ abstract class _NetworkStore with Store {
       this.activeSession = null;
       this.connectionWasInProgress = false;
       this.connectionResponse = null;
+    }
+  }
+
+  @action
+  _handleEvent(BaseEvent event) {
+    switch (event.updateType) {
+      case EventType.Exiting:
+        this.closeSession(manually: false);
+        break;
+      default:
+        break;
     }
   }
 
@@ -109,4 +123,13 @@ abstract class _NetworkStore with Store {
         onDone: () => print('done'),
         onError: (error) => print(error),
       );
+
+  handleStream() {
+    this.activeSession.socketStream.listen((event) {
+      Map<String, dynamic> fullJSON = json.decode(event);
+      if (fullJSON['update-type'] != null) {
+        _handleEvent(BaseEvent(fullJSON));
+      }
+    });
+  }
 }

@@ -113,7 +113,7 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
 
       return ObserverListener(
         listener: (_) {
-          if (context.watch<DashboardStore>().obsTerminated)
+          if (context.read<DashboardStore>().obsTerminated)
             Navigator.of(context)
                 .pushReplacementNamed(HomeTabRoutingKeys.Landing.route);
         },
@@ -196,10 +196,10 @@ class _DashboardViewState extends State<DashboardView> with AfterLayoutMixin {
                               child: Observer(builder: (_) {
                                 return StatusDot(
                                   size: 8.0,
-                                  color: context.watch<DashboardStore>().isLive
+                                  color: context.read<DashboardStore>().isLive
                                       ? Colors.green
                                       : Colors.red,
-                                  text: context.watch<DashboardStore>().isLive
+                                  text: context.read<DashboardStore>().isLive
                                       ? 'Live'
                                       : 'Not Live',
                                   style: Theme.of(context).textTheme.caption,

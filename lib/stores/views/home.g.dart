@@ -6,7 +6,7 @@ part of 'home.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$HomeStore on _HomeStore, Store {
   final _$autodiscoverConnectionsAtom =
@@ -14,77 +14,69 @@ mixin _$HomeStore on _HomeStore, Store {
 
   @override
   Future<List<Connection>> get autodiscoverConnections {
-    _$autodiscoverConnectionsAtom.context
-        .enforceReadPolicy(_$autodiscoverConnectionsAtom);
-    _$autodiscoverConnectionsAtom.reportObserved();
+    _$autodiscoverConnectionsAtom.reportRead();
     return super.autodiscoverConnections;
   }
 
   @override
   set autodiscoverConnections(Future<List<Connection>> value) {
-    _$autodiscoverConnectionsAtom.context.conditionallyRunInAction(() {
+    _$autodiscoverConnectionsAtom
+        .reportWrite(value, super.autodiscoverConnections, () {
       super.autodiscoverConnections = value;
-      _$autodiscoverConnectionsAtom.reportChanged();
-    }, _$autodiscoverConnectionsAtom,
-        name: '${_$autodiscoverConnectionsAtom.name}_set');
+    });
   }
 
   final _$autodiscoverPortAtom = Atom(name: '_HomeStore.autodiscoverPort');
 
   @override
   String get autodiscoverPort {
-    _$autodiscoverPortAtom.context.enforceReadPolicy(_$autodiscoverPortAtom);
-    _$autodiscoverPortAtom.reportObserved();
+    _$autodiscoverPortAtom.reportRead();
     return super.autodiscoverPort;
   }
 
   @override
   set autodiscoverPort(String value) {
-    _$autodiscoverPortAtom.context.conditionallyRunInAction(() {
+    _$autodiscoverPortAtom.reportWrite(value, super.autodiscoverPort, () {
       super.autodiscoverPort = value;
-      _$autodiscoverPortAtom.reportChanged();
-    }, _$autodiscoverPortAtom, name: '${_$autodiscoverPortAtom.name}_set');
+    });
   }
 
   final _$refreshableAtom = Atom(name: '_HomeStore.refreshable');
 
   @override
   bool get refreshable {
-    _$refreshableAtom.context.enforceReadPolicy(_$refreshableAtom);
-    _$refreshableAtom.reportObserved();
+    _$refreshableAtom.reportRead();
     return super.refreshable;
   }
 
   @override
   set refreshable(bool value) {
-    _$refreshableAtom.context.conditionallyRunInAction(() {
+    _$refreshableAtom.reportWrite(value, super.refreshable, () {
       super.refreshable = value;
-      _$refreshableAtom.reportChanged();
-    }, _$refreshableAtom, name: '${_$refreshableAtom.name}_set');
+    });
   }
 
   final _$manualModeAtom = Atom(name: '_HomeStore.manualMode');
 
   @override
   bool get manualMode {
-    _$manualModeAtom.context.enforceReadPolicy(_$manualModeAtom);
-    _$manualModeAtom.reportObserved();
+    _$manualModeAtom.reportRead();
     return super.manualMode;
   }
 
   @override
   set manualMode(bool value) {
-    _$manualModeAtom.context.conditionallyRunInAction(() {
+    _$manualModeAtom.reportWrite(value, super.manualMode, () {
       super.manualMode = value;
-      _$manualModeAtom.reportChanged();
-    }, _$manualModeAtom, name: '${_$manualModeAtom.name}_set');
+    });
   }
 
   final _$_HomeStoreActionController = ActionController(name: '_HomeStore');
 
   @override
   void setAutodiscoverPort(String autodiscoverPort) {
-    final _$actionInfo = _$_HomeStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.setAutodiscoverPort');
     try {
       return super.setAutodiscoverPort(autodiscoverPort);
     } finally {
@@ -94,7 +86,8 @@ mixin _$HomeStore on _HomeStore, Store {
 
   @override
   void updateAutodiscoverConnections() {
-    final _$actionInfo = _$_HomeStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.updateAutodiscoverConnections');
     try {
       return super.updateAutodiscoverConnections();
     } finally {
@@ -104,7 +97,8 @@ mixin _$HomeStore on _HomeStore, Store {
 
   @override
   void setRefreshable(bool refreshable) {
-    final _$actionInfo = _$_HomeStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.setRefreshable');
     try {
       return super.setRefreshable(refreshable);
     } finally {
@@ -114,7 +108,8 @@ mixin _$HomeStore on _HomeStore, Store {
 
   @override
   void toggleManualMode([bool manualMode]) {
-    final _$actionInfo = _$_HomeStoreActionController.startAction();
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.toggleManualMode');
     try {
       return super.toggleManualMode(manualMode);
     } finally {
@@ -124,8 +119,11 @@ mixin _$HomeStore on _HomeStore, Store {
 
   @override
   String toString() {
-    final string =
-        'autodiscoverConnections: ${autodiscoverConnections.toString()},autodiscoverPort: ${autodiscoverPort.toString()},refreshable: ${refreshable.toString()},manualMode: ${manualMode.toString()}';
-    return '{$string}';
+    return '''
+autodiscoverConnections: ${autodiscoverConnections},
+autodiscoverPort: ${autodiscoverPort},
+refreshable: ${refreshable},
+manualMode: ${manualMode}
+    ''';
   }
 }
