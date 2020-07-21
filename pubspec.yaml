@@ -30,10 +30,9 @@ dependencies:
   flutter_inappwebview: ^4.0.0+4
 
   # state management and DI
-  provider: ^4.3.0
+  provider: ^4.3.1
   mobx: ^1.2.1
   flutter_mobx: ^1.1.0
-  flutter_mobx_helpers: ^1.0.1
   path: ^1.7.0
 
   # network stuff
@@ -47,9 +46,6 @@ dependencies:
   #local persistant stuff
   hive: ^1.4.1+1
   hive_flutter: ^0.3.0+2
-
-  # after layout stuff
-  after_layout: ^1.0.7+2
 
   # fancy done layout shit
   carousel_slider: ^2.2.1

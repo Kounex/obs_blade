@@ -35,19 +35,6 @@ class RefresherAppBar extends StatelessWidget {
                       ),
                     )
                   : Container(),
-              //   AnimatedOpacity(
-              //   duration: Duration(milliseconds: 250),
-              //   curve: Curves.easeInOutExpo,
-              //   opacity: constraints.maxHeight -
-              //               (MediaQuery.of(context).padding.top - 20) <=
-              //           60
-              //       ? 1.0
-              //       : 0.0,
-              //   child: Text(
-              //     'OBS Blade',
-              //     style: TextStyle(fontSize: 18.0),
-              //   ),
-              // ),
               ScrollRefreshIcon(
                 expandedBarHeight: this.expandedHeight,
               )

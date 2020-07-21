@@ -40,23 +40,6 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$connectionWasInProgressAtom =
-      Atom(name: '_NetworkStore.connectionWasInProgress');
-
-  @override
-  bool get connectionWasInProgress {
-    _$connectionWasInProgressAtom.reportRead();
-    return super.connectionWasInProgress;
-  }
-
-  @override
-  set connectionWasInProgress(bool value) {
-    _$connectionWasInProgressAtom
-        .reportWrite(value, super.connectionWasInProgress, () {
-      super.connectionWasInProgress = value;
-    });
-  }
-
   final _$connectionInProgressAtom =
       Atom(name: '_NetworkStore.connectionInProgress');
 
@@ -129,7 +112,6 @@ mixin _$NetworkStore on _NetworkStore, Store {
     return '''
 activeSession: ${activeSession},
 connectionResponse: ${connectionResponse},
-connectionWasInProgress: ${connectionWasInProgress},
 connectionInProgress: ${connectionInProgress},
 obsTerminated: ${obsTerminated}
     ''';

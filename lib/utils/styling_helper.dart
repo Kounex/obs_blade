@@ -10,6 +10,8 @@ class StylingHelper {
   static const Color MAIN_BLUE = const Color(0xff101823);
   static const Color MAIN_RED = const Color(0xffff4654);
 
+  static const int ALPHA_BLURRY = 170;
+
   static const Color BLACK_REDUCED_SMEARING =
       const Color.fromRGBO(5, 5, 5, 1.0);
 

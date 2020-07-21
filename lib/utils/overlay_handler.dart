@@ -24,8 +24,7 @@ class OverlayHandler {
       bool replaceIfActive = false}) async {
     if (OverlayHandler.currentOverlayEntry == null || replaceIfActive) {
       if (replaceIfActive) {
-        OverlayHandler.currentOverlayEntry?.remove();
-        OverlayHandler.currentOverlayTimer?.cancel();
+        OverlayHandler.closeAnyOverlay();
       }
       OverlayHandler.currentOverlayEntry = OverlayHandler.getStatusOverlay(
           context: context, content: content, showDuration: showDuration);
@@ -43,7 +42,11 @@ class OverlayHandler {
   }
 
   /// Manually close any overlay (if exists)
-  static void closeAnyOverlay() => OverlayHandler.currentOverlayEntry?.remove();
+  static void closeAnyOverlay() {
+    OverlayHandler.currentOverlayTimer?.cancel();
+    OverlayHandler.currentOverlayEntry?.remove();
+    OverlayHandler.currentOverlayEntry = null;
+  }
 
   /// Function which actually returns the [OverlayEntry] used in
   /// [OverlayHelper.showStatusOverlay] and doesn't need to be called

@@ -52,7 +52,8 @@ class App extends StatelessWidget {
 
             /// Inner Widget themes
             appBarTheme: AppBarTheme(
-              color: StylingHelper.MAIN_BLUE.withAlpha(170),
+              color:
+                  StylingHelper.MAIN_BLUE.withAlpha(StylingHelper.ALPHA_BLURRY),
             ),
             buttonTheme: ButtonThemeData(
               buttonColor: StylingHelper.MAIN_RED,
@@ -70,7 +71,8 @@ class App extends StatelessWidget {
                 primaryColor: Colors.white,
               ),
               primaryColor: CupertinoColors.systemBlue,
-              barBackgroundColor: StylingHelper.MAIN_BLUE.withAlpha(170),
+              barBackgroundColor:
+                  StylingHelper.MAIN_BLUE.withAlpha(StylingHelper.ALPHA_BLURRY),
             ),
           );
           // theme = theme.copyWith(

@@ -9,10 +9,7 @@ class InfoDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoAlertDialog(
-      content: Text(
-        this.body,
-        style: Theme.of(context).textTheme.subtitle1,
-      ),
+      content: Text(this.body),
       actions: [
         CupertinoDialogAction(
           child: Text('OK'),

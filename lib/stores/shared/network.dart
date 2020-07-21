@@ -24,8 +24,6 @@ abstract class _NetworkStore with Store {
   BaseResponse connectionResponse;
 
   @observable
-  bool connectionWasInProgress = false;
-  @observable
   bool connectionInProgress = false;
   @observable
   bool obsTerminated = false;
@@ -34,9 +32,6 @@ abstract class _NetworkStore with Store {
   Future<BaseResponse> setOBSWebSocket(Connection connection,
       {Duration timeout = const Duration(seconds: 3)}) async {
     this.closeSession();
-    if (!this.connectionWasInProgress) {
-      this.connectionWasInProgress = true;
-    }
     this.connectionInProgress = true;
     this.activeSession =
         Session(NetworkHelper.establishWebSocket(connection), connection);
@@ -51,10 +46,9 @@ abstract class _NetworkStore with Store {
     NetworkHelper.makeRequest(
         this.activeSession.socket.sink, RequestType.GetAuthRequired);
     this.connectionResponse = await Future.any([
-      authCompleter.future.then((value) => value),
-      Future.delayed(timeout, () {
-        return BaseResponse({'status': 'error', 'error': 'timeout'});
-      })
+      authCompleter.future,
+      Future.delayed(
+          timeout, () => BaseResponse({'status': 'error', 'error': 'timeout'}))
     ]);
 
     subscription.cancel();
@@ -75,7 +69,6 @@ abstract class _NetworkStore with Store {
     if (this.activeSession != null) {
       this.activeSession.socket.sink.close();
       this.activeSession = null;
-      this.connectionWasInProgress = false;
       this.connectionResponse = null;
     }
   }
