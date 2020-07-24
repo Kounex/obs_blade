@@ -14,21 +14,8 @@ import 'utils/routing_helper.dart';
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<HomeStore>(
-          create: (_) {
-            HomeStore landingStore = HomeStore();
-
-            /// Trigger autodiscover on startup
-            landingStore.updateAutodiscoverConnections();
-            return landingStore;
-          },
-        ),
-        Provider<NetworkStore>(
-          create: (_) => NetworkStore(),
-        ),
-      ],
+    return Provider<NetworkStore>(
+      create: (_) => NetworkStore(),
       child: ValueListenableBuilder(
         valueListenable:
             Hive.box<Settings>(HiveKeys.Settings.name).listenable(),

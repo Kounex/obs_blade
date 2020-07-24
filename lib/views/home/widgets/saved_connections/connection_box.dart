@@ -19,8 +19,8 @@ class ConnectionBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = Provider.of<NetworkStore>(context);
-    HomeStore landingStore = Provider.of<HomeStore>(context);
+    NetworkStore networkStore = context.watch<NetworkStore>();
+    HomeStore landingStore = context.watch<HomeStore>();
 
     return Container(
       width: this.width,

@@ -14,7 +14,7 @@ class AudioSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = Provider.of<NetworkStore>(context);
+    NetworkStore networkStore = context.watch<NetworkStore>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

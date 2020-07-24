@@ -19,7 +19,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = Provider.of<HomeStore>(context);
+    HomeStore landingStore = context.watch<HomeStore>();
 
     return Column(
       // mainAxisAlignment: MainAxisAlignment.center,

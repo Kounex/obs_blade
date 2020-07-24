@@ -20,12 +20,31 @@ import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 import 'widgets/switcher_card/switcher_card.dart';
 
-class HomeView extends StatefulWidget {
+class HomeView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Provider<HomeStore>(
+      create: (_) {
+        HomeStore landingStore = HomeStore();
+
+        /// Trigger autodiscover on startup
+        if (!context.read<NetworkStore>().obsTerminated) {
+          context.read<NetworkStore>().obsTerminated = false;
+          landingStore.updateAutodiscoverConnections();
+        }
+        return landingStore;
+      },
+      builder: (context, _) => _HomeView(),
+    );
+  }
+}
+
+class _HomeView extends StatefulWidget {
   @override
   _HomeViewState createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeViewState extends State<_HomeView> {
   /// Since I'm using (at least one) reaction in this State, I need to dispose
   /// it when this Widget / State is disposing itself as well. I add each reaction call
   /// to this list and dispose every instance in the dispose call of this Widget
@@ -57,12 +76,11 @@ class _HomeViewState extends State<HomeView> {
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
     MobX.when((_) => context.read<NetworkStore>().obsTerminated, () {
-      context.read<NetworkStore>().obsTerminated = false;
       SchedulerBinding.instance.addPostFrameCallback((_) => showDialog(
             context: context,
             barrierDismissible: false,
             builder: (context) =>
-                InfoDialog(body: 'Your OBS instance terminated!'),
+                InfoDialog(body: 'Your OBS instance has been terminated!'),
           ).then((_) =>
               context.read<HomeStore>().updateAutodiscoverConnections()));
     });
@@ -139,8 +157,7 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = Provider.of<HomeStore>(context);
-
+    HomeStore landingStore = context.watch<HomeStore>();
     return Scaffold(
       /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
       /// our extendedHeight, where we are ready to trigger searching for OBS connections,
