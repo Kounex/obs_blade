@@ -17,27 +17,4 @@ class BaseEvent {
   EventType instance(String updateType) => EventType.values.firstWhere(
       (eventType) => eventType.toString().split('.')[1] == updateType,
       orElse: () => null);
-  //   switch (updateType) {
-  //     case 'StreamStarted':
-  //       return EventType.StreamStarted;
-  //     case 'StreamStopping':
-  //       return EventType.StreamStopping;
-  //     case 'StreamStatus':
-  //       return EventType.StreamStatus;
-  //     case 'ScenesChanged':
-  //       return EventType.ScenesChanged;
-  //     case 'SwitchScenes':
-  //       return EventType.SwitchScenes;
-  //     case 'TransitionBegin':
-  //       return EventType.TransitionBegin;
-  //     case 'SourceVolumeChanged':
-  //       return EventType.SourceVolumeChanged;
-  //     case 'SourceMuteStateChanged':
-  //       return EventType.SourceMuteStateChanged;
-  //     case 'Exiting':
-  //       return EventType.Exiting;
-  //     default:
-  //       return null;
-  //   }
-  // }
 }

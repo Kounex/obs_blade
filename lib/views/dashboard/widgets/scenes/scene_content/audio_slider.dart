@@ -19,7 +19,11 @@ class AudioSlider extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(this.audioSceneItem.name),
+        Text(
+          this.audioSceneItem.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         Row(
           children: [
             IconButton(

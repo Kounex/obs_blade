@@ -33,12 +33,16 @@ class _SceneItemsState extends State<SceneItems> {
             padding: EdgeInsets.all(0.0),
             itemExtent: 50.0,
             children: [
-              ...dashboardStore.currentSceneItems != null
+              ...dashboardStore.currentSceneItems != null &&
+                      dashboardStore.currentSceneItems.length > 0
                   ? dashboardStore.currentSceneItems.map(
                       (sceneItem) => ListTile(
+                        dense: true,
                         leading: Icon(Icons.filter),
                         title: Text(
                           sceneItem.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         trailing: IconButton(
                           icon: Icon(
@@ -56,7 +60,14 @@ class _SceneItemsState extends State<SceneItems> {
                         ),
                       ),
                     )
-                  : [Text('No Scene Items available')]
+                  : [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Center(
+                          child: Text('No Scene Items available'),
+                        ),
+                      )
+                    ]
             ],
           ),
         ),

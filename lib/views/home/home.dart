@@ -73,6 +73,10 @@ class _HomeViewState extends State<HomeView> {
     _disposers.add(
         MobX.reaction((_) => context.read<NetworkStore>().connectionInProgress,
             (connectionInProgress) {
+      /// For now I have to wrap this function with [addPostFrameCallback] since
+      /// without doing so this function will sometimes not execute correctly (in my tests
+      /// the first line was executed, no more) - need to investigate the cause. This
+      /// workaround has no impact performance wise, at least as far as I know.
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (connectionInProgress) {
           OverlayHandler.showStatusOverlay(
@@ -138,9 +142,17 @@ class _HomeViewState extends State<HomeView> {
     HomeStore landingStore = Provider.of<HomeStore>(context);
 
     return Scaffold(
+      /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
+      /// our extendedHeight, where we are ready to trigger searching for OBS connections,
+      /// it is being set to true, false otherwise. I want to trigger the actual refresh only
+      /// if, once the extendedHeight is reached, the user lets go off the screen and could just
+      /// scroll up again without triggering a refresh (feels more natural in my opinion)
       body: Listener(
         onPointerUp: (_) {
           if (landingStore.refreshable) {
+            /// Switch back to autodiscover mode (of our [SwitcherCard]) if we refresh so the
+            /// user can actually see the part thats refreshing
+            if (landingStore.manualMode) landingStore.toggleManualMode();
             landingStore.updateAutodiscoverConnections();
           }
         },

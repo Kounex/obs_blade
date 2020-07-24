@@ -10,6 +10,7 @@ import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/events/scene_item_visibility_changed.dart';
 import '../../types/classes/stream/events/source_mute_state_changed.dart';
+import '../../types/classes/stream/events/source_renamed.dart';
 import '../../types/classes/stream/events/source_volume_changed.dart';
 import '../../types/classes/stream/events/switch_scenes.dart';
 import '../../types/classes/stream/events/transition_begin.dart';
@@ -132,6 +133,28 @@ abstract class _DashboardStore with Store {
         this.sceneTransitionDurationMS = transitionBeginEvent.duration;
         this.activeSceneName = transitionBeginEvent.toScene;
         break;
+
+      case EventType.SceneItemAdded:
+        // SceneItemAddedEvent sceneItemAddedEvent =
+        //     SceneItemAddedEvent(event.json);
+        NetworkHelper.makeRequest(
+            this.activeSession.socket.sink, RequestType.GetCurrentScene);
+        break;
+      case EventType.SceneItemRemoved:
+        // SceneItemRemovedEvent sceneItemRemovedEvent =
+        //     SceneItemRemovedEvent(event.json);
+        NetworkHelper.makeRequest(
+            this.activeSession.socket.sink, RequestType.GetCurrentScene);
+        break;
+      case EventType.SourceRenamed:
+        SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(event.json);
+        this
+            .currentSceneItems
+            .firstWhere((sceneItem) =>
+                sceneItem.name == sourceRenamedEvent.previousName)
+            .name = sourceRenamedEvent.newName;
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        break;
       case EventType.SourceVolumeChanged:
         SourceVolumeChangedEvent sourceVolumeChangedEvent =
             SourceVolumeChangedEvent(event.json);
@@ -194,6 +217,18 @@ abstract class _DashboardStore with Store {
       case RequestType.GetSpecialSources:
         GetSpecialSourcesResponse getSpecialSourcesResponse =
             GetSpecialSourcesResponse(response.json);
+        if (getSpecialSourcesResponse.desktop1 != null) {
+          NetworkHelper.makeRequest(
+              this.activeSession.socket.sink,
+              RequestType.GetVolume,
+              {'source': getSpecialSourcesResponse.desktop1});
+        }
+        if (getSpecialSourcesResponse.desktop2 != null) {
+          NetworkHelper.makeRequest(
+              this.activeSession.socket.sink,
+              RequestType.GetVolume,
+              {'source': getSpecialSourcesResponse.desktop2});
+        }
         if (getSpecialSourcesResponse.mic1 != null) {
           NetworkHelper.makeRequest(
               this.activeSession.socket.sink,

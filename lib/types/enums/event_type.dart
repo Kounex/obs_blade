@@ -17,6 +17,15 @@ enum EventType {
   /// A transition (other than "cut") has begun
   TransitionBegin,
 
+  /// A scene item has been added to a scene
+  SceneItemAdded,
+
+  /// A scene item has been removed from a scene
+  SceneItemRemoved,
+
+  /// A source has been renamed
+  SourceRenamed,
+
   /// The volume of a source has changed
   SourceVolumeChanged,
 

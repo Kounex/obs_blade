@@ -73,11 +73,18 @@ dev_dependencies:
   # app icons
   flutter_launcher_icons: ^0.7.5
 
+  # splashscreen ios and android
+  flutter_native_splash: ^0.1.9
+
 flutter_icons:
   android: true
   ios: true
   image_path_android: 'assets/icons/app/app-logo-android.png'
   image_path_ios: 'assets/icons/app/app-logo-ios.png'
+
+flutter_native_splash:
+  image: assets/icons/app/splash-logo.png
+  color: '101823'
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
