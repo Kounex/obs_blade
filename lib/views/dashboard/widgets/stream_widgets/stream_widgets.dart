@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'stats/stats.dart';
-import 'twitch_chat/twitch_chat.dart';
+import 'twitch_chat.dart';
 
 class StreamWidgets extends StatelessWidget {
   @override

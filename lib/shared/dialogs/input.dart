@@ -5,6 +5,7 @@ class InputDialog extends StatefulWidget {
   final String title;
   final String body;
 
+  final String inputText;
   final String inputPlaceholder;
   final void Function(String) onSave;
 
@@ -16,6 +17,7 @@ class InputDialog extends StatefulWidget {
     @required this.title,
     @required this.body,
     @required this.onSave,
+    this.inputText,
     this.inputPlaceholder,
     this.inputCheck,
   });
@@ -25,8 +27,15 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
-  TextEditingController _controller = TextEditingController();
+  TextEditingController _controller;
+  bool _textHasBeenEdited = false;
   String _validationText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.inputText);
+  }
 
   @override
   void dispose() {
@@ -48,8 +57,16 @@ class _InputDialogState extends State<InputDialog> {
             padding: const EdgeInsets.only(top: 8.0),
             child: CupertinoTextField(
               controller: _controller
-                ..addListener(() => setState((() =>
-                    _validationText = widget.inputCheck(_controller.text)))),
+                ..addListener(() {
+                  if (!_textHasBeenEdited && _controller.text.length > 0)
+                    _textHasBeenEdited = true;
+
+                  if (_textHasBeenEdited)
+                    setState(
+                      (() => _validationText =
+                          widget.inputCheck(_controller.text)),
+                    );
+                }),
               placeholder: widget.inputPlaceholder,
             ),
           ),

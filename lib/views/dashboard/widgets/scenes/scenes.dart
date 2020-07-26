@@ -12,6 +12,8 @@ import 'package:provider/provider.dart';
 import '../../../../stores/views/dashboard.dart';
 import 'scene_content/scene_content.dart';
 
+const double kSceneButtonSpace = 18.0;
+
 class Scenes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -23,15 +25,19 @@ class Scenes extends StatelessWidget {
         children: [
           Center(
             child: Observer(
-              builder: (_) => Wrap(
-                runSpacing: 24.0,
-                spacing: 24.0,
-                children: dashboardStore.scenes != null &&
-                        dashboardStore.scenes.length > 0
-                    ? dashboardStore.scenes
-                        .map((scene) => SceneButton(scene: scene))
-                        .toList()
-                    : [Text('No Scenes available')],
+              builder: (_) => Padding(
+                padding: const EdgeInsets.only(
+                    left: kSceneButtonSpace, right: kSceneButtonSpace),
+                child: Wrap(
+                  runSpacing: kSceneButtonSpace,
+                  spacing: kSceneButtonSpace,
+                  children: dashboardStore.scenes != null &&
+                          dashboardStore.scenes.length > 0
+                      ? dashboardStore.scenes
+                          .map((scene) => SceneButton(scene: scene))
+                          .toList()
+                      : [Text('No Scenes available')],
+                ),
               ),
             ),
           ),
