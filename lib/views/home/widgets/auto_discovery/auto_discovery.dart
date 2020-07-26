@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/fader.dart';
+import '../../../../shared/basic/base_progress_indicator.dart';
 import '../../../../shared/basic/question_mark_tooltip.dart';
 import '../../../../stores/views/home.dart';
 import '../../../../utils/validation_helper.dart';
@@ -106,20 +107,8 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               }
               return Align(
                 child: Container(
-                  height: 150.0,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      CircularProgressIndicator(
-                        strokeWidth: 2.0,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 12.0),
-                        child: Text('Searching...'),
-                      )
-                    ],
-                  ),
-                ),
+                    height: 150.0,
+                    child: BaseProgressIndicator(text: 'Searching...')),
               );
             },
           ),

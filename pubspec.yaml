@@ -11,7 +11,7 @@ description: A new Flutter project.
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.5.0
+version: 0.6.0
 
 environment:
   sdk: '>=2.8.0 <3.0.0'
@@ -24,34 +24,37 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^0.1.3
 
-  # custom
+  # CUSTOM
+  # Get project meta info
+  package_info: '^0.4.1'
 
-  # webview
+  # Webview
   flutter_inappwebview: ^4.0.0+4
 
-  # state management and DI
+  # State Management and DI
   provider: ^4.3.1
   mobx: ^1.2.1
   flutter_mobx: ^1.1.0
   path: ^1.7.0
 
-  # network stuff
+  # Network stuff
   tcp_scanner: ^1.1.1
   connectivity: ^0.4.9
   web_socket_channel: ^1.1.0
 
-  #security
+  # Security
   crypto: ^2.1.5
 
-  #local persistant stuff
+  # Local persistance stuff
   hive: ^1.4.2
   hive_flutter: ^0.3.1
 
-  # fancy done layout shit
+  # Fancy done layout shit
   carousel_slider: ^2.2.1
   flutter_swiper: ^1.1.6
+  modal_bottom_sheet: ^0.2.0+1
 
-  # sweet icons
+  # Sweet icons
   font_awesome_flutter: ^8.8.1
 
 dependency_overrides:
@@ -64,13 +67,14 @@ dev_dependencies:
   build_runner: ^1.8.0
   hive_generator: ^0.7.1
   mobx_codegen: ^1.1.0
+
   # Mock for testing
   mockito: ^4.1.1
 
-  # app icons
+  # App icons
   flutter_launcher_icons: ^0.7.5
 
-  # splashscreen ios and android
+  # Splashscreen ios and android
   flutter_native_splash: ^0.1.9
 
 flutter_icons:
@@ -98,6 +102,7 @@ flutter:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   assets:
+    - assets/icons/app/
     - assets/images/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

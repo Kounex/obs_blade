@@ -2,6 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:obs_blade/views/about/widgets/license_modal.dart';
+import 'package:package_info/package_info.dart';
 
 import '../../models/settings.dart';
 import '../../types/enums/hive_keys.dart';
@@ -14,15 +17,8 @@ class SettingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: CupertinoNavigationBar(
-      //       middle: Text('Settings'),
-      //     ),
       body: CustomScrollView(
         slivers: <Widget>[
-          // SliverAppBar(
-          //   pinned: true,
-          //   title: Text('Settings'),
-          // ),
           CupertinoSliverNavigationBar(
             largeTitle: Text('Settings'),
           ),
@@ -93,15 +89,37 @@ class SettingsView extends StatelessWidget {
                       BlockEntry(
                         leading: StylingHelper.CUPERTINO_AT_ICON,
                         title: 'About',
-                        navigateTo: SettingsTabRoutingKeys.About.route,
+                        onTap: () => showCupertinoModalBottomSheet(
+                          expand: true,
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          useRootNavigator: true,
+                          builder: (context, scrollController) =>
+                              LicenseModal(),
+                        ),
+                        // navigateTo: SettingsTabRoutingKeys.About.route,
                       ),
                     ],
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 7.0, left: 14.0),
-                    child: Text(
-                      'Version 0.5.0',
-                      style: Theme.of(context).textTheme.caption,
+                    child: FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        return Row(
+                          children: [
+                            Text(
+                              'Version ',
+                              style: Theme.of(context).textTheme.caption,
+                            ),
+                            if (snapshot.hasData)
+                              Text(
+                                snapshot.data.version,
+                                style: Theme.of(context).textTheme.caption,
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ],

@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 
 import 'models/settings.dart';
 import 'stores/shared/network.dart';
-import 'stores/views/home.dart';
 import 'types/enums/hive_keys.dart';
 import 'utils/routing_helper.dart';
 
@@ -39,8 +38,8 @@ class App extends StatelessWidget {
 
             /// Inner Widget themes
             appBarTheme: AppBarTheme(
-              color:
-                  StylingHelper.MAIN_BLUE.withAlpha(StylingHelper.ALPHA_BLURRY),
+              color: StylingHelper.MAIN_BLUE
+                  .withOpacity(StylingHelper.OPACITY_BLURRY),
             ),
             buttonTheme: ButtonThemeData(
               buttonColor: StylingHelper.MAIN_RED,
@@ -58,8 +57,8 @@ class App extends StatelessWidget {
                 primaryColor: Colors.white,
               ),
               primaryColor: CupertinoColors.systemBlue,
-              barBackgroundColor:
-                  StylingHelper.MAIN_BLUE.withAlpha(StylingHelper.ALPHA_BLURRY),
+              barBackgroundColor: StylingHelper.MAIN_BLUE
+                  .withOpacity(StylingHelper.OPACITY_BLURRY),
             ),
           );
           // theme = theme.copyWith(
