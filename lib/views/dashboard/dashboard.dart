@@ -45,7 +45,7 @@ class DashboardView extends StatelessWidget {
           // Setting the active session and make initial requests
           // to display data on connect
           dashboardStore
-              .setActiveSession(context.read<NetworkStore>().activeSession);
+              .setupNetworkStoreHandling(context.read<NetworkStore>());
           return dashboardStore;
         },
         builder: (context, _) => _DashboardView());

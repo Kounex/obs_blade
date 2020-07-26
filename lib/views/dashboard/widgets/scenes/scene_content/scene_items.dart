@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/nested_list_manager.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
+import 'nested_list_manager.dart';
 
 class SceneItems extends StatefulWidget {
   @override
@@ -52,11 +53,16 @@ class _SceneItemsState extends State<SceneItems> {
                             color: sceneItem.render ? Colors.white : Colors.red,
                           ),
                           onPressed: () => NetworkHelper.makeRequest(
-                              dashboardStore.activeSession.socket.sink,
-                              RequestType.SetSceneItemProperties, {
-                            'item': sceneItem.name,
-                            'visible': !sceneItem.render
-                          }),
+                              context
+                                  .read<NetworkStore>()
+                                  .activeSession
+                                  .socket
+                                  .sink,
+                              RequestType.SetSceneItemProperties,
+                              {
+                                'item': sceneItem.name,
+                                'visible': !sceneItem.render
+                              }),
                         ),
                       ),
                     )

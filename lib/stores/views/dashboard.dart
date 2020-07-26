@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/stores/shared/network.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
@@ -63,34 +64,34 @@ abstract class _DashboardStore with Store {
   @observable
   int sceneTransitionDurationMS;
 
-  Session activeSession;
+  // Session activeSession;
+  NetworkStore networkStore;
 
   List<SourceType> sourceTypes;
 
-  setActiveSession(Session activeSession) {
-    this.activeSession = activeSession;
+  setupNetworkStoreHandling(NetworkStore networkStore) {
+    this.networkStore = networkStore;
     this.initialRequests();
     this.handleStream();
   }
 
   initialRequests() {
     NetworkHelper.makeRequest(
-        this.activeSession.socket.sink, RequestType.GetSceneList);
+        this.networkStore.activeSession.socket.sink, RequestType.GetSceneList);
     // NetworkHelper.makeRequest(
-    //     this.activeSession.socket.sink, RequestType.GetSourcesList);
-    NetworkHelper.makeRequest(
-        this.activeSession.socket.sink, RequestType.GetSourceTypesList);
+    //     this.networkStore.activeSession.socket.sink, RequestType.GetSourcesList);
+    NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+        RequestType.GetSourceTypesList);
     // NetworkHelper.makeRequest(
-    //     this.activeSession.socket.sink, RequestType.ListOutputs);
+    //     this.networkStore.activeSession.socket.sink, RequestType.ListOutputs);
   }
 
   handleStream() {
-    this.activeSession.socketStream.listen((event) {
-      Map<String, dynamic> fullJSON = json.decode(event);
-      if (fullJSON['update-type'] != null) {
-        _handleEvent(BaseEvent(fullJSON));
+    this.networkStore.watchOBSStream().listen((message) {
+      if (message is BaseEvent) {
+        _handleEvent(message);
       } else {
-        _handleResponse(BaseResponse(fullJSON));
+        _handleResponse(message);
       }
     });
   }
@@ -98,7 +99,7 @@ abstract class _DashboardStore with Store {
   @action
   _handleEvent(BaseEvent event) {
     print(event.json['update-type']);
-    switch (event.updateType) {
+    switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
         this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch;
@@ -115,14 +116,14 @@ abstract class _DashboardStore with Store {
         }
         break;
       case EventType.ScenesChanged:
-        NetworkHelper.makeRequest(
-            this.activeSession.socket.sink, RequestType.GetSceneList);
+        NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+            RequestType.GetSceneList);
         break;
       case EventType.SwitchScenes:
         SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
         this.currentSceneItems = ObservableList.of(switchSceneEvent.sources);
         currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
-            this.activeSession.socket.sink,
+            this.networkStore.activeSession.socket.sink,
             RequestType.GetMute,
             {'source': sceneItem.name}));
 
@@ -137,14 +138,14 @@ abstract class _DashboardStore with Store {
       case EventType.SceneItemAdded:
         // SceneItemAddedEvent sceneItemAddedEvent =
         //     SceneItemAddedEvent(event.json);
-        NetworkHelper.makeRequest(
-            this.activeSession.socket.sink, RequestType.GetCurrentScene);
+        NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+            RequestType.GetCurrentScene);
         break;
       case EventType.SceneItemRemoved:
         // SceneItemRemovedEvent sceneItemRemovedEvent =
         //     SceneItemRemovedEvent(event.json);
-        NetworkHelper.makeRequest(
-            this.activeSession.socket.sink, RequestType.GetCurrentScene);
+        NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+            RequestType.GetCurrentScene);
         break;
       case EventType.SourceRenamed:
         SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(event.json);
@@ -197,7 +198,7 @@ abstract class _DashboardStore with Store {
 
   @action
   _handleResponse(BaseResponse response) {
-    switch (RequestType.values[response.messageID]) {
+    switch (response.requestType) {
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
             GetSceneListResponse(response.json);
@@ -210,7 +211,7 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems =
             ObservableList.of(getCurrentSceneResponse.sources);
         currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
-            this.activeSession.socket.sink,
+            this.networkStore.activeSession.socket.sink,
             RequestType.GetMute,
             {'source': sceneItem.name}));
         break;
@@ -219,31 +220,31 @@ abstract class _DashboardStore with Store {
             GetSpecialSourcesResponse(response.json);
         if (getSpecialSourcesResponse.desktop1 != null) {
           NetworkHelper.makeRequest(
-              this.activeSession.socket.sink,
+              this.networkStore.activeSession.socket.sink,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.desktop1});
         }
         if (getSpecialSourcesResponse.desktop2 != null) {
           NetworkHelper.makeRequest(
-              this.activeSession.socket.sink,
+              this.networkStore.activeSession.socket.sink,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.desktop2});
         }
         if (getSpecialSourcesResponse.mic1 != null) {
           NetworkHelper.makeRequest(
-              this.activeSession.socket.sink,
+              this.networkStore.activeSession.socket.sink,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic1});
         }
         if (getSpecialSourcesResponse.mic2 != null) {
           NetworkHelper.makeRequest(
-              this.activeSession.socket.sink,
+              this.networkStore.activeSession.socket.sink,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic2});
         }
         if (getSpecialSourcesResponse.mic3 != null) {
           NetworkHelper.makeRequest(
-              this.activeSession.socket.sink,
+              this.networkStore.activeSession.socket.sink,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic3});
         }
@@ -254,7 +255,7 @@ abstract class _DashboardStore with Store {
         // getSourcesListResponse.sources.forEach((source) {
         //   print(response.json);
         // print('${source.name}: ${source.typeID}');
-        // NetworkHelper.makeRequest(this.activeSession.socket.sink,
+        // NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
         //     RequestType.GetSourceSettings, {'sourceName': source.name});
         // });
         break;
@@ -264,10 +265,10 @@ abstract class _DashboardStore with Store {
         this.sourceTypes = getSourceTypesList.types;
         // (response.json['types'] as List<dynamic>)
         //     .forEach((type) => print(type['typeId']));
-        NetworkHelper.makeRequest(
-            this.activeSession.socket.sink, RequestType.GetCurrentScene);
-        NetworkHelper.makeRequest(
-            this.activeSession.socket.sink, RequestType.GetSpecialSources);
+        NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+            RequestType.GetCurrentScene);
+        NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+            RequestType.GetSpecialSources);
         break;
       case RequestType.GetVolume:
         GetVolumeResponse getVolumeResponse = GetVolumeResponse(response.json);

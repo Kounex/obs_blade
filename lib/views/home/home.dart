@@ -20,6 +20,17 @@ import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 import 'widgets/switcher_card/switcher_card.dart';
 
+/// Using the "Facade Pattern" here, where I'm# wrapping my actual ViewWidget with a WrapperWidget
+/// which only purpose is to expose the ViewModel via Provider. Since the context available in
+/// our build / state is effectively the context of our parent, without the WrapperWidget I would
+/// not have access to the provided ViewModel directly.
+/// I can counter this by using the builder property of Provider to solve this problem in the build
+/// method, but it does not work in my structure where I also register MobX reactions in
+/// [didChangeDependencies] where i (might) access the ViewModel which is part of this View and is
+/// provided just here. With the WrapperWidget in this Facade Pattern the parent has just provided
+/// the ViewModel and I cann access it in my reactions!
+/// It does not use a special name, instead the actual View got private (_) since it is nothing which
+/// has to be exposed (logically)
 class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

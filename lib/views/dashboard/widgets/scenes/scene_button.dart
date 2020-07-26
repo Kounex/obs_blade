@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/types/classes/api/scene.dart';
-import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/utils/network_helper.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/dashboard.dart';
+import '../../../../types/classes/api/scene.dart';
+import '../../../../types/enums/request_type.dart';
+import '../../../../utils/network_helper.dart';
 
 class SceneButton extends StatelessWidget {
   final Scene scene;
@@ -17,7 +19,7 @@ class SceneButton extends StatelessWidget {
     return Observer(
       builder: (_) => GestureDetector(
         onTap: () => NetworkHelper.makeRequest(
-            dashboardStore.activeSession.socket.sink,
+            context.read<NetworkStore>().activeSession.socket.sink,
             RequestType.SetCurrentScene,
             {'scene-name': scene.name}),
         child: Stack(

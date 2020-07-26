@@ -8,13 +8,13 @@ part of 'past_stream_data.dart';
 
 class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
   @override
-  final typeId = 1;
+  final int typeId = 1;
 
   @override
   PastStreamData read(BinaryReader reader) {
-    var numOfFields = reader.readByte();
-    var fields = <int, dynamic>{
-      for (var i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PastStreamData()
       ..kbitsPerSecList = (fields[0] as List)?.cast<int>()
@@ -63,4 +63,14 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..writeByte(12)
       ..write(obj.streamEndedMS);
   }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PastStreamDataAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }

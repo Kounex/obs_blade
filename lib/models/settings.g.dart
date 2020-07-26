@@ -8,13 +8,13 @@ part of 'settings.dart';
 
 class SettingsAdapter extends TypeAdapter<Settings> {
   @override
-  final typeId = 2;
+  final int typeId = 2;
 
   @override
   Settings read(BinaryReader reader) {
-    var numOfFields = reader.readByte();
-    var fields = <int, dynamic>{
-      for (var i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Settings()
       ..trueDark = fields[0] as bool
@@ -33,4 +33,14 @@ class SettingsAdapter extends TypeAdapter<Settings> {
       ..writeByte(2)
       ..write(obj.enforceTabletMode);
   }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SettingsAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }

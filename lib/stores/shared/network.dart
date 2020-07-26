@@ -3,14 +3,15 @@ import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/types/classes/stream/events/base.dart';
-import 'package:obs_blade/types/enums/event_type.dart';
 
 import '../../models/connection.dart';
 import '../../types/classes/session.dart';
+import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_auth_required.dart';
+import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
+import '../../types/interfaces/message.dart';
 import '../../utils/network_helper.dart';
 
 part 'network.g.dart';
@@ -75,7 +76,7 @@ abstract class _NetworkStore with Store {
 
   @action
   _handleEvent(BaseEvent event) {
-    switch (event.updateType) {
+    switch (event.eventType) {
       case EventType.Exiting:
         this.closeSession(manually: false);
         break;
@@ -90,7 +91,7 @@ abstract class _NetworkStore with Store {
         (event) {
           Map<String, dynamic> jsonObject = json.decode(event);
           BaseResponse response = BaseResponse(jsonObject);
-          switch (RequestType.values[response.messageID]) {
+          switch (response.requestType) {
             case RequestType.GetAuthRequired:
               GetAuthRequiredResponse getAuthResponse =
                   GetAuthRequiredResponse(jsonObject);
@@ -117,11 +118,25 @@ abstract class _NetworkStore with Store {
         onError: (error) => print(error),
       );
 
+  Stream<Message> watchOBSStream() async* {
+    try {
+      await for (final event in this.activeSession.socketStream) {
+        Map<String, dynamic> fullJSON = json.decode(event);
+        if (fullJSON['update-type'] != null) {
+          yield BaseEvent(fullJSON);
+        } else {
+          yield BaseResponse(fullJSON);
+        }
+      }
+    } finally {
+      this.activeSession?.socket?.sink?.close();
+    }
+  }
+
   handleStream() {
-    this.activeSession.socketStream.listen((event) {
-      Map<String, dynamic> fullJSON = json.decode(event);
-      if (fullJSON['update-type'] != null) {
-        _handleEvent(BaseEvent(fullJSON));
+    this.watchOBSStream().listen((message) {
+      if (message is BaseEvent) {
+        _handleEvent(message);
       }
     });
   }
