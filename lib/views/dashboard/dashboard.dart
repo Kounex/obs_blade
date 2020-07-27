@@ -1,17 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/views/dashboard/widgets/dialogs/save_edit_connection.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/connection.dart';
 import '../../shared/dialogs/confirmation.dart';
-import '../../shared/dialogs/input.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/dashboard.dart';
-import '../../types/enums/hive_keys.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
@@ -37,17 +33,16 @@ class DashboardScroll extends InheritedWidget {
 class DashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Provider<DashboardStore>(
-        create: (_) {
-          DashboardStore dashboardStore = DashboardStore();
+    return Provider<DashboardStore>(create: (_) {
+      DashboardStore dashboardStore = DashboardStore();
 
-          // Setting the active session and make initial requests
-          // to display data on connect
-          dashboardStore
-              .setupNetworkStoreHandling(context.read<NetworkStore>());
-          return dashboardStore;
-        },
-        builder: (context, _) => _DashboardView());
+      // Setting the active session and make initial requests
+      // to display data on connect
+      dashboardStore.setupNetworkStoreHandling(context.read<NetworkStore>());
+      return dashboardStore;
+    }, builder: (context, _) {
+      return _DashboardView();
+    });
   }
 }
 
@@ -58,9 +53,7 @@ class _DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<_DashboardView> {
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
+  void initState() {
     when(
         (_) =>
             context.read<NetworkStore>().activeSession.connection.name == null,
@@ -71,6 +64,7 @@ class _DashboardViewState extends State<_DashboardView> {
         (_) => context.read<NetworkStore>().obsTerminated,
         () => Navigator.of(context)
             .pushReplacementNamed(HomeTabRoutingKeys.Landing.route));
+    super.initState();
   }
 
   _saveConnectionDialog(BuildContext context) {

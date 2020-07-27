@@ -74,8 +74,8 @@ class _HomeViewState extends State<_HomeView> {
   /// our dialog is pushed when the current build/render cycle is done, thats where our
   /// [pushReplacementNamed] is done and it is safe to use [Navigator] again
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
 
     /// I have to import the MobX part above with 'as MobX' since the Widget Listener
     /// is part of Material and MobX therefore it can't be resolved on its own. By
