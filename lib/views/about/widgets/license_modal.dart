@@ -53,18 +53,8 @@ class LicenseModal extends StatelessWidget {
               ),
               LightDivider(),
               Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverList(
-                      delegate: SliverChildListDelegate(
-                        [
-                          LicenseEntries(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
+                child: LicenseEntries(),
+              ),
             ],
           ),
         ),

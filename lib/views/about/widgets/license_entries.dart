@@ -44,33 +44,46 @@ class _LicenseData {
   }
 }
 
-class LicenseEntries extends StatelessWidget {
+class LicenseEntries extends StatefulWidget {
+  @override
+  _LicenseEntriesState createState() => _LicenseEntriesState();
+}
+
+class _LicenseEntriesState extends State<LicenseEntries> {
+  Future<_LicenseData> _licenses;
+
+  @override
+  void initState() {
+    _licenses = LicenseRegistry.licenses
+        .fold<_LicenseData>(
+          _LicenseData(),
+          (_LicenseData prev, LicenseEntry license) =>
+              prev..addLicense(license),
+        )
+        .then((_LicenseData licenseData) => licenseData..sortPackages());
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_LicenseData>(
-      future: LicenseRegistry.licenses
-          .fold<_LicenseData>(
-            _LicenseData(),
-            (_LicenseData prev, LicenseEntry license) =>
-                prev..addLicense(license),
-          )
-          .then((_LicenseData licenseData) => licenseData..sortPackages()),
+      future: _licenses,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return Column(
-            children: snapshot.data.packages
-                .map((packageName) => ListTile(
-                      dense: true,
-                      title: Text(packageName),
-                      subtitle: Text(
-                          '${snapshot.data.packageLicenseBindings[packageName].length} licenses'),
-                    ))
-                .toList(),
+          return ListView.builder(
+            padding:
+                EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+            itemCount: snapshot.data.packages.length,
+            itemBuilder: (context, index) => ListTile(
+              dense: true,
+              title: Text(snapshot.data.packages[index]),
+              subtitle: Text(
+                  '${snapshot.data.packageLicenseBindings[snapshot.data.packages[index]].length} licenses'),
+            ),
           );
         }
         return Container(
           alignment: Alignment.center,
-          padding: EdgeInsets.only(top: 24.0),
           child: BaseProgressIndicator(text: 'Fetching...'),
         );
       },

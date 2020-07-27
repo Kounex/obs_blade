@@ -10,7 +10,7 @@ class StylingHelper {
   static const Color MAIN_BLUE = const Color(0xff101823);
   static const Color MAIN_RED = const Color(0xffff4654);
 
-  static const double OPACITY_BLURRY = 0.90;
+  static const double OPACITY_BLURRY = 0.75;
 
   /// Taken from [CupertinoNavigationBar]
   static const double SIGMA_BLURRY = 10.0;
