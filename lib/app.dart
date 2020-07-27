@@ -35,6 +35,7 @@ class App extends StatelessWidget {
             dividerColor: Colors.grey[500],
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
+            toggleableActiveColor: StylingHelper.MAIN_RED,
 
             /// Inner Widget themes
             appBarTheme: AppBarTheme(
