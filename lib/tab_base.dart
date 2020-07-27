@@ -72,9 +72,13 @@ class _TabBaseState extends State<TabBase> {
         children: [
           ..._tabViews
               .mapIndexed(
-                (navigator, index) => Offstage(
-                  offstage: index != _currentTabIndex,
-                  child: navigator,
+                (navigator, index) => Padding(
+                  padding:
+                      const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
+                  child: Offstage(
+                    offstage: index != _currentTabIndex,
+                    child: navigator,
+                  ),
                 ),
               )
               .toList(),
