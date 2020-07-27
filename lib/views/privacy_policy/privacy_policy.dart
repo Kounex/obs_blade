@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../utils/styling_helper.dart';
+
 class PrivacyPolicyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -10,6 +12,7 @@ class PrivacyPolicyView extends StatelessWidget {
         middle: Text('Privacy Policy'),
       ),
       body: CustomScrollView(
+        physics: StylingHelper.platformAwareScrollPhysics,
         slivers: [],
       ),
     );

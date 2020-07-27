@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../utils/styling_helper.dart';
+
 /// Uses a [CupertinoNavigationBar] which would usually be set for the
 /// appBar property of [Scaffold] but uses it here inside a [Stack] because
 /// the blurry transoarent background does not work "nice" if used in
@@ -24,6 +26,7 @@ class TransculentCupertinoBody extends StatelessWidget {
     return Stack(
       children: [
         CustomScrollView(
+          physics: StylingHelper.platformAwareScrollPhysics,
           slivers: [
             SliverPadding(
               padding: EdgeInsets.only(

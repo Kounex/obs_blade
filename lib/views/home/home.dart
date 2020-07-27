@@ -4,21 +4,23 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx/mobx.dart' as MobX;
+import 'package:obs_blade/shared/overlay/base_result.dart';
+import 'package:obs_blade/views/home/widgets/connect_box/connect_box.dart';
 import 'package:provider/provider.dart';
 
+import '../../shared/overlay/base_progress_indicator.dart';
 import '../../shared/dialogs/info.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/home.dart';
 import '../../types/classes/stream/responses/base.dart';
+import '../../types/classes/stream/responses/base.dart';
+import '../../types/classes/stream/responses/base.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/routing_helper.dart';
-import 'widgets/auto_discovery/auto_discovery.dart';
-import 'widgets/connect_form/connect_form.dart';
+import '../../utils/styling_helper.dart';
 import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
-import 'widgets/switcher_card/switcher_card.dart';
 
 /// Using the "Facade Pattern" here, where I'm# wrapping my actual ViewWidget with a WrapperWidget
 /// which only purpose is to expose the ViewModel via Provider. Since the context available in
@@ -65,9 +67,19 @@ class _HomeViewState extends State<_HomeView> {
   /// to a [BuildContext] of this [StatelessWidget] which we need to access the MobX
   /// stores through Provider; context.read<NetworkStore>() for example
   ///
+  /// NEW: Not making use of [didChangeDependencies] since it gets triggered quite often.
+  /// Initially I wanted to use this since I thought I would have access to a context
+  /// where the provided ViewModel for this View is accessible, but since the context
+  /// passed to our build method is the one from the parent, we won't have access to the
+  /// provided ViewModel on this way at all - thats why i used the Facade Pattern and
+  /// used a Wrapper Widget which has the only pupose to expose the ViewModel via Provider
+  /// and making it accessible with the given context here. The reactions I registered
+  /// here should only be registered once (making use of reaction and when) so thats why
+  /// its now in [initState]
+  ///
   /// Since I'm checking here if the [obsTerminated] value is true (meaning we came to this
   /// view because OBS has terminated) I want to disaplay dialog informing the user about it.
-  /// [didChangeDependencies] will get called relatively fast, in this case during the
+  /// [initState] will get called relatively fast, in this case during the
   /// [pushReplacementNamed] call. Since showing a dialog is also using [Navigator] stuff (it
   /// will push the dialog into the stack) we will get an exepction indicating that problem.
   /// To avoid that I added [SchedulerBinding.instance.addPostFrameCallback] which ensures that
@@ -102,59 +114,43 @@ class _HomeViewState extends State<_HomeView> {
     _disposers.add(
         MobX.reaction((_) => context.read<NetworkStore>().connectionInProgress,
             (connectionInProgress) {
-      /// For now I have to wrap this function with [addPostFrameCallback] since
-      /// without doing so this function will sometimes not execute correctly (in my tests
-      /// the first line was executed, no more) - need to investigate the cause. This
-      /// workaround has no impact performance wise, at least as far as I know.
-      SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (connectionInProgress) {
-          OverlayHandler.showStatusOverlay(
+      NetworkStore networkStore = context.read<NetworkStore>();
+
+      if (connectionInProgress) {
+        OverlayHandler.showStatusOverlay(
             context: context,
             showDuration: Duration(seconds: 5),
-            content: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  strokeWidth: 2.0,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 24.0),
-                  child: Text('Connecting...'),
-                ),
-              ],
+            content: BaseProgressIndicator(
+              text: 'Connecting...',
+            ));
+      } else if (!connectionInProgress) {
+        if (networkStore.connectionResponse.status == BaseResponse.ok) {
+          OverlayHandler.closeAnyOverlay();
+          Navigator.pushReplacementNamed(
+              context, HomeTabRoutingKeys.Dashboard.route);
+        }
+
+        /// If the error for the connection attempt results in an 'Authentication' error,
+        /// it is due to providing a wrong password (or none at all) and we don't want to
+        /// display an overlay for that - we trigger the validation of the password field
+        /// in our [ConnectForm]
+        else if (!networkStore.connectionResponse.error
+            .contains(BaseResponse.failedAuthentication)) {
+          OverlayHandler.showStatusOverlay(
+            context: context,
+            replaceIfActive: true,
+            content: Align(
+              alignment: Alignment.center,
+              child: BaseResult(
+                isPositive: false,
+                text: 'Couldn\'t connect to a WebSocket!',
+              ),
             ),
           );
-        } else if (!connectionInProgress) {
-          if (context.read<NetworkStore>().connectionResponse.status ==
-              BaseResponse.ok) {
-            OverlayHandler.closeAnyOverlay();
-            Navigator.pushReplacementNamed(
-                context, HomeTabRoutingKeys.Dashboard.route);
-          }
-
-          /// If the error for the connection attempt results in an 'Authentication' error,
-          /// it is due to providing a wrong password (or none at all) and we don't want to
-          /// display an overlay for that - we trigger the validation of the password field
-          /// in our [ConnectForm]
-          else if (!context
-              .read<NetworkStore>()
-              .connectionResponse
-              .error
-              .contains('Authentication')) {
-            OverlayHandler.showStatusOverlay(
-              context: context,
-              replaceIfActive: true,
-              content: Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Couldn\'t connect to a WebSocket!',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
+        } else {
+          OverlayHandler.closeAnyOverlay();
         }
-      });
+      }
     }));
   }
 
@@ -191,9 +187,7 @@ class _HomeViewState extends State<_HomeView> {
           /// be able to scroll even though we reached the end. To achieve this we need different behaviour
           /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
           /// for the first group and [BouncingScrollPhysics] for the second
-          physics: Platform.isIOS || Platform.isMacOS
-              ? AlwaysScrollableScrollPhysics()
-              : BouncingScrollPhysics(),
+          physics: StylingHelper.platformAwareScrollPhysics,
           slivers: <Widget>[
             RefresherAppBar(
               expandedHeight: 200.0,
@@ -204,37 +198,7 @@ class _HomeViewState extends State<_HomeView> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
                   [
-                    Observer(
-                      builder: (context) => Stack(
-                        children: <Widget>[
-                          SwitcherCard(
-                            title: landingStore.manualMode
-                                ? 'Connection'
-                                : 'Autodiscover',
-                            child: landingStore.manualMode
-                                ? Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 24.0, right: 24.0, bottom: 12.0),
-                                    child: ConnectForm(
-                                      connection:
-                                          landingStore.typedInConnection,
-                                      saveCredentials: true,
-                                    ),
-                                  )
-                                : AutoDiscovery(),
-                          ),
-                          Positioned(
-                            right: 36.0,
-                            top: 30.0,
-                            child: CupertinoButton(
-                              child: Text(
-                                  landingStore.manualMode ? 'Auto' : 'Manual'),
-                              onPressed: () => landingStore.toggleManualMode(),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
+                    ConnectBox(),
                     SavedConnections(),
                     // SizedBox(
                     //   height: kBottomNavigationBarHeight,

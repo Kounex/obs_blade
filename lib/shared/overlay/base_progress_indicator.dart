@@ -26,6 +26,7 @@ class BaseProgressIndicator extends StatelessWidget {
             padding: EdgeInsets.only(top: 14.0),
             child: Text(
               this.text,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.caption,
             ),
           )

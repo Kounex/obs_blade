@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 
 /// Will hold some general styling stuff like "custom" icons or some
@@ -34,4 +36,12 @@ class StylingHelper {
   static const IconData CUPERTINO_SUNGLASSES_ICON = const IconData(0xf43f,
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
+
+  /// TODO: Wrapping [] with [] for other Platforms then Apple, scrolling works as intended
+  /// (behaviour like Apple stuff) - need to confirm if this also applies to Apple, so I can
+  /// use this approach for any Platform instead of making a distinction here
+  static ScrollPhysics get platformAwareScrollPhysics =>
+      Platform.isIOS || Platform.isMacOS
+          ? AlwaysScrollableScrollPhysics()
+          : BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 }

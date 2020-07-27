@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../shared/basic/flutter_modified/translucent_sliver_app_bar.dart';
-import '../../../../shared/basic/status_dot.dart';
+import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
+import '../../../../shared/general/status_dot.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';

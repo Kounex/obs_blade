@@ -33,6 +33,7 @@ abstract class _NetworkStore with Store {
   Future<BaseResponse> setOBSWebSocket(Connection connection,
       {Duration timeout = const Duration(seconds: 3)}) async {
     this.closeSession();
+    this.connectionResponse = null;
     this.connectionInProgress = true;
     this.activeSession =
         Session(NetworkHelper.establishWebSocket(connection), connection);

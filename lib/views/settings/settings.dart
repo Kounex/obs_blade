@@ -6,7 +6,7 @@ import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:package_info/package_info.dart';
 
 import '../../models/settings.dart';
-import '../../shared/basic/themed_cupertino_switch.dart';
+import '../../shared/general/themed_cupertino_switch.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';
@@ -19,6 +19,7 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
+        physics: StylingHelper.platformAwareScrollPhysics,
         slivers: <Widget>[
           CupertinoSliverNavigationBar(
             largeTitle: Text('Settings'),

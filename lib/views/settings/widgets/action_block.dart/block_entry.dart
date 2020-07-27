@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:obs_blade/shared/basic/question_mark_tooltip.dart';
+import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 const double kblockEntryPadding = 14.0;

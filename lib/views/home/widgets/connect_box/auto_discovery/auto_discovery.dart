@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:provider/provider.dart';
-
-import '../../../../models/connection.dart';
-import '../../../../shared/animator/fader.dart';
-import '../../../../shared/basic/base_progress_indicator.dart';
-import '../../../../shared/basic/question_mark_tooltip.dart';
-import '../../../../stores/views/home.dart';
-import '../../../../utils/validation_helper.dart';
+import '../../../../../models/connection.dart';
+import '../../../../../shared/animator/fader.dart';
+import '../../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../../shared/general/question_mark_tooltip.dart';
+import '../../../../../stores/views/home.dart';
+import '../../../../../utils/validation_helper.dart';
 import 'session_tile.dart';
 
 class AutoDiscovery extends StatefulWidget {
