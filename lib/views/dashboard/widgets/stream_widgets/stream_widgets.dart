@@ -43,7 +43,11 @@ class StreamWidgets extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(
                             top: 24.0, bottom: 24.0, left: 8.0, right: 8.0),
-                        child: TwitchChat(),
+                        child: Stack(
+                          children: [
+                            TwitchChat(),
+                          ],
+                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(top: 20.0),

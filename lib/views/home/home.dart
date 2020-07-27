@@ -236,6 +236,9 @@ class _HomeViewState extends State<_HomeView> {
                       ),
                     ),
                     SavedConnections(),
+                    // SizedBox(
+                    //   height: kBottomNavigationBarHeight,
+                    // ),
                   ],
                 ),
               ),

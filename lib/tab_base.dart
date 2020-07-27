@@ -68,66 +68,37 @@ class _TabBaseState extends State<TabBase> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          ..._tabViews
-              .mapIndexed(
-                (navigator, index) => Padding(
-                  padding:
-                      const EdgeInsets.only(bottom: kBottomNavigationBarHeight),
-                  child: Offstage(
-                    offstage: index != _currentTabIndex,
-                    child: navigator,
-                  ),
-                ),
-              )
-              .toList(),
-          CupertinoTabBar(
-            currentIndex: _currentTabIndex,
-            onTap: (index) => setState(() {
-              if (_currentTabIndex == index) {
-                if (_navigatorKeys[index].currentState.canPop()) {
-                  _navigatorKeys[index].currentState.pop();
-                }
-              } else {
-                _currentTabIndex = index;
-              }
-            }),
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.home),
-                title: Text('Home'),
+        children: _tabViews
+            .mapIndexed(
+              (navigator, index) => Offstage(
+                offstage: index != _currentTabIndex,
+                child: navigator,
               ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.settings),
-                title: Text('Settings'),
-              ),
-            ],
+            )
+            .toList(),
+      ),
+      bottomNavigationBar: CupertinoTabBar(
+        currentIndex: _currentTabIndex,
+        onTap: (index) => setState(() {
+          if (_currentTabIndex == index) {
+            if (_navigatorKeys[index].currentState.canPop()) {
+              _navigatorKeys[index].currentState.pop();
+            }
+          } else {
+            _currentTabIndex = index;
+          }
+        }),
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.home),
+            title: Text('Home'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.settings),
+            title: Text('Settings'),
           ),
         ],
       ),
-      // bottomNavigationBar: CupertinoTabBar(
-      //   currentIndex: _currentTabIndex,
-      //   onTap: (index) => setState(() {
-      //     if (_currentTabIndex == index) {
-      //       if (_navigatorKeys[index].currentState.canPop()) {
-      //         _navigatorKeys[index].currentState.pop();
-      //       }
-      //     } else {
-      //       _currentTabIndex = index;
-      //     }
-      //   }),
-      //   items: [
-      //     BottomNavigationBarItem(
-      //       icon: Icon(CupertinoIcons.home),
-      //       title: Text('Home'),
-      //     ),
-      //     BottomNavigationBarItem(
-      //       icon: Icon(CupertinoIcons.settings),
-      //       title: Text('Settings'),
-      //     ),
-      //   ],
-      // ),
     );
   }
 }

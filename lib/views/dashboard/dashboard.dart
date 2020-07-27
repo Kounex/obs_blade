@@ -121,7 +121,10 @@ class _DashboardViewState extends State<_DashboardView> {
                             ],
                           ),
                         ),
-                      )
+                      ),
+                      // SizedBox(
+                      //   height: kBottomNavigationBarHeight,
+                      // ),
                     ],
                   ),
                 ),
