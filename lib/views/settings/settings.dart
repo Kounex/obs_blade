@@ -94,8 +94,11 @@ class SettingsView extends StatelessWidget {
                       BlockEntry(
                         leading: StylingHelper.CUPERTINO_AT_ICON,
                         title: 'About',
+                        // onTap: () => Navigator.of(context).push(
+                        //     MaterialWithModalsPageRoute(
+                        //         builder: (_) => LicenseModal())),
                         onTap: () => showCupertinoModalBottomSheet(
-                          expand: true,
+                          expand: false,
                           context: context,
                           backgroundColor: Colors.transparent,
                           useRootNavigator: true,
