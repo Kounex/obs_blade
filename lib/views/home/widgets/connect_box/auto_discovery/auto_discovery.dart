@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/types/exceptions/no_network.dart';
+import 'package:obs_blade/types/exceptions/network.dart';
 import 'package:obs_blade/views/home/widgets/connect_box/auto_discovery/result_entry.dart';
 import 'package:provider/provider.dart';
 import '../../../../../models/connection.dart';
@@ -83,9 +83,9 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                 return ResultEntry(
                     result: snapshot.hasData && snapshot.data.length == 0
                         ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!'
-                        : snapshot.error is NoNetworkException
-                            ? 'Network error occured! Make sure you have a working internet connection!'
-                            : 'Error occured! Either something is wrong with your internet connection or the app could not make use of autodiscovery. Check your internet connection and restart the app!');
+                        : snapshot.error is NotInWLANException
+                            ? 'Your Device is not connected via WLAN! Autodiscovery only works if you are connected to your local network via WLAN!'
+                            : 'Error occured! Either something is wrong with your WLAN connection or the app could not make use of autodiscovery. Check your connection and restart the app!');
               }
               return Fader(
                 child: Container(

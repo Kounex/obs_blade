@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
-import 'package:obs_blade/types/exceptions/no_network.dart';
+import 'package:obs_blade/types/exceptions/network.dart';
 import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -12,14 +12,13 @@ import '../models/connection.dart';
 import '../types/enums/request_type.dart';
 
 class NetworkHelper {
-  static bool hasNetworkConnection = true;
+  static ConnectivityResult currentConnectivity;
 
   static void activateNetworkConnectionListener() async {
-    NetworkHelper.hasNetworkConnection =
-        (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+    NetworkHelper.currentConnectivity =
+        await Connectivity().checkConnectivity();
     Connectivity().onConnectivityChanged.listen((connectivityResult) =>
-        NetworkHelper.hasNetworkConnection =
-            connectivityResult != ConnectivityResult.none);
+        NetworkHelper.currentConnectivity = connectivityResult);
   }
 
   /// Establish and return an instance of [IOWebSocketChannel] based on the
@@ -32,7 +31,7 @@ class NetworkHelper {
   /// applications in the local network which listen on the given port (default
   /// port is 4444)
   static Future<List<Connection>> getAvailableOBSIPs({int port = 4444}) async {
-    if (NetworkHelper.hasNetworkConnection) {
+    if (NetworkHelper.currentConnectivity == ConnectivityResult.wifi) {
       String baseIP =
           (await Connectivity().getWifiIP()).split('.').take(3).join('.');
       List<int> availableIPs = [];
@@ -48,8 +47,9 @@ class NetworkHelper {
           : null);
 
       return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
+    } else {
+      throw NotInWLANException();
     }
-    throw NoNetworkException();
   }
 
   /// This is the content of the auth field which is needed to correctly
