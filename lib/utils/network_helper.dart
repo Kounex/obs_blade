@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
+import 'package:obs_blade/types/exceptions/no_network.dart';
 import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -11,6 +12,16 @@ import '../models/connection.dart';
 import '../types/enums/request_type.dart';
 
 class NetworkHelper {
+  static bool hasNetworkConnection = true;
+
+  static void activateNetworkConnectionListener() async {
+    NetworkHelper.hasNetworkConnection =
+        (await Connectivity().checkConnectivity()) != ConnectivityResult.none;
+    Connectivity().onConnectivityChanged.listen((connectivityResult) =>
+        NetworkHelper.hasNetworkConnection =
+            connectivityResult != ConnectivityResult.none);
+  }
+
   /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port)
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
@@ -21,21 +32,24 @@ class NetworkHelper {
   /// applications in the local network which listen on the given port (default
   /// port is 4444)
   static Future<List<Connection>> getAvailableOBSIPs({int port = 4444}) async {
-    String baseIP =
-        (await Connectivity().getWifiIP()).split('.').take(3).join('.');
-    List<int> availableIPs = [];
-    List<ScanResult> results = [];
+    if (NetworkHelper.hasNetworkConnection) {
+      String baseIP =
+          (await Connectivity().getWifiIP()).split('.').take(3).join('.');
+      List<int> availableIPs = [];
+      List<ScanResult> results = [];
 
-    results = await Future.wait<ScanResult>(List.generate(256, (index) => index)
-        .map((index) =>
-            TCPScanner('$baseIP.${index.toString()}', [port], timeout: 1000)
-                .noIsolateScan()));
+      results = await Future.wait<ScanResult>(
+          List.generate(256, (index) => index).map((index) =>
+              TCPScanner('$baseIP.${index.toString()}', [port], timeout: 1000)
+                  .noIsolateScan()));
 
-    results.forEach((r) => r.open.length > 0
-        ? availableIPs.add(int.parse(r.host.split('.').last))
-        : null);
+      results.forEach((r) => r.open.length > 0
+          ? availableIPs.add(int.parse(r.host.split('.').last))
+          : null);
 
-    return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
+      return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
+    }
+    throw NoNetworkException();
   }
 
   /// This is the content of the auth field which is needed to correctly

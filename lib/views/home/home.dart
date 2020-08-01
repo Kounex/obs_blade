@@ -165,6 +165,8 @@ class _HomeViewState extends State<_HomeView> {
   @override
   Widget build(BuildContext context) {
     HomeStore landingStore = context.watch<HomeStore>();
+    NetworkStore networkStore = context.watch<NetworkStore>();
+
     return Scaffold(
       /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
       /// our extendedHeight, where we are ready to trigger searching for OBS connections,

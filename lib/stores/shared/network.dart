@@ -21,11 +21,12 @@ class NetworkStore = _NetworkStore with _$NetworkStore;
 abstract class _NetworkStore with Store {
   @observable
   Session activeSession;
-  @observable
-  BaseResponse connectionResponse;
 
   @observable
   bool connectionInProgress = false;
+  @observable
+  BaseResponse connectionResponse;
+
   @observable
   bool obsTerminated = false;
 
@@ -134,7 +135,7 @@ abstract class _NetworkStore with Store {
     }
   }
 
-  handleStream() {
+  void handleStream() {
     this.watchOBSStream().listen((message) {
       if (message is BaseEvent) {
         _handleEvent(message);

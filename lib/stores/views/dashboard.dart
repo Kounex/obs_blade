@@ -78,10 +78,10 @@ abstract class _DashboardStore with Store {
   initialRequests() {
     NetworkHelper.makeRequest(
         this.networkStore.activeSession.socket.sink, RequestType.GetSceneList);
-    // NetworkHelper.makeRequest(
-    //     this.networkStore.activeSession.socket.sink, RequestType.GetSourcesList);
     NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
         RequestType.GetSourceTypesList);
+    // NetworkHelper.makeRequest(
+    //     this.networkStore.activeSession.socket.sink, RequestType.GetSourcesList);
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket.sink, RequestType.ListOutputs);
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/types/exceptions/no_network.dart';
+import 'package:obs_blade/views/home/widgets/connect_box/auto_discovery/result_entry.dart';
 import 'package:provider/provider.dart';
 import '../../../../../models/connection.dart';
 import '../../../../../shared/animator/fader.dart';
@@ -65,49 +67,31 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             future: landingStore.autodiscoverConnections,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData) {
-                  if (snapshot.data.length > 0) {
-                    return Fader(
-                      child: Column(
-                        children: snapshot.data
-                            .map(
-                              (availableObsConnection) => SessionTile(
-                                connection: availableObsConnection,
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    );
-                  }
-                  return Container(
-                    padding: EdgeInsets.only(left: 24.0, right: 24.0),
-                    alignment: Alignment.center,
-                    height: 150.0,
-                    child: Fader(
-                      child: Text(
-                        'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nPull down to try again!',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Container(
-                    padding: EdgeInsets.only(left: 24.0, right: 24.0),
-                    alignment: Alignment.center,
-                    height: 150.0,
-                    child: Fader(
-                      child: Text(
-                        'Network error occured! Make sure you are connected to your local network!\n\nPull down to try again!',
-                        textAlign: TextAlign.center,
-                      ),
+                if (snapshot.hasData && snapshot.data.length > 0) {
+                  return Fader(
+                    child: Column(
+                      children: snapshot.data
+                          .map(
+                            (availableObsConnection) => SessionTile(
+                              connection: availableObsConnection,
+                            ),
+                          )
+                          .toList(),
                     ),
                   );
                 }
+                return ResultEntry(
+                    result: snapshot.hasData && snapshot.data.length == 0
+                        ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!'
+                        : snapshot.error is NoNetworkException
+                            ? 'Network error occured! Make sure you have a working internet connection!\n\nPull down to try again!'
+                            : 'Error occured! Either something is wrong with your internet connection or the app could not make use of autodiscovery. Check your internet connection and restart the app!');
               }
-              return Align(
+              return Fader(
                 child: Container(
-                    height: 150.0,
-                    child: BaseProgressIndicator(text: 'Searching...')),
+                  // height: 150.0,
+                  child: BaseProgressIndicator(text: 'Searching...'),
+                ),
               );
             },
           ),

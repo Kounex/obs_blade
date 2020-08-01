@@ -1,4 +1,6 @@
+import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/utils/validation_helper.dart';
 
 import '../../models/connection.dart';
 import '../../utils/network_helper.dart';
@@ -26,10 +28,9 @@ abstract class _HomeStore with Store {
 
   @action
   void updateAutodiscoverConnections() {
-    int port = int.tryParse(autodiscoverPort);
-    if (port != null && port > 0 && port <= 65535) {
-      this.autodiscoverConnections =
-          NetworkHelper.getAvailableOBSIPs(port: port);
+    if (ValidationHelper.portValidation(this.autodiscoverPort) == null) {
+      this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
+          port: int.tryParse(this.autodiscoverPort));
     }
   }
 

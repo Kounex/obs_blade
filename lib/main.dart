@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/utils/network_helper.dart';
 
 import 'app.dart';
 import 'models/connection.dart';
@@ -44,6 +45,9 @@ void main() async {
   /// then - in this method we check if the property is null now and
   /// set default values if thats the case
   settingsBox.get(0).setDefault();
+
+  /// Register listener for detecting network change and status
+  NetworkHelper.activateNetworkConnectionListener();
 
   runApp(App());
 }
