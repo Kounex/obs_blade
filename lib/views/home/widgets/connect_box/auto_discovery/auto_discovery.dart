@@ -84,7 +84,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                     result: snapshot.hasData && snapshot.data.length == 0
                         ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!'
                         : snapshot.error is NoNetworkException
-                            ? 'Network error occured! Make sure you have a working internet connection!\n\nPull down to try again!'
+                            ? 'Network error occured! Make sure you have a working internet connection!'
                             : 'Error occured! Either something is wrong with your internet connection or the app could not make use of autodiscovery. Check your internet connection and restart the app!');
               }
               return Fader(
