@@ -89,7 +89,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               }
               return Fader(
                 child: Container(
-                  // height: 150.0,
+                  height: 150.0,
                   child: BaseProgressIndicator(text: 'Searching...'),
                 ),
               );
