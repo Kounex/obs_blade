@@ -1,4 +1,5 @@
 import 'package:connectivity/connectivity.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/utils/validation_helper.dart';
 
@@ -29,8 +30,8 @@ abstract class _HomeStore with Store {
   @action
   void updateAutodiscoverConnections() {
     if (ValidationHelper.portValidation(this.autodiscoverPort) == null) {
-      this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
-          port: int.tryParse(this.autodiscoverPort));
+      this.autodiscoverConnections = compute(NetworkHelper.getAvailableOBSIPs,
+          int.tryParse(this.autodiscoverPort));
     }
   }
 

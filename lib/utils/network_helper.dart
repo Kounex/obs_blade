@@ -30,7 +30,7 @@ class NetworkHelper {
   /// Initiating an autodiscover process (based on [TCPScanner]) to look for
   /// applications in the local network which listen on the given port (default
   /// port is 4444)
-  static Future<List<Connection>> getAvailableOBSIPs({int port = 4444}) async {
+  static Future<List<Connection>> getAvailableOBSIPs(int port) async {
     if (NetworkHelper.currentConnectivity == ConnectivityResult.wifi) {
       String baseIP =
           (await Connectivity().getWifiIP()).split('.').take(3).join('.');
