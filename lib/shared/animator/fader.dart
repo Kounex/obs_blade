@@ -21,12 +21,18 @@ class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
 
   @override
   void initState() {
-    super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
     _animation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(_controller);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override

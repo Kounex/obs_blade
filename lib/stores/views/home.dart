@@ -30,8 +30,8 @@ abstract class _HomeStore with Store {
   @action
   void updateAutodiscoverConnections() {
     if (ValidationHelper.portValidation(this.autodiscoverPort) == null) {
-      this.autodiscoverConnections = compute(NetworkHelper.getAvailableOBSIPs,
-          int.tryParse(this.autodiscoverPort));
+      this.autodiscoverConnections =
+          NetworkHelper.getAvailableOBSIPs(int.tryParse(this.autodiscoverPort));
     }
   }
 

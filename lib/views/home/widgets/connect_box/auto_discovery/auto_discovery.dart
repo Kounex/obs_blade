@@ -83,7 +83,9 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                 return ResultEntry(
                     result: snapshot.hasData && snapshot.data.length == 0
                         ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!'
-                        : snapshot.error is NotInWLANException
+                        : snapshot.error
+                                .toString()
+                                .contains('NotInWLANException')
                             ? 'Your Device is not connected via WLAN! Autodiscovery only works if you are connected to your local network via WLAN!'
                             : 'Error occured! Either something is wrong with your WLAN connection or the app could not make use of autodiscovery. Check your connection and restart the app!');
               }
