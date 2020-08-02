@@ -12,14 +12,14 @@ import '../models/connection.dart';
 import '../types/enums/request_type.dart';
 
 class NetworkHelper {
-  static ConnectivityResult currentConnectivity;
+  // static ConnectivityResult currentConnectivity;
 
-  static void activateNetworkConnectionListener() async {
-    NetworkHelper.currentConnectivity =
-        await Connectivity().checkConnectivity();
-    Connectivity().onConnectivityChanged.listen((connectivityResult) =>
-        NetworkHelper.currentConnectivity = connectivityResult);
-  }
+  // static void activateNetworkConnectionListener() async {
+  //   NetworkHelper.currentConnectivity =
+  //       await Connectivity().checkConnectivity();
+  //   Connectivity().onConnectivityChanged.listen((connectivityResult) =>
+  //       NetworkHelper.currentConnectivity = connectivityResult);
+  // }
 
   /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port)
@@ -31,7 +31,7 @@ class NetworkHelper {
   /// applications in the local network which listen on the given port (default
   /// port is 4444)
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
-    if (NetworkHelper.currentConnectivity == ConnectivityResult.wifi) {
+    if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
       String baseIP =
           (await Connectivity().getWifiIP()).split('.').take(3).join('.');
       List<int> availableIPs = [];

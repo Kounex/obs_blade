@@ -47,7 +47,7 @@ void main() async {
   settingsBox.get(0).setDefault();
 
   /// Register listener for detecting network change and status
-  NetworkHelper.activateNetworkConnectionListener();
+  // NetworkHelper.activateNetworkConnectionListener();
 
   runApp(App());
 }
