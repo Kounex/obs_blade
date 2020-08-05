@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 class BaseResult extends StatelessWidget {
-  final Icon icon;
+  final IconData icon;
   final bool isPositive;
   final String text;
 
   final double iconSize;
 
-  BaseResult({this.icon, this.isPositive, this.text, this.iconSize = 32.0})
+  BaseResult(
+      {this.icon, this.isPositive = true, this.text, this.iconSize = 32.0})
       : assert((icon != null && isPositive == null) ||
             (icon == null && isPositive != null));
 
@@ -18,9 +19,11 @@ class BaseResult extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Icon(
-          this.icon ?? this.isPositive
-              ? CupertinoIcons.check_mark_circled
-              : CupertinoIcons.clear_circled,
+          this.icon != null
+              ? this.icon
+              : this.isPositive
+                  ? CupertinoIcons.check_mark_circled
+                  : CupertinoIcons.clear_circled,
           size: this.iconSize,
         ),
         if (this.text != null)
