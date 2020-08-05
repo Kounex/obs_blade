@@ -13,6 +13,9 @@ class Settings extends HiveObject {
   @HiveField(2)
   bool enforceTabletMode = false;
 
+  @HiveField(3)
+  String selectedTwitchUsername;
+
   void setDefault() {
     this.trueDark ??= false;
     this.reduceSmearing ??= false;

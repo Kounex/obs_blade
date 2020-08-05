@@ -75,7 +75,7 @@ class _InputDialogState extends State<InputDialog> {
             child: Padding(
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
-                _validationText,
+                _validationText ?? '',
                 style: TextStyle(
                   color: Colors.red,
                 ),
@@ -95,7 +95,7 @@ class _InputDialogState extends State<InputDialog> {
           onPressed: () {
             setState(
                 () => _validationText = widget.inputCheck(_controller.text));
-            if (_validationText.length == 0) {
+            if (_validationText == null || _validationText.length == 0) {
               Navigator.of(context).pop();
               widget.onSave(_controller.text);
             }

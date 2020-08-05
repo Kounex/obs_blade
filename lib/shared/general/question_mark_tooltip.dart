@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
+import 'package:obs_blade/utils/dialog_handler.dart';
 
 import '../../utils/styling_helper.dart';
 import 'flutter_modified/custom_tooltip.dart';
@@ -13,10 +14,9 @@ class QuestionMarkTooltip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => showDialog(
+      onTap: () => DialogHandler.showBaseDialog(
         context: context,
-        barrierDismissible: false,
-        builder: (_) => InfoDialog(
+        dialogWidget: InfoDialog(
           body: this.message,
         ),
       ),

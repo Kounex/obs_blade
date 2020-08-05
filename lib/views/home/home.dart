@@ -1,24 +1,21 @@
-import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:mobx/mobx.dart' as MobX;
-import 'package:obs_blade/shared/overlay/base_result.dart';
-import 'package:obs_blade/views/home/widgets/connect_box/connect_box.dart';
 import 'package:provider/provider.dart';
 
-import '../../shared/overlay/base_progress_indicator.dart';
 import '../../shared/dialogs/info.dart';
+import '../../shared/overlay/base_progress_indicator.dart';
+import '../../shared/overlay/base_result.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/home.dart';
 import '../../types/classes/stream/responses/base.dart';
-import '../../types/classes/stream/responses/base.dart';
-import '../../types/classes/stream/responses/base.dart';
+import '../../utils/dialog_handler.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';
+import '../../utils/dialog_handler.dart';
+import 'widgets/connect_box/connect_box.dart';
 import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 
@@ -99,10 +96,10 @@ class _HomeViewState extends State<_HomeView> {
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
     MobX.when((_) => context.read<NetworkStore>().obsTerminated, () {
-      SchedulerBinding.instance.addPostFrameCallback((_) => showDialog(
+      SchedulerBinding.instance.addPostFrameCallback((_) =>
+          DialogHandler.showBaseDialog(
             context: context,
-            barrierDismissible: false,
-            builder: (context) =>
+            dialogWidget:
                 InfoDialog(body: 'Your OBS instance has been terminated!'),
           ).then((_) =>
               context.read<HomeStore>().updateAutodiscoverConnections()));
@@ -195,18 +192,18 @@ class _HomeViewState extends State<_HomeView> {
               expandedHeight: 200.0,
               imagePath: 'assets/images/base-logo.png',
             ),
-            SliverPadding(
-              padding: EdgeInsets.only(bottom: 50.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    ConnectBox(),
-                    SavedConnections(),
-                    // SizedBox(
-                    //   height: kBottomNavigationBarHeight,
-                    // ),
-                  ],
-                ),
+            SliverList(
+              delegate: SliverChildListDelegate(
+                [
+                  Align(
+                    child: Container(
+                      constraints: BoxConstraints(maxWidth: 500.0),
+                      child: ConnectBox(),
+                    ),
+                  ),
+                  SavedConnections(),
+                  SizedBox(height: kBottomNavigationBarHeight),
+                ],
               ),
             ),
           ],

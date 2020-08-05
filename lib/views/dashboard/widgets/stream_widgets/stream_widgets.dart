@@ -36,24 +36,21 @@ class StreamWidgets extends StatelessWidget {
                 ],
               ),
               SizedBox(
-                height: 525,
+                height: 525.0,
                 child: TabBarView(
-                    physics: NeverScrollableScrollPhysics(),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            top: 24.0, bottom: 24.0, left: 8.0, right: 8.0),
-                        child: Stack(
-                          children: [
-                            TwitchChat(),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20.0),
-                        child: Stats(),
-                      ),
-                    ]),
+                  physics: NeverScrollableScrollPhysics(),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          top: 24.0, bottom: 24.0, left: 8.0, right: 8.0),
+                      child: TwitchChat(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
+                      child: Stats(),
+                    ),
+                  ],
+                ),
               )
             ],
           ),

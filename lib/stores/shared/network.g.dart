@@ -24,22 +24,6 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$connectionResponseAtom =
-      Atom(name: '_NetworkStore.connectionResponse');
-
-  @override
-  BaseResponse get connectionResponse {
-    _$connectionResponseAtom.reportRead();
-    return super.connectionResponse;
-  }
-
-  @override
-  set connectionResponse(BaseResponse value) {
-    _$connectionResponseAtom.reportWrite(value, super.connectionResponse, () {
-      super.connectionResponse = value;
-    });
-  }
-
   final _$connectionInProgressAtom =
       Atom(name: '_NetworkStore.connectionInProgress');
 
@@ -54,6 +38,22 @@ mixin _$NetworkStore on _NetworkStore, Store {
     _$connectionInProgressAtom.reportWrite(value, super.connectionInProgress,
         () {
       super.connectionInProgress = value;
+    });
+  }
+
+  final _$connectionResponseAtom =
+      Atom(name: '_NetworkStore.connectionResponse');
+
+  @override
+  BaseResponse get connectionResponse {
+    _$connectionResponseAtom.reportRead();
+    return super.connectionResponse;
+  }
+
+  @override
+  set connectionResponse(BaseResponse value) {
+    _$connectionResponseAtom.reportWrite(value, super.connectionResponse, () {
+      super.connectionResponse = value;
     });
   }
 
@@ -111,8 +111,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
   String toString() {
     return '''
 activeSession: ${activeSession},
-connectionResponse: ${connectionResponse},
 connectionInProgress: ${connectionInProgress},
+connectionResponse: ${connectionResponse},
 obsTerminated: ${obsTerminated}
     ''';
   }

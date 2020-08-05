@@ -19,19 +19,22 @@ class SettingsAdapter extends TypeAdapter<Settings> {
     return Settings()
       ..trueDark = fields[0] as bool
       ..reduceSmearing = fields[1] as bool
-      ..enforceTabletMode = fields[2] as bool;
+      ..enforceTabletMode = fields[2] as bool
+      ..selectedTwitchUsername = fields[3] as String;
   }
 
   @override
   void write(BinaryWriter writer, Settings obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.trueDark)
       ..writeByte(1)
       ..write(obj.reduceSmearing)
       ..writeByte(2)
-      ..write(obj.enforceTabletMode);
+      ..write(obj.enforceTabletMode)
+      ..writeByte(3)
+      ..write(obj.selectedTwitchUsername);
   }
 
   @override

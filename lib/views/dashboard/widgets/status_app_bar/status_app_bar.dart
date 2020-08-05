@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/utils/dialog_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
@@ -25,10 +26,9 @@ class StatusAppBar extends StatelessWidget {
             children: [
               CupertinoButton(
                 child: Text('Close'),
-                onPressed: () => showDialog(
+                onPressed: () => DialogHandler.showBaseDialog(
                   context: context,
-                  barrierDismissible: false,
-                  builder: (_) => ConfirmationDialog(
+                  dialogWidget: ConfirmationDialog(
                     title: 'Close Connection',
                     body:
                         'Are you sure you want to close the current WebSocket connection?',

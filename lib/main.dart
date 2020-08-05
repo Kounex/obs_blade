@@ -25,6 +25,11 @@ void main() async {
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 
+  await Hive.openBox<String>(
+    HiveKeys.TwitchUsernames.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+
   /// Settings is a singleton - therefore not really a use case
   /// for Hive since it persists data in a key value store manner
   /// (like tables) so you usually have several entities for each

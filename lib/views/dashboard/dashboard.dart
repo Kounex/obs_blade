@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/utils/dialog_handler.dart';
 import 'package:obs_blade/views/dashboard/widgets/dialogs/save_edit_connection.dart';
 import 'package:provider/provider.dart';
 
@@ -68,18 +69,16 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 
   _saveConnectionDialog(BuildContext context) {
-    showDialog(
+    DialogHandler.showBaseDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => ConfirmationDialog(
+      dialogWidget: ConfirmationDialog(
         title: 'Save Connection',
         body:
             'Do you want to save this connection? You can do it later as well!\n\n(Click on the icon on the top right of the screen and select "Save / Edit Connection"',
         onOk: () {
-          showDialog(
+          DialogHandler.showBaseDialog(
             context: context,
-            barrierDismissible: false,
-            builder: (context) => SaveEditConnectionDialog(),
+            dialogWidget: SaveEditConnectionDialog(),
           );
         },
       ),

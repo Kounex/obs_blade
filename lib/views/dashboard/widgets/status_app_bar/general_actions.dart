@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/utils/dialog_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../dialogs/save_edit_connection.dart';
@@ -29,10 +30,9 @@ class GeneralActions extends StatelessWidget {
               CupertinoActionSheetAction(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  showDialog(
+                  DialogHandler.showBaseDialog(
                     context: context,
-                    barrierDismissible: false,
-                    builder: (context) => SaveEditConnectionDialog(
+                    dialogWidget: SaveEditConnectionDialog(
                       newConnection: newConnection,
                     ),
                   );
@@ -40,6 +40,10 @@ class GeneralActions extends StatelessWidget {
                 child: Text((newConnection ? 'Save' : 'Edit') + ' Connection'),
               )
             ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+            ),
           );
         },
       ),
@@ -78,10 +82,9 @@ class GeneralActions extends StatelessWidget {
           onChanged: (selection) {
             switch (selection) {
               case 'Save / Edit Connection':
-                showDialog(
+                DialogHandler.showBaseDialog(
                   context: context,
-                  barrierDismissible: false,
-                  builder: (context) => SaveEditConnectionDialog(),
+                  dialogWidget: SaveEditConnectionDialog(),
                 );
                 break;
             }

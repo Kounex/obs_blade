@@ -23,7 +23,9 @@ class BaseCard extends StatelessWidget {
     return Padding(
       padding: this.padding,
       child: Card(
+        margin: EdgeInsets.all(0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             if (this.titleWidget != null || this.title != null)

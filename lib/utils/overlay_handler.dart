@@ -40,9 +40,9 @@ class OverlayHandler {
       /// the user and actually does not look to good - a user will not really see / feel
       /// this delay but this gives us enough time to react to this overlay wanting to be
       /// shown
-      OverlayHandler.currentOverlayEntry = OverlayHandler.getStatusOverlay(
-          context: context, content: content, showDuration: showDuration);
       OverlayHandler.delayTimer = Timer(delayDuration, () {
+        OverlayHandler.currentOverlayEntry = OverlayHandler.getStatusOverlay(
+            context: context, content: content, showDuration: showDuration);
         Overlay.of(context, rootOverlay: true)
             .insert(OverlayHandler.currentOverlayEntry);
       });
@@ -62,10 +62,14 @@ class OverlayHandler {
 
   /// Manually close any overlay (if exists)
   static void closeAnyOverlay() {
-    OverlayHandler.currentOverlayTimer?.cancel();
-    OverlayHandler.delayTimer?.cancel();
-    OverlayHandler.currentOverlayEntry?.remove();
-    OverlayHandler.currentOverlayEntry = null;
+    try {
+      OverlayHandler.currentOverlayTimer?.cancel();
+      OverlayHandler.delayTimer?.cancel();
+      OverlayHandler.currentOverlayEntry?.remove();
+      OverlayHandler.currentOverlayEntry = null;
+    } catch (e) {
+      print(e);
+    }
   }
 
   /// Function which actually returns the [OverlayEntry] used in
