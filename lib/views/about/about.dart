@@ -1,14 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:obs_blade/shared/general/transculent_cupertino_body.dart';
-import 'package:obs_blade/views/about/widgets/license_modal.dart';
+
+import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import 'widgets/license_modal.dart';
 
 class AboutView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: TransculentCupertinoBody(
+      body: TransculentCupertinoNavBarWrapper(
         appBarPreviousTitle: 'Settings',
         appBarTitle: 'About',
         listViewChildren: [

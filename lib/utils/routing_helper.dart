@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/views/privacy_policy/privacy_policy.dart';
+import 'package:obs_blade/views/statistics/statistics.dart';
 
 import '../tab_base.dart';
 import '../views/about/about.dart';
@@ -16,6 +17,11 @@ enum AppRoutingKeys { Tabs }
 enum HomeTabRoutingKeys {
   Landing,
   Dashboard,
+}
+
+/// Routing keys for the statistics tab
+enum StaticticsTabRoutingKeys {
+  Landing,
 }
 
 /// Routing keys for the settings tab
@@ -43,6 +49,15 @@ extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
       }[this];
 }
 
+/// Extension method for [StaticticsTabRoutingKeys] enum to get the actual route
+/// path for an enum
+extension StaticticsTabRoutingKeysFunctions on StaticticsTabRoutingKeys {
+  String get route => {
+        StaticticsTabRoutingKeys.Landing:
+            AppRoutingKeys.Tabs.route + '/statistics',
+      }[this];
+}
+
 /// Extension method for [SettingsTabRoutingKeys] enum to get the actual route
 /// path for an enum
 extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
@@ -60,6 +75,10 @@ class RoutingHelper {
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
     HomeTabRoutingKeys.Landing.route: (_) => HomeView(),
     HomeTabRoutingKeys.Dashboard.route: (_) => DashboardView(),
+  };
+
+  static Map<String, Widget Function(BuildContext)> statisticsTabRoutes = {
+    StaticticsTabRoutingKeys.Landing.route: (_) => StatisticsView(),
   };
 
   static Map<String, Widget Function(BuildContext)> settingsTabRoutes = {

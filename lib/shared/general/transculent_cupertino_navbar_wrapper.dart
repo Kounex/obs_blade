@@ -9,13 +9,13 @@ import '../../utils/styling_helper.dart';
 /// the appBar property - the blurry part is only visible right at the bottom
 /// border instead through the whole bar (like [CupertinoSliverNavigationBar] does
 /// it for example)
-class TransculentCupertinoBody extends StatelessWidget {
+class TransculentCupertinoNavBarWrapper extends StatelessWidget {
   final String appBarPreviousTitle;
   final String appBarTitle;
 
   final List<Widget> listViewChildren;
 
-  TransculentCupertinoBody(
+  TransculentCupertinoNavBarWrapper(
       {this.appBarPreviousTitle,
       @required this.appBarTitle,
       this.listViewChildren = const []})

@@ -49,59 +49,71 @@ class UsernameActionRow extends StatelessWidget {
         CupertinoButton(
           padding: EdgeInsets.all(0),
           child: Text('Edit'),
-          onPressed: () => DialogHandler.showBaseDialog(
-            context: context,
-            dialogWidget: InputDialog(
-              title: 'Edit Twitch Username',
-              body: 'Change the currently selected Twitch Username',
-              inputPlaceholder: settings.selectedTwitchUsername,
-              inputCheck: (enteredTwitchUsername) =>
-                  enteredTwitchUsername.length == 0
-                      ? 'Please enter a username!'
-                      : enteredTwitchUsername !=
-                                  settings.selectedTwitchUsername &&
-                              this
-                                  .twitchUsernamesBox
-                                  .values
-                                  .contains(enteredTwitchUsername)
-                          ? 'Username already added!'
-                          : null,
-              onSave: (editedTwitchUsername) {
-                // this.twitchUsernamesBox.values.firstWhere((twitchUserName) =>
-                //     twitchUserName == settings.selectedTwitchUsername);
-                // this.twitchUsernamesBox.add(twitchUsername);
-                // this.settings.selectedTwitchUsername = twitchUsername;
-                // this.settings.save();
-              },
-            ),
-          ),
+          onPressed: settings.selectedTwitchUsername != null
+              ? () => DialogHandler.showBaseDialog(
+                    context: context,
+                    dialogWidget: InputDialog(
+                      title: 'Edit Twitch Username',
+                      body: 'Change the currently selected Twitch Username',
+                      inputText: settings.selectedTwitchUsername,
+                      inputCheck: (enteredTwitchUsername) =>
+                          enteredTwitchUsername.length == 0
+                              ? 'Please enter a username!'
+                              : enteredTwitchUsername !=
+                                          settings.selectedTwitchUsername &&
+                                      this
+                                          .twitchUsernamesBox
+                                          .values
+                                          .contains(enteredTwitchUsername)
+                                  ? 'Username already added!'
+                                  : null,
+                      onSave: (editedTwitchUsername) {
+                        if (editedTwitchUsername !=
+                            this.settings.selectedTwitchUsername) {
+                          this.twitchUsernamesBox.putAt(
+                              twitchUsernamesBox.values
+                                  .toList()
+                                  .indexOf(settings.selectedTwitchUsername),
+                              editedTwitchUsername);
+                          this.settings.selectedTwitchUsername =
+                              editedTwitchUsername;
+                          this.settings.save();
+                        }
+                      },
+                    ),
+                  )
+              : null,
         ),
         SizedBox(height: 15.0, child: VerticalDivider()),
         CupertinoButton(
           padding: EdgeInsets.all(0),
           child: Text(
             'Delete',
-            style: TextStyle(color: CupertinoColors.destructiveRed),
+            style: settings.selectedTwitchUsername != null
+                ? TextStyle(color: CupertinoColors.destructiveRed)
+                : null,
           ),
-          onPressed: () => DialogHandler.showBaseDialog(
-            context: context,
-            dialogWidget: ConfirmationDialog(
-              title: 'Delete Twitch Username',
-              body:
-                  'Are you sure you want to delete the currently selected Twitch Username? This action can\'t be undone!',
-              isYesDestructive: true,
-              onOk: () {
-                twitchUsernamesBox.deleteAt(twitchUsernamesBox.values
-                    .toList()
-                    .indexOf(settings.selectedTwitchUsername));
-                settings.selectedTwitchUsername =
-                    twitchUsernamesBox.values.length > 0
-                        ? twitchUsernamesBox
-                            .get(twitchUsernamesBox.values.length - 1)
-                        : null;
-              },
-            ),
-          ),
+          onPressed: settings.selectedTwitchUsername != null
+              ? () => DialogHandler.showBaseDialog(
+                    context: context,
+                    dialogWidget: ConfirmationDialog(
+                      title: 'Delete Twitch Username',
+                      body:
+                          'Are you sure you want to delete the currently selected Twitch Username? This action can\'t be undone!',
+                      isYesDestructive: true,
+                      onOk: () {
+                        twitchUsernamesBox.deleteAt(twitchUsernamesBox.values
+                            .toList()
+                            .indexOf(settings.selectedTwitchUsername));
+                        settings.selectedTwitchUsername =
+                            twitchUsernamesBox.values.length > 0
+                                ? twitchUsernamesBox
+                                    .get(twitchUsernamesBox.values.length - 1)
+                                : null;
+                      },
+                    ),
+                  )
+              : null,
         ),
       ],
     );

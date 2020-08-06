@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
@@ -87,6 +88,10 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     child: CupertinoTextField(
                       controller: _port,
                       placeholder: 'Port',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        WhitelistingTextInputFormatter.digitsOnly
+                      ],
                     ),
                   ),
                 ),

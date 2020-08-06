@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/types/exceptions/network.dart';
-import 'package:obs_blade/views/home/widgets/connect_box/auto_discovery/result_entry.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../../models/connection.dart';
 import '../../../../../shared/animator/fader.dart';
-import '../../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../../shared/general/question_mark_tooltip.dart';
+import '../../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../../stores/views/home.dart';
 import '../../../../../utils/validation_helper.dart';
+import 'result_entry.dart';
 import 'session_tile.dart';
 
 class AutoDiscovery extends StatefulWidget {
@@ -51,6 +52,8 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               textAlign: TextAlign.center,
               controller:
                   TextEditingController(text: landingStore.autodiscoverPort),
+              keyboardType: TextInputType.number,
+              inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
               onChanged: (text) {
                 landingStore.setAutodiscoverPort(text);
                 _formKey.currentState.validate();

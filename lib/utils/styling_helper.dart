@@ -20,6 +20,9 @@ class StylingHelper {
   static const Color BLACK_REDUCED_SMEARING =
       const Color.fromRGBO(5, 5, 5, 1.0);
 
+  static const Color LIGHT_DIVIDER_COLOR =
+      const Color.fromRGBO(111, 111, 111, 1.0);
+
   /// Added CupertinoIcons
   static const IconData CUPERTINO_MACBOOK_ICON = const IconData(0xf390,
       fontFamily: CupertinoIcons.iconFont,
@@ -37,9 +40,15 @@ class StylingHelper {
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
 
-  /// TODO: Wrapping [] with [] for other Platforms then Apple, scrolling works as intended
-  /// (behaviour like Apple stuff) - need to confirm if this also applies to Apple, so I can
-  /// use this approach for any Platform instead of making a distinction here
+  static const IconData CUPERTINO_THEME_ICON = const IconData(0xf3ce,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
+  static const IconData CUPERTINO_BAR_ICON = const IconData(0xf2b5,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
+  /// Bouncng scroll for all cases
   static ScrollPhysics get platformAwareScrollPhysics =>
       Platform.isIOS || Platform.isMacOS
           ? AlwaysScrollableScrollPhysics()

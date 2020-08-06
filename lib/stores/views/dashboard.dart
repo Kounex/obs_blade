@@ -1,14 +1,11 @@
-import 'dart:convert';
-
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/stores/shared/network.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/source_type.dart';
 import '../../types/classes/api/stream_stats.dart';
-import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
+import '../../types/classes/stream/events/scene_item_removed.dart';
 import '../../types/classes/stream/events/scene_item_visibility_changed.dart';
 import '../../types/classes/stream/events/source_mute_state_changed.dart';
 import '../../types/classes/stream/events/source_renamed.dart';
@@ -25,6 +22,7 @@ import '../../types/classes/stream/responses/get_volume.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
 import '../../utils/network_helper.dart';
+import '../shared/network.dart';
 
 part 'dashboard.g.dart';
 
@@ -142,10 +140,12 @@ abstract class _DashboardStore with Store {
             RequestType.GetCurrentScene);
         break;
       case EventType.SceneItemRemoved:
-        // SceneItemRemovedEvent sceneItemRemovedEvent =
-        //     SceneItemRemovedEvent(event.json);
-        NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
-            RequestType.GetCurrentScene);
+        SceneItemRemovedEvent sceneItemRemovedEvent =
+            SceneItemRemovedEvent(event.json);
+        this.currentSceneItems.removeWhere(
+            (sceneItem) => sceneItem.id == sceneItemRemovedEvent.itemID);
+        // NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
+        //     RequestType.GetCurrentScene);
         break;
       case EventType.SourceRenamed:
         SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(event.json);

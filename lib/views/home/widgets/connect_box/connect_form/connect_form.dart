@@ -74,6 +74,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   controller: _port,
                   readOnly: !widget.saveCredentials,
                   enabled: widget.saveCredentials,
+                  keyboardType: TextInputType.number,
                   inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
                   onChanged: (port) => widget.saveCredentials
                       ? landingStore.typedInConnection.port = int.parse(port)

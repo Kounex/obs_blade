@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import 'types/extensions/list.dart';
 import 'utils/routing_helper.dart';
+import 'utils/styling_helper.dart';
 
 class TabBase extends StatefulWidget {
   @override
@@ -16,6 +16,7 @@ class _TabBaseState extends State<TabBase> {
   List<Navigator> _tabViews;
   List<GlobalKey<NavigatorState>> _navigatorKeys = [
     GlobalKey<NavigatorState>(debugLabel: 'home'),
+    GlobalKey<NavigatorState>(debugLabel: 'statistics'),
     GlobalKey<NavigatorState>(debugLabel: 'settings'),
   ];
   List<HeroController> _heroControllers;
@@ -28,6 +29,7 @@ class _TabBaseState extends State<TabBase> {
   void initState() {
     super.initState();
     _heroControllers = [
+      HeroController(createRectTween: _createRectTween),
       HeroController(createRectTween: _createRectTween),
       HeroController(createRectTween: _createRectTween)
     ];
@@ -49,6 +51,21 @@ class _TabBaseState extends State<TabBase> {
       ),
       Navigator(
         key: _navigatorKeys[1],
+        initialRoute: StaticticsTabRoutingKeys.Landing.route,
+        onGenerateInitialRoutes: (state, route) => [
+          CupertinoPageRoute(
+            builder: RoutingHelper.statisticsTabRoutes[route],
+            settings: RouteSettings(name: route),
+          ),
+        ],
+        onGenerateRoute: (routeSettings) => CupertinoPageRoute(
+          builder: RoutingHelper.statisticsTabRoutes[routeSettings.name],
+          settings: routeSettings,
+        ),
+        observers: [_heroControllers[1]],
+      ),
+      Navigator(
+        key: _navigatorKeys[2],
         initialRoute: SettingsTabRoutingKeys.Landing.route,
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
@@ -60,7 +77,7 @@ class _TabBaseState extends State<TabBase> {
           builder: RoutingHelper.settingsTabRoutes[routeSettings.name],
           settings: routeSettings,
         ),
-        observers: [_heroControllers[1]],
+        observers: [_heroControllers[2]],
       ),
     ];
   }
@@ -68,7 +85,18 @@ class _TabBaseState extends State<TabBase> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      // body: Stack(
+      //   children: _tabViews
+      //       .mapIndexed(
+      //         (navigator, index) => Offstage(
+      //           offstage: index != _currentTabIndex,
+      //           child: navigator,
+      //         ),
+      //       )
+      //       .toList(),
+      // ),
+      body: IndexedStack(
+        index: _currentTabIndex,
         children: _tabViews
             .mapIndexed(
               (navigator, index) => Offstage(
@@ -78,6 +106,7 @@ class _TabBaseState extends State<TabBase> {
             )
             .toList(),
       ),
+
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: _currentTabIndex,
         onTap: (index) => setState(() {
@@ -93,6 +122,10 @@ class _TabBaseState extends State<TabBase> {
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.home),
             title: Text('Home'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(StylingHelper.CUPERTINO_BAR_ICON),
+            title: Text('Statistics'),
           ),
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.settings),

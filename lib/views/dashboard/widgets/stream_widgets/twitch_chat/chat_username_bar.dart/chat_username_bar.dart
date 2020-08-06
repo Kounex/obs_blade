@@ -17,14 +17,12 @@ class ChatUsernameBar extends StatelessWidget {
     print(settings.selectedTwitchUsername);
     print(twitchUsernamesBox.values);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: ValueListenableBuilder(
-            valueListenable: twitchUsernamesBox.listenable(),
-            builder: (context, Box<String> twitchUsernamesBox, child) =>
-                ConstrainedBox(
+    return ValueListenableBuilder(
+      valueListenable: twitchUsernamesBox.listenable(),
+      builder: (context, Box<String> twitchUsernamesBox, child) => Row(
+        children: [
+          Flexible(
+            child: ConstrainedBox(
               constraints: BoxConstraints(minWidth: 100.0),
               child: DropdownButton<String>(
                 value: settings.selectedTwitchUsername,
@@ -48,13 +46,13 @@ class ChatUsernameBar extends StatelessWidget {
               ),
             ),
           ),
-        ),
-        SizedBox(width: 32.0),
-        UsernameActionRow(
-          settings: settings,
-          twitchUsernamesBox: twitchUsernamesBox,
-        ),
-      ],
+          SizedBox(width: 32.0),
+          UsernameActionRow(
+            settings: settings,
+            twitchUsernamesBox: twitchUsernamesBox,
+          ),
+        ],
+      ),
     );
   }
 }
