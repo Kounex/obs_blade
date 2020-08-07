@@ -40,7 +40,23 @@ class StylingHelper {
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
 
-  static const IconData CUPERTINO_THEME_ICON = const IconData(0xf3ce,
+  static const IconData CUPERTINO_THEME_ICON = const IconData(0xf40e,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
+  static const IconData CUPERTINO_REDUCE_SMEARING_ICON = const IconData(0xf3ce,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
+  static const IconData CUPERTINO_LOCK_OPEN_ICON = const IconData(0xf3b5,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
+  static const IconData CUPERTINO_LOCK_CLOSED_ICON = const IconData(0xf392,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
+  static const IconData CUPERTINO_INFO_ICON = const IconData(0xf44D,
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
 

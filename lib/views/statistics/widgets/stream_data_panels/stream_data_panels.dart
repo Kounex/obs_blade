@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:obs_blade/views/statistics/widgets/stream_data_panels/stream_chart.dart';
 
 import '../../../../models/past_stream_data.dart';
 import '../../../../types/classes/api/stream_stats.dart';
@@ -29,7 +30,7 @@ class _StreamDataPanelsState extends State<StreamDataPanels> {
       totalStreamTime: _random.nextInt(14400),
       numTotalFrames: _random.nextInt(70000),
       numDroppedFrames: _random.nextInt(100),
-      fps: _random.nextDouble() * 60,
+      fps: 60 - (_random.nextDouble() * 20),
       renderTotalFrames: _random.nextInt(70000),
       renderMissedFrames: _random.nextInt(100),
       outputTotalFrames: _random.nextInt(70000),
@@ -78,7 +79,19 @@ class _StreamDataPanelsState extends State<StreamDataPanels> {
                   ],
                 );
               },
-              body: Text('Test'),
+              body: LayoutBuilder(
+                builder: (context, constraints) => SizedBox(
+                  width: constraints.maxWidth,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: 12.0,
+                      bottom: 12,
+                      right: 24.0,
+                    ),
+                    child: StreamChart(pastStreamData: pastStreamData),
+                  ),
+                ),
+              ),
             ),
           )
           .toList(),

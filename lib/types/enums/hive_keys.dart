@@ -5,11 +5,9 @@ enum HiveKeys {
   /// Returns a List of [PastStreamData]
   PastStreamData,
 
-  /// Returns a List (which only contains one entry - singleton) of [Settings]
+  /// Returns the box containing app settings - refer to [SettingsKeys]
+  /// to see which key-value pairs are available
   Settings,
-
-  /// Returns a List of twitch usernames to indicate which chat to display [String]
-  TwitchUsernames,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -17,6 +15,5 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.SavedConnections: 'saved-connections',
         HiveKeys.PastStreamData: 'past-stream-data',
         HiveKeys.Settings: 'settings',
-        HiveKeys.TwitchUsernames: 'twitch-usernames',
       }[this];
 }

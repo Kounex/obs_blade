@@ -1,21 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/settings.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/shared/dialogs/input.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/dialog_handler.dart';
 
 class UsernameActionRow extends StatelessWidget {
-  final Settings settings;
-  final Box<String> twitchUsernamesBox;
+  final Box settingsBox;
 
-  UsernameActionRow(
-      {@required this.settings, @required this.twitchUsernamesBox})
-      : assert(settings != null && twitchUsernamesBox != null);
+  UsernameActionRow({@required this.settingsBox}) : assert(settingsBox != null);
 
   @override
   Widget build(BuildContext context) {
+    List<String> twitchUsernames = this
+        .settingsBox
+        .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[]);
+
+    String selectedTwitchUsername =
+        this.settingsBox.get(SettingsKeys.SelectedTwitchUsername.name);
+
     return Row(
       children: [
         CupertinoButton(
@@ -31,16 +35,14 @@ class UsernameActionRow extends StatelessWidget {
               inputCheck: (enteredTwitchUsername) =>
                   enteredTwitchUsername.length == 0
                       ? 'Please enter a username!'
-                      : this
-                              .twitchUsernamesBox
-                              .values
-                              .contains(enteredTwitchUsername)
+                      : twitchUsernames.contains(enteredTwitchUsername)
                           ? 'Username already added!'
                           : null,
               onSave: (newTwitchUsername) {
-                this.twitchUsernamesBox.add(newTwitchUsername);
-                this.settings.selectedTwitchUsername = newTwitchUsername;
-                this.settings.save();
+                this.settingsBox.put(SettingsKeys.TwitchUsernames.name,
+                    [...twitchUsernames, newTwitchUsername]);
+                this.settingsBox.put(SettingsKeys.SelectedTwitchUsername.name,
+                    newTwitchUsername);
               },
             ),
           ),
@@ -49,35 +51,32 @@ class UsernameActionRow extends StatelessWidget {
         CupertinoButton(
           padding: EdgeInsets.all(0),
           child: Text('Edit'),
-          onPressed: settings.selectedTwitchUsername != null
+          onPressed: selectedTwitchUsername != null
               ? () => DialogHandler.showBaseDialog(
                     context: context,
                     dialogWidget: InputDialog(
                       title: 'Edit Twitch Username',
                       body: 'Change the currently selected Twitch Username',
-                      inputText: settings.selectedTwitchUsername,
+                      inputText: selectedTwitchUsername,
                       inputCheck: (enteredTwitchUsername) =>
                           enteredTwitchUsername.length == 0
                               ? 'Please enter a username!'
                               : enteredTwitchUsername !=
-                                          settings.selectedTwitchUsername &&
-                                      this
-                                          .twitchUsernamesBox
-                                          .values
+                                          selectedTwitchUsername &&
+                                      twitchUsernames
                                           .contains(enteredTwitchUsername)
                                   ? 'Username already added!'
                                   : null,
                       onSave: (editedTwitchUsername) {
-                        if (editedTwitchUsername !=
-                            this.settings.selectedTwitchUsername) {
-                          this.twitchUsernamesBox.putAt(
-                              twitchUsernamesBox.values
-                                  .toList()
-                                  .indexOf(settings.selectedTwitchUsername),
+                        if (editedTwitchUsername != selectedTwitchUsername) {
+                          twitchUsernames[twitchUsernames.indexOf(
+                              selectedTwitchUsername)] = editedTwitchUsername;
+                          this.settingsBox.put(
+                              SettingsKeys.TwitchUsernames.name,
+                              twitchUsernames);
+                          this.settingsBox.put(
+                              SettingsKeys.SelectedTwitchUsername.name,
                               editedTwitchUsername);
-                          this.settings.selectedTwitchUsername =
-                              editedTwitchUsername;
-                          this.settings.save();
                         }
                       },
                     ),
@@ -89,11 +88,11 @@ class UsernameActionRow extends StatelessWidget {
           padding: EdgeInsets.all(0),
           child: Text(
             'Delete',
-            style: settings.selectedTwitchUsername != null
+            style: selectedTwitchUsername != null
                 ? TextStyle(color: CupertinoColors.destructiveRed)
                 : null,
           ),
-          onPressed: settings.selectedTwitchUsername != null
+          onPressed: selectedTwitchUsername != null
               ? () => DialogHandler.showBaseDialog(
                     context: context,
                     dialogWidget: ConfirmationDialog(
@@ -102,14 +101,15 @@ class UsernameActionRow extends StatelessWidget {
                           'Are you sure you want to delete the currently selected Twitch Username? This action can\'t be undone!',
                       isYesDestructive: true,
                       onOk: () {
-                        twitchUsernamesBox.deleteAt(twitchUsernamesBox.values
-                            .toList()
-                            .indexOf(settings.selectedTwitchUsername));
-                        settings.selectedTwitchUsername =
-                            twitchUsernamesBox.values.length > 0
-                                ? twitchUsernamesBox
-                                    .get(twitchUsernamesBox.values.length - 1)
-                                : null;
+                        twitchUsernames.removeAt(
+                            twitchUsernames.indexOf(selectedTwitchUsername));
+                        this.settingsBox.put(
+                            SettingsKeys.TwitchUsernames.name, twitchUsernames);
+                        this.settingsBox.put(
+                            SettingsKeys.SelectedTwitchUsername.name,
+                            twitchUsernames.length > 0
+                                ? twitchUsernames[twitchUsernames.length - 1]
+                                : null);
                       },
                     ),
                   )

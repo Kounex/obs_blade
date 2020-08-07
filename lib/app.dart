@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 
-import 'models/settings.dart';
 import 'stores/shared/network.dart';
 import 'types/enums/hive_keys.dart';
+import 'types/enums/settings_keys.dart';
 import 'utils/routing_helper.dart';
+import 'utils/styling_helper.dart';
 
 class App extends StatelessWidget {
   @override
@@ -17,16 +17,20 @@ class App extends StatelessWidget {
     return Provider<NetworkStore>(
       create: (_) => NetworkStore(),
       child: ValueListenableBuilder(
-        valueListenable:
-            Hive.box<Settings>(HiveKeys.Settings.name).listenable(),
-        builder: (context, Box<Settings> settingsBox, child) {
+        valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
+          SettingsKeys.TrueDark.name,
+          SettingsKeys.ReduceSmearing.name
+        ]),
+        builder: (context, Box settingsBox, child) {
           ThemeData theme = ThemeData.dark().copyWith(
             /// General Theme colors
-            scaffoldBackgroundColor: settingsBox.getAt(0).trueDark
-                ? settingsBox.get(0).reduceSmearing
-                    ? StylingHelper.BLACK_REDUCED_SMEARING
-                    : Colors.black
-                : Colors.grey[900],
+            scaffoldBackgroundColor:
+                settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
+                    ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
+                            defaultValue: false)
+                        ? StylingHelper.BLACK_REDUCED_SMEARING
+                        : Colors.black
+                    : Colors.grey[900],
             accentColor: CupertinoColors.systemBlue, // const Color(0xffb777ff),
             accentIconTheme: IconThemeData(),
             backgroundColor: StylingHelper.MAIN_BLUE,

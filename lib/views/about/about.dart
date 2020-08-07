@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import 'widgets/license_modal.dart';
+import 'widgets/license_modal/license_modal.dart';
 
 class AboutView extends StatelessWidget {
   @override
@@ -19,7 +19,7 @@ class AboutView extends StatelessWidget {
               child: Text('Packages'),
               onPressed: () {
                 showCupertinoModalBottomSheet(
-                  expand: true,
+                  expand: false,
                   context: context,
                   backgroundColor: Colors.transparent,
                   useRootNavigator: true,

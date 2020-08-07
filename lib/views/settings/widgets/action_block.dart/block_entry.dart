@@ -19,6 +19,7 @@ const Color kPressedColor = CupertinoDynamicColor.withBrightness(
 
 class BlockEntry extends StatefulWidget {
   final IconData leading;
+  final double leadingSize;
   final String title;
   final String help;
   final Widget trailing;
@@ -27,6 +28,7 @@ class BlockEntry extends StatefulWidget {
 
   BlockEntry(
       {this.leading,
+      this.leadingSize,
       this.title,
       this.help,
       this.trailing,
@@ -73,9 +75,15 @@ class _BlockEntryState extends State<BlockEntry> {
               if (widget.leading != null)
                 Padding(
                   padding: EdgeInsets.only(right: kblockEntryPadding),
-                  child: Icon(
-                    widget.leading,
-                    size: kblockEntryIconSize,
+                  child: SizedBox(
+                    width: kblockEntryIconSize,
+                    child: Hero(
+                      tag: widget.title,
+                      child: Icon(
+                        widget.leading,
+                        size: widget.leadingSize ?? kblockEntryIconSize,
+                      ),
+                    ),
                   ),
                 ),
               Expanded(
