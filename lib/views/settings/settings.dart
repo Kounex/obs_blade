@@ -107,6 +107,7 @@ class SettingsView extends StatelessWidget {
                         leading: CupertinoIcons.heart_solid,
                         leadingSize: 28.0,
                         title: 'Support Me',
+                        heroPlaceholder: CupertinoIcons.heart,
                         onTap: () => Navigator.of(context).push(
                           PageRouteBuilder(
                             opaque: false,
