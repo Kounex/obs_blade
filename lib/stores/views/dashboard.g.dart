@@ -48,18 +48,34 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$streamStatsAtom = Atom(name: '_DashboardStore.streamStats');
+  final _$streamDataAtom = Atom(name: '_DashboardStore.streamData');
 
   @override
-  StreamStats get streamStats {
-    _$streamStatsAtom.reportRead();
-    return super.streamStats;
+  PastStreamData get streamData {
+    _$streamDataAtom.reportRead();
+    return super.streamData;
   }
 
   @override
-  set streamStats(StreamStats value) {
-    _$streamStatsAtom.reportWrite(value, super.streamStats, () {
-      super.streamStats = value;
+  set streamData(PastStreamData value) {
+    _$streamDataAtom.reportWrite(value, super.streamData, () {
+      super.streamData = value;
+    });
+  }
+
+  final _$latestStreamStatsAtom =
+      Atom(name: '_DashboardStore.latestStreamStats');
+
+  @override
+  StreamStats get latestStreamStats {
+    _$latestStreamStatsAtom.reportRead();
+    return super.latestStreamStats;
+  }
+
+  @override
+  set latestStreamStats(StreamStats value) {
+    _$latestStreamStatsAtom.reportWrite(value, super.latestStreamStats, () {
+      super.latestStreamStats = value;
     });
   }
 
@@ -158,22 +174,18 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$_handleEventAsyncAction = AsyncAction('_DashboardStore._handleEvent');
+
+  @override
+  Future<void> _handleEvent(BaseEvent event) {
+    return _$_handleEventAsyncAction.run(() => super._handleEvent(event));
+  }
+
   final _$_DashboardStoreActionController =
       ActionController(name: '_DashboardStore');
 
   @override
-  dynamic _handleEvent(BaseEvent event) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction(
-        name: '_DashboardStore._handleEvent');
-    try {
-      return super._handleEvent(event);
-    } finally {
-      _$_DashboardStoreActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
-  dynamic _handleResponse(BaseResponse response) {
+  void _handleResponse(BaseResponse response) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
         name: '_DashboardStore._handleResponse');
     try {
@@ -188,7 +200,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     return '''
 isLive: ${isLive},
 goneLiveInMS: ${goneLiveInMS},
-streamStats: ${streamStats},
+streamData: ${streamData},
+latestStreamStats: ${latestStreamStats},
 activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},

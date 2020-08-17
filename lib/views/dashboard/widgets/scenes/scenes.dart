@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../../../models/settings.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
 import '../../../../utils/styling_helper.dart';
 import 'scene_button.dart';
-import 'scene_content/scene_content_mobile.dart';
-import 'package:provider/provider.dart';
-
-import '../../../../stores/views/dashboard.dart';
 import 'scene_content/scene_content.dart';
+import 'scene_content/scene_content_mobile.dart';
 
 const double kSceneButtonSpace = 18.0;
 

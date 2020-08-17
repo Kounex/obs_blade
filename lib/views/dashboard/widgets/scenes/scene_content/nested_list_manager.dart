@@ -35,7 +35,6 @@ class _NestedScrollManagerState extends State<NestedScrollManager> {
         } else {
           _scrollThreshold = 0;
         }
-        print(_scrollThreshold);
 
         /// Inner ListView end or start has been reached and user keeps on scrolling ([_scrollThreshold]
         /// has reached [SCROLL_THRESHOLD]) so we manually pass the user scroll to the outer

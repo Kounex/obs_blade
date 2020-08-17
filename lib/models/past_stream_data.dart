@@ -73,13 +73,41 @@ class PastStreamData extends HiveObject {
   @HiveField(12)
   int streamEndedMS;
 
+  /// Custom properties which will not be set / transmitted by OBS but set
+  /// by the user or internally for checks
+
+  /// Name of this [PastStreamData] to find it later / filtering etc.
+  @HiveField(13)
+  String name;
+
+  /// If this [PastStreamData] has been starred by the user (like favourite).
+  /// Also suitable for filtering etc.
+  @HiveField(14)
+  bool starred;
+
+  /// Notes a user can write down for this [PastStreamData] for additional
+  /// information on the stream or whatever
+  @HiveField(15)
+  String notes;
+
+  /// Will be set if the collection of [StreamStats] has anyhow been stopped
+  /// by the user (seesion closed manually while streaming, app paused etc.)
+  ///
+  /// If [true] or [null]: stopped by user
+  /// If [false]: stopped correctly by stopping OBS stream while app active
+  @HiveField(16)
+  bool stoppedByUser;
+
   /// List of current [StreamStats] which will be used to fill the
   /// list of stats (see above). As soon as we reach [kAmountStreamStatsForAverage]
   /// amount of elements, the lists will get filled and [cacheStreamStats] gets
   /// cleared
   List<StreamStats> _cacheStreamStats = [];
 
+  bool hasBeenPopulated = false;
+
   addStreamStats(StreamStats streamStats) {
+    this.hasBeenPopulated = true;
     if (_cacheStreamStats.length < kAmountStreamStatsForAverage) {
       _cacheStreamStats.add(streamStats);
     } else {
@@ -94,7 +122,7 @@ class PastStreamData extends HiveObject {
   /// and as soon as we stop the stream we will call this method
   /// to set the value of the other properties according to the
   /// last [StreamStats] in [_cacheStreamStats]
-  finishUpStats() {
+  finishUpStats({bool finishManually = false}) {
     this.strain = _cacheStreamStats.last.strain;
     this.totalStreamTime = _cacheStreamStats.last.totalStreamTime;
     this.numTotalFrames = _cacheStreamStats.last.numTotalFrames;
@@ -105,6 +133,7 @@ class PastStreamData extends HiveObject {
     this.outputSkippedFrames = _cacheStreamStats.last.outputSkippedFrames;
     this.averageFrameTime = _cacheStreamStats.last.averageFrameTime;
     this.streamEndedMS = DateTime.now().millisecondsSinceEpoch;
+    this.stoppedByUser = finishManually;
   }
 
   /// Update our lists (to see the changes of those values over time)

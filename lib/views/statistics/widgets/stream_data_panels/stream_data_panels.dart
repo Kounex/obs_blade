@@ -27,7 +27,7 @@ class _StreamDataPanelsState extends State<StreamDataPanels> {
       bytesPerSec: _random.nextInt(70000),
       kbitsPerSec: _random.nextInt(6000),
       strain: _random.nextDouble() * 100,
-      totalStreamTime: _random.nextInt(14400),
+      totalStreamTime: _random.nextInt(64000),
       numTotalFrames: _random.nextInt(70000),
       numDroppedFrames: _random.nextInt(100),
       fps: 60 - (_random.nextDouble() * 20),
@@ -42,7 +42,7 @@ class _StreamDataPanelsState extends State<StreamDataPanels> {
 
   @override
   void initState() {
-    _pastStreamData = List.generate(_random.nextInt(10), (_) {
+    _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
       PastStreamData pastStreamData = PastStreamData();
       List.generate(_random.nextInt(1000), (index) {
         pastStreamData.addStreamStats(_randomStreamStats());
@@ -67,29 +67,81 @@ class _StreamDataPanelsState extends State<StreamDataPanels> {
               isExpanded: _expandedState[index],
               headerBuilder: (context, expanded) {
                 DateTime streamStart = DateTime.fromMillisecondsSinceEpoch(
+                        pastStreamData.streamEndedMS)
+                    .subtract(
+                        Duration(seconds: pastStreamData.totalStreamTime));
+                DateTime streamEnd = DateTime.fromMillisecondsSinceEpoch(
                     pastStreamData.streamEndedMS);
-                DateTime streamEnd = streamStart.add(
-                    Duration(milliseconds: pastStreamData.totalStreamTime));
-                return Column(
+                return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text('${DateFormat.yMMMMd('en_US').format(streamStart)}'),
-                    Text(
-                        '${DateFormat.Hms('en_US').format(streamStart)} - ${DateFormat.Hms('en_US').format(streamEnd)}')
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text(
+                            '${DateFormat.yMMMMd('en_US').format(streamStart)}'),
+                        Text('${DateFormat.Hms('en_US').format(streamStart)}')
+                      ],
+                    ),
+                    Text('-'),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Text('${DateFormat.yMMMMd('en_US').format(streamEnd)}'),
+                        Text('${DateFormat.Hms('en_US').format(streamEnd)}')
+                      ],
+                    ),
                   ],
                 );
               },
-              body: LayoutBuilder(
-                builder: (context, constraints) => SizedBox(
-                  width: constraints.maxWidth,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      left: 12.0,
-                      bottom: 12,
-                      right: 24.0,
+              body: Padding(
+                padding: const EdgeInsets.only(top: 24.0),
+                child: Column(
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) => SizedBox(
+                        width: constraints.maxWidth,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: 12.0,
+                            bottom: 12,
+                            right: 24.0,
+                          ),
+                          child: StreamChart(
+                            data: pastStreamData.fpsList
+                                .map((fps) => fps.round())
+                                .toList(),
+                            dataName: 'FPS',
+                            chartColor: Colors.greenAccent,
+                            streamEndedMS: pastStreamData.streamEndedMS,
+                            totalStreamTime: pastStreamData.totalStreamTime,
+                          ),
+                        ),
+                      ),
                     ),
-                    child: StreamChart(pastStreamData: pastStreamData),
-                  ),
+                    LayoutBuilder(
+                      builder: (context, constraints) => SizedBox(
+                        width: constraints.maxWidth,
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: 12.0,
+                            bottom: 12,
+                            right: 24.0,
+                          ),
+                          child: StreamChart(
+                            data: pastStreamData.cpuUsageList
+                                .map((cpu) => cpu.round())
+                                .toList(),
+                            dataName: 'CPU Usage',
+                            dataUnit: '%',
+                            chartColor: Colors.blueAccent,
+                            streamEndedMS: pastStreamData.streamEndedMS,
+                            totalStreamTime: pastStreamData.totalStreamTime,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

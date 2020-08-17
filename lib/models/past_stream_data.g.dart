@@ -29,13 +29,17 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..outputTotalFrames = fields[9] as int
       ..outputSkippedFrames = fields[10] as int
       ..averageFrameTime = fields[11] as double
-      ..streamEndedMS = fields[12] as int;
+      ..streamEndedMS = fields[12] as int
+      ..name = fields[13] as String
+      ..starred = fields[14] as bool
+      ..notes = fields[15] as String
+      ..stoppedByUser = fields[16] as bool;
   }
 
   @override
   void write(BinaryWriter writer, PastStreamData obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.kbitsPerSecList)
       ..writeByte(1)
@@ -61,7 +65,15 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..writeByte(11)
       ..write(obj.averageFrameTime)
       ..writeByte(12)
-      ..write(obj.streamEndedMS);
+      ..write(obj.streamEndedMS)
+      ..writeByte(13)
+      ..write(obj.name)
+      ..writeByte(14)
+      ..write(obj.starred)
+      ..writeByte(15)
+      ..write(obj.notes)
+      ..writeByte(16)
+      ..write(obj.stoppedByUser);
   }
 
   @override

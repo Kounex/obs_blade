@@ -77,7 +77,7 @@ abstract class _NetworkStore with Store {
   }
 
   @action
-  _handleEvent(BaseEvent event) {
+  void _handleEvent(BaseEvent event) {
     switch (event.eventType) {
       case EventType.Exiting:
         this.closeSession(manually: false);

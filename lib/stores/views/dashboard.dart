@@ -1,4 +1,7 @@
+import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/past_stream_data.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
 
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
@@ -34,7 +37,9 @@ abstract class _DashboardStore with Store {
   @observable
   int goneLiveInMS;
   @observable
-  StreamStats streamStats;
+  PastStreamData streamData;
+  @observable
+  StreamStats latestStreamStats;
 
   @observable
   String activeSceneName;
@@ -67,13 +72,19 @@ abstract class _DashboardStore with Store {
 
   List<SourceType> sourceTypes;
 
-  setupNetworkStoreHandling(NetworkStore networkStore) {
+  /// Indicate whether the current [PastStreamData] has been created
+  /// for this streaming session or has been loaded from the Hive Box
+  /// and will be populated (if it is the same stream and we just reconnected
+  /// to a running stream session)
+  bool streamDataFromBox = false;
+
+  void setupNetworkStoreHandling(NetworkStore networkStore) {
     this.networkStore = networkStore;
     this.initialRequests();
     this.handleStream();
   }
 
-  initialRequests() {
+  void initialRequests() {
     NetworkHelper.makeRequest(
         this.networkStore.activeSession.socket.sink, RequestType.GetSceneList);
     NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
@@ -84,7 +95,7 @@ abstract class _DashboardStore with Store {
     //     this.networkStore.activeSession.socket.sink, RequestType.ListOutputs);
   }
 
-  handleStream() {
+  void handleStream() {
     this.networkStore.watchOBSStream().listen((message) {
       if (message is BaseEvent) {
         _handleEvent(message);
@@ -94,8 +105,21 @@ abstract class _DashboardStore with Store {
     });
   }
 
+  Future<void> finishPastStreamData({bool manually = false}) async {
+    if (this.streamData != null && this.streamData.hasBeenPopulated) {
+      this.streamData.finishUpStats(finishManually: manually);
+      if (this.streamDataFromBox) {
+        await this.streamData.save();
+      } else {
+        await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
+            .add(this.streamData);
+      }
+      this.streamData = null;
+    }
+  }
+
   @action
-  _handleEvent(BaseEvent event) {
+  Future<void> _handleEvent(BaseEvent event) async {
     print(event.json['update-type']);
     switch (event.eventType) {
       case EventType.StreamStarted:
@@ -104,14 +128,31 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.StreamStopping:
         this.isLive = false;
+        this.finishPastStreamData();
         break;
       case EventType.StreamStatus:
-        this.streamStats = StreamStats.fromJSON(event.json);
+        this.latestStreamStats = StreamStats.fromJSON(event.json);
         if (this.goneLiveInMS == null) {
           this.isLive = true;
           this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch -
-              (this.streamStats.totalStreamTime * 1000);
+              (this.latestStreamStats.totalStreamTime * 1000);
         }
+        if (this.streamData == null) {
+          List<PastStreamData> tmp =
+              Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
+                  .values
+                  .toList();
+          tmp.sort((a, b) => b.streamEndedMS - a.streamEndedMS);
+          if (tmp.length > 0 &&
+              (tmp.last.stoppedByUser == null || tmp.last.stoppedByUser)) {
+            this.streamDataFromBox = true;
+            this.streamData = tmp.last;
+          } else {
+            this.streamDataFromBox = false;
+            this.streamData = PastStreamData();
+          }
+        }
+        this.streamData.addStreamStats(this.latestStreamStats);
         break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(this.networkStore.activeSession.socket.sink,
@@ -189,6 +230,7 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(this.currentSceneItems);
         break;
       case EventType.Exiting:
+        await this.finishPastStreamData(manually: true);
         this.obsTerminated = true;
         break;
       default:
@@ -197,7 +239,7 @@ abstract class _DashboardStore with Store {
   }
 
   @action
-  _handleResponse(BaseResponse response) {
+  void _handleResponse(BaseResponse response) {
     switch (response.requestType) {
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =

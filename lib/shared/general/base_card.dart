@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class BaseCard extends StatelessWidget {
   final Widget child;
+  final bool centerChild;
 
   final String title;
   final Widget titleWidget;
@@ -12,6 +13,7 @@ class BaseCard extends StatelessWidget {
   BaseCard(
       {Key key,
       @required this.child,
+      this.centerChild = true,
       this.title,
       this.titleWidget,
       this.padding = const EdgeInsets.all(24.0),
@@ -25,7 +27,9 @@ class BaseCard extends StatelessWidget {
       child: Card(
         margin: EdgeInsets.all(0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: this.centerChild
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             if (this.titleWidget != null || this.title != null)

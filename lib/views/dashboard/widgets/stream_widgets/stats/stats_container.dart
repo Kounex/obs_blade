@@ -21,6 +21,7 @@ class StatsContainer extends StatelessWidget {
           runSpacing: 24.0,
           children: this.children,
         ),
+        centerChild: false,
       ),
     );
   }

@@ -22,8 +22,8 @@ class _SceneItemsState extends State<SceneItems> {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
     return Observer(builder: (_) {
-      dashboardStore.currentSceneItems
-          ?.forEach((element) => print(element.type));
+      // dashboardStore.currentSceneItems
+      //     ?.forEach((element) => print(element.type));
       return NestedScrollManager(
         child: Scrollbar(
           controller: _controller,

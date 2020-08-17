@@ -5,7 +5,7 @@ import 'package:obs_blade/utils/dialog_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
-import '../../../../shared/general/status_dot.dart';
+import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
@@ -15,6 +15,8 @@ import 'general_actions.dart';
 class StatusAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    DashboardStore dashboardStore = context.watch<DashboardStore>();
+
     return TransculentSliverAppBar(
       pinned: true,
       title: Stack(
@@ -34,6 +36,7 @@ class StatusAppBar extends StatelessWidget {
                         'Are you sure you want to close the current WebSocket connection?',
                     isYesDestructive: true,
                     onOk: () {
+                      dashboardStore.finishPastStreamData(manually: true);
                       context.read<NetworkStore>().closeSession();
                       Navigator.of(context).pushReplacementNamed(
                           HomeTabRoutingKeys.Landing.route);
@@ -51,13 +54,10 @@ class StatusAppBar extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
                 child: Observer(builder: (_) {
                   return StatusDot(
-                    size: 8.0,
-                    color: context.read<DashboardStore>().isLive
-                        ? Colors.green
-                        : Colors.red,
-                    text: context.read<DashboardStore>().isLive
-                        ? 'Live'
-                        : 'Not Live',
+                    key: Key(dashboardStore.isLive?.toString()),
+                    size: 10.0,
+                    color: dashboardStore.isLive ? Colors.green : Colors.red,
+                    text: dashboardStore.isLive ? 'Live' : 'Not Live',
                     style: Theme.of(context).textTheme.caption,
                   );
                 }),

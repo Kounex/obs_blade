@@ -5,7 +5,7 @@ import 'package:obs_blade/shared/general/base_card.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/connection.dart';
-import '../../../../shared/general/status_dot.dart';
+import '../../../../shared/animator/status_dot.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/home.dart';
 import 'edit_dialog.dart';

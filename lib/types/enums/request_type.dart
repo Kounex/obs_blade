@@ -62,23 +62,8 @@ enum RequestType {
   /// {'name': String } - Scene Item name (new)
   /// {'visible': bool} - The new visibility of the source. 'true' shows source, 'false' hides source
   SetSceneItemProperties,
-}
 
-// extension RequestTypeFunctions on RequestType {
-//   String get type => const {
-//         RequestType.GetAuthRequired: 'GetAuthRequired',
-//         RequestType.GetSceneList: 'GetSceneList',
-//         RequestType.GetCurrentScene: 'GetCurrentScene',
-//         RequestType.GetSourcesList: 'GetSourcesList',
-//         RequestType.GetSourceTypesList: 'GetSourceTypesList',
-//         RequestType.GetVolume: 'GetVolume',
-//         RequestType.GetMute: 'GetMute',
-//         RequestType.GetSourceSettings: 'GetSourceSettings',
-//         RequestType.ListOutputs: 'ListOutputs',
-//         RequestType.GetSpecialSources: 'GetSpecialSources',
-//         RequestType.Authenticate: 'Authenticate',
-//         RequestType.SetCurrentScene: 'SetCurrentScene',
-//         RequestType.SetVolume: 'SetVolume',
-//         RequestType.SetMute: 'SetMute',
-//       }[this];
-// }
+  /// Toggle streaming on or off (depending on the current stream state)
+  /// No specified parameters
+  StartStopStreaming
+}

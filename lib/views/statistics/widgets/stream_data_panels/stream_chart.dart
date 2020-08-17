@@ -4,19 +4,32 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
-import '../../../../models/past_stream_data.dart';
 import '../../../../types/extensions/list.dart';
 
 class StreamChart extends StatelessWidget {
-  final PastStreamData pastStreamData;
+  final List<int> data;
+  final int yPuffer;
+  final String dataName;
+  final String dataUnit;
+  final Color chartColor;
 
-  StreamChart({@required this.pastStreamData}) : assert(pastStreamData != null);
+  final int streamEndedMS;
+  final int totalStreamTime;
+
+  StreamChart({
+    @required this.data,
+    this.yPuffer = 20,
+    @required this.dataName,
+    this.dataUnit = '',
+    this.chartColor = Colors.white,
+    @required this.streamEndedMS,
+    @required this.totalStreamTime,
+  }) : assert(data != null && streamEndedMS != null && totalStreamTime != null);
 
   @override
   Widget build(BuildContext context) {
-    int streamStart =
-        this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime;
-    double maxFPS = this.pastStreamData.fpsList.reduce(
+    int streamStart = this.streamEndedMS - this.totalStreamTime * 1000;
+    int maxData = this.data.reduce(
           (value, element) => max(value, element),
         );
     TextStyle tooltipTextStyle = Theme.of(context).textTheme.bodyText1;
@@ -26,23 +39,23 @@ class StreamChart extends StatelessWidget {
     return LineChart(
       LineChartData(
         minY: 0.0,
-        maxY: maxFPS + 20.0,
-        minX: (this.pastStreamData.streamEndedMS -
-                this.pastStreamData.totalStreamTime)
-            .toDouble(),
-        maxX: this.pastStreamData.streamEndedMS.toDouble(),
+        maxY: maxData.toDouble() + this.yPuffer,
+        minX: streamStart.toDouble(),
+        maxX: this.streamEndedMS.toDouble(),
         axisTitleData: FlAxisTitleData(
           leftTitle: AxisTitle(
             showTitle: true,
-            titleText: 'FPS',
+            titleText: this.dataName,
             textStyle: axisTitleTextStyle,
             reservedSize: 20.0,
+            margin: 20.0,
           ),
           bottomTitle: AxisTitle(
             showTitle: true,
             titleText: 'Time',
             textStyle: axisTitleTextStyle,
             reservedSize: 20.0,
+            margin: 20.0,
           ),
         ),
         gridData: FlGridData(show: false),
@@ -71,7 +84,7 @@ class StreamChart extends StatelessWidget {
             getTooltipItems: (touchedSpots) => touchedSpots
                 .map(
                   (touchSpot) => LineTooltipItem(
-                      '${touchSpot.y.round().toString()}\n${DateFormat.Hm('en_US').format(DateTime.fromMillisecondsSinceEpoch(touchSpot.x.round()))}',
+                      '${touchSpot.y.round().toString()}${this.dataUnit}\n${DateFormat.Hm('en_US').format(DateTime.fromMillisecondsSinceEpoch(touchSpot.x.round()))}',
                       tooltipTextStyle),
                 )
                 .toList(),
@@ -80,16 +93,17 @@ class StreamChart extends StatelessWidget {
         titlesData: FlTitlesData(
           leftTitles: SideTitles(
             showTitles: true,
-            margin: 10.0,
+            margin: 15.0,
             textStyle: axisStepsTextStyle,
             interval: 20.0,
-            getTitles: (interval) => interval.round().toString(),
+            getTitles: (interval) =>
+                interval.round().toString() + this.dataUnit,
           ),
           bottomTitles: SideTitles(
             showTitles: true,
-            margin: 10.0,
+            margin: 15.0,
             textStyle: axisStepsTextStyle,
-            interval: this.pastStreamData.totalStreamTime / 5,
+            interval: (this.totalStreamTime * 1000) / 5,
             getTitles: (interval) => DateFormat.Hm('en_US').format(
               DateTime.fromMillisecondsSinceEpoch(
                 interval.round(),
@@ -99,20 +113,19 @@ class StreamChart extends StatelessWidget {
         ),
         lineBarsData: [
           LineChartBarData(
-            spots: this.pastStreamData.fpsList.mapIndexed(
-              (fps, index) {
-                print(fps);
-                return FlSpot(
-                    streamStart +
-                        (this.pastStreamData.totalStreamTime /
-                                this.pastStreamData.fpsList.length) *
-                            index,
-                    fps.round().toDouble());
-              },
-            ).toList(),
+            spots: this
+                .data
+                .mapIndexed(
+                  (data, index) => FlSpot(
+                      streamStart +
+                          ((this.totalStreamTime * 1000) / this.data.length) *
+                              index,
+                      data.toDouble()),
+                )
+                .toList(),
             isCurved: true,
             colors: [
-              const Color(0xff4af699),
+              this.chartColor,
             ],
             barWidth: 2,
             isStrokeCapRound: false,

@@ -97,7 +97,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
   }
 
   @override
-  dynamic _handleEvent(BaseEvent event) {
+  void _handleEvent(BaseEvent event) {
     final _$actionInfo = _$_NetworkStoreActionController.startAction(
         name: '_NetworkStore._handleEvent');
     try {
