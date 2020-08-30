@@ -11,7 +11,7 @@ import 'types/enums/hive_keys.dart';
 import 'package:flutter/widgets.dart';
 
 class LifecycleWatcher extends StatefulWidget {
-  Widget app;
+  final Widget app;
 
   LifecycleWatcher({@required this.app}) : assert(app != null);
 

@@ -26,7 +26,7 @@ class PlaceholderConnection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Icon(
-                    Icons.sentiment_dissatisfied_rounded,
+                    Icons.sentiment_dissatisfied,
                     size: 42.0,
                   ),
                   Text(
