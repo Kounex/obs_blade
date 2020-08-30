@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/nested_list_manager.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../stores/views/dashboard.dart';
+import '../../../../../../stores/views/dashboard.dart';
+import '../nested_list_manager.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatefulWidget {
@@ -65,10 +65,12 @@ class _AudioInputsState extends State<AudioInputs> {
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, right: 12.0),
                 child: Column(
-                  children: dashboardStore.currentAudioSceneItems
-                      .map((currentAudioSceneItem) =>
-                          AudioSlider(audioSceneItem: currentAudioSceneItem))
-                      .toList(),
+                  children: dashboardStore.currentAudioSceneItems.length > 0
+                      ? dashboardStore.currentAudioSceneItems
+                          .map((currentAudioSceneItem) => AudioSlider(
+                              audioSceneItem: currentAudioSceneItem))
+                          .toList()
+                      : Container(),
                 ),
               ),
             ],

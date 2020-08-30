@@ -19,7 +19,7 @@ class SceneButton extends StatelessWidget {
     return Observer(
       builder: (_) => GestureDetector(
         onTap: () => NetworkHelper.makeRequest(
-            context.read<NetworkStore>().activeSession.socket.sink,
+            context.read<NetworkStore>().activeSession.socket,
             RequestType.SetCurrentScene,
             {'scene-name': scene.name}),
         child: Stack(

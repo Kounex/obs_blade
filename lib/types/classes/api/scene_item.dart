@@ -34,6 +34,9 @@ class SceneItem {
   /// OPTIONAL - List of children (if this item is a group)
   List<SceneItem> groupChildren;
 
+  /// CUSTOM - added myself to handle stuff internally
+  bool displayGroup = false;
+
   SceneItem(
       {@required this.cy,
       @required this.cx,
@@ -75,6 +78,8 @@ class SceneItem {
         x: json['x'],
         y: json['y'],
         parentGroupName: json['parentGroupName'],
-        groupChildren: json['groupChildren']);
+        groupChildren: (json['groupChildren'] as List<dynamic>)
+            ?.map((rawSceneItem) => SceneItem.fromJSON(rawSceneItem))
+            ?.toList());
   }
 }

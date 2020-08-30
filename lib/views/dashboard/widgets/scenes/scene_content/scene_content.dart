@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
-import 'audio_inputs.dart';
-import 'scene_items.dart';
+import '../../../../../utils/styling_helper.dart';
+import 'audio_inputs/audio_inputs.dart';
+import 'scene_items/scene_items.dart';
 
 class SceneContent extends StatelessWidget {
   @override

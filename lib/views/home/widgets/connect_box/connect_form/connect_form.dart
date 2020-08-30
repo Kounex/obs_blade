@@ -75,7 +75,8 @@ class _ConnectFormState extends State<ConnectForm> {
                   readOnly: !widget.saveCredentials,
                   enabled: widget.saveCredentials,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+                  textInputAction: TextInputAction.done,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   onChanged: (port) => widget.saveCredentials
                       ? landingStore.typedInConnection.port = int.parse(port)
                       : null,

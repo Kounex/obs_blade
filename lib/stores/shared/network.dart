@@ -47,7 +47,7 @@ abstract class _NetworkStore with Store {
         _handleInitialWebSocket(connection, authCompleter);
 
     NetworkHelper.makeRequest(
-        this.activeSession.socket.sink, RequestType.GetAuthRequired);
+        this.activeSession.socket, RequestType.GetAuthRequired);
     this.connectionResponse = await Future.any([
       authCompleter.future,
       Future.delayed(
@@ -102,7 +102,7 @@ abstract class _NetworkStore with Store {
               this.activeSession.connection.salt = getAuthResponse.salt;
               if (getAuthResponse.authRequired) {
                 NetworkHelper.makeRequest(
-                    this.activeSession.socket.sink,
+                    this.activeSession.socket,
                     RequestType.Authenticate,
                     {'auth': NetworkHelper.getAuthRequestContent(connection)});
               } else {

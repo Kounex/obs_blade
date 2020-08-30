@@ -1,6 +1,6 @@
 name: obs_blade
 description: A new Flutter project.
-version: 0.6.0+20200814
+version: 0.7.0+2008302203
 
 environment:
   sdk: '>=2.8.0 <3.0.0'

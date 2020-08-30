@@ -32,6 +32,9 @@ enum EventType {
   /// A source has been muted or unmuted
   SourceMuteStateChanged,
 
+  /// Scene items within a scene have been reordered
+  SourceOrderChanged,
+
   /// A scene item's visibility has been toggled
   SceneItemVisibilityChanged,
 

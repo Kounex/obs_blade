@@ -42,7 +42,7 @@ class GeneralActions extends StatelessWidget {
                               : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',
                           isYesDestructive: true,
                           onOk: () => NetworkHelper.makeRequest(
-                              networkStore.activeSession.socket.sink,
+                              networkStore.activeSession.socket,
                               RequestType.StartStopStreaming)));
                 },
                 child: Text(dashboardStore.isLive

@@ -9,6 +9,7 @@ import '../../../../types/extensions/list.dart';
 class StreamChart extends StatelessWidget {
   final List<int> data;
   final int yPuffer;
+  final int yInterval;
   final String dataName;
   final String dataUnit;
   final Color chartColor;
@@ -19,6 +20,7 @@ class StreamChart extends StatelessWidget {
   StreamChart({
     @required this.data,
     this.yPuffer = 20,
+    this.yInterval = 20,
     @required this.dataName,
     this.dataUnit = '',
     this.chartColor = Colors.white,
@@ -95,7 +97,7 @@ class StreamChart extends StatelessWidget {
             showTitles: true,
             margin: 15.0,
             textStyle: axisStepsTextStyle,
-            interval: 20.0,
+            interval: this.yInterval.toDouble(),
             getTitles: (interval) =>
                 interval.round().toString() + this.dataUnit,
           ),

@@ -13,11 +13,14 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
   final String appBarPreviousTitle;
   final String appBarTitle;
 
+  final ScrollController scrollController;
+
   final List<Widget> listViewChildren;
 
   TransculentCupertinoNavBarWrapper(
       {this.appBarPreviousTitle,
       @required this.appBarTitle,
+      this.scrollController,
       this.listViewChildren = const []})
       : assert(listViewChildren != null);
 
@@ -26,6 +29,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     return Stack(
       children: [
         CustomScrollView(
+          controller: this.scrollController,
           physics: StylingHelper.platformAwareScrollPhysics,
           slivers: [
             SliverPadding(

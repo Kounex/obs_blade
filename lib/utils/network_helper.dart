@@ -68,9 +68,9 @@ class NetworkHelper {
 
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
-  static void makeRequest(WebSocketSink sink, RequestType request,
+  static void makeRequest(IOWebSocketChannel channel, RequestType request,
       [Map<String, dynamic> fields]) {
-    sink.add(json.encode({
+    channel.sink.add(json.encode({
       'message-id': request.index.toString(),
       'request-type': request.toString().split('.')[1],
       if (fields != null) ...fields

@@ -162,8 +162,6 @@ class _HomeViewState extends State<_HomeView> {
   @override
   Widget build(BuildContext context) {
     HomeStore landingStore = context.watch<HomeStore>();
-    NetworkStore networkStore = context.watch<NetworkStore>();
-
     return Scaffold(
       /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
       /// our extendedHeight, where we are ready to trigger searching for OBS connections,
@@ -180,6 +178,8 @@ class _HomeViewState extends State<_HomeView> {
           }
         },
         child: CustomScrollView(
+          controller: ModalRoute.of(context).settings.arguments,
+
           /// Scrolling has a unique behaviour on iOS and macOS where we bounce as soon as
           /// we reach the end. Since we are using the stretch of [RefresherAppBar], which uses
           /// [SliverAppBar] internally, to refresh (looking for OBS connections) we need to

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/views/privacy_policy/privacy_policy.dart';
+import 'package:obs_blade/views/statistic_detail/statistic_detail.dart';
 import 'package:obs_blade/views/statistics/statistics.dart';
 
 import '../tab_base.dart';
@@ -22,6 +23,7 @@ enum HomeTabRoutingKeys {
 /// Routing keys for the statistics tab
 enum StaticticsTabRoutingKeys {
   Landing,
+  Detail,
 }
 
 /// Routing keys for the settings tab
@@ -55,6 +57,8 @@ extension StaticticsTabRoutingKeysFunctions on StaticticsTabRoutingKeys {
   String get route => {
         StaticticsTabRoutingKeys.Landing:
             AppRoutingKeys.Tabs.route + '/statistics',
+        StaticticsTabRoutingKeys.Detail:
+            AppRoutingKeys.Tabs.route + '/statistics/detail',
       }[this];
 }
 
@@ -79,6 +83,7 @@ class RoutingHelper {
 
   static Map<String, Widget Function(BuildContext)> statisticsTabRoutes = {
     StaticticsTabRoutingKeys.Landing.route: (_) => StatisticsView(),
+    StaticticsTabRoutingKeys.Detail.route: (_) => StatisticDetailView(),
   };
 
   static Map<String, Widget Function(BuildContext)> settingsTabRoutes = {

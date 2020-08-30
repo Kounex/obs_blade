@@ -14,10 +14,10 @@ class ConnectBox extends StatelessWidget {
     HomeStore landingStore = context.watch<HomeStore>();
 
     return Align(
-      child: Stack(
-        children: <Widget>[
-          Observer(
-            builder: (_) => SwitcherCard(
+      child: Observer(
+        builder: (_) => Stack(
+          children: <Widget>[
+            SwitcherCard(
               title: landingStore.manualMode ? 'Connection' : 'Autodiscover',
               child: landingStore.manualMode
                   ? Padding(
@@ -30,16 +30,22 @@ class ConnectBox extends StatelessWidget {
                     )
                   : AutoDiscovery(),
             ),
-          ),
-          Positioned(
-            right: 36.0,
-            top: 30.0,
-            child: CupertinoButton(
-              child: Text(landingStore.manualMode ? 'Auto' : 'Manual'),
-              onPressed: () => landingStore.toggleManualMode(),
-            ),
-          )
-        ],
+            Positioned(
+              right: 36.0,
+              top: 26.0,
+              child: CupertinoButton(
+                child: Container(
+                  width: 60.0,
+                  child: Text(
+                    landingStore.manualMode ? 'Auto' : 'Manual',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                onPressed: () => landingStore.toggleManualMode(),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+
+import '../../../../shared/general/base_card.dart';
 
 class PlaceholderConnection extends StatelessWidget {
   final double height;
@@ -25,11 +26,11 @@ class PlaceholderConnection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Icon(
-                    Icons.sentiment_very_dissatisfied,
+                    Icons.sentiment_dissatisfied_rounded,
                     size: 42.0,
                   ),
                   Text(
-                    'No saved connections yet...\nNo worries, once you successfully connected to an OBS instance you can save one for later! :)',
+                    'No saved connections yet...\nNo worries though, once you successfully connected to an OBS instance you can save one for later! :)',
                     textAlign: TextAlign.center,
                   ),
                 ],

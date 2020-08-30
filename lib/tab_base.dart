@@ -21,6 +21,8 @@ class _TabBaseState extends State<TabBase> {
   ];
   List<HeroController> _heroControllers;
 
+  List<ScrollController> _tabScrollController;
+
   RectTween _createRectTween(Rect begin, Rect end) {
     return MaterialRectArcTween(begin: begin, end: end);
   }
@@ -33,6 +35,11 @@ class _TabBaseState extends State<TabBase> {
       HeroController(createRectTween: _createRectTween),
       HeroController(createRectTween: _createRectTween)
     ];
+    _tabScrollController = [
+      ScrollController(),
+      ScrollController(),
+      ScrollController()
+    ];
     _tabViews = [
       Navigator(
         key: _navigatorKeys[0],
@@ -40,7 +47,8 @@ class _TabBaseState extends State<TabBase> {
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.homeTabRoutes[route],
-            settings: RouteSettings(name: route),
+            settings:
+                RouteSettings(name: route, arguments: _tabScrollController[0]),
           ),
         ],
         onGenerateRoute: (routeSettings) => CupertinoPageRoute(
@@ -55,7 +63,8 @@ class _TabBaseState extends State<TabBase> {
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.statisticsTabRoutes[route],
-            settings: RouteSettings(name: route),
+            settings:
+                RouteSettings(name: route, arguments: _tabScrollController[1]),
           ),
         ],
         onGenerateRoute: (routeSettings) => CupertinoPageRoute(
@@ -70,7 +79,8 @@ class _TabBaseState extends State<TabBase> {
         onGenerateInitialRoutes: (state, route) => [
           CupertinoPageRoute(
             builder: RoutingHelper.settingsTabRoutes[route],
-            settings: RouteSettings(name: route),
+            settings:
+                RouteSettings(name: route, arguments: _tabScrollController[2]),
           ),
         ],
         onGenerateRoute: (routeSettings) => CupertinoPageRoute(
@@ -113,6 +123,9 @@ class _TabBaseState extends State<TabBase> {
           if (_currentTabIndex == index) {
             if (_navigatorKeys[index].currentState.canPop()) {
               _navigatorKeys[index].currentState.pop();
+            } else {
+              _tabScrollController[index].animateTo(0.0,
+                  duration: Duration(milliseconds: 250), curve: Curves.easeIn);
             }
           } else {
             _currentTabIndex = index;

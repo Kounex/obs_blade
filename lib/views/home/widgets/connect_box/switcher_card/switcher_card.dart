@@ -34,7 +34,7 @@ class SwitcherCard extends StatelessWidget {
           opacity: animation,
           child: SizeTransition(
             sizeFactor: animation.drive(
-              Tween(begin: 0.8, end: 1.0).chain(
+              Tween(begin: 0.75, end: 1.0).chain(
                 CurveTween(curve: Curves.easeOut),
               ),
             ),

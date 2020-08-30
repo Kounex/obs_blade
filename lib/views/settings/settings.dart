@@ -18,6 +18,7 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
+        controller: ModalRoute.of(context).settings.arguments,
         physics: StylingHelper.platformAwareScrollPhysics,
         slivers: <Widget>[
           CupertinoSliverNavigationBar(

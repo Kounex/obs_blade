@@ -53,7 +53,8 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               controller:
                   TextEditingController(text: landingStore.autodiscoverPort),
               keyboardType: TextInputType.number,
-              inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+              textInputAction: TextInputAction.done,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               onChanged: (text) {
                 landingStore.setAutodiscoverPort(text);
                 _formKey.currentState.validate();

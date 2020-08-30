@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:obs_blade/models/past_stream_data.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 
 class StreamEntry extends StatelessWidget {
+  final PastStreamData pastStreamData;
+
+  StreamEntry({@required this.pastStreamData});
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      onTap: () => Navigator.pushNamed(
+          context, StaticticsTabRoutingKeys.Detail.route,
+          arguments: this.pastStreamData),
       trailing: Icon(
         Icons.chevron_right,
         color: Colors.grey,
@@ -19,10 +28,10 @@ class StreamEntry extends StatelessWidget {
                 child: Text('From: '),
               ),
               Text(
-                  '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(1597661113942))}'),
+                  '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
               Text(' - '),
               Text(
-                  '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(1597661113942))}'),
+                  '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
             ],
           ),
           Row(
@@ -32,10 +41,10 @@ class StreamEntry extends StatelessWidget {
                 child: Text('To: '),
               ),
               Text(
-                  '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(1597677813942))}'),
+                  '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
               Text(' - '),
               Text(
-                  '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(1597677813942))}'),
+                  '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
             ],
           ),
         ],

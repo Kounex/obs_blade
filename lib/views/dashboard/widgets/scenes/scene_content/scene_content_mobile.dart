@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'audio_inputs.dart';
-import 'scene_items.dart';
+import 'audio_inputs/audio_inputs.dart';
+import 'scene_items/scene_items.dart';
 
 class SceneContentMobile extends StatelessWidget {
   @override

@@ -10,48 +10,20 @@ import '../../../../types/extensions/list.dart';
 import '../../../../utils/styling_helper.dart';
 
 class StreamDataPanels extends StatefulWidget {
+  final List<PastStreamData> pastStreamData;
+
+  StreamDataPanels({@required this.pastStreamData});
+
   @override
   _StreamDataPanelsState createState() => _StreamDataPanelsState();
 }
 
 class _StreamDataPanelsState extends State<StreamDataPanels> {
-  List<PastStreamData> _pastStreamData;
   List<bool> _expandedState;
-
-  Random _random = Random();
-
-  StreamStats _randomStreamStats() => StreamStats(
-      streaming: true,
-      recording: false,
-      replayBufferActive: true,
-      bytesPerSec: _random.nextInt(70000),
-      kbitsPerSec: _random.nextInt(6000),
-      strain: _random.nextDouble() * 100,
-      totalStreamTime: _random.nextInt(64000),
-      numTotalFrames: _random.nextInt(70000),
-      numDroppedFrames: _random.nextInt(100),
-      fps: 60 - (_random.nextDouble() * 20),
-      renderTotalFrames: _random.nextInt(70000),
-      renderMissedFrames: _random.nextInt(100),
-      outputTotalFrames: _random.nextInt(70000),
-      outputSkippedFrames: _random.nextInt(70000),
-      averageFrameTime: _random.nextDouble() * 60,
-      cpuUsage: _random.nextDouble() * 100,
-      memoryUsage: _random.nextDouble() * 1000000,
-      freeDiskSpace: _random.nextDouble() * 1000000);
 
   @override
   void initState() {
-    _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
-      PastStreamData pastStreamData = PastStreamData();
-      List.generate(_random.nextInt(1000), (index) {
-        pastStreamData.addStreamStats(_randomStreamStats());
-      });
-      pastStreamData.finishUpStats();
-      return pastStreamData;
-    });
-
-    _expandedState = _pastStreamData.map((_) => false).toList();
+    _expandedState = widget.pastStreamData.map((_) => false).toList();
 
     super.initState();
   }
@@ -60,7 +32,7 @@ class _StreamDataPanelsState extends State<StreamDataPanels> {
   Widget build(BuildContext context) {
     return ExpansionPanelList(
       dividerColor: StylingHelper.LIGHT_DIVIDER_COLOR.withOpacity(0.2),
-      children: _pastStreamData
+      children: widget.pastStreamData
           .mapIndexed(
             (pastStreamData, index) => ExpansionPanel(
               canTapOnHeader: true,

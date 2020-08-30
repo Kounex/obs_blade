@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../../../../stores/views/dashboard.dart';
-import 'formatted_text.dart';
+import '../../../../../shared/general/formatted_text.dart';
 import 'stats_container.dart';
 
 class Stats extends StatefulWidget {

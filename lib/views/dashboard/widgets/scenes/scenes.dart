@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/types/enums/request_type.dart';
+import 'package:obs_blade/utils/network_helper.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../stores/views/dashboard.dart';
@@ -40,6 +43,13 @@ class Scenes extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+          RaisedButton(
+            onPressed: () => NetworkHelper.makeRequest(
+                context.read<NetworkStore>().activeSession.socket,
+                RequestType.PlayPauseMedia,
+                {'sourceName': 'was geht ab', 'playPause': false}),
+            child: Text('SOUND'),
           ),
           ValueListenableBuilder(
             valueListenable: Hive.box(HiveKeys.Settings.name)

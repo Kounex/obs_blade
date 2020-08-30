@@ -89,9 +89,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                       controller: _port,
                       placeholder: 'Port',
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        WhitelistingTextInputFormatter.digitsOnly
-                      ],
+                      textInputAction: TextInputAction.done,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ),
                 ),

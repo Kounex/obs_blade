@@ -28,6 +28,10 @@ class PastStreamData extends HiveObject {
   @HiveField(2)
   List<double> cpuUsageList = [];
 
+  /// RAM usage (in megabytes)
+  @HiveField(17)
+  List<double> memoryUsageList = [];
+
   /// Percentage of dropped frames
   @HiveField(3)
   double strain;
@@ -143,9 +147,11 @@ class PastStreamData extends HiveObject {
         _cacheStreamStats.reduce((master, current) => master
           ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
           ..fps = min(master.fps, current.fps)
-          ..cpuUsage = max(master.cpuUsage, current.cpuUsage));
+          ..cpuUsage = max(master.cpuUsage, current.cpuUsage)
+          ..memoryUsage = max(master.memoryUsage, current.memoryUsage));
     this.kbitsPerSecList.add(relevantStreamStats.kbitsPerSec);
     this.fpsList.add(relevantStreamStats.fps);
     this.cpuUsageList.add(relevantStreamStats.cpuUsage);
+    this.memoryUsageList.add(relevantStreamStats.memoryUsage);
   }
 }
