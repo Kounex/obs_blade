@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../dashboard.dart';
+import '../../views/dashboard/dashboard.dart';
 
 const SCROLL_THRESHOLD = 125.0;
 

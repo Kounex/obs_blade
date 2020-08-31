@@ -1,58 +1,66 @@
 import 'package:flutter/material.dart';
 
+import '../../../../utils/styling_helper.dart';
 import 'stats/stats.dart';
 import 'twitch_chat/twitch_chat.dart';
 
 class StreamWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(
-            'Widgets',
-            style: Theme.of(context).textTheme.headline4,
+        Expanded(
+          child: Card(
+            margin: const EdgeInsets.only(left: 24.0, right: 12.0),
+            child: Column(
+              children: [
+                Container(
+                  color: StylingHelper.MAIN_BLUE,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      'Sources',
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle1
+                          .copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Divider(height: 0.0),
+                SizedBox(
+                  height: 250.0,
+                  child: TwitchChat(),
+                ),
+              ],
+            ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-          child: Divider(height: 0.0),
-        ),
-        DefaultTabController(
-          length: 2,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TabBar(
-                tabs: [
-                  Tab(
-                    child: Text('Chat'),
+        Expanded(
+          child: Card(
+            margin: const EdgeInsets.only(left: 12.0, right: 24.0),
+            child: Column(
+              children: [
+                Container(
+                  color: StylingHelper.MAIN_BLUE,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      'Audio',
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle1
+                          .copyWith(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  Tab(
-                    child: Text('Stats'),
-                  )
-                ],
-              ),
-              SizedBox(
-                height: 525.0,
-                child: TabBarView(
-                  physics: NeverScrollableScrollPhysics(),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(
-                          top: 24.0, bottom: 24.0, left: 8.0, right: 8.0),
-                      child: TwitchChat(),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20.0),
-                      child: Stats(),
-                    ),
-                  ],
                 ),
-              )
-            ],
+                Divider(height: 0.0),
+                SizedBox(
+                  height: 250.0,
+                  child: Stats(),
+                ),
+              ],
+            ),
           ),
         ),
       ],

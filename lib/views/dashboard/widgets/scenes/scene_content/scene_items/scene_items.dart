@@ -5,7 +5,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../../stores/views/dashboard.dart';
-import '../nested_list_manager.dart';
+import '../../../../../../shared/general/nested_list_manager.dart';
 import 'scene_item_tile.dart';
 
 class SceneItems extends StatefulWidget {

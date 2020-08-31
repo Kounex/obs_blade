@@ -1,18 +1,25 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/utils/dialog_handler.dart';
-import 'package:obs_blade/views/dashboard/widgets/dialogs/save_edit_connection.dart';
+import 'package:obs_blade/shared/general/responsive_widget_wrapper.dart';
 import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/confirmation.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/dashboard.dart';
+import '../../types/enums/hive_keys.dart';
+import '../../types/enums/settings_keys.dart';
+import '../../utils/dialog_handler.dart';
 import '../../utils/routing_helper.dart';
+import '../../utils/styling_helper.dart';
+import 'widgets/dialogs/save_edit_connection.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
 import 'widgets/stream_widgets/stream_widgets.dart';
+import 'widgets/stream_widgets/stream_widgets_mobile.dart';
 
 /// InheritedWidget [DashBoardScroll] is used to expose the ScrollController
 /// which is being used for the main ListView in Dashboard to the descendant
@@ -110,7 +117,10 @@ class _DashboardViewState extends State<_DashboardView> {
                                     top: 12.0, bottom: 24.0),
                                 child: Scenes(),
                               ),
-                              StreamWidgets(),
+                              ResponsiveWidgetWrapper(
+                                mobileWidget: StreamWidgetsMobile(),
+                                tabletWidget: StreamWidgets(),
+                              ),
                             ],
                           ),
                         ),

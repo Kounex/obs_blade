@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/shared/general/responsive_widget_wrapper.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/utils/network_helper.dart';
@@ -51,18 +52,9 @@ class Scenes extends StatelessWidget {
                 {'sourceName': 'was geht ab', 'playPause': false}),
             child: Text('SOUND'),
           ),
-          ValueListenableBuilder(
-            valueListenable: Hive.box(HiveKeys.Settings.name)
-                .listenable(keys: [SettingsKeys.EnforceTabletMode.name]),
-            builder: (context, Box settingsBox, child) => Padding(
-              padding: const EdgeInsets.only(top: 42.0),
-              child: MediaQuery.of(context).size.width >
-                          StylingHelper.MAX_WIDTH_MOBILE ||
-                      settingsBox.get(SettingsKeys.EnforceTabletMode.name,
-                          defaultValue: false)
-                  ? SceneContent()
-                  : SceneContentMobile(),
-            ),
+          ResponsiveWidgetWrapper(
+            mobileWidget: SceneContentMobile(),
+            tabletWidget: SceneContent(),
           ),
         ],
       ),
