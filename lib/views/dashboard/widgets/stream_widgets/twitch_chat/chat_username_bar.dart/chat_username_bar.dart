@@ -15,41 +15,46 @@ class ChatUsernameBar extends StatelessWidget {
         SettingsKeys.TwitchUsernames.name,
         SettingsKeys.SelectedTwitchUsername.name
       ]),
-      builder: (context, Box settingsBox, child) => Row(
-        children: [
-          Flexible(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: 100.0),
-              child: DropdownButton<String>(
-                value:
-                    settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
-                isExpanded: true,
-                disabledHint: Text(
-                  'No usernames',
-                  overflow: TextOverflow.ellipsis,
+      builder: (context, Box settingsBox, child) => Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        child: Row(
+          children: [
+            Flexible(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: 100.0),
+                child: DropdownButton<String>(
+                  value:
+                      settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
+                  isExpanded: true,
+                  disabledHint: Text(
+                    'No usernames',
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.fade,
+                  ),
+                  items: settingsBox
+                      .get(SettingsKeys.TwitchUsernames.name,
+                          defaultValue: <String>[])
+                      .map<DropdownMenuItem<String>>(
+                        (twitchUsername) => DropdownMenuItem<String>(
+                          value: twitchUsername,
+                          child: Text(twitchUsername),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (twitchUsername) {
+                    settingsBox.put(SettingsKeys.SelectedTwitchUsername.name,
+                        twitchUsername);
+                  },
                 ),
-                items: settingsBox
-                    .get(SettingsKeys.TwitchUsernames.name,
-                        defaultValue: <String>[])
-                    .map<DropdownMenuItem<String>>(
-                      (twitchUsername) => DropdownMenuItem<String>(
-                        value: twitchUsername,
-                        child: Text(twitchUsername),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (twitchUsername) {
-                  settingsBox.put(
-                      SettingsKeys.SelectedTwitchUsername.name, twitchUsername);
-                },
               ),
             ),
-          ),
-          SizedBox(width: 32.0),
-          UsernameActionRow(
-            settingsBox: settingsBox,
-          ),
-        ],
+            SizedBox(width: 32.0),
+            UsernameActionRow(
+              settingsBox: settingsBox,
+            ),
+          ],
+        ),
       ),
     );
   }

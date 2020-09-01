@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base_card.dart';
 
-import '../../../../../utils/styling_helper.dart';
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
 
@@ -10,56 +10,22 @@ class SceneContent extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Card(
-            margin: const EdgeInsets.only(left: 24.0, right: 12.0),
-            child: Column(
-              children: [
-                Container(
-                  color: StylingHelper.MAIN_BLUE,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                    child: Text(
-                      'Sources',
-                      style: Theme.of(context)
-                          .textTheme
-                          .subtitle1
-                          .copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                Divider(height: 0.0),
-                SizedBox(
-                  height: 250.0,
-                  child: SceneItems(),
-                ),
-              ],
+          child: BaseCard(
+            title: 'Scene Items',
+            noPaddingChild: true,
+            child: SizedBox(
+              height: 350.0,
+              child: SceneItems(),
             ),
           ),
         ),
         Expanded(
-          child: Card(
-            margin: const EdgeInsets.only(left: 12.0, right: 24.0),
-            child: Column(
-              children: [
-                Container(
-                  color: StylingHelper.MAIN_BLUE,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                    child: Text(
-                      'Audio',
-                      style: Theme.of(context)
-                          .textTheme
-                          .subtitle1
-                          .copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                Divider(height: 0.0),
-                SizedBox(
-                  height: 250.0,
-                  child: AudioInputs(),
-                ),
-              ],
+          child: BaseCard(
+            title: 'Audio',
+            noPaddingChild: true,
+            child: SizedBox(
+              height: 350.0,
+              child: AudioInputs(),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/placeholder_scene_item/placeholder_scene_item.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../../stores/views/dashboard.dart';
@@ -20,6 +21,7 @@ class _AudioInputsState extends State<AudioInputs> {
 
     return Observer(
       builder: (_) => NestedScrollManager(
+        parentScrollController: ModalRoute.of(context).settings.arguments,
         child: Scrollbar(
           controller: _controller,
           isAlwaysShown: true,
@@ -43,10 +45,16 @@ class _AudioInputsState extends State<AudioInputs> {
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, right: 12.0),
                 child: Column(
-                  children: dashboardStore.globalAudioSceneItems
-                      .map((globalAudioItem) =>
-                          AudioSlider(audioSceneItem: globalAudioItem))
-                      .toList(),
+                  children: dashboardStore.globalAudioSceneItems != null &&
+                          dashboardStore.globalAudioSceneItems.length > 0
+                      ? dashboardStore.globalAudioSceneItems
+                          .map((globalAudioItem) =>
+                              AudioSlider(audioSceneItem: globalAudioItem))
+                          .toList()
+                      : [
+                          PlaceholderSceneItem(
+                              text: 'No Global Audio source available...')
+                        ],
                 ),
               ),
               Divider(),
@@ -65,12 +73,16 @@ class _AudioInputsState extends State<AudioInputs> {
               Padding(
                 padding: const EdgeInsets.only(left: 12.0, right: 12.0),
                 child: Column(
-                  children: dashboardStore.currentAudioSceneItems.length > 0
+                  children: dashboardStore.currentAudioSceneItems != null &&
+                          dashboardStore.currentAudioSceneItems.length > 0
                       ? dashboardStore.currentAudioSceneItems
                           .map((currentAudioSceneItem) => AudioSlider(
                               audioSceneItem: currentAudioSceneItem))
                           .toList()
-                      : Container(),
+                      : [
+                          PlaceholderSceneItem(
+                              text: 'No Audio source in this scene...')
+                        ],
                 ),
               ),
             ],
