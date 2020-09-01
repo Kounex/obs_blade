@@ -9,17 +9,6 @@ class StreamWidgetsMobile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(
-            'Widgets',
-            style: Theme.of(context).textTheme.headline4,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-          child: Divider(height: 0.0),
-        ),
         DefaultTabController(
           length: 2,
           child: Column(
@@ -42,12 +31,14 @@ class StreamWidgetsMobile extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
-                          top: 24.0, bottom: 24.0, left: 8.0, right: 8.0),
+                          top: 12.0, bottom: 24.0, left: 8.0, right: 8.0),
                       child: TwitchChat(),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 20.0),
-                      child: Stats(),
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Stats(
+                        pageIndicatorPadding: true,
+                      ),
                     ),
                   ],
                 ),

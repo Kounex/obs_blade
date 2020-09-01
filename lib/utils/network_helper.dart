@@ -6,7 +6,6 @@ import 'package:crypto/crypto.dart';
 import 'package:obs_blade/types/exceptions/network.dart';
 import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/connection.dart';
 import '../types/enums/request_type.dart';

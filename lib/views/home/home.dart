@@ -124,7 +124,10 @@ class _HomeViewState extends State<_HomeView> {
         if (networkStore.connectionResponse.status == BaseResponse.ok) {
           OverlayHandler.closeAnyOverlay();
           Navigator.pushReplacementNamed(
-              context, HomeTabRoutingKeys.Dashboard.route);
+            context,
+            HomeTabRoutingKeys.Dashboard.route,
+            arguments: ModalRoute.of(context).settings.arguments,
+          );
         }
 
         /// If the error for the connection attempt results in an 'Authentication' error,

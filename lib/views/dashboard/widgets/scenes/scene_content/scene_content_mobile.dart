@@ -22,7 +22,7 @@ class SceneContentMobile extends StatelessWidget {
             ],
           ),
           SizedBox(
-            height: 250,
+            height: 300,
             child:
                 TabBarView(physics: NeverScrollableScrollPhysics(), children: [
               Padding(

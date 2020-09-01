@@ -9,6 +9,15 @@ part of 'dashboard.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$DashboardStore on _DashboardStore, Store {
+  Computed<ObservableList<SceneItem>> _$currentSoundboardSceneItemsComputed;
+
+  @override
+  ObservableList<SceneItem> get currentSoundboardSceneItems =>
+      (_$currentSoundboardSceneItemsComputed ??=
+              Computed<ObservableList<SceneItem>>(
+                  () => super.currentSoundboardSceneItems,
+                  name: '_DashboardStore.currentSoundboardSceneItems'))
+          .value;
   Computed<ObservableList<SceneItem>> _$currentAudioSceneItemsComputed;
 
   @override
@@ -174,6 +183,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$isPointerOnTwitchAtom =
+      Atom(name: '_DashboardStore.isPointerOnTwitch');
+
+  @override
+  bool get isPointerOnTwitch {
+    _$isPointerOnTwitchAtom.reportRead();
+    return super.isPointerOnTwitch;
+  }
+
+  @override
+  set isPointerOnTwitch(bool value) {
+    _$isPointerOnTwitchAtom.reportWrite(value, super.isPointerOnTwitch, () {
+      super.isPointerOnTwitch = value;
+    });
+  }
+
   final _$_handleEventAsyncAction = AsyncAction('_DashboardStore._handleEvent');
 
   @override
@@ -183,6 +208,28 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   final _$_DashboardStoreActionController =
       ActionController(name: '_DashboardStore');
+
+  @override
+  void setPointerOnTwitch(bool isPointerOnTwitch) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setPointerOnTwitch');
+    try {
+      return super.setPointerOnTwitch(isPointerOnTwitch);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.toggleSceneItemGroupVisibility');
+    try {
+      return super.toggleSceneItemGroupVisibility(sceneItem);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
 
   @override
   void _handleResponse(BaseResponse response) {
@@ -208,6 +255,8 @@ currentSceneItems: ${currentSceneItems},
 obsTerminated: ${obsTerminated},
 globalAudioSceneItems: ${globalAudioSceneItems},
 sceneTransitionDurationMS: ${sceneTransitionDurationMS},
+isPointerOnTwitch: ${isPointerOnTwitch},
+currentSoundboardSceneItems: ${currentSoundboardSceneItems},
 currentAudioSceneItems: ${currentAudioSceneItems}
     ''';
   }

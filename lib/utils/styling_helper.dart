@@ -24,7 +24,7 @@ class StylingHelper {
       const Color.fromRGBO(111, 111, 111, 1.0);
 
   /// Added CupertinoIcons
-  static const IconData CUPERTINO_MACBOOK_ICON = const IconData(0xf390,
+  static const IconData CUPERTINO_MACBOOK_ICON = const IconData(0xf466,
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
 

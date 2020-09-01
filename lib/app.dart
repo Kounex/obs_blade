@@ -74,7 +74,7 @@ class App extends StatelessWidget {
           // );
           return MaterialApp(
             theme: theme,
-            initialRoute: AppRoutingKeys.Tabs.route,
+            initialRoute: AppRoutingKeys.Intro.route,
             onGenerateInitialRoutes: (initialRoute) => [
               MaterialWithModalsPageRoute(
                 builder: RoutingHelper.appRoutes[initialRoute],

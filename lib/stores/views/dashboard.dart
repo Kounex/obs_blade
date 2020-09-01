@@ -1,10 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/types/classes/stream/events/source_order_changed.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
 
+import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/source_type.dart';
@@ -25,6 +22,7 @@ import '../../types/classes/stream/responses/get_source_types_list.dart';
 import '../../types/classes/stream/responses/get_special_sources.dart';
 import '../../types/classes/stream/responses/get_volume.dart';
 import '../../types/enums/event_type.dart';
+import '../../types/enums/hive_keys.dart';
 import '../../types/enums/request_type.dart';
 import '../../utils/network_helper.dart';
 import '../shared/network.dart';
@@ -84,6 +82,9 @@ abstract class _DashboardStore with Store {
 
   @observable
   int sceneTransitionDurationMS;
+
+  @observable
+  bool isPointerOnTwitch = false;
 
   // Session activeSession;
   NetworkStore networkStore;
@@ -147,6 +148,10 @@ abstract class _DashboardStore with Store {
     });
     return tmpSceneItems;
   }
+
+  @action
+  void setPointerOnTwitch(bool isPointerOnTwitch) =>
+      this.isPointerOnTwitch = isPointerOnTwitch;
 
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/intro/intro.dart';
 import 'package:obs_blade/views/privacy_policy/privacy_policy.dart';
 import 'package:obs_blade/views/statistic_detail/statistic_detail.dart';
 import 'package:obs_blade/views/statistics/statistics.dart';
@@ -12,7 +13,10 @@ import '../views/settings/settings.dart';
 /// All routing keys available on root level - for now the whole app
 /// is wrapped in tabs and no other root level views (which are not inside
 /// those tabs) are used
-enum AppRoutingKeys { Tabs }
+enum AppRoutingKeys {
+  Intro,
+  Tabs,
+}
 
 /// Routing keys for the home tab
 enum HomeTabRoutingKeys {
@@ -37,6 +41,7 @@ enum SettingsTabRoutingKeys {
 /// path for an enum
 extension AppRoutingKeysFunctions on AppRoutingKeys {
   String get route => const {
+        AppRoutingKeys.Intro: '/intro',
         AppRoutingKeys.Tabs: '/tabs',
       }[this];
 }
@@ -93,6 +98,7 @@ class RoutingHelper {
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {
+    AppRoutingKeys.Intro.route: (_) => IntroView(),
     AppRoutingKeys.Tabs.route: (_) => TabBase(),
   };
 }

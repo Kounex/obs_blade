@@ -20,6 +20,7 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..kbitsPerSecList = (fields[0] as List)?.cast<int>()
       ..fpsList = (fields[1] as List)?.cast<double>()
       ..cpuUsageList = (fields[2] as List)?.cast<double>()
+      ..memoryUsageList = (fields[17] as List)?.cast<double>()
       ..strain = fields[3] as double
       ..totalStreamTime = fields[4] as int
       ..numTotalFrames = fields[5] as int
@@ -39,13 +40,15 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
   @override
   void write(BinaryWriter writer, PastStreamData obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.kbitsPerSecList)
       ..writeByte(1)
       ..write(obj.fpsList)
       ..writeByte(2)
       ..write(obj.cpuUsageList)
+      ..writeByte(17)
+      ..write(obj.memoryUsageList)
       ..writeByte(3)
       ..write(obj.strain)
       ..writeByte(4)

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../views/dashboard/dashboard.dart';
-
 const SCROLL_THRESHOLD = 125.0;
 
 /// [NestedScrollManager] is used to enable scrolling a inner scrollable Widget
@@ -13,8 +11,10 @@ const SCROLL_THRESHOLD = 125.0;
 /// supported to guarantee a good behaviour - might be changed later
 class NestedScrollManager extends StatefulWidget {
   final Widget child;
+  final ScrollController parentScrollController;
 
-  NestedScrollManager({@required this.child});
+  NestedScrollManager(
+      {@required this.child, @required this.parentScrollController});
 
   @override
   _NestedScrollManagerState createState() => _NestedScrollManagerState();
@@ -41,23 +41,13 @@ class _NestedScrollManagerState extends State<NestedScrollManager> {
         /// ListView
         if (_scrollThreshold.abs() >= SCROLL_THRESHOLD) {
           double scrollPosition =
-              DashboardScroll.of(context).scrollController.offset +
-                  value.overscroll;
-          DashboardScroll.of(context).scrollController.jumpTo(scrollPosition <
-                  DashboardScroll.of(context)
-                      .scrollController
-                      .position
-                      .minScrollExtent
+              widget.parentScrollController.offset + value.overscroll;
+          widget.parentScrollController.jumpTo(scrollPosition <
+                  widget.parentScrollController.position.minScrollExtent
               ? 0
               : scrollPosition >
-                      DashboardScroll.of(context)
-                          .scrollController
-                          .position
-                          .maxScrollExtent
-                  ? DashboardScroll.of(context)
-                      .scrollController
-                      .position
-                      .maxScrollExtent
+                      widget.parentScrollController.position.maxScrollExtent
+                  ? widget.parentScrollController.position.maxScrollExtent
                   : scrollPosition);
         }
         return true;

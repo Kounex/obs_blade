@@ -95,16 +95,6 @@ class _TabBaseState extends State<TabBase> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // body: Stack(
-      //   children: _tabViews
-      //       .mapIndexed(
-      //         (navigator, index) => Offstage(
-      //           offstage: index != _currentTabIndex,
-      //           child: navigator,
-      //         ),
-      //       )
-      //       .toList(),
-      // ),
       body: IndexedStack(
         index: _currentTabIndex,
         children: _tabViews
@@ -116,7 +106,6 @@ class _TabBaseState extends State<TabBase> {
             )
             .toList(),
       ),
-
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: _currentTabIndex,
         onTap: (index) => setState(() {

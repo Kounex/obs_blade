@@ -45,13 +45,13 @@ class Scenes extends StatelessWidget {
               ),
             ),
           ),
-          RaisedButton(
-            onPressed: () => NetworkHelper.makeRequest(
-                context.read<NetworkStore>().activeSession.socket,
-                RequestType.PlayPauseMedia,
-                {'sourceName': 'was geht ab', 'playPause': false}),
-            child: Text('SOUND'),
-          ),
+          // RaisedButton(
+          //   onPressed: () => NetworkHelper.makeRequest(
+          //       context.read<NetworkStore>().activeSession.socket,
+          //       RequestType.PlayPauseMedia,
+          //       {'sourceName': 'was geht ab', 'playPause': false}),
+          //   child: Text('SOUND'),
+          // ),
           ResponsiveWidgetWrapper(
             mobileWidget: SceneContentMobile(),
             tabletWidget: SceneContent(),
