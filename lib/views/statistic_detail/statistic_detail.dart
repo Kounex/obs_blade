@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/shared/general/formatted_text.dart';
-import 'package:obs_blade/shared/general/transculent_cupertino_navbar_wrapper.dart';
-import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stats/stats_container.dart';
-import 'package:obs_blade/views/statistics/widgets/stream_data_panels/stream_chart.dart';
+
+import '../../models/past_stream_data.dart';
+import '../../shared/general/formatted_text.dart';
+import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../dashboard/widgets/stream_widgets/stats/stats_container.dart';
+import '../statistics/widgets/stream_chart/stream_chart.dart';
 
 class StatisticDetailView extends StatelessWidget {
   @override

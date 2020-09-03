@@ -80,6 +80,10 @@ class StylingHelper {
       fontFamily: CupertinoIcons.iconFont,
       fontPackage: CupertinoIcons.iconFontPackage);
 
+  static const IconData CUPERTINO_PIE_CHART_SOLID = const IconData(0xf484,
+      fontFamily: CupertinoIcons.iconFont,
+      fontPackage: CupertinoIcons.iconFontPackage);
+
   /// Bouncng scroll for all cases
   static ScrollPhysics get platformAwareScrollPhysics =>
       Platform.isIOS || Platform.isMacOS

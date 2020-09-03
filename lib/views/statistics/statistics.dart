@@ -1,12 +1,15 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
-import 'package:obs_blade/types/classes/api/stream_stats.dart';
-import 'package:obs_blade/views/statistics/widgets/stream_entry.dart/stream_entry.dart';
+import 'dart:ui';
 
+import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
+
+import '../../models/past_stream_data.dart';
+import '../../shared/general/base_card.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import 'widgets/stream_data_panels/stream_data_panels.dart';
+import '../../types/classes/api/stream_stats.dart';
+import 'widgets/card_header/card_header.dart';
+import 'widgets/stream_entry.dart/stream_entry.dart';
 
 class StatisticsView extends StatefulWidget {
   @override
@@ -58,12 +61,21 @@ class _StatisticsViewState extends State<StatisticsView> {
         scrollController: ModalRoute.of(context).settings.arguments,
         listViewChildren: [
           BaseCard(
-            title: 'Latest Stream',
+            titlePadding:
+                EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
+            titleWidget: CardHeader(
+              title: 'Latest\nStream.',
+              description: 'Your latest stream',
+            ),
             noPaddingChild: true,
             child: StreamEntry(pastStreamData: _pastStreamData.first),
           ),
           BaseCard(
-            title: 'Other Streams',
+            titlePadding:
+                EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
+            titleWidget: CardHeader(
+              title: 'Previous\nStreams.',
+            ),
             noPaddingChild: true,
             child: Column(
               children: [
