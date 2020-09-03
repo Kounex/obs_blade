@@ -38,7 +38,12 @@ class ChatUsernameBar extends StatelessWidget {
                       .map<DropdownMenuItem<String>>(
                         (twitchUsername) => DropdownMenuItem<String>(
                           value: twitchUsername,
-                          child: Text(twitchUsername),
+                          child: Text(
+                            twitchUsername,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.fade,
+                          ),
                         ),
                       )
                       .toList(),

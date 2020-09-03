@@ -1,4 +1,3 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -52,23 +51,23 @@ class SavedConnections extends StatelessWidget {
                         ),
                       )
                       .toList();
-                  return MediaQuery.of(context).size.width < width * 2
-                      ? CarouselSlider(
-                          options: CarouselOptions(
-                            height: height,
-                            autoPlay: false,
-                            // enlargeCenterPage: true,
-                            enableInfiniteScroll: false,
-                            viewportFraction: width /
-                                (MediaQuery.of(context).size.width -
-                                    MediaQuery.of(context).size.width / 10),
+                  return MediaQuery.of(context).size.width < width * 2.5
+                      ? SizedBox(
+                          height: height,
+                          child: PageView.builder(
+                            controller: PageController(viewportFraction: 0.75),
+                            itemCount: connectionBoxes.length,
+                            itemBuilder: (context, index) => Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 18.0, right: 18.0),
+                              child: connectionBoxes[index],
+                            ),
                           ),
-                          items: connectionBoxes,
                         )
                       : Center(
                           child: Wrap(
-                            spacing: 24.0,
-                            runSpacing: 24.0,
+                            spacing: 32.0,
+                            runSpacing: 32.0,
                             children: connectionBoxes,
                           ),
                         );

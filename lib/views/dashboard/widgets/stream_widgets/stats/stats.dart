@@ -9,9 +9,9 @@ import '../../../../../shared/general/formatted_text.dart';
 import 'stats_container.dart';
 
 class Stats extends StatefulWidget {
-  final bool pageIndicatorPadding;
+  final EdgeInsets pageIndicatorPadding;
 
-  Stats({this.pageIndicatorPadding = false});
+  Stats({this.pageIndicatorPadding});
 
   @override
   _StatsState createState() => _StatsState();
@@ -29,10 +29,10 @@ class _StatsState extends State<Stats> {
       return Column(
         children: [
           Padding(
-            padding: EdgeInsets.only(
-              top: 12.0,
-              bottom: widget.pageIndicatorPadding ? 12.0 : 0.0,
-            ),
+            padding: widget.pageIndicatorPadding ??
+                EdgeInsets.only(
+                  top: 12.0,
+                ),
             child: SmoothPageIndicator(
               controller: _pageController,
               count: 2,

@@ -31,13 +31,16 @@ class StreamWidgetsMobile extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(
-                          top: 12.0, bottom: 24.0, left: 8.0, right: 8.0),
+                          top: 12.0, left: 8.0, right: 8.0),
                       child: TwitchChat(),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 12.0),
                       child: Stats(
-                        pageIndicatorPadding: true,
+                        pageIndicatorPadding: EdgeInsets.only(
+                          top: 12.0,
+                          bottom: 12.0,
+                        ),
                       ),
                     ),
                   ],

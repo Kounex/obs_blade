@@ -13,6 +13,12 @@ enum SettingsKeys {
 
   /// [String]: The currently selected twitch username to use for the twitch chat
   SelectedTwitchUsername,
+
+  /// Internally used properties which won't be changeable / seeable for the user
+
+  /// [bool]: If the user already saw the intro - will be set after being in landing
+  /// of Home Tab and will prevent the user from seeing the intro slides again
+  HasUserSeenIntro,
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
@@ -22,5 +28,6 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.EnforceTabletMode: 'enforce-tablet-mode',
         SettingsKeys.TwitchUsernames: 'twitch-usernames',
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
+        SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
       }[this];
 }

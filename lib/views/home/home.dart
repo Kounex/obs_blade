@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:mobx/mobx.dart' as MobX;
+import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/info.dart';
@@ -195,19 +196,17 @@ class _HomeViewState extends State<_HomeView> {
               expandedHeight: 200.0,
               imagePath: 'assets/images/base-logo.png',
             ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                [
-                  Align(
-                    child: Container(
-                      constraints: BoxConstraints(maxWidth: 500.0),
-                      child: ConnectBox(),
-                    ),
+            CustomSliverList(
+              children: [
+                Align(
+                  child: Container(
+                    constraints: BoxConstraints(maxWidth: 500.0),
+                    child: ConnectBox(),
                   ),
-                  SavedConnections(),
-                  SizedBox(height: kBottomNavigationBarHeight),
-                ],
-              ),
+                ),
+                SavedConnections(),
+                SizedBox(height: kBottomNavigationBarHeight),
+              ],
             ),
           ],
         ),

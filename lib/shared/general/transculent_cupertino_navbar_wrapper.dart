@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 
 import '../../utils/styling_helper.dart';
 
@@ -32,14 +33,10 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
           controller: this.scrollController,
           physics: StylingHelper.platformAwareScrollPhysics,
           slivers: [
-            SliverPadding(
-              padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + kToolbarHeight),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  this.listViewChildren,
-                ),
-              ),
+            CustomSliverList(
+              customTopPadding:
+                  MediaQuery.of(context).padding.top + kToolbarHeight,
+              children: this.listViewChildren,
             ),
           ],
         ),

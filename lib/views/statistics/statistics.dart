@@ -67,8 +67,15 @@ class _StatisticsViewState extends State<StatisticsView> {
             noPaddingChild: true,
             child: Column(
               children: [
-                StreamDataPanels(
-                  pastStreamData: _pastStreamData.sublist(1),
+                ..._pastStreamData.map(
+                  (pastStreamData) => Column(
+                    children: [
+                      StreamEntry(pastStreamData: pastStreamData),
+                      Divider(
+                        height: 0.0,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

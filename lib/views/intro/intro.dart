@@ -2,37 +2,33 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
-import 'package:obs_blade/views/intro/widgets/intro_slide.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:provider/provider.dart';
 
-class IntroView extends StatefulWidget {
+import '../../stores/views/intro.dart';
+import '../../utils/styling_helper.dart';
+import 'widgets/intro_slide.dart';
+import 'widgets/slide_controls.dart';
+
+const double kIntroControlsBottomPadding = 32.0;
+
+class IntroView extends StatelessWidget {
   @override
-  _IntroViewState createState() => _IntroViewState();
+  Widget build(BuildContext context) {
+    return Provider<IntroStore>(
+      create: (_) => IntroStore(),
+      builder: (context, _) => _IntroView(),
+    );
+  }
 }
 
-class _IntroViewState extends State<IntroView> {
-  PageController _pageController = PageController();
-  int _currentPage = 0;
+class _IntroView extends StatelessWidget {
+  final PageController pageController = PageController();
 
-  List<Widget> _pageChildren = [
+  final List<Widget> pageChildren = [
     IntroSlide(),
     IntroSlide(),
     IntroSlide(),
   ];
-
-  @override
-  void initState() {
-    _pageController.addListener(_checkPageScroll);
-    super.initState();
-  }
-
-  void _checkPageScroll() {
-    if (_pageController.page.floor() != _currentPage) {
-      setState(() => _currentPage = _pageController.page.floor());
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +39,14 @@ class _IntroViewState extends State<IntroView> {
           alignment: Alignment.center,
           children: [
             PageView(
-              controller: _pageController,
-              children: _pageChildren,
+              controller: this.pageController,
+              children: this.pageChildren,
+              onPageChanged: (page) =>
+                  context.read<IntroStore>().setCurrentPage(page),
             ),
             Positioned(
-              bottom: 24.0,
+              bottom: MediaQuery.of(context).padding.bottom +
+                  kIntroControlsBottomPadding,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: min(
@@ -55,46 +54,9 @@ class _IntroViewState extends State<IntroView> {
                     500.0,
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      child: SizedBox(
-                        width: 50.0,
-                        child: Text('Back'),
-                      ),
-                      onPressed: _currentPage > 0
-                          ? () => _pageController.previousPage(
-                              duration: Duration(milliseconds: 250),
-                              curve: Curves.easeIn)
-                          : null,
-                    ),
-                    SmoothPageIndicator(
-                      controller: _pageController,
-                      effect: ScrollingDotsEffect(
-                        activeDotColor: StylingHelper.MAIN_RED,
-                        dotHeight: 12.0,
-                        dotWidth: 12.0,
-                      ),
-                      count: _pageChildren.length,
-                    ),
-                    CupertinoButton(
-                      child: SizedBox(
-                        width: 50.0,
-                        child: Text(
-                          _currentPage < _pageChildren.length - 1
-                              ? 'Next'
-                              : 'Start',
-                        ),
-                      ),
-                      onPressed: () => _currentPage < _pageChildren.length - 1
-                          ? _pageController.nextPage(
-                              duration: Duration(milliseconds: 250),
-                              curve: Curves.easeIn)
-                          : Navigator.of(context)
-                              .pushReplacementNamed(AppRoutingKeys.Tabs.route),
-                    ),
-                  ],
+                child: SlideControls(
+                  pageController: this.pageController,
+                  amountChildren: this.pageChildren.length,
                 ),
               ),
             )

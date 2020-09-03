@@ -14,7 +14,7 @@ class StreamWidgets extends StatelessWidget {
             title: 'Chat',
             noPaddingChild: true,
             child: SizedBox(
-              height: 350.0,
+              height: 500.0,
               child: TwitchChat(
                 usernameRowPadding: true,
               ),
@@ -26,7 +26,7 @@ class StreamWidgets extends StatelessWidget {
             title: 'Stats',
             noPaddingChild: true,
             child: SizedBox(
-              height: 350.0,
+              height: 500.0,
               child: Stats(),
             ),
           ),

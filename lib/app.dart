@@ -74,7 +74,10 @@ class App extends StatelessWidget {
           // );
           return MaterialApp(
             theme: theme,
-            initialRoute: AppRoutingKeys.Intro.route,
+            initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
+                    defaultValue: false)
+                ? AppRoutingKeys.Tabs.route
+                : AppRoutingKeys.Intro.route,
             onGenerateInitialRoutes: (initialRoute) => [
               MaterialWithModalsPageRoute(
                 builder: RoutingHelper.appRoutes[initialRoute],

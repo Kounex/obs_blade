@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
+
+import '../../../../models/past_stream_data.dart';
+import '../../../../utils/routing_helper.dart';
 
 class StreamEntry extends StatelessWidget {
   final PastStreamData pastStreamData;
@@ -10,42 +11,65 @@ class StreamEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: () => Navigator.pushNamed(
-          context, StaticticsTabRoutingKeys.Detail.route,
-          arguments: this.pastStreamData),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: Colors.grey,
-      ),
-      title: Text('Unnamed stream'),
-      subtitle: Column(
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: Row(
         children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 45.0,
-                child: Text('From: '),
+          Expanded(
+            child: ListTile(
+              title: Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Text(
+                  this.pastStreamData.name ?? 'Unnamed stream',
+                  style: Theme.of(context).textTheme.button.copyWith(
+                        fontSize: 18.0,
+                      ),
+                  maxLines: 2,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Text(
-                  '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
-              Text(' - '),
-              Text(
-                  '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
-            ],
+              onTap: () => Navigator.pushNamed(
+                  context, StaticticsTabRoutingKeys.Detail.route,
+                  arguments: this.pastStreamData),
+              subtitle: Column(
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 45.0,
+                        child: Text('From: '),
+                      ),
+                      Text(
+                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
+                      Text(' - '),
+                      Text(
+                          '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 45.0,
+                        child: Text('To: '),
+                      ),
+                      Text(
+                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
+                      Text(' - '),
+                      Text(
+                          '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          Row(
-            children: [
-              SizedBox(
-                width: 45.0,
-                child: Text('To: '),
-              ),
-              Text(
-                  '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
-              Text(' - '),
-              Text(
-                  '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
-            ],
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Icon(
+              Icons.chevron_right,
+              color: Colors.grey,
+            ),
           ),
         ],
       ),

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
-import 'package:obs_blade/shared/overlay/base_result.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/views/dashboard/widgets/stream_widgets/twitch_chat/chat_username_bar.dart/chat_username_bar.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/overlay/base_result.dart';
+import '../../../../../stores/views/dashboard.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/settings_keys.dart';
+import 'chat_username_bar.dart/chat_username_bar.dart';
 
 class TwitchChat extends StatefulWidget {
   final bool usernameRowPadding;
@@ -32,7 +33,6 @@ class _TwitchChatState extends State<TwitchChat>
 
     super.build(context);
     return Column(
-      mainAxisSize: MainAxisSize.max,
       children: [
         Padding(
           padding: EdgeInsets.only(
@@ -48,8 +48,17 @@ class _TwitchChatState extends State<TwitchChat>
             builder: (context, Box settingsBox, child) => Stack(
               alignment: Alignment.center,
               children: [
+                /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
+                /// the main Scroll (the [CustomScrollView] of this view) whie trying to scroll
+                /// in the region where the Twitch chat is. The Listener is used to determine
+                /// where the user is trying to scroll and if it's where the Twitch chat is,
+                /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
+                /// the scroll
                 Listener(
-                  onPointerDown: (_) => dashboardStore.setPointerOnTwitch(true),
+                  onPointerDown: (onPointerDown) =>
+                      dashboardStore.setPointerOnTwitch(
+                          onPointerDown.localPosition.dy > 125.0 &&
+                              onPointerDown.localPosition.dy < 350.0),
                   onPointerUp: (_) => dashboardStore.setPointerOnTwitch(false),
                   onPointerCancel: (_) =>
                       dashboardStore.setPointerOnTwitch(false),

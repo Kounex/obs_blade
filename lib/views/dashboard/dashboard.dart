@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/confirmation.dart';
@@ -105,52 +106,42 @@ class _DashboardViewState extends State<_DashboardView> {
           controller: ModalRoute.of(context).settings.arguments,
           slivers: [
             StatusAppBar(),
-            SliverPadding(
-              padding: EdgeInsets.only(
-                left: MediaQuery.of(context).padding.left,
-                bottom: 50.0,
-                right: MediaQuery.of(context).padding.right,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  [
-                    Align(
-                      child: SizedBox(
-                        // width: MediaQuery.of(context).size.width / 100 * 85,
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  top: 12.0, bottom: 24.0),
-                              child: Scenes(),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Widgets',
-                                style: Theme.of(context).textTheme.headline4,
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                              child: Divider(height: 0.0),
-                            ),
-                            ResponsiveWidgetWrapper(
-                              mobileWidget: StreamWidgetsMobile(),
-                              tabletWidget: StreamWidgets(),
-                            ),
-                          ],
+            CustomSliverList(
+              children: [
+                Align(
+                  child: SizedBox(
+                    // width: MediaQuery.of(context).size.width / 100 * 85,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(top: 12.0, bottom: 24.0),
+                          child: Scenes(),
                         ),
-                      ),
+                        Container(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Widgets',
+                            style: Theme.of(context).textTheme.headline4,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                          child: Divider(height: 0.0),
+                        ),
+                        ResponsiveWidgetWrapper(
+                          mobileWidget: StreamWidgetsMobile(),
+                          tabletWidget: StreamWidgets(),
+                        ),
+                      ],
                     ),
-                    // SizedBox(
-                    //   height: kBottomNavigationBarHeight,
-                    // ),
-                  ],
+                  ),
                 ),
-              ),
+                // SizedBox(
+                //   height: kBottomNavigationBarHeight,
+                // ),
+              ],
             ),
           ],
         );

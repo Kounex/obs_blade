@@ -1,10 +1,8 @@
-import 'package:connectivity/connectivity.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/utils/validation_helper.dart';
 
 import '../../models/connection.dart';
 import '../../utils/network_helper.dart';
+import '../../utils/validation_helper.dart';
 
 part 'home.g.dart';
 
