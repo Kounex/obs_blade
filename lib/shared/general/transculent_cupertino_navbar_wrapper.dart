@@ -18,12 +18,15 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
 
   final List<Widget> listViewChildren;
 
-  TransculentCupertinoNavBarWrapper(
-      {this.appBarPreviousTitle,
-      @required this.appBarTitle,
-      this.scrollController,
-      this.listViewChildren = const []})
-      : assert(listViewChildren != null);
+  final Widget actions;
+
+  TransculentCupertinoNavBarWrapper({
+    this.appBarPreviousTitle,
+    @required this.appBarTitle,
+    this.scrollController,
+    this.listViewChildren = const [],
+    this.actions,
+  }) : assert(listViewChildren != null);
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +46,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
         CupertinoNavigationBar(
           previousPageTitle: this.appBarPreviousTitle,
           middle: Text(this.appBarTitle),
+          trailing: this.actions,
         ),
       ],
     );

@@ -108,18 +108,22 @@ class _TabBaseState extends State<TabBase> {
       ),
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: _currentTabIndex,
-        onTap: (index) => setState(() {
+        onTap: (index) {
+          print(_navigatorKeys[index].currentState);
           if (_currentTabIndex == index) {
-            if (_navigatorKeys[index].currentState.canPop()) {
-              _navigatorKeys[index].currentState.pop();
-            } else {
+            if (_tabScrollController[index].hasClients &&
+                _tabScrollController[index].offset > 0) {
               _tabScrollController[index].animateTo(0.0,
                   duration: Duration(milliseconds: 250), curve: Curves.easeIn);
+            } else if (_navigatorKeys[index].currentState.canPop()) {
+              _navigatorKeys[index].currentState.pop();
             }
           } else {
-            _currentTabIndex = index;
+            setState(() {
+              _currentTabIndex = index;
+            });
           }
-        }),
+        },
         items: [
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.home),

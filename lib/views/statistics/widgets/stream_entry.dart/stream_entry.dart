@@ -30,8 +30,13 @@ class StreamEntry extends StatelessWidget {
                 ),
               ),
               onTap: () => Navigator.pushNamed(
-                  context, StaticticsTabRoutingKeys.Detail.route,
-                  arguments: this.pastStreamData),
+                context,
+                StaticticsTabRoutingKeys.Detail.route,
+                arguments: {
+                  'scrollController': ModalRoute.of(context).settings.arguments,
+                  'pastStreamData': this.pastStreamData,
+                },
+              ),
               subtitle: Column(
                 children: [
                   Row(

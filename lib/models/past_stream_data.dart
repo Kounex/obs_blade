@@ -108,10 +108,7 @@ class PastStreamData extends HiveObject {
   /// cleared
   List<StreamStats> _cacheStreamStats = [];
 
-  bool hasBeenPopulated = false;
-
   addStreamStats(StreamStats streamStats) {
-    this.hasBeenPopulated = true;
     if (_cacheStreamStats.length < kAmountStreamStatsForAverage) {
       _cacheStreamStats.add(streamStats);
     } else {
@@ -127,6 +124,7 @@ class PastStreamData extends HiveObject {
   /// to set the value of the other properties according to the
   /// last [StreamStats] in [_cacheStreamStats]
   finishUpStats({bool finishManually = false}) {
+    _setListsFromStreamStats();
     this.strain = _cacheStreamStats.last.strain;
     this.totalStreamTime = _cacheStreamStats.last.totalStreamTime;
     this.numTotalFrames = _cacheStreamStats.last.numTotalFrames;

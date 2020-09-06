@@ -125,7 +125,7 @@ abstract class _DashboardStore with Store {
   }
 
   Future<void> finishPastStreamData({bool manually = false}) async {
-    if (this.streamData != null && this.streamData.hasBeenPopulated) {
+    if (this.streamData != null) {
       this.streamData.finishUpStats(finishManually: manually);
       if (this.streamDataFromBox) {
         await this.streamData.save();
