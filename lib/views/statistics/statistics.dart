@@ -3,9 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/app_bar_cupertino_actions.dart';
+import 'package:obs_blade/stores/shared/tabs.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/views/statistics/widgets/stream_entry_placeholder/stream_entry_placeholder.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base_card.dart';
@@ -20,6 +23,8 @@ class StatisticsView extends StatefulWidget {
 }
 
 class _StatisticsViewState extends State<StatisticsView> {
+  List<ReactionDisposer> _disposers = [];
+
   // List<PastStreamData> _pastStreamData;
   // Random _random = Random();
 
@@ -43,18 +48,34 @@ class _StatisticsViewState extends State<StatisticsView> {
   //     memoryUsage: _random.nextDouble() * 1000000,
   //     freeDiskSpace: _random.nextDouble() * 1000000);
 
-  // @override
-  // void initState() {
-  //   _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
-  //     PastStreamData pastStreamData = PastStreamData();
-  //     List.generate(_random.nextInt(1000), (index) {
-  //       pastStreamData.addStreamStats(_randomStreamStats());
-  //     });
-  //     pastStreamData.finishUpStats();
-  //     return pastStreamData;
-  //   });
-  //   super.initState();
-  // }
+  @override
+  void initState() {
+    // _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
+    //   PastStreamData pastStreamData = PastStreamData();
+    //   List.generate(_random.nextInt(1000), (index) {
+    //     pastStreamData.addStreamStats(_randomStreamStats());
+    //   });
+    //   pastStreamData.finishUpStats();
+    //   return pastStreamData;
+    // });
+
+    _disposers.add(
+        reaction((_) => context.read<TabsStore>().performTabClickAction,
+            (performTabClickAction) {
+      print('LOL');
+      if (performTabClickAction && ModalRoute.of(context).isCurrent) {
+        print('settings');
+        context.read<TabsStore>().setPerformTabClickAction(false);
+      }
+    }));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _disposers.forEach((d) => d());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

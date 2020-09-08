@@ -1,9 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/stores/shared/tabs.dart';
+import 'package:provider/provider.dart';
+import './types/extensions/list.dart';
 
 import 'types/extensions/list.dart';
 import 'utils/routing_helper.dart';
-import 'utils/styling_helper.dart';
 
 class TabBase extends StatefulWidget {
   @override
@@ -11,17 +14,10 @@ class TabBase extends StatefulWidget {
 }
 
 class _TabBaseState extends State<TabBase> {
-  int _currentTabIndex = 0;
-
   List<Navigator> _tabViews;
-  List<GlobalKey<NavigatorState>> _navigatorKeys = [
-    GlobalKey<NavigatorState>(debugLabel: 'home'),
-    GlobalKey<NavigatorState>(debugLabel: 'statistics'),
-    GlobalKey<NavigatorState>(debugLabel: 'settings'),
-  ];
-  List<HeroController> _heroControllers;
-
-  List<ScrollController> _tabScrollController;
+  List<GlobalKey<NavigatorState>> _navigatorKeys = [];
+  List<HeroController> _heroControllers = [];
+  List<ScrollController> _tabScrollController = [];
 
   RectTween _createRectTween(Rect begin, Rect end) {
     return MaterialRectArcTween(begin: begin, end: end);
@@ -30,114 +26,86 @@ class _TabBaseState extends State<TabBase> {
   @override
   void initState() {
     super.initState();
-    _heroControllers = [
-      HeroController(createRectTween: _createRectTween),
-      HeroController(createRectTween: _createRectTween),
-      HeroController(createRectTween: _createRectTween)
-    ];
-    _tabScrollController = [
-      ScrollController(),
-      ScrollController(),
-      ScrollController()
-    ];
-    _tabViews = [
-      Navigator(
-        key: _navigatorKeys[0],
-        initialRoute: HomeTabRoutingKeys.Landing.route,
-        onGenerateInitialRoutes: (state, route) => [
-          CupertinoPageRoute(
-            builder: RoutingHelper.homeTabRoutes[route],
-            settings:
-                RouteSettings(name: route, arguments: _tabScrollController[0]),
+    Tabs.values.forEach((tab) {
+      _navigatorKeys.add(
+        GlobalKey<NavigatorState>(debugLabel: tab.name),
+      );
+      _heroControllers.add(
+        HeroController(createRectTween: _createRectTween),
+      );
+      _tabScrollController.add(
+        ScrollController(),
+      );
+    });
+    _tabViews = Tabs.values
+        .mapIndexed(
+          (tab, index) => Navigator(
+            key: _navigatorKeys[index],
+            initialRoute: tab.routes.keys.first,
+            onGenerateInitialRoutes: (state, route) => [
+              CupertinoPageRoute(
+                builder: tab.routes[route],
+                settings: RouteSettings(
+                  name: route,
+                  arguments: _tabScrollController[index],
+                ),
+              ),
+            ],
+            onGenerateRoute: (routeSettings) => CupertinoPageRoute(
+              builder: tab.routes[routeSettings.name],
+              settings: routeSettings,
+            ),
+            observers: [_heroControllers[index]],
           ),
-        ],
-        onGenerateRoute: (routeSettings) => CupertinoPageRoute(
-          builder: RoutingHelper.homeTabRoutes[routeSettings.name],
-          settings: routeSettings,
-        ),
-        observers: [_heroControllers[0]],
-      ),
-      Navigator(
-        key: _navigatorKeys[1],
-        initialRoute: StaticticsTabRoutingKeys.Landing.route,
-        onGenerateInitialRoutes: (state, route) => [
-          CupertinoPageRoute(
-            builder: RoutingHelper.statisticsTabRoutes[route],
-            settings:
-                RouteSettings(name: route, arguments: _tabScrollController[1]),
-          ),
-        ],
-        onGenerateRoute: (routeSettings) => CupertinoPageRoute(
-          builder: RoutingHelper.statisticsTabRoutes[routeSettings.name],
-          settings: routeSettings,
-        ),
-        observers: [_heroControllers[1]],
-      ),
-      Navigator(
-        key: _navigatorKeys[2],
-        initialRoute: SettingsTabRoutingKeys.Landing.route,
-        onGenerateInitialRoutes: (state, route) => [
-          CupertinoPageRoute(
-            builder: RoutingHelper.settingsTabRoutes[route],
-            settings:
-                RouteSettings(name: route, arguments: _tabScrollController[2]),
-          ),
-        ],
-        onGenerateRoute: (routeSettings) => CupertinoPageRoute(
-          builder: RoutingHelper.settingsTabRoutes[routeSettings.name],
-          settings: routeSettings,
-        ),
-        observers: [_heroControllers[2]],
-      ),
-    ];
+        )
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    TabsStore tabsStore = context.watch<TabsStore>();
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentTabIndex,
-        children: _tabViews
-            .mapIndexed(
-              (navigator, index) => Offstage(
-                offstage: index != _currentTabIndex,
-                child: navigator,
-              ),
-            )
-            .toList(),
-      ),
-      bottomNavigationBar: CupertinoTabBar(
-        currentIndex: _currentTabIndex,
-        onTap: (index) {
-          print(_navigatorKeys[index].currentState);
-          if (_currentTabIndex == index) {
-            if (_tabScrollController[index].hasClients &&
-                _tabScrollController[index].offset > 0) {
-              _tabScrollController[index].animateTo(0.0,
-                  duration: Duration(milliseconds: 250), curve: Curves.easeIn);
-            } else if (_navigatorKeys[index].currentState.canPop()) {
-              _navigatorKeys[index].currentState.pop();
+      body: Observer(builder: (_) {
+        return IndexedStack(
+          index: tabsStore.tabIndex,
+          children: _tabViews
+              .mapIndexed(
+                (navigator, index) => Offstage(
+                  offstage: index != tabsStore.tabIndex,
+                  child: navigator,
+                ),
+              )
+              .toList(),
+        );
+      }),
+      bottomNavigationBar: Observer(
+        builder: (_) => CupertinoTabBar(
+          currentIndex: tabsStore.tabIndex,
+          onTap: (index) {
+            if (tabsStore.tabIndex == index) {
+              tabsStore.setPerformTabClickAction(true);
+              if (_tabScrollController[index].hasClients &&
+                  _tabScrollController[index].offset > 0) {
+                _tabScrollController[index].animateTo(0.0,
+                    duration: Duration(milliseconds: 250),
+                    curve: Curves.easeIn);
+              } else if (_navigatorKeys[index].currentState.canPop()) {
+                _navigatorKeys[index].currentState.pop();
+              }
+            } else {
+              tabsStore.setTabIndex(index);
             }
-          } else {
-            setState(() {
-              _currentTabIndex = index;
-            });
-          }
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.home),
-            title: Text('Home'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(StylingHelper.CUPERTINO_BAR_ICON),
-            title: Text('Statistics'),
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.settings),
-            title: Text('Settings'),
-          ),
-        ],
+          },
+          items: Tabs.values
+              .map(
+                (tab) => BottomNavigationBarItem(
+                  icon: Icon(tab.icon),
+                  title: Text(tab.name),
+                ),
+              )
+              .toList(),
+        ),
       ),
     );
   }

@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/utils/dialog_handler.dart';
+import 'package:mobx/mobx.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
+import '../../shared/dialogs/confirmation.dart';
 import '../../shared/general/app_bar_cupertino_actions.dart';
 import '../../shared/general/formatted_text.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../stores/shared/tabs.dart';
+import '../../utils/dialog_handler.dart';
 import '../dashboard/widgets/stream_widgets/stats/stats_container.dart';
 import '../statistics/widgets/stream_chart/stream_chart.dart';
 
-class StatisticDetailView extends StatelessWidget {
+class StatisticDetailView extends StatefulWidget {
+  @override
+  _StatisticDetailViewState createState() => _StatisticDetailViewState();
+}
+
+class _StatisticDetailViewState extends State<StatisticDetailView> {
+  List<ReactionDisposer> _disposers = [];
+
+  @override
+  void initState() {
+    _disposers.add(
+        reaction((_) => context.read<TabsStore>().performTabClickAction,
+            (performTabClickAction) {
+      if (performTabClickAction && ModalRoute.of(context).isCurrent) {
+        print('settings_detail');
+      }
+    }));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _disposers.forEach((d) => d());
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     PastStreamData pastStreamData = (ModalRoute.of(context).settings.arguments

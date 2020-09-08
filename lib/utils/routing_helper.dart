@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/views/intro/intro.dart';
 import 'package:obs_blade/views/privacy_policy/privacy_policy.dart';
 import 'package:obs_blade/views/statistic_detail/statistic_detail.dart';
@@ -16,6 +18,40 @@ import '../views/settings/settings.dart';
 enum AppRoutingKeys {
   Intro,
   Tabs,
+}
+
+/// All available and used tabs in our TabView which is basically the root
+/// of our application (view wise) since the main navigation is realised
+/// with a tab bar - this enum is used to iterate over available tabs and
+/// automate adding tabs (see extension functions for this enum)
+enum Tabs {
+  Home,
+  Statistics,
+  Settings,
+}
+
+/// Extension functions for the [Tabs] enum which has some convinient functions
+/// which automates the generation of the [Navigator] instances with the
+/// needed properties in [TabBase]. By populating the enum and this functions
+/// current and new tabs will automatically generated / changed
+extension TabsFunctions on Tabs {
+  String get name => const {
+        Tabs.Home: 'Home',
+        Tabs.Statistics: 'Statistics',
+        Tabs.Settings: 'Settings',
+      }[this];
+
+  IconData get icon => const {
+        Tabs.Home: CupertinoIcons.home,
+        Tabs.Statistics: StylingHelper.CUPERTINO_BAR_ICON,
+        Tabs.Settings: CupertinoIcons.settings,
+      }[this];
+
+  Map<String, Widget Function(BuildContext)> get routes => {
+        Tabs.Home: RoutingHelper.homeTabRoutes,
+        Tabs.Statistics: RoutingHelper.statisticsTabRoutes,
+        Tabs.Settings: RoutingHelper.settingsTabRoutes,
+      }[this];
 }
 
 /// Routing keys for the home tab
