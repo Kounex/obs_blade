@@ -2,15 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:obs_blade/views/intro/intro.dart';
 
 class IntroSlide extends StatelessWidget {
+  final List<Widget> content;
+
+  IntroSlide({@required this.content});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        bottom:
-            MediaQuery.of(context).padding.bottom + kIntroControlsBottomPadding,
+        top: MediaQuery.of(context).padding.top,
+        left: 24.0,
+        right: 24.0,
+        bottom: MediaQuery.of(context).padding.bottom +
+            kIntroControlsBottomPadding +
+            32.0,
       ),
-      child: Center(
-        child: Text('WTF'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: this.content,
       ),
     );
   }

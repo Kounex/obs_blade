@@ -9,7 +9,7 @@ import '../../utils/styling_helper.dart';
 import 'widgets/intro_slide.dart';
 import 'widgets/slide_controls.dart';
 
-const double kIntroControlsBottomPadding = 32.0;
+const double kIntroControlsBottomPadding = 24.0;
 
 class IntroView extends StatelessWidget {
   @override
@@ -21,14 +21,128 @@ class IntroView extends StatelessWidget {
   }
 }
 
-class _IntroView extends StatelessWidget {
-  final PageController pageController = PageController();
+class _IntroView extends StatefulWidget {
+  @override
+  __IntroViewState createState() => __IntroViewState();
+}
 
-  final List<Widget> pageChildren = [
-    IntroSlide(),
-    IntroSlide(),
-    IntroSlide(),
-  ];
+class __IntroViewState extends State<_IntroView> {
+  PageController _pageController = PageController();
+  List<Widget> _pageChildren;
+
+  @override
+  void didChangeDependencies() {
+    _pageChildren = [
+      IntroSlide(
+        content: [
+          Transform.scale(
+            scale: 1.3,
+            child: Transform.translate(
+              offset: Offset(0.0, -MediaQuery.of(context).size.height * 0.05),
+              child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height / 3,
+                  ),
+                  child: Image.asset('assets/images/base-logo.png')),
+            ),
+          ),
+          Card(
+            color: Colors.black12,
+            child: Padding(
+              padding: EdgeInsets.all(18.0),
+              child: Text(
+                'Control your OBS instance and your stream!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headline6,
+              ),
+            ),
+          )
+        ],
+      ),
+      IntroSlide(
+        content: [
+          Transform.scale(
+            scale: 1.3,
+            child: Transform.translate(
+              offset: Offset(0.0, -MediaQuery.of(context).size.height * 0.05),
+              child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height / 3,
+                  ),
+                  child: Image.asset(
+                      'assets/images/intro/intro_obs_websocket_page.png')),
+            ),
+          ),
+          Card(
+            color: Colors.black12,
+            child: Padding(
+              padding: EdgeInsets.all(18.0),
+              child: Text(
+                'Vist the OBS WebSocket GitHub page!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headline6,
+              ),
+            ),
+          )
+        ],
+      ),
+      IntroSlide(
+        content: [
+          Transform.scale(
+            scale: 1.3,
+            child: Transform.translate(
+              offset: Offset(0.0, -MediaQuery.of(context).size.height * 0.05),
+              child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height / 3,
+                  ),
+                  child: Image.asset(
+                      'assets/images/intro/intro_obs_websocket_download.png')),
+            ),
+          ),
+          Card(
+            color: Colors.black12,
+            child: Padding(
+              padding: EdgeInsets.all(18.0),
+              child: Text(
+                'Click on \'Releases\' to get to the download area!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headline6,
+              ),
+            ),
+          )
+        ],
+      ),
+      IntroSlide(
+        content: [
+          Transform.scale(
+            scale: 1.3,
+            child: Transform.translate(
+              offset: Offset(0.0, -MediaQuery.of(context).size.height * 0.05),
+              child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height / 3,
+                  ),
+                  child: Image.asset(
+                      'assets/images/intro/intro_obs_websocket_settings.png')),
+            ),
+          ),
+          Card(
+            color: Colors.black12,
+            child: Padding(
+              padding: EdgeInsets.all(18.0),
+              child: Text(
+                'After installing the correct version for your OS, make sure to restart OBS and look if Tools -> WebSocket Server Settings is available!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headline6,
+              ),
+            ),
+          )
+        ],
+      ),
+    ];
+    super.didChangeDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +152,10 @@ class _IntroView extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            PageView(
-              controller: this.pageController,
-              children: this.pageChildren,
+            PageView.builder(
+              controller: _pageController,
+              itemCount: _pageChildren.length,
+              itemBuilder: (context, index) => _pageChildren[index],
               onPageChanged: (page) =>
                   context.read<IntroStore>().setCurrentPage(page),
             ),
@@ -55,8 +170,8 @@ class _IntroView extends StatelessWidget {
                   ),
                 ),
                 child: SlideControls(
-                  pageController: this.pageController,
-                  amountChildren: this.pageChildren.length,
+                  pageController: _pageController,
+                  amountChildren: _pageChildren.length,
                 ),
               ),
             )
