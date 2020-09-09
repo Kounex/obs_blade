@@ -58,10 +58,10 @@ class StreamEntry extends StatelessWidget {
                         child: Text('From: '),
                       ),
                       Text(
-                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
+                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000))}'),
                       Text(' - '),
                       Text(
-                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
+                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000))}'),
                     ],
                   ),
                   Row(
@@ -71,10 +71,10 @@ class StreamEntry extends StatelessWidget {
                         child: Text('To: '),
                       ),
                       Text(
-                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
+                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last))}'),
                       Text(' - '),
                       Text(
-                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
+                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last))}'),
                     ],
                   ),
                 ],

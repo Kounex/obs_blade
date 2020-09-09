@@ -14,7 +14,6 @@ main() {
       PastStreamData pastStreamData = PastStreamData();
 
       pastStreamData.addStreamStats(StreamStatsMocker.random());
-      pastStreamData.finishUpStats();
 
       expect(pastStreamData.averageFrameTime, isNotNull);
     });
@@ -31,8 +30,6 @@ main() {
         pastStreamData.addStreamStats(streamStatsList.last);
       });
 
-      pastStreamData.finishUpStats();
-
       expect(pastStreamData.fpsList.length,
           amountStreamStats ~/ kAmountStreamStatsForAverage);
     });
@@ -48,8 +45,6 @@ main() {
         pastStreamData.addStreamStats(streamStatsList.last);
       });
       streamStatsList.removeLast();
-
-      pastStreamData.finishUpStats();
 
       expect(
           pastStreamData.fpsList.first,

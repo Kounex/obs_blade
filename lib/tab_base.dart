@@ -85,13 +85,13 @@ class _TabBaseState extends State<TabBase> {
           onTap: (index) {
             if (tabsStore.tabIndex == index) {
               tabsStore.setPerformTabClickAction(true);
-              if (_tabScrollController[index].hasClients &&
+              if (_navigatorKeys[index].currentState.canPop()) {
+                _navigatorKeys[index].currentState.pop();
+              } else if (_tabScrollController[index].hasClients &&
                   _tabScrollController[index].offset > 0) {
                 _tabScrollController[index].animateTo(0.0,
                     duration: Duration(milliseconds: 250),
                     curve: Curves.easeIn);
-              } else if (_navigatorKeys[index].currentState.canPop()) {
-                _navigatorKeys[index].currentState.pop();
               }
             } else {
               tabsStore.setTabIndex(index);

@@ -89,7 +89,8 @@ class _StatisticsViewState extends State<StatisticsView> {
                   noPaddingChild: true,
                   child: pastStreamDataBox.isNotEmpty
                       ? StreamEntry(
-                          pastStreamData: pastStreamDataBox.values.first)
+                          pastStreamData:
+                              pastStreamDataBox.values.toList().reversed.first)
                       : StreamEntryPlaceholder(
                           text:
                               'You haven\'t streamed using this app!\nOr deleted all statistic entries?!'),
@@ -106,7 +107,11 @@ class _StatisticsViewState extends State<StatisticsView> {
                   child: pastStreamDataBox.values.length > 1
                       ? Column(
                           children: [
-                            ...pastStreamDataBox.values.skip(1).map(
+                            ...pastStreamDataBox.values
+                                .toList()
+                                .reversed
+                                .skip(1)
+                                .map(
                                   (pastStreamData) => Column(
                                     children: [
                                       StreamEntry(

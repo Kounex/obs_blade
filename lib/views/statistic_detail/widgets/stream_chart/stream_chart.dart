@@ -94,7 +94,7 @@ class StreamChart extends StatelessWidget {
             getTooltipItems: (touchedSpots) => touchedSpots
                 .map(
                   (touchSpot) => LineTooltipItem(
-                      '${touchSpot.y.toStringAsFixed(this.amountFixedTooltipValue)}${this.dataUnit}\n${DateFormat.Hm('en_US').format(DateTime.fromMillisecondsSinceEpoch(touchSpot.x.round()))}',
+                      '${touchSpot.y.toStringAsFixed(this.amountFixedTooltipValue)}${this.dataUnit}\n${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(touchSpot.x.round()))}',
                       tooltipTextStyle),
                 )
                 .toList(),
@@ -114,7 +114,7 @@ class StreamChart extends StatelessWidget {
             margin: 15.0,
             textStyle: axisStepsTextStyle,
             interval: (this.totalStreamTime * 1000) / 5,
-            getTitles: (interval) => DateFormat.Hm('en_US').format(
+            getTitles: (interval) => DateFormat.Hm('de_DE').format(
               DateTime.fromMillisecondsSinceEpoch(
                 interval.round(),
               ),
@@ -133,7 +133,6 @@ class StreamChart extends StatelessWidget {
                       data.toDouble()),
                 )
                 .toList(),
-            isCurved: true,
             colors: [
               this.chartColor,
             ],

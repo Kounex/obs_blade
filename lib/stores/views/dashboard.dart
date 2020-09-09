@@ -118,12 +118,11 @@ abstract class _DashboardStore with Store {
     });
   }
 
-  /// Finish and save current [PastStreaData] since stream is either over,
-  /// connection has been closed or OBS terminated
-  Future<void> finishPastStreamData({bool manually = false}) async {
+  /// Check if we have an ongoing statistics going (!= null) and set it
+  /// to null to indicate that we are done with this one and can start
+  /// a new one
+  Future<void> finishPastStreamData() async {
     if (this.streamData != null) {
-      this.streamData.finishUpStats(finishManually: manually);
-      await this.streamData.save();
       this.streamData = null;
     }
   }
@@ -154,12 +153,11 @@ abstract class _DashboardStore with Store {
     Box<PastStreamData> pastStreamDataBox =
         Hive.box<PastStreamData>(HiveKeys.PastStreamData.name);
     List<PastStreamData> tmp = pastStreamDataBox.values.toList();
-    tmp.sort((a, b) => b.streamEndedMS - a.streamEndedMS);
+    tmp.sort((a, b) => b.listEntryDateMS.last - a.listEntryDateMS.last);
     if (tmp.length > 0 &&
-        ((tmp.last.stoppedByUser == null || tmp.last.stoppedByUser) ||
-            DateTime.now().millisecondsSinceEpoch -
-                    this.latestStreamStats.totalStreamTime * 1000 <=
-                tmp.last.streamEndedMS)) {
+        DateTime.now().millisecondsSinceEpoch -
+                this.latestStreamStats.totalStreamTime * 1000 <=
+            tmp.last.listEntryDateMS.last) {
       this.streamData = tmp.last;
     } else {
       this.streamData = PastStreamData();
@@ -285,7 +283,7 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(this.currentSceneItems);
         break;
       case EventType.Exiting:
-        await this.finishPastStreamData(manually: true);
+        await this.finishPastStreamData();
         this.obsTerminated = true;
         break;
       default:
