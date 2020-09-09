@@ -91,12 +91,6 @@ abstract class _DashboardStore with Store {
 
   List<SourceType> sourceTypes;
 
-  /// Indicate whether the current [PastStreamData] has been created
-  /// for this streaming session or has been loaded from the Hive Box
-  /// and will be populated (if it is the same stream and we just reconnected
-  /// to a running stream session)
-  bool streamDataFromBox = false;
-
   void setupNetworkStoreHandling(NetworkStore networkStore) {
     this.networkStore = networkStore;
     this.initialRequests();
@@ -124,19 +118,22 @@ abstract class _DashboardStore with Store {
     });
   }
 
+  /// Finish and save current [PastStreaData] since stream is either over,
+  /// connection has been closed or OBS terminated
   Future<void> finishPastStreamData({bool manually = false}) async {
     if (this.streamData != null) {
       this.streamData.finishUpStats(finishManually: manually);
-      if (this.streamDataFromBox) {
-        await this.streamData.save();
-      } else {
-        await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
-            .add(this.streamData);
-      }
+      await this.streamData.save();
       this.streamData = null;
     }
   }
 
+  /// SceneItems which type is 'group' can have children which are
+  /// SceneItems again - this would lead to checking those children
+  /// in many cases (a lot of work and extra code). SO instead I flatten
+  /// this by adding those children to the general list and since
+  /// those children have their parent name as a property I can easily
+  /// identify them in the flat list
   List<SceneItem> _flattenSceneItems(Iterable<SceneItem> sceneItems) {
     List<SceneItem> tmpSceneItems = [];
     sceneItems.forEach((sceneItem) {
@@ -147,6 +144,27 @@ abstract class _DashboardStore with Store {
       }
     });
     return tmpSceneItems;
+  }
+
+  /// If we get a [StreamStatus] event and we have no [PastStreamData]
+  /// instance (null) we need to check if we create a completely new
+  /// instance (indicating new stream) or we use the last one since it
+  /// seems as this is the same stream we already were connected to
+  void _manageStreamDataInit() async {
+    Box<PastStreamData> pastStreamDataBox =
+        Hive.box<PastStreamData>(HiveKeys.PastStreamData.name);
+    List<PastStreamData> tmp = pastStreamDataBox.values.toList();
+    tmp.sort((a, b) => b.streamEndedMS - a.streamEndedMS);
+    if (tmp.length > 0 &&
+        ((tmp.last.stoppedByUser == null || tmp.last.stoppedByUser) ||
+            DateTime.now().millisecondsSinceEpoch -
+                    this.latestStreamStats.totalStreamTime * 1000 <=
+                tmp.last.streamEndedMS)) {
+      this.streamData = tmp.last;
+    } else {
+      this.streamData = PastStreamData();
+      await pastStreamDataBox.add(this.streamData);
+    }
   }
 
   @action
@@ -179,21 +197,10 @@ abstract class _DashboardStore with Store {
               (this.latestStreamStats.totalStreamTime * 1000);
         }
         if (this.streamData == null) {
-          List<PastStreamData> tmp =
-              Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
-                  .values
-                  .toList();
-          tmp.sort((a, b) => b.streamEndedMS - a.streamEndedMS);
-          if (tmp.length > 0 &&
-              (tmp.last.stoppedByUser == null || tmp.last.stoppedByUser)) {
-            this.streamDataFromBox = true;
-            this.streamData = tmp.last;
-          } else {
-            this.streamDataFromBox = false;
-            this.streamData = PastStreamData();
-          }
+          _manageStreamDataInit();
         }
         this.streamData.addStreamStats(this.latestStreamStats);
+        await this.streamData.save();
         break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(

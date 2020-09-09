@@ -28,30 +28,33 @@ class CardHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Transform.translate(
-              offset: Offset(0.0, -12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    this.title,
-                    style: Theme.of(context).textTheme.headline5,
-                  ),
-                  SizedBox(
-                    width: 108.0,
-                    child: Divider(height: 8.0),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      this.description,
-                      style: Theme.of(context).textTheme.caption,
+            Flexible(
+              child: Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      this.title,
+                      style: Theme.of(context).textTheme.headline5,
                     ),
-                  ),
-                ],
+                    SizedBox(
+                      width: 108.0,
+                      child: Divider(height: 8.0),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        this.description,
+                        style: Theme.of(context).textTheme.caption,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             Align(

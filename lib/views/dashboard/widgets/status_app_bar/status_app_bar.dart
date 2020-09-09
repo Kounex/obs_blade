@@ -37,11 +37,11 @@ class StatusAppBar extends StatelessWidget {
                     isYesDestructive: true,
                     onOk: () {
                       dashboardStore.finishPastStreamData(manually: true);
-                      context.read<NetworkStore>().closeSession();
                       Navigator.of(context).pushReplacementNamed(
                         HomeTabRoutingKeys.Landing.route,
                         arguments: ModalRoute.of(context).settings.arguments,
                       );
+                      context.read<NetworkStore>().closeSession();
                     },
                   ),
                 ),

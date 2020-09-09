@@ -10,8 +10,8 @@ class AboutView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
-        appBarPreviousTitle: 'Settings',
-        appBarTitle: 'About',
+        previousTitle: 'Settings',
+        title: 'About',
         listViewChildren: [
           Padding(
             padding: EdgeInsets.only(top: 12.0),

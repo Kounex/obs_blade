@@ -19,23 +19,35 @@ class StreamEntry extends StatelessWidget {
             child: ListTile(
               title: Padding(
                 padding: const EdgeInsets.only(bottom: 12.0),
-                child: Text(
-                  this.pastStreamData.name ?? 'Unnamed stream',
-                  style: Theme.of(context).textTheme.button.copyWith(
-                        fontSize: 18.0,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: Icon(
+                        this.pastStreamData.starred != null &&
+                                this.pastStreamData.starred
+                            ? Icons.star
+                            : Icons.star_border,
                       ),
-                  maxLines: 2,
-                  softWrap: true,
-                  overflow: TextOverflow.ellipsis,
+                    ),
+                    Expanded(
+                      child: Text(
+                        this.pastStreamData.name ?? 'Unnamed stream',
+                        style: Theme.of(context).textTheme.button.copyWith(
+                              fontSize: 18.0,
+                            ),
+                        maxLines: 2,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               onTap: () => Navigator.pushNamed(
                 context,
                 StaticticsTabRoutingKeys.Detail.route,
-                arguments: {
-                  'scrollController': ModalRoute.of(context).settings.arguments,
-                  'pastStreamData': this.pastStreamData,
-                },
+                arguments: this.pastStreamData,
               ),
               subtitle: Column(
                 children: [
@@ -49,7 +61,7 @@ class StreamEntry extends StatelessWidget {
                           '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
                       Text(' - '),
                       Text(
-                          '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
+                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS - this.pastStreamData.totalStreamTime * 1000))}'),
                     ],
                   ),
                   Row(
@@ -62,7 +74,7 @@ class StreamEntry extends StatelessWidget {
                           '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
                       Text(' - '),
                       Text(
-                          '${DateFormat.Hms('en_US').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
+                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.streamEndedMS))}'),
                     ],
                   ),
                 ],

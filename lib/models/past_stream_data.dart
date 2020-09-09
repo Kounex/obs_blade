@@ -32,6 +32,14 @@ class PastStreamData extends HiveObject {
   @HiveField(17)
   List<double> memoryUsageList = [];
 
+  /// For every entry we make in our lists (which will be used for charts)
+  /// we will save the DateTime in milliseconds so we know when this entry
+  /// has been done. Since the user could connect to OBS while already streaming
+  /// or disconnect / connect multiple times, the charts would be wrong
+  /// since we could not represent the "holes"
+  @HiveField(18)
+  List<int> listEntryDateMS = [];
+
   /// Percentage of dropped frames
   @HiveField(3)
   double strain;
@@ -108,7 +116,7 @@ class PastStreamData extends HiveObject {
   /// cleared
   List<StreamStats> _cacheStreamStats = [];
 
-  addStreamStats(StreamStats streamStats) {
+  void addStreamStats(StreamStats streamStats) {
     if (_cacheStreamStats.length < kAmountStreamStatsForAverage) {
       _cacheStreamStats.add(streamStats);
     } else {
@@ -123,7 +131,7 @@ class PastStreamData extends HiveObject {
   /// and as soon as we stop the stream we will call this method
   /// to set the value of the other properties according to the
   /// last [StreamStats] in [_cacheStreamStats]
-  finishUpStats({bool finishManually = false}) {
+  void finishUpStats({bool finishManually = false}) {
     _setListsFromStreamStats();
     this.strain = _cacheStreamStats.last.strain;
     this.totalStreamTime = _cacheStreamStats.last.totalStreamTime;
@@ -140,7 +148,7 @@ class PastStreamData extends HiveObject {
 
   /// Update our lists (to see the changes of those values over time)
   /// according to our interval set by [kAmountStreamStatsForAverage]
-  _setListsFromStreamStats() {
+  void _setListsFromStreamStats() {
     StreamStats relevantStreamStats =
         _cacheStreamStats.reduce((master, current) => master
           ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
@@ -151,5 +159,6 @@ class PastStreamData extends HiveObject {
     this.fpsList.add(relevantStreamStats.fps);
     this.cpuUsageList.add(relevantStreamStats.cpuUsage);
     this.memoryUsageList.add(relevantStreamStats.memoryUsage);
+    this.listEntryDateMS.add(DateTime.now().millisecondsSinceEpoch);
   }
 }

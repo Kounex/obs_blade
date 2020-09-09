@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:mobx/mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:obs_blade/shared/dialogs/input.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/dialogs/confirmation.dart';
 import '../../shared/general/app_bar_cupertino_actions.dart';
 import '../../shared/general/formatted_text.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../stores/shared/tabs.dart';
 import '../../utils/dialog_handler.dart';
 import '../dashboard/widgets/stream_widgets/stats/stats_container.dart';
-import '../statistics/widgets/stream_chart/stream_chart.dart';
+import 'widgets/stream_chart/stream_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {
   @override
@@ -18,44 +16,50 @@ class StatisticDetailView extends StatefulWidget {
 }
 
 class _StatisticDetailViewState extends State<StatisticDetailView> {
-  List<ReactionDisposer> _disposers = [];
-
-  @override
-  void initState() {
-    _disposers.add(
-        reaction((_) => context.read<TabsStore>().performTabClickAction,
-            (performTabClickAction) {
-      if (performTabClickAction && ModalRoute.of(context).isCurrent) {
-        print('settings_detail');
-      }
-    }));
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _disposers.forEach((d) => d());
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    PastStreamData pastStreamData = (ModalRoute.of(context).settings.arguments
-        as Map<String, dynamic>)['pastStreamData'];
-    ScrollController scrollController = (ModalRoute.of(context)
-        .settings
-        .arguments as Map<String, dynamic>)['scrollController'];
-    if (scrollController.hasClients)
-      scrollController.detach(scrollController.position);
+    PastStreamData pastStreamData = ModalRoute.of(context).settings.arguments;
 
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
-        scrollController: scrollController,
-        appBarTitle: pastStreamData.name ?? 'Unnamed stream',
+        previousTitle: 'Statistics',
+        title: pastStreamData.name ?? 'Unnamed stream',
         actions: AppBarCupertinoActions(
           actionSheetTitle: 'Actions',
           actions: [
-            AppBarCupertinoActionEntry(title: 'Rename'),
+            AppBarCupertinoActionEntry(
+                title: pastStreamData.starred != null && pastStreamData.starred
+                    ? 'Delete from Favorites'
+                    : 'Mark as Favorite',
+                onAction: () {
+                  if (pastStreamData.starred != null) {
+                    pastStreamData.starred = !pastStreamData.starred;
+                  } else {
+                    pastStreamData.starred = true;
+                  }
+                  pastStreamData.box.put(pastStreamData.key, pastStreamData);
+                  setState(() {});
+                }),
+            AppBarCupertinoActionEntry(
+                title: 'Rename',
+                onAction: () {
+                  DialogHandler.showBaseDialog(
+                    context: context,
+                    dialogWidget: InputDialog(
+                      title: 'Rename stream statistic',
+                      body:
+                          'Please enter the new name for this stream statistic',
+                      inputPlaceholder: 'Statistics name',
+                      inputText: pastStreamData.name,
+                      onSave: (name) {
+                        pastStreamData.name = name;
+                        pastStreamData.save();
+
+                        setState(() {});
+                      },
+                    ),
+                  );
+                }),
             AppBarCupertinoActionEntry(
               title: 'Delete',
               isDestructive: true,
@@ -79,7 +83,8 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         ),
         listViewChildren: [
           StreamChart(
-            data: pastStreamData.fpsList.map((fps) => fps.round()).toList(),
+            data: pastStreamData.fpsList,
+            dataTimesMS: pastStreamData.listEntryDateMS,
             dataName: 'FPS',
             chartColor: Colors.greenAccent,
             streamEndedMS: pastStreamData.streamEndedMS,
@@ -87,19 +92,24 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
           ),
           Divider(),
           StreamChart(
-            data:
-                pastStreamData.cpuUsageList.map((cpu) => cpu.round()).toList(),
+            data: pastStreamData.cpuUsageList,
+            dataTimesMS: pastStreamData.listEntryDateMS,
+            amountFixedTooltipValue: 2,
             dataName: 'CPU Usage',
             dataUnit: '%',
+            yMax: 100,
             chartColor: Colors.blueAccent,
             streamEndedMS: pastStreamData.streamEndedMS,
             totalStreamTime: pastStreamData.totalStreamTime,
           ),
           Divider(),
           StreamChart(
-            data: pastStreamData.kbitsPerSecList,
+            data: pastStreamData.kbitsPerSecList
+                .map((kbits) => kbits.toDouble())
+                .toList(),
+            dataTimesMS: pastStreamData.listEntryDateMS,
             dataName: 'kbit/s',
-            yPuffer: 500,
+            yPuffer: 1000,
             yInterval: 500,
             chartColor: Colors.orangeAccent,
             streamEndedMS: pastStreamData.streamEndedMS,
@@ -108,12 +118,15 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
           Divider(),
           StreamChart(
             data: pastStreamData.memoryUsageList
-                .map((ram) => ram.round())
+                .map((memory) => memory / 1000)
                 .toList(),
+            dataTimesMS: pastStreamData.listEntryDateMS,
+            amountFixedTooltipValue: 3,
+            amountFixedYAxis: 1,
             dataName: 'RAM',
-            dataUnit: ' MB',
-            yPuffer: 200,
-            yInterval: 200,
+            dataUnit: ' GB',
+            yPuffer: 0.5,
+            yInterval: 0.2,
             chartColor: Colors.redAccent,
             streamEndedMS: pastStreamData.streamEndedMS,
             totalStreamTime: pastStreamData.totalStreamTime,

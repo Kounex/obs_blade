@@ -17,7 +17,7 @@ class GeneralActions extends StatelessWidget {
   Widget build(BuildContext context) {
     NetworkStore networkStore = context.watch<NetworkStore>();
     DashboardStore dashboardStore = context.watch<DashboardStore>();
-    bool newConnection = networkStore.activeSession.connection.name == null;
+    bool newConnection = networkStore.activeSession?.connection?.name == null;
     return Observer(
       builder: (_) => AppBarCupertinoActions(
         actionSheetTitle: 'Actions',

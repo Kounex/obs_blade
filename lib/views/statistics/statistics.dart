@@ -1,21 +1,14 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:mobx/mobx.dart';
-import 'package:obs_blade/shared/general/app_bar_cupertino_actions.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/views/statistics/widgets/stream_entry_placeholder/stream_entry_placeholder.dart';
-import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base_card.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../types/classes/api/stream_stats.dart';
+import '../../types/enums/hive_keys.dart';
 import 'widgets/card_header/card_header.dart';
 import 'widgets/stream_entry.dart/stream_entry.dart';
+import 'widgets/stream_entry_placeholder/stream_entry_placeholder.dart';
 
 class StatisticsView extends StatefulWidget {
   @override
@@ -23,7 +16,7 @@ class StatisticsView extends StatefulWidget {
 }
 
 class _StatisticsViewState extends State<StatisticsView> {
-  List<ReactionDisposer> _disposers = [];
+  // List<ReactionDisposer> _disposers = [];
 
   // List<PastStreamData> _pastStreamData;
   // Random _random = Random();
@@ -48,40 +41,32 @@ class _StatisticsViewState extends State<StatisticsView> {
   //     memoryUsage: _random.nextDouble() * 1000000,
   //     freeDiskSpace: _random.nextDouble() * 1000000);
 
-  @override
-  void initState() {
-    // _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
-    //   PastStreamData pastStreamData = PastStreamData();
-    //   List.generate(_random.nextInt(1000), (index) {
-    //     pastStreamData.addStreamStats(_randomStreamStats());
-    //   });
-    //   pastStreamData.finishUpStats();
-    //   return pastStreamData;
-    // });
+  // @override
+  // void initState() {
+  //   _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
+  //     PastStreamData pastStreamData = PastStreamData();
+  //     List.generate(_random.nextInt(1000), (index) {
+  //       pastStreamData.addStreamStats(_randomStreamStats());
+  //     });
+  //     pastStreamData.finishUpStats();
+  //     return pastStreamData;
+  //   });
 
-    _disposers.add(
-        reaction((_) => context.read<TabsStore>().performTabClickAction,
-            (performTabClickAction) {
-      print('LOL');
-      if (performTabClickAction && ModalRoute.of(context).isCurrent) {
-        print('settings');
-        context.read<TabsStore>().setPerformTabClickAction(false);
-      }
-    }));
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _disposers.forEach((d) => d());
-    super.dispose();
-  }
+  // _disposers.add(
+  //     reaction((_) => context.read<TabsStore>().performTabClickAction,
+  //         (performTabClickAction) {
+  //   if (performTabClickAction && ModalRoute.of(context).isCurrent) {
+  //     context.read<TabsStore>().setPerformTabClickAction(false);
+  //   }
+  // }));
+  // super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
-        appBarTitle: 'Statistics',
+        title: 'Statistics',
         scrollController: ModalRoute.of(context).settings.arguments,
         listViewChildren: [
           ValueListenableBuilder(
@@ -92,11 +77,14 @@ class _StatisticsViewState extends State<StatisticsView> {
                 Column(
               children: [
                 BaseCard(
+                  padding: EdgeInsets.only(
+                      top: 24.0, left: 24.0, right: 24.0, bottom: 12.0),
                   titlePadding:
                       EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
                   titleWidget: CardHeader(
                     title: 'Latest\nStream.',
-                    description: 'Your latest stream',
+                    description:
+                        'The most freshest statistic of your latest stream session',
                   ),
                   noPaddingChild: true,
                   child: pastStreamDataBox.isNotEmpty
@@ -111,6 +99,8 @@ class _StatisticsViewState extends State<StatisticsView> {
                       EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
                   titleWidget: CardHeader(
                     title: 'Previous\nStreams.',
+                    description:
+                        'All the statistics of your smexy stream sessions',
                   ),
                   noPaddingChild: true,
                   child: pastStreamDataBox.values.length > 1

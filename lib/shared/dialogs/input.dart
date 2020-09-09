@@ -34,7 +34,7 @@ class _InputDialogState extends State<InputDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.inputText);
+    _controller = TextEditingController(text: widget.inputText ?? '');
   }
 
   @override
@@ -61,7 +61,7 @@ class _InputDialogState extends State<InputDialog> {
                   if (!_textHasBeenEdited && _controller.text.length > 0)
                     _textHasBeenEdited = true;
 
-                  if (_textHasBeenEdited)
+                  if (widget.inputCheck != null && _textHasBeenEdited)
                     setState(
                       (() => _validationText =
                           widget.inputCheck(_controller.text)),
@@ -93,8 +93,9 @@ class _InputDialogState extends State<InputDialog> {
         CupertinoDialogAction(
           child: Text('Save'),
           onPressed: () {
-            setState(
-                () => _validationText = widget.inputCheck(_controller.text));
+            if (widget.inputCheck != null)
+              setState(
+                  () => _validationText = widget.inputCheck(_controller.text));
             if (_validationText == null || _validationText.length == 0) {
               Navigator.of(context).pop();
               widget.onSave(_controller.text);
