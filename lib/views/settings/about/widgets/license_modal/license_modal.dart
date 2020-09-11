@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../utils/styling_helper.dart';
-import '../../../settings/widgets/action_block.dart/light_divider.dart';
+import '../../../../../utils/styling_helper.dart';
+import '../../../widgets/action_block.dart/light_divider.dart';
 import '../license_modal/license_entries.dart';
 
 class LicenseModal extends StatelessWidget {

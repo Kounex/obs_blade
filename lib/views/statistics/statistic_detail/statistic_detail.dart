@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/dialogs/input.dart';
 
-import '../../models/past_stream_data.dart';
-import '../../shared/dialogs/confirmation.dart';
-import '../../shared/general/app_bar_cupertino_actions.dart';
-import '../../shared/general/formatted_text.dart';
-import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../utils/dialog_handler.dart';
-import '../dashboard/widgets/stream_widgets/stats/stats_container.dart';
+import '../../../models/past_stream_data.dart';
+import '../../../shared/dialogs/confirmation.dart';
+import '../../../shared/dialogs/input.dart';
+import '../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../shared/general/formatted_text.dart';
+import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../utils/dialog_handler.dart';
+import '../../dashboard/widgets/stream_widgets/stats/stats_container.dart';
 import 'widgets/stream_chart/stream_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {

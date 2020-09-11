@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/views/intro/intro.dart';
-import 'package:obs_blade/views/privacy_policy/privacy_policy.dart';
-import 'package:obs_blade/views/statistic_detail/statistic_detail.dart';
+import 'package:obs_blade/views/settings/privacy_policy/privacy_policy.dart';
+import 'package:obs_blade/views/statistics/statistic_detail/statistic_detail.dart';
 import 'package:obs_blade/views/statistics/statistics.dart';
 
 import '../tab_base.dart';
-import '../views/about/about.dart';
+import '../views/settings/about/about.dart';
 import '../views/dashboard/dashboard.dart';
 import '../views/home/home.dart';
 import '../views/settings/settings.dart';

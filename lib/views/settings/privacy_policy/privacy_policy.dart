@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
   @override

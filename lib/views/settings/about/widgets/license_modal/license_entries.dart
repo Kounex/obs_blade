@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../../shared/overlay/base_progress_indicator.dart';
 
 /// This is a collection of licenses and the packages to which they apply.
 /// [packageLicenseBindings] records the m+:n+ relationship between the license

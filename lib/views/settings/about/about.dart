@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
-import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import 'widgets/license_modal/license_modal.dart';
 
 class AboutView extends StatelessWidget {
