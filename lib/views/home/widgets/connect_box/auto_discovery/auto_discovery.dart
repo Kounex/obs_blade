@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../models/connection.dart';
@@ -19,6 +20,7 @@ class AutoDiscovery extends StatefulWidget {
 
 class _AutoDiscoveryState extends State<AutoDiscovery> {
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  FocusNode _portFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -48,18 +50,22 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
           width: 65.0,
           child: Form(
             key: _formKey,
-            child: TextFormField(
-              textAlign: TextAlign.center,
-              controller:
-                  TextEditingController(text: landingStore.autodiscoverPort),
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onChanged: (text) {
-                landingStore.setAutodiscoverPort(text);
-                _formKey.currentState.validate();
-              },
-              validator: (text) => ValidationHelper.portValidation(text),
+            child: KeyboardNumberHeader(
+              focusNode: _portFocusNode,
+              child: TextFormField(
+                focusNode: _portFocusNode,
+                textAlign: TextAlign.center,
+                controller:
+                    TextEditingController(text: landingStore.autodiscoverPort),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (text) {
+                  landingStore.setAutodiscoverPort(text);
+                  _formKey.currentState.validate();
+                },
+                validator: (text) => ValidationHelper.portValidation(text),
+              ),
             ),
           ),
         ),

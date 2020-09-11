@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../models/connection.dart';
@@ -26,6 +27,8 @@ class _ConnectFormState extends State<ConnectForm> {
   TextEditingController _ip;
   TextEditingController _port;
   TextEditingController _pw;
+
+  FocusNode _portFocusNode = FocusNode();
 
   bool _obscurePWText = true;
 
@@ -70,19 +73,23 @@ class _ConnectFormState extends State<ConnectForm> {
               Spacer(),
               Flexible(
                 flex: 2,
-                child: TextFormField(
-                  controller: _port,
-                  readOnly: !widget.saveCredentials,
-                  enabled: widget.saveCredentials,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (port) => widget.saveCredentials
-                      ? landingStore.typedInConnection.port = int.parse(port)
-                      : null,
-                  decoration:
-                      InputDecoration(labelText: 'Port', errorMaxLines: 2),
-                  validator: (text) => ValidationHelper.portValidation(text),
+                child: KeyboardNumberHeader(
+                  focusNode: _portFocusNode,
+                  child: TextFormField(
+                    controller: _port,
+                    focusNode: _portFocusNode,
+                    readOnly: !widget.saveCredentials,
+                    enabled: widget.saveCredentials,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.done,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (port) => widget.saveCredentials
+                        ? landingStore.typedInConnection.port = int.parse(port)
+                        : null,
+                    decoration:
+                        InputDecoration(labelText: 'Port', errorMaxLines: 2),
+                    validator: (text) => ValidationHelper.portValidation(text),
+                  ),
                 ),
               ),
             ],

@@ -18,34 +18,34 @@ dependencies:
   intl: ^0.16.1
 
   # Get project meta info
-  package_info: '^0.4.1'
+  package_info: '^0.4.3'
 
   # Webview
   flutter_inappwebview: ^4.0.0+4
 
   # State Management and DI
-  provider: ^4.3.2
-  mobx: ^1.2.1
-  flutter_mobx: ^1.1.0
+  provider: ^4.3.2+1
+  mobx: ^1.2.1+2
+  flutter_mobx: ^1.1.0+2
   path: ^1.6.4
 
   # Network stuff
   tcp_scanner: ^1.1.1
-  connectivity: ^0.4.9
+  connectivity: ^0.4.9+2
   web_socket_channel: ^1.1.0
 
   # Security
   crypto: ^2.1.5
 
   # Local persistance stuff
-  hive: ^1.4.3
+  hive: ^1.4.4
   hive_flutter: ^0.3.1
 
   # Fancy done layout shit
   modal_bottom_sheet: ^0.2.0+1
   fl_chart: ^0.11.0
   smooth_page_indicator: ^0.2.0
-  keyboard_actions: '^3.3.0'
+  keyboard_actions: ^3.3.0+1
 
 dependency_overrides:
 

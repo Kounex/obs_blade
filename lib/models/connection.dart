@@ -21,6 +21,7 @@ class Connection extends HiveObject {
 
   String challenge;
   String salt;
+  bool reachable;
 
   Connection(this.ip, this.port, [this.pw]);
 }

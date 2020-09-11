@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/validation_cupertino_textfield.dart';
 
 class InputDialog extends StatefulWidget {
   final String title;
@@ -7,6 +8,7 @@ class InputDialog extends StatefulWidget {
 
   final String inputText;
   final String inputPlaceholder;
+  final bool inputAutocorrect;
   final void Function(String) onSave;
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
@@ -16,6 +18,7 @@ class InputDialog extends StatefulWidget {
   InputDialog({
     @required this.title,
     @required this.body,
+    this.inputAutocorrect = true,
     @required this.onSave,
     this.inputText,
     this.inputPlaceholder,
@@ -27,14 +30,13 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
+  GlobalKey<ValidationCupertinoTextfieldState> _validationKey = GlobalKey();
   TextEditingController _controller;
-  bool _textHasBeenEdited = false;
-  String _validationText = '';
 
   @override
   void initState() {
-    super.initState();
     _controller = TextEditingController(text: widget.inputText ?? '');
+    super.initState();
   }
 
   @override
@@ -55,33 +57,14 @@ class _InputDialogState extends State<InputDialog> {
           Text(widget.body),
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
-            child: CupertinoTextField(
-              controller: _controller
-                ..addListener(() {
-                  if (!_textHasBeenEdited && _controller.text.length > 0)
-                    _textHasBeenEdited = true;
-
-                  if (widget.inputCheck != null && _textHasBeenEdited)
-                    setState(
-                      (() => _validationText =
-                          widget.inputCheck(_controller.text)),
-                    );
-                }),
+            child: ValidationCupertinoTextfield(
+              key: _validationKey,
+              controller: _controller..addListener(() => setState(() {})),
               placeholder: widget.inputPlaceholder,
+              autocorrect: widget.inputAutocorrect,
+              check: widget.inputCheck,
             ),
           ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text(
-                _validationText ?? '',
-                style: TextStyle(
-                  color: Colors.red,
-                ),
-              ),
-            ),
-          )
         ],
       ),
       actions: [
@@ -90,17 +73,18 @@ class _InputDialogState extends State<InputDialog> {
           isDestructiveAction: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        CupertinoDialogAction(
-          child: Text('Save'),
-          onPressed: () {
-            if (widget.inputCheck != null)
-              setState(
-                  () => _validationText = widget.inputCheck(_controller.text));
-            if (_validationText == null || _validationText.length == 0) {
-              Navigator.of(context).pop();
-              widget.onSave(_controller.text);
-            }
-          },
+        Builder(
+          builder: (context) => CupertinoDialogAction(
+            child: Text('Save'),
+            onPressed: _validationKey.currentState.isValid
+                ? () {
+                    if (_validationKey.currentState.isValid) {
+                      widget.onSave(_controller.text);
+                      Navigator.of(context).pop();
+                    }
+                  }
+                : null,
+          ),
         ),
       ],
     );

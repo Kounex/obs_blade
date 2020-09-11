@@ -1,5 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
+import 'package:obs_blade/shared/general/keyboard_number_header.dart';
+import 'package:obs_blade/shared/general/validation_cupertino_textfield.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/validation_helper.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
@@ -18,6 +23,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
   TextEditingController _ip;
   TextEditingController _port;
   TextEditingController _pw;
+
+  GlobalKey<ValidationCupertinoTextfieldState> _nameValidator = GlobalKey();
+  GlobalKey<ValidationCupertinoTextfieldState> _ipValidator = GlobalKey();
+  GlobalKey<ValidationCupertinoTextfieldState> _portValidator = GlobalKey();
+
+  FocusNode _portFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -65,10 +76,18 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           Text(
               'Change the following information to change your saved connection'),
           Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: CupertinoTextField(
-              controller: _name,
+            padding: const EdgeInsets.only(top: 24.0),
+            child: ValidationCupertinoTextfield(
+              key: _nameValidator,
+              controller: _name..addListener(() => setState(() {})),
               placeholder: 'Name',
+              autocorrect: true,
+              check: (name) => name != widget.connection.name &&
+                      Hive.box<Connection>(HiveKeys.SavedConnections.name)
+                          .values
+                          .any((connection) => connection.name == name)
+                  ? 'Name already in use!'
+                  : '',
             ),
           ),
           Padding(
@@ -77,20 +96,29 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               children: [
                 Flexible(
                   flex: 2,
-                  child: CupertinoTextField(
-                    controller: _ip,
+                  child: ValidationCupertinoTextfield(
+                    key: _ipValidator,
+                    controller: _ip..addListener(() => setState(() {})),
                     placeholder: 'IP',
+                    check: (ip) => ValidationHelper.ipValidation(ip),
                   ),
                 ),
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(left: 4.0),
-                    child: CupertinoTextField(
-                      controller: _port,
-                      placeholder: 'Port',
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    child: KeyboardNumberHeader(
+                      focusNode: _portFocusNode,
+                      child: ValidationCupertinoTextfield(
+                        key: _portValidator,
+                        controller: _port..addListener(() => setState(() {})),
+                        focusNode: _portFocusNode,
+                        placeholder: 'Port',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        check: (port) => ValidationHelper.portValidation(port),
+                      ),
                     ),
                   ),
                 ),
@@ -102,6 +130,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             child: CupertinoTextField(
               controller: _pw,
               placeholder: 'Password',
+              autocorrect: false,
             ),
           ),
         ],
@@ -112,16 +141,22 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           isDefaultAction: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        CupertinoDialogAction(
-          child: Text('Save'),
-          onPressed: () {
-            Navigator.of(context).pop();
-            widget.connection.name = _name.text;
-            widget.connection.ip = _ip.text;
-            widget.connection.port = int.parse(_port.text);
-            widget.connection.pw = _pw.text;
-            widget.connection.save();
-          },
+        Builder(
+          builder: (context) => CupertinoDialogAction(
+            child: Text('Save'),
+            onPressed: _nameValidator.currentState.isValid &&
+                    _ipValidator.currentState.isValid &&
+                    _portValidator.currentState.isValid
+                ? () {
+                    Navigator.of(context).pop();
+                    widget.connection.name = _name.text;
+                    widget.connection.ip = _ip.text;
+                    widget.connection.port = int.parse(_port.text);
+                    widget.connection.pw = _pw.text;
+                    widget.connection.save();
+                  }
+                : null,
+          ),
         ),
       ],
     );

@@ -41,7 +41,9 @@ class SaveEditConnectionDialog extends StatelessWidget {
           networkStore.activeSession.connection.pw = null;
         }
         networkStore.activeSession.connection.name = name;
-        box.add(networkStore.activeSession.connection);
+        this.newConnection
+            ? box.add(networkStore.activeSession.connection)
+            : networkStore.activeSession.connection.save();
       },
     );
   }
