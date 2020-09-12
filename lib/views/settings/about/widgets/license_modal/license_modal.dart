@@ -45,7 +45,7 @@ class LicenseModal extends StatelessWidget {
                       padding: EdgeInsets.only(right: 8.0),
                       height: 32.0,
                       child:
-                          Image.asset('assets/images/flutter_logo_render.png'),
+                          Image.asset('assets/images/flutter-logo-render.png'),
                     ),
                     Text('Powered by Flutter'),
                   ],

@@ -2,20 +2,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:mobx/mobx.dart' as MobX;
-import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/info.dart';
+import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/overlay/base_progress_indicator.dart';
 import '../../shared/overlay/base_result.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/home.dart';
 import '../../types/classes/stream/responses/base.dart';
-import '../../utils/dialog_handler.dart';
+import '../../utils/modal_handler.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';
-import '../../utils/dialog_handler.dart';
 import 'widgets/connect_box/connect_box.dart';
 import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
@@ -98,7 +97,7 @@ class _HomeViewState extends State<_HomeView> {
     /// stuff here most of the time i named the MobX import instead ob the Material one
     MobX.when((_) => context.read<NetworkStore>().obsTerminated, () {
       SchedulerBinding.instance.addPostFrameCallback((_) =>
-          DialogHandler.showBaseDialog(
+          ModalHandler.showBaseDialog(
             context: context,
             dialogWidget:
                 InfoDialog(body: 'Your OBS instance has been terminated!'),
@@ -199,10 +198,7 @@ class _HomeViewState extends State<_HomeView> {
             CustomSliverList(
               children: [
                 Align(
-                  child: Container(
-                    constraints: BoxConstraints(maxWidth: 500.0),
-                    child: ConnectBox(),
-                  ),
+                  child: ConnectBox(),
                 ),
                 SavedConnections(),
                 SizedBox(height: kBottomNavigationBarHeight),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../models/past_stream_data.dart';
 import '../../../shared/dialogs/confirmation.dart';
@@ -6,7 +7,6 @@ import '../../../shared/dialogs/input.dart';
 import '../../../shared/general/app_bar_cupertino_actions.dart';
 import '../../../shared/general/formatted_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../../utils/dialog_handler.dart';
 import '../../dashboard/widgets/stream_widgets/stats/stats_container.dart';
 import 'widgets/stream_chart/stream_chart.dart';
 
@@ -43,7 +43,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
             AppBarCupertinoActionEntry(
                 title: 'Rename',
                 onAction: () {
-                  DialogHandler.showBaseDialog(
+                  ModalHandler.showBaseDialog(
                     context: context,
                     dialogWidget: InputDialog(
                       title: 'Rename stream statistic',
@@ -64,7 +64,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
               title: 'Delete',
               isDestructive: true,
               onAction: () {
-                DialogHandler.showBaseDialog(
+                ModalHandler.showBaseDialog(
                   context: context,
                   dialogWidget: ConfirmationDialog(
                     title: 'Delete stream statistic',

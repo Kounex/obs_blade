@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/utils/dialog_handler.dart';
 
+import '../../utils/modal_handler.dart';
 import '../../utils/styling_helper.dart';
-import 'flutter_modified/custom_tooltip.dart';
+import '../dialogs/info.dart';
 
 class QuestionMarkTooltip extends StatelessWidget {
   final String message;
@@ -14,7 +13,7 @@ class QuestionMarkTooltip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => DialogHandler.showBaseDialog(
+      onTap: () => ModalHandler.showBaseDialog(
         context: context,
         dialogWidget: InfoDialog(
           body: this.message,

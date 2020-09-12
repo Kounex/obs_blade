@@ -23,7 +23,10 @@ class ConnectionBox extends StatelessWidget {
     return SizedBox(
       width: this.width,
       child: BaseCard(
-        padding: EdgeInsets.all(0),
+        topPadding: 0.0,
+        rightPadding: 0.0,
+        bottomPadding: 0.0,
+        leftPadding: 0.0,
         noPaddingChild: true,
         child: SizedBox(
           height: this.height,

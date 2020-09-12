@@ -16,7 +16,10 @@ class PlaceholderConnection extends StatelessWidget {
       child: SizedBox(
         width: this.width,
         child: BaseCard(
-          padding: EdgeInsets.all(0),
+          topPadding: 0.0,
+          rightPadding: 0.0,
+          bottomPadding: 0.0,
+          leftPadding: 0.0,
           noPaddingChild: true,
           child: Padding(
             padding: const EdgeInsets.only(left: 24.0, right: 24.0),

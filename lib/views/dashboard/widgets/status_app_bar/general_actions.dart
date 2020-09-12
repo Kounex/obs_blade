@@ -6,7 +6,7 @@ import 'package:obs_blade/shared/general/app_bar_cupertino_actions.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/utils/dialog_handler.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:provider/provider.dart';
 
@@ -25,7 +25,7 @@ class GeneralActions extends StatelessWidget {
           AppBarCupertinoActionEntry(
             title: dashboardStore.isLive ? 'Stop Streaming' : 'Start Streaming',
             onAction: () {
-              DialogHandler.showBaseDialog(
+              ModalHandler.showBaseDialog(
                 context: context,
                 dialogWidget: ConfirmationDialog(
                   title: dashboardStore.isLive
@@ -45,7 +45,7 @@ class GeneralActions extends StatelessWidget {
           AppBarCupertinoActionEntry(
             title: (newConnection ? 'Save' : 'Edit') + ' Connection',
             onAction: () {
-              DialogHandler.showBaseDialog(
+              ModalHandler.showBaseDialog(
                 context: context,
                 dialogWidget: SaveEditConnectionDialog(
                   newConnection: newConnection,

@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/confirmation.dart';
+import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/responsive_widget_wrapper.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/dashboard.dart';
-import '../../utils/dialog_handler.dart';
+import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/dialogs/save_edit_connection.dart';
 import 'widgets/scenes/scenes.dart';
@@ -77,14 +77,14 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 
   _saveConnectionDialog(BuildContext context) {
-    DialogHandler.showBaseDialog(
+    ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: ConfirmationDialog(
         title: 'Save Connection',
         body:
             'Do you want to save this connection? You can do it later as well!\n\n(Click on the icon on the top right of the screen and select "Save / Edit Connection"',
         onOk: () {
-          DialogHandler.showBaseDialog(
+          ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: SaveEditConnectionDialog(),
           );

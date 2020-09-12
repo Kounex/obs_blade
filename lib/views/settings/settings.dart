@@ -64,6 +64,12 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
+                    BlockEntry(
+                      leading: CupertinoIcons.bell,
+                      leadingSize: 30.0,
+                      title: 'Custom Theme',
+                      navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
+                    ),
                   ],
                 ),
                 ActionBlock(

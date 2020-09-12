@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/shared/dialogs/input.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/dialog_handler.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;
@@ -25,7 +25,7 @@ class UsernameActionRow extends StatelessWidget {
         CupertinoButton(
           padding: EdgeInsets.all(0),
           child: Text('Add'),
-          onPressed: () => DialogHandler.showBaseDialog(
+          onPressed: () => ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: InputDialog(
               title: 'New Twitch Username',
@@ -52,7 +52,7 @@ class UsernameActionRow extends StatelessWidget {
           padding: EdgeInsets.all(0),
           child: Text('Edit'),
           onPressed: selectedTwitchUsername != null
-              ? () => DialogHandler.showBaseDialog(
+              ? () => ModalHandler.showBaseDialog(
                     context: context,
                     dialogWidget: InputDialog(
                       title: 'Edit Twitch Username',
@@ -93,7 +93,7 @@ class UsernameActionRow extends StatelessWidget {
                 : null,
           ),
           onPressed: selectedTwitchUsername != null
-              ? () => DialogHandler.showBaseDialog(
+              ? () => ModalHandler.showBaseDialog(
                     context: context,
                     dialogWidget: ConfirmationDialog(
                       title: 'Delete Twitch Username',

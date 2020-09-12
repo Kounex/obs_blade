@@ -11,7 +11,7 @@ const Color kDialogColor = CupertinoDynamicColor.withBrightness(
 
 const double kDialogBlurAmount = 20.0;
 
-class DialogHandler {
+class ModalHandler {
   static Future<T> showBaseDialog<T>(
           {@required BuildContext context,
           @required Widget dialogWidget,
@@ -20,5 +20,23 @@ class DialogHandler {
         context: context,
         barrierDismissible: barrierDismissible,
         builder: (context) => dialogWidget,
+      );
+
+  static Future<T> showBaseBottomSheet<T>(
+          {@required BuildContext context,
+          @required Widget modalWidget,
+          bool useRootNavigator = true,
+          bool barrierDismissible = false}) async =>
+      showModalBottomSheet(
+        context: context,
+        useRootNavigator: useRootNavigator,
+        isDismissible: false,
+        enableDrag: false,
+        isScrollControlled: true,
+        builder: (context) => Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: modalWidget,
+        ),
       );
 }

@@ -77,8 +77,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                 Column(
               children: [
                 BaseCard(
-                  padding: EdgeInsets.only(
-                      top: 24.0, left: 24.0, right: 24.0, bottom: 12.0),
+                  bottomPadding: 12.0,
                   titlePadding:
                       EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
                   titleWidget: CardHeader(

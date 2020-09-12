@@ -21,4 +21,20 @@ class ValidationHelper {
     }
     return 'Not an IP address';
   }
+
+  static String colorHexValidator(String text) {
+    if (text.length == 6 &&
+        (RegExp(r'^[a-fA-F0-9]+$').allMatches(text).isNotEmpty)) {
+      return null;
+    }
+    return 'Not a valid color hex code';
+  }
+
+  static String colorRGBValidator(String text) {
+    int val = int.tryParse(text);
+    if (text.length <= 3 && val != null && val >= 0) {
+      return null;
+    }
+    return '0 - 255 valid!';
+  }
 }

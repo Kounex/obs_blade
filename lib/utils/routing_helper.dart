@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/views/intro/intro.dart';
+import 'package:obs_blade/views/settings/custom_theme/custom_theme.dart';
 import 'package:obs_blade/views/settings/privacy_policy/privacy_policy.dart';
 import 'package:obs_blade/views/statistics/statistic_detail/statistic_detail.dart';
 import 'package:obs_blade/views/statistics/statistics.dart';
@@ -67,11 +68,7 @@ enum StaticticsTabRoutingKeys {
 }
 
 /// Routing keys for the settings tab
-enum SettingsTabRoutingKeys {
-  Landing,
-  PrivacyPolicy,
-  About,
-}
+enum SettingsTabRoutingKeys { Landing, PrivacyPolicy, About, CustomTheme }
 
 /// Extension method for [AppRoutingKeys] enum to get the actual route
 /// path for an enum
@@ -109,9 +106,11 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
   String get route => {
         SettingsTabRoutingKeys.Landing: AppRoutingKeys.Tabs.route + '/settings',
         SettingsTabRoutingKeys.PrivacyPolicy:
-            AppRoutingKeys.Tabs.route + '/settings/privacy_policy',
+            AppRoutingKeys.Tabs.route + '/settings/privacy-policy',
         SettingsTabRoutingKeys.About:
             AppRoutingKeys.Tabs.route + '/settings/about',
+        SettingsTabRoutingKeys.CustomTheme:
+            AppRoutingKeys.Tabs.route + '/settings/custom-theme',
       }[this];
 }
 
@@ -131,6 +130,7 @@ class RoutingHelper {
     SettingsTabRoutingKeys.Landing.route: (_) => SettingsView(),
     SettingsTabRoutingKeys.PrivacyPolicy.route: (_) => PrivacyPolicyView(),
     SettingsTabRoutingKeys.About.route: (_) => AboutView(),
+    SettingsTabRoutingKeys.CustomTheme.route: (_) => CustomThemeView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {

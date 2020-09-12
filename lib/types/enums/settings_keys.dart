@@ -14,6 +14,12 @@ enum SettingsKeys {
   /// [String]: The currently selected twitch username to use for the twitch chat
   SelectedTwitchUsername,
 
+  /// [bool]: If user wants to use his custom theme
+  CustomTheme,
+
+  /// [String]: Hex code for primary color if custom theme is used
+  CustomPrimaryColor,
+
   /// Internally used properties which won't be changeable / seeable for the user
 
   /// [bool]: If the user already saw the intro - will be set after being in landing
@@ -28,6 +34,8 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.EnforceTabletMode: 'enforce-tablet-mode',
         SettingsKeys.TwitchUsernames: 'twitch-usernames',
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
+        SettingsKeys.CustomTheme: 'custom-theme',
+        SettingsKeys.CustomPrimaryColor: 'custom-primary-color',
         SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
       }[this];
 }
