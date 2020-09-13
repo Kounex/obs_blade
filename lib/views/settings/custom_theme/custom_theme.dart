@@ -49,6 +49,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                       child: Text('Add Theme'),
                     ),
                     bottomPadding: 12.0,
+                    noPaddingChild: true,
                     child: CustomThemeList(),
                   ),
                   // Padding(

@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/views/settings/custom_theme/widgets/custom_theme_list/theme_entry.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/overlay/base_result.dart';
@@ -30,53 +32,11 @@ class CustomThemeList extends StatelessWidget {
                   padding: EdgeInsets.all(0),
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: customThemeBox.values.length,
-                  separatorBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: LightDivider(),
-                  ),
-                  itemBuilder: (context, index) => ListTile(
-                    onTap: () => ModalHandler.showBaseCupertinoBottomSheet(
-                      context: context,
-                      modalWidgetBuilder: (context, scrollController) =>
-                          AddEditTheme(
-                        customTheme: customThemeBox.values.elementAt(index),
-                        scrollController: scrollController,
-                      ),
-                    ),
-                    title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(customThemeBox.values.elementAt(index).name ??
-                            'Unnamed theme'),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                          child: ThemeColorsRow(
-                            customTheme: customThemeBox.values.elementAt(index),
-                          ),
-                        ),
-                      ],
-                    ),
-                    subtitle: Text(
-                      customThemeBox.values.elementAt(index).description !=
-                                  null &&
-                              customThemeBox.values
-                                      .elementAt(index)
-                                      .description
-                                      .length >
-                                  0
-                          ? customThemeBox.values.elementAt(index).description
-                          : 'No description',
-                    ),
-                    trailing: Radio(
-                      groupValue: Hive.box(HiveKeys.Settings.name).get(
-                          SettingsKeys.ActiveCustomThemeUUID.name,
-                          defaultValue: ''),
-                      value: customThemeBox.values.elementAt(index).uuid,
-                      onChanged: (active) =>
-                          Hive.box(HiveKeys.Settings.name).put(
-                        SettingsKeys.ActiveCustomThemeUUID.name,
-                        customThemeBox.values.elementAt(index).uuid,
-                      ),
+                  separatorBuilder: (context, index) => LightDivider(),
+                  itemBuilder: (context, index) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: ThemeEntry(
+                      customTheme: customThemeBox.values.elementAt(index),
                     ),
                   ),
                 )
