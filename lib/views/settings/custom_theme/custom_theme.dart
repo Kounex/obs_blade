@@ -35,22 +35,36 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                     child: ThemeActive(settingsBox: settingsBox),
                   ),
                   BaseCard(
+                    title: 'Your Themes',
+                    trailingTitleWidget: CupertinoButton(
+                      padding: const EdgeInsets.all(0),
+                      onPressed: () =>
+                          ModalHandler.showBaseCupertinoBottomSheet(
+                        context: context,
+                        modalWidgetBuilder: (context, scrollController) =>
+                            AddEditTheme(
+                          scrollController: scrollController,
+                        ),
+                      ),
+                      child: Text('Add Theme'),
+                    ),
                     bottomPadding: 12.0,
                     child: CustomThemeList(),
                   ),
-                  BaseCard(
-                    child: Align(
-                      child: RaisedButton(
-                        onPressed: () =>
-                            ModalHandler.showBaseCupertinoBottomSheet(
-                          context: context,
-                          modalWidgetBuilder: (context, scrollController) =>
-                              AddEditTheme(),
-                        ),
-                        child: Text('New Theme'),
-                      ),
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.only(top: 12.0),
+                  //   child: RaisedButton(
+                  //     onPressed: () =>
+                  //         ModalHandler.showBaseCupertinoBottomSheet(
+                  //       context: context,
+                  //       modalWidgetBuilder: (context, scrollController) =>
+                  //           AddEditTheme(
+                  //         scrollController: scrollController,
+                  //       ),
+                  //     ),
+                  //     child: Text('New Theme'),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

@@ -12,8 +12,9 @@ import 'color_row.dart';
 
 class AddEditTheme extends StatefulWidget {
   final CustomTheme customTheme;
+  final ScrollController scrollController;
 
-  AddEditTheme({this.customTheme});
+  AddEditTheme({this.customTheme, this.scrollController});
 
   @override
   _AddEditThemeState createState() => _AddEditThemeState();
@@ -99,18 +100,21 @@ class _AddEditThemeState extends State<AddEditTheme> {
           LightDivider(),
           Expanded(
             child: SingleChildScrollView(
+              controller: widget.scrollController,
               child: Padding(
-                padding: const EdgeInsets.only(top: 12.0),
+                padding: const EdgeInsets.only(top: 24.0),
                 child: Column(
                   children: [
                     ValidationCupertinoTextfield(
                       controller: _name,
                       placeholder: 'Name',
+                      autocorrect: true,
                       check: (name) => _nameValidation(name),
                     ),
                     ValidationCupertinoTextfield(
                       controller: _description,
                       placeholder: 'Description (Optional)',
+                      autocorrect: true,
                       minLines: 3,
                     ),
                     Padding(

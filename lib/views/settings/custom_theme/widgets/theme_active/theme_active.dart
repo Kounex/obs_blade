@@ -40,8 +40,10 @@ class ThemeActive extends StatelessWidget {
           value: this
               .settingsBox
               .get(SettingsKeys.CustomTheme.name, defaultValue: false),
-          onChanged: (customTheme) =>
-              this.settingsBox.put(SettingsKeys.CustomTheme.name, customTheme),
+          onChanged: (customTheme) => this.settingsBox.put(
+                SettingsKeys.CustomTheme.name,
+                customTheme,
+              ),
         )
       ],
     );

@@ -9,6 +9,7 @@ class ValidationCupertinoTextfield extends StatefulWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter> inputFormatters;
   final bool autocorrect;
+  final double bottomPadding;
   final int minLines;
   final int maxLines;
 
@@ -25,6 +26,7 @@ class ValidationCupertinoTextfield extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
     this.autocorrect = false,
+    this.bottomPadding = 4.0,
     this.minLines = 1,
     this.maxLines,
   }) : super(key: key);
@@ -67,7 +69,8 @@ class ValidationCupertinoTextfieldState
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.only(top: 4.0, left: 4.0, bottom: 12.0),
+            padding: EdgeInsets.only(
+                top: 4.0, left: 4.0, bottom: widget.bottomPadding),
             child: Text(
               validationText ?? '',
               style: TextStyle(

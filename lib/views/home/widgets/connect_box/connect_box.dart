@@ -15,36 +15,18 @@ class ConnectBox extends StatelessWidget {
 
     return Align(
       child: Observer(
-        builder: (_) => Stack(
-          children: <Widget>[
-            SwitcherCard(
-              title: landingStore.manualMode ? 'Connection' : 'Autodiscover',
-              child: landingStore.manualMode
-                  ? Padding(
-                      padding: const EdgeInsets.only(
-                          left: 24.0, right: 24.0, bottom: 12.0),
-                      child: ConnectForm(
-                        connection: landingStore.typedInConnection,
-                        saveCredentials: true,
-                      ),
-                    )
-                  : AutoDiscovery(),
-            ),
-            Positioned(
-              right: 36.0,
-              top: 26.0,
-              child: CupertinoButton(
-                child: Container(
-                  width: 60.0,
-                  child: Text(
-                    landingStore.manualMode ? 'Auto' : 'Manual',
-                    textAlign: TextAlign.center,
+        builder: (_) => SwitcherCard(
+          title: landingStore.manualMode ? 'Connection' : 'Autodiscover',
+          child: landingStore.manualMode
+              ? Padding(
+                  padding: const EdgeInsets.only(
+                      left: 24.0, right: 24.0, bottom: 12.0),
+                  child: ConnectForm(
+                    connection: landingStore.typedInConnection,
+                    saveCredentials: true,
                   ),
-                ),
-                onPressed: () => landingStore.toggleManualMode(),
-              ),
-            )
-          ],
+                )
+              : AutoDiscovery(),
         ),
       ),
     );

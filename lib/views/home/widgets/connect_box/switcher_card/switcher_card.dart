@@ -1,4 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/stores/views/home.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../../shared/general/base_card.dart';
 
@@ -13,6 +16,8 @@ class SwitcherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    HomeStore landingStore = context.watch<HomeStore>();
+
     return BaseCard(
       noPaddingChild: this.noPaddingChild,
       titleWidget: AnimatedSwitcher(
@@ -27,6 +32,17 @@ class SwitcherCard extends StatelessWidget {
             style: Theme.of(context).textTheme.headline5,
           ),
         ),
+      ),
+      trailingTitleWidget: CupertinoButton(
+        padding: const EdgeInsets.all(0),
+        child: Container(
+          width: 60.0,
+          child: Text(
+            landingStore.manualMode ? 'Auto' : 'Manual',
+            textAlign: TextAlign.center,
+          ),
+        ),
+        onPressed: () => landingStore.toggleManualMode(),
       ),
       child: AnimatedSwitcher(
         duration: Duration(milliseconds: 200),

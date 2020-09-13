@@ -7,6 +7,8 @@ class BaseCard extends StatelessWidget {
   final String title;
   final Widget titleWidget;
 
+  final Widget trailingTitleWidget;
+
   final double topPadding;
   final double rightPadding;
   final double bottomPadding;
@@ -21,13 +23,14 @@ class BaseCard extends StatelessWidget {
     this.centerChild = true,
     this.title,
     this.titleWidget,
+    this.trailingTitleWidget,
     this.noPaddingChild = false,
     this.topPadding = 24.0,
     this.rightPadding = 24.0,
     this.bottomPadding = 24.0,
     this.leftPadding = 24.0,
     this.titlePadding =
-        const EdgeInsets.only(left: 24.0, top: 12.0, bottom: 12.0),
+        const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
   }) : super(key: key);
 
   @override
@@ -51,12 +54,19 @@ class BaseCard extends StatelessWidget {
               if (this.titleWidget != null || this.title != null)
                 Padding(
                   padding: this.titlePadding,
-                  child: this.titleWidget == null
-                      ? Text(
-                          this.title,
-                          style: Theme.of(context).textTheme.headline5,
-                        )
-                      : this.titleWidget,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      this.titleWidget == null
+                          ? Text(
+                              this.title,
+                              style: Theme.of(context).textTheme.headline5,
+                            )
+                          : this.titleWidget,
+                      if (this.trailingTitleWidget != null)
+                        this.trailingTitleWidget
+                    ],
+                  ),
                 ),
               if (this.titleWidget != null || this.title != null)
                 Divider(

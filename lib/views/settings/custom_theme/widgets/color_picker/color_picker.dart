@@ -105,6 +105,7 @@ class _ColorPickerState extends State<ColorPicker> {
                         validator: (color) =>
                             ValidationHelper.colorHexValidator(color),
                         autovalidate: true,
+                        autocorrect: false,
                         onChanged: (value) {
                           if (ValidationHelper.colorHexValidator(_color.text) ==
                               null) {

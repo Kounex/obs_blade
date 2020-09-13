@@ -42,34 +42,31 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
   @override
   Widget build(BuildContext context) {
     return CupertinoAlertDialog(
-      title: Padding(
-        padding: const EdgeInsets.only(bottom: 4.0),
-        child: Row(
-          children: [
-            Text('Edit Connection'),
-            CupertinoButton(
-              child: Text(
-                'Delete',
-                style: TextStyle(color: CupertinoColors.destructiveRed),
-              ),
-              onPressed: () {
-                showCupertinoDialog(
-                  context: context,
-                  builder: (context) => ConfirmationDialog(
-                    title: 'Delete Connection',
-                    body:
-                        'Are you sure you want to delete this connection? This action can\'t be undone!',
-                    isYesDestructive: true,
-                    onOk: () {
-                      Navigator.of(context).pop();
-                      widget.connection.delete();
-                    },
-                  ),
-                );
-              },
+      title: Row(
+        children: [
+          Text('Edit Connection'),
+          CupertinoButton(
+            child: Text(
+              'Delete',
+              style: TextStyle(color: CupertinoColors.destructiveRed),
             ),
-          ],
-        ),
+            onPressed: () {
+              showCupertinoDialog(
+                context: context,
+                builder: (context) => ConfirmationDialog(
+                  title: 'Delete Connection',
+                  body:
+                      'Are you sure you want to delete this connection? This action can\'t be undone!',
+                  isYesDestructive: true,
+                  onOk: () {
+                    Navigator.of(context).pop();
+                    widget.connection.delete();
+                  },
+                ),
+              );
+            },
+          ),
+        ],
       ),
       content: Column(
         children: [
@@ -82,56 +79,50 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               controller: _name..addListener(() => setState(() {})),
               placeholder: 'Name',
               autocorrect: true,
-              check: (name) => name != widget.connection.name &&
-                      Hive.box<Connection>(HiveKeys.SavedConnections.name)
-                          .values
-                          .any((connection) => connection.name == name)
-                  ? 'Name already in use!'
-                  : '',
+              check: (name) => name.trim().length == 0
+                  ? 'Please provide a name!'
+                  : name.trim() != widget.connection.name &&
+                          Hive.box<Connection>(HiveKeys.SavedConnections.name)
+                              .values
+                              .any((connection) => connection.name == name)
+                      ? 'Name already in use!'
+                      : '',
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0),
-            child: Row(
-              children: [
-                Flexible(
-                  flex: 2,
-                  child: ValidationCupertinoTextfield(
-                    key: _ipValidator,
-                    controller: _ip..addListener(() => setState(() {})),
-                    placeholder: 'IP',
-                    check: (ip) => ValidationHelper.ipValidation(ip),
-                  ),
+          Row(
+            children: [
+              Flexible(
+                flex: 2,
+                child: ValidationCupertinoTextfield(
+                  key: _ipValidator,
+                  controller: _ip..addListener(() => setState(() {})),
+                  placeholder: 'IP',
+                  check: (ip) => ValidationHelper.ipValidation(ip),
                 ),
-                Flexible(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4.0),
-                    child: KeyboardNumberHeader(
+              ),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 4.0),
+                  child: KeyboardNumberHeader(
+                    focusNode: _portFocusNode,
+                    child: ValidationCupertinoTextfield(
+                      key: _portValidator,
+                      controller: _port..addListener(() => setState(() {})),
                       focusNode: _portFocusNode,
-                      child: ValidationCupertinoTextfield(
-                        key: _portValidator,
-                        controller: _port..addListener(() => setState(() {})),
-                        focusNode: _portFocusNode,
-                        placeholder: 'Port',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly
-                        ],
-                        check: (port) => ValidationHelper.portValidation(port),
-                      ),
+                      placeholder: 'Port',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      check: (port) => ValidationHelper.portValidation(port),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4.0),
-            child: CupertinoTextField(
-              controller: _pw,
-              placeholder: 'Password',
-              autocorrect: false,
-            ),
+          CupertinoTextField(
+            controller: _pw,
+            placeholder: 'Password',
+            autocorrect: false,
           ),
         ],
       ),
@@ -149,7 +140,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     _portValidator.currentState.isValid
                 ? () {
                     Navigator.of(context).pop();
-                    widget.connection.name = _name.text;
+                    widget.connection.name = _name.text.trim();
                     widget.connection.ip = _ip.text;
                     widget.connection.port = int.parse(_port.text);
                     widget.connection.pw = _pw.text;

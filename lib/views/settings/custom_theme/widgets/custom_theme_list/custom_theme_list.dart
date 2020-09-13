@@ -18,8 +18,15 @@ class CustomThemeList extends StatelessWidget {
           Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).listenable(),
       builder: (context, Box<CustomTheme> customThemeBox, child) =>
           customThemeBox.values.isNotEmpty
-              ? ListView.separated(
+              ?
+
+              /// Even though I'm nt making use of the actual [ListView]
+              /// since i don't want scrolling here, the builder is fitting
+              /// for this use case and we can make use of the .separated
+              /// constructor to easily add [Divider] here between the entries
+              ListView.separated(
                   shrinkWrap: true,
+                  padding: EdgeInsets.all(0),
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: customThemeBox.values.length,
                   separatorBuilder: (context, index) => Padding(
@@ -32,6 +39,7 @@ class CustomThemeList extends StatelessWidget {
                       modalWidgetBuilder: (context, scrollController) =>
                           AddEditTheme(
                         customTheme: customThemeBox.values.elementAt(index),
+                        scrollController: scrollController,
                       ),
                     ),
                     title: Column(
@@ -48,8 +56,15 @@ class CustomThemeList extends StatelessWidget {
                       ],
                     ),
                     subtitle: Text(
-                      customThemeBox.values.elementAt(index).description ??
-                          'No description',
+                      customThemeBox.values.elementAt(index).description !=
+                                  null &&
+                              customThemeBox.values
+                                      .elementAt(index)
+                                      .description
+                                      .length >
+                                  0
+                          ? customThemeBox.values.elementAt(index).description
+                          : 'No description',
                     ),
                   ),
                 )
@@ -57,7 +72,7 @@ class CustomThemeList extends StatelessWidget {
                   child: BaseResult(
                     icon: BaseResultIcon.Missing,
                     iconSize: 42.0,
-                    text: 'No custom theme created yet!',
+                    text: 'No custom themes created yet!',
                   ),
                 ),
     );

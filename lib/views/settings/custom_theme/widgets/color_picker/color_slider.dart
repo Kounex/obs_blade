@@ -71,6 +71,7 @@ class _ColorSliderState extends State<ColorSlider> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               maxLength: 3,
+              autocorrect: false,
               onChanged: (value) {
                 int colorVal = int.parse(value);
                 if (colorVal > 255) {
