@@ -64,6 +64,13 @@ class App extends StatelessWidget {
               textStyle: TextStyle(color: Colors.white),
             ),
             cupertinoOverrideTheme: CupertinoThemeData(
+              scaffoldBackgroundColor: settingsBox
+                      .get(SettingsKeys.TrueDark.name, defaultValue: false)
+                  ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
+                          defaultValue: false)
+                      ? StylingHelper.BACKGROUND_REDUCED_SMEARING_COLOR
+                      : StylingHelper.BACKGROUND_COLOR
+                  : Colors.grey[900],
               textTheme: CupertinoTextThemeData(
                 primaryColor: Colors.white,
               ),
