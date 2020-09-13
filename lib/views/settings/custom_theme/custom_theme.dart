@@ -21,6 +21,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
   @override
   Widget build(BuildContext context) {
     return CupertinoScaffold(
+      transitionBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Builder(
         builder: (context) => TransculentCupertinoNavBarWrapper(
           previousTitle: 'Settings',
@@ -52,20 +53,6 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                     noPaddingChild: true,
                     child: CustomThemeList(),
                   ),
-                  // Padding(
-                  //   padding: const EdgeInsets.only(top: 12.0),
-                  //   child: RaisedButton(
-                  //     onPressed: () =>
-                  //         ModalHandler.showBaseCupertinoBottomSheet(
-                  //       context: context,
-                  //       modalWidgetBuilder: (context, scrollController) =>
-                  //           AddEditTheme(
-                  //         scrollController: scrollController,
-                  //       ),
-                  //     ),
-                  //     child: Text('New Theme'),
-                  //   ),
-                  // ),
                 ],
               ),
             ),

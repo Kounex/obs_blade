@@ -26,6 +26,7 @@ class ColorRow extends StatelessWidget {
           height: 340.0,
           child: ColorPicker(
             title: this.colorTitle,
+            description: this.colorDescription,
             color: this.colorHex,
             onSave: (colorHex) => this.onSave?.call(colorHex),
           ),

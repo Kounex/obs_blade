@@ -41,10 +41,13 @@ class CustomThemeList extends StatelessWidget {
                   ),
                 )
               : Align(
-                  child: BaseResult(
-                    icon: BaseResultIcon.Missing,
-                    iconSize: 42.0,
-                    text: 'No custom themes created yet!',
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: BaseResult(
+                      icon: BaseResultIcon.Missing,
+                      iconSize: 42.0,
+                      text: 'No custom themes created yet!',
+                    ),
                   ),
                 ),
     );

@@ -10,6 +10,7 @@ class AboutView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoScaffold(
+      transitionBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Builder(
         builder: (context) => TransculentCupertinoNavBarWrapper(
           previousTitle: 'Settings',

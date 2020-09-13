@@ -7,12 +7,14 @@ import '../../../../../types/extensions/string.dart';
 
 class ColorPicker extends StatefulWidget {
   final String title;
+  final String description;
   final String color;
   final bool useAlpha;
   final void Function(String) onSave;
 
   ColorPicker({
     @required this.title,
+    @required this.description,
     this.color,
     this.useAlpha = false,
     this.onSave,
@@ -49,7 +51,7 @@ class _ColorPickerState extends State<ColorPicker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 12.0),
+          padding: EdgeInsets.only(left: 12.0, right: 4.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -80,9 +82,15 @@ class _ColorPickerState extends State<ColorPicker> {
             ],
           ),
         ),
-        LightDivider(),
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+          child: Text(
+            widget.description,
+            style: Theme.of(context).textTheme.caption,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -118,14 +126,17 @@ class _ColorPickerState extends State<ColorPicker> {
                   ],
                 ),
               ),
-              Container(
-                height: 32.0,
-                width: 32.0,
-                decoration: BoxDecoration(
-                  color: _color.text.hexToColor(),
-                  border: Border.all(
-                    color: Colors.black,
-                    width: 1.0,
+              Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: Container(
+                  height: 32.0,
+                  width: 32.0,
+                  decoration: BoxDecoration(
+                    color: _color.text.hexToColor(),
+                    border: Border.all(
+                      color: Colors.black,
+                      width: 1.0,
+                    ),
                   ),
                 ),
               ),
