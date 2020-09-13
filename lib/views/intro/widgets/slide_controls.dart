@@ -38,7 +38,7 @@ class SlideControls extends StatelessWidget {
         SmoothPageIndicator(
             controller: this.pageController,
             effect: ScrollingDotsEffect(
-              activeDotColor: StylingHelper.MAIN_RED,
+              activeDotColor: Theme.of(context).toggleableActiveColor,
               dotHeight: 12.0,
               dotWidth: 12.0,
             ),

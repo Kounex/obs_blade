@@ -8,9 +8,15 @@ import '../../../../../types/extensions/string.dart';
 class ColorPicker extends StatefulWidget {
   final String title;
   final String color;
+  final bool useAlpha;
   final void Function(String) onSave;
 
-  ColorPicker({@required this.title, this.color, this.onSave});
+  ColorPicker({
+    @required this.title,
+    this.color,
+    this.useAlpha = false,
+    this.onSave,
+  });
 
   @override
   _ColorPickerState createState() => _ColorPickerState();
@@ -18,20 +24,22 @@ class ColorPicker extends StatefulWidget {
 
 class _ColorPickerState extends State<ColorPicker> {
   TextEditingController _color;
+  Key _colorContainerKey;
 
   @override
   void initState() {
     _color = TextEditingController(text: widget.color ?? '000000');
+    _colorContainerKey = Key(widget.color ?? '000000');
     super.initState();
   }
 
-  int _getColorSliderValue(int begin, int end) =>
-      int.parse(_color.text.substring(begin, end), radix: 16);
+  int _getColorSliderValue(int begin) =>
+      int.parse(_color.text.substring(begin, begin + 2), radix: 16);
 
-  void _onColorSlideChange(String value, int begin, int end) {
+  void _onColorSlideChange(String value, int begin) {
     String hex = int.parse(value).toRadixString(16);
-    _color.text =
-        _color.text.replaceRange(begin, end, hex.length == 1 ? '0$hex' : hex);
+    _color.text = _color.text
+        .replaceRange(begin, begin + 2, hex.length == 1 ? '0$hex' : hex);
     setState(() {});
   }
 
@@ -78,32 +86,36 @@ class _ColorPickerState extends State<ColorPicker> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(right: 24.0),
-                    child: Text(
-                      'Hex:',
-                      style: Theme.of(context).textTheme.headline6,
+              SizedBox(
+                height: 50.0,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: 24.0),
+                      child: Text(
+                        'Hex:',
+                        style: Theme.of(context).textTheme.headline6,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 150.0,
-                    child: TextFormField(
-                      controller: _color,
-                      decoration: InputDecoration(isDense: true),
-                      validator: (color) =>
-                          ValidationHelper.colorHexValidator(color),
-                      autovalidate: true,
-                      onChanged: (value) {
-                        if (ValidationHelper.colorHexValidator(_color.text) ==
-                            null) {
-                          setState(() {});
-                        }
-                      },
+                    SizedBox(
+                      width: 150.0,
+                      child: TextFormField(
+                        controller: _color,
+                        decoration: InputDecoration(isDense: true),
+                        validator: (color) =>
+                            ValidationHelper.colorHexValidator(color),
+                        autovalidate: true,
+                        onChanged: (value) {
+                          if (ValidationHelper.colorHexValidator(_color.text) ==
+                              null) {
+                            _colorContainerKey = Key(_color.text);
+                            setState(() {});
+                          }
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Container(
                 height: 32.0,
@@ -124,37 +136,40 @@ class _ColorPickerState extends State<ColorPicker> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding:
+                    const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),
                 child: Column(
+                  key: _colorContainerKey,
                   children: [
                     ColorSlider(
                       label: 'R',
-                      value: _getColorSliderValue(0, 2),
+                      value: _getColorSliderValue(widget.useAlpha ? 2 : 0),
                       activeColor: Colors.red,
-                      onChanged: (colorVal) =>
-                          _onColorSlideChange(colorVal, 0, 2),
+                      onChanged: (colorVal) => _onColorSlideChange(
+                          colorVal, widget.useAlpha ? 2 : 0),
                     ),
                     ColorSlider(
                       label: 'G',
-                      value: _getColorSliderValue(2, 4),
+                      value: _getColorSliderValue(widget.useAlpha ? 4 : 2),
                       activeColor: Colors.green,
-                      onChanged: (colorVal) =>
-                          _onColorSlideChange(colorVal, 2, 4),
+                      onChanged: (colorVal) => _onColorSlideChange(
+                          colorVal, widget.useAlpha ? 4 : 2),
                     ),
                     ColorSlider(
                       label: 'B',
-                      value: _getColorSliderValue(4, 6),
+                      value: _getColorSliderValue(widget.useAlpha ? 6 : 4),
                       activeColor: Colors.blue,
-                      onChanged: (colorVal) =>
-                          _onColorSlideChange(colorVal, 4, 6),
+                      onChanged: (colorVal) => _onColorSlideChange(
+                          colorVal, widget.useAlpha ? 6 : 4),
                     ),
-                    // ColorSlider(
-                    //   label: 'A',
-                    //   value: _getColorSliderValue(0, 2),
-                    //   activeColor: Colors.white,
-                    //   onChanged: (colorVal) =>
-                    //       _onColorSlideChange(colorVal, 0, 2),
-                    // ),
+                    if (widget.useAlpha)
+                      ColorSlider(
+                        label: 'A',
+                        value: _getColorSliderValue(0),
+                        activeColor: Colors.white,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, 0),
+                      ),
                   ],
                 ),
               ),

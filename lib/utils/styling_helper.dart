@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 /// Will hold some general styling stuff like "custom" icons or some
 /// app wide layout constraints (if applicable)
@@ -9,19 +10,21 @@ class StylingHelper {
   static const double MAX_WIDTH_MOBILE = 700.0;
 
   /// Main colors (primarly used for Themeing)
-  static const Color MAIN_BLUE = const Color(0xff101823);
-  static const Color MAIN_RED = const Color(0xffff4654);
+  static const Color PRIMARY_COLOR = const Color(0xff101823);
+  static const Color ACCENT_COLOR = const Color(0xffff4654);
+  static const Color HIGHLIGHT_COLOR = CupertinoColors.systemBlue;
+  static const Color BACKGROUND_COLOR = Colors.black;
+
+  static const Color BACKGROUND_REDUCED_SMEARING_COLOR =
+      const Color.fromRGBO(5, 5, 5, 1.0);
+
+  static const Color LIGHT_DIVIDER_COLOR =
+      const Color.fromRGBO(111, 111, 111, 1.0);
 
   static const double OPACITY_BLURRY = 0.75;
 
   /// Taken from [CupertinoNavigationBar]
   static const double SIGMA_BLURRY = 10.0;
-
-  static const Color BLACK_REDUCED_SMEARING =
-      const Color.fromRGBO(5, 5, 5, 1.0);
-
-  static const Color LIGHT_DIVIDER_COLOR =
-      const Color.fromRGBO(111, 111, 111, 1.0);
 
   /// Added CupertinoIcons
   static const IconData CUPERTINO_MACBOOK_ICON = const IconData(0xf466,

@@ -45,7 +45,7 @@ class SupportDialog extends StatelessWidget {
               decoration: BoxDecoration(
                 // color: CupertinoDynamicColor.resolve(kDialogColor, context)
                 //     .withOpacity(1.0),
-                color: StylingHelper.MAIN_RED,
+                color: Theme.of(context).toggleableActiveColor,
                 shape: BoxShape.circle,
               ),
               child: Hero(

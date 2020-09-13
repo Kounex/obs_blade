@@ -9,6 +9,8 @@ class ValidationCupertinoTextfield extends StatefulWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter> inputFormatters;
   final bool autocorrect;
+  final int minLines;
+  final int maxLines;
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
   /// the error text which should be displayed
@@ -23,6 +25,8 @@ class ValidationCupertinoTextfield extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
     this.autocorrect = false,
+    this.minLines = 1,
+    this.maxLines,
   }) : super(key: key);
 
   @override
@@ -57,11 +61,13 @@ class ValidationCupertinoTextfieldState
           keyboardType: widget.keyboardType,
           inputFormatters: widget.inputFormatters ?? [],
           autocorrect: widget.autocorrect,
+          minLines: widget.minLines,
+          maxLines: widget.maxLines ?? widget.minLines,
         ),
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.only(top: 4.0),
+            padding: const EdgeInsets.only(top: 4.0, left: 4.0, bottom: 12.0),
             child: Text(
               validationText ?? '',
               style: TextStyle(

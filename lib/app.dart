@@ -32,27 +32,28 @@ class App extends StatelessWidget {
                 settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
                     ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
                             defaultValue: false)
-                        ? StylingHelper.BLACK_REDUCED_SMEARING
-                        : Colors.black
+                        ? StylingHelper.BACKGROUND_REDUCED_SMEARING_COLOR
+                        : StylingHelper.BACKGROUND_COLOR
                     : Colors.grey[900],
-            accentColor: CupertinoColors.systemBlue, // const Color(0xffb777ff),
+            accentColor:
+                StylingHelper.HIGHLIGHT_COLOR, // const Color(0xffb777ff),
             accentIconTheme: IconThemeData(),
-            backgroundColor: StylingHelper.MAIN_BLUE,
-            canvasColor: StylingHelper.MAIN_BLUE,
-            cardColor: StylingHelper.MAIN_BLUE,
+            backgroundColor: StylingHelper.PRIMARY_COLOR,
+            canvasColor: StylingHelper.PRIMARY_COLOR,
+            cardColor: StylingHelper.PRIMARY_COLOR,
             indicatorColor: CupertinoColors.activeBlue,
             dividerColor: Colors.grey[500],
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
-            toggleableActiveColor: StylingHelper.MAIN_RED,
+            toggleableActiveColor: StylingHelper.ACCENT_COLOR,
 
             /// Inner Widget themes
             appBarTheme: AppBarTheme(
-              color: StylingHelper.MAIN_BLUE
+              color: StylingHelper.PRIMARY_COLOR
                   .withOpacity(StylingHelper.OPACITY_BLURRY),
             ),
             buttonTheme: ButtonThemeData(
-              buttonColor: StylingHelper.MAIN_RED,
+              buttonColor: StylingHelper.ACCENT_COLOR,
               splashColor: Colors.transparent,
             ),
             tooltipTheme: TooltipThemeData(
@@ -66,8 +67,8 @@ class App extends StatelessWidget {
               textTheme: CupertinoTextThemeData(
                 primaryColor: Colors.white,
               ),
-              primaryColor: CupertinoColors.systemBlue,
-              barBackgroundColor: StylingHelper.MAIN_BLUE
+              primaryColor: StylingHelper.HIGHLIGHT_COLOR,
+              barBackgroundColor: StylingHelper.PRIMARY_COLOR
                   .withOpacity(StylingHelper.OPACITY_BLURRY),
             ),
           );
@@ -83,7 +84,7 @@ class App extends StatelessWidget {
                 ? AppRoutingKeys.Tabs.route
                 : AppRoutingKeys.Intro.route,
             onGenerateInitialRoutes: (initialRoute) => [
-              MaterialWithModalsPageRoute(
+              MaterialPageRoute(
                 builder: RoutingHelper.appRoutes[initialRoute],
                 settings: RouteSettings(name: initialRoute),
               ),

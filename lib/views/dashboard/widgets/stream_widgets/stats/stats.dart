@@ -37,7 +37,7 @@ class _StatsState extends State<Stats> {
               controller: _pageController,
               count: 2,
               effect: ScrollingDotsEffect(
-                activeDotColor: StylingHelper.MAIN_RED,
+                activeDotColor: Theme.of(context).toggleableActiveColor,
                 dotHeight: 10.0,
                 dotWidth: 10.0,
               ),

@@ -8,6 +8,9 @@ enum HiveKeys {
   /// Returns the box containing app settings - refer to [SettingsKeys]
   /// to see which key-value pairs are available
   Settings,
+
+  /// Returns a List of [CustomTheme]
+  CustomTheme,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -15,5 +18,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.SavedConnections: 'saved-connections',
         HiveKeys.PastStreamData: 'past-stream-data',
         HiveKeys.Settings: 'settings',
+        HiveKeys.CustomTheme: 'custom-theme',
       }[this];
 }

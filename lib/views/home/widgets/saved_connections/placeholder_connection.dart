@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/overlay/base_result.dart';
 
 import '../../../../shared/general/base_card.dart';
 
@@ -25,18 +26,11 @@ class PlaceholderConnection extends StatelessWidget {
             padding: const EdgeInsets.only(left: 24.0, right: 24.0),
             child: SizedBox(
               height: this.height,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Icon(
-                    Icons.sentiment_dissatisfied,
-                    size: 42.0,
-                  ),
-                  Text(
+              child: BaseResult(
+                icon: BaseResultIcon.Missing,
+                iconSize: 42.0,
+                text:
                     'No saved connections yet...\nNo worries though, once you successfully connected to an OBS instance you can save one for later! :)',
-                    textAlign: TextAlign.center,
-                  ),
-                ],
               ),
             ),
           ),

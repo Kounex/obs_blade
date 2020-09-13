@@ -142,7 +142,7 @@ class _HomeViewState extends State<_HomeView> {
             content: Align(
               alignment: Alignment.center,
               child: BaseResult(
-                isPositive: false,
+                icon: BaseResultIcon.Negative,
                 text: 'Couldn\'t connect to a WebSocket!',
               ),
             ),

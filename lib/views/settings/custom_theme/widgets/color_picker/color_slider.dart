@@ -36,7 +36,7 @@ class _ColorSliderState extends State<ColorSlider> {
     return Row(
       children: [
         SizedBox(
-          width: 42.0,
+          width: 24.0,
           child: Text(
             widget.label ?? '',
             textAlign: TextAlign.center,
@@ -63,6 +63,7 @@ class _ColorSliderState extends State<ColorSlider> {
             child: TextFormField(
               controller: _colorVal,
               focusNode: _colorValueFocusNode,
+              textAlign: TextAlign.center,
               decoration: InputDecoration(
                 isDense: true,
                 counterText: '',

@@ -66,7 +66,7 @@ class _BlockEntryState extends State<BlockEntry> {
       child: Container(
         color: _isPressed
             ? CupertinoDynamicColor.resolve(kPressedColor, context)
-            : StylingHelper.MAIN_BLUE,
+            : Theme.of(context).backgroundColor,
         height: kblockEntryHeight,
         width: MediaQuery.of(context).size.width,
         child: Padding(

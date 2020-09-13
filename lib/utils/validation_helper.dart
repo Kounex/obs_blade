@@ -22,8 +22,8 @@ class ValidationHelper {
     return 'Not an IP address';
   }
 
-  static String colorHexValidator(String text) {
-    if (text.length == 6 &&
+  static String colorHexValidator(String text, {bool useAlpha = false}) {
+    if (text.length == (useAlpha ? 8 : 6) &&
         (RegExp(r'^[a-fA-F0-9]+$').allMatches(text).isNotEmpty)) {
       return null;
     }
@@ -35,6 +35,6 @@ class ValidationHelper {
     if (text.length <= 3 && val != null && val >= 0) {
       return null;
     }
-    return '0 - 255 valid!';
+    return 'Valid: 0 - 255';
   }
 }

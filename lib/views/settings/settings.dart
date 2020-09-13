@@ -39,7 +39,6 @@ class SettingsView extends StatelessWidget {
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(SettingsKeys.TrueDark.name,
                             defaultValue: false),
-                        activeColor: StylingHelper.MAIN_RED,
                         onChanged: (trueDark) {
                           settingsBox.put(SettingsKeys.TrueDark.name, trueDark);
                         },
@@ -57,7 +56,6 @@ class SettingsView extends StatelessWidget {
                           value: settingsBox.get(
                               SettingsKeys.ReduceSmearing.name,
                               defaultValue: false),
-                          activeColor: StylingHelper.MAIN_RED,
                           onChanged: (reduceSmearing) {
                             settingsBox.put(SettingsKeys.ReduceSmearing.name,
                                 reduceSmearing);
@@ -65,8 +63,8 @@ class SettingsView extends StatelessWidget {
                         ),
                       ),
                     BlockEntry(
-                      leading: CupertinoIcons.bell,
-                      leadingSize: 30.0,
+                      leading: CupertinoIcons.lab_flask_solid,
+                      leadingSize: 28.0,
                       title: 'Custom Theme',
                       navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
                     ),
@@ -85,7 +83,6 @@ class SettingsView extends StatelessWidget {
                         value: settingsBox.get(
                             SettingsKeys.EnforceTabletMode.name,
                             defaultValue: false),
-                        activeColor: StylingHelper.MAIN_RED,
                         onChanged: (enforceTabletMode) {
                           settingsBox.put(SettingsKeys.EnforceTabletMode.name,
                               enforceTabletMode);

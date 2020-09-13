@@ -41,6 +41,9 @@ dependencies:
   hive: ^1.4.4
   hive_flutter: ^0.3.1
 
+  # To enable unique identifiable objects (models)
+  uuid: ^2.2.2
+
   # Fancy done layout shit
   modal_bottom_sheet: ^0.2.0+1
   fl_chart: ^0.11.0

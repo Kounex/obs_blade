@@ -17,8 +17,8 @@ enum SettingsKeys {
   /// [bool]: If user wants to use his custom theme
   CustomTheme,
 
-  /// [String]: Hex code for primary color if custom theme is used
-  CustomPrimaryColor,
+  /// [String]: UUID of the active custom theme (only used if [CustomTheme] is true)
+  ActiveCustomThemeUUID,
 
   /// Internally used properties which won't be changeable / seeable for the user
 
@@ -35,7 +35,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.TwitchUsernames: 'twitch-usernames',
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
         SettingsKeys.CustomTheme: 'custom-theme',
-        SettingsKeys.CustomPrimaryColor: 'custom-primary-color',
+        SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
       }[this];
 }

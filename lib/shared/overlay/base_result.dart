@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
+enum BaseResultIcon { Positive, Negative, Missing }
+
+extension BaseResultIconFunctions on BaseResultIcon {
+  IconData get data => const {
+        BaseResultIcon.Positive: CupertinoIcons.check_mark_circled,
+        BaseResultIcon.Negative: CupertinoIcons.clear_circled,
+        BaseResultIcon.Missing: Icons.search_off,
+      }[this];
+}
+
 class BaseResult extends StatelessWidget {
-  final IconData icon;
-  final bool isPositive;
+  final BaseResultIcon icon;
   final String text;
 
   final double iconSize;
 
-  BaseResult(
-      {this.icon, this.isPositive = true, this.text, this.iconSize = 32.0})
-      : assert((icon != null && isPositive == null) ||
-            (icon == null && isPositive != null));
+  BaseResult({
+    this.icon = BaseResultIcon.Positive,
+    this.text,
+    this.iconSize = 32.0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +29,7 @@ class BaseResult extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Icon(
-          this.icon != null
-              ? this.icon
-              : this.isPositive
-                  ? CupertinoIcons.check_mark_circled
-                  : CupertinoIcons.clear_circled,
+          this.icon.data,
           size: this.iconSize,
         ),
         if (this.text != null)

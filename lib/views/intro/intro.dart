@@ -148,7 +148,7 @@ class __IntroViewState extends State<_IntroView> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: StylingHelper.MAIN_BLUE,
+        color: Theme.of(context).backgroundColor,
         child: Stack(
           alignment: Alignment.center,
           children: [

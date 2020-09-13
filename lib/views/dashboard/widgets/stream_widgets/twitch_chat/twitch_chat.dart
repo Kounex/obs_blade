@@ -91,7 +91,7 @@ class _TwitchChatState extends State<TwitchChat>
                     width: 225,
                     child: BaseCard(
                       child: BaseResult(
-                          isPositive: false,
+                          icon: BaseResultIcon.Negative,
                           text:
                               'No Twitch Username selected, so no ones chat can be displayed!'),
                     ),

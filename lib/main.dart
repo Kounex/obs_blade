@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/custom_theme.dart';
 
 import 'app.dart';
 import 'models/connection.dart';
@@ -53,7 +54,7 @@ void main() async {
 
   Hive.registerAdapter(ConnectionAdapter());
   Hive.registerAdapter(PastStreamDataAdapter());
-  // Hive.registerAdapter(SettingsAdapter());
+  Hive.registerAdapter(CustomThemeAdapter());
 
   /// Open Hive boxes which are coupled to HiveObjects (models)
   await Hive.openBox<Connection>(
@@ -62,6 +63,10 @@ void main() async {
   );
   await Hive.openBox<PastStreamData>(
     HiveKeys.PastStreamData.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<CustomTheme>(
+    HiveKeys.CustomTheme.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 
