@@ -20,39 +20,57 @@ class CustomTheme extends HiveObject {
   bool starred;
 
   @HiveField(4)
-  String primaryColorHex;
+  String cardColorHex;
 
   @HiveField(5)
-  String accentColorHex;
+  String appBarColorHex;
 
   @HiveField(6)
-  String highlightColorHex;
+  String tabBarColorHex;
 
   @HiveField(7)
-  String backgroundColorHex;
+  String accentColorHex;
 
   @HiveField(8)
-  String textColorHex;
+  String highlightColorHex;
 
   @HiveField(9)
+  String backgroundColorHex;
+
+  @HiveField(10)
+  String textColorHex;
+
+  @HiveField(11)
   bool useLightBrightness;
+
+  @HiveField(12)
+  int dateCreatedMS;
+
+  @HiveField(13)
+  int dateUpdatedMS;
 
   CustomTheme(
       this.name,
       this.description,
       this.starred,
-      this.primaryColorHex,
+      this.cardColorHex,
+      this.appBarColorHex,
+      this.tabBarColorHex,
       this.accentColorHex,
       this.highlightColorHex,
       this.backgroundColorHex,
       this.textColorHex,
       this.useLightBrightness) {
     this.uuid = Uuid().v4();
+    this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch;
   }
 
   CustomTheme.basic() {
     this.uuid = Uuid().v4();
-    this.primaryColorHex = StylingHelper.PRIMARY_COLOR.toHex();
+    this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch;
+    this.cardColorHex = StylingHelper.PRIMARY_COLOR.toHex();
+    this.appBarColorHex = StylingHelper.PRIMARY_COLOR.toHex();
+    this.tabBarColorHex = StylingHelper.PRIMARY_COLOR.toHex();
     this.accentColorHex = StylingHelper.ACCENT_COLOR.toHex();
     this.highlightColorHex = StylingHelper.HIGHLIGHT_COLOR.toHex();
     this.backgroundColorHex = StylingHelper.BACKGROUND_COLOR.toHex();

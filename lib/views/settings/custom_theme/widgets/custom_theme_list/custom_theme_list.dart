@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/overlay/base_result.dart';
@@ -65,6 +66,17 @@ class CustomThemeList extends StatelessWidget {
                                   0
                           ? customThemeBox.values.elementAt(index).description
                           : 'No description',
+                    ),
+                    trailing: Radio(
+                      groupValue: Hive.box(HiveKeys.Settings.name).get(
+                          SettingsKeys.ActiveCustomThemeUUID.name,
+                          defaultValue: ''),
+                      value: customThemeBox.values.elementAt(index).uuid,
+                      onChanged: (active) =>
+                          Hive.box(HiveKeys.Settings.name).put(
+                        SettingsKeys.ActiveCustomThemeUUID.name,
+                        customThemeBox.values.elementAt(index).uuid,
+                      ),
                     ),
                   ),
                 )

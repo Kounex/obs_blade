@@ -57,12 +57,13 @@ class BaseCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      this.titleWidget == null
-                          ? Text(
-                              this.title,
-                              style: Theme.of(context).textTheme.headline5,
-                            )
-                          : this.titleWidget,
+                      Expanded(
+                          child: this.titleWidget == null
+                              ? Text(
+                                  this.title,
+                                  style: Theme.of(context).textTheme.headline5,
+                                )
+                              : this.titleWidget),
                       if (this.trailingTitleWidget != null)
                         this.trailingTitleWidget
                     ],

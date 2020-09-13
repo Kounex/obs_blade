@@ -25,14 +25,19 @@ class CustomThemeAdapter extends TypeAdapter<CustomTheme> {
       fields[6] as String,
       fields[7] as String,
       fields[8] as String,
-      fields[9] as bool,
-    )..uuid = fields[0] as String;
+      fields[9] as String,
+      fields[10] as String,
+      fields[11] as bool,
+    )
+      ..uuid = fields[0] as String
+      ..dateCreatedMS = fields[12] as int
+      ..dateUpdatedMS = fields[13] as int;
   }
 
   @override
   void write(BinaryWriter writer, CustomTheme obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.uuid)
       ..writeByte(1)
@@ -42,17 +47,25 @@ class CustomThemeAdapter extends TypeAdapter<CustomTheme> {
       ..writeByte(3)
       ..write(obj.starred)
       ..writeByte(4)
-      ..write(obj.primaryColorHex)
+      ..write(obj.cardColorHex)
       ..writeByte(5)
-      ..write(obj.accentColorHex)
+      ..write(obj.appBarColorHex)
       ..writeByte(6)
-      ..write(obj.highlightColorHex)
+      ..write(obj.tabBarColorHex)
       ..writeByte(7)
-      ..write(obj.backgroundColorHex)
+      ..write(obj.accentColorHex)
       ..writeByte(8)
-      ..write(obj.textColorHex)
+      ..write(obj.highlightColorHex)
       ..writeByte(9)
-      ..write(obj.useLightBrightness);
+      ..write(obj.backgroundColorHex)
+      ..writeByte(10)
+      ..write(obj.textColorHex)
+      ..writeByte(11)
+      ..write(obj.useLightBrightness)
+      ..writeByte(12)
+      ..write(obj.dateCreatedMS)
+      ..writeByte(13)
+      ..write(obj.dateUpdatedMS);
   }
 
   @override

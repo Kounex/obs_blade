@@ -34,13 +34,19 @@ class _AddEditThemeState extends State<AddEditTheme> {
     super.initState();
   }
 
-  String _nameValidation(String name) => name.trim().length == 0
-      ? 'Please provide a theme name!'
-      : Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-              .values
-              .any((customTheme) => customTheme.name == name)
-          ? 'A theme with this name already exists!'
-          : null;
+  String _nameValidation(String name) {
+    if (name.trim().length == 0) {
+      return 'Please provide a theme name!';
+    }
+    if (Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
+        .values
+        .any((customTheme) => customTheme.name == name)) {
+      if (widget.customTheme != null && widget.customTheme.name != name) {
+        return 'A theme with this name already exists!';
+      }
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +69,14 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     if (_nameValidation(_name.text) == null) {
                       _customTheme.name = _name.text.trim();
                       _customTheme.description = _description.text.trim();
-                      _customTheme.isInBox
-                          ? _customTheme.save()
-                          : Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-                              .add(_customTheme);
+                      if (_customTheme.isInBox) {
+                        _customTheme.dateUpdatedMS =
+                            DateTime.now().millisecondsSinceEpoch;
+                        _customTheme.save();
+                      } else {
+                        Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
+                            .add(_customTheme);
+                      }
                       Navigator.of(context).pop();
                     }
                   },
@@ -120,12 +130,34 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'Primary Color',
+                        colorTitle: 'Card Color',
                         colorDescription:
-                            'Main color which is used for the AppBar, BottomBar, Cards, etc.',
-                        colorHex: _customTheme.primaryColorHex,
+                            'Most UI elements are inside Cards so this is kinda the primary color of the app',
+                        colorHex: _customTheme.cardColorHex,
                         onSave: (colorHex) => setState(
-                            () => _customTheme.primaryColorHex = colorHex),
+                            () => _customTheme.cardColorHex = colorHex),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 32.0),
+                      child: ColorRow(
+                        colorTitle: 'AppBar Color',
+                        colorDescription:
+                            'The top UI element which contains the title of the current view, back navigation etc.',
+                        colorHex: _customTheme.appBarColorHex,
+                        onSave: (colorHex) => setState(
+                            () => _customTheme.appBarColorHex = colorHex),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 32.0),
+                      child: ColorRow(
+                        colorTitle: 'TabBar Color',
+                        colorDescription:
+                            'The bottom navigation bar containing the tabs for this app',
+                        colorHex: _customTheme.tabBarColorHex,
+                        onSave: (colorHex) => setState(
+                            () => _customTheme.tabBarColorHex = colorHex),
                       ),
                     ),
                     Padding(
@@ -144,7 +176,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       child: ColorRow(
                         colorTitle: 'Highlight Color',
                         colorDescription:
-                            'Active state is being displayed with this color, not widely used, currently selected Scene',
+                            'Active state is being displayed with this color like active scene, active tab, some buttons, etc.',
                         colorHex: _customTheme.highlightColorHex,
                         onSave: (colorHex) => setState(
                             () => _customTheme.highlightColorHex = colorHex),
@@ -155,7 +187,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       child: ColorRow(
                         colorTitle: 'Background Color',
                         colorDescription:
-                            'Typical background color where no UI element is shown',
+                            'Color for the typical background which behind all the UI elements',
                         colorHex: _customTheme.backgroundColorHex,
                         onSave: (colorHex) => setState(
                             () => _customTheme.backgroundColorHex = colorHex),

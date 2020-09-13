@@ -27,54 +27,29 @@ class CardHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      this.title,
-                      style: Theme.of(context).textTheme.headline5,
-                    ),
-                    SizedBox(
-                      width: 108.0,
-                      child: Divider(height: 8.0),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        this.description,
-                        style: Theme.of(context).textTheme.caption,
-                      ),
-                    ),
-                  ],
+        Padding(
+          padding: EdgeInsets.only(top: 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                this.title,
+                style: Theme.of(context).textTheme.headline5,
+              ),
+              SizedBox(
+                width: 108.0,
+                child: Divider(height: 8.0),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  this.description,
+                  style: Theme.of(context).textTheme.caption,
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.topRight,
-              child: Transform.translate(
-                offset: Offset(42.0, -42.0),
-                child: ClipPath(
-                  clipper: IconClipper(),
-                  clipBehavior: Clip.antiAlias,
-                  child: Transform.rotate(
-                    angle: -0.0,
-                    child: Icon(
-                      StylingHelper.CUPERTINO_PIE_CHART_SOLID,
-                      size: 128.0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
         this.someStats ?? Container(),
       ],
