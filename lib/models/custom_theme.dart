@@ -60,9 +60,11 @@ class CustomTheme extends HiveObject {
       this.highlightColorHex,
       this.backgroundColorHex,
       this.textColorHex,
-      this.useLightBrightness) {
-    this.uuid = Uuid().v4();
-    this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch;
+      this.useLightBrightness,
+      [this.uuid,
+      this.dateCreatedMS]) {
+    this.uuid = uuid ?? Uuid().v4();
+    this.dateCreatedMS = dateCreatedMS ?? DateTime.now().millisecondsSinceEpoch;
   }
 
   CustomTheme.basic() {

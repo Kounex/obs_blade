@@ -69,16 +69,22 @@ class _ColorSliderState extends State<ColorSlider> {
                 counterText: '',
               ),
               keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                    RegExp(r"^([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"))
+              ],
               maxLength: 3,
               autocorrect: false,
               onChanged: (value) {
-                int colorVal = int.parse(value);
-                if (colorVal > 255) {
-                  colorVal = 255;
-                }
-                _colorVal.text = colorVal.toString();
+                _colorVal.text = value;
                 widget.onChanged(value);
+                setState(() {});
+              },
+              onEditingComplete: () {
+                String colorVal =
+                    _colorVal.text.length == 0 ? '0' : _colorVal.text;
+                _colorVal.text = colorVal;
+                widget.onChanged(colorVal);
                 setState(() {});
               },
             ),

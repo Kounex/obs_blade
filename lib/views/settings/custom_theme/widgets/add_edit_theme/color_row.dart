@@ -1,37 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/themed_cupertino_switch.dart';
+import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
 
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../color_picker/color_picker.dart';
 
 class ColorRow extends StatelessWidget {
-  final String colorTitle;
-  final String colorDescription;
+  final String title;
+  final String description;
   final String colorHex;
+
+  final bool active;
+  final void Function(bool) onActiveChanged;
+
   final void Function(String) onSave;
 
   ColorRow({
-    @required this.colorTitle,
-    @required this.colorDescription,
+    @required this.title,
+    @required this.description,
     @required this.colorHex,
+    this.active,
+    this.onActiveChanged,
     this.onSave,
-  });
+  }) : assert((onActiveChanged == null && onSave == null) ||
+            (onActiveChanged == null && onSave != null) ||
+            (onActiveChanged != null && active != null && onSave == null));
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => ModalHandler.showBaseBottomSheet(
-        context: context,
-        modalWidget: Container(
-          height: 340.0,
-          child: ColorPicker(
-            title: this.colorTitle,
-            description: this.colorDescription,
-            color: this.colorHex,
-            onSave: (colorHex) => this.onSave?.call(colorHex),
-          ),
-        ),
-      ),
+      behavior: HitTestBehavior.opaque,
+      onTap: this.onSave != null
+          ? () => ModalHandler.showBaseBottomSheet(
+                context: context,
+                modalWidget: Container(
+                  height: 340.0,
+                  child: ColorPicker(
+                    title: this.title,
+                    description: this.description,
+                    color: this.colorHex,
+                    onSave: (colorHex) => this.onSave?.call(colorHex),
+                  ),
+                ),
+              )
+          : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -40,12 +53,12 @@ class ColorRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  this.colorTitle,
+                  this.title,
                   style: Theme.of(context).textTheme.button,
                 ),
                 Divider(),
                 Text(
-                  this.colorDescription,
+                  this.description,
                   style: Theme.of(context).textTheme.caption,
                 ),
               ],
@@ -56,25 +69,23 @@ class ColorRow extends StatelessWidget {
           ),
           SizedBox(
             width: 75.0,
-            child: Column(
-              children: [
-                Container(
-                  height: 32.0,
-                  width: 32.0,
-                  decoration: BoxDecoration(
-                    color: this.colorHex.hexToColor(),
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 1.0,
-                    ),
+            child: this.onActiveChanged != null
+                ? ThemedCupertinoSwitch(
+                    value: this.active,
+                    onChanged: this.onActiveChanged,
+                  )
+                : Column(
+                    children: [
+                      ColorBubble(
+                        color: this.colorHex.hexToColor(),
+                        size: 32.0,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Text('#${this.colorHex}'),
+                      ),
+                    ],
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: Text('#${this.colorHex}'),
-                ),
-              ],
-            ),
           )
         ],
       ),

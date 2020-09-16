@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
 import '../../../../../utils/validation_helper.dart';
 import 'color_slider.dart';
 import '../../../widgets/action_block.dart/light_divider.dart';
@@ -114,6 +115,7 @@ class _ColorPickerState extends State<ColorPicker> {
                             ValidationHelper.colorHexValidator(color),
                         autovalidate: true,
                         autocorrect: false,
+                        maxLength: widget.useAlpha ? 8 : 6,
                         onChanged: (value) {
                           if (ValidationHelper.colorHexValidator(_color.text) ==
                               null) {
@@ -128,16 +130,9 @@ class _ColorPickerState extends State<ColorPicker> {
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 10.0),
-                child: Container(
-                  height: 32.0,
-                  width: 32.0,
-                  decoration: BoxDecoration(
-                    color: _color.text.hexToColor(),
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 1.0,
-                    ),
-                  ),
+                child: ColorBubble(
+                  color: _color.text.hexToColor(),
+                  size: 32.0,
                 ),
               ),
             ],

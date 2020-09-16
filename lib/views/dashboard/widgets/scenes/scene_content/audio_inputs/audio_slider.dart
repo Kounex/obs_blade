@@ -29,7 +29,9 @@ class AudioSlider extends StatelessWidget {
             IconButton(
               icon: Icon(
                 this.audioSceneItem.muted ? Icons.volume_off : Icons.volume_up,
-                color: this.audioSceneItem.muted ? Colors.red : null,
+                color: this.audioSceneItem.muted
+                    ? Colors.red
+                    : Theme.of(context).accentColor,
               ),
               padding: EdgeInsets.all(0.0),
               onPressed: () => NetworkHelper.makeRequest(

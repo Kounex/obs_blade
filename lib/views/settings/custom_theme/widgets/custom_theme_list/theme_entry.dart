@@ -11,8 +11,9 @@ import 'theme_colors_row.dart';
 
 class ThemeEntry extends StatelessWidget {
   final CustomTheme customTheme;
+  final bool isEditable;
 
-  ThemeEntry({@required this.customTheme});
+  ThemeEntry({@required this.customTheme, this.isEditable = true});
 
   @override
   Widget build(BuildContext context) {
@@ -65,17 +66,18 @@ class ThemeEntry extends StatelessWidget {
               ),
             ],
           ),
-          CupertinoButton(
-            padding: const EdgeInsets.only(right: 24.0),
-            child: Text('Edit'),
-            onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
-              context: context,
-              modalWidgetBuilder: (context, scrollController) => AddEditTheme(
-                customTheme: this.customTheme,
-                scrollController: scrollController,
+          if (this.isEditable)
+            CupertinoButton(
+              padding: const EdgeInsets.only(right: 24.0),
+              child: Text('Edit'),
+              onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
+                context: context,
+                modalWidgetBuilder: (context, scrollController) => AddEditTheme(
+                  customTheme: this.customTheme,
+                  scrollController: scrollController,
+                ),
               ),
-            ),
-          )
+            )
         ],
       ),
     );

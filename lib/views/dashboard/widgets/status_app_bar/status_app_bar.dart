@@ -51,7 +51,11 @@ class StatusAppBar extends StatelessWidget {
           ),
           Column(
             children: <Widget>[
-              Text('Dashboard'),
+              Text(
+                'Dashboard',
+                style:
+                    Theme.of(context).textTheme.button.copyWith(fontSize: 18.0),
+              ),
               Padding(
                 padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
                 child: Observer(builder: (_) {

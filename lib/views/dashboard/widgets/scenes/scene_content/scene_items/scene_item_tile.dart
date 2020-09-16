@@ -41,7 +41,9 @@ class SceneItemTile extends StatelessWidget {
       trailing: IconButton(
         icon: Icon(
           this.sceneItem.render ? Icons.visibility : Icons.visibility_off,
-          color: this.sceneItem.render ? Colors.white : Colors.red,
+          color: this.sceneItem.render
+              ? Theme.of(context).accentColor
+              : Colors.red,
         ),
         onPressed: () => NetworkHelper.makeRequest(
             context.read<NetworkStore>().activeSession.socket,

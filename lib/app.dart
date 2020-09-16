@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/utils/built_in_themes.dart';
 import 'package:provider/provider.dart';
 
 import 'models/custom_theme.dart';
@@ -15,6 +16,7 @@ import 'types/extensions/string.dart';
 
 class App extends StatelessWidget {
   ThemeData _getCurrentTheme(Box settingsBox) {
+    Brightness brightness;
     Color scaffoldBackgroundColor;
     Color accentColor;
     Color backgroundColor;
@@ -28,14 +30,20 @@ class App extends StatelessWidget {
     Color cupertinoPrimaryColor;
 
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
-      CustomTheme activeCustomTheme =
-          Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values.firstWhere(
-              (customTheme) =>
-                  customTheme.uuid ==
-                  settingsBox.get(SettingsKeys.ActiveCustomThemeUUID.name,
-                      defaultValue: ''),
-              orElse: () => null);
+      CustomTheme activeCustomTheme = [
+        ...BuiltInThemes.themes,
+        ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values
+      ].firstWhere(
+          (customTheme) =>
+              customTheme.uuid ==
+              settingsBox.get(SettingsKeys.ActiveCustomThemeUUID.name,
+                  defaultValue: ''),
+          orElse: () => null);
       if (activeCustomTheme != null) {
+        brightness = activeCustomTheme.useLightBrightness != null &&
+                activeCustomTheme.useLightBrightness
+            ? Brightness.light
+            : Brightness.dark;
         scaffoldBackgroundColor =
             activeCustomTheme.backgroundColorHex.hexToColor();
         accentColor = activeCustomTheme.highlightColorHex.hexToColor();
@@ -52,7 +60,10 @@ class App extends StatelessWidget {
       }
     }
 
-    return ThemeData.dark().copyWith(
+    return (brightness != null && brightness == Brightness.light
+            ? ThemeData.light()
+            : ThemeData.dark())
+        .copyWith(
       scaffoldBackgroundColor: scaffoldBackgroundColor ??
           (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
               ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
@@ -68,10 +79,23 @@ class App extends StatelessWidget {
       dividerColor: Colors.grey[500],
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      textSelectionColor: accentColor ?? StylingHelper.HIGHLIGHT_COLOR,
       toggleableActiveColor:
           toggleableActiveColor ?? StylingHelper.ACCENT_COLOR,
 
       /// Inner Widget themes
+      primaryIconTheme: IconThemeData(
+        color: brightness != null && brightness == Brightness.light
+            ? Colors.black
+            : Colors.white,
+      ),
+
+      tabBarTheme: TabBarTheme(
+        labelColor: brightness != null && brightness == Brightness.light
+            ? Colors.black
+            : Colors.white,
+      ),
+
       appBarTheme: AppBarTheme(
         color: (appBarColor ?? StylingHelper.PRIMARY_COLOR)
             .withOpacity(StylingHelper.OPACITY_BLURRY),
@@ -96,7 +120,7 @@ class App extends StatelessWidget {
                     : StylingHelper.BACKGROUND_COLOR
                 : Colors.grey[900]),
         textTheme: CupertinoTextThemeData(
-          primaryColor: Colors.white,
+          primaryColor: accentColor ?? StylingHelper.HIGHLIGHT_COLOR,
         ),
         primaryColor: cupertinoPrimaryColor ?? StylingHelper.HIGHLIGHT_COLOR,
         barBackgroundColor: (tabBarColor ?? StylingHelper.PRIMARY_COLOR)
@@ -119,22 +143,26 @@ class App extends StatelessWidget {
           SettingsKeys.CustomTheme.name,
           SettingsKeys.ActiveCustomThemeUUID.name,
         ]),
-        builder: (context, Box settingsBox, child) {
-          return MaterialApp(
-            theme: _getCurrentTheme(settingsBox),
-            initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
-                    defaultValue: false)
-                ? AppRoutingKeys.Tabs.route
-                : AppRoutingKeys.Intro.route,
-            onGenerateInitialRoutes: (initialRoute) => [
-              MaterialPageRoute(
-                builder: RoutingHelper.appRoutes[initialRoute],
-                settings: RouteSettings(name: initialRoute),
-              ),
-            ],
-            routes: RoutingHelper.appRoutes,
-          );
-        },
+        builder: (context, Box settingsBox, child) => ValueListenableBuilder(
+          valueListenable:
+              Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).listenable(),
+          builder: (context, Box<CustomTheme> customThemeBox, child) {
+            return MaterialApp(
+              theme: _getCurrentTheme(settingsBox),
+              initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
+                      defaultValue: false)
+                  ? AppRoutingKeys.Tabs.route
+                  : AppRoutingKeys.Intro.route,
+              onGenerateInitialRoutes: (initialRoute) => [
+                MaterialPageRoute(
+                  builder: RoutingHelper.appRoutes[initialRoute],
+                  settings: RouteSettings(name: initialRoute),
+                ),
+              ],
+              routes: RoutingHelper.appRoutes,
+            );
+          },
+        ),
       ),
     );
   }

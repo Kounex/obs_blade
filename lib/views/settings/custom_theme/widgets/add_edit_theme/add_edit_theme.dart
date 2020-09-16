@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/shared/general/validation_cupertino_textfield.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
 
@@ -72,7 +73,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       if (_customTheme.isInBox) {
                         _customTheme.dateUpdatedMS =
                             DateTime.now().millisecondsSinceEpoch;
-                        _customTheme.save();
+                        Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
+                            .put(_customTheme.key, _customTheme);
+                        // _customTheme.save();
                       } else {
                         Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
                             .add(_customTheme);
@@ -99,6 +102,17 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                     'Are you sure you want to delete this custom theme? This action can\'t be undone!',
                                 onOk: () {
                                   Navigator.of(context).pop();
+                                  Box settingsBox =
+                                      Hive.box(HiveKeys.Settings.name);
+                                  if (settingsBox.get(
+                                          SettingsKeys
+                                              .ActiveCustomThemeUUID.name,
+                                          defaultValue: '') ==
+                                      _customTheme.uuid) {
+                                    settingsBox.put(
+                                        SettingsKeys.ActiveCustomThemeUUID.name,
+                                        '');
+                                  }
                                   _customTheme.delete();
                                 },
                               ),
@@ -130,8 +144,20 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'Card Color',
-                        colorDescription:
+                        title: 'Is this a light theme?',
+                        description:
+                            'If this theme is intended to be a light theme, this option should be checked so text / system UI correctly adapts',
+                        colorHex: _customTheme.cardColorHex,
+                        active: _customTheme.useLightBrightness ?? false,
+                        onActiveChanged: (active) => setState(
+                            () => _customTheme.useLightBrightness = active),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 32.0),
+                      child: ColorRow(
+                        title: 'Card Color',
+                        description:
                             'Most UI elements are inside Cards so this is kinda the primary color of the app',
                         colorHex: _customTheme.cardColorHex,
                         onSave: (colorHex) => setState(
@@ -141,8 +167,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'AppBar Color',
-                        colorDescription:
+                        title: 'AppBar Color',
+                        description:
                             'The top UI element which contains the title of the current view, back navigation etc.',
                         colorHex: _customTheme.appBarColorHex,
                         onSave: (colorHex) => setState(
@@ -152,8 +178,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'TabBar Color',
-                        colorDescription:
+                        title: 'TabBar Color',
+                        description:
                             'The bottom navigation bar containing the tabs for this app',
                         colorHex: _customTheme.tabBarColorHex,
                         onSave: (colorHex) => setState(
@@ -163,8 +189,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'Accent Color',
-                        colorDescription:
+                        title: 'Accent Color',
+                        description:
                             'Is being used by action / toggle elements like Switch, Button, etc.',
                         colorHex: _customTheme.accentColorHex,
                         onSave: (colorHex) => setState(
@@ -174,8 +200,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'Highlight Color',
-                        colorDescription:
+                        title: 'Highlight Color',
+                        description:
                             'Active state is being displayed with this color like active scene, active tab, some buttons, etc.',
                         colorHex: _customTheme.highlightColorHex,
                         onSave: (colorHex) => setState(
@@ -185,8 +211,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 32.0),
                       child: ColorRow(
-                        colorTitle: 'Background Color',
-                        colorDescription:
+                        title: 'Background Color',
+                        description:
                             'Color for the typical background which behind all the UI elements',
                         colorHex: _customTheme.backgroundColorHex,
                         onSave: (colorHex) => setState(

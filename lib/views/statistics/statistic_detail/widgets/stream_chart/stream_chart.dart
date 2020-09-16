@@ -90,7 +90,7 @@ class StreamChart extends StatelessWidget {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            tooltipBgColor: Colors.black,
+            tooltipBgColor: Theme.of(context).cardColor,
             getTooltipItems: (touchedSpots) => touchedSpots
                 .map(
                   (touchSpot) => LineTooltipItem(
