@@ -52,9 +52,12 @@ class Scenes extends StatelessWidget {
           //       {'sourceName': 'was geht ab', 'playPause': false}),
           //   child: Text('SOUND'),
           // ),
-          ResponsiveWidgetWrapper(
-            mobileWidget: SceneContentMobile(),
-            tabletWidget: SceneContent(),
+          Padding(
+            padding: const EdgeInsets.only(top: 42.0),
+            child: ResponsiveWidgetWrapper(
+              mobileWidget: SceneContentMobile(),
+              tabletWidget: SceneContent(),
+            ),
           ),
         ],
       ),

@@ -46,7 +46,7 @@ dependencies:
 
   # Fancy done layout shit
   modal_bottom_sheet: ^0.2.0+1
-  fl_chart: ^0.11.0
+  fl_chart: ^0.11.1
   smooth_page_indicator: ^0.2.0
   keyboard_actions: ^3.3.0+1
 

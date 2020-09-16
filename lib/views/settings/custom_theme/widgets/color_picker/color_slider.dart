@@ -28,6 +28,12 @@ class _ColorSliderState extends State<ColorSlider> {
   @override
   void initState() {
     _colorVal = TextEditingController(text: widget.value?.toString() ?? '0');
+    _colorValueFocusNode.addListener(() {
+      if (_colorValueFocusNode.hasFocus) {
+        _colorVal.selection =
+            TextSelection(baseOffset: 0, extentOffset: _colorVal.text.length);
+      }
+    });
     super.initState();
   }
 
@@ -71,20 +77,25 @@ class _ColorSliderState extends State<ColorSlider> {
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(
-                    RegExp(r"^([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"))
+                    RegExp(r"^([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"),
+                    replacementString: _colorVal.text)
               ],
-              maxLength: 3,
               autocorrect: false,
+              maxLength: 3,
+              maxLengthEnforced: true,
               onChanged: (value) {
-                _colorVal.text = value;
+                if (value.length == 0) {
+                  _colorVal.value = TextEditingValue(
+                      text: '0',
+                      selection:
+                          TextSelection.fromPosition(TextPosition(offset: 1)));
+                } else if (value.length > 1 && value[0] == '0') {
+                  _colorVal.value = TextEditingValue(
+                      text: value.substring(1, 2),
+                      selection:
+                          TextSelection.fromPosition(TextPosition(offset: 1)));
+                }
                 widget.onChanged(value);
-                setState(() {});
-              },
-              onEditingComplete: () {
-                String colorVal =
-                    _colorVal.text.length == 0 ? '0' : _colorVal.text;
-                _colorVal.text = colorVal;
-                widget.onChanged(colorVal);
                 setState(() {});
               },
             ),

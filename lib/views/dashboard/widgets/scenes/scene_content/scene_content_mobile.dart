@@ -11,15 +11,18 @@ class SceneContentMobile extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TabBar(
-            tabs: [
-              Tab(
-                child: Text('Scene Items'),
-              ),
-              Tab(
-                child: Text('Audio'),
-              )
-            ],
+          Material(
+            color: Theme.of(context).cupertinoOverrideTheme.barBackgroundColor,
+            child: TabBar(
+              tabs: [
+                Tab(
+                  child: Text('Scene Items'),
+                ),
+                Tab(
+                  child: Text('Audio'),
+                )
+              ],
+            ),
           ),
           SizedBox(
             height: 300,

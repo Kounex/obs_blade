@@ -17,15 +17,12 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: Hive.box(HiveKeys.Settings.name)
           .listenable(keys: [SettingsKeys.EnforceTabletMode.name]),
-      builder: (context, Box settingsBox, child) => Padding(
-        padding: const EdgeInsets.only(top: 42.0),
-        child: MediaQuery.of(context).size.width >
-                    StylingHelper.MAX_WIDTH_MOBILE ||
-                settingsBox.get(SettingsKeys.EnforceTabletMode.name,
-                    defaultValue: false)
-            ? this.tabletWidget
-            : this.mobileWidget,
-      ),
+      builder: (context, Box settingsBox, child) =>
+          MediaQuery.of(context).size.width > StylingHelper.MAX_WIDTH_MOBILE ||
+                  settingsBox.get(SettingsKeys.EnforceTabletMode.name,
+                      defaultValue: false)
+              ? this.tabletWidget
+              : this.mobileWidget,
     );
   }
 }

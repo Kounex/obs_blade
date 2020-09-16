@@ -14,15 +14,19 @@ class StreamWidgetsMobile extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TabBar(
-                tabs: [
-                  Tab(
-                    child: Text('Chat'),
-                  ),
-                  Tab(
-                    child: Text('Stats'),
-                  )
-                ],
+              Material(
+                color:
+                    Theme.of(context).cupertinoOverrideTheme.barBackgroundColor,
+                child: TabBar(
+                  tabs: [
+                    Tab(
+                      child: Text('Chat'),
+                    ),
+                    Tab(
+                      child: Text('Stats'),
+                    )
+                  ],
+                ),
               ),
               SizedBox(
                 height: 525.0,

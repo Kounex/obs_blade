@@ -24,6 +24,7 @@ class App extends StatelessWidget {
     Color cardColor;
     Color indicatorColor;
     Color toggleableActiveColor;
+    Color sliderColor;
     Color appBarColor;
     Color buttonColor;
     Color tabBarColor;
@@ -52,6 +53,7 @@ class App extends StatelessWidget {
         cardColor = activeCustomTheme.cardColorHex.hexToColor();
         indicatorColor = activeCustomTheme.highlightColorHex.hexToColor();
         toggleableActiveColor = activeCustomTheme.accentColorHex.hexToColor();
+        sliderColor = activeCustomTheme.highlightColorHex.hexToColor();
         appBarColor = activeCustomTheme.appBarColorHex.hexToColor();
         buttonColor = activeCustomTheme.accentColorHex.hexToColor();
         tabBarColor = activeCustomTheme.tabBarColorHex.hexToColor();
@@ -90,6 +92,19 @@ class App extends StatelessWidget {
             : Colors.white,
       ),
 
+      sliderTheme: SliderThemeData(
+        activeTickMarkColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
+        activeTrackColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
+        valueIndicatorColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
+        thumbColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
+        overlayColor:
+            (sliderColor ?? StylingHelper.HIGHLIGHT_COLOR).withOpacity(0.3),
+        inactiveTrackColor:
+            (sliderColor ?? StylingHelper.HIGHLIGHT_COLOR).withOpacity(0.3),
+        inactiveTickMarkColor:
+            (sliderColor ?? StylingHelper.HIGHLIGHT_COLOR).withOpacity(0.3),
+      ),
+
       tabBarTheme: TabBarTheme(
         labelColor: brightness != null && brightness == Brightness.light
             ? Colors.black
@@ -100,6 +115,7 @@ class App extends StatelessWidget {
         color: (appBarColor ?? StylingHelper.PRIMARY_COLOR)
             .withOpacity(StylingHelper.OPACITY_BLURRY),
       ),
+
       buttonTheme: ButtonThemeData(
         buttonColor: buttonColor ?? StylingHelper.ACCENT_COLOR,
         splashColor: Colors.transparent,
