@@ -31,7 +31,10 @@ class RefresherAppBar extends StatelessWidget {
                   ? Fader(
                       child: Text(
                         'OBS Blade',
-                        style: TextStyle(fontSize: 18.0),
+                        style: Theme.of(context)
+                            .textTheme
+                            .button
+                            .copyWith(fontSize: 18.0),
                       ),
                     )
                   : Container(),

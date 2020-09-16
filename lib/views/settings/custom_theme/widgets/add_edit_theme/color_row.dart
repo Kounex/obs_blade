@@ -35,7 +35,7 @@ class ColorRow extends StatelessWidget {
           ? () => ModalHandler.showBaseBottomSheet(
                 context: context,
                 modalWidget: Container(
-                  height: 340.0,
+                  height: 364.0,
                   child: ColorPicker(
                     title: this.title,
                     description: this.description,

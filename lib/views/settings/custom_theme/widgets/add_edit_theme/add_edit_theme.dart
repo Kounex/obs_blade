@@ -219,6 +219,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             () => _customTheme.backgroundColorHex = colorHex),
                       ),
                     ),
+                    SizedBox(height: 32.0),
                   ],
                 ),
               ),

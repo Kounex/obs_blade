@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
 import '../../../../../utils/validation_helper.dart';
 import 'color_slider.dart';
@@ -27,11 +28,18 @@ class ColorPicker extends StatefulWidget {
 
 class _ColorPickerState extends State<ColorPicker> {
   TextEditingController _color;
+  FocusNode _colorFocusNode = FocusNode();
   Key _colorContainerKey;
 
   @override
   void initState() {
     _color = TextEditingController(text: widget.color ?? '000000');
+    _colorFocusNode.addListener(() {
+      if (_colorFocusNode.hasFocus) {
+        _color.selection =
+            TextSelection(baseOffset: 0, extentOffset: _color.text.length);
+      }
+    });
     _colorContainerKey = Key(widget.color ?? '000000');
     super.initState();
   }
@@ -110,12 +118,20 @@ class _ColorPickerState extends State<ColorPicker> {
                       width: 150.0,
                       child: TextFormField(
                         controller: _color,
+                        focusNode: _colorFocusNode,
                         decoration: InputDecoration(isDense: true),
                         validator: (color) =>
                             ValidationHelper.colorHexValidator(color),
                         autovalidate: true,
                         autocorrect: false,
                         maxLength: widget.useAlpha ? 8 : 6,
+                        maxLengthEnforced: true,
+                        // inputFormatters: [
+                        //   FilteringTextInputFormatter.allow(
+                        //     r'^[a-fA-F0-9]+$',
+                        //     replacementString: _color.text,
+                        //   )
+                        // ],
                         onChanged: (value) {
                           if (ValidationHelper.colorHexValidator(_color.text) ==
                               null) {

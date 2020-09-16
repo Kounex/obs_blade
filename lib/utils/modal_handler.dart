@@ -42,7 +42,11 @@ class ModalHandler {
         builder: (context) => Padding(
           padding:
               EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: modalWidget,
+          child: ConstrainedBox(
+            constraints:
+                BoxConstraints(maxWidth: StylingHelper.MAX_WIDTH_MOBILE),
+            child: modalWidget,
+          ),
         ),
       );
 
