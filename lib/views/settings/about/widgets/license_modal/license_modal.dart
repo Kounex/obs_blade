@@ -7,16 +7,19 @@ import '../../../widgets/action_block.dart/light_divider.dart';
 import '../license_modal/license_entries.dart';
 
 class LicenseModal extends StatelessWidget {
+  final ScrollController scrollController;
+
+  LicenseModal({this.scrollController});
+
   @override
   Widget build(BuildContext context) {
-    // return LicensePage();
     return Column(
       children: [
         Align(
           child: Container(
             padding: EdgeInsets.only(bottom: 12.0),
             width: 300.0,
-            child: Image.asset('assets/images/base-logo.png'),
+            child: Image.asset('assets/images/base_logo.png'),
           ),
         ),
         LightDivider(),
@@ -28,7 +31,7 @@ class LicenseModal extends StatelessWidget {
               Container(
                 padding: EdgeInsets.only(right: 8.0),
                 height: 32.0,
-                child: Image.asset('assets/images/flutter-logo-render.png'),
+                child: Image.asset('assets/images/flutter_logo_render.png'),
               ),
               Text('Powered by Flutter'),
             ],
@@ -36,7 +39,9 @@ class LicenseModal extends StatelessWidget {
         ),
         LightDivider(),
         Expanded(
-          child: LicenseEntries(),
+          child: LicenseEntries(
+            scrollController: scrollController,
+          ),
         ),
       ],
     );

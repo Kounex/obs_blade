@@ -1,13 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../shared/general/base_card.dart';
+import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../../types/enums/hive_keys.dart';
 import '../../../utils/modal_handler.dart';
 import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
@@ -21,8 +17,7 @@ class CustomThemeView extends StatefulWidget {
 class _CustomThemeViewState extends State<CustomThemeView> {
   @override
   Widget build(BuildContext context) {
-    return CupertinoScaffold(
-      transitionBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    return ThemedCupertinoScaffold(
       body: Builder(
         builder: (context) => TransculentCupertinoNavBarWrapper(
           previousTitle: 'Settings',

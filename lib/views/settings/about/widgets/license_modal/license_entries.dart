@@ -45,6 +45,10 @@ class _LicenseData {
 }
 
 class LicenseEntries extends StatefulWidget {
+  final ScrollController scrollController;
+
+  LicenseEntries({this.scrollController});
+
   @override
   _LicenseEntriesState createState() => _LicenseEntriesState();
 }
@@ -71,6 +75,7 @@ class _LicenseEntriesState extends State<LicenseEntries> {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return ListView.builder(
+            controller: widget.scrollController,
             padding:
                 EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             itemCount: snapshot.data.packages.length,

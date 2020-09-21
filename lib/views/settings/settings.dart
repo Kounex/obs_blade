@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/shared/general/custom_sliver_list.dart';
+import 'package:obs_blade/shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
 import 'package:package_info/package_info.dart';
 
-import '../../shared/general/themed_cupertino_switch.dart';
+import '../../shared/general/themed/themed_cupertino_switch.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/routing_helper.dart';
@@ -22,7 +23,7 @@ class SettingsView extends StatelessWidget {
         controller: ModalRoute.of(context).settings.arguments,
         physics: StylingHelper.platformAwareScrollPhysics,
         slivers: <Widget>[
-          CupertinoSliverNavigationBar(
+          ThemedCupertinoSliverNavigationBar(
             largeTitle: Text('Settings'),
           ),
           ValueListenableBuilder(

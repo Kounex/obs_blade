@@ -37,11 +37,16 @@ class HomeView extends StatelessWidget {
       create: (_) {
         HomeStore landingStore = HomeStore();
 
+        // if (!context.read<NetworkStore>().obsTerminated) {
+        //   context.read<NetworkStore>().obsTerminated = false;
+
         /// Trigger autodiscover on startup
-        if (!context.read<NetworkStore>().obsTerminated) {
-          context.read<NetworkStore>().obsTerminated = false;
-          landingStore.updateAutodiscoverConnections();
-        }
+        /// Delay autodiscover to let the view render and ask for permission etc.
+        Future.delayed(
+          Duration(milliseconds: 500),
+          () => landingStore.updateAutodiscoverConnections(),
+        );
+        // }
         return landingStore;
       },
       builder: (context, _) => _HomeView(),
@@ -193,7 +198,7 @@ class _HomeViewState extends State<_HomeView> {
           slivers: <Widget>[
             RefresherAppBar(
               expandedHeight: 200.0,
-              imagePath: 'assets/images/base-logo.png',
+              imagePath: 'assets/images/base_logo.png',
             ),
             CustomSliverList(
               children: [
@@ -201,7 +206,6 @@ class _HomeViewState extends State<_HomeView> {
                   child: ConnectBox(),
                 ),
                 SavedConnections(),
-                SizedBox(height: kBottomNavigationBarHeight),
               ],
             ),
           ],

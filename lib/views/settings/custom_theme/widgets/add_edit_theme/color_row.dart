@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/themed_cupertino_switch.dart';
+import 'package:obs_blade/shared/general/themed/themed_cupertino_switch.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
 
 import '../../../../../types/extensions/string.dart';

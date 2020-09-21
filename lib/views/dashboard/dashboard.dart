@@ -98,11 +98,9 @@ class _DashboardViewState extends State<_DashboardView> {
     return Scaffold(
       body: Observer(builder: (_) {
         return CustomScrollView(
-          // physics: ClampingScrollPhysics(),
           physics: context.read<DashboardStore>().isPointerOnTwitch
               ? NeverScrollableScrollPhysics()
               : ClampingScrollPhysics(),
-          // controller: DashboardScroll.of(context).scrollController,
           controller: ModalRoute.of(context).settings.arguments,
           slivers: [
             StatusAppBar(),

@@ -49,6 +49,7 @@ dependencies:
   fl_chart: ^0.11.1
   smooth_page_indicator: ^0.2.0
   keyboard_actions: ^3.3.0+1
+  flutter_svg: ^0.19.0
 
 dependency_overrides:
 
@@ -90,3 +91,4 @@ flutter:
     - assets/icons/app/
     - assets/images/
     - assets/images/intro/
+    - assets/svgs/
