@@ -18,7 +18,7 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
       valueListenable: Hive.box(HiveKeys.Settings.name)
           .listenable(keys: [SettingsKeys.EnforceTabletMode.name]),
       builder: (context, Box settingsBox, child) =>
-          MediaQuery.of(context).size.width > StylingHelper.MAX_WIDTH_MOBILE ||
+          MediaQuery.of(context).size.width > StylingHelper.max_width_mobile ||
                   settingsBox.get(SettingsKeys.EnforceTabletMode.name,
                       defaultValue: false)
               ? this.tabletWidget

@@ -70,20 +70,20 @@ class App extends StatelessWidget {
           (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
               ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
                       defaultValue: false)
-                  ? StylingHelper.BACKGROUND_REDUCED_SMEARING_COLOR
-                  : StylingHelper.BACKGROUND_COLOR
+                  ? StylingHelper.background_reduced_smearing_color
+                  : StylingHelper.background_color
               : Colors.grey[900]),
-      accentColor: accentColor ?? StylingHelper.HIGHLIGHT_COLOR,
-      backgroundColor: backgroundColor ?? StylingHelper.PRIMARY_COLOR,
-      canvasColor: canvasColor ?? StylingHelper.PRIMARY_COLOR,
-      cardColor: cardColor ?? StylingHelper.PRIMARY_COLOR,
-      indicatorColor: indicatorColor ?? StylingHelper.HIGHLIGHT_COLOR,
+      accentColor: accentColor ?? StylingHelper.highlight_color,
+      backgroundColor: backgroundColor ?? StylingHelper.primary_color,
+      canvasColor: canvasColor ?? StylingHelper.primary_color,
+      cardColor: cardColor ?? StylingHelper.primary_color,
+      indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
       dividerColor: Colors.grey[500],
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      textSelectionColor: accentColor ?? StylingHelper.HIGHLIGHT_COLOR,
+      textSelectionColor: accentColor ?? StylingHelper.highlight_color,
       toggleableActiveColor:
-          toggleableActiveColor ?? StylingHelper.ACCENT_COLOR,
+          toggleableActiveColor ?? StylingHelper.accent_color,
 
       /// Inner Widget themes
       primaryIconTheme: IconThemeData(
@@ -93,16 +93,16 @@ class App extends StatelessWidget {
       ),
 
       sliderTheme: SliderThemeData(
-        activeTickMarkColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
-        activeTrackColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
-        valueIndicatorColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
-        thumbColor: sliderColor ?? StylingHelper.HIGHLIGHT_COLOR,
+        activeTickMarkColor: sliderColor ?? StylingHelper.highlight_color,
+        activeTrackColor: sliderColor ?? StylingHelper.highlight_color,
+        valueIndicatorColor: sliderColor ?? StylingHelper.highlight_color,
+        thumbColor: sliderColor ?? StylingHelper.highlight_color,
         overlayColor:
-            (sliderColor ?? StylingHelper.HIGHLIGHT_COLOR).withOpacity(0.3),
+            (sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
         inactiveTrackColor:
-            (sliderColor ?? StylingHelper.HIGHLIGHT_COLOR).withOpacity(0.3),
+            (sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
         inactiveTickMarkColor:
-            (sliderColor ?? StylingHelper.HIGHLIGHT_COLOR).withOpacity(0.3),
+            (sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
       ),
 
       tabBarTheme: TabBarTheme(
@@ -112,12 +112,12 @@ class App extends StatelessWidget {
       ),
 
       appBarTheme: AppBarTheme(
-        color: (appBarColor ?? StylingHelper.PRIMARY_COLOR)
-            .withOpacity(StylingHelper.OPACITY_BLURRY),
+        color: (appBarColor ?? StylingHelper.primary_color)
+            .withOpacity(StylingHelper.opacity_blurry),
       ),
 
       buttonTheme: ButtonThemeData(
-        buttonColor: buttonColor ?? StylingHelper.ACCENT_COLOR,
+        buttonColor: buttonColor ?? StylingHelper.accent_color,
         splashColor: Colors.transparent,
       ),
       // tooltipTheme: TooltipThemeData(
@@ -132,15 +132,15 @@ class App extends StatelessWidget {
             (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
                 ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
                         defaultValue: false)
-                    ? StylingHelper.BACKGROUND_REDUCED_SMEARING_COLOR
-                    : StylingHelper.BACKGROUND_COLOR
+                    ? StylingHelper.background_reduced_smearing_color
+                    : StylingHelper.background_color
                 : Colors.grey[900]),
         textTheme: CupertinoTextThemeData(
-          primaryColor: accentColor ?? StylingHelper.HIGHLIGHT_COLOR,
+          primaryColor: accentColor ?? StylingHelper.highlight_color,
         ),
-        primaryColor: cupertinoPrimaryColor ?? StylingHelper.HIGHLIGHT_COLOR,
-        barBackgroundColor: (tabBarColor ?? StylingHelper.PRIMARY_COLOR)
-            .withOpacity(StylingHelper.OPACITY_BLURRY),
+        primaryColor: cupertinoPrimaryColor ?? StylingHelper.highlight_color,
+        barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
+            .withOpacity(StylingHelper.opacity_blurry),
       ),
     );
   }

@@ -27,7 +27,7 @@ class BuiltInThemes {
           'e4e4e4',
           'f0f0f0',
           'a6d1ff',
-          StylingHelper.HIGHLIGHT_COLOR.toHex(),
+          StylingHelper.highlight_color.toHex(),
           'e4e4e4',
           'ffffff',
           true,

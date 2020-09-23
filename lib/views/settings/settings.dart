@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:obs_blade/shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
+import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 import 'package:package_info/package_info.dart';
 
 import '../../shared/general/themed/themed_cupertino_switch.dart';
@@ -34,7 +35,7 @@ class SettingsView extends StatelessWidget {
                   title: 'Theme',
                   blockEntries: [
                     BlockEntry(
-                      leading: StylingHelper.CUPERTINO_THEME_ICON,
+                      leading: CupertinoIconsExtended.theme,
                       leadingSize: 36.0,
                       title: 'True Dark Mode',
                       trailing: ThemedCupertinoSwitch(
@@ -48,7 +49,7 @@ class SettingsView extends StatelessWidget {
                     if (settingsBox.get(SettingsKeys.TrueDark.name,
                         defaultValue: false))
                       BlockEntry(
-                        leading: StylingHelper.CUPERTINO_REDUCE_SMEARING_ICON,
+                        leading: CupertinoIconsExtended.reduced_smearing,
                         leadingSize: 28.0,
                         title: 'Reduce smearing',
                         help:
@@ -75,7 +76,7 @@ class SettingsView extends StatelessWidget {
                   title: 'Layout',
                   blockEntries: [
                     BlockEntry(
-                      leading: StylingHelper.CUPERTINO_LOCK_CLOSED_ICON,
+                      leading: CupertinoIconsExtended.lock_closed,
                       leadingSize: 30.0,
                       title: 'Enforce Tablet Mode',
                       help:
@@ -96,7 +97,7 @@ class SettingsView extends StatelessWidget {
                   title: 'Misc.',
                   blockEntries: [
                     BlockEntry(
-                      leading: StylingHelper.CUPERTINO_INFO_ICON,
+                      leading: CupertinoIconsExtended.info,
                       leadingSize: 28.0,
                       title: 'About',
                       navigateTo: SettingsTabRoutingKeys.About.route,

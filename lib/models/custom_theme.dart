@@ -70,12 +70,12 @@ class CustomTheme extends HiveObject {
   CustomTheme.basic() {
     this.uuid = Uuid().v4();
     this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch;
-    this.cardColorHex = StylingHelper.PRIMARY_COLOR.toHex();
-    this.appBarColorHex = StylingHelper.PRIMARY_COLOR.toHex();
-    this.tabBarColorHex = StylingHelper.PRIMARY_COLOR.toHex();
-    this.accentColorHex = StylingHelper.ACCENT_COLOR.toHex();
-    this.highlightColorHex = StylingHelper.HIGHLIGHT_COLOR.toHex();
-    this.backgroundColorHex = StylingHelper.BACKGROUND_COLOR.toHex();
+    this.cardColorHex = StylingHelper.primary_color.toHex();
+    this.appBarColorHex = StylingHelper.primary_color.toHex();
+    this.tabBarColorHex = StylingHelper.primary_color.toHex();
+    this.accentColorHex = StylingHelper.accent_color.toHex();
+    this.highlightColorHex = StylingHelper.highlight_color.toHex();
+    this.backgroundColorHex = StylingHelper.background_color.toHex();
     this.useLightBrightness = false;
   }
 }
