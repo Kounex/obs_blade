@@ -73,11 +73,11 @@ class StreamChart extends StatelessWidget {
           show: true,
           border: Border(
             bottom: BorderSide(
-              color: StylingHelper.LIGHT_DIVIDER_COLOR.withOpacity(0.2),
+              color: StylingHelper.light_divider_color.withOpacity(0.2),
               width: 1,
             ),
             left: BorderSide(
-              color: StylingHelper.LIGHT_DIVIDER_COLOR.withOpacity(0.2),
+              color: StylingHelper.light_divider_color.withOpacity(0.2),
               width: 1,
             ),
             right: BorderSide(

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 
 import '../../utils/modal_handler.dart';
-import '../../utils/styling_helper.dart';
 import '../dialogs/info.dart';
 
 class QuestionMarkTooltip extends StatelessWidget {
@@ -19,7 +19,7 @@ class QuestionMarkTooltip extends StatelessWidget {
           body: this.message,
         ),
       ),
-      child: Icon(StylingHelper.CUPERTINO_QUESTION_ICON),
+      child: Icon(CupertinoIconsExtended.question),
     );
     // return CustomTooltip(
     //   message: this.message,
@@ -30,7 +30,7 @@ class QuestionMarkTooltip extends StatelessWidget {
     //   waitDuration: Duration(milliseconds: 0),
     //   showDuration: Duration(seconds: 5),
     //   immediately: true,
-    //   child: Icon(StylingHelper.CUPERTINO_QUESTION_ICON),
+    //   child: Icon(StylingHelper.question),
     // );
   }
 }

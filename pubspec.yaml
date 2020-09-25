@@ -92,3 +92,8 @@ flutter:
     - assets/images/
     - assets/images/intro/
     - assets/svgs/
+
+  fonts:
+    - family: JamIcons
+      fonts:
+        - asset: assets/fonts/jam_icons.ttf

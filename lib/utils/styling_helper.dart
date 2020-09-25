@@ -7,85 +7,24 @@ import 'package:flutter/material.dart';
 /// app wide layout constraints (if applicable)
 class StylingHelper {
   /// Width threshold to trigger mobile or tablet view
-  static const double MAX_WIDTH_MOBILE = 700.0;
+  static const double max_width_mobile = 700.0;
 
   /// Main colors (primarly used for Themeing)
-  static const Color PRIMARY_COLOR = const Color(0xff101823);
-  static const Color ACCENT_COLOR = const Color(0xffff4654);
-  static const Color HIGHLIGHT_COLOR = CupertinoColors.systemBlue;
-  static const Color BACKGROUND_COLOR = Colors.black;
+  static const Color primary_color = const Color(0xff101823);
+  static const Color accent_color = const Color(0xffff4654);
+  static const Color highlight_color = CupertinoColors.systemBlue;
+  static const Color background_color = Colors.black;
 
-  static const Color BACKGROUND_REDUCED_SMEARING_COLOR =
+  static const Color background_reduced_smearing_color =
       const Color.fromRGBO(5, 5, 5, 1.0);
 
-  static const Color LIGHT_DIVIDER_COLOR =
+  static const Color light_divider_color =
       const Color.fromRGBO(111, 111, 111, 1.0);
 
-  static const double OPACITY_BLURRY = 0.75;
+  static const double opacity_blurry = 0.75;
 
   /// Taken from [CupertinoNavigationBar]
-  static const double SIGMA_BLURRY = 10.0;
-
-  /// Added CupertinoIcons
-  static const IconData CUPERTINO_MACBOOK_ICON = const IconData(0xf466,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_QUESTION_ICON = const IconData(0xf445,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_QUESTION_ICON_CLEAN = const IconData(0xf444,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_AT_ICON = const IconData(0xf3d9,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_SUNGLASSES_ICON = const IconData(0xf43f,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_THEME_ICON = const IconData(0xf40e,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_REDUCE_SMEARING_ICON = const IconData(0xf3ce,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_LOCK_OPEN_ICON = const IconData(0xf3b5,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_LOCK_CLOSED_ICON = const IconData(0xf392,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_INFO_ICON = const IconData(0xf44D,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_BAR_ICON = const IconData(0xf2b5,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_RECTS_OVERLAP = const IconData(0xf3ef,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_RECTS_OVERLAP_SOLID = const IconData(0xf3f0,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_LANDSCAPE_IMAGE = const IconData(0xf2e4,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
-
-  static const IconData CUPERTINO_PIE_CHART_SOLID = const IconData(0xf484,
-      fontFamily: CupertinoIcons.iconFont,
-      fontPackage: CupertinoIcons.iconFontPackage);
+  static const double sigma_blurry = 10.0;
 
   /// Bouncng scroll for all cases
   static ScrollPhysics get platformAwareScrollPhysics =>

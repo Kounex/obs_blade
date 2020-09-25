@@ -4,8 +4,8 @@ import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
+import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 import 'package:obs_blade/utils/network_helper.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 
 class SceneItemTile extends StatelessWidget {
@@ -29,7 +29,7 @@ class SceneItemTile extends StatelessWidget {
                 ? this.sceneItem.displayGroup
                     ? CupertinoIcons.folder
                     : CupertinoIcons.folder_solid
-                : StylingHelper.CUPERTINO_LANDSCAPE_IMAGE,
+                : CupertinoIconsExtended.landscape_image,
           ),
         ),
       ),

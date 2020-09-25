@@ -44,7 +44,7 @@ class ModalHandler {
               EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: ConstrainedBox(
             constraints:
-                BoxConstraints(maxWidth: StylingHelper.MAX_WIDTH_MOBILE),
+                BoxConstraints(maxWidth: StylingHelper.max_width_mobile),
             child: modalWidget,
           ),
         ),
@@ -68,7 +68,7 @@ class ModalHandler {
             child: Scaffold(
               backgroundColor: Theme.of(context)
                   .backgroundColor
-                  .withOpacity(StylingHelper.OPACITY_BLURRY),
+                  .withOpacity(StylingHelper.opacity_blurry),
               extendBodyBehindAppBar: true,
               body: Column(
                 children: [
