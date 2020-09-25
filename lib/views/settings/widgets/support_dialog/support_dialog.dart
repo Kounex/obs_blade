@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../utils/styling_helper.dart';
 import 'donate_button.dart';
 
 class SupportDialog extends StatelessWidget {
@@ -24,14 +23,14 @@ class SupportDialog extends StatelessWidget {
                         style: Theme.of(context).textTheme.headline6),
                     Text(
                         'You sure? Tapped accidentaly? Or just curious? I mean, you know, I always appreciate the love! Motivates me to keep this app updated! But it\s completly optional :)'),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        DonateButton(text: 'Nice', value: 0.99),
-                        DonateButton(text: 'Yoo', value: 2.99),
-                        DonateButton(text: 'WTF?', value: 5.99),
-                      ],
-                    ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //   children: [
+                    //     DonateButton(text: 'Nice', value: 0.99),
+                    //     DonateButton(text: 'Yoo', value: 2.99),
+                    //     DonateButton(text: 'WTF?', value: 5.99),
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
@@ -67,13 +66,13 @@ class SupportDialog extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
-          Transform(
-            transform: Matrix4.identity()..translate(110.0, 110.0),
-            child: CupertinoButton(
-              child: Text('...'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
+          // Transform(
+          //   transform: Matrix4.identity()..translate(110.0, 110.0),
+          //   child: CupertinoButton(
+          //     child: Text('...'),
+          //     onPressed: () => Navigator.of(context).pop(),
+          //   ),
+          // ),
         ],
       ),
     );

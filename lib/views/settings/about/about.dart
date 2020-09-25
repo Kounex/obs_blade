@@ -1,8 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base_card.dart';
-import 'package:obs_blade/views/settings/about/widgets/social_block/social_block.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
+import 'package:obs_blade/shared/general/social_block.dart';
 
 import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
@@ -28,7 +27,22 @@ class AboutView extends StatelessWidget {
                   //   height: 32.0,
                   // ),
                   BaseCard(
-                    child: SocialBlock(),
+                    child: SocialBlock(
+                      socialInfos: [
+                        SocialEntry(
+                          svgPath: 'assets/svgs/twitter.svg',
+                          link: 'https://twitter.com/Kounexx',
+                          linkText: 'Twitter',
+                        ),
+                        SocialEntry(
+                          svgPath: 'assets/svgs/linkedin.svg',
+                          logoSize: 28.0,
+                          link:
+                              'https://www.linkedin.com/in/ren%C3%A9-schramowski-a35342157/',
+                          linkText: 'LinkedIn',
+                        ),
+                      ],
+                    ),
                   ),
                   // LightDivider(
                   //   height: 32.0,
