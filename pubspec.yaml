@@ -18,20 +18,20 @@ dependencies:
   intl: ^0.16.1
 
   # Get project meta info
-  package_info: '^0.4.3'
+  package_info: ^0.4.3
 
   # Webview
   flutter_inappwebview: ^4.0.0+4
 
   # State Management and DI
-  provider: ^4.3.2+1
+  provider: ^4.3.2+2
   mobx: ^1.2.1+2
   flutter_mobx: ^1.1.0+2
   path: ^1.6.4
 
   # Network stuff
   tcp_scanner: ^1.1.1
-  connectivity: ^0.4.9+2
+  connectivity: ^0.4.9+3
   web_socket_channel: ^1.1.0
 
   # Security
@@ -44,14 +44,17 @@ dependencies:
   # To enable unique identifiable objects (models)
   uuid: ^2.2.2
 
+  # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
+  url_launcher: ^5.7.2
+
   # Fancy done layout shit
-  modal_bottom_sheet: ^0.2.0+1
+  modal_bottom_sheet: ^0.2.2
   fl_chart: ^0.11.1
   smooth_page_indicator: ^0.2.0
   keyboard_actions: ^3.3.0+1
   flutter_svg: ^0.19.0
 
-dependency_overrides:
+dependency_overrides: null
 
 dev_dependencies:
   flutter_test:
@@ -62,14 +65,14 @@ dev_dependencies:
   # Codegen
   build_resolvers: ^1.3.11
   build_runner: ^1.10.1
-  hive_generator: ^0.7.1
+  hive_generator: ^0.7.2+1
   mobx_codegen: ^1.1.0+1
 
   # Mock for testing
   mockito: ^4.1.1
 
   # App icons
-  flutter_launcher_icons: ^0.7.5
+  flutter_launcher_icons: ^0.8.0
 
   # Splashscreen ios and android
   flutter_native_splash: ^0.1.9
@@ -97,3 +100,4 @@ flutter:
     - family: JamIcons
       fonts:
         - asset: assets/fonts/jam_icons.ttf
+

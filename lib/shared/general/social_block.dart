@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SocialEntry {
   final String svgPath;
@@ -20,6 +21,14 @@ class SocialBlock extends StatelessWidget {
   SocialBlock({@required this.socialInfos})
       : assert(socialInfos != null && socialInfos.length > 0);
 
+  Future<void> _handleSocialTap(SocialEntry social) async {
+    if (await canLaunch(social.link)) {
+      await launch(social.link);
+    } else {
+      throw 'Could not launch ${social.link}';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -27,6 +36,7 @@ class SocialBlock extends StatelessWidget {
           .socialInfos
           .map(
             (social) => GestureDetector(
+              onTap: () => _handleSocialTap(social),
               child: Row(
                 children: [
                   Padding(
@@ -40,14 +50,12 @@ class SocialBlock extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      social.linkText ?? social.link,
-                      softWrap: true,
-                      style: TextStyle(
-                        color: Theme.of(context).accentColor,
-                        decoration: TextDecoration.underline,
-                      ),
+                  Text(
+                    social.linkText ?? social.link,
+                    softWrap: true,
+                    style: TextStyle(
+                      color: Theme.of(context).accentColor,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ],
