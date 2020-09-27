@@ -21,7 +21,7 @@ class PlaceholderConnection extends StatelessWidget {
           rightPadding: 0.0,
           bottomPadding: 0.0,
           leftPadding: 0.0,
-          noPaddingChild: true,
+          paddingChild: EdgeInsets.all(0),
           child: Padding(
             padding: const EdgeInsets.only(left: 24.0, right: 24.0),
             child: SizedBox(

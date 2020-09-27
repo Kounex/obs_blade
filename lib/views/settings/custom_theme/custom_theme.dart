@@ -30,7 +30,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
             BaseCard(
               title: 'Predefined Themes',
               bottomPadding: 12.0,
-              noPaddingChild: true,
+              paddingChild: EdgeInsets.all(0),
               child: CustomThemeList(
                 predefinedThemes: true,
               ),
@@ -49,7 +49,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                 child: Text('Add Theme'),
               ),
               bottomPadding: 12.0,
-              noPaddingChild: true,
+              paddingChild: EdgeInsets.all(0),
               child: CustomThemeList(),
             ),
           ],

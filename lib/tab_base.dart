@@ -101,7 +101,7 @@ class _TabBaseState extends State<TabBase> {
               .map(
                 (tab) => BottomNavigationBarItem(
                   icon: Icon(tab.icon),
-                  title: Text(tab.name),
+                  label: tab.name,
                 ),
               )
               .toList(),

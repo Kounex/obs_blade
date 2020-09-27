@@ -12,7 +12,7 @@ class StreamWidgets extends StatelessWidget {
         Expanded(
           child: BaseCard(
             title: 'Chat',
-            noPaddingChild: true,
+            paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 500.0,
               child: TwitchChat(
@@ -24,7 +24,7 @@ class StreamWidgets extends StatelessWidget {
         Expanded(
           child: BaseCard(
             title: 'Stats',
-            noPaddingChild: true,
+            paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 500.0,
               child: Stats(),
