@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 const double kblockEntryPadding = 14.0;
 const double kblockEntryIconSize = 32.0;
@@ -26,17 +25,19 @@ class BlockEntry extends StatefulWidget {
   final Widget trailing;
   final Function onTap;
   final String navigateTo;
+  final String navigateToResult;
 
-  BlockEntry(
-      {this.leading,
-      this.leadingSize,
-      this.heroPlaceholder,
-      this.title,
-      this.help,
-      this.trailing,
-      this.onTap,
-      this.navigateTo})
-      : assert((trailing == null &&
+  BlockEntry({
+    this.leading,
+    this.leadingSize,
+    this.heroPlaceholder,
+    this.title,
+    this.help,
+    this.trailing,
+    this.onTap,
+    this.navigateTo,
+    this.navigateToResult,
+  }) : assert((trailing == null &&
                 ((navigateTo != null && onTap == null) ||
                     (navigateTo == null && onTap != null)) ||
             (trailing != null && (navigateTo == null && onTap == null))));
@@ -62,7 +63,9 @@ class _BlockEntryState extends State<BlockEntry> {
       onTapCancel: () => _handleIsPressed(false),
       onTap: widget.navigateTo != null
           ? () => Navigator.of(context).pushNamed(widget.navigateTo)
-          : widget.onTap != null ? () => widget.onTap() : null,
+          : widget.onTap != null
+              ? () => widget.onTap()
+              : null,
       child: Container(
         color: _isPressed
             ? CupertinoDynamicColor.resolve(kPressedColor, context)
@@ -108,9 +111,21 @@ class _BlockEntryState extends State<BlockEntry> {
                 ),
               ),
               widget.navigateTo != null || widget.onTap != null
-                  ? Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
+                  ? Row(
+                      children: [
+                        if (widget.navigateToResult != null)
+                          Text(
+                            widget.navigateToResult,
+                            style: Theme.of(context)
+                                .textTheme
+                                .caption
+                                .copyWith(fontSize: 14.0),
+                          ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey,
+                        ),
+                      ],
                     )
                   : widget.trailing,
             ],
