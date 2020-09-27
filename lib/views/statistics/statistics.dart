@@ -90,7 +90,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                   trailingTitleWidget: HeaderDecoration(
                     icon: CupertinoIcons.time_solid,
                   ),
-                  noPaddingChild: true,
+                  paddingChild: EdgeInsets.all(0),
                   child: pastStreamDataBox.isNotEmpty
                       ? StreamEntry(
                           pastStreamData:
@@ -108,7 +108,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                         'All the statistics of your smexy stream sessions',
                   ),
                   trailingTitleWidget: HeaderDecoration(),
-                  noPaddingChild: true,
+                  paddingChild: EdgeInsets.all(0),
                   child: pastStreamDataBox.values.length > 1
                       ? Column(
                           children: [

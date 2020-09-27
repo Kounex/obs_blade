@@ -14,7 +14,7 @@ class BaseCard extends StatelessWidget {
   final double bottomPadding;
   final double leftPadding;
 
-  final bool noPaddingChild;
+  final EdgeInsetsGeometry paddingChild;
   final EdgeInsetsGeometry titlePadding;
 
   BaseCard({
@@ -24,7 +24,7 @@ class BaseCard extends StatelessWidget {
     this.title,
     this.titleWidget,
     this.trailingTitleWidget,
-    this.noPaddingChild = false,
+    this.paddingChild = const EdgeInsets.all(24.0),
     this.topPadding = 24.0,
     this.rightPadding = 24.0,
     this.bottomPadding = 24.0,
@@ -74,7 +74,7 @@ class BaseCard extends StatelessWidget {
                   height: 0.0,
                 ),
               Padding(
-                padding: EdgeInsets.all(this.noPaddingChild ? 0.0 : 24.0),
+                padding: this.paddingChild,
                 child: this.child,
               ),
             ],

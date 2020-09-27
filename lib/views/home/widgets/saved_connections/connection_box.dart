@@ -27,7 +27,7 @@ class ConnectionBox extends StatelessWidget {
         rightPadding: 0.0,
         bottomPadding: 0.0,
         leftPadding: 0.0,
-        noPaddingChild: true,
+        paddingChild: EdgeInsets.all(0),
         child: SizedBox(
           height: this.height,
           child: Column(

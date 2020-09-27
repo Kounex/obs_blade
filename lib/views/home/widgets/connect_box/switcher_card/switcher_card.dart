@@ -9,17 +9,19 @@ class SwitcherCard extends StatelessWidget {
   final String title;
   final Widget child;
 
-  final bool noPaddingChild;
+  final EdgeInsetsGeometry paddingChild;
 
   SwitcherCard(
-      {@required this.title, @required this.child, this.noPaddingChild = true});
+      {@required this.title,
+      @required this.child,
+      this.paddingChild = const EdgeInsets.all(0)});
 
   @override
   Widget build(BuildContext context) {
     HomeStore landingStore = context.watch<HomeStore>();
 
     return BaseCard(
-      noPaddingChild: this.noPaddingChild,
+      paddingChild: this.paddingChild,
       titleWidget: AnimatedSwitcher(
         duration: Duration(milliseconds: 200),
         child: Container(

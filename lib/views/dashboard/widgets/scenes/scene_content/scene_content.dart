@@ -12,7 +12,7 @@ class SceneContent extends StatelessWidget {
         Expanded(
           child: BaseCard(
             title: 'Scene Items',
-            noPaddingChild: true,
+            paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 350.0,
               child: SceneItems(),
@@ -22,7 +22,7 @@ class SceneContent extends StatelessWidget {
         Expanded(
           child: BaseCard(
             title: 'Audio',
-            noPaddingChild: true,
+            paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 350.0,
               child: AudioInputs(),
