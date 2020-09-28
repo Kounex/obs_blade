@@ -35,6 +35,17 @@ class SettingsView extends StatelessWidget {
                   title: 'Theme',
                   blockEntries: [
                     BlockEntry(
+                      leading: CupertinoIcons.lab_flask_solid,
+                      leadingSize: 28.0,
+                      title: 'Custom Theme',
+                      navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
+                      navigateToResult: settingsBox.get(
+                              SettingsKeys.CustomTheme.name,
+                              defaultValue: false)
+                          ? 'Active'
+                          : 'Inactive',
+                    ),
+                    BlockEntry(
                       leading: CupertinoIconsExtended.theme,
                       leadingSize: 36.0,
                       title: 'True Dark Mode',
@@ -64,12 +75,6 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
-                    BlockEntry(
-                      leading: CupertinoIcons.lab_flask_solid,
-                      leadingSize: 28.0,
-                      title: 'Custom Theme',
-                      navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
-                    ),
                   ],
                 ),
                 ActionBlock(
