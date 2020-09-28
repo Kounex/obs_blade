@@ -77,8 +77,8 @@ class SocialBlock extends StatelessWidget {
     });
 
     return Wrap(
-      spacing: 8.0,
-      runSpacing: 8.0,
+      spacing: 12.0,
+      runSpacing: 12.0,
       children: socialEntries,
     );
   }

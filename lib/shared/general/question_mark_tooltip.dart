@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 
 import '../../utils/modal_handler.dart';
 import '../dialogs/info.dart';
@@ -13,14 +12,15 @@ class QuestionMarkTooltip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => ModalHandler.showBaseDialog(
-        context: context,
-        dialogWidget: InfoDialog(
-          body: this.message,
-        ),
-      ),
-      child: Icon(CupertinoIconsExtended.question),
-    );
+        onTap: () => ModalHandler.showBaseDialog(
+              context: context,
+              dialogWidget: InfoDialog(
+                body: this.message,
+              ),
+            ),
+        child: Icon(
+          CupertinoIcons.question_circle_fill,
+        ));
     // return CustomTooltip(
     //   message: this.message,
     //   padding: EdgeInsets.all(12.0),

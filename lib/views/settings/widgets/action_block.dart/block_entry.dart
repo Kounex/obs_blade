@@ -29,7 +29,7 @@ class BlockEntry extends StatefulWidget {
 
   BlockEntry({
     this.leading,
-    this.leadingSize,
+    this.leadingSize = 28.0,
     this.heroPlaceholder,
     this.title,
     this.help,

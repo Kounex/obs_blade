@@ -29,27 +29,29 @@ class ThemeEntry extends StatelessWidget {
           Row(
             children: [
               SizedBox(
-                  width: 64.0,
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 200),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      ),
+                width: 64.0,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: animation,
+                      child: child,
                     ),
-                    child: Hive.box(HiveKeys.Settings.name).get(
-                                SettingsKeys.ActiveCustomThemeUUID.name,
-                                defaultValue: '') ==
-                            this.customTheme.uuid
-                        ? Icon(
-                            CupertinoIcons.check_mark,
-                            size: 42.0,
-                            color: Theme.of(context).accentColor,
-                          )
-                        : Container(),
-                  )),
+                  ),
+                  child: Hive.box(HiveKeys.Settings.name).get(
+                              SettingsKeys.ActiveCustomThemeUUID.name,
+                              defaultValue: '') ==
+                          this.customTheme.uuid
+                      ? Icon(
+                          CupertinoIcons.checkmark_alt,
+                          key: Key(this.customTheme.uuid),
+                          size: 32.0,
+                          color: Theme.of(context).accentColor,
+                        )
+                      : Container(),
+                ),
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

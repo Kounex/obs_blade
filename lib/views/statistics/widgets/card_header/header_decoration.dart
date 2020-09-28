@@ -1,5 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 
 class IconClipper extends CustomClipper<Path> {
   final double xCut;
@@ -35,7 +35,7 @@ class HeaderDecoration extends StatelessWidget {
   final double iconCornerRadius;
 
   HeaderDecoration({
-    this.icon = CupertinoIconsExtended.pie_chart_solid,
+    this.icon = CupertinoIcons.chart_pie_fill,
     this.iconSize = 128.0,
     this.iconXOffset = 42.0,
     this.iconYOffset = -42.0,

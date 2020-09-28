@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 import 'package:obs_blade/views/intro/intro.dart';
 import 'package:obs_blade/views/settings/custom_theme/custom_theme.dart';
 import 'package:obs_blade/views/settings/privacy_policy/privacy_policy.dart';
@@ -43,8 +42,8 @@ extension TabsFunctions on Tabs {
       }[this];
 
   IconData get icon => const {
-        Tabs.Home: CupertinoIcons.home,
-        Tabs.Statistics: CupertinoIconsExtended.bar,
+        Tabs.Home: CupertinoIcons.house_alt,
+        Tabs.Statistics: CupertinoIcons.chart_bar_alt_fill,
         Tabs.Settings: CupertinoIcons.settings,
       }[this];
 

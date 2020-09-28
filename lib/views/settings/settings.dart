@@ -4,7 +4,6 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:obs_blade/shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
-import 'package:obs_blade/utils/icons/cupertino_icons_extended.dart';
 import 'package:package_info/package_info.dart';
 
 import '../../shared/general/themed/themed_cupertino_switch.dart';
@@ -36,7 +35,6 @@ class SettingsView extends StatelessWidget {
                   blockEntries: [
                     BlockEntry(
                       leading: CupertinoIcons.lab_flask_solid,
-                      leadingSize: 28.0,
                       title: 'Custom Theme',
                       navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
                       navigateToResult: settingsBox.get(
@@ -46,8 +44,8 @@ class SettingsView extends StatelessWidget {
                           : 'Inactive',
                     ),
                     BlockEntry(
-                      leading: CupertinoIconsExtended.theme,
-                      leadingSize: 36.0,
+                      leading: CupertinoIcons.moon_circle_fill,
+                      leadingSize: 30.0,
                       title: 'True Dark Mode',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(SettingsKeys.TrueDark.name,
@@ -60,8 +58,7 @@ class SettingsView extends StatelessWidget {
                     if (settingsBox.get(SettingsKeys.TrueDark.name,
                         defaultValue: false))
                       BlockEntry(
-                        leading: CupertinoIconsExtended.reduced_smearing,
-                        leadingSize: 28.0,
+                        leading: CupertinoIcons.drop_fill,
                         title: 'Reduce smearing',
                         help:
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery!',
@@ -81,7 +78,7 @@ class SettingsView extends StatelessWidget {
                   title: 'Layout',
                   blockEntries: [
                     BlockEntry(
-                      leading: CupertinoIconsExtended.lock_closed,
+                      leading: CupertinoIcons.lock_fill,
                       leadingSize: 30.0,
                       title: 'Enforce Tablet Mode',
                       help:
@@ -102,20 +99,17 @@ class SettingsView extends StatelessWidget {
                   title: 'Misc.',
                   blockEntries: [
                     BlockEntry(
-                      leading: CupertinoIconsExtended.info,
-                      leadingSize: 28.0,
+                      leading: CupertinoIcons.info_circle_fill,
                       title: 'About',
                       navigateTo: SettingsTabRoutingKeys.About.route,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.book_solid,
-                      leadingSize: 28.0,
                       title: 'Privacy Policy',
                       navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.heart_solid,
-                      leadingSize: 28.0,
                       title: 'Support Me',
                       heroPlaceholder: CupertinoIcons.heart,
                       onTap: () => Navigator.of(context).push(
