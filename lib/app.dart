@@ -46,19 +46,19 @@ class App extends StatelessWidget {
             ? Brightness.light
             : Brightness.dark;
         scaffoldBackgroundColor =
-            activeCustomTheme.backgroundColorHex.hexToColor();
-        accentColor = activeCustomTheme.highlightColorHex.hexToColor();
-        backgroundColor = activeCustomTheme.cardColorHex.hexToColor();
-        canvasColor = activeCustomTheme.cardColorHex.hexToColor();
-        cardColor = activeCustomTheme.cardColorHex.hexToColor();
-        indicatorColor = activeCustomTheme.highlightColorHex.hexToColor();
-        toggleableActiveColor = activeCustomTheme.accentColorHex.hexToColor();
-        sliderColor = activeCustomTheme.highlightColorHex.hexToColor();
-        appBarColor = activeCustomTheme.appBarColorHex.hexToColor();
-        buttonColor = activeCustomTheme.accentColorHex.hexToColor();
-        tabBarColor = activeCustomTheme.tabBarColorHex.hexToColor();
+            activeCustomTheme.backgroundColorHex?.hexToColor();
+        accentColor = activeCustomTheme.highlightColorHex?.hexToColor();
+        backgroundColor = activeCustomTheme.cardColorHex?.hexToColor();
+        canvasColor = activeCustomTheme.cardColorHex?.hexToColor();
+        cardColor = activeCustomTheme.cardColorHex?.hexToColor();
+        indicatorColor = activeCustomTheme.highlightColorHex?.hexToColor();
+        toggleableActiveColor = activeCustomTheme.accentColorHex?.hexToColor();
+        sliderColor = activeCustomTheme.highlightColorHex?.hexToColor();
+        appBarColor = activeCustomTheme.appBarColorHex?.hexToColor();
+        buttonColor = activeCustomTheme.accentColorHex?.hexToColor();
+        tabBarColor = activeCustomTheme.tabBarColorHex?.hexToColor();
         cupertinoPrimaryColor =
-            activeCustomTheme.highlightColorHex.hexToColor();
+            activeCustomTheme.highlightColorHex?.hexToColor();
       }
     }
 
