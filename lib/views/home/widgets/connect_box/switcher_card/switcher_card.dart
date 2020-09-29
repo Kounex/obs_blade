@@ -24,11 +24,9 @@ class SwitcherCard extends StatelessWidget {
       paddingChild: this.paddingChild,
       titleWidget: AnimatedSwitcher(
         duration: Duration(milliseconds: 200),
-        child: Container(
-          // first element of the AnimatedSwitcher needs to have a key if the
-          // switching widgets share the same widget type (in this case Container)
+        child: Align(
           key: Key(this.title),
-          width: 150.0,
+          alignment: Alignment.centerLeft,
           child: Text(
             this.title,
             style: Theme.of(context).textTheme.headline5,

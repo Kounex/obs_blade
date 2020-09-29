@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:mobx/mobx.dart';
 
 part 'tabs.g.dart';

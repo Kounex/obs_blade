@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-import '../../../../../stores/views/dashboard.dart';
 import '../../../../../shared/general/formatted_text.dart';
+import '../../../../../stores/views/dashboard.dart';
 import 'stats_container.dart';
 
 class Stats extends StatefulWidget {

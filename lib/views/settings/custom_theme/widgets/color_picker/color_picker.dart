@@ -122,7 +122,7 @@ class _ColorPickerState extends State<ColorPicker> {
                         decoration: InputDecoration(isDense: true),
                         validator: (color) =>
                             ValidationHelper.colorHexValidator(color),
-                        autovalidate: true,
+                        autovalidateMode: AutovalidateMode.always,
                         autocorrect: false,
                         maxLength: widget.useAlpha ? 8 : 6,
                         maxLengthEnforced: true,

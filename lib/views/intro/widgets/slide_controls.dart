@@ -1,14 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:obs_blade/stores/views/intro.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../../stores/views/intro.dart';
+import '../../../utils/routing_helper.dart';
 
 class SlideControls extends StatelessWidget {
   final PageController pageController;

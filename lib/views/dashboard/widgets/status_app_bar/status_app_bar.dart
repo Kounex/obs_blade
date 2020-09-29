@@ -53,8 +53,7 @@ class StatusAppBar extends StatelessWidget {
             children: <Widget>[
               Text(
                 'Dashboard',
-                style:
-                    Theme.of(context).textTheme.button.copyWith(fontSize: 18.0),
+                style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),

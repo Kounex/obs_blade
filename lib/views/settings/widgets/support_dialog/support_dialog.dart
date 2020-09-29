@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'donate_button.dart';
-
 class SupportDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

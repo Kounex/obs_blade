@@ -97,7 +97,8 @@ class _StatisticsViewState extends State<StatisticsView> {
                               pastStreamDataBox.values.toList().reversed.first)
                       : StreamEntryPlaceholder(
                           text:
-                              'You haven\'t streamed using this app!\nOr deleted all statistic entries?!'),
+                              'You haven\'t streamed using this app or deleted all statistic entries?! Whatever it is, you should start streaming!',
+                        ),
                 ),
                 BaseCard(
                   titlePadding:
@@ -131,7 +132,8 @@ class _StatisticsViewState extends State<StatisticsView> {
                         )
                       : StreamEntryPlaceholder(
                           text:
-                              'Can\'t find statistics for your previous streams\nGo ahead, stream some good stuff!'),
+                              'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!',
+                        ),
                 ),
               ],
             ),
