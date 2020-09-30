@@ -74,7 +74,7 @@ class ValidationCupertinoTextfieldState
             child: Text(
               validationText ?? '',
               style: TextStyle(
-                color: Colors.red,
+                color: CupertinoColors.destructiveRed,
               ),
             ),
           ),

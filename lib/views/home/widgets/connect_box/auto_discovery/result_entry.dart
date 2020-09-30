@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/animator/fader.dart';
+import 'package:obs_blade/shared/general/themed/themed_rich_text.dart';
 
 class ResultEntry extends StatelessWidget {
   final String result;
@@ -9,13 +10,20 @@ class ResultEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(left: 24.0, right: 24.0),
+      padding: EdgeInsets.all(24.0),
       alignment: Alignment.center,
-      height: 150.0,
       child: Fader(
-        child: Text(
-          '${this.result}\n\nPull down to try again!',
+        child: ThemedRichText(
           textAlign: TextAlign.center,
+          textSpans: [
+            TextSpan(text: '${this.result}'),
+            TextSpan(
+              text: '\n\nPull down to try again!',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

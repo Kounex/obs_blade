@@ -54,7 +54,9 @@ class ConnectionBox extends StatelessWidget {
               ),
               Center(
                 child: StatusDot(
-                  color: this.connection.reachable ? Colors.green : Colors.red,
+                  color: this.connection.reachable
+                      ? Colors.green
+                      : CupertinoColors.destructiveRed,
                   text:
                       this.connection.reachable ? 'Reachable' : 'Not reachable',
                 ),

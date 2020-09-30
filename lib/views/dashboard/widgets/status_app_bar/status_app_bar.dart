@@ -62,7 +62,9 @@ class StatusAppBar extends StatelessWidget {
                   return StatusDot(
                     key: Key(dashboardStore.isLive?.toString()),
                     size: 10.0,
-                    color: dashboardStore.isLive ? Colors.green : Colors.red,
+                    color: dashboardStore.isLive
+                        ? Colors.green
+                        : CupertinoColors.destructiveRed,
                     text: dashboardStore.isLive ? 'Live' : 'Not Live',
                     style: Theme.of(context).textTheme.caption,
                   );

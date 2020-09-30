@@ -42,7 +42,7 @@ class SceneItemTile extends StatelessWidget {
           this.sceneItem.render ? Icons.visibility : Icons.visibility_off,
           color: this.sceneItem.render
               ? Theme.of(context).accentColor
-              : Colors.red,
+              : CupertinoColors.destructiveRed,
         ),
         onPressed: () => NetworkHelper.makeRequest(
             context.read<NetworkStore>().activeSession.socket,

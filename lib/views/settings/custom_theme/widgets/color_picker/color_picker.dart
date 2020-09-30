@@ -166,7 +166,7 @@ class _ColorPickerState extends State<ColorPicker> {
                     ColorSlider(
                       label: 'R',
                       value: _getColorSliderValue(widget.useAlpha ? 2 : 0),
-                      activeColor: Colors.red,
+                      activeColor: CupertinoColors.destructiveRed,
                       onChanged: (colorVal) => _onColorSlideChange(
                           colorVal, widget.useAlpha ? 2 : 0),
                     ),

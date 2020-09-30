@@ -23,7 +23,7 @@ class ThemeActive extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Text(
-                  'Once active the selected theme below will be used for this app. If you don\'t have a custom theme yet, just create one at the bottom of this page!',
+                  'Once active the selected theme below will be used for this app. Select between predefined themes or your own!',
                   style: Theme.of(context).textTheme.caption,
                 ),
               ),

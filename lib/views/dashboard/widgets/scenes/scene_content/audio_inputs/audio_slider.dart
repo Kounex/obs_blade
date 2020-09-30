@@ -30,7 +30,7 @@ class AudioSlider extends StatelessWidget {
               icon: Icon(
                 this.audioSceneItem.muted ? Icons.volume_off : Icons.volume_up,
                 color: this.audioSceneItem.muted
-                    ? Colors.red
+                    ? CupertinoColors.destructiveRed
                     : Theme.of(context).accentColor,
               ),
               padding: EdgeInsets.all(0.0),
@@ -70,7 +70,7 @@ class AudioSlider extends StatelessWidget {
         //           this.audioSceneItem.muted
         //               ? Icons.volume_off
         //               : Icons.volume_up,
-        //           color: this.audioSceneItem.muted ? Colors.red : null,
+        //           color: this.audioSceneItem.muted ? CupertinoColors.destructiveRed : null,
         //         ),
         //         padding: EdgeInsets.all(0.0),
         //         onPressed: () => NetworkHelper.makeRequest(

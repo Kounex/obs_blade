@@ -13,12 +13,7 @@ import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
 import 'widgets/theme_active/theme_active.dart';
 
-class CustomThemeView extends StatefulWidget {
-  @override
-  _CustomThemeViewState createState() => _CustomThemeViewState();
-}
-
-class _CustomThemeViewState extends State<CustomThemeView> {
+class CustomThemeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ThemedCupertinoScaffold(
@@ -81,30 +76,6 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                     ),
                   ),
                 ),
-                // Padding(
-                //   padding:
-                //       const EdgeInsets.only(top: 21.0, left: 23.0, right: 23.0),
-                //   child: Container(
-                //     padding: EdgeInsets.only(top: 92.0),
-                //     alignment: Alignment.center,
-                //     decoration: BoxDecoration(
-                //       gradient: LinearGradient(
-                //         begin: Alignment.topCenter,
-                //         end: Alignment.bottomCenter,
-                //         stops: [0, 0.55],
-                //         colors: [
-                //           Colors.transparent,
-                //           // Colors.black,
-                //           Theme.of(context).scaffoldBackgroundColor,
-                //         ],
-                //       ),
-                //     ),
-                //     child: BaseResult(
-                //       icon: BaseResultIcon.Missing,
-                //       text: 'Available soon...',
-                //     ),
-                //   ),
-                // )
               ],
             ),
           ],

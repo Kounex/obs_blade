@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/themed/themed_rich_text.dart';
 
 import '../../../shared/general/base_card.dart';
 import '../../../shared/general/social_block.dart';
@@ -36,23 +37,20 @@ class AboutView extends StatelessWidget {
                           'Greetings!\n',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        RichText(
-                          text: TextSpan(
-                            style: Theme.of(context).textTheme.bodyText2,
-                            children: [
-                              TextSpan(
-                                  text:
-                                      'Hope you enjoy using OBS Blade. If you want to get in touch me with, you can visit those sites and message me. For now this is also the preferred way to let me know of any bugs / problems / feature requests. I will add some '),
-                              TextSpan(
-                                text: 'real',
-                                style: TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        ThemedRichText(
+                          textSpans: [
+                            TextSpan(
+                                text:
+                                    'Hope you enjoy using OBS Blade. If you want to get in touch me with, you can visit those sites and message me. For now this is also the preferred way to let me know of any bugs / problems / feature requests. I will add some '),
+                            TextSpan(
+                              text: 'real',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.bold,
                               ),
-                              TextSpan(text: ' ways to do that in the future.'),
-                            ],
-                          ),
+                            ),
+                            TextSpan(text: ' ways to do that in the future.'),
+                          ],
                         ),
                         SocialBlock(
                           socialInfos: [

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class StatusDot extends StatefulWidget {
@@ -10,7 +11,7 @@ class StatusDot extends StatefulWidget {
   StatusDot({
     Key key,
     this.size = 12.0,
-    this.color = Colors.red,
+    this.color = CupertinoColors.destructiveRed,
     @required this.text,
     this.direction = Axis.horizontal,
     this.style,
