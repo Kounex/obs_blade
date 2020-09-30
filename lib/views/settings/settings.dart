@@ -93,6 +93,12 @@ class SettingsView extends StatelessWidget {
                         },
                       ),
                     ),
+                    BlockEntry(
+                      leading: CupertinoIcons.book_fill,
+                      title: 'Intro Slides',
+                      navigateTo: AppRoutingKeys.Intro.route,
+                      rootNavigation: true,
+                    ),
                   ],
                 ),
                 ActionBlock(
@@ -104,7 +110,7 @@ class SettingsView extends StatelessWidget {
                       navigateTo: SettingsTabRoutingKeys.About.route,
                     ),
                     BlockEntry(
-                      leading: CupertinoIcons.book_solid,
+                      leading: CupertinoIcons.doc_person_fill,
                       title: 'Privacy Policy',
                       navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
                     ),

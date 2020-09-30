@@ -28,9 +28,8 @@ class GeneralActions extends StatelessWidget {
               ModalHandler.showBaseDialog(
                 context: context,
                 dialogWidget: ConfirmationDialog(
-                  title: dashboardStore.isLive
-                      ? 'Stop Streaming'
-                      : 'Start Streaming',
+                  title:
+                      (dashboardStore.isLive ? 'Stop' : 'Start') + ' Streaming',
                   body: dashboardStore.isLive
                       ? 'Are you sure you want to stop the stream? Nothing more to show or talk about? Or just tired or no time?\n\n... just to make sure it\'s intentional!'
                       : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',

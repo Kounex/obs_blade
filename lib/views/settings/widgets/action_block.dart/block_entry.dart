@@ -25,6 +25,7 @@ class BlockEntry extends StatefulWidget {
   final Widget trailing;
   final Function onTap;
   final String navigateTo;
+  final bool rootNavigation;
   final String navigateToResult;
 
   BlockEntry({
@@ -36,6 +37,7 @@ class BlockEntry extends StatefulWidget {
     this.trailing,
     this.onTap,
     this.navigateTo,
+    this.rootNavigation = false,
     this.navigateToResult,
   }) : assert((trailing == null &&
                 ((navigateTo != null && onTap == null) ||
@@ -62,7 +64,10 @@ class _BlockEntryState extends State<BlockEntry> {
       onTapUp: (_) => _handleIsPressed(false),
       onTapCancel: () => _handleIsPressed(false),
       onTap: widget.navigateTo != null
-          ? () => Navigator.of(context).pushNamed(widget.navigateTo)
+          ? () => widget.rootNavigation
+              ? Navigator.of(context, rootNavigator: true)
+                  .pushReplacementNamed(widget.navigateTo)
+              : Navigator.of(context).pushNamed(widget.navigateTo)
           : widget.onTap != null
               ? () => widget.onTap()
               : null,

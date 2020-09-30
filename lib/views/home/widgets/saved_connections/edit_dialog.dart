@@ -1,13 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/shared/general/keyboard_number_header.dart';
-import 'package:obs_blade/shared/general/validation_cupertino_textfield.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/utils/validation_helper.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/keyboard_number_header.dart';
+import '../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../types/enums/hive_keys.dart';
+import '../../../../utils/validation_helper.dart';
 
 class EditConnectionDialog extends StatefulWidget {
   final Connection connection;

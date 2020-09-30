@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -10,8 +11,13 @@ import '../../../utils/routing_helper.dart';
 class SlideControls extends StatelessWidget {
   final PageController pageController;
   final int amountChildren;
+  final bool manually;
 
-  SlideControls({@required this.pageController, @required this.amountChildren});
+  SlideControls({
+    @required this.pageController,
+    @required this.amountChildren,
+    this.manually = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +27,17 @@ class SlideControls extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Observer(builder: (_) {
-          return CupertinoButton(
-            child: SizedBox(
-              width: 50.0,
-              child: Text('Back'),
+          return SizedBox(
+            width: 50.0,
+            child: ThemedCupertinoButton(
+              padding: EdgeInsets.all(0),
+              onPressed: introStore.currentPage > 0
+                  ? () => this.pageController.previousPage(
+                      duration: Duration(milliseconds: 250),
+                      curve: Curves.easeIn)
+                  : null,
+              text: 'Back',
             ),
-            onPressed: introStore.currentPage > 0
-                ? () => this.pageController.previousPage(
-                    duration: Duration(milliseconds: 250), curve: Curves.easeIn)
-                : null,
           );
         }),
         SmoothPageIndicator(
@@ -41,27 +49,27 @@ class SlideControls extends StatelessWidget {
             ),
             count: this.amountChildren),
         Observer(builder: (_) {
-          return CupertinoButton(
-            child: SizedBox(
-              width: 50.0,
-              child: Text(
-                introStore.currentPage < this.amountChildren - 1
-                    ? 'Next'
-                    : 'Start',
-              ),
+          return SizedBox(
+            width: 50.0,
+            child: ThemedCupertinoButton(
+              padding: EdgeInsets.all(0),
+              onPressed: () {
+                if (introStore.currentPage < this.amountChildren - 1) {
+                  this.pageController.nextPage(
+                      duration: Duration(milliseconds: 250),
+                      curve: Curves.easeIn);
+                } else {
+                  // Hive.box(HiveKeys.Settings.name)
+                  //     .put(SettingsKeys.HasUserSeenIntro.name, true);
+                  Navigator.of(context).pushReplacementNamed(this.manually
+                      ? SettingsTabRoutingKeys.Landing.route
+                      : AppRoutingKeys.Tabs.route);
+                }
+              },
+              text: introStore.currentPage < this.amountChildren - 1
+                  ? 'Next'
+                  : 'Start',
             ),
-            onPressed: () {
-              if (introStore.currentPage < this.amountChildren - 1) {
-                this.pageController.nextPage(
-                    duration: Duration(milliseconds: 250),
-                    curve: Curves.easeIn);
-              } else {
-                // Hive.box(HiveKeys.Settings.name)
-                //     .put(SettingsKeys.HasUserSeenIntro.name, true);
-                Navigator.of(context)
-                    .pushReplacementNamed(AppRoutingKeys.Tabs.route);
-              }
-            },
           );
         }),
       ],

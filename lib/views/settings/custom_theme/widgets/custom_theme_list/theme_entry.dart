@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
@@ -69,9 +70,9 @@ class ThemeEntry extends StatelessWidget {
             ],
           ),
           if (this.isEditable)
-            CupertinoButton(
+            ThemedCupertinoButton(
               padding: const EdgeInsets.only(right: 24.0),
-              child: Text('Edit'),
+              text: 'Edit',
               onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
                 context: context,
                 modalWidgetBuilder: (context, scrollController) => AddEditTheme(

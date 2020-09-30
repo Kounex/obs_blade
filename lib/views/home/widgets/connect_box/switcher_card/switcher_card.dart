@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/stores/views/home.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../stores/views/home.dart';
 
 class SwitcherCard extends StatelessWidget {
   final String title;
@@ -33,16 +34,13 @@ class SwitcherCard extends StatelessWidget {
           ),
         ),
       ),
-      trailingTitleWidget: CupertinoButton(
-        padding: const EdgeInsets.all(0),
-        child: Container(
-          width: 60.0,
-          child: Text(
-            landingStore.manualMode ? 'Auto' : 'Manual',
-            textAlign: TextAlign.center,
-          ),
+      trailingTitleWidget: Container(
+        width: 60.0,
+        child: ThemedCupertinoButton(
+          padding: const EdgeInsets.all(0),
+          onPressed: () => landingStore.toggleManualMode(),
+          text: landingStore.manualMode ? 'Auto' : 'Manual',
         ),
-        onPressed: () => landingStore.toggleManualMode(),
       ),
       child: AnimatedSwitcher(
         duration: Duration(milliseconds: 200),

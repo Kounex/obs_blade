@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
-import '../../../../../utils/validation_helper.dart';
-import 'color_slider.dart';
-import '../../../widgets/action_block.dart/light_divider.dart';
+
+import '../../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../../types/extensions/string.dart';
+import '../../../../../utils/validation_helper.dart';
+import '../../../widgets/action_block.dart/light_divider.dart';
+import 'color_bubble.dart';
+import 'color_slider.dart';
 
 class ColorPicker extends StatefulWidget {
   final String title;
@@ -72,19 +74,16 @@ class _ColorPickerState extends State<ColorPicker> {
               ),
               Row(
                 children: [
-                  CupertinoButton(
+                  ThemedCupertinoButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      'Cancel',
-                      // style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    text: 'Cancel',
                   ),
-                  CupertinoButton(
+                  ThemedCupertinoButton(
                     onPressed: () {
                       widget.onSave?.call(_color.text);
                       Navigator.of(context).pop();
                     },
-                    child: Text('Save'),
+                    text: 'Save',
                   ),
                 ],
               ),

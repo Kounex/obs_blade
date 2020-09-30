@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -26,8 +27,8 @@ class StatusAppBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              CupertinoButton(
-                child: Text('Close'),
+              ThemedCupertinoButton(
+                text: 'Close',
                 onPressed: () => ModalHandler.showBaseDialog(
                   context: context,
                   dialogWidget: ConfirmationDialog(

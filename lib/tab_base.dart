@@ -81,6 +81,7 @@ class _TabBaseState extends State<TabBase> {
       }),
       bottomNavigationBar: Observer(
         builder: (_) => CupertinoTabBar(
+          activeColor: Theme.of(context).accentColor,
           currentIndex: tabsStore.tabIndex,
           onTap: (index) {
             if (tabsStore.tabIndex == index) {

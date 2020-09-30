@@ -138,7 +138,7 @@ class App extends StatelessWidget {
         textTheme: CupertinoTextThemeData(
           primaryColor: accentColor ?? StylingHelper.highlight_color,
         ),
-        primaryColor: cupertinoPrimaryColor ?? StylingHelper.highlight_color,
+        // primaryColor: cupertinoPrimaryColor ?? StylingHelper.highlight_color,
         barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),

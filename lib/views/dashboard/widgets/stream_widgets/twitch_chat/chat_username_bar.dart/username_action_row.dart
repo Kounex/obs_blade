@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/shared/dialogs/input.dart';
+import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
@@ -22,9 +23,9 @@ class UsernameActionRow extends StatelessWidget {
 
     return Row(
       children: [
-        CupertinoButton(
+        ThemedCupertinoButton(
           padding: EdgeInsets.all(0),
-          child: Text('Add'),
+          text: 'Add',
           onPressed: () => ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: InputDialog(
@@ -48,9 +49,9 @@ class UsernameActionRow extends StatelessWidget {
           ),
         ),
         SizedBox(height: 15.0, child: VerticalDivider()),
-        CupertinoButton(
+        ThemedCupertinoButton(
           padding: EdgeInsets.all(0),
-          child: Text('Edit'),
+          text: 'Edit',
           onPressed: selectedTwitchUsername != null
               ? () => ModalHandler.showBaseDialog(
                     context: context,
@@ -84,14 +85,10 @@ class UsernameActionRow extends StatelessWidget {
               : null,
         ),
         SizedBox(height: 15.0, child: VerticalDivider()),
-        CupertinoButton(
+        ThemedCupertinoButton(
           padding: EdgeInsets.all(0),
-          child: Text(
-            'Delete',
-            style: selectedTwitchUsername != null
-                ? TextStyle(color: CupertinoColors.destructiveRed)
-                : null,
-          ),
+          isDestructive: selectedTwitchUsername != null,
+          text: 'Delete',
           onPressed: selectedTwitchUsername != null
               ? () => ModalHandler.showBaseDialog(
                     context: context,

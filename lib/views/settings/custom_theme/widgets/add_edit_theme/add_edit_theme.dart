@@ -1,14 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/shared/general/validation_cupertino_textfield.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/modal_handler.dart';
+import '../../../widgets/action_block.dart/light_divider.dart';
 import 'color_row.dart';
 
 class AddEditTheme extends StatefulWidget {
@@ -63,9 +64,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                   widget.customTheme != null ? 'Edit Theme' : 'Add Theme',
                   style: Theme.of(context).textTheme.headline5,
                 ),
-                CupertinoButton(
+                ThemedCupertinoButton(
                   padding: EdgeInsets.only(left: 24.0),
-                  child: Text('Save'),
+                  text: 'Save',
                   onPressed: () {
                     if (_nameValidation(_name.text) == null) {
                       _customTheme.name = _name.text.trim();
@@ -84,14 +85,10 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     }
                   },
                 ),
-                CupertinoButton(
+                ThemedCupertinoButton(
                     padding: EdgeInsets.only(left: 24.0),
-                    child: Text(
-                      'Delete',
-                      style: widget.customTheme != null
-                          ? TextStyle(color: CupertinoColors.destructiveRed)
-                          : null,
-                    ),
+                    isDestructive: widget.customTheme != null,
+                    text: 'Delete',
                     onPressed: widget.customTheme != null
                         ? () => ModalHandler.showBaseDialog(
                               context: context,

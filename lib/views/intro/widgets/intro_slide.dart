@@ -34,7 +34,9 @@ class IntroSlide extends StatelessWidget {
             ),
           ),
           Card(
-            color: Colors.black12,
+            color: Theme.of(context).cardColor.computeLuminance() <= 0.2
+                ? Colors.white24
+                : Colors.black26,
             child: Padding(
               padding: EdgeInsets.all(18.0),
               child: Text(

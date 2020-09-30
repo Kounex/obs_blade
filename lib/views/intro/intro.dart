@@ -11,21 +11,29 @@ import 'widgets/slide_controls.dart';
 const double kIntroControlsBottomPadding = 24.0;
 
 class IntroView extends StatelessWidget {
+  final bool manually;
+
+  IntroView({this.manually = false});
+
   @override
   Widget build(BuildContext context) {
     return Provider<IntroStore>(
       create: (_) => IntroStore(),
-      builder: (context, _) => _IntroView(),
+      builder: (context, _) => _IntroView(this.manually),
     );
   }
 }
 
 class _IntroView extends StatefulWidget {
+  final bool manually;
+
+  _IntroView(this.manually);
+
   @override
-  __IntroViewState createState() => __IntroViewState();
+  _IntroViewState createState() => _IntroViewState();
 }
 
-class __IntroViewState extends State<_IntroView> {
+class _IntroViewState extends State<_IntroView> {
   PageController _pageController = PageController();
   List<Widget> _pageChildren;
 
@@ -81,6 +89,7 @@ class __IntroViewState extends State<_IntroView> {
                 child: SlideControls(
                   pageController: _pageController,
                   amountChildren: _pageChildren.length,
+                  manually: widget.manually,
                 ),
               ),
             )

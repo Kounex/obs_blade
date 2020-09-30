@@ -4,6 +4,9 @@ class BaseCard extends StatelessWidget {
   final Widget child;
   final bool centerChild;
 
+  final Color backgroundColor;
+  final bool paintBorder;
+
   final String title;
   final Widget titleWidget;
 
@@ -21,6 +24,8 @@ class BaseCard extends StatelessWidget {
     Key key,
     @required this.child,
     this.centerChild = true,
+    this.backgroundColor,
+    this.paintBorder = false,
     this.title,
     this.titleWidget,
     this.trailingTitleWidget,
@@ -44,6 +49,17 @@ class BaseCard extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 500.0),
         child: Card(
+          shape: this.paintBorder
+              ? RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4.0),
+                  side: BorderSide(
+                      color:
+                          Theme.of(context).cardColor.computeLuminance() <= 0.2
+                              ? Colors.white
+                              : Colors.black),
+                )
+              : null,
+          color: this.backgroundColor ?? Theme.of(context).cardColor,
           margin: EdgeInsets.all(0),
           child: Column(
             mainAxisAlignment: this.centerChild
