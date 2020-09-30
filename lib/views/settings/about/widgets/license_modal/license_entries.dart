@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:obs_blade/views/settings/about/widgets/license_modal/license_detail.dart';
 
 import '../../../../../shared/overlay/base_progress_indicator.dart';
 
@@ -8,7 +11,7 @@ import '../../../../../shared/overlay/base_progress_indicator.dart';
 /// and packages as a map of package names to license indexes.
 ///
 /// Took from: about.dart (26.07.2020)
-class _LicenseData {
+class LicenseData {
   final List<LicenseEntry> licenses = <LicenseEntry>[];
   final Map<String, List<int>> packageLicenseBindings = <String, List<int>>{};
   final List<String> packages = <String>[];
@@ -54,36 +57,45 @@ class LicenseEntries extends StatefulWidget {
 }
 
 class _LicenseEntriesState extends State<LicenseEntries> {
-  Future<_LicenseData> _licenses;
+  Future<LicenseData> _licenses;
 
   @override
   void initState() {
     _licenses = LicenseRegistry.licenses
-        .fold<_LicenseData>(
-          _LicenseData(),
-          (_LicenseData prev, LicenseEntry license) =>
-              prev..addLicense(license),
+        .fold<LicenseData>(
+          LicenseData(),
+          (LicenseData prev, LicenseEntry license) => prev..addLicense(license),
         )
-        .then((_LicenseData licenseData) => licenseData..sortPackages());
+        .then((LicenseData licenseData) => licenseData..sortPackages());
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<_LicenseData>(
+    return FutureBuilder<LicenseData>(
       future: _licenses,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return ListView.builder(
+            shrinkWrap: true,
             controller: widget.scrollController,
             padding:
                 EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
             itemCount: snapshot.data.packages.length,
             itemBuilder: (context, index) => ListTile(
               dense: true,
+              onTap: () => Navigator.of(context, rootNavigator: true).push(
+                CupertinoModalBottomSheetRoute(
+                  expanded: true,
+                  builder: (context, _) => LicenseDetail(
+                    licenseEntry: snapshot.data.licenses[index],
+                  ),
+                ),
+              ),
               title: Text(snapshot.data.packages[index]),
               subtitle: Text(
-                  '${snapshot.data.packageLicenseBindings[snapshot.data.packages[index]].length} licenses'),
+                '${snapshot.data.packageLicenseBindings[snapshot.data.packages[index]].length} licenses',
+              ),
             ),
           );
         }

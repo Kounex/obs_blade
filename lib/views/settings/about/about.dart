@@ -68,6 +68,12 @@ class AboutView extends StatelessWidget {
                                   'https://www.linkedin.com/in/ren%C3%A9-schramowski-a35342157/',
                               linkText: 'LinkedIn',
                             ),
+                            SocialEntry(
+                              icon: CupertinoIcons.mail_solid,
+                              iconSize: 24.0,
+                              link: 'mailto:contact@kounex.com',
+                              linkText: 'contact@kounex.com',
+                            ),
                           ],
                         ),
                         Text(

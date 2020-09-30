@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+const double kSocialEntryDefaultIconSize = 28.0;
+
 class SocialEntry {
   final String svgPath;
   final IconData icon;
@@ -51,7 +53,9 @@ class SocialBlock extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: SizedBox(
-                  width: social.iconSize,
+                  width: kSocialEntryDefaultIconSize >= social.iconSize
+                      ? kSocialEntryDefaultIconSize
+                      : social.iconSize,
                   child: social.icon != null
                       ? Icon(
                           social.icon,

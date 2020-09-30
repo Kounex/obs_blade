@@ -28,6 +28,7 @@ class RefresherAppBar extends StatelessWidget {
       toolbarHeight: kRefresherAppBarHeight,
       expandedHeight: this.expandedHeight,
       flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
         title: Stack(
           alignment: Alignment.bottomCenter,
           children: [

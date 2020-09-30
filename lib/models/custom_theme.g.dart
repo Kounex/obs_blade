@@ -28,10 +28,9 @@ class CustomThemeAdapter extends TypeAdapter<CustomTheme> {
       fields[9] as String,
       fields[10] as String,
       fields[11] as bool,
-    )
-      ..uuid = fields[0] as String
-      ..dateCreatedMS = fields[12] as int
-      ..dateUpdatedMS = fields[13] as int;
+      fields[0] as String,
+      fields[12] as int,
+    )..dateUpdatedMS = fields[13] as int;
   }
 
   @override

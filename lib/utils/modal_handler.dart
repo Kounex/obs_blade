@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+import 'styling_helper.dart';
 
 // A translucent color that is painted on top of the blurred backdrop as the
 // dialog's background color
@@ -65,26 +65,7 @@ class ModalHandler {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Material(
             color: Colors.transparent,
-            child: Scaffold(
-              backgroundColor: Theme.of(context)
-                  .backgroundColor
-                  .withOpacity(StylingHelper.opacity_blurry),
-              extendBodyBehindAppBar: true,
-              body: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      icon: Icon(CupertinoIcons.clear_circled_solid),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                  Expanded(
-                    child: modalWidgetBuilder(context, scrollController),
-                  ),
-                ],
-              ),
-            ),
+            child: modalWidgetBuilder(context, scrollController),
           ),
         ),
       );

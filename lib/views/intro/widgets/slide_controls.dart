@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../stores/views/intro.dart';
+import '../../../types/enums/hive_keys.dart';
+import '../../../types/enums/settings_keys.dart';
 import '../../../utils/routing_helper.dart';
 
 class SlideControls extends StatelessWidget {
@@ -59,8 +62,8 @@ class SlideControls extends StatelessWidget {
                       duration: Duration(milliseconds: 250),
                       curve: Curves.easeIn);
                 } else {
-                  // Hive.box(HiveKeys.Settings.name)
-                  //     .put(SettingsKeys.HasUserSeenIntro.name, true);
+                  Hive.box(HiveKeys.Settings.name)
+                      .put(SettingsKeys.HasUserSeenIntro.name, true);
                   Navigator.of(context).pushReplacementNamed(this.manually
                       ? SettingsTabRoutingKeys.Landing.route
                       : AppRoutingKeys.Tabs.route);
