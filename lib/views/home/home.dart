@@ -43,7 +43,7 @@ class HomeView extends StatelessWidget {
         /// Trigger autodiscover on startup
         /// Delay autodiscover to let the view render and ask for permission etc.
         Future.delayed(
-          Duration(milliseconds: 2000),
+          Duration(milliseconds: 1000),
           () => landingStore.updateAutodiscoverConnections(),
         );
         // }
