@@ -164,6 +164,7 @@ class App extends StatelessWidget {
               Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).listenable(),
           builder: (context, Box<CustomTheme> customThemeBox, child) {
             return MaterialApp(
+              debugShowCheckedModeBanner: false,
               theme: _getCurrentTheme(settingsBox),
               initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
                       defaultValue: false)

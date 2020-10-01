@@ -43,6 +43,7 @@ class _IntroViewState extends State<_IntroView> {
       IntroSlide(
         imagePath: 'assets/images/base_logo.png',
         slideText: 'Control your OBS instance and your stream!',
+        showBetaCard: true,
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_page.png',
