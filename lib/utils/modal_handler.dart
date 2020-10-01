@@ -62,10 +62,15 @@ class ModalHandler {
         backgroundColor: Colors.transparent,
         useRootNavigator: useRootNavigator,
         builder: (context, scrollController) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Material(
-            color: Colors.transparent,
-            child: modalWidgetBuilder(context, scrollController),
+          filter: ImageFilter.blur(
+            sigmaX: StylingHelper.sigma_blurry,
+            sigmaY: StylingHelper.sigma_blurry,
+          ),
+          child: Scaffold(
+            backgroundColor: Theme.of(context)
+                .cardColor
+                .withOpacity(StylingHelper.opacity_blurry),
+            body: modalWidgetBuilder(context, scrollController),
           ),
         ),
       );

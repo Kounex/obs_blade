@@ -104,8 +104,9 @@ class _HomeViewState extends State<_HomeView> {
       SchedulerBinding.instance.addPostFrameCallback((_) =>
           ModalHandler.showBaseDialog(
             context: context,
-            dialogWidget:
-                InfoDialog(body: 'Your OBS instance has been terminated!'),
+            dialogWidget: InfoDialog(
+                body:
+                    'Your connection to OBS has been lost and the app was not able to reconnect!'),
           ).then((_) =>
               context.read<HomeStore>().updateAutodiscoverConnections()));
     });

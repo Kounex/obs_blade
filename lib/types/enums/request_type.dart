@@ -5,6 +5,11 @@ enum RequestType {
    * create a response class for it
    */
 
+  /// Returns the latest version of the plugin and the API
+  ///
+  /// No specified parameters
+  GetVersion,
+
   /// Tells the client if authentication is required. If so, returns authentication parameters challenge and salt (see "Authentication" for more information)
   ///
   /// No specified parameters

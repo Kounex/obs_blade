@@ -110,6 +110,7 @@ class AboutView extends StatelessWidget {
                         RaisedButton(
                           child: Text('Packages'),
                           onPressed: () =>
+                              // showAboutDialog(context: context),
                               ModalHandler.showBaseCupertinoBottomSheet(
                             context: context,
                             modalWidgetBuilder: (context, scrollController) =>

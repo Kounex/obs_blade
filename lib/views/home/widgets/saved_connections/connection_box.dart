@@ -71,7 +71,7 @@ class ConnectionBox extends StatelessWidget {
                         networkStore.setOBSWebSocket(this.connection);
                       }),
                   IconButton(
-                    icon: Icon(CupertinoIcons.pencil),
+                    icon: Icon(Icons.edit),
                     onPressed: () => showCupertinoDialog(
                       context: context,
                       builder: (context) =>

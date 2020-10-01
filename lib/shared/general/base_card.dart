@@ -6,6 +6,7 @@ class BaseCard extends StatelessWidget {
 
   final Color backgroundColor;
   final bool paintBorder;
+  final Color borderColor;
 
   final String title;
   final Widget titleWidget;
@@ -26,6 +27,7 @@ class BaseCard extends StatelessWidget {
     this.centerChild = true,
     this.backgroundColor,
     this.paintBorder = false,
+    this.borderColor,
     this.title,
     this.titleWidget,
     this.trailingTitleWidget,
@@ -53,10 +55,11 @@ class BaseCard extends StatelessWidget {
               ? RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4.0),
                   side: BorderSide(
-                      color:
-                          Theme.of(context).cardColor.computeLuminance() <= 0.2
-                              ? Colors.white
-                              : Colors.black),
+                    color: this.borderColor ??
+                        (Theme.of(context).cardColor.computeLuminance() <= 0.2
+                            ? Colors.white
+                            : Colors.black),
+                  ),
                 )
               : null,
           color: this.backgroundColor ?? Theme.of(context).cardColor,

@@ -70,31 +70,45 @@ class _LicenseEntriesState extends State<LicenseEntries> {
     super.initState();
   }
 
+  List<LicenseEntry> _getLicensesForPackage(
+      LicenseData licenseData, String packageName) {
+    List<LicenseEntry> entries = [];
+    licenseData.packageLicenseBindings[packageName].forEach(
+      (licenseIndex) => entries.add(
+        licenseData.licenses.elementAt(licenseIndex),
+      ),
+    );
+    return entries;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<LicenseData>(
       future: _licenses,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return ListView.builder(
-            shrinkWrap: true,
-            controller: widget.scrollController,
-            padding:
-                EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-            itemCount: snapshot.data.packages.length,
-            itemBuilder: (context, index) => ListTile(
-              dense: true,
-              onTap: () => Navigator.of(context, rootNavigator: true).push(
-                CupertinoModalBottomSheetRoute(
-                  expanded: true,
-                  builder: (context, _) => LicenseDetail(
-                    licenseEntry: snapshot.data.licenses[index],
+          return Scrollbar(
+            child: ListView.builder(
+              shrinkWrap: true,
+              controller: widget.scrollController,
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).padding.bottom),
+              itemCount: snapshot.data.packages.length,
+              itemBuilder: (context, index) => ListTile(
+                dense: true,
+                onTap: () => Navigator.of(context, rootNavigator: true).push(
+                  CupertinoModalBottomSheetRoute(
+                    expanded: true,
+                    builder: (context, _) => LicenseDetail(
+                        package: snapshot.data.packages[index],
+                        licenseEntries: _getLicensesForPackage(
+                            snapshot.data, snapshot.data.packages[index])),
                   ),
                 ),
-              ),
-              title: Text(snapshot.data.packages[index]),
-              subtitle: Text(
-                '${snapshot.data.packageLicenseBindings[snapshot.data.packages[index]].length} licenses',
+                title: Text(snapshot.data.packages[index]),
+                subtitle: Text(
+                  '${snapshot.data.packageLicenseBindings[snapshot.data.packages[index]].length} licenses',
+                ),
               ),
             ),
           );

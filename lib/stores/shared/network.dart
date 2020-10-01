@@ -31,9 +31,14 @@ abstract class _NetworkStore with Store {
   bool obsTerminated = false;
 
   @action
-  Future<BaseResponse> setOBSWebSocket(Connection connection,
-      {Duration timeout = const Duration(seconds: 3)}) async {
-    this.closeSession();
+  Future<BaseResponse> setOBSWebSocket(
+    Connection connection, {
+    bool reconnect = false,
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
+    if (!reconnect) {
+      this.closeSession();
+    }
     this.connectionResponse = null;
     this.connectionInProgress = true;
     this.activeSession =
@@ -55,12 +60,14 @@ abstract class _NetworkStore with Store {
     ]);
 
     subscription.cancel();
-    if (this.connectionResponse.status != BaseResponse.ok) {
-      this.activeSession.socket.sink.close();
-      this.activeSession = null;
-    } else {
-      this.activeSession.connection.ssid = await Connectivity().getWifiName();
-      this.handleStream();
+    if (!reconnect) {
+      if (this.connectionResponse.status != BaseResponse.ok) {
+        this.activeSession.socket.sink.close();
+        this.activeSession = null;
+      } else {
+        // this.activeSession.connection.ssid = await Connectivity().getWifiName();
+        this.handleStream();
+      }
     }
     this.connectionInProgress = false;
     return this.connectionResponse;

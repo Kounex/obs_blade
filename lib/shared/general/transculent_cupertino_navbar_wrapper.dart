@@ -16,6 +16,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
   final Widget titleWidget;
 
   final ScrollController scrollController;
+  final bool showScrollBar;
 
   final List<Widget> listViewChildren;
   final Widget customBody;
@@ -27,6 +28,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.title,
     this.titleWidget,
     this.scrollController,
+    this.showScrollBar = false,
     this.listViewChildren = const [],
     this.customBody,
     this.actions,
@@ -36,6 +38,24 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget customScrollView = CustomScrollView(
+      controller: this.scrollController,
+      physics: StylingHelper.platformAwareScrollPhysics,
+      slivers: [
+        CustomSliverList(
+          customTopPadding: MediaQuery.of(context).padding.top + kToolbarHeight,
+          children: this.listViewChildren,
+        ),
+      ],
+    );
+
+    if (this.showScrollBar) {
+      customScrollView = Scrollbar(
+        controller: this.scrollController,
+        child: customScrollView,
+      );
+    }
+
     return Stack(
       children: [
         if (this.customBody != null)
@@ -44,18 +64,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
                 top: MediaQuery.of(context).padding.top + kToolbarHeight),
             child: this.customBody,
           ),
-        if (this.customBody == null)
-          CustomScrollView(
-            controller: this.scrollController,
-            physics: StylingHelper.platformAwareScrollPhysics,
-            slivers: [
-              CustomSliverList(
-                customTopPadding:
-                    MediaQuery.of(context).padding.top + kToolbarHeight,
-                children: this.listViewChildren,
-              ),
-            ],
-          ),
+        if (this.customBody == null) customScrollView,
         CupertinoNavigationBar(
           backgroundColor: Theme.of(context).appBarTheme.color,
           leading: this.previousTitle == null ? Container() : null,

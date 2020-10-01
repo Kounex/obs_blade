@@ -77,9 +77,9 @@ mixin _$NetworkStore on _NetworkStore, Store {
 
   @override
   Future<BaseResponse> setOBSWebSocket(Connection connection,
-      {Duration timeout = const Duration(seconds: 3)}) {
-    return _$setOBSWebSocketAsyncAction
-        .run(() => super.setOBSWebSocket(connection, timeout: timeout));
+      {bool reconnect = false, Duration timeout = const Duration(seconds: 3)}) {
+    return _$setOBSWebSocketAsyncAction.run(() => super
+        .setOBSWebSocket(connection, reconnect: reconnect, timeout: timeout));
   }
 
   final _$_NetworkStoreActionController =

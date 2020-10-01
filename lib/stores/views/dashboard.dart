@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 
@@ -57,9 +59,6 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<SceneItem> currentSceneItems;
 
-  @observable
-  bool obsTerminated = false;
-
   @computed
   ObservableList<SceneItem> get currentSoundboardSceneItems =>
       this.currentSceneItems != null
@@ -86,15 +85,30 @@ abstract class _DashboardStore with Store {
   @observable
   bool isPointerOnTwitch = false;
 
+  @observable
+  bool reconnecting = false;
+
   // Session activeSession;
   NetworkStore networkStore;
 
   List<SourceType> sourceTypes;
 
+  Timer checkConnectionTimer;
+
+  @action
   void setupNetworkStoreHandling(NetworkStore networkStore) {
     this.networkStore = networkStore;
-    this.initialRequests();
     this.handleStream();
+    this.initialRequests();
+
+    /// Since [setupNetworkStoreHandling] gets called as soon as we connect
+    /// to an OBS instance, we trigger this [Timer] which will check if
+    /// the connection is still alive periodically - see [_checkOBSConnection]
+    /// for more information
+    this.checkConnectionTimer = Timer(
+      Duration(seconds: 5),
+      () => _checkOBSConnection(),
+    );
   }
 
   void initialRequests() {
@@ -153,7 +167,13 @@ abstract class _DashboardStore with Store {
     Box<PastStreamData> pastStreamDataBox =
         Hive.box<PastStreamData>(HiveKeys.PastStreamData.name);
     List<PastStreamData> tmp = pastStreamDataBox.values.toList();
-    tmp.sort((a, b) => b.listEntryDateMS.last - a.listEntryDateMS.last);
+
+    /// Sort ascending so the last entry is the latest stream
+    tmp.sort((a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
+
+    /// Check if the latest stream has its last entry (based on [listEntryDateMS]
+    ///  set later than current time - [totalStreamTime] which means that we
+    /// connected to an OBS session we already were connected to
     if (tmp.length > 0 &&
         DateTime.now().millisecondsSinceEpoch -
                 this.latestStreamStats.totalStreamTime * 1000 <=
@@ -162,6 +182,47 @@ abstract class _DashboardStore with Store {
     } else {
       this.streamData = PastStreamData();
       await pastStreamDataBox.add(this.streamData);
+    }
+  }
+
+  /// While using the device this app is running on while connected to an OBS
+  /// instance, it may happen that we lose the connection due to OS background
+  /// behaviour or because we lose network connection or other reasons. This function
+  /// intents to check if the connection (in this case a WebSocket connection) is
+  /// still active (no [closeCode] present) - if so, we try to establish a new connection.
+  /// If we still have a [closeCode] after trying to establish a new connection, we
+  /// set the [obsTerminated] flag to initiate that we can't reach OBS anymore and
+  /// we get back to our [HomeView]
+  @action
+  Future<void> _checkOBSConnection() async {
+    if (this.networkStore.activeSession?.socket?.closeCode != null) {
+      this.reconnecting = true;
+      BaseResponse response;
+      int tries = 0;
+
+      while (tries < 5 && response?.status != BaseResponse.ok) {
+        response = await this.networkStore.setOBSWebSocket(
+              this.networkStore.activeSession.connection,
+              reconnect: true,
+            );
+        tries++;
+      }
+      if (response?.status != BaseResponse.ok) {
+        this.networkStore.obsTerminated = true;
+      } else {
+        this.reconnecting = false;
+        this.handleStream();
+        this.initialRequests();
+        this.checkConnectionTimer = Timer(
+          Duration(seconds: 3),
+          () => _checkOBSConnection(),
+        );
+      }
+    } else {
+      this.checkConnectionTimer = Timer(
+        Duration(seconds: 3),
+        () => _checkOBSConnection(),
+      );
     }
   }
 
@@ -189,6 +250,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.StreamStatus:
         this.latestStreamStats = StreamStats.fromJSON(event.json);
+
+        /// This case happens if we connect to an OBS session which already streams
         if (this.goneLiveInMS == null) {
           this.isLive = true;
           this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch -
@@ -284,7 +347,7 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.Exiting:
         await this.finishPastStreamData();
-        this.obsTerminated = true;
+        this.networkStore.obsTerminated = true;
         break;
       default:
         break;

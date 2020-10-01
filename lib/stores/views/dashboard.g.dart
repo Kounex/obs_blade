@@ -134,21 +134,6 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$obsTerminatedAtom = Atom(name: '_DashboardStore.obsTerminated');
-
-  @override
-  bool get obsTerminated {
-    _$obsTerminatedAtom.reportRead();
-    return super.obsTerminated;
-  }
-
-  @override
-  set obsTerminated(bool value) {
-    _$obsTerminatedAtom.reportWrite(value, super.obsTerminated, () {
-      super.obsTerminated = value;
-    });
-  }
-
   final _$globalAudioSceneItemsAtom =
       Atom(name: '_DashboardStore.globalAudioSceneItems');
 
@@ -199,6 +184,30 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$reconnectingAtom = Atom(name: '_DashboardStore.reconnecting');
+
+  @override
+  bool get reconnecting {
+    _$reconnectingAtom.reportRead();
+    return super.reconnecting;
+  }
+
+  @override
+  set reconnecting(bool value) {
+    _$reconnectingAtom.reportWrite(value, super.reconnecting, () {
+      super.reconnecting = value;
+    });
+  }
+
+  final _$_checkOBSConnectionAsyncAction =
+      AsyncAction('_DashboardStore._checkOBSConnection');
+
+  @override
+  Future<void> _checkOBSConnection() {
+    return _$_checkOBSConnectionAsyncAction
+        .run(() => super._checkOBSConnection());
+  }
+
   final _$_handleEventAsyncAction = AsyncAction('_DashboardStore._handleEvent');
 
   @override
@@ -208,6 +217,17 @@ mixin _$DashboardStore on _DashboardStore, Store {
 
   final _$_DashboardStoreActionController =
       ActionController(name: '_DashboardStore');
+
+  @override
+  void setupNetworkStoreHandling(NetworkStore networkStore) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setupNetworkStoreHandling');
+    try {
+      return super.setupNetworkStoreHandling(networkStore);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
 
   @override
   void setPointerOnTwitch(bool isPointerOnTwitch) {
@@ -252,10 +272,10 @@ latestStreamStats: ${latestStreamStats},
 activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},
-obsTerminated: ${obsTerminated},
 globalAudioSceneItems: ${globalAudioSceneItems},
 sceneTransitionDurationMS: ${sceneTransitionDurationMS},
 isPointerOnTwitch: ${isPointerOnTwitch},
+reconnecting: ${reconnecting},
 currentSoundboardSceneItems: ${currentSoundboardSceneItems},
 currentAudioSceneItems: ${currentAudioSceneItems}
     ''';

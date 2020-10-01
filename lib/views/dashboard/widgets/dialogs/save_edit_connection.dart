@@ -23,6 +23,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
       inputText: networkStore.activeSession.connection.name,
       inputPlaceholder: 'Name of the connection',
       inputCheck: (name) {
+        name = name.trim();
         if (name.length == 0) {
           return 'Please provide a name!';
         }
@@ -34,6 +35,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
         return '';
       },
       onSave: (name) {
+        name = name.trim();
         // if the challenge (or salt) is null, we didn't have to connect with a password.
         // a user might still enter a password, we don't want this password to be
         // saved, thats why we set it to null explicitly if thats the case

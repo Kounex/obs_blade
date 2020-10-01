@@ -22,7 +22,6 @@ class AppBarCupertinoActions extends StatelessWidget {
     return IconButton(
       icon: Icon(
         CupertinoIcons.ellipsis,
-        size: 32.0,
       ),
       onPressed: () => showCupertinoModalPopup(
         context: context,

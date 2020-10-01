@@ -24,7 +24,9 @@ class NetworkHelper {
   /// information inside a connection (IP and port)
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
-          'ws://${connection.ip}:${connection.port.toString()}');
+        'ws://${connection.ip}:${connection.port.toString()}',
+        pingInterval: Duration(seconds: 5),
+      );
 
   /// Initiating an autodiscover process (based on [TCPScanner]) to look for
   /// applications in the local network which listen on the given port (default

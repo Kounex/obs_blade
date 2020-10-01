@@ -35,6 +35,9 @@ class SceneItem {
   List<SceneItem> groupChildren;
 
   /// CUSTOM - added myself to handle stuff internally
+
+  /// Indicate whether we want to display the children of this group
+  /// (if this [SceneItem] is a group)
   bool displayGroup = false;
 
   SceneItem(
