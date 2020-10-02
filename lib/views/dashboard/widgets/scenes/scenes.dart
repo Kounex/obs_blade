@@ -45,7 +45,7 @@ class Scenes extends StatelessWidget {
           //   child: Text('SOUND'),
           // ),
           Padding(
-            padding: const EdgeInsets.only(top: 42.0),
+            padding: const EdgeInsets.only(top: 32.0),
             child: ResponsiveWidgetWrapper(
               mobileWidget: SceneContentMobile(),
               tabletWidget: SceneContent(),

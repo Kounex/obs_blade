@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../models/past_stream_data.dart';
@@ -19,6 +20,61 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
   @override
   Widget build(BuildContext context) {
     PastStreamData pastStreamData = ModalRoute.of(context).settings.arguments;
+
+    List<StreamChart> streamCharts = [
+      StreamChart(
+        data: pastStreamData.fpsList,
+        dataTimesMS: pastStreamData.listEntryDateMS,
+        dataName: 'FPS',
+        chartColor: Colors.greenAccent,
+        streamEndedMS: pastStreamData.listEntryDateMS.last,
+        totalStreamTime: pastStreamData.totalStreamTime,
+      ),
+      StreamChart(
+        data: pastStreamData.cpuUsageList,
+        dataTimesMS: pastStreamData.listEntryDateMS,
+        amountFixedTooltipValue: 2,
+        dataName: 'CPU Usage',
+        dataUnit: '%',
+        yMax: 100,
+        chartColor: Colors.blueAccent,
+        streamEndedMS: pastStreamData.listEntryDateMS.last,
+        totalStreamTime: pastStreamData.totalStreamTime,
+      ),
+      StreamChart(
+        data: pastStreamData.kbitsPerSecList
+            .map((kbits) => kbits.toDouble())
+            .toList(),
+        dataTimesMS: pastStreamData.listEntryDateMS,
+        dataName: 'kbit/s',
+        yPuffer: 1000,
+        yInterval: 500,
+        chartColor: Colors.orangeAccent,
+        streamEndedMS: pastStreamData.listEntryDateMS.last,
+        totalStreamTime: pastStreamData.totalStreamTime,
+      ),
+      StreamChart(
+        data: pastStreamData.memoryUsageList
+            .map((memory) => memory / 1000)
+            .toList(),
+        dataTimesMS: pastStreamData.listEntryDateMS,
+        amountFixedTooltipValue: 3,
+        amountFixedYAxis: 1,
+        dataName: 'RAM',
+        dataUnit: ' GB',
+        yPuffer: 0.5,
+        yInterval: 0.2,
+        chartColor: Colors.redAccent,
+        streamEndedMS: pastStreamData.listEntryDateMS.last,
+        totalStreamTime: pastStreamData.totalStreamTime,
+      ),
+    ];
+
+    String streamTimeHours =
+        (pastStreamData.totalStreamTime ~/ 3600).toString();
+    String streamTimeMinutes =
+        ((pastStreamData.totalStreamTime ~/ 60) % 60).toString();
+    String streamTimeSeconds = (pastStreamData.totalStreamTime % 60).toString();
 
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
@@ -82,83 +138,96 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
           ],
         ),
         listViewChildren: [
-          StreamChart(
-            data: pastStreamData.fpsList,
-            dataTimesMS: pastStreamData.listEntryDateMS,
-            dataName: 'FPS',
-            chartColor: Colors.greenAccent,
-            streamEndedMS: pastStreamData.listEntryDateMS.last,
-            totalStreamTime: pastStreamData.totalStreamTime,
+          Padding(
+            padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
+            child: Wrap(
+              runSpacing: 24.0,
+              spacing: 24.0,
+              alignment: WrapAlignment.center,
+              children: streamCharts
+                  .map(
+                    (streamChart) => ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 350.0,
+                      ),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0) +
+                              EdgeInsets.only(
+                                  top: 4.0, left: 20.0, right: 24.0),
+                          child: streamChart,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
-          Divider(),
-          StreamChart(
-            data: pastStreamData.cpuUsageList,
-            dataTimesMS: pastStreamData.listEntryDateMS,
-            amountFixedTooltipValue: 2,
-            dataName: 'CPU Usage',
-            dataUnit: '%',
-            yMax: 100,
-            chartColor: Colors.blueAccent,
-            streamEndedMS: pastStreamData.listEntryDateMS.last,
-            totalStreamTime: pastStreamData.totalStreamTime,
-          ),
-          Divider(),
-          StreamChart(
-            data: pastStreamData.kbitsPerSecList
-                .map((kbits) => kbits.toDouble())
-                .toList(),
-            dataTimesMS: pastStreamData.listEntryDateMS,
-            dataName: 'kbit/s',
-            yPuffer: 1000,
-            yInterval: 500,
-            chartColor: Colors.orangeAccent,
-            streamEndedMS: pastStreamData.listEntryDateMS.last,
-            totalStreamTime: pastStreamData.totalStreamTime,
-          ),
-          Divider(),
-          StreamChart(
-            data: pastStreamData.memoryUsageList
-                .map((memory) => memory / 1000)
-                .toList(),
-            dataTimesMS: pastStreamData.listEntryDateMS,
-            amountFixedTooltipValue: 3,
-            amountFixedYAxis: 1,
-            dataName: 'RAM',
-            dataUnit: ' GB',
-            yPuffer: 0.5,
-            yInterval: 0.2,
-            chartColor: Colors.redAccent,
-            streamEndedMS: pastStreamData.listEntryDateMS.last,
-            totalStreamTime: pastStreamData.totalStreamTime,
-          ),
-          Divider(),
           StatsContainer(
-            title: 'Stuff',
+            title: 'Some numbers',
             children: [
               FormattedText(
-                label: 'Total Output Frames (encoder)',
-                text: pastStreamData.outputTotalFrames.toString(),
-                width: 200.0,
+                label: 'Total stream time',
+                text:
+                    '$streamTimeHours:${(streamTimeMinutes.length == 1 ? '0' : '') + streamTimeMinutes}:${(streamTimeSeconds.length == 1 ? '0' : '') + streamTimeSeconds}',
+                width: 100.0,
               ),
               FormattedText(
-                label: 'Total Output Frames (render)',
-                text: pastStreamData.renderTotalFrames.toString(),
-                width: 200.0,
+                label: 'Average FPS',
+                text: (pastStreamData.fpsList.reduce((a, b) => a + b) /
+                        pastStreamData.fpsList.length)
+                    .toStringAsFixed(2),
+                width: 75.0,
+              ),
+              FormattedText(
+                label: 'Average CPU Usage',
+                text: (pastStreamData.cpuUsageList.reduce((a, b) => a + b) /
+                        pastStreamData.cpuUsageList.length)
+                    .toStringAsFixed(2),
+                unit: '%',
+                width: 115.0,
+              ),
+              FormattedText(
+                label: 'Average kbit/s',
+                text: (pastStreamData.kbitsPerSecList.reduce((a, b) => a + b) /
+                        pastStreamData.kbitsPerSecList.length)
+                    .toStringAsFixed(2),
+                width: 85.0,
+              ),
+              FormattedText(
+                label: 'Average RAM',
+                text: ((pastStreamData.memoryUsageList.reduce((a, b) => a + b) /
+                            pastStreamData.memoryUsageList.length) /
+                        1000)
+                    .toStringAsFixed(2),
+                unit: ' GB',
+                width: 80.0,
+              ),
+              FormattedText(
+                label: 'Dropped Frames',
+                text: pastStreamData.strain?.toString(),
+                unit: '%',
+                width: 95.0,
               ),
               FormattedText(
                 label: 'Missed Frames (render)',
                 text: pastStreamData.renderMissedFrames.toString(),
-                width: 200.0,
+                width: 135.0,
               ),
               FormattedText(
                 label: 'Skipped Frames (encoder)',
                 text: pastStreamData.outputSkippedFrames.toString(),
-                width: 200.0,
+                width: 150.0,
               ),
               FormattedText(
-                label: 'Dropped Frames (%)',
-                text: pastStreamData.strain?.toString(),
-                width: 200.0,
+                label: 'Total Output Frames (encoder)',
+                text: pastStreamData.outputTotalFrames.toString(),
+                width: 175.0,
+              ),
+              FormattedText(
+                label: 'Total Output Frames (render)',
+                text: pastStreamData.renderTotalFrames.toString(),
+                width: 165.0,
               ),
             ],
           ),

@@ -52,13 +52,16 @@ abstract class _DashboardStore with Store {
   /// the current scene and elements of groups are inside the
   /// separate [SceneItem.groupChildren]. To better maintain and work
   /// with scene items, I flatten these so all scene items, even
-  /// the children of groups are on top level and a the custom
+  /// the children of groups are on top level and a custom
   /// [SceneItem.displayGroup] propertry toggles whether they
   /// will be displayed or not, but this makes searching and
   /// updating scene items easier
   @observable
   ObservableList<SceneItem> currentSceneItems;
 
+  /// Not used currently as the WebSocket API does not expose working
+  /// with such sources (playing, stopping, etc.) right now. This will likely
+  /// be supported in the near future which therefore enables Soundboard support!
   @computed
   ObservableList<SceneItem> get currentSoundboardSceneItems =>
       this.currentSceneItems != null
@@ -66,6 +69,10 @@ abstract class _DashboardStore with Store {
               sceneItem.type == 'ffmpeg_source' && sceneItem.render))
           : ObservableList();
 
+  /// [SceneItem] works as the master object for all kind of sources
+  /// inside a scene. Therefore "special" kind of scene items like audio sources
+  /// are computed from the master list [currentSceneItems] of the current active
+  /// scene
   @computed
   ObservableList<SceneItem> get currentAudioSceneItems =>
       this.currentSceneItems != null
@@ -85,10 +92,25 @@ abstract class _DashboardStore with Store {
   @observable
   bool isPointerOnTwitch = false;
 
+  /// Indicator (which is used in [_checkOBSConnection]) whether we attempt a
+  /// reconnect since the WebSocket connection closed. Can and is currently listened
+  /// to in [ReconnectToast] to show the user that a reconnect attempt is ongoing
   @observable
   bool reconnecting = false;
 
-  // Session activeSession;
+  /// Currently I hold a reference to the [NetworkStore] object to be able
+  /// to listen to the WebSocket stream and toggle some stuff. [NetworkStore]
+  /// is one of the shared stores, indicate that those kind of stores are not
+  /// bound to specific views but are rather "global". Those can be seen as
+  /// the "real" app states / stores. Therefore they are used in several views /
+  /// widgets but also in other stores. I don't have a better solution right now
+  /// other than passing a reference to the [NetworkStore] as soon as this store
+  /// [DashboardStore] gets instantiated in the Provider create property.
+  ///
+  /// I want to avoid having such things as global entities at all because global
+  /// stuff (as the name already indicates) is not bound to anything really and it
+  /// could be accessed from everywhere and "controlling" those stuff can get out
+  /// of hand quickly.
   NetworkStore networkStore;
 
   List<SourceType> sourceTypes;

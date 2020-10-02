@@ -38,26 +38,22 @@ class CustomThemeView extends StatelessWidget {
               fit: StackFit.loose,
               alignment: Alignment.bottomCenter,
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: BaseCard(
-                    title: 'Your Themes',
-                    trailingTitleWidget: ThemedCupertinoButton(
-                      padding: const EdgeInsets.all(0),
-                      onPressed: () =>
-                          ModalHandler.showBaseCupertinoBottomSheet(
-                        context: context,
-                        modalWidgetBuilder: (context, scrollController) =>
-                            AddEditTheme(
-                          scrollController: scrollController,
-                        ),
+                BaseCard(
+                  title: 'Your Themes',
+                  trailingTitleWidget: ThemedCupertinoButton(
+                    padding: const EdgeInsets.all(0),
+                    onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
+                      context: context,
+                      modalWidgetBuilder: (context, scrollController) =>
+                          AddEditTheme(
+                        scrollController: scrollController,
                       ),
-                      text: 'Add Theme',
                     ),
-                    bottomPadding: 12.0,
-                    paddingChild: EdgeInsets.all(0),
-                    child: CustomThemeList(),
+                    text: 'Add Theme',
                   ),
+                  bottomPadding: 12.0,
+                  paddingChild: EdgeInsets.all(0),
+                  child: CustomThemeList(),
                 ),
                 Positioned.fill(
                   child: ClipRect(

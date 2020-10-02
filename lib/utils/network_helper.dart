@@ -11,21 +11,18 @@ import '../models/connection.dart';
 import '../types/enums/request_type.dart';
 
 class NetworkHelper {
-  // static ConnectivityResult currentConnectivity;
-
-  // static void activateNetworkConnectionListener() async {
-  //   NetworkHelper.currentConnectivity =
-  //       await Connectivity().checkConnectivity();
-  //   Connectivity().onConnectivityChanged.listen((connectivityResult) =>
-  //       NetworkHelper.currentConnectivity = connectivityResult);
-  // }
-
   /// Establish and return an instance of [IOWebSocketChannel] based on the
-  /// information inside a connection (IP and port)
+  /// information inside a connection (IP and port). Currently using a
+  /// [pingInterval] of 3 seconds which will check if the WebSocket connection
+  /// is still alive in a 3 seconds interval - this will result in being able
+  /// to check for [closeStatus] or [closeResult] whether the connection is
+  /// alive or not. Mainly used in [DashboardStore] where a [Timer] is periodically
+  /// checking this to be able to reconnect if possible or navigate back to
+  /// [HomeView] otherwise
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
         'ws://${connection.ip}:${connection.port.toString()}',
-        pingInterval: Duration(seconds: 5),
+        pingInterval: Duration(seconds: 3),
       );
 
   /// Initiating an autodiscover process (based on [TCPScanner]) to look for

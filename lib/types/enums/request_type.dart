@@ -1,8 +1,10 @@
 enum RequestType {
   /**
+   * -----------------------------------------------------------------------
    * Requests which serve as 'getter' - we will get a response
    * with valueable information we want to use in the app so we
-   * create a response class for it
+   * have a designated response class for it: types/classes/stream/responses
+   * -----------------------------------------------------------------------
    */
 
   /// Returns the latest version of the plugin and the API
@@ -60,10 +62,12 @@ enum RequestType {
   GetSpecialSources,
 
   /**
+   * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
    * in our request to change something in OBS. We don't need the response
    * since we don't wait for information after this request, so no response
    * classes exist for those
+   * -----------------------------------------------------------------------
    */
 
   /// Attempt to authenticate the client to the server

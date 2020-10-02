@@ -31,46 +31,5 @@ class SceneContent extends StatelessWidget {
         ),
       ],
     );
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                color: Theme.of(context).cardColor,
-                height: 30.0,
-                alignment: Alignment.center,
-                child: Text('Sources'),
-              ),
-            ),
-            Expanded(
-              child: Container(
-                color: Theme.of(context).cardColor,
-                height: 30.0,
-                alignment: Alignment.center,
-                child: Text('Audio'),
-              ),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: SizedBox(height: 250.0, child: SceneItems()),
-              ),
-            ),
-            VerticalDivider(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: SizedBox(height: 250.0, child: AudioInputs()),
-              ),
-            )
-          ],
-        ),
-      ],
-    );
   }
 }

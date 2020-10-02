@@ -63,8 +63,9 @@ class _TwitchChatState extends State<TwitchChat>
                   onPointerCancel: (_) =>
                       dashboardStore.setPointerOnTwitch(false),
                   child: InAppWebView(
-                    key: Key(settingsBox
-                        .get(SettingsKeys.SelectedTwitchUsername.name)),
+                    key: Key(
+                      settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
+                    ),
                     initialUrl: settingsBox.get(
                                 SettingsKeys.SelectedTwitchUsername.name) !=
                             null

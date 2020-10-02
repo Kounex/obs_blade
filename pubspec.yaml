@@ -1,6 +1,7 @@
 name: obs_blade
 description: A new Flutter project.
-version: 0.8.2+2009161528
+# Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
+version: 0.9.0+2020100201
 
 environment:
   sdk: '>=2.9.0 <3.0.0'
@@ -22,6 +23,7 @@ dependencies:
 
   # Webview
   flutter_inappwebview: ^4.0.0+4
+  webview_flutter: ^1.0.0
 
   # State Management and DI
   provider: ^4.3.2+2
@@ -46,6 +48,9 @@ dependencies:
 
   # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
   url_launcher: ^5.7.2
+
+  # See app layout on different device sizes on the fly
+  device_preview: ^0.4.8
 
   # Fancy done layout shit
   modal_bottom_sheet: ^0.2.2
@@ -80,11 +85,11 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path_android: 'assets/icons/app/app-logo-android.png'
-  image_path_ios: 'assets/icons/app/app-logo-ios.png'
+  image_path_android: 'assets/icons/app/app_logo.png'
+  image_path_ios: 'assets/icons/app/app_logo.png'
 
 flutter_native_splash:
-  image: assets/icons/app/splash-logo.png
+  image: assets/icons/app/splash.png
   color: '101823'
 
 flutter:
@@ -94,7 +99,6 @@ flutter:
     - assets/icons/app/
     - assets/images/
     - assets/images/intro/
-    - assets/svgs/
 
   fonts:
     - family: JamIcons
