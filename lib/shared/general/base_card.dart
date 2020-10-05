@@ -52,6 +52,10 @@ class BaseCard extends StatelessWidget {
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 500.0),
           child: Card(
+            shadowColor: this.backgroundColor != null &&
+                    this.backgroundColor.value == Colors.transparent.value
+                ? Colors.transparent
+                : null,
             shape: this.paintBorder
                 ? RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4.0),

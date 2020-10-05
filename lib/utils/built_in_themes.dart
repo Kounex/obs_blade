@@ -6,7 +6,7 @@ class BuiltInThemes {
   static Iterable<CustomTheme> get themes => [
         CustomTheme(
           'Pure Indigo',
-          'Might remind you of a platform, pure coincidence... i guess',
+          'Might remind you of a platform... pure coincidence, I guess',
           false,
           '050505',
           '050505',

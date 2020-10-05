@@ -15,7 +15,9 @@ class ColorBubble extends StatelessWidget {
         color: this.color,
         borderRadius: BorderRadius.circular(this.size / 2),
         border: Border.all(
-          color: Colors.black,
+          color: Theme.of(context).cardColor.computeLuminance() < 0.2
+              ? Colors.grey
+              : Colors.black,
           width: 1.0,
         ),
       ),

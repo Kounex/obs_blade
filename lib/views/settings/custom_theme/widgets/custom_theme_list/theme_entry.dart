@@ -28,47 +28,63 @@ class ThemeEntry extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 64.0,
-                child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: animation,
-                      child: child,
+          Expanded(
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 64.0,
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: animation,
+                        child: child,
+                      ),
                     ),
+                    child: Hive.box(HiveKeys.Settings.name).get(
+                                SettingsKeys.ActiveCustomThemeUUID.name,
+                                defaultValue: '') ==
+                            this.customTheme.uuid
+                        ? Icon(
+                            CupertinoIcons.checkmark_alt,
+                            size: 32.0,
+                            color: Theme.of(context).accentColor,
+                          )
+                        : Container(),
                   ),
-                  child: Hive.box(HiveKeys.Settings.name).get(
-                              SettingsKeys.ActiveCustomThemeUUID.name,
-                              defaultValue: '') ==
-                          this.customTheme.uuid
-                      ? Icon(
-                          CupertinoIcons.checkmark_alt,
-                          key: Key(this.customTheme.uuid),
-                          size: 32.0,
-                          color: Theme.of(context).accentColor,
-                        )
-                      : Container(),
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(this.customTheme.name ?? 'Unnamed theme'),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: 8.0,
-                    ),
-                    child: ThemeColorsRow(
-                      customTheme: this.customTheme,
+                Expanded(
+                  child: Padding(
+                    padding:
+                        EdgeInsets.only(right: !this.isEditable ? 24.0 : 0.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          this.customTheme.name ?? 'Unnamed theme',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          this.customTheme.description ?? 'No description',
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.caption,
+                          maxLines: 2,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 8.0,
+                          ),
+                          child: ThemeColorsRow(
+                            customTheme: this.customTheme,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
           if (this.isEditable)
             ThemedCupertinoButton(

@@ -17,8 +17,9 @@ class SocialEntry {
     this.icon,
     this.linkText,
     this.iconSize = 28.0,
-  }) : assert(
-            svgPath != null && icon == null || svgPath == null && icon != null);
+  }) : assert(svgPath == null && icon == null ||
+            svgPath != null && icon == null ||
+            svgPath == null && icon != null);
 }
 
 class SocialBlock extends StatelessWidget {
@@ -50,25 +51,26 @@ class SocialBlock extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: SizedBox(
-                  width: kSocialEntryDefaultIconSize >= social.iconSize
-                      ? kSocialEntryDefaultIconSize
-                      : social.iconSize,
-                  child: social.icon != null
-                      ? Icon(
-                          social.icon,
-                          size: social.iconSize,
-                          color: Theme.of(context).iconTheme.color,
-                        )
-                      : SvgPicture.asset(
-                          social.svgPath,
-                          height: social.iconSize,
-                          color: Theme.of(context).iconTheme.color,
-                        ),
+              if (social.icon != null || social.svgPath != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: SizedBox(
+                    width: kSocialEntryDefaultIconSize >= social.iconSize
+                        ? kSocialEntryDefaultIconSize
+                        : social.iconSize,
+                    child: social.icon != null
+                        ? Icon(
+                            social.icon,
+                            size: social.iconSize,
+                            color: Theme.of(context).iconTheme.color,
+                          )
+                        : SvgPicture.asset(
+                            social.svgPath,
+                            height: social.iconSize,
+                            color: Theme.of(context).iconTheme.color,
+                          ),
+                  ),
                 ),
-              ),
               Text(
                 social.linkText ?? social.link,
                 softWrap: true,

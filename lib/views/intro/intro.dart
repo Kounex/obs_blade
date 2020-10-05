@@ -1,7 +1,10 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:obs_blade/shared/general/social_block.dart';
 import 'package:provider/provider.dart';
 
 import '../../stores/views/intro.dart';
@@ -39,27 +42,88 @@ class _IntroViewState extends State<_IntroView> {
 
   @override
   void initState() {
+    super.initState();
+
+    /// Checking whether tablet (screen big enough to display intro slides
+    /// correctly in landscape mode) or phone - taken from the
+    /// 'flutter_device_type' package
+    final double devicePixelRatio = ui.window.devicePixelRatio;
+    final ui.Size size = ui.window.physicalSize;
+    final double width = size.width;
+    final double height = size.height;
+
+    if (!(devicePixelRatio < 2 && (width >= 1000 || height >= 1000)) &&
+        !(devicePixelRatio == 2 && (width >= 1920 || height >= 1920))) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    }
+
     _pageChildren = [
       IntroSlide(
+        imagePath: 'assets/images/intro/beta_version.png',
+        slideTextSpans: [
+          TextSpan(
+            text:
+                'This app is in its early stages - if you encounter anything unusual, please get in touch with me!\n(Details in the \'About\' page)',
+          ),
+        ],
+      ),
+      IntroSlide(
         imagePath: 'assets/images/base_logo.png',
-        slideText: 'Control your OBS instance and your stream!',
-        showBetaCard: true,
+        slideTextSpans: [
+          TextSpan(
+            text:
+                'Control your OBS instance and easily manage your stream - live!',
+          ),
+        ],
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_page.png',
-        slideText: 'Vist the OBS WebSocket GitHub page!',
+        slideTextSpans: [
+          TextSpan(
+            text:
+                'Vist the OBS WebSocket GitHub page to get the plugin to make this app work',
+          ),
+        ],
+        additionalChild: SocialBlock(
+          socialInfos: [
+            SocialEntry(
+                link: 'https://https://github.com/Palakis/obs-websocket'),
+          ],
+        ),
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_download.png',
-        slideText: 'Click on \'Releases\' to get to the download area!',
+        slideTextSpans: [
+          TextSpan(
+            text:
+                'Click on \'Releases\' to get to the download area and select the correct installer (for your operating system)',
+          ),
+        ],
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_settings.png',
-        slideText:
-            'After installing the correct version for your OS, make sure to restart OBS and look if Tools -> WebSocket Server Settings is available!',
+        slideTextSpans: [
+          TextSpan(
+            text:
+                'After installing the correct version, make sure to restart OBS and look if Tools -> WebSocket Server Settings is available - then you are good to go!',
+          ),
+        ],
       ),
     ];
-    super.initState();
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
   }
 
   @override
@@ -67,19 +131,22 @@ class _IntroViewState extends State<_IntroView> {
     return Scaffold(
       body: Container(
         color: Theme.of(context).backgroundColor,
-        child: Stack(
-          alignment: Alignment.center,
+        child: Column(
           children: [
-            PageView.builder(
-              controller: _pageController,
-              itemCount: _pageChildren.length,
-              itemBuilder: (context, index) => _pageChildren[index],
-              onPageChanged: (page) =>
-                  context.read<IntroStore>().setCurrentPage(page),
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _pageChildren.length,
+                itemBuilder: (context, index) => _pageChildren[index],
+                onPageChanged: (page) =>
+                    context.read<IntroStore>().setCurrentPage(page),
+              ),
             ),
-            Positioned(
-              bottom: MediaQuery.of(context).padding.bottom +
-                  kIntroControlsBottomPadding,
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom +
+                    kIntroControlsBottomPadding,
+              ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: min(
