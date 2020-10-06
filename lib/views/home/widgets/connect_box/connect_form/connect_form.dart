@@ -65,7 +65,8 @@ class _ConnectFormState extends State<ConnectForm> {
                       ? landingStore.typedInConnection.ip = ip
                       : null,
                   decoration: InputDecoration(
-                    labelText: 'IP Address',
+                    labelText: 'IP Address (internal)',
+                    hintText: 'e.g. 192.168.178.10',
                   ),
                   validator: (text) => ValidationHelper.ipValidation(text),
                 ),

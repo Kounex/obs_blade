@@ -59,7 +59,21 @@ class _IntroViewState extends State<_IntroView> {
         DeviceOrientation.portraitDown,
       ]);
     }
+  }
 
+  @override
+  void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     _pageChildren = [
       IntroSlide(
         imagePath: 'assets/images/intro/beta_version.png',
@@ -84,13 +98,17 @@ class _IntroViewState extends State<_IntroView> {
         slideTextSpans: [
           TextSpan(
             text:
-                'Vist the OBS WebSocket GitHub page to get the plugin to make this app work',
+                'Visit the OBS WebSocket GitHub page to get the plugin to make this app work:',
           ),
         ],
         additionalChild: SocialBlock(
+          topPadding: 12.0,
+          bottomPadding: 0,
           socialInfos: [
             SocialEntry(
-                link: 'https://https://github.com/Palakis/obs-websocket'),
+              link: 'https://github.com/Palakis/obs-websocket',
+              textStyle: Theme.of(context).textTheme.headline6,
+            ),
           ],
         ),
       ),
@@ -113,21 +131,7 @@ class _IntroViewState extends State<_IntroView> {
         ],
       ),
     ];
-  }
 
-  @override
-  void dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         color: Theme.of(context).backgroundColor,

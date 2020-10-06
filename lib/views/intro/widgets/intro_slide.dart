@@ -37,7 +37,7 @@ class IntroSlide extends StatelessWidget {
               child: Image.asset(this.imagePath),
             ),
             SizedBox(
-              height: 250.0,
+              height: 275.0,
               child: BaseCard(
                 backgroundColor: Colors.transparent,
                 paddingChild: EdgeInsets.all(0),

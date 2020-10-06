@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:obs_blade/shared/dialogs/info.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const double kSocialEntryDefaultIconSize = 28.0;
 
 class SocialEntry {
+  final String link;
+  final String deepLink;
   final String svgPath;
   final IconData icon;
-  final String link;
   final String linkText;
   final double iconSize;
+  final TextStyle textStyle;
 
   SocialEntry({
     @required this.link,
+    this.deepLink,
     this.svgPath,
     this.icon,
     this.linkText,
     this.iconSize = 28.0,
+    this.textStyle,
   }) : assert(svgPath == null && icon == null ||
             svgPath != null && icon == null ||
             svgPath == null && icon != null);
@@ -24,18 +30,55 @@ class SocialEntry {
 
 class SocialBlock extends StatelessWidget {
   final List<SocialEntry> socialInfos;
-  final double verticalPadding;
+  final double topPadding;
+  final double bottomPadding;
 
   SocialBlock({
     @required this.socialInfos,
-    this.verticalPadding = 18.0,
+    this.topPadding = 18.0,
+    this.bottomPadding = 18.0,
   }) : assert(socialInfos != null && socialInfos.length > 0);
 
-  Future<void> _handleSocialTap(SocialEntry social) async {
-    if (await canLaunch(social.link)) {
-      await launch(social.link);
-    } else {
-      throw 'Could not launch ${social.link}';
+  Future<void> _handleSocialTap(
+      BuildContext context, SocialEntry social) async {
+    try {
+      if (social.deepLink != null &&
+          await canLaunch(
+            social.deepLink,
+          )) {
+        if (!await launch(
+          social.deepLink,
+          forceSafariVC: false,
+          universalLinksOnly: true,
+        )) {
+          await launch(
+            social.deepLink,
+          );
+        }
+      } else if (await canLaunch(
+        social.link,
+      )) {
+        if (!await launch(
+          social.link,
+          forceSafariVC: false,
+          universalLinksOnly: true,
+        )) {
+          await launch(
+            social.link,
+          );
+        }
+      } else {
+        throw 'Could not launch ${social.link}';
+      }
+    } catch (_) {
+      ModalHandler.showBaseDialog(
+        context: context,
+        dialogWidget: InfoDialog(
+          title: 'Couldn\'t open link',
+          body:
+              'Couldn\'t open the following link on this device:\n\n${social.link}',
+        ),
+      );
     }
   }
 
@@ -46,7 +89,7 @@ class SocialBlock extends StatelessWidget {
     this.socialInfos.forEach((social) {
       socialEntries.add(
         GestureDetector(
-          onTap: () => _handleSocialTap(social),
+          onTap: () => _handleSocialTap(context, social),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -71,12 +114,14 @@ class SocialBlock extends StatelessWidget {
                           ),
                   ),
                 ),
-              Text(
-                social.linkText ?? social.link,
-                softWrap: true,
-                style: TextStyle(
-                  color: Theme.of(context).accentColor,
-                  decoration: TextDecoration.underline,
+              Flexible(
+                child: Text(
+                  social.linkText ?? social.link,
+                  softWrap: true,
+                  style: (social.textStyle ?? TextStyle()).copyWith(
+                    color: Theme.of(context).accentColor,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
             ],
@@ -86,7 +131,8 @@ class SocialBlock extends StatelessWidget {
     });
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: this.verticalPadding),
+      padding:
+          EdgeInsets.only(top: this.topPadding, bottom: this.bottomPadding),
       child: Wrap(
         spacing: 12.0,
         runSpacing: 12.0,
