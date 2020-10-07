@@ -3,6 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../../../../../types/extensions/int.dart';
 import '../../../../../shared/general/formatted_text.dart';
 import '../../../../../stores/views/dashboard.dart';
 import 'stats_container.dart';
@@ -52,22 +53,47 @@ class _StatsState extends State<Stats> {
                     title: 'Performance',
                     children: [
                       FormattedText(
+                        label: 'Total stream time',
+                        text: dashboardStore.latestStreamStats?.totalStreamTime
+                            ?.secondsToFormattedTimeString(),
+                        width: 100.0,
+                      ),
+                      FormattedText(
                         label: 'FPS',
                         text: dashboardStore.latestStreamStats?.fps
                             ?.round()
                             ?.toString(),
                       ),
                       FormattedText(
-                        label: 'kBits / s',
+                        label: 'kbit/s',
                         text: dashboardStore.latestStreamStats?.kbitsPerSec
                             ?.toString(),
-                        width: 150.0,
+                        width: 75.0,
                       ),
                       FormattedText(
-                        label: 'Dropped Frames (%)',
+                        label: 'CPU Usage',
+                        unit: '%',
+                        text: dashboardStore.latestStreamStats?.cpuUsage
+                            ?.toStringAsFixed(2),
+                        width: 70.0,
+                      ),
+                      FormattedText(
+                        label: 'Memory Usage',
+                        unit: ' GB',
+                        text: dashboardStore.latestStreamStats?.memoryUsage !=
+                                null
+                            ? (dashboardStore.latestStreamStats.memoryUsage /
+                                    1000)
+                                .toStringAsFixed(2)
+                            : null,
+                        width: 90.0,
+                      ),
+                      FormattedText(
+                        label: 'Dropped Frames',
+                        unit: '%',
                         text: dashboardStore.latestStreamStats?.strain
                             ?.toString(),
-                        width: 160.0,
+                        width: 95.0,
                       ),
                     ],
                   ),
@@ -75,45 +101,39 @@ class _StatsState extends State<Stats> {
                 Container(
                   width: MediaQuery.of(context).size.width,
                   child: StatsContainer(
-                    title: 'Hardware',
+                    title: 'Misc.',
                     children: [
                       FormattedText(
                         label: 'Missed Frames (render)',
                         text: dashboardStore
                             .latestStreamStats?.renderMissedFrames
-                            ?.toString(),
-                        width: 180.0,
+                            ?.toStringAsFixed(2),
+                        width: 135.0,
                       ),
                       FormattedText(
                         label: 'Skipped Frames (encoder)',
                         text: dashboardStore
                             .latestStreamStats?.outputSkippedFrames
                             ?.toString(),
-                        width: 200.0,
+                        width: 150.0,
                       ),
                       FormattedText(
-                        label: 'CPU Usage (%)',
-                        text: dashboardStore.latestStreamStats?.cpuUsage != null
-                            ? ((dashboardStore.latestStreamStats.cpuUsage * 100)
-                                        .round() /
-                                    100)
-                                .toString()
-                            : null,
-                        width: 120.0,
+                        label: 'Total Output Frames (encoder)',
+                        text: dashboardStore
+                            .latestStreamStats?.outputTotalFrames
+                            ?.toString(),
+                        width: 175.0,
                       ),
                       FormattedText(
-                        label: 'Memory Usage (GB)',
-                        text: dashboardStore.latestStreamStats?.memoryUsage !=
-                                null
-                            ? (dashboardStore.latestStreamStats.memoryUsage
-                                        .round() /
-                                    1000)
-                                .toString()
-                            : null,
-                        width: 155.0,
+                        label: 'Total Output Frames (render)',
+                        text: dashboardStore
+                            .latestStreamStats?.renderTotalFrames
+                            ?.toString(),
+                        width: 165.0,
                       ),
                       FormattedText(
-                        label: 'Free Disk Space GB',
+                        label: 'Free Disk Space',
+                        unit: ' GB',
                         text: dashboardStore.latestStreamStats?.freeDiskSpace !=
                                 null
                             ? (dashboardStore.latestStreamStats.freeDiskSpace

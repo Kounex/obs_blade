@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../models/past_stream_data.dart';
+import '../../../types/extensions/int.dart';
 import '../../../shared/dialogs/confirmation.dart';
 import '../../../shared/dialogs/input.dart';
 import '../../../shared/general/app_bar_cupertino_actions.dart';
@@ -69,12 +69,6 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         totalStreamTime: pastStreamData.totalStreamTime,
       ),
     ];
-
-    String streamTimeHours =
-        (pastStreamData.totalStreamTime ~/ 3600).toString();
-    String streamTimeMinutes =
-        ((pastStreamData.totalStreamTime ~/ 60) % 60).toString();
-    String streamTimeSeconds = (pastStreamData.totalStreamTime % 60).toString();
 
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
@@ -168,8 +162,8 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
             children: [
               FormattedText(
                 label: 'Total stream time',
-                text:
-                    '$streamTimeHours:${(streamTimeMinutes.length == 1 ? '0' : '') + streamTimeMinutes}:${(streamTimeSeconds.length == 1 ? '0' : '') + streamTimeSeconds}',
+                text: pastStreamData.totalStreamTime
+                    .secondsToFormattedTimeString(),
                 width: 100.0,
               ),
               FormattedText(
@@ -205,7 +199,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
               ),
               FormattedText(
                 label: 'Dropped Frames',
-                text: pastStreamData.strain?.toString(),
+                text: pastStreamData.strain?.toStringAsFixed(2),
                 unit: '%',
                 width: 95.0,
               ),

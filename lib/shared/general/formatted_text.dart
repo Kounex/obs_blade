@@ -19,13 +19,15 @@ class FormattedText extends StatelessWidget {
       width: this.width,
       child: TextField(
         controller: TextEditingController(
-          text: (this.text ?? '-') + (this.unit ?? ''),
+          text:
+              (this.text ?? '-') + (this.text != null ? (this.unit ?? '') : ''),
         ),
         decoration: InputDecoration(
-            isDense: true,
-            enabled: false,
-            labelText: this.label,
-            labelStyle: TextStyle(height: 0.75)),
+          isDense: true,
+          enabled: false,
+          labelText: this.label,
+          labelStyle: TextStyle(height: 0.75),
+        ),
       ),
     );
   }
