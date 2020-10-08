@@ -18,6 +18,7 @@ Once this plugin is installed and active (usually restarting OBS right after) th
 
 ## Features
 
+<div style="display: flex">
 <img src="https://assets.kounex.com/images/obs-blade/i_1.png" width="120">
 <img src="https://assets.kounex.com/images/obs-blade/i_2.png" width="120">
 <img src="https://assets.kounex.com/images/obs-blade/i_3.png" width="120">
@@ -25,6 +26,7 @@ Once this plugin is installed and active (usually restarting OBS right after) th
 <img src="https://assets.kounex.com/images/obs-blade/i_5.png" width="120">
 <img src="https://assets.kounex.com/images/obs-blade/i_6.png" width="120">
 <img src="https://assets.kounex.com/images/obs-blade/i_7.png" width="120">
+</div>
 
 OBS Blade is designed to be your stream companion and help you to manage your live stream. While using OBS (Open Broadcaster Software) you can connect to the running instance and gain control over important parts of the software. This should help you to manage what your audience can see / hear without the need to switch to OBS on your machine and make such changes. You can keep doing what you do and easily use this app to control OBS!
 
