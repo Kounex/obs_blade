@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/flutter_modified/translucent_sliver_app_bar.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../shared/animator/fader.dart';
 import 'scroll_refresh_icon.dart';

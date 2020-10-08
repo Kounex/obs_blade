@@ -5,7 +5,6 @@ import 'package:hive/hive.dart';
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
-import '../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../shared/general/validation_cupertino_textfield.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/validation_helper.dart';

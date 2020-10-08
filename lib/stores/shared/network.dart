@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:connectivity/connectivity.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../models/connection.dart';
