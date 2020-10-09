@@ -45,7 +45,7 @@ android {
     defaultConfig {
         applicationId "com.kounex.obs_blade"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
