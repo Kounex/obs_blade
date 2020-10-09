@@ -76,15 +76,6 @@ class _IntroViewState extends State<_IntroView> {
   Widget build(BuildContext context) {
     _pageChildren = [
       IntroSlide(
-        imagePath: 'assets/images/intro/beta_version.png',
-        slideTextSpans: [
-          TextSpan(
-            text:
-                'This app is in its early stages - if you encounter anything unusual, please get in touch with me!\n(Details in the \'About\' page)',
-          ),
-        ],
-      ),
-      IntroSlide(
         imagePath: 'assets/images/base_logo.png',
         slideTextSpans: [
           TextSpan(
