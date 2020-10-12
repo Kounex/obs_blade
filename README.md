@@ -60,7 +60,7 @@ contact@kounex.com
 
 This App is available in the iOS App Store and the Google Play Store:
 
-- [iOS App Store]
+- [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
 - [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obs_blade)
 
 ## Support me!
