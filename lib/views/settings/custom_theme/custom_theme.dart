@@ -59,13 +59,15 @@ class CustomThemeView extends StatelessWidget {
                   title: 'Your Themes',
                   trailingTitleWidget: ThemedCupertinoButton(
                     padding: const EdgeInsets.all(0),
-                    onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
-                      context: context,
-                      modalWidgetBuilder: (context, scrollController) =>
-                          AddEditTheme(
-                        scrollController: scrollController,
-                      ),
-                    ),
+                    onPressed: () {
+                      // ModalHandler.showBaseCupertinoBottomSheet(
+                      //   context: context,
+                      //   modalWidgetBuilder: (context, scrollController) =>
+                      //       AddEditTheme(
+                      //     scrollController: scrollController,
+                      //   ),
+                      // );
+                    },
                     text: 'Add Theme',
                   ),
                   bottomPadding: 12.0,
