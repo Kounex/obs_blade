@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/header_decoration.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/overall_stats.dart';
 
 class IconClipper extends CustomClipper<Path> {
   @override
@@ -14,43 +16,64 @@ class IconClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }
 
+enum StatsType { Current, AllPrevious }
+
 class CardHeader extends StatelessWidget {
   final String title;
   final String description;
-  final Widget someStats;
+  final StatsType statsType;
 
-  CardHeader({@required this.title, this.description = '', this.someStats});
+  final IconData headerDecorationIcon;
+
+  CardHeader({
+    @required this.title,
+    this.description = '',
+    this.statsType = StatsType.Current,
+    this.headerDecorationIcon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.only(top: 8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                this.title,
-                style: Theme.of(context).textTheme.headline5,
-              ),
-              SizedBox(
-                width: 108.0,
-                child: Divider(height: 8.0),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  this.description,
-                  style: Theme.of(context).textTheme.caption,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(top: 8.0, left: 14.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      this.title,
+                      style: Theme.of(context).textTheme.headline5,
+                    ),
+                    SizedBox(
+                      width: 108.0,
+                      child: Divider(height: 8.0),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        this.description,
+                        style: Theme.of(context).textTheme.caption,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            HeaderDecoration(
+              icon: this.headerDecorationIcon,
+            ),
+          ],
         ),
-        this.someStats ?? Container(),
+        OverallStats(
+          statsType: this.statsType,
+        ),
       ],
     );
   }

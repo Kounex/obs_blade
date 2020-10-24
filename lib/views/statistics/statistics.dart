@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/header_decoration.dart';
+import 'package:obs_blade/stores/views/statistics.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base_card.dart';
@@ -12,12 +14,22 @@ import 'widgets/card_header/card_header.dart';
 import 'widgets/stream_entry.dart/stream_entry.dart';
 import 'widgets/stream_entry_placeholder/stream_entry_placeholder.dart';
 
-class StatisticsView extends StatefulWidget {
+class StatisticsView extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Provider(
+      create: (context) => StatisticsStore(),
+      child: _StatisticsView(),
+    );
+  }
+}
+
+class _StatisticsView extends StatefulWidget {
   @override
   _StatisticsViewState createState() => _StatisticsViewState();
 }
 
-class _StatisticsViewState extends State<StatisticsView> {
+class _StatisticsViewState extends State<_StatisticsView> {
   // List<ReactionDisposer> _disposers = [];
 
   // List<PastStreamData> _pastStreamData;
@@ -64,8 +76,85 @@ class _StatisticsViewState extends State<StatisticsView> {
   // super.initState();
   // }
 
+  /// Uses both sort and filter functions
+  List<PastStreamData> _sortAndFilterPastStreamData(
+          StatisticsStore statisticsStore,
+          Iterable<PastStreamData> pastStreamData) =>
+      _filterStreamData(
+          statisticsStore, _sortStreamData(statisticsStore, pastStreamData));
+
+  /// Sorts [PastStreamData] accroding to the selected [FilterType] and
+  /// [FilterOrder]
+  Iterable<PastStreamData> _sortStreamData(StatisticsStore statisticsStore,
+          Iterable<PastStreamData> pastStreamData) =>
+      pastStreamData.toList()
+        ..sort((data1, data2) {
+          PastStreamData dataOrder1;
+          PastStreamData dataOrder2;
+          int sortResult = 0;
+          if (statisticsStore.filterOrder == FilterOrder.Ascending) {
+            dataOrder1 = data1;
+            dataOrder2 = data2;
+          } else {
+            dataOrder1 = data2;
+            dataOrder2 = data1;
+          }
+          switch (statisticsStore.filterType) {
+            case FilterType.StatisticTime:
+              sortResult = dataOrder1.listEntryDateMS.last -
+                  dataOrder2.listEntryDateMS.last;
+              break;
+            case FilterType.TotalTime:
+              sortResult =
+                  dataOrder1.totalStreamTime - dataOrder2.totalStreamTime;
+              break;
+            case FilterType.Name:
+              sortResult = dataOrder1.name.compareTo(dataOrder2.name);
+              break;
+            case FilterType.Kbits:
+              sortResult = (dataOrder1.kbitsPerSecList
+                          .reduce((value, element) => value += element) ~/
+                      dataOrder1.kbitsPerSecList.length) -
+                  (dataOrder2.kbitsPerSecList
+                          .reduce((value, element) => value += element) ~/
+                      dataOrder2.kbitsPerSecList.length);
+              break;
+            default:
+              sortResult = dataOrder1.listEntryDateMS.last -
+                  dataOrder2.listEntryDateMS.last;
+          }
+
+          return sortResult;
+        });
+
+  /// Filters [PastStreamData] according to various stuff the user has
+  /// set (like amount entries, favorited or not, date range etc.)
+  List<PastStreamData> _filterStreamData(StatisticsStore statisticsStore,
+      Iterable<PastStreamData> pastStreamData) {
+    pastStreamData = pastStreamData
+        .where((data) => (data.name ?? '')
+            .toLowerCase()
+            .contains(statisticsStore.filterName))
+        .where((data) {
+      if (statisticsStore.showOnlyFavorites != null) {
+        return statisticsStore.showOnlyFavorites ? data.starred ?? false : true;
+      }
+      return data.starred == null || !data.starred;
+    });
+
+    if (int.tryParse(statisticsStore.amountStatisticEntries.numberText) !=
+        null) {
+      pastStreamData = pastStreamData
+          .take(int.parse(statisticsStore.amountStatisticEntries.numberText));
+    }
+
+    return pastStreamData.toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
         title: 'Statistics',
@@ -75,68 +164,73 @@ class _StatisticsViewState extends State<StatisticsView> {
             valueListenable:
                 Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
                     .listenable(),
-            builder: (context, Box<PastStreamData> pastStreamDataBox, child) =>
-                Column(
-              children: [
-                BaseCard(
-                  bottomPadding: 12.0,
-                  titlePadding:
-                      EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
-                  titleWidget: CardHeader(
-                    title: 'Latest\nStream.',
-                    description:
-                        'The most freshest statistic of your latest stream session',
+            builder: (context, Box<PastStreamData> pastStreamDataBox, child) {
+              List<PastStreamData> pastStreamData = pastStreamDataBox.values
+                  .toList()
+                    ..sort((a, b) =>
+                        a.listEntryDateMS.last - b.listEntryDateMS.last);
+              return Column(
+                children: [
+                  BaseCard(
+                    bottomPadding: 12.0,
+                    titlePadding: EdgeInsets.all(0),
+                    titleWidget: CardHeader(
+                      headerDecorationIcon: CupertinoIcons.time_solid,
+                      title: 'Latest\nStream.',
+                      description:
+                          'The most freshest statistic of your latest stream session',
+                    ),
+                    paddingChild: EdgeInsets.all(0),
+                    child: pastStreamData.isNotEmpty
+                        ? StreamEntry(
+                            pastStreamData: pastStreamData.reversed.first)
+                        : StreamEntryPlaceholder(
+                            text:
+                                'You haven\'t streamed using this app or deleted all statistic entries?! Whatever it is, you should start streaming!',
+                          ),
                   ),
-                  trailingTitleWidget: HeaderDecoration(
-                    icon: CupertinoIcons.time_solid,
-                  ),
-                  paddingChild: EdgeInsets.all(0),
-                  child: pastStreamDataBox.isNotEmpty
-                      ? StreamEntry(
-                          pastStreamData:
-                              pastStreamDataBox.values.toList().reversed.first)
-                      : StreamEntryPlaceholder(
-                          text:
-                              'You haven\'t streamed using this app or deleted all statistic entries?! Whatever it is, you should start streaming!',
+                  Observer(
+                    builder: (_) {
+                      List<PastStreamData> sortedFilteredStreamData =
+                          _sortAndFilterPastStreamData(
+                        statisticsStore,
+                        pastStreamData.reversed.skip(1),
+                      );
+                      return BaseCard(
+                        titlePadding: EdgeInsets.all(0),
+                        titleWidget: CardHeader(
+                          statsType: StatsType.AllPrevious,
+                          title: 'Previous\nStreams.',
+                          description:
+                              'All the statistics of your smexy stream sessions',
                         ),
-                ),
-                BaseCard(
-                  titlePadding:
-                      EdgeInsets.only(left: 14.0, right: 14.0, bottom: 12.0),
-                  titleWidget: CardHeader(
-                    title: 'Previous\nStreams.',
-                    description:
-                        'All the statistics of your smexy stream sessions',
-                  ),
-                  trailingTitleWidget: HeaderDecoration(),
-                  paddingChild: EdgeInsets.all(0),
-                  child: pastStreamDataBox.values.length > 1
-                      ? Column(
-                          children: [
-                            ...pastStreamDataBox.values
-                                .toList()
-                                .reversed
-                                .skip(1)
-                                .map(
-                                  (pastStreamData) => Column(
-                                    children: [
-                                      StreamEntry(
-                                          pastStreamData: pastStreamData),
-                                      Divider(
-                                        height: 0.0,
-                                      ),
-                                    ],
+                        paddingChild: EdgeInsets.all(0),
+                        child: pastStreamDataBox.values.length > 1
+                            ? Column(
+                                children: [
+                                  ...sortedFilteredStreamData.map(
+                                    (pastStreamData) => Column(
+                                      children: [
+                                        StreamEntry(
+                                            pastStreamData: pastStreamData),
+                                        Divider(
+                                          height: 0.0,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                          ],
-                        )
-                      : StreamEntryPlaceholder(
-                          text:
-                              'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!',
-                        ),
-                ),
-              ],
-            ),
+                                ],
+                              )
+                            : StreamEntryPlaceholder(
+                                text:
+                                    'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!',
+                              ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

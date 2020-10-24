@@ -42,18 +42,49 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$goneLiveInMSAtom = Atom(name: '_DashboardStore.goneLiveInMS');
+  final _$isRecordingAtom = Atom(name: '_DashboardStore.isRecording');
 
   @override
-  int get goneLiveInMS {
-    _$goneLiveInMSAtom.reportRead();
-    return super.goneLiveInMS;
+  bool get isRecording {
+    _$isRecordingAtom.reportRead();
+    return super.isRecording;
   }
 
   @override
-  set goneLiveInMS(int value) {
-    _$goneLiveInMSAtom.reportWrite(value, super.goneLiveInMS, () {
-      super.goneLiveInMS = value;
+  set isRecording(bool value) {
+    _$isRecordingAtom.reportWrite(value, super.isRecording, () {
+      super.isRecording = value;
+    });
+  }
+
+  final _$goneLiveMSAtom = Atom(name: '_DashboardStore.goneLiveMS');
+
+  @override
+  int get goneLiveMS {
+    _$goneLiveMSAtom.reportRead();
+    return super.goneLiveMS;
+  }
+
+  @override
+  set goneLiveMS(int value) {
+    _$goneLiveMSAtom.reportWrite(value, super.goneLiveMS, () {
+      super.goneLiveMS = value;
+    });
+  }
+
+  final _$startedRecordingMSAtom =
+      Atom(name: '_DashboardStore.startedRecordingMS');
+
+  @override
+  int get startedRecordingMS {
+    _$startedRecordingMSAtom.reportRead();
+    return super.startedRecordingMS;
+  }
+
+  @override
+  set startedRecordingMS(int value) {
+    _$startedRecordingMSAtom.reportWrite(value, super.startedRecordingMS, () {
+      super.startedRecordingMS = value;
     });
   }
 
@@ -266,7 +297,9 @@ mixin _$DashboardStore on _DashboardStore, Store {
   String toString() {
     return '''
 isLive: ${isLive},
-goneLiveInMS: ${goneLiveInMS},
+isRecording: ${isRecording},
+goneLiveMS: ${goneLiveMS},
+startedRecordingMS: ${startedRecordingMS},
 streamData: ${streamData},
 latestStreamStats: ${latestStreamStats},
 activeSceneName: ${activeSceneName},

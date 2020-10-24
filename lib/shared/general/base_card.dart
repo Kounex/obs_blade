@@ -21,6 +21,8 @@ class BaseCard extends StatelessWidget {
   final EdgeInsetsGeometry paddingChild;
   final EdgeInsetsGeometry titlePadding;
 
+  final CrossAxisAlignment titleCrossAlignment;
+
   BaseCard({
     Key key,
     @required this.child,
@@ -38,6 +40,7 @@ class BaseCard extends StatelessWidget {
     this.leftPadding = 24.0,
     this.titlePadding =
         const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
+    this.titleCrossAlignment = CrossAxisAlignment.center,
   }) : super(key: key);
 
   @override
@@ -79,6 +82,8 @@ class BaseCard extends StatelessWidget {
                   Padding(
                     padding: this.titlePadding,
                     child: Row(
+                      crossAxisAlignment:
+                          this.titleCrossAlignment ?? CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(

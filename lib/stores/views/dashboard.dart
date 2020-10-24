@@ -37,7 +37,11 @@ abstract class _DashboardStore with Store {
   @observable
   bool isLive = false;
   @observable
-  int goneLiveInMS;
+  bool isRecording = false;
+  @observable
+  int goneLiveMS;
+  @observable
+  int startedRecordingMS;
   @observable
   PastStreamData streamData;
   @observable
@@ -185,7 +189,7 @@ abstract class _DashboardStore with Store {
   /// instance (null) we need to check if we create a completely new
   /// instance (indicating new stream) or we use the last one since it
   /// seems as this is the same stream we already were connected to
-  void _manageStreamDataInit() async {
+  Future<void> _manageStreamDataInit() async {
     Box<PastStreamData> pastStreamDataBox =
         Hive.box<PastStreamData>(HiveKeys.PastStreamData.name);
     List<PastStreamData> tmp = pastStreamDataBox.values.toList();
@@ -264,20 +268,31 @@ abstract class _DashboardStore with Store {
     switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
-        this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch;
+        this.goneLiveMS = DateTime.now().millisecondsSinceEpoch;
         break;
       case EventType.StreamStopping:
         this.isLive = false;
         this.finishPastStreamData();
         break;
+      case EventType.RecordingStarted:
+        this.isRecording = true;
+        this.startedRecordingMS = DateTime.now().millisecondsSinceEpoch;
+        break;
+      case EventType.RecordingStopped:
+        this.isRecording = false;
+        break;
       case EventType.StreamStatus:
         this.latestStreamStats = StreamStats.fromJSON(event.json);
 
         /// This case happens if we connect to an OBS session which already streams
-        if (this.goneLiveInMS == null) {
+        if (this.goneLiveMS == null) {
           this.isLive = true;
-          this.goneLiveInMS = DateTime.now().millisecondsSinceEpoch -
+          this.goneLiveMS = DateTime.now().millisecondsSinceEpoch -
               (this.latestStreamStats.totalStreamTime * 1000);
+        }
+        if (this.latestStreamStats.recording &&
+            this.startedRecordingMS == null) {
+          this.isRecording = true;
         }
         if (this.streamData == null) {
           _manageStreamDataInit();

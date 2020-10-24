@@ -37,7 +37,7 @@ class HeaderDecoration extends StatelessWidget {
   HeaderDecoration({
     this.icon = CupertinoIcons.chart_pie_fill,
     this.iconSize = 128.0,
-    this.iconXOffset = 42.0,
+    this.iconXOffset = 28.0,
     this.iconYOffset = -42.0,
     this.iconXCut = 28.0,
     this.iconYCut = 42.0,
@@ -61,7 +61,7 @@ class HeaderDecoration extends StatelessWidget {
         child: Transform.rotate(
           angle: -0.0,
           child: Icon(
-            this.icon,
+            this.icon ?? CupertinoIcons.chart_pie_fill,
             size: this.iconSize,
           ),
         ),

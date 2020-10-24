@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 class ColorBubble extends StatelessWidget {
   final Color color;
@@ -15,9 +16,7 @@ class ColorBubble extends StatelessWidget {
         color: this.color,
         borderRadius: BorderRadius.circular(this.size / 2),
         border: Border.all(
-          color: Theme.of(context).cardColor.computeLuminance() < 0.2
-              ? Colors.grey
-              : Colors.black,
+          color: StylingHelper.surroundingAwareAccent(context),
           width: 1.0,
         ),
       ),

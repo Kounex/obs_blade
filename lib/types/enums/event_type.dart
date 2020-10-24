@@ -5,6 +5,12 @@ enum EventType {
   /// A request to stop streaming has been issued
   StreamStopping,
 
+  /// Recording started successfully
+  RecordingStarted,
+
+  /// Recording stopped successfully
+  RecordingStopped,
+
   /// Emitted every 2 seconds when stream is active
   StreamStatus,
 
