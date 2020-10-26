@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
+import 'package:obs_blade/views/statistics/widgets/paginated_statistics/paginated_statistics.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
@@ -205,21 +206,10 @@ class _StatisticsViewState extends State<_StatisticsView> {
                               'All the statistics of your smexy stream sessions',
                         ),
                         paddingChild: EdgeInsets.all(0),
-                        child: pastStreamDataBox.values.length > 1
-                            ? Column(
-                                children: [
-                                  ...sortedFilteredStreamData.map(
-                                    (pastStreamData) => Column(
-                                      children: [
-                                        StreamEntry(
-                                            pastStreamData: pastStreamData),
-                                        Divider(
-                                          height: 0.0,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                        child: sortedFilteredStreamData.length > 0
+                            ? PaginatedStatistics(
+                                filteredAndSortedStreamData:
+                                    sortedFilteredStreamData,
                               )
                             : StreamEntryPlaceholder(
                                 text:

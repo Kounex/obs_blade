@@ -5,7 +5,7 @@ import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/fav
 import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/filter_name.dart';
 
 import '../card_header.dart';
-import 'date_range.dart';
+import 'date_range/date_range.dart';
 import 'order_row.dart';
 
 const double _kControlsPadding = 12.0;
@@ -29,7 +29,7 @@ class _OverallStatsState extends State<OverallStats> {
     if (widget.statsType == StatsType.Current) {
       children.add(Text('Current'));
     } else {
-      children.add(Divider(height: _kControlsPadding));
+      children.add(SizedBox(height: _kControlsPadding));
       children.add(OrderRow());
       children.add(SizedBox(height: _kControlsPadding));
       children.add(FilterName());
@@ -61,16 +61,21 @@ class _OverallStatsState extends State<OverallStats> {
               ),
               body: SizedBox(
                 width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: 14.0,
-                    right: 14.0,
-                    bottom: 12.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: children,
-                  ),
+                child: Column(
+                  children: [
+                    Divider(height: 1.0),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 14.0,
+                        right: 14.0,
+                        bottom: 12.0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: children,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

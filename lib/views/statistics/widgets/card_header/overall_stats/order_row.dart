@@ -14,41 +14,36 @@ class OrderRow extends StatelessWidget {
       builder: (_) => Row(
         children: [
           Expanded(
-            child: Container(
-              padding: EdgeInsets.only(top: 4.0, bottom: 4.0, right: 8.0),
-              // decoration: BoxDecoration(
-              //   border: Border.all(
-              //     color: CupertinoDynamicColor.resolve(
-              //         CupertinoDynamicColor.withBrightness(
-              //           color: CupertinoColors.white,
-              //           darkColor: CupertinoColors.black,
-              //         ),
-              //         context),
-              //   ),
-              //   borderRadius: BorderRadius.circular(4.0),
-              // ),
-              child: DropdownButton<FilterType>(
-                // underline: Container(),
-                isExpanded: true,
-                isDense: true,
-                value: statisticsStore.filterType,
-                dropdownColor: Theme.of(context).scaffoldBackgroundColor,
-                items: FilterType.values
-                    .map(
-                      (filterType) => DropdownMenuItem<FilterType>(
-                        value: filterType,
-                        child: Text(filterType.text),
-                      ),
-                    )
-                    .toList(),
-                selectedItemBuilder: (context) => FilterType.values
-                    .map(
-                      (filterType) => Text(filterType.text),
-                    )
-                    .toList(),
-                onChanged: (filterType) =>
-                    statisticsStore.setFilterType(filterType),
-              ),
+            child: Stack(
+              children: [
+                CupertinoTextField(),
+                Container(
+                  padding: EdgeInsets.only(
+                      left: 6.0, top: 4.0, bottom: 4.0, right: 2.0),
+                  child: DropdownButton<FilterType>(
+                    underline: Container(),
+                    isExpanded: true,
+                    isDense: true,
+                    value: statisticsStore.filterType,
+                    dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                    items: FilterType.values
+                        .map(
+                          (filterType) => DropdownMenuItem<FilterType>(
+                            value: filterType,
+                            child: Text(filterType.text),
+                          ),
+                        )
+                        .toList(),
+                    selectedItemBuilder: (context) => FilterType.values
+                        .map(
+                          (filterType) => Text(filterType.text),
+                        )
+                        .toList(),
+                    onChanged: (filterType) =>
+                        statisticsStore.setFilterType(filterType),
+                  ),
+                ),
+              ],
             ),
           ),
           Padding(

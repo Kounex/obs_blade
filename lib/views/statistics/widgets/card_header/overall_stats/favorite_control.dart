@@ -17,9 +17,6 @@ class FavoriteControl extends StatelessWidget {
               ? 'null'
               : statisticsStore.showOnlyFavorites,
           padding: EdgeInsets.all(0),
-          // selectedColor: Theme.of(context).toggleableActiveColor,
-          // borderColor: Theme.of(context).toggleableActiveColor,
-          // unselectedColor: Theme.of(context).cardColor,
           children: {
             false: Row(
               mainAxisAlignment: MainAxisAlignment.center,

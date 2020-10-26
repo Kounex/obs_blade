@@ -60,6 +60,12 @@ abstract class _StatisticsStore with Store {
   @observable
   bool showOnlyFavorites = false;
 
+  @observable
+  DateTime fromDate;
+
+  @observable
+  DateTime toDate;
+
   @action
   void setFilterType(FilterType filterType) => this.filterType = filterType;
 
@@ -80,4 +86,10 @@ abstract class _StatisticsStore with Store {
   @action
   void setShowOnlyFavorites(bool showOnlyFavorites) =>
       this.showOnlyFavorites = showOnlyFavorites;
+
+  @action
+  void setFromDate(DateTime fromDate) => this.fromDate = fromDate;
+
+  @action
+  void setToDate(DateTime toDate) => this.toDate = toDate;
 }

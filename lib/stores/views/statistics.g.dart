@@ -87,6 +87,36 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
+  final _$fromDateAtom = Atom(name: '_StatisticsStore.fromDate');
+
+  @override
+  DateTime get fromDate {
+    _$fromDateAtom.reportRead();
+    return super.fromDate;
+  }
+
+  @override
+  set fromDate(DateTime value) {
+    _$fromDateAtom.reportWrite(value, super.fromDate, () {
+      super.fromDate = value;
+    });
+  }
+
+  final _$toDateAtom = Atom(name: '_StatisticsStore.toDate');
+
+  @override
+  DateTime get toDate {
+    _$toDateAtom.reportRead();
+    return super.toDate;
+  }
+
+  @override
+  set toDate(DateTime value) {
+    _$toDateAtom.reportWrite(value, super.toDate, () {
+      super.toDate = value;
+    });
+  }
+
   final _$_StatisticsStoreActionController =
       ActionController(name: '_StatisticsStore');
 
@@ -147,13 +177,37 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
+  void setFromDate(DateTime fromDate) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setFromDate');
+    try {
+      return super.setFromDate(fromDate);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setToDate(DateTime toDate) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setToDate');
+    try {
+      return super.setToDate(toDate);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
 filterType: ${filterType},
 filterOrder: ${filterOrder},
 amountStatisticEntries: ${amountStatisticEntries},
 filterName: ${filterName},
-showOnlyFavorites: ${showOnlyFavorites}
+showOnlyFavorites: ${showOnlyFavorites},
+fromDate: ${fromDate},
+toDate: ${toDate}
     ''';
   }
 }

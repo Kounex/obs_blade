@@ -8,7 +8,7 @@ class FilterName extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoTextField(
       placeholder: 'Filter by name...',
-      clearButtonMode: OverlayVisibilityMode.editing,
+      clearButtonMode: OverlayVisibilityMode.always,
       onChanged: (name) => context.read<StatisticsStore>().setFilterName(
             name.trim().toLowerCase(),
           ),
