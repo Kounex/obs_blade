@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../../models/past_stream_data.dart';
 import '../../../utils/routing_helper.dart';
 
+import '../../../types/extensions/int.dart';
+
 class StreamEntry extends StatelessWidget {
   final PastStreamData pastStreamData;
 
@@ -58,10 +60,10 @@ class StreamEntry extends StatelessWidget {
                         child: Text('From: '),
                       ),
                       Text(
-                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000))}'),
+                          '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedDateString()}'),
                       Text(' - '),
                       Text(
-                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000))}'),
+                          '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedTimeString()}'),
                     ],
                   ),
                   Row(
@@ -71,10 +73,10 @@ class StreamEntry extends StatelessWidget {
                         child: Text('To: '),
                       ),
                       Text(
-                          '${DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last))}'),
+                          '${(this.pastStreamData.listEntryDateMS.last).millisecondsToFormattedDateString()}'),
                       Text(' - '),
                       Text(
-                          '${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this.pastStreamData.listEntryDateMS.last))}'),
+                          '${(this.pastStreamData.listEntryDateMS.last).millisecondsToFormattedTimeString()}'),
                     ],
                   ),
                 ],

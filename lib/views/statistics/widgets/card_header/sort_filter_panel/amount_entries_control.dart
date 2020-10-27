@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../../stores/views/statistics.dart';
 
 class AmountEntriesControl extends StatelessWidget {
   @override
@@ -22,7 +23,7 @@ class AmountEntriesControl extends StatelessWidget {
               AmountStatisticEntries.values.map(
                 (amount) => MapEntry(
                   amount,
-                  Text(amount.numberText),
+                  Text(amount.number.toString()),
                 ),
               ),
             ),

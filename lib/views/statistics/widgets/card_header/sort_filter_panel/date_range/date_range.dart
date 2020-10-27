@@ -28,7 +28,9 @@ class DateRange extends StatelessWidget {
               placeholder: 'To...',
               selectedDate: statisticsStore.toDate,
               minimumDate: statisticsStore.fromDate,
-              updateDateTime: (date) => statisticsStore.setToDate(date),
+              updateDateTime: (date) => statisticsStore.setToDate(date
+                  ?.add(Duration(days: 1))
+                  ?.subtract(Duration(milliseconds: 1))),
             ),
           ),
         ],

@@ -5,6 +5,12 @@ import 'package:provider/provider.dart';
 
 import '../../../../../stores/views/statistics.dart';
 
+const List<FilterType> kActiveFilterTypes = [
+  FilterType.Name,
+  FilterType.StatisticTime,
+  FilterType.TotalTime,
+];
+
 class OrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -16,7 +22,12 @@ class OrderRow extends StatelessWidget {
           Expanded(
             child: Stack(
               children: [
-                CupertinoTextField(),
+                /// Dirty workaround... but I mean it works and is minimalistic :x
+                /// I want the dopdown to look just like the other textfields and instead
+                /// of writing "unnecessary" code to immitate the look and feel of them
+                /// I just use it for the visual part. By setting it to readonly it will
+                /// not have any focus and should not interfere in any way
+                CupertinoTextField(readOnly: true),
                 Container(
                   padding: EdgeInsets.only(
                       left: 6.0, top: 4.0, bottom: 4.0, right: 2.0),
@@ -27,6 +38,8 @@ class OrderRow extends StatelessWidget {
                     value: statisticsStore.filterType,
                     dropdownColor: Theme.of(context).scaffoldBackgroundColor,
                     items: FilterType.values
+                        .where((filterType) =>
+                            kActiveFilterTypes.contains(filterType))
                         .map(
                           (filterType) => DropdownMenuItem<FilterType>(
                             value: filterType,

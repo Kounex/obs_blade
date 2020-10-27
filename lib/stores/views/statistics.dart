@@ -30,15 +30,19 @@ extension FilterOrderFunctions on FilterOrder {
       }[this];
 }
 
-enum AmountStatisticEntries { Five, Ten, TwentyFive, Fifty, All }
+enum AmountStatisticEntries {
+  Five,
+  Ten,
+  TwentyFive,
+  Fifty,
+}
 
 extension AmountStatisticEntriesFunctions on AmountStatisticEntries {
-  String get numberText => const {
-        AmountStatisticEntries.Five: '5',
-        AmountStatisticEntries.Ten: '10',
-        AmountStatisticEntries.TwentyFive: '25',
-        AmountStatisticEntries.Fifty: '50',
-        AmountStatisticEntries.All: 'All',
+  int get number => const {
+        AmountStatisticEntries.Five: 5,
+        AmountStatisticEntries.Ten: 10,
+        AmountStatisticEntries.TwentyFive: 25,
+        AmountStatisticEntries.Fifty: 50,
       }[this];
 }
 

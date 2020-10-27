@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/stores/views/statistics.dart';
-import 'package:obs_blade/views/statistics/widgets/paginated_statistics.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base_card.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../stores/views/statistics.dart';
 import '../../types/enums/hive_keys.dart';
 import 'widgets/card_header/card_header.dart';
+import 'widgets/card_header/sort_filter_panel/sort_filter_panel.dart';
+import 'widgets/paginated_statistics/paginated_statistics.dart';
 import 'widgets/stream_entry.dart';
 import 'widgets/stream_entry_placeholder.dart';
 
@@ -110,7 +111,8 @@ class _StatisticsViewState extends State<_StatisticsView> {
                   dataOrder1.totalStreamTime - dataOrder2.totalStreamTime;
               break;
             case FilterType.Name:
-              sortResult = dataOrder1.name.compareTo(dataOrder2.name);
+              sortResult =
+                  (dataOrder1.name ?? '').compareTo((dataOrder2.name) ?? '');
               break;
             case FilterType.Kbits:
               sortResult = (dataOrder1.kbitsPerSecList
@@ -133,21 +135,24 @@ class _StatisticsViewState extends State<_StatisticsView> {
   List<PastStreamData> _filterStreamData(StatisticsStore statisticsStore,
       Iterable<PastStreamData> pastStreamData) {
     pastStreamData = pastStreamData
+
+        /// Filter statistics which name contain the String entered by the user
         .where((data) => (data.name ?? '')
             .toLowerCase()
             .contains(statisticsStore.filterName))
+
+        /// Fitler statistics which are either starred, not starred or both
         .where((data) {
       if (statisticsStore.showOnlyFavorites != null) {
         return statisticsStore.showOnlyFavorites ? data.starred ?? false : true;
       }
       return data.starred == null || !data.starred;
-    });
-
-    if (int.tryParse(statisticsStore.amountStatisticEntries.numberText) !=
-        null) {
-      pastStreamData = pastStreamData
-          .take(int.parse(statisticsStore.amountStatisticEntries.numberText));
-    }
+    }).where((data) =>
+            data.listEntryDateMS.first >=
+                (statisticsStore.fromDate?.millisecondsSinceEpoch ?? 0) &&
+            data.listEntryDateMS.last <=
+                (statisticsStore.toDate?.millisecondsSinceEpoch ??
+                    DateTime.now().millisecondsSinceEpoch));
 
     return pastStreamData.toList();
   }
@@ -200,10 +205,12 @@ class _StatisticsViewState extends State<_StatisticsView> {
                       return BaseCard(
                         titlePadding: EdgeInsets.all(0),
                         titleWidget: CardHeader(
-                          statsType: StatsType.AllPrevious,
                           title: 'Previous\nStreams.',
                           description:
                               'All the statistics of your smexy stream sessions',
+                          additionalCardWidgets: [
+                            SortFilterPanel(),
+                          ],
                         ),
                         paddingChild: EdgeInsets.all(0),
                         child: sortedFilteredStreamData.length > 0
@@ -212,8 +219,9 @@ class _StatisticsViewState extends State<_StatisticsView> {
                                     sortedFilteredStreamData,
                               )
                             : StreamEntryPlaceholder(
-                                text:
-                                    'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!',
+                                text: pastStreamData.length <= 1
+                                    ? 'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!'
+                                    : 'No statistics found which match your filters! Change them and they will hopefully come back!',
                               ),
                       );
                     },

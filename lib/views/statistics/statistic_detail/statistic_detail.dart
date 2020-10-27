@@ -161,7 +161,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
               FormattedText(
                 label: 'Total stream time',
                 text: pastStreamData.totalStreamTime
-                    .secondsToFormattedTimeString(),
+                    .secondsToFormattedDurationString(),
                 width: 100.0,
               ),
               FormattedText(

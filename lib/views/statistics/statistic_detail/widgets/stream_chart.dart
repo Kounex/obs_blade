@@ -57,15 +57,20 @@ class StreamChart extends StatelessWidget {
     double yInterval =
         this.yMax != null ? (this.yMax / this.minYInterval) : null;
     if (yInterval == null) {
-      if (this.minYInterval < 1) {
-        yInterval = (((maxData / this.minYInterval) / kChartsNormalizedFactor) *
-                this.minYInterval)
-            .toDouble();
+      if (maxData > 0) {
+        if (this.minYInterval < 1) {
+          yInterval =
+              (((maxData / this.minYInterval) / kChartsNormalizedFactor) *
+                      this.minYInterval)
+                  .toDouble();
+        } else {
+          yInterval =
+              (((maxData / this.minYInterval) ~/ kChartsNormalizedFactor) *
+                      this.minYInterval)
+                  .toDouble();
+        }
       } else {
-        yInterval =
-            (((maxData / this.minYInterval) ~/ kChartsNormalizedFactor) *
-                    this.minYInterval)
-                .toDouble();
+        yInterval = this.minYInterval;
       }
     }
 
