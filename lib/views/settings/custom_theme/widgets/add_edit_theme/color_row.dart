@@ -34,14 +34,11 @@ class ColorRow extends StatelessWidget {
       onTap: this.onSave != null
           ? () => ModalHandler.showBaseBottomSheet(
                 context: context,
-                modalWidget: Container(
-                  height: 364.0,
-                  child: ColorPicker(
-                    title: this.title,
-                    description: this.description,
-                    color: this.colorHex,
-                    onSave: (colorHex) => this.onSave?.call(colorHex),
-                  ),
+                modalWidget: ColorPicker(
+                  title: this.title,
+                  description: this.description,
+                  color: this.colorHex,
+                  onSave: (colorHex) => this.onSave?.call(colorHex),
                 ),
               )
           : null,

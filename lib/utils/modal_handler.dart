@@ -39,13 +39,17 @@ class ModalHandler {
         isDismissible: false,
         enableDrag: false,
         isScrollControlled: true,
-        builder: (context) => Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: ConstrainedBox(
-            constraints:
-                BoxConstraints(maxWidth: StylingHelper.max_width_mobile),
-            child: modalWidget,
+        builder: (context) => SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height / 1.5,
+              ),
+              child: modalWidget,
+            ),
           ),
         ),
       );
@@ -70,7 +74,10 @@ class ModalHandler {
             backgroundColor: Theme.of(context)
                 .cardColor
                 .withOpacity(StylingHelper.opacity_blurry),
-            body: modalWidgetBuilder(context, scrollController),
+            body: SafeArea(
+              bottom: false,
+              child: modalWidgetBuilder(context, scrollController),
+            ),
           ),
         ),
       );

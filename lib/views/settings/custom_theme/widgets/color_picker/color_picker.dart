@@ -59,6 +59,7 @@ class _ColorPickerState extends State<ColorPicker> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -91,111 +92,116 @@ class _ColorPickerState extends State<ColorPicker> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+          padding: const EdgeInsets.only(left: 12.0, bottom: 12.0),
           child: Text(
             widget.description,
             style: Theme.of(context).textTheme.caption,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SizedBox(
-                height: 50.0,
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 24.0),
-                      child: Text(
-                        'Hex:',
-                        style: Theme.of(context).textTheme.headline6,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 150.0,
-                      child: TextFormField(
-                        controller: _color,
-                        focusNode: _colorFocusNode,
-                        decoration: InputDecoration(isDense: true),
-                        validator: (color) =>
-                            ValidationHelper.colorHexValidator(color),
-                        autovalidateMode: AutovalidateMode.always,
-                        autocorrect: false,
-                        maxLength: widget.useAlpha ? 8 : 6,
-                        maxLengthEnforced: true,
-                        // inputFormatters: [
-                        //   FilteringTextInputFormatter.allow(
-                        //     r'^[a-fA-F0-9]+$',
-                        //     replacementString: _color.text,
-                        //   )
-                        // ],
-                        onChanged: (value) {
-                          if (ValidationHelper.colorHexValidator(_color.text) ==
-                              null) {
-                            _colorContainerKey = Key(_color.text);
-                            setState(() {});
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 10.0),
-                child: ColorBubble(
-                  color: _color.text.hexToColor(),
-                  size: 32.0,
-                ),
-              ),
-            ],
-          ),
-        ),
         LightDivider(),
-        SingleChildScrollView(
-          child: Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),
-                child: Column(
-                  key: _colorContainerKey,
-                  children: [
-                    ColorSlider(
-                      label: 'R',
-                      value: _getColorSliderValue(widget.useAlpha ? 2 : 0),
-                      activeColor: CupertinoColors.destructiveRed,
-                      onChanged: (colorVal) => _onColorSlideChange(
-                          colorVal, widget.useAlpha ? 2 : 0),
-                    ),
-                    ColorSlider(
-                      label: 'G',
-                      value: _getColorSliderValue(widget.useAlpha ? 4 : 2),
-                      activeColor: Colors.green,
-                      onChanged: (colorVal) => _onColorSlideChange(
-                          colorVal, widget.useAlpha ? 4 : 2),
-                    ),
-                    ColorSlider(
-                      label: 'B',
-                      value: _getColorSliderValue(widget.useAlpha ? 6 : 4),
-                      activeColor: Colors.blue,
-                      onChanged: (colorVal) => _onColorSlideChange(
-                          colorVal, widget.useAlpha ? 6 : 4),
-                    ),
-                    if (widget.useAlpha)
-                      ColorSlider(
-                        label: 'A',
-                        value: _getColorSliderValue(0),
-                        activeColor: Colors.white,
-                        onChanged: (colorVal) =>
-                            _onColorSlideChange(colorVal, 0),
+        Flexible(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        // height: 50.0,
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(right: 24.0),
+                              child: Text(
+                                'Hex:',
+                                style: Theme.of(context).textTheme.headline6,
+                              ),
+                            ),
+                            SizedBox(
+                              width: 150.0,
+                              child: TextFormField(
+                                controller: _color,
+                                focusNode: _colorFocusNode,
+                                decoration: InputDecoration(isDense: true),
+                                validator: (color) =>
+                                    ValidationHelper.colorHexValidator(color),
+                                autovalidateMode: AutovalidateMode.always,
+                                autocorrect: false,
+                                maxLength: widget.useAlpha ? 8 : 6,
+                                maxLengthEnforced: true,
+                                // inputFormatters: [
+                                //   FilteringTextInputFormatter.allow(
+                                //     r'^[a-fA-F0-9]+$',
+                                //     replacementString: _color.text,
+                                //   )
+                                // ],
+                                onChanged: (value) {
+                                  if (ValidationHelper.colorHexValidator(
+                                          _color.text) ==
+                                      null) {
+                                    _colorContainerKey = Key(_color.text);
+                                    setState(() {});
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: ColorBubble(
+                          color: _color.text.hexToColor(),
+                          size: 32.0,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                LightDivider(),
+                Padding(
+                  padding:
+                      const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),
+                  child: Column(
+                    key: _colorContainerKey,
+                    children: [
+                      ColorSlider(
+                        label: 'R',
+                        value: _getColorSliderValue(widget.useAlpha ? 2 : 0),
+                        activeColor: CupertinoColors.destructiveRed,
+                        onChanged: (colorVal) => _onColorSlideChange(
+                            colorVal, widget.useAlpha ? 2 : 0),
+                      ),
+                      ColorSlider(
+                        label: 'G',
+                        value: _getColorSliderValue(widget.useAlpha ? 4 : 2),
+                        activeColor: Colors.green,
+                        onChanged: (colorVal) => _onColorSlideChange(
+                            colorVal, widget.useAlpha ? 4 : 2),
+                      ),
+                      ColorSlider(
+                        label: 'B',
+                        value: _getColorSliderValue(widget.useAlpha ? 6 : 4),
+                        activeColor: Colors.blue,
+                        onChanged: (colorVal) => _onColorSlideChange(
+                            colorVal, widget.useAlpha ? 6 : 4),
+                      ),
+                      if (widget.useAlpha)
+                        ColorSlider(
+                          label: 'A',
+                          value: _getColorSliderValue(0),
+                          activeColor: Colors.white,
+                          onChanged: (colorVal) =>
+                              _onColorSlideChange(colorVal, 0),
+                        ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 12.0),
+              ],
+            ),
           ),
         ),
       ],

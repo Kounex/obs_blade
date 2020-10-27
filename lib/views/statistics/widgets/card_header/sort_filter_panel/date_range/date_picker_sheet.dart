@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -44,47 +46,48 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height / 3,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              CupertinoButton(
-                child: Text(
-                  'Clear',
-                  style: TextStyle(
-                    color: CupertinoColors.destructiveRed,
-                  ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            CupertinoButton(
+              child: Text(
+                'Clear',
+                style: TextStyle(
+                  color: CupertinoColors.destructiveRed,
                 ),
-                onPressed: () {
-                  this.widget.updateDateTime(null);
-                  Navigator.of(context, rootNavigator: true).pop();
-                },
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CupertinoButton(
-                    child: Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context, rootNavigator: true).pop();
-                    },
-                  ),
-                  CupertinoButton(
-                    child: Text('Save'),
-                    onPressed: () {
-                      this.widget.updateDateTime(_date);
-                      Navigator.of(context, rootNavigator: true).pop();
-                    },
-                  )
-                ],
-              ),
-            ],
-          ),
-          LightDivider(),
-          Expanded(
+              onPressed: () {
+                this.widget.updateDateTime(null);
+                Navigator.of(context, rootNavigator: true).pop();
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CupertinoButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  },
+                ),
+                CupertinoButton(
+                  child: Text('Save'),
+                  onPressed: () {
+                    this.widget.updateDateTime(_date);
+                    Navigator.of(context, rootNavigator: true).pop();
+                  },
+                )
+              ],
+            ),
+          ],
+        ),
+        LightDivider(),
+        Flexible(
+          child: SizedBox(
+            height: 250.0,
             child: CupertinoDatePicker(
               mode: CupertinoDatePickerMode.date,
               initialDateTime: _date,
@@ -93,8 +96,8 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
               onDateTimeChanged: (dateTime) => _date = dateTime,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
