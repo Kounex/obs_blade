@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/views/home/widgets/connect_box/switcher_card/switcher_card.dart';
+import 'package:obs_blade/views/home/widgets/connect_box/switcher_card.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../stores/views/home.dart';
 import 'auto_discovery/auto_discovery.dart';
-import 'connect_form/connect_form.dart';
+import 'connect_form.dart';
 
 class ConnectBox extends StatelessWidget {
   @override

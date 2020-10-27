@@ -5,12 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../models/connection.dart';
-import '../../../../../shared/general/question_mark_tooltip.dart';
-import '../../../../../stores/shared/network.dart';
-import '../../../../../stores/views/home.dart';
-import '../../../../../types/classes/stream/responses/base.dart';
-import '../../../../../utils/validation_helper.dart';
+import '../../../../models/connection.dart';
+import '../../../../shared/general/question_mark_tooltip.dart';
+import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/home.dart';
+import '../../../../types/classes/stream/responses/base.dart';
+import '../../../../utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
   final Connection connection;

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/views/dashboard/widgets/reconnect_toast/reconnect_toast.dart';
+import 'package:obs_blade/views/dashboard/widgets/reconnect_toast.dart';
 import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/confirmation.dart';

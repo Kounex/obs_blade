@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../models/past_stream_data.dart';
-import '../../../../utils/routing_helper.dart';
+import '../../../models/past_stream_data.dart';
+import '../../../utils/routing_helper.dart';
 
 class StreamEntry extends StatelessWidget {
   final PastStreamData pastStreamData;

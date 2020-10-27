@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../models/past_stream_data.dart';
-import '../stream_entry.dart/stream_entry.dart';
+import '../../../models/past_stream_data.dart';
+import 'stream_entry.dart';
 
 class PaginatedStatistics extends StatefulWidget {
   final List<PastStreamData> filteredAndSortedStreamData;

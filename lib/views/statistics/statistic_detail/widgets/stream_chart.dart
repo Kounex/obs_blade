@@ -4,7 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
-import '../../../../../types/extensions/list.dart';
+import '../../../../types/extensions/list.dart';
 
 /// In order to display the graphs in the middle of the coordinate system
 /// (if no fix max value is provided), we use this value which

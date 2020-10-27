@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../shared/general/base_card.dart';
-import '../../../../../shared/general/themed/themed_cupertino_button.dart';
-import '../../../../../stores/views/home.dart';
+import '../../../../shared/general/base_card.dart';
+import '../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../stores/views/home.dart';
 
 class SwitcherCard extends StatelessWidget {
   final String title;

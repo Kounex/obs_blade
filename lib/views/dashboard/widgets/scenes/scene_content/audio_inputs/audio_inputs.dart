@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/placeholder_scene_item/placeholder_scene_item.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/placeholder_scene_item.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../../stores/views/dashboard.dart';

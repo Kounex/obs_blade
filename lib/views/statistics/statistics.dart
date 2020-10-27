@@ -4,7 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
-import 'package:obs_blade/views/statistics/widgets/paginated_statistics/paginated_statistics.dart';
+import 'package:obs_blade/views/statistics/widgets/paginated_statistics.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
@@ -12,8 +12,8 @@ import '../../shared/general/base_card.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../types/enums/hive_keys.dart';
 import 'widgets/card_header/card_header.dart';
-import 'widgets/stream_entry.dart/stream_entry.dart';
-import 'widgets/stream_entry_placeholder/stream_entry_placeholder.dart';
+import 'widgets/stream_entry.dart';
+import 'widgets/stream_entry_placeholder.dart';
 
 class StatisticsView extends StatelessWidget {
   @override

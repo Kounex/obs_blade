@@ -15,7 +15,7 @@ import '../../../shared/overlay/base_result.dart';
 import '../../../utils/modal_handler.dart';
 import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
-import 'widgets/theme_active/theme_active.dart';
+import 'widgets/theme_active.dart';
 
 class CustomThemeView extends StatelessWidget {
   @override
