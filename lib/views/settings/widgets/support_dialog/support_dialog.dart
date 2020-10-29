@@ -31,20 +31,14 @@ class SupportDialog extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
-                          'You sure? Tapped accidentaly? Or just curious? I mean, you know, I always appreciate the love! Motivates me to keep this app updated - but it\'s completly optional :)',
+                          'You sure? Tapped accidentaly? Or just curious? I mean, I always appreciate the love! Motivates me to keep this app updated - but it\'s completly optional :)',
                         ),
                       ),
                       SocialBlock(
                         socialInfos: [
                           SocialEntry(
-                            icon: JamIcons.paypal,
-                            link: 'https://paypal.me/Kounex',
-                            linkText: 'PayPal',
-                          ),
-                          SocialEntry(
-                            icon: Icons.local_pizza,
-                            link: 'https://www.buymeacoffee.com/Kounex',
-                            linkText: 'Buy me a Pizza!',
+                            link: 'https://obs-blade.kounex.com/',
+                            linkText: 'Read more here!',
                           ),
                         ],
                       )
