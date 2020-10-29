@@ -4,7 +4,10 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/shared/general/custom_sliver_list.dart';
 import 'package:obs_blade/shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
+import 'package:obs_blade/stores/shared/tabs.dart';
 import 'package:package_info/package_info.dart';
+import 'package:provider/provider.dart';
+import 'package:wakelock/wakelock.dart';
 
 import '../../shared/general/themed/themed_cupertino_switch.dart';
 import '../../types/enums/hive_keys.dart';
@@ -59,7 +62,7 @@ class SettingsView extends StatelessWidget {
                         defaultValue: false))
                       BlockEntry(
                         leading: CupertinoIcons.drop_fill,
-                        title: 'Reduce smearing',
+                        title: 'Reduce Smearing',
                         help:
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery!',
                         trailing: ThemedCupertinoSwitch(
@@ -77,6 +80,33 @@ class SettingsView extends StatelessWidget {
                 ActionBlock(
                   title: 'Layout',
                   blockEntries: [
+                    BlockEntry(
+                      leading: CupertinoIcons.device_phone_portrait,
+                      title: 'Wake Lock',
+                      help:
+                          'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(SettingsKeys.WakeLock.name,
+                            defaultValue: true),
+                        onChanged: (wakeLock) {
+                          settingsBox.put(SettingsKeys.WakeLock.name, wakeLock);
+                          if (wakeLock) {
+                            /// Check if user is currently in the [DashboardView], therefore
+                            /// connected to an OBS instance, we will then activate [Wakelock]
+                            /// now since otherwise it won't affect the current connection because
+                            /// it will only trigger when entereing the [DashboardView]
+                            if (context
+                                    .read<TabsStore>()
+                                    .activeRoutePerNavigator[Tabs.Home] ==
+                                HomeTabRoutingKeys.Dashboard.route) {
+                              Wakelock.enable();
+                            }
+                          } else {
+                            Wakelock.disable();
+                          }
+                        },
+                      ),
+                    ),
                     BlockEntry(
                       leading: CupertinoIcons.lock_fill,
                       leadingSize: 30.0,

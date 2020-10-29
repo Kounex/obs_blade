@@ -1,11 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
 import 'package:provider/provider.dart';
-import './types/extensions/list.dart';
 
-import 'types/extensions/list.dart';
+import 'stores/shared/tabs.dart';
 import 'utils/routing_helper.dart';
 
 class TabBase extends StatefulWidget {
@@ -14,10 +12,9 @@ class TabBase extends StatefulWidget {
 }
 
 class _TabBaseState extends State<TabBase> {
-  List<Navigator> _tabViews;
-  List<GlobalKey<NavigatorState>> _navigatorKeys = [];
-  List<HeroController> _heroControllers = [];
-  List<ScrollController> _tabScrollController = [];
+  Map<Tabs, Navigator> _tabViews = {};
+  Map<Tabs, HeroController> _heroControllers = {};
+  Map<Tabs, ScrollController> _tabScrollController = {};
 
   RectTween _createRectTween(Rect begin, Rect end) {
     return MaterialRectArcTween(begin: begin, end: end);
@@ -26,39 +23,38 @@ class _TabBaseState extends State<TabBase> {
   @override
   void initState() {
     super.initState();
+    TabsStore tabsStore = context.read<TabsStore>();
     Tabs.values.forEach((tab) {
-      _navigatorKeys.add(
-        GlobalKey<NavigatorState>(debugLabel: tab.name),
-      );
-      _heroControllers.add(
-        HeroController(createRectTween: _createRectTween),
-      );
-      _tabScrollController.add(
-        ScrollController(),
+      tabsStore.navigatorKeys[tab] =
+          GlobalKey<NavigatorState>(debugLabel: tab.name);
+      _heroControllers[tab] = HeroController(createRectTween: _createRectTween);
+      _tabScrollController[tab] = ScrollController();
+
+      _tabViews[tab] = Navigator(
+        key: tabsStore.navigatorKeys[tab],
+        initialRoute: tab.routes.keys.first,
+        onGenerateInitialRoutes: (state, route) {
+          tabsStore.activeRoutePerNavigator[tab] = route;
+          return [
+            CupertinoPageRoute(
+              builder: tab.routes[route],
+              settings: RouteSettings(
+                name: route,
+                arguments: _tabScrollController[tab],
+              ),
+            ),
+          ];
+        },
+        onGenerateRoute: (routeSettings) {
+          tabsStore.activeRoutePerNavigator[tab] = routeSettings.name;
+          return CupertinoPageRoute(
+            builder: tab.routes[routeSettings.name],
+            settings: routeSettings,
+          );
+        },
+        observers: [_heroControllers[tab]],
       );
     });
-    _tabViews = Tabs.values
-        .mapIndexed(
-          (tab, index) => Navigator(
-            key: _navigatorKeys[index],
-            initialRoute: tab.routes.keys.first,
-            onGenerateInitialRoutes: (state, route) => [
-              CupertinoPageRoute(
-                builder: tab.routes[route],
-                settings: RouteSettings(
-                  name: route,
-                  arguments: _tabScrollController[index],
-                ),
-              ),
-            ],
-            onGenerateRoute: (routeSettings) => CupertinoPageRoute(
-              builder: tab.routes[routeSettings.name],
-              settings: routeSettings,
-            ),
-            observers: [_heroControllers[index]],
-          ),
-        )
-        .toList();
   }
 
   @override
@@ -68,34 +64,39 @@ class _TabBaseState extends State<TabBase> {
     return Scaffold(
       body: Observer(builder: (_) {
         return IndexedStack(
-          index: tabsStore.tabIndex,
+          index: tabsStore.activeTab.index,
           children: _tabViews
-              .mapIndexed(
-                (navigator, index) => Offstage(
-                  offstage: index != tabsStore.tabIndex,
-                  child: navigator,
+              .map(
+                (tab, tabView) => MapEntry(
+                  tab,
+                  Offstage(
+                    offstage: tab != tabsStore.activeTab,
+                    child: tabView,
+                  ),
                 ),
               )
+              .values
               .toList(),
         );
       }),
       bottomNavigationBar: Observer(
         builder: (_) => CupertinoTabBar(
           activeColor: Theme.of(context).accentColor,
-          currentIndex: tabsStore.tabIndex,
+          currentIndex: tabsStore.activeTab.index,
           onTap: (index) {
-            if (tabsStore.tabIndex == index) {
+            Tabs tappedTab = Tabs.values[index];
+            if (tabsStore.activeTab == tappedTab) {
               tabsStore.setPerformTabClickAction(true);
-              if (_navigatorKeys[index].currentState.canPop()) {
-                _navigatorKeys[index].currentState.pop();
-              } else if (_tabScrollController[index].hasClients &&
-                  _tabScrollController[index].offset > 0) {
-                _tabScrollController[index].animateTo(0.0,
+              if (tabsStore.navigatorKeys[tappedTab].currentState.canPop()) {
+                tabsStore.navigatorKeys[tappedTab].currentState.pop();
+              } else if (_tabScrollController[tappedTab].hasClients &&
+                  _tabScrollController[tappedTab].offset > 0) {
+                _tabScrollController[tappedTab].animateTo(0.0,
                     duration: Duration(milliseconds: 250),
                     curve: Curves.easeIn);
               }
             } else {
-              tabsStore.setTabIndex(index);
+              tabsStore.setActiveTab(Tabs.values[index]);
             }
           },
           items: Tabs.values

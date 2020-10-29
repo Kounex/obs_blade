@@ -2,9 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/reconnect_toast/reconnect_toast.dart';
 import 'package:provider/provider.dart';
+import 'package:wakelock/wakelock.dart';
 
 import '../../shared/dialogs/confirmation.dart';
 import '../../shared/general/custom_sliver_list.dart';
@@ -62,6 +66,11 @@ class _DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<_DashboardView> {
   @override
   void initState() {
+    if (Hive.box(HiveKeys.Settings.name)
+        .get(SettingsKeys.WakeLock.name, defaultValue: true)) {
+      Wakelock.enable();
+    }
+
     when(
         (_) =>
             context.read<NetworkStore>().activeSession.connection.name == null,
@@ -75,6 +84,14 @@ class _DashboardViewState extends State<_DashboardView> {
               arguments: ModalRoute.of(context).settings.arguments,
             ));
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    /// Disable [Wakelock] - does not need to check whether this is active
+    /// since calling disable is idempotent
+    Wakelock.disable();
+    super.dispose();
   }
 
   _saveConnectionDialog(BuildContext context) {
@@ -116,8 +133,7 @@ class _DashboardViewState extends State<_DashboardView> {
                         child: Column(
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(
-                                  top: 12.0, bottom: 24.0),
+                              padding: const EdgeInsets.only(bottom: 24.0),
                               child: Scenes(),
                             ),
                             Container(

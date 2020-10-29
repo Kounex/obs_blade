@@ -9,18 +9,18 @@ part of 'tabs.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$TabsStore on _TabsStore, Store {
-  final _$tabIndexAtom = Atom(name: '_TabsStore.tabIndex');
+  final _$activeTabAtom = Atom(name: '_TabsStore.activeTab');
 
   @override
-  int get tabIndex {
-    _$tabIndexAtom.reportRead();
-    return super.tabIndex;
+  Tabs get activeTab {
+    _$activeTabAtom.reportRead();
+    return super.activeTab;
   }
 
   @override
-  set tabIndex(int value) {
-    _$tabIndexAtom.reportWrite(value, super.tabIndex, () {
-      super.tabIndex = value;
+  set activeTab(Tabs value) {
+    _$activeTabAtom.reportWrite(value, super.activeTab, () {
+      super.activeTab = value;
     });
   }
 
@@ -44,11 +44,11 @@ mixin _$TabsStore on _TabsStore, Store {
   final _$_TabsStoreActionController = ActionController(name: '_TabsStore');
 
   @override
-  void setTabIndex(int tabIndex) {
+  void setActiveTab(Tabs activeTab) {
     final _$actionInfo = _$_TabsStoreActionController.startAction(
-        name: '_TabsStore.setTabIndex');
+        name: '_TabsStore.setActiveTab');
     try {
-      return super.setTabIndex(tabIndex);
+      return super.setActiveTab(activeTab);
     } finally {
       _$_TabsStoreActionController.endAction(_$actionInfo);
     }
@@ -68,7 +68,7 @@ mixin _$TabsStore on _TabsStore, Store {
   @override
   String toString() {
     return '''
-tabIndex: ${tabIndex},
+activeTab: ${activeTab},
 performTabClickAction: ${performTabClickAction}
     ''';
   }

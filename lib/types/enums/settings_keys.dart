@@ -20,6 +20,10 @@ enum SettingsKeys {
   /// [String]: UUID of the active custom theme (only used if [CustomTheme] is true)
   ActiveCustomThemeUUID,
 
+  /// [bool]: Indicates if the user wants to let his device stay active in the [DashboardView].
+  /// Active by default
+  WakeLock,
+
   /// Internally used properties which won't be changeable / seeable for the user
 
   /// [bool]: If the user already saw the intro - will be set after being in landing
@@ -36,6 +40,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
+        SettingsKeys.WakeLock: 'wake-lock',
         SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
       }[this];
 }

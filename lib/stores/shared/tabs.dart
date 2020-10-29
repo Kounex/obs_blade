@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 
 part 'tabs.g.dart';
 
@@ -6,7 +8,10 @@ class TabsStore = _TabsStore with _$TabsStore;
 
 abstract class _TabsStore with Store {
   @observable
-  int tabIndex = 0;
+  Tabs activeTab = Tabs.Home;
+
+  Map<Tabs, GlobalKey<NavigatorState>> navigatorKeys = {};
+  Map<Tabs, String> activeRoutePerNavigator = {};
 
   /// Might later be used as an indicator which says that the user tapped
   /// on a tab which is already active and in our views we can react to
@@ -19,7 +24,7 @@ abstract class _TabsStore with Store {
   bool performTabClickAction = false;
 
   @action
-  void setTabIndex(int tabIndex) => this.tabIndex = tabIndex;
+  void setActiveTab(Tabs activeTab) => this.activeTab = activeTab;
 
   @action
   void setPerformTabClickAction(bool performTabClickAction) =>
