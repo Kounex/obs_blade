@@ -55,7 +55,7 @@ class _StatsState extends State<Stats> {
                       FormattedText(
                         label: 'Total stream time',
                         text: dashboardStore.latestStreamStats?.totalStreamTime
-                            ?.secondsToFormattedTimeString(),
+                            ?.secondsToFormattedDurationString(),
                         width: 100.0,
                       ),
                       FormattedText(

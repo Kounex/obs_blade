@@ -9,7 +9,7 @@ import '../../../shared/general/app_bar_cupertino_actions.dart';
 import '../../../shared/general/formatted_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../dashboard/widgets/stream_widgets/stats/stats_container.dart';
-import 'widgets/stream_chart/stream_chart.dart';
+import 'widgets/stream_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {
   @override
@@ -161,7 +161,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
               FormattedText(
                 label: 'Total stream time',
                 text: pastStreamData.totalStreamTime
-                    .secondsToFormattedTimeString(),
+                    .secondsToFormattedDurationString(),
                 width: 100.0,
               ),
               FormattedText(

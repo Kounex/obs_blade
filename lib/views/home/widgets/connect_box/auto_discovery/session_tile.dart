@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../models/connection.dart';
-import '../connect_form/connect_form.dart';
+import '../connect_form.dart';
 
 class SessionTile extends StatelessWidget {
   final Connection connection;

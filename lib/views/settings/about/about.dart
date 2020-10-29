@@ -8,7 +8,7 @@ import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../utils/icons/jam_icons.dart';
 import '../../../utils/modal_handler.dart';
-import 'widgets/about_header/about_header.dart';
+import 'widgets/about_header.dart';
 import 'widgets/license_modal/license_modal.dart';
 
 class AboutView extends StatelessWidget {

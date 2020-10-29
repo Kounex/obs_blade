@@ -1,46 +1,24 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/amount_entries_control.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/favorite_control.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/filter_name.dart';
 
-import '../card_header.dart';
+import 'amount_entries_control.dart';
 import 'date_range/date_range.dart';
+import 'favorite_control.dart';
+import 'filter_name.dart';
 import 'order_row.dart';
 
 const double _kControlsPadding = 12.0;
 
-class OverallStats extends StatefulWidget {
-  final StatsType statsType;
-
-  OverallStats({this.statsType = StatsType.Current});
-
+class SortFilterPanel extends StatefulWidget {
   @override
-  _OverallStatsState createState() => _OverallStatsState();
+  _SortFilterPanelState createState() => _SortFilterPanelState();
 }
 
-class _OverallStatsState extends State<OverallStats> {
+class _SortFilterPanelState extends State<SortFilterPanel> {
   bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> children = [];
-
-    if (widget.statsType == StatsType.Current) {
-      children.add(Text('Current'));
-    } else {
-      children.add(SizedBox(height: _kControlsPadding));
-      children.add(OrderRow());
-      children.add(SizedBox(height: _kControlsPadding));
-      children.add(FilterName());
-      children.add(SizedBox(height: _kControlsPadding));
-      children.add(DateRange());
-      children.add(SizedBox(height: _kControlsPadding));
-      children.add(FavoriteControl());
-      children.add(SizedBox(height: _kControlsPadding));
-      children.add(AmountEntriesControl());
-    }
-
     return Column(
       children: [
         Divider(height: 1.0),
@@ -51,12 +29,13 @@ class _OverallStatsState extends State<OverallStats> {
               setState(() => _isExpanded = !_isExpanded),
           children: [
             ExpansionPanel(
+              canTapOnHeader: true,
               isExpanded: _isExpanded,
               headerBuilder: (context, isExpanded) => Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 14.0),
-                  child: Text('OMEGALUL'),
+                  child: Text('Expand to sort and filter your statistics!'),
                 ),
               ),
               body: SizedBox(
@@ -72,7 +51,18 @@ class _OverallStatsState extends State<OverallStats> {
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: children,
+                        children: [
+                          SizedBox(height: _kControlsPadding),
+                          OrderRow(),
+                          SizedBox(height: _kControlsPadding),
+                          FilterName(),
+                          SizedBox(height: _kControlsPadding),
+                          DateRange(),
+                          SizedBox(height: _kControlsPadding),
+                          FavoriteControl(),
+                          SizedBox(height: _kControlsPadding),
+                          AmountEntriesControl(),
+                        ],
                       ),
                     ),
                   ],

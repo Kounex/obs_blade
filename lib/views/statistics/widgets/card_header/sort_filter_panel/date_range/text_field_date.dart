@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/date_range/date_picker_sheet.dart';
+
+import '../../../../../../utils/modal_handler.dart';
+import 'date_picker_sheet.dart';
 
 class TextFieldDate extends StatefulWidget {
   final String placeholder;
@@ -52,6 +53,7 @@ class _TextFieldDateState extends State<TextFieldDate> {
           },
         ),
       ),
+      onChanged: (_) => widget.updateDateTime(null),
     );
   }
 }

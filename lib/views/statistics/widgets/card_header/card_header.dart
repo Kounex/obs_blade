@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/header_decoration.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/overall_stats/overall_stats.dart';
+
+import 'header_decoration.dart';
 
 class IconClipper extends CustomClipper<Path> {
   @override
@@ -16,20 +16,19 @@ class IconClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }
 
-enum StatsType { Current, AllPrevious }
-
 class CardHeader extends StatelessWidget {
   final String title;
   final String description;
-  final StatsType statsType;
 
   final IconData headerDecorationIcon;
+
+  final List<Widget> additionalCardWidgets;
 
   CardHeader({
     @required this.title,
     this.description = '',
-    this.statsType = StatsType.Current,
     this.headerDecorationIcon,
+    this.additionalCardWidgets = const [],
   });
 
   @override
@@ -71,9 +70,7 @@ class CardHeader extends StatelessWidget {
             ),
           ],
         ),
-        OverallStats(
-          statsType: this.statsType,
-        ),
+        ...this.additionalCardWidgets,
       ],
     );
   }

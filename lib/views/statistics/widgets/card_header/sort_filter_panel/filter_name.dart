@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../../stores/views/statistics.dart';
 
 class FilterName extends StatelessWidget {
   @override
