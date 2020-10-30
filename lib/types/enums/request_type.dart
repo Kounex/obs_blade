@@ -109,5 +109,20 @@ enum RequestType {
   ///
   /// {'sourceName': String } - Source name
   /// {'playPause': bool } - Whether to pause or play the source. false for play, true for pause
-  PlayPauseMedia
+  PlayPauseMedia,
+
+  /// Toggle recording on or off (depending on the current recording state)
+  ///
+  /// No specified parameters
+  StartStopRecording,
+
+  /// Pause the current recording. Returns an error if recording is not active or already paused
+  ///
+  /// No specified parameters
+  PauseRecording,
+
+  /// Resume/unpause the current recording (if paused). Returns an error if recording is not active or not paused
+  ///
+  /// No specified parameters
+  ResumeRecording,
 }

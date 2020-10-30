@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -32,11 +34,21 @@ class AppBarCupertinoActions extends StatelessWidget {
                 .actions
                 .map(
                   (action) => CupertinoActionSheetAction(
-                    child: Text(action.title),
+                    child: Text(
+                      action.title,
+                      style: action.onAction == null
+                          ? TextStyle(
+                              color:
+                                  CupertinoColors.systemBlue.withOpacity(0.3),
+                            )
+                          : null,
+                    ),
                     isDestructiveAction: action.isDestructive,
                     onPressed: () {
-                      Navigator.of(context).pop();
-                      action.onAction?.call();
+                      if (action.onAction != null) {
+                        Navigator.of(context).pop();
+                        action.onAction.call();
+                      }
                     },
                   ),
                 )

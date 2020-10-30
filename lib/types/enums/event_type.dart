@@ -8,8 +8,14 @@ enum EventType {
   /// Recording started successfully
   RecordingStarted,
 
-  /// Recording stopped successfully
-  RecordingStopped,
+  /// A request to stop recording has been issued
+  RecordingStopping,
+
+  /// Current recording paused
+  RecordingPaused,
+
+  /// Current recording resumed
+  RecordingResumed,
 
   /// Emitted every 2 seconds when stream is active
   StreamStatus,

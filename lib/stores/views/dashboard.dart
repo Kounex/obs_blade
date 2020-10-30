@@ -39,6 +39,8 @@ abstract class _DashboardStore with Store {
   @observable
   bool isRecording = false;
   @observable
+  bool isRecordingPaused = false;
+  @observable
   int goneLiveMS;
   @observable
   int startedRecordingMS;
@@ -278,8 +280,14 @@ abstract class _DashboardStore with Store {
         this.isRecording = true;
         this.startedRecordingMS = DateTime.now().millisecondsSinceEpoch;
         break;
-      case EventType.RecordingStopped:
+      case EventType.RecordingStopping:
         this.isRecording = false;
+        break;
+      case EventType.RecordingPaused:
+        this.isRecordingPaused = true;
+        break;
+      case EventType.RecordingResumed:
+        this.isRecordingPaused = false;
         break;
       case EventType.StreamStatus:
         this.latestStreamStats = StreamStats.fromJSON(event.json);

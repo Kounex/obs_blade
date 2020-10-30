@@ -23,7 +23,7 @@ class GeneralActions extends StatelessWidget {
         actionSheetTitle: 'Actions',
         actions: [
           AppBarCupertinoActionEntry(
-            title: dashboardStore.isLive ? 'Stop Streaming' : 'Start Streaming',
+            title: (dashboardStore.isLive ? 'Stop' : 'Start') + ' Streaming',
             onAction: () {
               ModalHandler.showBaseDialog(
                 context: context,
@@ -40,6 +40,38 @@ class GeneralActions extends StatelessWidget {
                 ),
               );
             },
+          ),
+          AppBarCupertinoActionEntry(
+            title:
+                (dashboardStore.isRecording ? 'Stop' : 'Start') + ' Recording',
+            onAction: () {
+              ModalHandler.showBaseDialog(
+                context: context,
+                dialogWidget: ConfirmationDialog(
+                  title: (dashboardStore.isRecording ? 'Stop' : 'Start') +
+                      ' Recording',
+                  body: dashboardStore.isRecording
+                      ? 'Do you want to stop recording? Got everything on tape as intended?\n\nIf yes: nice work!'
+                      : 'Do you want to start recording? Recording unintentionally is not as bad as suddenly starting to stream!\n\nStill asking just to be sure!',
+                  isYesDestructive: true,
+                  onOk: () => NetworkHelper.makeRequest(
+                      networkStore.activeSession.socket,
+                      RequestType.StartStopRecording),
+                ),
+              );
+            },
+          ),
+          AppBarCupertinoActionEntry(
+            title: (dashboardStore.isRecordingPaused ? 'Resume' : 'Pause') +
+                ' Recording',
+            onAction: dashboardStore.isRecording
+                ? () => NetworkHelper.makeRequest(
+                      networkStore.activeSession.socket,
+                      dashboardStore.isRecordingPaused
+                          ? RequestType.ResumeRecording
+                          : RequestType.PauseRecording,
+                    )
+                : null,
           ),
           AppBarCupertinoActionEntry(
             title: (newConnection ? 'Save' : 'Edit') + ' Connection',

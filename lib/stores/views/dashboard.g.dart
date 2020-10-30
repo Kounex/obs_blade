@@ -57,6 +57,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$isRecordingPausedAtom =
+      Atom(name: '_DashboardStore.isRecordingPaused');
+
+  @override
+  bool get isRecordingPaused {
+    _$isRecordingPausedAtom.reportRead();
+    return super.isRecordingPaused;
+  }
+
+  @override
+  set isRecordingPaused(bool value) {
+    _$isRecordingPausedAtom.reportWrite(value, super.isRecordingPaused, () {
+      super.isRecordingPaused = value;
+    });
+  }
+
   final _$goneLiveMSAtom = Atom(name: '_DashboardStore.goneLiveMS');
 
   @override
@@ -298,6 +314,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
     return '''
 isLive: ${isLive},
 isRecording: ${isRecording},
+isRecordingPaused: ${isRecordingPaused},
 goneLiveMS: ${goneLiveMS},
 startedRecordingMS: ${startedRecordingMS},
 streamData: ${streamData},

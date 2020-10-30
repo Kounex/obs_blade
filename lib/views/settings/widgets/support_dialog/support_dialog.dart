@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:keyboard_actions/external/platform_check/platform_check.dart';
 import 'package:obs_blade/shared/general/social_block.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 
@@ -18,16 +21,24 @@ class SupportDialog extends StatelessWidget {
           children: [
             CupertinoAlertDialog(
               content: SizedBox(
-                height: 200.0,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
+                height: 175.0,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    if (!Platform.isAndroid) SizedBox(height: 12.0),
+                    Text(
+                      'Support',
+                      style: Theme.of(context).textTheme.headline6,
+                    ),
+                    if (Platform.isAndroid) ...[
                       Text(
-                        'Support',
-                        style: Theme.of(context).textTheme.headline6,
+                        'Due to Google Play Payment policies I\'m not allowed to leave donation options here. There are ways to support me available online.',
                       ),
+                      Text(
+                        'If you really want to, you will find them - you can also contact me directly!',
+                      ),
+                    ],
+                    if (!Platform.isAndroid) ...[
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
@@ -41,22 +52,22 @@ class SupportDialog extends StatelessWidget {
                             linkText: 'Read more here!',
                           ),
                         ],
-                      )
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   children: [
-                      //     DonateButton(text: 'Nice', value: 0.99),
-                      //     DonateButton(text: 'Yoo', value: 2.99),
-                      //     DonateButton(text: 'WTF?', value: 5.99),
-                      //   ],
-                      // ),
+                      ),
                     ],
-                  ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //   children: [
+                    //     DonateButton(text: 'Nice', value: 0.99),
+                    //     DonateButton(text: 'Yoo', value: 2.99),
+                    //     DonateButton(text: 'WTF?', value: 5.99),
+                    //   ],
+                    // ),
+                  ],
                 ),
               ),
             ),
             Transform(
-              transform: Matrix4.identity()..translate(0.0, -120.0),
+              transform: Matrix4.identity()..translate(0.0, -110.0),
               child: Container(
                 height: 60.0,
                 width: 60.0,
@@ -76,7 +87,7 @@ class SupportDialog extends StatelessWidget {
               ),
             ),
             Transform(
-              transform: Matrix4.identity()..translate(110.0, -100.0),
+              transform: Matrix4.identity()..translate(105.0, -80.0),
               child: IconButton(
                 icon: Icon(
                   CupertinoIcons.clear_circled_solid,
