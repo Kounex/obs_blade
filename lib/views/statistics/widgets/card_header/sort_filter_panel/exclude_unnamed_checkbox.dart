@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:provider/provider.dart';
 
@@ -11,11 +12,13 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
       offset: Offset(-12.0, 0.0),
       child: Row(
         children: [
-          Checkbox(
-            // materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            value: statisticsStore.excludeUnnamedStreams,
-            onChanged: (excludeUnnamedStreams) =>
-                statisticsStore.setExcludeUnnamedStreams(excludeUnnamedStreams),
+          Observer(
+            builder: (_) => Checkbox(
+              // materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              value: statisticsStore.excludeUnnamedStreams,
+              onChanged: (excludeUnnamedStreams) => statisticsStore
+                  .setExcludeUnnamedStreams(excludeUnnamedStreams),
+            ),
           ),
           Text(
             'Exclude unnamed streams',

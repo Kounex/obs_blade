@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../models/past_stream_data.dart';
 import '../../../../stores/views/statistics.dart';
-import '../stream_entry.dart';
+import '../stream_entry/stream_entry.dart';
 import 'pagination_control.dart';
 
 class PaginatedStatistics extends StatefulWidget {

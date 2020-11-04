@@ -13,7 +13,7 @@ import '../../types/enums/hive_keys.dart';
 import 'widgets/card_header/card_header.dart';
 import 'widgets/card_header/sort_filter_panel/sort_filter_panel.dart';
 import 'widgets/paginated_statistics/paginated_statistics.dart';
-import 'widgets/stream_entry.dart';
+import 'widgets/stream_entry/stream_entry.dart';
 import 'widgets/stream_entry_placeholder.dart';
 
 class StatisticsView extends StatelessWidget {
@@ -204,25 +204,25 @@ class _StatisticsViewState extends State<_StatisticsView> {
                                 'You haven\'t streamed using this app or deleted all statistic entries?! Whatever it is, you should start streaming!',
                           ),
                   ),
-                  Observer(
-                    builder: (_) {
-                      List<PastStreamData> sortedFilteredStreamData =
-                          _sortAndFilterPastStreamData(
-                        statisticsStore,
-                        pastStreamData.reversed.skip(1),
-                      );
-                      return BaseCard(
-                        titlePadding: EdgeInsets.all(0),
-                        titleWidget: CardHeader(
-                          title: 'Previous\nStreams.',
-                          description:
-                              'All the statistics of your smexy stream sessions',
-                          additionalCardWidgets: [
-                            SortFilterPanel(),
-                          ],
-                        ),
-                        paddingChild: EdgeInsets.all(0),
-                        child: sortedFilteredStreamData.length > 0
+                  BaseCard(
+                    titlePadding: EdgeInsets.all(0),
+                    titleWidget: CardHeader(
+                      title: 'Previous\nStreams.',
+                      description:
+                          'All the statistics of your smexy stream sessions',
+                      additionalCardWidgets: [
+                        SortFilterPanel(),
+                      ],
+                    ),
+                    paddingChild: EdgeInsets.all(0),
+                    child: Observer(
+                      builder: (_) {
+                        List<PastStreamData> sortedFilteredStreamData =
+                            _sortAndFilterPastStreamData(
+                          statisticsStore,
+                          pastStreamData.reversed.skip(1),
+                        );
+                        return sortedFilteredStreamData.length > 0
                             ? PaginatedStatistics(
                                 filteredAndSortedStreamData:
                                     sortedFilteredStreamData,
@@ -231,9 +231,9 @@ class _StatisticsViewState extends State<_StatisticsView> {
                                 text: pastStreamData.length <= 1
                                     ? 'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!'
                                     : 'No statistics found which match your filters! Change them and they will hopefully come back!',
-                              ),
-                      );
-                    },
+                              );
+                      },
+                    ),
                   ),
                 ],
               );
