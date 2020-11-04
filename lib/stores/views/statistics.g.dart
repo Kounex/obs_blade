@@ -117,6 +117,23 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
+  final _$excludeUnnamedStreamsAtom =
+      Atom(name: '_StatisticsStore.excludeUnnamedStreams');
+
+  @override
+  bool get excludeUnnamedStreams {
+    _$excludeUnnamedStreamsAtom.reportRead();
+    return super.excludeUnnamedStreams;
+  }
+
+  @override
+  set excludeUnnamedStreams(bool value) {
+    _$excludeUnnamedStreamsAtom.reportWrite(value, super.excludeUnnamedStreams,
+        () {
+      super.excludeUnnamedStreams = value;
+    });
+  }
+
   final _$_StatisticsStoreActionController =
       ActionController(name: '_StatisticsStore');
 
@@ -199,6 +216,17 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
+  void setExcludeUnnamedStreams(bool excludeUnnamedStreams) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setExcludeUnnamedStreams');
+    try {
+      return super.setExcludeUnnamedStreams(excludeUnnamedStreams);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
 filterType: ${filterType},
@@ -207,7 +235,8 @@ amountStatisticEntries: ${amountStatisticEntries},
 filterName: ${filterName},
 showOnlyFavorites: ${showOnlyFavorites},
 fromDate: ${fromDate},
-toDate: ${toDate}
+toDate: ${toDate},
+excludeUnnamedStreams: ${excludeUnnamedStreams}
     ''';
   }
 }

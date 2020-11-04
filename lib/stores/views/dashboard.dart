@@ -171,7 +171,7 @@ abstract class _DashboardStore with Store {
 
   /// SceneItems which type is 'group' can have children which are
   /// SceneItems again - this would lead to checking those children
-  /// in many cases (a lot of work and extra code). SO instead I flatten
+  /// in many cases (a lot of work and extra code). So instead I flatten
   /// this by adding those children to the general list and since
   /// those children have their parent name as a property I can easily
   /// identify them in the flat list
@@ -282,6 +282,7 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.RecordingStopping:
         this.isRecording = false;
+        this.isRecordingPaused = false;
         break;
       case EventType.RecordingPaused:
         this.isRecordingPaused = true;
@@ -316,11 +317,10 @@ abstract class _DashboardStore with Store {
         SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
         this.currentSceneItems =
             ObservableList.of(_flattenSceneItems(switchSceneEvent.sources));
-        currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
+        this.currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
             this.networkStore.activeSession.socket,
             RequestType.GetMute,
             {'source': sceneItem.name}));
-
         break;
       case EventType.TransitionBegin:
         TransitionBeginEvent transitionBeginEvent =

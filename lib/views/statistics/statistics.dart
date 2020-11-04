@@ -111,8 +111,8 @@ class _StatisticsViewState extends State<_StatisticsView> {
                   dataOrder1.totalStreamTime - dataOrder2.totalStreamTime;
               break;
             case FilterType.Name:
-              sortResult =
-                  (dataOrder1.name ?? '').compareTo((dataOrder2.name) ?? '');
+              sortResult = (dataOrder1.name ?? 'Unnamed stream')
+                  .compareTo((dataOrder2.name) ?? '');
               break;
             case FilterType.Kbits:
               sortResult = (dataOrder1.kbitsPerSecList
@@ -137,22 +137,31 @@ class _StatisticsViewState extends State<_StatisticsView> {
     pastStreamData = pastStreamData
 
         /// Filter statistics which name contain the String entered by the user
-        .where((data) => (data.name ?? '')
+        .where((data) => (data.name ?? 'Unnamed stream')
             .toLowerCase()
             .contains(statisticsStore.filterName))
 
         /// Fitler statistics which are either starred, not starred or both
         .where((data) {
-      if (statisticsStore.showOnlyFavorites != null) {
-        return statisticsStore.showOnlyFavorites ? data.starred ?? false : true;
-      }
-      return data.starred == null || !data.starred;
-    }).where((data) =>
+          if (statisticsStore.showOnlyFavorites != null) {
+            return statisticsStore.showOnlyFavorites
+                ? data.starred ?? false
+                : true;
+          }
+          return data.starred == null || !data.starred;
+        })
+
+        /// Filter statistics which are inside the date range the user might have set
+        .where((data) =>
             data.listEntryDateMS.first >=
                 (statisticsStore.fromDate?.millisecondsSinceEpoch ?? 0) &&
             data.listEntryDateMS.last <=
                 (statisticsStore.toDate?.millisecondsSinceEpoch ??
-                    DateTime.now().millisecondsSinceEpoch));
+                    DateTime.now().millisecondsSinceEpoch))
+
+        /// Filter statistics which are not unnamed if user set this checkbox
+        .where((data) =>
+            statisticsStore.excludeUnnamedStreams ? data.name != null : true);
 
     return pastStreamData.toList();
   }

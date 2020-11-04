@@ -70,6 +70,9 @@ abstract class _StatisticsStore with Store {
   @observable
   DateTime toDate;
 
+  @observable
+  bool excludeUnnamedStreams = false;
+
   @action
   void setFilterType(FilterType filterType) => this.filterType = filterType;
 
@@ -96,4 +99,8 @@ abstract class _StatisticsStore with Store {
 
   @action
   void setToDate(DateTime toDate) => this.toDate = toDate;
+
+  @action
+  void setExcludeUnnamedStreams(bool excludeUnnamedStreams) =>
+      this.excludeUnnamedStreams = excludeUnnamedStreams;
 }

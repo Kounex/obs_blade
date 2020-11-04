@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/exclude_unnamed_checkbox.dart';
 
 import 'amount_entries_control.dart';
 import 'date_range/date_range.dart';
@@ -7,7 +8,7 @@ import 'favorite_control.dart';
 import 'filter_name.dart';
 import 'order_row.dart';
 
-const double _kControlsPadding = 12.0;
+const double _kControlsPadding = 14.0;
 
 class SortFilterPanel extends StatefulWidget {
   @override
@@ -52,16 +53,18 @@ class _SortFilterPanelState extends State<SortFilterPanel> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: _kControlsPadding),
+                          SizedBox(height: _kControlsPadding + 8.0),
                           OrderRow(),
                           SizedBox(height: _kControlsPadding),
                           FilterName(),
                           SizedBox(height: _kControlsPadding),
                           DateRange(),
-                          SizedBox(height: _kControlsPadding),
+                          SizedBox(height: _kControlsPadding + 2.0),
                           FavoriteControl(),
-                          SizedBox(height: _kControlsPadding),
+                          SizedBox(height: _kControlsPadding + 2.0),
                           AmountEntriesControl(),
+                          SizedBox(height: 4.0),
+                          ExcludeUnnamedCheckbox(),
                         ],
                       ),
                     ),
