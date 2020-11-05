@@ -16,6 +16,7 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
             builder: (_) => Checkbox(
               // materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               value: statisticsStore.excludeUnnamedStreams,
+              tristate: true,
               onChanged: (excludeUnnamedStreams) => statisticsStore
                   .setExcludeUnnamedStreams(excludeUnnamedStreams),
             ),

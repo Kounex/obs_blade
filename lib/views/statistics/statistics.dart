@@ -159,9 +159,15 @@ class _StatisticsViewState extends State<_StatisticsView> {
                 (statisticsStore.toDate?.millisecondsSinceEpoch ??
                     DateTime.now().millisecondsSinceEpoch))
 
-        /// Filter statistics which are not unnamed if user set this checkbox
-        .where((data) =>
-            statisticsStore.excludeUnnamedStreams ? data.name != null : true);
+        /// Filter statistics which are not unnamed or specifically unnamed if user set this checkbox (or tristate)
+        .where((data) {
+          if (statisticsStore.excludeUnnamedStreams != null) {
+            return statisticsStore.excludeUnnamedStreams
+                ? data.name != null
+                : true;
+          }
+          return data.name == null;
+        });
 
     return pastStreamData.toList();
   }

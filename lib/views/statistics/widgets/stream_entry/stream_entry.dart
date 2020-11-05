@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:obs_blade/views/statistics/widgets/stream_entry/entry_meta_chip.dart';
+import 'package:obs_blade/views/statistics/widgets/stream_entry/stream_date_chip.dart';
 
 import '../../../../models/past_stream_data.dart';
 import '../../../../utils/routing_helper.dart';
@@ -79,56 +80,16 @@ class StreamEntry extends StatelessWidget {
                   // ),
                   Column(
                 children: [
-                  Chip(
-                    labelPadding: const EdgeInsets.all(2.0),
-                    label: Row(
-                      children: [
-                        Chip(
-                          padding: const EdgeInsets.all(0),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor: Colors.black26,
-                          label: SizedBox(
-                            width: 40.0,
-                            child: Text(
-                              'From:',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                              '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedDateString()} - ${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedTimeString()}'),
-                        ),
-                      ],
-                    ),
+                  StreamDateChip(
+                    label: 'From:',
+                    content:
+                        '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedDateString()} - ${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedTimeString()}',
                   ),
                   SizedBox(height: 4.0),
-                  Chip(
-                    labelPadding: const EdgeInsets.all(2.0),
-                    label: Row(
-                      children: [
-                        Chip(
-                          padding: const EdgeInsets.all(0),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor: Colors.black26,
-                          label: SizedBox(
-                            width: 40.0,
-                            child: Text(
-                              'To:',
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                              '${this.pastStreamData.listEntryDateMS.last.millisecondsToFormattedDateString()} - ${this.pastStreamData.listEntryDateMS.last.millisecondsToFormattedTimeString()}'),
-                        ),
-                      ],
-                    ),
+                  StreamDateChip(
+                    label: 'To:',
+                    content:
+                        '${this.pastStreamData.listEntryDateMS.last.millisecondsToFormattedDateString()} - ${this.pastStreamData.listEntryDateMS.last.millisecondsToFormattedTimeString()}',
                   ),
                   // Row(
                   //   children: [
