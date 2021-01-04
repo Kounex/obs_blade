@@ -36,7 +36,7 @@ class StatusAppBar extends StatelessWidget {
                     body:
                         'Are you sure you want to close the current WebSocket connection?',
                     isYesDestructive: true,
-                    onOk: () {
+                    onOk: (_) {
                       dashboardStore.finishPastStreamData();
                       Navigator.of(context).pushReplacementNamed(
                         HomeTabRoutingKeys.Landing.route,

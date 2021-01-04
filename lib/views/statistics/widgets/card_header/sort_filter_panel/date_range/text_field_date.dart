@@ -29,7 +29,8 @@ class _TextFieldDateState extends State<TextFieldDate> {
 
   @override
   void initState() {
-    _controller = TextEditingController(text: widget.selectedDate?.toString());
+    _controller =
+        TextEditingController(text: this.widget.selectedDate?.toString());
     super.initState();
   }
 
@@ -38,22 +39,22 @@ class _TextFieldDateState extends State<TextFieldDate> {
     return CupertinoTextField(
       controller: _controller,
       clearButtonMode: OverlayVisibilityMode.always,
-      placeholder: widget.placeholder,
+      placeholder: this.widget.placeholder,
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,
         modalWidget: DatePickerSheet(
-          selectedDate: widget.selectedDate,
-          minimumDate: widget.minimumDate,
-          maximumDate: widget.maximumDate,
+          selectedDate: this.widget.selectedDate,
+          minimumDate: this.widget.minimumDate,
+          maximumDate: this.widget.maximumDate,
           updateDateTime: (date) {
             _controller.text =
                 date == null ? '' : DateFormat.yMd('de_DE').format(date);
-            widget.updateDateTime(date);
+            this.widget.updateDateTime(date);
           },
         ),
       ),
-      onChanged: (_) => widget.updateDateTime(null),
+      onChanged: (_) => this.widget.updateDateTime(null),
     );
   }
 }

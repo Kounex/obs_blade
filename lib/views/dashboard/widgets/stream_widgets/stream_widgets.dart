@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stream_chat/stream_chat.dart';
 
 import '../../../../shared/general/base_card.dart';
 import 'stats/stats.dart';
-import 'twitch_chat/twitch_chat.dart';
 
 class StreamWidgets extends StatelessWidget {
   @override
@@ -14,8 +14,8 @@ class StreamWidgets extends StatelessWidget {
             title: 'Chat',
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 500.0,
-              child: TwitchChat(
+              height: 550.0,
+              child: StreamChat(
                 usernameRowPadding: true,
               ),
             ),
@@ -26,7 +26,7 @@ class StreamWidgets extends StatelessWidget {
             title: 'Stats',
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 500.0,
+              height: 550.0,
               child: Stats(),
             ),
           ),

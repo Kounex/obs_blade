@@ -61,6 +61,7 @@ dependencies:
   smooth_page_indicator: ^0.2.0
   keyboard_actions: ^3.3.0+1
   flutter_svg: ^0.19.0
+  expandable: ^4.1.4
 
 dependency_overrides: null
 

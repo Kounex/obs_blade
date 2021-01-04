@@ -16,7 +16,7 @@ import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
-import 'widgets/dialogs/save_edit_connection.dart';
+import 'widgets/save_edit_connection_dialog.dart';
 import 'widgets/reconnect_toast.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
@@ -101,7 +101,7 @@ class _DashboardViewState extends State<_DashboardView> {
         title: 'Save Connection',
         body:
             'Do you want to save this connection? You can do it later as well!\n\n(Click on the icon on the top right of the screen and select "Save / Edit Connection"',
-        onOk: () {
+        onOk: (_) {
           ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: SaveEditConnectionDialog(),
@@ -119,7 +119,7 @@ class _DashboardViewState extends State<_DashboardView> {
           alignment: Alignment.topCenter,
           children: [
             CustomScrollView(
-              physics: context.read<DashboardStore>().isPointerOnTwitch
+              physics: context.read<DashboardStore>().isPointerOnChat
                   ? NeverScrollableScrollPhysics()
                   : ClampingScrollPhysics(),
               controller: ModalRoute.of(context).settings.arguments,

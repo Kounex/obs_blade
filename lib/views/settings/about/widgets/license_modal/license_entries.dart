@@ -90,7 +90,7 @@ class _LicenseEntriesState extends State<LicenseEntries> {
           return Scrollbar(
             child: ListView.builder(
               shrinkWrap: true,
-              controller: widget.scrollController,
+              controller: this.widget.scrollController,
               padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).padding.bottom),
               itemCount: snapshot.data.packages.length,

@@ -29,7 +29,7 @@ class _StatsState extends State<Stats> {
       return Column(
         children: [
           Padding(
-            padding: widget.pageIndicatorPadding ??
+            padding: this.widget.pageIndicatorPadding ??
                 EdgeInsets.only(
                   top: 12.0,
                 ),

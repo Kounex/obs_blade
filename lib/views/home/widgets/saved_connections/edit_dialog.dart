@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
@@ -33,10 +34,10 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.connection.name);
-    _ip = TextEditingController(text: widget.connection.ip);
-    _port = TextEditingController(text: widget.connection.port.toString());
-    _pw = TextEditingController(text: widget.connection.pw);
+    _name = TextEditingController(text: this.widget.connection.name);
+    _ip = TextEditingController(text: this.widget.connection.ip);
+    _port = TextEditingController(text: this.widget.connection.port.toString());
+    _pw = TextEditingController(text: this.widget.connection.pw);
   }
 
   @override
@@ -51,16 +52,16 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               style: TextStyle(color: CupertinoColors.destructiveRed),
             ),
             onPressed: () {
-              showCupertinoDialog(
+              ModalHandler.showBaseDialog(
                 context: context,
-                builder: (context) => ConfirmationDialog(
+                dialogWidget: ConfirmationDialog(
                   title: 'Delete Connection',
                   body:
                       'Are you sure you want to delete this connection? This action can\'t be undone!',
                   isYesDestructive: true,
-                  onOk: () {
+                  onOk: (_) {
                     Navigator.of(context).pop();
-                    widget.connection.delete();
+                    this.widget.connection.delete();
                   },
                 ),
               );
@@ -81,7 +82,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               autocorrect: true,
               check: (name) => name.trim().length == 0
                   ? 'Please provide a name!'
-                  : name.trim() != widget.connection.name &&
+                  : name.trim() != this.widget.connection.name &&
                           Hive.box<Connection>(HiveKeys.SavedConnections.name)
                               .values
                               .any((connection) => connection.name == name)
@@ -140,11 +141,11 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     _portValidator.currentState.isValid
                 ? () {
                     Navigator.of(context).pop();
-                    widget.connection.name = _name.text.trim();
-                    widget.connection.ip = _ip.text;
-                    widget.connection.port = int.parse(_port.text);
-                    widget.connection.pw = _pw.text;
-                    widget.connection.save();
+                    this.widget.connection.name = _name.text.trim();
+                    this.widget.connection.ip = _ip.text;
+                    this.widget.connection.port = int.parse(_port.text);
+                    this.widget.connection.pw = _pw.text;
+                    this.widget.connection.save();
                   }
                 : null,
           ),

@@ -97,7 +97,7 @@ class UsernameActionRow extends StatelessWidget {
                       body:
                           'Are you sure you want to delete the currently selected Twitch Username? This action can\'t be undone!',
                       isYesDestructive: true,
-                      onOk: () {
+                      onOk: (_) {
                         twitchUsernames.removeAt(
                             twitchUsernames.indexOf(selectedTwitchUsername));
                         this.settingsBox.put(

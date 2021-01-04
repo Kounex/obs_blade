@@ -52,7 +52,7 @@ class _BlockEntryState extends State<BlockEntry> {
   bool _isPressed = false;
 
   _handleIsPressed(bool isPressed) =>
-      widget.navigateTo != null || widget.onTap != null
+      this.widget.navigateTo != null || this.widget.onTap != null
           ? setState(() => _isPressed = isPressed)
           : null;
 
@@ -63,13 +63,13 @@ class _BlockEntryState extends State<BlockEntry> {
       onTapDown: (_) => _handleIsPressed(true),
       onTapUp: (_) => _handleIsPressed(false),
       onTapCancel: () => _handleIsPressed(false),
-      onTap: widget.navigateTo != null
-          ? () => widget.rootNavigation
+      onTap: this.widget.navigateTo != null
+          ? () => this.widget.rootNavigation
               ? Navigator.of(context, rootNavigator: true)
-                  .pushReplacementNamed(widget.navigateTo)
-              : Navigator.of(context).pushNamed(widget.navigateTo)
-          : widget.onTap != null
-              ? () => widget.onTap()
+                  .pushReplacementNamed(this.widget.navigateTo)
+              : Navigator.of(context).pushNamed(this.widget.navigateTo)
+          : this.widget.onTap != null
+              ? () => this.widget.onTap()
               : null,
       child: Container(
         color: _isPressed
@@ -82,20 +82,20 @@ class _BlockEntryState extends State<BlockEntry> {
               left: kblockEntryPadding, right: kblockEntryPadding),
           child: Row(
             children: [
-              if (widget.leading != null)
+              if (this.widget.leading != null)
                 Padding(
                   padding: EdgeInsets.only(right: kblockEntryPadding),
                   child: SizedBox(
                     width: kblockEntryIconSize,
                     child: Hero(
-                      tag: widget.title,
-                      placeholderBuilder: widget.heroPlaceholder != null
+                      tag: this.widget.title,
+                      placeholderBuilder: this.widget.heroPlaceholder != null
                           ? (context, heroSize, child) =>
-                              Icon(widget.heroPlaceholder)
+                              Icon(this.widget.heroPlaceholder)
                           : null,
                       child: Icon(
-                        widget.leading,
-                        size: widget.leadingSize ?? kblockEntryIconSize,
+                        this.widget.leading,
+                        size: this.widget.leadingSize ?? kblockEntryIconSize,
                       ),
                     ),
                   ),
@@ -103,24 +103,24 @@ class _BlockEntryState extends State<BlockEntry> {
               Expanded(
                 child: Row(
                   children: [
-                    Text(widget.title,
+                    Text(this.widget.title,
                         style: Theme.of(context).textTheme.subtitle1
                         // .copyWith(fontSize: 15.0),
                         ),
-                    if (widget.help != null)
+                    if (this.widget.help != null)
                       Padding(
                         padding: const EdgeInsets.only(left: 12.0),
-                        child: QuestionMarkTooltip(message: widget.help),
+                        child: QuestionMarkTooltip(message: this.widget.help),
                       )
                   ],
                 ),
               ),
-              widget.navigateTo != null || widget.onTap != null
+              this.widget.navigateTo != null || this.widget.onTap != null
                   ? Row(
                       children: [
-                        if (widget.navigateToResult != null)
+                        if (this.widget.navigateToResult != null)
                           Text(
-                            widget.navigateToResult,
+                            this.widget.navigateToResult,
                             style: Theme.of(context)
                                 .textTheme
                                 .caption
@@ -132,7 +132,7 @@ class _BlockEntryState extends State<BlockEntry> {
                         ),
                       ],
                     )
-                  : widget.trailing,
+                  : this.widget.trailing,
             ],
           ),
         ),

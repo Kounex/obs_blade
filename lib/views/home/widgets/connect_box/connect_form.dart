@@ -37,10 +37,10 @@ class _ConnectFormState extends State<ConnectForm> {
   @override
   void initState() {
     super.initState();
-    _ip = TextEditingController(text: widget.connection?.ip);
+    _ip = TextEditingController(text: this.widget.connection?.ip);
     _port = TextEditingController(
-        text: widget.connection?.port?.toString() ?? '4444');
-    _pw = TextEditingController(text: widget.connection?.pw);
+        text: this.widget.connection?.port?.toString() ?? '4444');
+    _pw = TextEditingController(text: this.widget.connection?.pw);
   }
 
   @override
@@ -60,8 +60,8 @@ class _ConnectFormState extends State<ConnectForm> {
                 child: TextFormField(
                   controller: _ip,
                   readOnly: !widget.saveCredentials,
-                  enabled: widget.saveCredentials,
-                  onChanged: (ip) => widget.saveCredentials
+                  enabled: this.widget.saveCredentials,
+                  onChanged: (ip) => this.widget.saveCredentials
                       ? landingStore.typedInConnection.ip = ip
                       : null,
                   decoration: InputDecoration(
@@ -80,11 +80,11 @@ class _ConnectFormState extends State<ConnectForm> {
                     controller: _port,
                     focusNode: _portFocusNode,
                     readOnly: !widget.saveCredentials,
-                    enabled: widget.saveCredentials,
+                    enabled: this.widget.saveCredentials,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (port) => widget.saveCredentials
+                    onChanged: (port) => this.widget.saveCredentials
                         ? landingStore.typedInConnection.port = int.parse(port)
                         : null,
                     decoration:
@@ -100,7 +100,7 @@ class _ConnectFormState extends State<ConnectForm> {
             builder: (context, snapshot) => StatefulBuilder(
               builder: (context, innerState) => TextFormField(
                 controller: _pw,
-                onChanged: (pw) => widget.saveCredentials
+                onChanged: (pw) => this.widget.saveCredentials
                     ? landingStore.typedInConnection.pw = pw
                     : null,
                 obscureText: _obscurePWText,

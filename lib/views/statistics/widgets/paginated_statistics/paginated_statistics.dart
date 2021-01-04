@@ -23,7 +23,7 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
   int _page = 1;
 
   int _getMaxPages(int amountStatisticsEntries) =>
-      (widget.filteredAndSortedStreamData.length / amountStatisticsEntries)
+      (this.widget.filteredAndSortedStreamData.length / amountStatisticsEntries)
           .ceil();
 
   @override
@@ -44,13 +44,13 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) => StreamEntry(
-                  pastStreamData: widget.filteredAndSortedStreamData[
+                  pastStreamData: this.widget.filteredAndSortedStreamData[
                       ((_page - 1) *
                               statisticsStore.amountStatisticEntries.number) +
                           index]),
               separatorBuilder: (context, index) => Divider(height: 0),
               itemCount: min(
-                  widget.filteredAndSortedStreamData.length -
+                  this.widget.filteredAndSortedStreamData.length -
                       ((_page - 1) *
                           statisticsStore.amountStatisticEntries.number),
                   statisticsStore.amountStatisticEntries.number),

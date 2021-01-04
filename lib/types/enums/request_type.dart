@@ -48,7 +48,7 @@ enum RequestType {
   /// Get settings of the specified source
   ///
   /// { 'sourceName': String } - Source name
-  /// (Optional) { 'sourceType':	String } - Type of the specified source. Useful for type-checking if you expect a specific settings schema
+  /// (Optional) { 'sourceType':	String } - Type of the specified source.Useful for type-checking if you expect a specific settings schema
   GetSourceSettings,
 
   /// List existing outputs
@@ -60,6 +60,17 @@ enum RequestType {
   ///
   /// No specified parameters
   GetSpecialSources,
+
+  /// At least embedPictureFormat or saveToFilePath must be specified. Clients can specify width and height parameters to receive scaled pictures. Aspect ratio is preserved if only one of these two parameters is specified.
+  ///
+  /// (Optional) { 'sourceName':	String } - Source name. Note that, since scenes are also sources, you can also provide a scene name. If not provided, the currently active scene is used
+  /// (Optional) { 'embedPictureFormat': String } - Format of the Data URI encoded picture. Can be "png", "jpg", "jpeg" or "bmp" (or any other value supported by Qt's Image module)
+  /// (Optional) { 'saveToFilePath': String } - Full file path (file extension included) where the captured image is to be saved. Can be in a format different from pictureFormat. Can be a relative path
+  /// (Optional) { 'fileFormat': String } - Format to save the image file as (one of the values provided in the supported-image-export-formats response field of GetVersion). If not specified, tries to guess based on file extension
+  /// (Optional) { 'compressionQuality': int } - Compression ratio between -1 and 100 to write the image with. -1 is automatic, 1 is smallest file/most compression, 100 is largest file/least compression. Varies with image type
+  /// (Optional) { 'width': int } - Screenshot width. Defaults to the source's base width
+  /// (Optional) { 'height': int } - Screenshot height. Defaults to the source's base width
+  TakeSourceScreenshot,
 
   /**
    * -----------------------------------------------------------------------

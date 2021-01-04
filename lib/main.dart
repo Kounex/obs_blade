@@ -45,7 +45,7 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   }
 
   @override
-  Widget build(BuildContext context) => widget.app;
+  Widget build(BuildContext context) => this.widget.app;
 }
 
 void main() async {

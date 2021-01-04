@@ -65,7 +65,7 @@ class TransculentSliverAppBar extends StatefulWidget {
   /// A widget to display before the [title].
   ///
   /// If this is null and [automaticallyImplyLeading] is set to true, the [AppBar] will
-  /// imply an appropriate widget. For example, if the [AppBar] is in a [Scaffold]
+  /// imply an appropriate this.widget. For example, if the [AppBar] is in a [Scaffold]
   /// that also has a [Drawer], the [Scaffold] will fill this widget with an
   /// [IconButton] that opens the drawer. If there's no [Drawer] and the parent
   /// [Navigator] can go back, the [AppBar] will use a [BackButton] that calls
@@ -85,7 +85,7 @@ class TransculentSliverAppBar extends StatefulWidget {
   /// of the app.
   final Widget title;
 
-  /// Widgets to display after the [title] widget.
+  /// Widgets to display after the [title] this.widget.
   ///
   /// Typically these widgets are [IconButton]s representing common operations.
   /// For less common operations, consider using a [PopupMenuButton] as the
@@ -122,7 +122,7 @@ class TransculentSliverAppBar extends StatefulWidget {
   /// be the same as the app bar's overall height.
   ///
   /// When using [SliverAppBar.flexibleSpace], the [SliverAppBar.expandedHeight]
-  /// must be large enough to accommodate the [SliverAppBar.flexibleSpace] widget.
+  /// must be large enough to accommodate the [SliverAppBar.flexibleSpace] this.widget.
   ///
   /// Typically a [FlexibleSpaceBar]. See [FlexibleSpaceBar] for details.
   final Widget flexibleSpace;
@@ -359,7 +359,7 @@ class TransculentSliverAppBar extends StatefulWidget {
   /// By default, the value of `toolbarHeight` is [kToolbarHeight].
   final double toolbarHeight;
 
-  /// Defines the width of [leading] widget.
+  /// Defines the width of [leading] this.widget.
   ///
   /// By default, the value of `leadingWidth` is 56.0.
   final double leadingWidth;
@@ -378,7 +378,7 @@ class _TransculentSliverAppBarState extends State<TransculentSliverAppBar>
   PersistentHeaderShowOnScreenConfiguration _showOnScreenConfiguration;
 
   void _updateSnapConfiguration() {
-    if (widget.snap && widget.floating) {
+    if (this.widget.snap && this.widget.floating) {
       _snapConfiguration = FloatingHeaderSnapConfiguration(
         curve: Curves.easeOut,
         duration: const Duration(milliseconds: 200),
@@ -387,17 +387,17 @@ class _TransculentSliverAppBarState extends State<TransculentSliverAppBar>
       _snapConfiguration = null;
     }
 
-    _showOnScreenConfiguration = widget.floating & widget.snap
+    _showOnScreenConfiguration = this.widget.floating & this.widget.snap
         ? const PersistentHeaderShowOnScreenConfiguration(
             minShowOnScreenExtent: double.infinity)
         : null;
   }
 
   void _updateStretchConfiguration() {
-    if (widget.stretch) {
+    if (this.widget.stretch) {
       _stretchConfiguration = OverScrollHeaderStretchConfiguration(
-        stretchTriggerOffset: widget.stretchTriggerOffset,
-        onStretchTrigger: widget.onStretchTrigger,
+        stretchTriggerOffset: this.widget.stretchTriggerOffset,
+        onStretchTrigger: this.widget.onStretchTrigger,
       );
     } else {
       _stretchConfiguration = null;
@@ -414,61 +414,63 @@ class _TransculentSliverAppBarState extends State<TransculentSliverAppBar>
   @override
   void didUpdateWidget(TransculentSliverAppBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.snap != oldWidget.snap || widget.floating != oldWidget.floating)
-      _updateSnapConfiguration();
-    if (widget.stretch != oldWidget.stretch) _updateStretchConfiguration();
+    if (this.widget.snap != oldWidget.snap ||
+        this.widget.floating != oldWidget.floating) _updateSnapConfiguration();
+    if (this.widget.stretch != oldWidget.stretch) _updateStretchConfiguration();
   }
 
   @override
   Widget build(BuildContext context) {
     assert(!widget.primary || debugCheckHasMediaQuery(context));
-    final double bottomHeight = widget.bottom?.preferredSize?.height ?? 0.0;
+    final double bottomHeight =
+        this.widget.bottom?.preferredSize?.height ?? 0.0;
     final double topPadding =
-        widget.primary ? MediaQuery.of(context).padding.top : 0.0;
-    final double collapsedHeight =
-        (widget.pinned && widget.floating && widget.bottom != null)
-            ? (widget.collapsedHeight ?? 0.0) + bottomHeight + topPadding
-            : (widget.collapsedHeight ?? widget.toolbarHeight) +
-                bottomHeight +
-                topPadding;
+        this.widget.primary ? MediaQuery.of(context).padding.top : 0.0;
+    final double collapsedHeight = (this.widget.pinned &&
+            this.widget.floating &&
+            this.widget.bottom != null)
+        ? (this.widget.collapsedHeight ?? 0.0) + bottomHeight + topPadding
+        : (this.widget.collapsedHeight ?? this.widget.toolbarHeight) +
+            bottomHeight +
+            topPadding;
 
     return MediaQuery.removePadding(
       context: context,
       removeBottom: true,
       child: SliverPersistentHeader(
-        floating: widget.floating,
-        pinned: widget.pinned,
+        floating: this.widget.floating,
+        pinned: this.widget.pinned,
         delegate: _SliverAppBarDelegate(
           vsync: this,
-          leading: widget.leading,
-          automaticallyImplyLeading: widget.automaticallyImplyLeading,
-          title: widget.title,
-          actions: widget.actions,
-          flexibleSpace: widget.flexibleSpace,
-          bottom: widget.bottom,
-          elevation: widget.elevation,
-          shadowColor: widget.shadowColor,
-          forceElevated: widget.forceElevated,
-          backgroundColor: widget.backgroundColor,
-          brightness: widget.brightness,
-          iconTheme: widget.iconTheme,
-          actionsIconTheme: widget.actionsIconTheme,
-          textTheme: widget.textTheme,
-          primary: widget.primary,
-          centerTitle: widget.centerTitle,
-          excludeHeaderSemantics: widget.excludeHeaderSemantics,
-          titleSpacing: widget.titleSpacing,
-          expandedHeight: widget.expandedHeight,
+          leading: this.widget.leading,
+          automaticallyImplyLeading: this.widget.automaticallyImplyLeading,
+          title: this.widget.title,
+          actions: this.widget.actions,
+          flexibleSpace: this.widget.flexibleSpace,
+          bottom: this.widget.bottom,
+          elevation: this.widget.elevation,
+          shadowColor: this.widget.shadowColor,
+          forceElevated: this.widget.forceElevated,
+          backgroundColor: this.widget.backgroundColor,
+          brightness: this.widget.brightness,
+          iconTheme: this.widget.iconTheme,
+          actionsIconTheme: this.widget.actionsIconTheme,
+          textTheme: this.widget.textTheme,
+          primary: this.widget.primary,
+          centerTitle: this.widget.centerTitle,
+          excludeHeaderSemantics: this.widget.excludeHeaderSemantics,
+          titleSpacing: this.widget.titleSpacing,
+          expandedHeight: this.widget.expandedHeight,
           collapsedHeight: collapsedHeight,
           topPadding: topPadding,
-          floating: widget.floating,
-          pinned: widget.pinned,
-          shape: widget.shape,
+          floating: this.widget.floating,
+          pinned: this.widget.pinned,
+          shape: this.widget.shape,
           snapConfiguration: _snapConfiguration,
           stretchConfiguration: _stretchConfiguration,
           showOnScreenConfiguration: _showOnScreenConfiguration,
-          toolbarHeight: widget.toolbarHeight,
-          leadingWidth: widget.leadingWidth,
+          toolbarHeight: this.widget.toolbarHeight,
+          leadingWidth: this.widget.leadingWidth,
         ),
       ),
     );
@@ -768,5 +770,5 @@ class _FloatingAppBarState extends State<_FloatingAppBar> {
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) => this.widget.child;
 }

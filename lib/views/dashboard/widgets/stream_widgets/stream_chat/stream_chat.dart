@@ -11,16 +11,16 @@ import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
 
-class TwitchChat extends StatefulWidget {
+class StreamChat extends StatefulWidget {
   final bool usernameRowPadding;
 
-  TwitchChat({this.usernameRowPadding = false});
+  StreamChat({this.usernameRowPadding = false});
 
   @override
-  _TwitchChatState createState() => _TwitchChatState();
+  _StreamChatState createState() => _StreamChatState();
 }
 
-class _TwitchChatState extends State<TwitchChat>
+class _StreamChatState extends State<StreamChat>
     with AutomaticKeepAliveClientMixin {
   InAppWebViewController _webController;
 
@@ -36,15 +36,19 @@ class _TwitchChatState extends State<TwitchChat>
       children: [
         Padding(
           padding: EdgeInsets.only(
-              left: widget.usernameRowPadding ? 4.0 : 0.0,
-              right: widget.usernameRowPadding ? 4.0 : 0.0,
-              bottom: 12.0),
+            left: this.widget.usernameRowPadding ? 4.0 : 0.0,
+            right: this.widget.usernameRowPadding ? 4.0 : 0.0,
+            bottom: 12.0,
+          ),
           child: ChatUsernameBar(),
         ),
         Expanded(
           child: ValueListenableBuilder(
-            valueListenable: Hive.box(HiveKeys.Settings.name)
-                .listenable(keys: [SettingsKeys.SelectedTwitchUsername.name]),
+            valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
+              SettingsKeys.SelectedChatType.name,
+              SettingsKeys.SelectedTwitchUsername.name,
+              SettingsKeys.SelectedYoutubeUsername.name,
+            ]),
             builder: (context, Box settingsBox, child) => Stack(
               alignment: Alignment.center,
               children: [
@@ -56,16 +60,17 @@ class _TwitchChatState extends State<TwitchChat>
                 /// the scroll
                 Listener(
                   onPointerDown: (onPointerDown) =>
-                      dashboardStore.setPointerOnTwitch(
+                      dashboardStore.setPointerOnChat(
                           onPointerDown.localPosition.dy > 125.0 &&
                               onPointerDown.localPosition.dy < 350.0),
-                  onPointerUp: (_) => dashboardStore.setPointerOnTwitch(false),
+                  onPointerUp: (_) => dashboardStore.setPointerOnChat(false),
                   onPointerCancel: (_) =>
-                      dashboardStore.setPointerOnTwitch(false),
+                      dashboardStore.setPointerOnChat(false),
                   child: InAppWebView(
                     key: Key(
                       settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
                     ),
+                    // https://www.youtube.com/live_chat?is_popout=1&v=
                     initialUrl: settingsBox.get(
                                 SettingsKeys.SelectedTwitchUsername.name) !=
                             null
@@ -94,7 +99,7 @@ class _TwitchChatState extends State<TwitchChat>
                       child: BaseResult(
                           icon: BaseResultIcon.Negative,
                           text:
-                              'No Twitch Username selected, so no ones chat can be displayed!'),
+                              'No ${settingsBox.get(SettingsKeys.SelectedChatType.name, defaultValue: 'Twitch')} Username selected, so no ones chat can be displayed!'),
                     ),
                   ),
               ],

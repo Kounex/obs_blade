@@ -48,29 +48,30 @@ class ValidationCupertinoTextfieldState
     return Column(
       children: [
         CupertinoTextField(
-          focusNode: widget.focusNode,
-          controller: widget.controller
+          focusNode: this.widget.focusNode,
+          controller: this.widget.controller
             ..addListener(() {
-              if (!_textHasBeenEdited && widget.controller.text.length > 0)
+              if (!_textHasBeenEdited && this.widget.controller.text.length > 0)
                 _textHasBeenEdited = true;
 
-              if (widget.check != null && _textHasBeenEdited)
+              if (this.widget.check != null && _textHasBeenEdited)
                 setState(
-                  (() => validationText = widget.check(widget.controller.text)),
+                  (() => validationText =
+                      this.widget.check(this.widget.controller.text)),
                 );
             }),
-          placeholder: widget.placeholder,
-          keyboardType: widget.keyboardType,
-          inputFormatters: widget.inputFormatters ?? [],
-          autocorrect: widget.autocorrect,
-          minLines: widget.minLines,
-          maxLines: widget.maxLines ?? widget.minLines,
+          placeholder: this.widget.placeholder,
+          keyboardType: this.widget.keyboardType,
+          inputFormatters: this.widget.inputFormatters ?? [],
+          autocorrect: this.widget.autocorrect,
+          minLines: this.widget.minLines,
+          maxLines: this.widget.maxLines ?? this.widget.minLines,
         ),
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: EdgeInsets.only(
-                top: 4.0, left: 4.0, bottom: widget.bottomPadding),
+                top: 4.0, left: 4.0, bottom: this.widget.bottomPadding),
             child: Text(
               validationText ?? '',
               style: TextStyle(

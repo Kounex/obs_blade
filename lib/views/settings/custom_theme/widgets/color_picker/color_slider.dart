@@ -27,7 +27,8 @@ class _ColorSliderState extends State<ColorSlider> {
 
   @override
   void initState() {
-    _colorVal = TextEditingController(text: widget.value?.toString() ?? '0');
+    _colorVal =
+        TextEditingController(text: this.widget.value?.toString() ?? '0');
     _colorValueFocusNode.addListener(() {
       if (_colorValueFocusNode.hasFocus) {
         _colorVal.selection =
@@ -44,7 +45,7 @@ class _ColorSliderState extends State<ColorSlider> {
         SizedBox(
           width: 24.0,
           child: Text(
-            widget.label ?? '',
+            this.widget.label ?? '',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headline6,
           ),
@@ -55,9 +56,9 @@ class _ColorSliderState extends State<ColorSlider> {
             min: 0.0,
             max: 255.0,
             divisions: 255,
-            activeColor: widget.activeColor,
+            activeColor: this.widget.activeColor,
             onChanged: (value) {
-              widget.onChanged(value.toStringAsFixed(0));
+              this.widget.onChanged(value.toStringAsFixed(0));
               setState(() => _colorVal.text = value.toStringAsFixed(0));
             },
           ),
@@ -95,7 +96,7 @@ class _ColorSliderState extends State<ColorSlider> {
                       selection:
                           TextSelection.fromPosition(TextPosition(offset: 1)));
                 }
-                widget.onChanged(value);
+                this.widget.onChanged(value);
                 setState(() {});
               },
             ),

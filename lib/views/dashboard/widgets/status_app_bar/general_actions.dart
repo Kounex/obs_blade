@@ -10,7 +10,7 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:provider/provider.dart';
 
-import '../dialogs/save_edit_connection.dart';
+import '../save_edit_connection_dialog.dart';
 
 class GeneralActions extends StatelessWidget {
   @override
@@ -34,7 +34,7 @@ class GeneralActions extends StatelessWidget {
                       ? 'Are you sure you want to stop the stream? Nothing more to show or talk about? Or just tired or no time?\n\n... just to make sure it\'s intentional!'
                       : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',
                   isYesDestructive: true,
-                  onOk: () => NetworkHelper.makeRequest(
+                  onOk: (_) => NetworkHelper.makeRequest(
                       networkStore.activeSession.socket,
                       RequestType.StartStopStreaming),
                 ),
@@ -54,7 +54,7 @@ class GeneralActions extends StatelessWidget {
                       ? 'Do you want to stop recording? Got everything on tape as intended?\n\nIf yes: nice work!'
                       : 'Do you want to start recording? Recording unintentionally is not as bad as suddenly starting to stream!\n\nStill asking just to be sure!',
                   isYesDestructive: true,
-                  onOk: () => NetworkHelper.makeRequest(
+                  onOk: (_) => NetworkHelper.makeRequest(
                       networkStore.activeSession.socket,
                       RequestType.StartStopRecording),
                 ),

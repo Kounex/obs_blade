@@ -41,18 +41,22 @@ class _NestedScrollManagerState extends State<NestedScrollManager> {
         /// ListView
         if (_scrollThreshold.abs() >= SCROLL_THRESHOLD) {
           double scrollPosition =
-              widget.parentScrollController.offset + value.overscroll;
-          widget.parentScrollController.jumpTo(scrollPosition <
-                  widget.parentScrollController.position.minScrollExtent
+              this.widget.parentScrollController.offset + value.overscroll;
+          this.widget.parentScrollController.jumpTo(scrollPosition <
+                  this.widget.parentScrollController.position.minScrollExtent
               ? 0
               : scrollPosition >
-                      widget.parentScrollController.position.maxScrollExtent
-                  ? widget.parentScrollController.position.maxScrollExtent
+                      this
+                          .widget
+                          .parentScrollController
+                          .position
+                          .maxScrollExtent
+                  ? this.widget.parentScrollController.position.maxScrollExtent
                   : scrollPosition);
         }
         return true;
       },
-      child: widget.child,
+      child: this.widget.child,
     );
   }
 }

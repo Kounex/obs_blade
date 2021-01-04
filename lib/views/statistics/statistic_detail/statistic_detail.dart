@@ -119,7 +119,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     isYesDestructive: true,
                     body:
                         'Are you sure you want to delete this stream statistic entry? This action can\'t be undone so be sure this is what you actually want!',
-                    onOk: () {
+                    onOk: (_) {
                       pastStreamData.delete();
                       Navigator.of(context).pop();
                     },

@@ -26,8 +26,8 @@ class _FullOverlayState extends State<FullOverlay>
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: widget.animationDuration);
+    _controller = AnimationController(
+        vsync: this, duration: this.widget.animationDuration);
     _blur = Tween<double>(begin: 0.0, end: 9.0)
         .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
     _opacity = Tween<double>(begin: 0.0, end: 1.0)
@@ -43,8 +43,8 @@ class _FullOverlayState extends State<FullOverlay>
   @override
   Widget build(BuildContext context) {
     _controller.forward();
-    Future.delayed(
-        widget.showDuration, () => this.mounted ? _controller.reverse() : null);
+    Future.delayed(this.widget.showDuration,
+        () => this.mounted ? _controller.reverse() : null);
     return Stack(
       children: [
         SizedBox.expand(
@@ -59,7 +59,7 @@ class _FullOverlayState extends State<FullOverlay>
                 animation: _controller,
                 child: Padding(
                   padding: EdgeInsets.all(12.0),
-                  child: widget.content,
+                  child: this.widget.content,
                 ),
                 builder: (context, child) {
                   return BackdropFilter(

@@ -36,10 +36,14 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
   double _getRefreshOpacity(double barStretchOffset, double currentBarHeight) {
     double opacity = pow(
             1.4,
-            0.2 * (currentBarHeight - widget.expandedBarHeight) -
+            0.2 * (currentBarHeight - this.widget.expandedBarHeight) -
                 (barStretchOffset / 6)) -
         0.1;
-    return opacity > 1.0 ? 1.0 : opacity < 0.0 ? 0.0 : opacity;
+    return opacity > 1.0
+        ? 1.0
+        : opacity < 0.0
+            ? 0.0
+            : opacity;
   }
 
   @override
@@ -48,7 +52,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     double barStretchOffset = MediaQuery.of(context).size.height / 15;
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxHeight - widget.expandedBarHeight >=
+        if (constraints.maxHeight - this.widget.expandedBarHeight >=
                 barStretchOffset &&
             !_animController.isAnimating &&
             !landingStore.refreshable) {
@@ -56,14 +60,14 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
           landingStore.setRefreshable(true);
           _animController.forward().then((_) => _animController.animateTo(0.5));
         }
-        if (constraints.maxHeight - widget.expandedBarHeight <
+        if (constraints.maxHeight - this.widget.expandedBarHeight <
                 barStretchOffset &&
             landingStore.refreshable) {
           landingStore.setRefreshable(false);
           _animController.animateTo(0.0);
         }
         return Padding(
-          padding: EdgeInsets.only(top: widget.expandedBarHeight / 2),
+          padding: EdgeInsets.only(top: this.widget.expandedBarHeight / 2),
           child: Align(
             child: Opacity(
               opacity:

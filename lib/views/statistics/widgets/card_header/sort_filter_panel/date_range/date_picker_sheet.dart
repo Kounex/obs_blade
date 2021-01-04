@@ -28,17 +28,18 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
   @override
   void initState() {
     super.initState();
-    _date = widget.selectedDate ?? _initialDateTime();
+    _date = this.widget.selectedDate ?? _initialDateTime();
   }
 
   DateTime _initialDateTime() {
     DateTime now = DateTime.now();
     now = DateTime(now.year, now.month, now.day);
-    if (widget.selectedDate != null) {
-      return widget.selectedDate;
+    if (this.widget.selectedDate != null) {
+      return this.widget.selectedDate;
     } else {
-      if (widget.maximumDate != null && widget.maximumDate.isBefore(now)) {
-        return widget.maximumDate;
+      if (this.widget.maximumDate != null &&
+          this.widget.maximumDate.isBefore(now)) {
+        return this.widget.maximumDate;
       }
     }
     return now;
@@ -91,8 +92,8 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
             child: CupertinoDatePicker(
               mode: CupertinoDatePickerMode.date,
               initialDateTime: _date,
-              minimumDate: widget.minimumDate,
-              maximumDate: widget.maximumDate ?? _initialDateTime(),
+              minimumDate: this.widget.minimumDate,
+              maximumDate: this.widget.maximumDate ?? _initialDateTime(),
               onDateTimeChanged: (dateTime) => _date = dateTime,
             ),
           ),

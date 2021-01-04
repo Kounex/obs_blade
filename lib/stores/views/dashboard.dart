@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/classes/stream/responses/take_source_screenshot.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -96,7 +99,17 @@ abstract class _DashboardStore with Store {
   int sceneTransitionDurationMS;
 
   @observable
-  bool isPointerOnTwitch = false;
+  bool shouldRequestPreviewImage = false;
+
+  @observable
+  Uint8List scenePreviewImageBytes;
+
+  /// Checks whether the user is trying to scroll while the pointer (finger) is
+  /// on the chat - this means the user probably wants to scroll the chat.
+  /// If the user wants to scroll inside the app, the pointer (finger) may not
+  /// be on the chat but above or underneath (UI wise)
+  @observable
+  bool isPointerOnChat = false;
 
   /// Indicator (which is used in [_checkOBSConnection]) whether we attempt a
   /// reconnect since the WebSocket connection closed. Can and is currently listened
@@ -159,6 +172,18 @@ abstract class _DashboardStore with Store {
       }
     });
   }
+
+  void requestPreviewImage() => NetworkHelper.makeRequest(
+        this.networkStore.activeSession.socket,
+        RequestType.TakeSourceScreenshot,
+        {
+          'sourceName': this.activeSceneName,
+          'embedPictureFormat': 'jpg',
+          'compressionQuality': 50,
+          // 'width': 100,
+          // 'height': 100,
+        },
+      );
 
   /// Check if we have an ongoing statistics going (!= null) and set it
   /// to null to indicate that we are done with this one and can start
@@ -255,8 +280,17 @@ abstract class _DashboardStore with Store {
   }
 
   @action
-  void setPointerOnTwitch(bool isPointerOnTwitch) =>
-      this.isPointerOnTwitch = isPointerOnTwitch;
+  void setShouldRequestPreviewImage(bool shouldRequestPreviewImage) {
+    this.shouldRequestPreviewImage = shouldRequestPreviewImage;
+    if (shouldRequestPreviewImage) {
+      this.scenePreviewImageBytes = null;
+      this.requestPreviewImage();
+    }
+  }
+
+  @action
+  void setPointerOnChat(bool isPointerOnChat) =>
+      this.isPointerOnChat = isPointerOnChat;
 
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
@@ -504,6 +538,15 @@ abstract class _DashboardStore with Store {
         //     ListOutputsResponse(response.json);
         // listOutputsResponse.outputs.forEach(
         //     (output) => print('${output.name}: ${output.flags.audio}'));
+        break;
+      case RequestType.TakeSourceScreenshot:
+        TakeSourceScreenshotResponse takeSourceScreenshotResponse =
+            TakeSourceScreenshotResponse(response.json);
+
+        this.scenePreviewImageBytes =
+            base64Decode(takeSourceScreenshotResponse.img.split(',')[1]);
+
+        if (this.shouldRequestPreviewImage) this.requestPreviewImage();
         break;
       default:
         break;

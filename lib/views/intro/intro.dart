@@ -152,7 +152,7 @@ class _IntroViewState extends State<_IntroView> {
                 child: SlideControls(
                   pageController: _pageController,
                   amountChildren: _pageChildren.length,
-                  manually: widget.manually,
+                  manually: this.widget.manually,
                 ),
               ),
             )

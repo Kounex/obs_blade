@@ -15,7 +15,7 @@ class InfoDialog extends StatelessWidget {
     return CupertinoAlertDialog(
       title: this.title != null
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(this.title),
             )
           : null,

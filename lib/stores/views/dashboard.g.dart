@@ -215,19 +215,52 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$isPointerOnTwitchAtom =
-      Atom(name: '_DashboardStore.isPointerOnTwitch');
+  final _$shouldRequestPreviewImageAtom =
+      Atom(name: '_DashboardStore.shouldRequestPreviewImage');
 
   @override
-  bool get isPointerOnTwitch {
-    _$isPointerOnTwitchAtom.reportRead();
-    return super.isPointerOnTwitch;
+  bool get shouldRequestPreviewImage {
+    _$shouldRequestPreviewImageAtom.reportRead();
+    return super.shouldRequestPreviewImage;
   }
 
   @override
-  set isPointerOnTwitch(bool value) {
-    _$isPointerOnTwitchAtom.reportWrite(value, super.isPointerOnTwitch, () {
-      super.isPointerOnTwitch = value;
+  set shouldRequestPreviewImage(bool value) {
+    _$shouldRequestPreviewImageAtom
+        .reportWrite(value, super.shouldRequestPreviewImage, () {
+      super.shouldRequestPreviewImage = value;
+    });
+  }
+
+  final _$scenePreviewImageBytesAtom =
+      Atom(name: '_DashboardStore.scenePreviewImageBytes');
+
+  @override
+  Uint8List get scenePreviewImageBytes {
+    _$scenePreviewImageBytesAtom.reportRead();
+    return super.scenePreviewImageBytes;
+  }
+
+  @override
+  set scenePreviewImageBytes(Uint8List value) {
+    _$scenePreviewImageBytesAtom
+        .reportWrite(value, super.scenePreviewImageBytes, () {
+      super.scenePreviewImageBytes = value;
+    });
+  }
+
+  final _$isPointerOnChatAtom = Atom(name: '_DashboardStore.isPointerOnChat');
+
+  @override
+  bool get isPointerOnChat {
+    _$isPointerOnChatAtom.reportRead();
+    return super.isPointerOnChat;
+  }
+
+  @override
+  set isPointerOnChat(bool value) {
+    _$isPointerOnChatAtom.reportWrite(value, super.isPointerOnChat, () {
+      super.isPointerOnChat = value;
     });
   }
 
@@ -277,11 +310,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
-  void setPointerOnTwitch(bool isPointerOnTwitch) {
+  void setShouldRequestPreviewImage(bool shouldRequestPreviewImage) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
-        name: '_DashboardStore.setPointerOnTwitch');
+        name: '_DashboardStore.setShouldRequestPreviewImage');
     try {
-      return super.setPointerOnTwitch(isPointerOnTwitch);
+      return super.setShouldRequestPreviewImage(shouldRequestPreviewImage);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setPointerOnChat(bool isPointerOnChat) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setPointerOnChat');
+    try {
+      return super.setPointerOnChat(isPointerOnChat);
     } finally {
       _$_DashboardStoreActionController.endAction(_$actionInfo);
     }
@@ -324,7 +368,9 @@ scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},
 globalAudioSceneItems: ${globalAudioSceneItems},
 sceneTransitionDurationMS: ${sceneTransitionDurationMS},
-isPointerOnTwitch: ${isPointerOnTwitch},
+shouldRequestPreviewImage: ${shouldRequestPreviewImage},
+scenePreviewImageBytes: ${scenePreviewImageBytes},
+isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
 currentSoundboardSceneItems: ${currentSoundboardSceneItems},
 currentAudioSceneItems: ${currentAudioSceneItems}

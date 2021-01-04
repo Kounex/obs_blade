@@ -35,7 +35,7 @@ class _InputDialogState extends State<InputDialog> {
 
   @override
   void initState() {
-    _controller = TextEditingController(text: widget.inputText ?? '');
+    _controller = TextEditingController(text: this.widget.inputText ?? '');
     super.initState();
   }
 
@@ -49,20 +49,20 @@ class _InputDialogState extends State<InputDialog> {
   Widget build(BuildContext context) {
     return CupertinoAlertDialog(
       title: Padding(
-        padding: const EdgeInsets.only(bottom: 4.0),
-        child: Text(widget.title),
+        padding: const EdgeInsets.only(bottom: 8.0),
+        child: Text(this.widget.title),
       ),
       content: Column(
         children: [
-          Text(widget.body),
+          Text(this.widget.body),
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: ValidationCupertinoTextfield(
               key: _validationKey,
               controller: _controller..addListener(() => setState(() {})),
-              placeholder: widget.inputPlaceholder,
-              autocorrect: widget.inputAutocorrect,
-              check: widget.inputCheck,
+              placeholder: this.widget.inputPlaceholder,
+              autocorrect: this.widget.inputAutocorrect,
+              check: this.widget.inputCheck,
             ),
           ),
         ],
@@ -79,7 +79,7 @@ class _InputDialogState extends State<InputDialog> {
             onPressed: _validationKey.currentState.isValid
                 ? () {
                     if (_validationKey.currentState.isValid) {
-                      widget.onSave(_controller.text);
+                      this.widget.onSave(_controller.text);
                       Navigator.of(context).pop();
                     }
                   }

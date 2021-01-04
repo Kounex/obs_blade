@@ -30,7 +30,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
 
   @override
   void initState() {
-    _customTheme = widget.customTheme ?? CustomTheme.basic();
+    _customTheme = this.widget.customTheme ?? CustomTheme.basic();
     _name = TextEditingController(text: _customTheme.name);
     _description = TextEditingController(text: _customTheme.description);
     super.initState();
@@ -43,7 +43,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
     if (Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
         .values
         .any((customTheme) => customTheme.name == name)) {
-      if (widget.customTheme != null && widget.customTheme.name != name) {
+      if (this.widget.customTheme != null &&
+          this.widget.customTheme.name != name) {
         return 'A theme with this name already exists!';
       }
     }
@@ -70,7 +71,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                 Row(
                   children: [
                     Text(
-                      widget.customTheme != null ? 'Edit Theme' : 'Add Theme',
+                      this.widget.customTheme != null
+                          ? 'Edit Theme'
+                          : 'Add Theme',
                       style: Theme.of(context).textTheme.headline5,
                     ),
                     ThemedCupertinoButton(
@@ -96,9 +99,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     ),
                     ThemedCupertinoButton(
                         padding: EdgeInsets.only(left: 24.0),
-                        isDestructive: widget.customTheme != null,
+                        isDestructive: this.widget.customTheme != null,
                         text: 'Delete',
-                        onPressed: widget.customTheme != null
+                        onPressed: this.widget.customTheme != null
                             ? () => ModalHandler.showBaseDialog(
                                   context: context,
                                   dialogWidget: ConfirmationDialog(
@@ -106,7 +109,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                     isYesDestructive: true,
                                     body:
                                         'Are you sure you want to delete this custom theme? This action can\'t be undone!',
-                                    onOk: () {
+                                    onOk: (_) {
                                       Navigator.of(context).pop();
                                       Box settingsBox =
                                           Hive.box(HiveKeys.Settings.name);
@@ -130,7 +133,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                 LightDivider(),
                 Expanded(
                   child: SingleChildScrollView(
-                    controller: widget.scrollController,
+                    controller: this.widget.scrollController,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 24.0),
                       child: Column(

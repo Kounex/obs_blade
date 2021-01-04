@@ -35,14 +35,14 @@ class _ColorPickerState extends State<ColorPicker> {
 
   @override
   void initState() {
-    _color = TextEditingController(text: widget.color ?? '000000');
+    _color = TextEditingController(text: this.widget.color ?? '000000');
     _colorFocusNode.addListener(() {
       if (_colorFocusNode.hasFocus) {
         _color.selection =
             TextSelection(baseOffset: 0, extentOffset: _color.text.length);
       }
     });
-    _colorContainerKey = Key(widget.color ?? '000000');
+    _colorContainerKey = Key(this.widget.color ?? '000000');
     super.initState();
   }
 
@@ -69,7 +69,7 @@ class _ColorPickerState extends State<ColorPicker> {
             children: [
               Expanded(
                 child: Text(
-                  widget.title,
+                  this.widget.title,
                   style: Theme.of(context).textTheme.headline5,
                 ),
               ),
@@ -81,7 +81,7 @@ class _ColorPickerState extends State<ColorPicker> {
                   ),
                   ThemedCupertinoButton(
                     onPressed: () {
-                      widget.onSave?.call(_color.text);
+                      this.widget.onSave?.call(_color.text);
                       Navigator.of(context).pop();
                     },
                     text: 'Save',
@@ -94,7 +94,7 @@ class _ColorPickerState extends State<ColorPicker> {
         Padding(
           padding: const EdgeInsets.only(left: 12.0, bottom: 12.0),
           child: Text(
-            widget.description,
+            this.widget.description,
             style: Theme.of(context).textTheme.caption,
           ),
         ),
@@ -129,7 +129,7 @@ class _ColorPickerState extends State<ColorPicker> {
                                     ValidationHelper.colorHexValidator(color),
                                 autovalidateMode: AutovalidateMode.always,
                                 autocorrect: false,
-                                maxLength: widget.useAlpha ? 8 : 6,
+                                maxLength: this.widget.useAlpha ? 8 : 6,
                                 maxLengthEnforced: true,
                                 // inputFormatters: [
                                 //   FilteringTextInputFormatter.allow(
@@ -169,26 +169,29 @@ class _ColorPickerState extends State<ColorPicker> {
                     children: [
                       ColorSlider(
                         label: 'R',
-                        value: _getColorSliderValue(widget.useAlpha ? 2 : 0),
+                        value:
+                            _getColorSliderValue(this.widget.useAlpha ? 2 : 0),
                         activeColor: CupertinoColors.destructiveRed,
                         onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal, widget.useAlpha ? 2 : 0),
+                            colorVal, this.widget.useAlpha ? 2 : 0),
                       ),
                       ColorSlider(
                         label: 'G',
-                        value: _getColorSliderValue(widget.useAlpha ? 4 : 2),
+                        value:
+                            _getColorSliderValue(this.widget.useAlpha ? 4 : 2),
                         activeColor: Colors.green,
                         onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal, widget.useAlpha ? 4 : 2),
+                            colorVal, this.widget.useAlpha ? 4 : 2),
                       ),
                       ColorSlider(
                         label: 'B',
-                        value: _getColorSliderValue(widget.useAlpha ? 6 : 4),
+                        value:
+                            _getColorSliderValue(this.widget.useAlpha ? 6 : 4),
                         activeColor: Colors.blue,
                         onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal, widget.useAlpha ? 6 : 4),
+                            colorVal, this.widget.useAlpha ? 6 : 4),
                       ),
-                      if (widget.useAlpha)
+                      if (this.widget.useAlpha)
                         ColorSlider(
                           label: 'A',
                           value: _getColorSliderValue(0),
