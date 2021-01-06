@@ -31,7 +31,7 @@ class AudioSlider extends StatelessWidget {
                 this.audioSceneItem.muted ? Icons.volume_off : Icons.volume_up,
                 color: this.audioSceneItem.muted
                     ? CupertinoColors.destructiveRed
-                    : Theme.of(context).accentColor,
+                    : Theme.of(context).buttonColor,
               ),
               padding: EdgeInsets.all(0.0),
               onPressed: () => NetworkHelper.makeRequest(

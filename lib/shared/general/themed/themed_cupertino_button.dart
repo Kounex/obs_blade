@@ -23,7 +23,7 @@ class ThemedCupertinoButton extends StatelessWidget {
           color: this.onPressed != null
               ? this.isDestructive
                   ? CupertinoColors.destructiveRed
-                  : Theme.of(context).accentColor
+                  : Theme.of(context).cupertinoOverrideTheme.primaryColor
               : null,
         ),
       ),

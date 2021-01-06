@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/validation_cupertino_textfield.dart';
+
+import '../general/validation_cupertino_textfield.dart';
 
 class InputDialog extends StatefulWidget {
   final String title;
@@ -8,7 +9,6 @@ class InputDialog extends StatefulWidget {
 
   final String inputText;
   final String inputPlaceholder;
-  final bool inputAutocorrect;
   final void Function(String) onSave;
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
@@ -18,7 +18,6 @@ class InputDialog extends StatefulWidget {
   InputDialog({
     @required this.title,
     @required this.body,
-    this.inputAutocorrect = true,
     @required this.onSave,
     this.inputText,
     this.inputPlaceholder,
@@ -30,12 +29,18 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
-  GlobalKey<ValidationCupertinoTextfieldState> _validationKey = GlobalKey();
   TextEditingController _controller;
 
   @override
   void initState() {
-    _controller = TextEditingController(text: this.widget.inputText ?? '');
+    _controller = this.widget.inputCheck != null
+        ? CustomValidationTextEditingController(
+            text: this.widget.inputText ?? '',
+            check: this.widget.inputCheck,
+          )
+        : TextEditingController(
+            text: this.widget.inputText ?? '',
+          );
     super.initState();
   }
 
@@ -57,13 +62,15 @@ class _InputDialogState extends State<InputDialog> {
           Text(this.widget.body),
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
-            child: ValidationCupertinoTextfield(
-              key: _validationKey,
-              controller: _controller..addListener(() => setState(() {})),
-              placeholder: this.widget.inputPlaceholder,
-              autocorrect: this.widget.inputAutocorrect,
-              check: this.widget.inputCheck,
-            ),
+            child: this.widget.inputCheck != null
+                ? ValidationCupertinoTextfield(
+                    controller: _controller,
+                    placeholder: this.widget.inputPlaceholder,
+                  )
+                : CupertinoTextField(
+                    controller: _controller,
+                    placeholder: this.widget.inputPlaceholder,
+                  ),
           ),
         ],
       ),
@@ -73,18 +80,22 @@ class _InputDialogState extends State<InputDialog> {
           isDestructiveAction: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        Builder(
-          builder: (context) => CupertinoDialogAction(
-            child: Text('Save'),
-            onPressed: _validationKey.currentState.isValid
-                ? () {
-                    if (_validationKey.currentState.isValid) {
-                      this.widget.onSave(_controller.text);
-                      Navigator.of(context).pop();
-                    }
-                  }
-                : null,
-          ),
+        CupertinoDialogAction(
+          child: Text('Save'),
+          onPressed: () {
+            bool valid = true;
+            if (this.widget.inputCheck != null) {
+              (_controller as CustomValidationTextEditingController).submit();
+              valid = (_controller as CustomValidationTextEditingController)
+                  .isValid;
+            }
+            if (valid) {
+              this
+                  .widget
+                  .onSave(_controller.text.isEmpty ? null : _controller.text);
+              Navigator.of(context).pop();
+            }
+          },
         ),
       ],
     );

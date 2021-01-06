@@ -6,6 +6,8 @@ import 'package:obs_blade/shared/dialogs/input.dart';
 import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
+import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stream_chat/chat_username_bar.dart/add_edit_username_dialog.dart';
+import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stream_chat/chat_username_bar.dart/delete_username_dialog.dart';
 
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;
@@ -14,12 +16,16 @@ class UsernameActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<String> twitchUsernames = this
-        .settingsBox
-        .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[]);
+    // List<String> twitchUsernames = this
+    //     .settingsBox
+    //     .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[]);
 
-    String selectedTwitchUsername =
-        this.settingsBox.get(SettingsKeys.SelectedTwitchUsername.name);
+    String selectedChatUsername = this.settingsBox.get(
+                SettingsKeys.SelectedChatType.name,
+                defaultValue: 'twitch') ==
+            'twitch'
+        ? this.settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)
+        : this.settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name);
 
     return Row(
       children: [
@@ -28,58 +34,19 @@ class UsernameActionRow extends StatelessWidget {
           text: 'Add',
           onPressed: () => ModalHandler.showBaseDialog(
             context: context,
-            dialogWidget: InputDialog(
-              title: 'New Twitch Username',
-              body:
-                  'Add the name of a Twitch user to be able to view this user\'s chat',
-              inputPlaceholder: 'Twitch Username',
-              inputCheck: (enteredTwitchUsername) =>
-                  enteredTwitchUsername.length == 0
-                      ? 'Please enter a username!'
-                      : twitchUsernames.contains(enteredTwitchUsername)
-                          ? 'Username already added!'
-                          : null,
-              onSave: (newTwitchUsername) {
-                this.settingsBox.put(SettingsKeys.TwitchUsernames.name,
-                    [...twitchUsernames, newTwitchUsername]);
-                this.settingsBox.put(SettingsKeys.SelectedTwitchUsername.name,
-                    newTwitchUsername);
-              },
-            ),
+            dialogWidget: AddEditUsernameDialog(settingsBox: this.settingsBox),
           ),
         ),
         SizedBox(height: 15.0, child: VerticalDivider()),
         ThemedCupertinoButton(
           padding: EdgeInsets.all(0),
           text: 'Edit',
-          onPressed: selectedTwitchUsername != null
+          onPressed: selectedChatUsername != null
               ? () => ModalHandler.showBaseDialog(
                     context: context,
-                    dialogWidget: InputDialog(
-                      title: 'Edit Twitch Username',
-                      body: 'Change the currently selected Twitch Username',
-                      inputText: selectedTwitchUsername,
-                      inputCheck: (enteredTwitchUsername) =>
-                          enteredTwitchUsername.length == 0
-                              ? 'Please enter a username!'
-                              : enteredTwitchUsername !=
-                                          selectedTwitchUsername &&
-                                      twitchUsernames
-                                          .contains(enteredTwitchUsername)
-                                  ? 'Username already added!'
-                                  : null,
-                      onSave: (editedTwitchUsername) {
-                        if (editedTwitchUsername != selectedTwitchUsername) {
-                          twitchUsernames[twitchUsernames.indexOf(
-                              selectedTwitchUsername)] = editedTwitchUsername;
-                          this.settingsBox.put(
-                              SettingsKeys.TwitchUsernames.name,
-                              twitchUsernames);
-                          this.settingsBox.put(
-                              SettingsKeys.SelectedTwitchUsername.name,
-                              editedTwitchUsername);
-                        }
-                      },
+                    dialogWidget: AddEditUsernameDialog(
+                      settingsBox: this.settingsBox,
+                      username: selectedChatUsername,
                     ),
                   )
               : null,
@@ -87,27 +54,14 @@ class UsernameActionRow extends StatelessWidget {
         SizedBox(height: 15.0, child: VerticalDivider()),
         ThemedCupertinoButton(
           padding: EdgeInsets.all(0),
-          isDestructive: selectedTwitchUsername != null,
+          isDestructive: selectedChatUsername != null,
           text: 'Delete',
-          onPressed: selectedTwitchUsername != null
+          onPressed: selectedChatUsername != null
               ? () => ModalHandler.showBaseDialog(
                     context: context,
-                    dialogWidget: ConfirmationDialog(
-                      title: 'Delete Twitch Username',
-                      body:
-                          'Are you sure you want to delete the currently selected Twitch Username? This action can\'t be undone!',
-                      isYesDestructive: true,
-                      onOk: (_) {
-                        twitchUsernames.removeAt(
-                            twitchUsernames.indexOf(selectedTwitchUsername));
-                        this.settingsBox.put(
-                            SettingsKeys.TwitchUsernames.name, twitchUsernames);
-                        this.settingsBox.put(
-                            SettingsKeys.SelectedTwitchUsername.name,
-                            twitchUsernames.length > 0
-                                ? twitchUsernames[twitchUsernames.length - 1]
-                                : null);
-                      },
+                    dialogWidget: DeleteUsernameDialog(
+                      settingsBox: settingsBox,
+                      username: selectedChatUsername,
                     ),
                   )
               : null,

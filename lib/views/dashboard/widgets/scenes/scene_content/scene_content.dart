@@ -8,10 +8,12 @@ class SceneContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Expanded(
+        Flexible(
           child: BaseCard(
             title: 'Scene Items',
+            rightPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 350.0,
@@ -19,9 +21,10 @@ class SceneContent extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
+        Flexible(
           child: BaseCard(
             title: 'Audio',
+            leftPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 350.0,

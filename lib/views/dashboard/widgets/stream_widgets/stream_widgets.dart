@@ -8,10 +8,12 @@ class StreamWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Expanded(
+        Flexible(
           child: BaseCard(
             title: 'Chat',
+            rightPadding: 12.0,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 550.0,
@@ -21,9 +23,10 @@ class StreamWidgets extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
+        Flexible(
           child: BaseCard(
             title: 'Stats',
+            leftPadding: 12.0,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 550.0,

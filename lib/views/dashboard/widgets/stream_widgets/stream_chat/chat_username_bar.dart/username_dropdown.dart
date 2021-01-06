@@ -10,11 +10,17 @@ class UsernameDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String chatType = this
+        .settingsBox
+        .get(SettingsKeys.SelectedChatType.name, defaultValue: 'twitch');
+
     return Flexible(
       child: ConstrainedBox(
         constraints: BoxConstraints(minWidth: 100.0),
         child: DropdownButton<String>(
-          value: settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
+          value: chatType.toLowerCase() == 'twitch'
+              ? settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)
+              : settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name),
           isExpanded: true,
           disabledHint: Text(
             'No usernames',
@@ -22,13 +28,16 @@ class UsernameDropdown extends StatelessWidget {
             softWrap: false,
             overflow: TextOverflow.fade,
           ),
-          items: settingsBox
-              .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[])
+          items: (chatType.toLowerCase() == 'twitch'
+                  ? settingsBox.get(SettingsKeys.TwitchUsernames.name,
+                      defaultValue: <String>[])
+                  : settingsBox.get(SettingsKeys.YoutubeUsernames.name,
+                      defaultValue: <String, String>{}).keys)
               .map<DropdownMenuItem<String>>(
-                (twitchUsername) => DropdownMenuItem<String>(
-                  value: twitchUsername,
+                (chatUsername) => DropdownMenuItem<String>(
+                  value: chatUsername,
                   child: Text(
-                    twitchUsername,
+                    chatUsername,
                     maxLines: 1,
                     softWrap: false,
                     overflow: TextOverflow.fade,
@@ -36,9 +45,12 @@ class UsernameDropdown extends StatelessWidget {
                 ),
               )
               .toList(),
-          onChanged: (twitchUsername) {
+          onChanged: (chatUsername) {
             settingsBox.put(
-                SettingsKeys.SelectedTwitchUsername.name, twitchUsername);
+                chatType.toLowerCase() == 'twitch'
+                    ? SettingsKeys.SelectedTwitchUsername.name
+                    : SettingsKeys.SelectedYoutubeUsername.name,
+                chatUsername);
           },
         ),
       ),

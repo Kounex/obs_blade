@@ -27,7 +27,9 @@ class App extends StatelessWidget {
     Color sliderColor;
     Color appBarColor;
     Color buttonColor;
+    Color extraButtonColor;
     Color tabBarColor;
+    Color cursorColor;
     Color cupertinoPrimaryColor;
 
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
@@ -47,16 +49,18 @@ class App extends StatelessWidget {
             : Brightness.dark;
         scaffoldBackgroundColor =
             activeCustomTheme.backgroundColorHex?.hexToColor();
-        accentColor = activeCustomTheme.highlightColorHex?.hexToColor();
+        accentColor = activeCustomTheme.accentColorHex?.hexToColor();
         backgroundColor = activeCustomTheme.cardColorHex?.hexToColor();
         canvasColor = activeCustomTheme.cardColorHex?.hexToColor();
         cardColor = activeCustomTheme.cardColorHex?.hexToColor();
-        indicatorColor = activeCustomTheme.highlightColorHex?.hexToColor();
+        indicatorColor = activeCustomTheme.accentColorHex?.hexToColor();
         toggleableActiveColor = activeCustomTheme.accentColorHex?.hexToColor();
-        sliderColor = activeCustomTheme.highlightColorHex?.hexToColor();
+        sliderColor = activeCustomTheme.accentColorHex?.hexToColor();
         appBarColor = activeCustomTheme.appBarColorHex?.hexToColor();
         buttonColor = activeCustomTheme.accentColorHex?.hexToColor();
+        extraButtonColor = activeCustomTheme.highlightColorHex?.hexToColor();
         tabBarColor = activeCustomTheme.tabBarColorHex?.hexToColor();
+        cursorColor = activeCustomTheme.accentColorHex?.hexToColor();
         cupertinoPrimaryColor =
             activeCustomTheme.highlightColorHex?.hexToColor();
       }
@@ -72,12 +76,14 @@ class App extends StatelessWidget {
                       defaultValue: false)
                   ? StylingHelper.background_reduced_smearing_color
                   : StylingHelper.background_color
-              : Colors.grey[900]),
+              : '212123'.hexToColor()), //Colors.grey[900]),
       accentColor: accentColor ?? StylingHelper.highlight_color,
       backgroundColor: backgroundColor ?? StylingHelper.primary_color,
       canvasColor: canvasColor ?? StylingHelper.primary_color,
       cardColor: cardColor ?? StylingHelper.primary_color,
+      // cursorColor: cursorColor ?? StylingHelper.highlight_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
+      buttonColor: extraButtonColor,
       dividerColor: Colors.grey[500],
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
@@ -104,6 +110,16 @@ class App extends StatelessWidget {
         inactiveTickMarkColor:
             (sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
       ),
+
+      // useTextSelectionTheme: true,
+
+      // textSelectionTheme: TextSelectionThemeData(
+      //   cursorColor: cursorColor ?? StylingHelper.highlight_color,
+      //   selectionColor: cursorColor ?? StylingHelper.highlight_color,
+      //   selectionHandleColor: cursorColor ?? StylingHelper.highlight_color,
+      // ),
+
+      // textSelectionHandleColor: cursorColor ?? StylingHelper.highlight_color,
 
       tabBarTheme: TabBarTheme(
         labelColor: brightness != null && brightness == Brightness.light
@@ -138,7 +154,6 @@ class App extends StatelessWidget {
         textTheme: CupertinoTextThemeData(
           primaryColor: accentColor ?? StylingHelper.highlight_color,
         ),
-        // primaryColor: cupertinoPrimaryColor ?? StylingHelper.highlight_color,
         barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),

@@ -45,70 +45,68 @@ class BaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 500.0),
+      child: Padding(
+        padding: EdgeInsets.only(
           top: this.topPadding,
           right: this.rightPadding,
           bottom: this.bottomPadding,
-          left: this.leftPadding),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 500.0),
-          child: Card(
-            shadowColor: this.backgroundColor != null &&
-                    this.backgroundColor.value == Colors.transparent.value
-                ? Colors.transparent
-                : null,
-            shape: this.paintBorder
-                ? RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4.0),
-                    side: BorderSide(
-                      color: this.borderColor ??
-                          (Theme.of(context).cardColor.computeLuminance() <= 0.2
-                              ? Colors.white
-                              : Colors.black),
-                    ),
-                  )
-                : null,
-            color: this.backgroundColor ?? Theme.of(context).cardColor,
-            margin: EdgeInsets.all(0),
-            child: Column(
-              mainAxisAlignment: this.centerChild
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                if (this.titleWidget != null || this.title != null)
-                  Padding(
-                    padding: this.titlePadding,
-                    child: Row(
-                      crossAxisAlignment:
-                          this.titleCrossAlignment ?? CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                            child: this.titleWidget == null
-                                ? Text(
-                                    this.title,
-                                    style:
-                                        Theme.of(context).textTheme.headline5,
-                                  )
-                                : this.titleWidget),
-                        if (this.trailingTitleWidget != null)
-                          this.trailingTitleWidget
-                      ],
-                    ),
+          left: this.leftPadding,
+        ),
+        child: Card(
+          shadowColor: this.backgroundColor != null &&
+                  this.backgroundColor.value == Colors.transparent.value
+              ? Colors.transparent
+              : null,
+          shape: this.paintBorder
+              ? RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4.0),
+                  side: BorderSide(
+                    color: this.borderColor ??
+                        (Theme.of(context).cardColor.computeLuminance() <= 0.2
+                            ? Colors.white
+                            : Colors.black),
                   ),
-                if (this.titleWidget != null || this.title != null)
-                  Divider(
-                    height: 0.0,
-                  ),
+                )
+              : null,
+          color: this.backgroundColor ?? Theme.of(context).cardColor,
+          margin: EdgeInsets.all(0),
+          child: Column(
+            mainAxisAlignment: this.centerChild
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              if (this.titleWidget != null || this.title != null)
                 Padding(
-                  padding: this.paddingChild,
-                  child: this.child,
+                  padding: this.titlePadding,
+                  child: Row(
+                    crossAxisAlignment:
+                        this.titleCrossAlignment ?? CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                          child: this.titleWidget == null
+                              ? Text(
+                                  this.title,
+                                  style: Theme.of(context).textTheme.headline5,
+                                )
+                              : this.titleWidget),
+                      if (this.trailingTitleWidget != null)
+                        this.trailingTitleWidget
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              if (this.titleWidget != null || this.title != null)
+                Divider(
+                  height: 0.0,
+                ),
+              Padding(
+                padding: this.paddingChild,
+                child: this.child,
+              ),
+            ],
           ),
         ),
       ),

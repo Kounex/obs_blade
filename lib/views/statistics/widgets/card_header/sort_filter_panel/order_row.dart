@@ -118,7 +118,7 @@ class _OrderRowState extends State<OrderRow> with TickerProviderStateMixin {
               padding: EdgeInsets.all(4.0),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).toggleableActiveColor,
+                color: Theme.of(context).accentColor,
               ),
               child: AnimatedBuilder(
                 animation: _controllerUp,

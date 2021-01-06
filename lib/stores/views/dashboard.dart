@@ -179,7 +179,7 @@ abstract class _DashboardStore with Store {
         {
           'sourceName': this.activeSceneName,
           'embedPictureFormat': 'jpg',
-          'compressionQuality': 50,
+          'compressionQuality': 25,
           // 'width': 100,
           // 'height': 100,
         },

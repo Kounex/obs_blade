@@ -41,7 +41,7 @@ class SceneItemTile extends StatelessWidget {
         icon: Icon(
           this.sceneItem.render ? Icons.visibility : Icons.visibility_off,
           color: this.sceneItem.render
-              ? Theme.of(context).accentColor
+              ? Theme.of(context).buttonColor
               : CupertinoColors.destructiveRed,
         ),
         onPressed: () => NetworkHelper.makeRequest(

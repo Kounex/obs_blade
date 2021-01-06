@@ -2,30 +2,44 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ValidationCupertinoTextfield extends StatefulWidget {
-  final TextEditingController controller;
-  final String placeholder;
-  final FocusNode focusNode;
-  final TextInputType keyboardType;
-  final List<TextInputFormatter> inputFormatters;
-  final bool autocorrect;
-  final double bottomPadding;
-  final int minLines;
-  final int maxLines;
+class CustomValidationTextEditingController extends TextEditingController {
+  bool submitted = false;
+
+  String textAtSubmission;
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
   /// the error text which should be displayed
   final String Function(String) check;
 
+  CustomValidationTextEditingController({@required this.check, String text})
+      : super(text: text);
+
+  bool get isValid => this.check(this.text) == null;
+
+  void submit() {
+    this.submitted = true;
+    this.textAtSubmission = this.text;
+    this.notifyListeners();
+  }
+}
+
+class ValidationCupertinoTextfield extends StatefulWidget {
+  final CustomValidationTextEditingController controller;
+  final String placeholder;
+  final FocusNode focusNode;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter> inputFormatters;
+  final double bottomPadding;
+  final int minLines;
+  final int maxLines;
+
   ValidationCupertinoTextfield({
     Key key,
     @required this.controller,
     this.placeholder,
-    this.check,
     this.focusNode,
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
-    this.autocorrect = false,
     this.bottomPadding = 4.0,
     this.minLines = 1,
     this.maxLines,
@@ -38,10 +52,35 @@ class ValidationCupertinoTextfield extends StatefulWidget {
 
 class ValidationCupertinoTextfieldState
     extends State<ValidationCupertinoTextfield> {
-  String validationText = '';
-  bool _textHasBeenEdited = false;
+  String _validationText;
+  VoidCallback _textEditingListener;
 
-  bool get isValid => validationText == null || validationText.length == 0;
+  @override
+  void initState() {
+    _textEditingListener = () {
+      if (this.widget.controller.submitted && _validationText == null) {
+        String tempVal =
+            this.widget.controller.check(this.widget.controller.text);
+        if (tempVal != _validationText)
+          setState(() => _validationText = tempVal);
+      }
+      if (this.widget.controller.submitted &&
+          this.widget.controller.textAtSubmission !=
+              this.widget.controller.text) {
+        this.widget.controller.submitted = false;
+        setState(() => _validationText = null);
+      }
+    };
+
+    this.widget.controller.addListener(_textEditingListener);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    this.widget.controller.removeListener(_textEditingListener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,21 +88,12 @@ class ValidationCupertinoTextfieldState
       children: [
         CupertinoTextField(
           focusNode: this.widget.focusNode,
-          controller: this.widget.controller
-            ..addListener(() {
-              if (!_textHasBeenEdited && this.widget.controller.text.length > 0)
-                _textHasBeenEdited = true;
-
-              if (this.widget.check != null && _textHasBeenEdited)
-                setState(
-                  (() => validationText =
-                      this.widget.check(this.widget.controller.text)),
-                );
-            }),
+          controller: this.widget.controller,
+          cursorColor: Theme.of(context).cursorColor,
           placeholder: this.widget.placeholder,
           keyboardType: this.widget.keyboardType,
           inputFormatters: this.widget.inputFormatters ?? [],
-          autocorrect: this.widget.autocorrect,
+          autocorrect: false,
           minLines: this.widget.minLines,
           maxLines: this.widget.maxLines ?? this.widget.minLines,
         ),
@@ -73,7 +103,7 @@ class ValidationCupertinoTextfieldState
             padding: EdgeInsets.only(
                 top: 4.0, left: 4.0, bottom: this.widget.bottomPadding),
             child: Text(
-              validationText ?? '',
+              _validationText ?? '',
               style: TextStyle(
                 color: CupertinoColors.destructiveRed,
               ),

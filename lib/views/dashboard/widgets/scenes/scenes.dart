@@ -17,7 +17,7 @@ class Scenes extends StatelessWidget {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
     return Padding(
-      padding: const EdgeInsets.only(top: 32.0),
+      padding: const EdgeInsets.only(top: 48.0),
       child: Column(
         children: [
           Center(
@@ -46,7 +46,7 @@ class Scenes extends StatelessWidget {
           //   child: Text('SOUND'),
           // ),
           Padding(
-            padding: const EdgeInsets.only(top: 32.0),
+            padding: const EdgeInsets.only(top: 48.0),
             child: ScenePreview(),
           ),
           Padding(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:keyboard_actions/external/platform_check/platform_check.dart';
 import 'package:obs_blade/shared/general/keyboard_number_header.dart';
+import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../models/connection.dart';
@@ -70,9 +71,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             ),
           ),
         ),
-        Divider(
-          height: 0.0,
-        ),
+        Divider(height: 1.0),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
             future: landingStore.autodiscoverConnections,
@@ -82,12 +81,16 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   return Fader(
                     child: Column(
                       children: snapshot.data
-                          .map(
-                            (availableObsConnection) => SessionTile(
-                              connection: availableObsConnection,
-                            ),
+                          .expand(
+                            (availableObsConnection) => [
+                              SessionTile(
+                                connection: availableObsConnection,
+                              ),
+                              LightDivider(),
+                            ],
                           )
-                          .toList(),
+                          .toList()
+                            ..removeLast(),
                     ),
                   );
                 }

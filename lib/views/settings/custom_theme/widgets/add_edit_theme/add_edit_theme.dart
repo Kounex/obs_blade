@@ -25,13 +25,17 @@ class AddEditTheme extends StatefulWidget {
 class _AddEditThemeState extends State<AddEditTheme> {
   CustomTheme _customTheme;
 
-  TextEditingController _name;
+  CustomValidationTextEditingController _name;
   TextEditingController _description;
 
   @override
   void initState() {
     _customTheme = this.widget.customTheme ?? CustomTheme.basic();
-    _name = TextEditingController(text: _customTheme.name);
+    _name = CustomValidationTextEditingController(
+      text: _customTheme.name,
+      check: _nameValidation,
+    );
+
     _description = TextEditingController(text: _customTheme.description);
     super.initState();
   }
@@ -80,7 +84,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       padding: EdgeInsets.only(left: 24.0),
                       text: 'Save',
                       onPressed: () {
-                        if (_nameValidation(_name.text) == null) {
+                        _name.submit();
+                        if (_name.isValid) {
                           _customTheme.name = _name.text.trim();
                           _customTheme.description = _description.text.trim();
                           if (_customTheme.isInBox) {
@@ -141,13 +146,10 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           ValidationCupertinoTextfield(
                             controller: _name,
                             placeholder: 'Name',
-                            autocorrect: true,
-                            check: (name) => _nameValidation(name),
                           ),
-                          ValidationCupertinoTextfield(
+                          CupertinoTextField(
                             controller: _description,
                             placeholder: 'Description (Optional)',
-                            autocorrect: true,
                             minLines: 3,
                           ),
                           Padding(
