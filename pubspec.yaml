@@ -62,6 +62,7 @@ dependencies:
   keyboard_actions: ^3.3.0+1
   flutter_svg: ^0.19.0
   expandable: ^4.1.4
+  assorted_layout_widgets: ^3.0.0
 
 dependency_overrides: null
 

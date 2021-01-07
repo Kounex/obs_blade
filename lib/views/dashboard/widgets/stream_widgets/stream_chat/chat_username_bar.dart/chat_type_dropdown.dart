@@ -11,7 +11,7 @@ class ChatTypeDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 150.0,
+      width: 132.0,
       child: DropdownButton<String>(
         isExpanded: true,
         value: this

@@ -27,7 +27,9 @@ class AppBarCupertinoActions extends StatelessWidget {
         context: context,
         builder: (context) {
           return CupertinoActionSheet(
-            title: this.actionSheetTitle != null ? Text('Actions') : null,
+            title: this.actionSheetTitle != null
+                ? Text(this.actionSheetTitle)
+                : null,
             actions: this
                 .actions
                 .map(

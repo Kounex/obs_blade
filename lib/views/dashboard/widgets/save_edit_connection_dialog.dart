@@ -32,7 +32,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
             connection.name == name)) {
           return 'Name already used!';
         }
-        return '';
+        return null;
       },
       onSave: (name) {
         name = name.trim();

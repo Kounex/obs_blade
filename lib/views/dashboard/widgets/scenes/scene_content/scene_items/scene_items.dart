@@ -22,8 +22,11 @@ class _SceneItemsState extends State<SceneItems> {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
     return Observer(builder: (_) {
-      dashboardStore.currentSceneItems
-          ?.forEach((element) => print(element.type));
+      dashboardStore.currentAudioSceneItems?.forEach((element) =>
+          print('${element.id}: ${element.name} (${element.type})'));
+
+      dashboardStore.globalAudioSceneItems?.forEach((element) =>
+          print('${element.id}: ${element.name} (${element.type})'));
 
       return NestedScrollManager(
         parentScrollController: ModalRoute.of(context).settings.arguments,

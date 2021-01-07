@@ -101,7 +101,7 @@ class _StreamChatState extends State<StreamChat>
                       initialOptions: InAppWebViewGroupOptions(
                         crossPlatform: InAppWebViewOptions(
                           transparentBackground: true,
-                          // supportZoom: false,
+                          supportZoom: false,
                           debuggingEnabled: false,
                           javaScriptCanOpenWindowsAutomatically: false,
                           userAgent:

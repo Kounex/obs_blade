@@ -29,6 +29,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.6.0"
+  assorted_layout_widgets:
+    dependency: "direct main"
+    description:
+      name: assorted_layout_widgets
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.0"
   async:
     dependency: transitive
     description:
@@ -476,6 +483,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.12.10-nullsafety.1"
+  matrix4_transform:
+    dependency: transitive
+    description:
+      name: matrix4_transform
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.6"
   meta:
     dependency: transitive
     description:

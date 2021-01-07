@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const double kBaseCardMaxWidth = 772.0;
+
 class BaseCard extends StatelessWidget {
   final Widget child;
   final bool centerChild;
@@ -23,6 +25,8 @@ class BaseCard extends StatelessWidget {
 
   final CrossAxisAlignment titleCrossAlignment;
 
+  final double elevation;
+
   BaseCard({
     Key key,
     @required this.child,
@@ -41,72 +45,77 @@ class BaseCard extends StatelessWidget {
     this.titlePadding =
         const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
     this.titleCrossAlignment = CrossAxisAlignment.center,
+    this.elevation,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: 500.0),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: this.topPadding,
-          right: this.rightPadding,
-          bottom: this.bottomPadding,
-          left: this.leftPadding,
-        ),
-        child: Card(
-          shadowColor: this.backgroundColor != null &&
-                  this.backgroundColor.value == Colors.transparent.value
-              ? Colors.transparent
-              : null,
-          shape: this.paintBorder
-              ? RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4.0),
-                  side: BorderSide(
-                    color: this.borderColor ??
-                        (Theme.of(context).cardColor.computeLuminance() <= 0.2
-                            ? Colors.white
-                            : Colors.black),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: this.topPadding,
+            right: this.rightPadding,
+            bottom: this.bottomPadding,
+            left: this.leftPadding,
+          ),
+          child: Card(
+            shadowColor: this.backgroundColor != null &&
+                    this.backgroundColor.value == Colors.transparent.value
+                ? Colors.transparent
+                : null,
+            shape: this.paintBorder
+                ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4.0),
+                    side: BorderSide(
+                      color: this.borderColor ??
+                          (Theme.of(context).cardColor.computeLuminance() <= 0.2
+                              ? Colors.white
+                              : Colors.black),
+                    ),
+                  )
+                : null,
+            color: this.backgroundColor ?? Theme.of(context).cardColor,
+            elevation: this.elevation,
+            margin: EdgeInsets.all(0),
+            child: Column(
+              mainAxisAlignment: this.centerChild
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (this.titleWidget != null || this.title != null)
+                  Padding(
+                    padding: this.titlePadding,
+                    child: Row(
+                      crossAxisAlignment:
+                          this.titleCrossAlignment ?? CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                            child: this.titleWidget == null
+                                ? Text(
+                                    this.title,
+                                    style:
+                                        Theme.of(context).textTheme.headline5,
+                                  )
+                                : this.titleWidget),
+                        if (this.trailingTitleWidget != null)
+                          this.trailingTitleWidget
+                      ],
+                    ),
                   ),
-                )
-              : null,
-          color: this.backgroundColor ?? Theme.of(context).cardColor,
-          margin: EdgeInsets.all(0),
-          child: Column(
-            mainAxisAlignment: this.centerChild
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              if (this.titleWidget != null || this.title != null)
+                if (this.titleWidget != null || this.title != null)
+                  Divider(
+                    height: 0.0,
+                  ),
                 Padding(
-                  padding: this.titlePadding,
-                  child: Row(
-                    crossAxisAlignment:
-                        this.titleCrossAlignment ?? CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                          child: this.titleWidget == null
-                              ? Text(
-                                  this.title,
-                                  style: Theme.of(context).textTheme.headline5,
-                                )
-                              : this.titleWidget),
-                      if (this.trailingTitleWidget != null)
-                        this.trailingTitleWidget
-                    ],
-                  ),
+                  padding: this.paddingChild,
+                  child: this.child,
                 ),
-              if (this.titleWidget != null || this.title != null)
-                Divider(
-                  height: 0.0,
-                ),
-              Padding(
-                padding: this.paddingChild,
-                child: this.child,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

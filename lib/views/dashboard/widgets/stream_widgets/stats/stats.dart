@@ -25,7 +25,6 @@ class _StatsState extends State<Stats> {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
 
     return Observer(builder: (_) {
-      // TODO: making this as a carousel just like saved connection if mobile, wrap on tablet
       return Column(
         children: [
           Padding(
@@ -50,6 +49,7 @@ class _StatsState extends State<Stats> {
                 Container(
                   width: MediaQuery.of(context).size.width,
                   child: StatsContainer(
+                    elevation: 0.0,
                     title: 'Performance',
                     children: [
                       FormattedText(
@@ -101,6 +101,7 @@ class _StatsState extends State<Stats> {
                 Container(
                   width: MediaQuery.of(context).size.width,
                   child: StatsContainer(
+                    elevation: 0.0,
                     title: 'Misc.',
                     children: [
                       FormattedText(

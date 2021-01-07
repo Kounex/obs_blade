@@ -30,7 +30,6 @@ class GeneralActions extends StatelessWidget {
             networkStore.activeSession?.connection?.name == null;
         return Observer(
           builder: (_) => AppBarCupertinoActions(
-            actionSheetTitle: 'Actions',
             actions: [
               AppBarCupertinoActionEntry(
                 title:

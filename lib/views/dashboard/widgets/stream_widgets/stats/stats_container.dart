@@ -5,14 +5,20 @@ import '../../../../../shared/general/base_card.dart';
 class StatsContainer extends StatelessWidget {
   final String title;
   final List<Widget> children;
+  final double elevation;
 
-  StatsContainer({@required this.title, this.children});
+  StatsContainer({
+    @required this.title,
+    this.children,
+    this.elevation,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BaseCard(
       topPadding: 0.0,
       bottomPadding: 0.0,
+      elevation: this.elevation,
       titleWidget:
           Text(this.title, style: Theme.of(context).textTheme.headline6),
       child: Wrap(

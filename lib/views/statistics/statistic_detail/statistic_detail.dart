@@ -1,5 +1,8 @@
+import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base_card.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
+import 'package:obs_blade/views/statistics/widgets/stream_entry/stream_entry.dart';
 
 import '../../../models/past_stream_data.dart';
 import '../../../types/extensions/int.dart';
@@ -73,7 +76,6 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         previousTitle: 'Statistics',
         title: pastStreamData.name ?? 'Unnamed stream',
         actions: AppBarCupertinoActions(
-          actionSheetTitle: 'Actions',
           actions: [
             AppBarCupertinoActionEntry(
                 title: pastStreamData.starred != null && pastStreamData.starred
@@ -130,98 +132,121 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
           ],
         ),
         listViewChildren: [
-          Padding(
-            padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
-            child: Wrap(
-              runSpacing: 24.0,
-              spacing: 24.0,
-              alignment: WrapAlignment.center,
-              children: streamCharts
-                  .map(
-                    (streamChart) => ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: 350.0,
-                      ),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0) +
-                              EdgeInsets.only(
-                                  top: 4.0, left: 20.0, right: 24.0),
-                          child: streamChart,
-                        ),
-                      ),
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: kBaseCardMaxWidth),
+              child: Column(
+                children: [
+                  BaseCard(
+                    child: StreamEntry(
+                      pastStreamData: pastStreamData,
+                      usedInDetail: true,
                     ),
-                  )
-                  .toList(),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 24.0,
+                      right: 24.0,
+                      bottom: 24.0,
+                    ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      runSpacing: 24.0,
+                      spacing: 24.0,
+                      children: streamCharts
+                          .map(
+                            (streamChart) => ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: 350.0,
+                              ),
+                              child: Card(
+                                margin: EdgeInsets.all(0),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0) +
+                                      EdgeInsets.only(
+                                          top: 4.0, left: 20.0, right: 24.0),
+                                  child: streamChart,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                  StatsContainer(
+                    title: 'Some numbers',
+                    children: [
+                      FormattedText(
+                        label: 'Total stream time',
+                        text: pastStreamData.totalStreamTime
+                            .secondsToFormattedDurationString(),
+                        width: 100.0,
+                      ),
+                      FormattedText(
+                        label: 'Average FPS',
+                        text: (pastStreamData.fpsList.reduce((a, b) => a + b) /
+                                pastStreamData.fpsList.length)
+                            .toStringAsFixed(2),
+                        width: 75.0,
+                      ),
+                      FormattedText(
+                        label: 'Average CPU Usage',
+                        text: (pastStreamData.cpuUsageList
+                                    .reduce((a, b) => a + b) /
+                                pastStreamData.cpuUsageList.length)
+                            .toStringAsFixed(2),
+                        unit: '%',
+                        width: 115.0,
+                      ),
+                      FormattedText(
+                        label: 'Average kbit/s',
+                        text: (pastStreamData.kbitsPerSecList
+                                    .reduce((a, b) => a + b) /
+                                pastStreamData.kbitsPerSecList.length)
+                            .toStringAsFixed(2),
+                        width: 85.0,
+                      ),
+                      FormattedText(
+                        label: 'Average RAM',
+                        text: ((pastStreamData.memoryUsageList
+                                        .reduce((a, b) => a + b) /
+                                    pastStreamData.memoryUsageList.length) /
+                                1000)
+                            .toStringAsFixed(2),
+                        unit: ' GB',
+                        width: 80.0,
+                      ),
+                      FormattedText(
+                        label: 'Dropped Frames',
+                        text: pastStreamData.strain?.toStringAsFixed(2),
+                        unit: '%',
+                        width: 95.0,
+                      ),
+                      FormattedText(
+                        label: 'Missed Frames (render)',
+                        text: pastStreamData.renderMissedFrames.toString(),
+                        width: 135.0,
+                      ),
+                      FormattedText(
+                        label: 'Skipped Frames (encoder)',
+                        text: pastStreamData.outputSkippedFrames.toString(),
+                        width: 150.0,
+                      ),
+                      FormattedText(
+                        label: 'Total Output Frames (encoder)',
+                        text: pastStreamData.outputTotalFrames.toString(),
+                        width: 175.0,
+                      ),
+                      FormattedText(
+                        label: 'Total Output Frames (render)',
+                        text: pastStreamData.renderTotalFrames.toString(),
+                        width: 165.0,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          StatsContainer(
-            title: 'Some numbers',
-            children: [
-              FormattedText(
-                label: 'Total stream time',
-                text: pastStreamData.totalStreamTime
-                    .secondsToFormattedDurationString(),
-                width: 100.0,
-              ),
-              FormattedText(
-                label: 'Average FPS',
-                text: (pastStreamData.fpsList.reduce((a, b) => a + b) /
-                        pastStreamData.fpsList.length)
-                    .toStringAsFixed(2),
-                width: 75.0,
-              ),
-              FormattedText(
-                label: 'Average CPU Usage',
-                text: (pastStreamData.cpuUsageList.reduce((a, b) => a + b) /
-                        pastStreamData.cpuUsageList.length)
-                    .toStringAsFixed(2),
-                unit: '%',
-                width: 115.0,
-              ),
-              FormattedText(
-                label: 'Average kbit/s',
-                text: (pastStreamData.kbitsPerSecList.reduce((a, b) => a + b) /
-                        pastStreamData.kbitsPerSecList.length)
-                    .toStringAsFixed(2),
-                width: 85.0,
-              ),
-              FormattedText(
-                label: 'Average RAM',
-                text: ((pastStreamData.memoryUsageList.reduce((a, b) => a + b) /
-                            pastStreamData.memoryUsageList.length) /
-                        1000)
-                    .toStringAsFixed(2),
-                unit: ' GB',
-                width: 80.0,
-              ),
-              FormattedText(
-                label: 'Dropped Frames',
-                text: pastStreamData.strain?.toStringAsFixed(2),
-                unit: '%',
-                width: 95.0,
-              ),
-              FormattedText(
-                label: 'Missed Frames (render)',
-                text: pastStreamData.renderMissedFrames.toString(),
-                width: 135.0,
-              ),
-              FormattedText(
-                label: 'Skipped Frames (encoder)',
-                text: pastStreamData.outputSkippedFrames.toString(),
-                width: 150.0,
-              ),
-              FormattedText(
-                label: 'Total Output Frames (encoder)',
-                text: pastStreamData.outputTotalFrames.toString(),
-                width: 175.0,
-              ),
-              FormattedText(
-                label: 'Total Output Frames (render)',
-                text: pastStreamData.renderTotalFrames.toString(),
-                width: 165.0,
-              ),
-            ],
           ),
         ],
       ),
