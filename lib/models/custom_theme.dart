@@ -1,7 +1,8 @@
 import 'package:hive/hive.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:uuid/uuid.dart';
+
 import '../types/extensions/color.dart';
+import '../utils/styling_helper.dart';
 
 part 'custom_theme.g.dart';
 

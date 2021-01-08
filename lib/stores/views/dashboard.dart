@@ -92,15 +92,22 @@ abstract class _DashboardStore with Store {
                   sourceType.typeID == sceneItem.type)))
           : ObservableList();
 
+  /// "Special" Audio sources produced by global entities like Desktop or Mic
   @observable
   ObservableList<SceneItem> globalAudioSceneItems = ObservableList();
 
   @observable
   int sceneTransitionDurationMS;
 
+  /// Indicates whether the the [requestPreviewImage] method should be called.
+  /// Will do so as long as it stays true and stops once its false again
   @observable
   bool shouldRequestPreviewImage = false;
 
+  /// Will hold the current image (screenshot) for the active scene - will be
+  /// set and updated as fast as possible with new screenshots while [shouldRequestPreviewImage]
+  /// is true and will therefore be used as the workaround of a live preview of the
+  /// active scene
   @observable
   Uint8List scenePreviewImageBytes;
 
@@ -441,6 +448,8 @@ abstract class _DashboardStore with Store {
             GetSceneListResponse(response.json);
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
+        this.scenes.forEach((scene) => scene.sources.forEach(
+            (item) => print('${scene.name} | ${item.id} | ${item.name}')));
         break;
       case RequestType.GetCurrentScene:
         GetCurrentSceneResponse getCurrentSceneResponse =

@@ -1,4 +1,3 @@
-import 'package:assorted_layout_widgets/assorted_layout_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base_card.dart';
 import 'package:obs_blade/utils/modal_handler.dart';

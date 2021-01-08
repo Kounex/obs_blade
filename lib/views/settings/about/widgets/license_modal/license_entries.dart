@@ -99,7 +99,7 @@ class _LicenseEntriesState extends State<LicenseEntries> {
                 onTap: () => Navigator.of(context, rootNavigator: true).push(
                   CupertinoModalBottomSheetRoute(
                     expanded: true,
-                    builder: (context, _) => LicenseDetail(
+                    builder: (context) => LicenseDetail(
                         package: snapshot.data.packages[index],
                         licenseEntries: _getLicensesForPackage(
                             snapshot.data, snapshot.data.packages[index])),

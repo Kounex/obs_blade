@@ -151,7 +151,7 @@ class StreamChart extends StatelessWidget {
                 leftTitles: SideTitles(
                   showTitles: true,
                   margin: 15.0,
-                  textStyle: axisStepsTextStyle,
+                  getTextStyles: (_) => axisStepsTextStyle,
                   interval: yInterval,
                   getTitles: (interval) =>
                       interval.toStringAsFixed(this.amountFixedYAxis) +
@@ -160,7 +160,7 @@ class StreamChart extends StatelessWidget {
                 bottomTitles: SideTitles(
                   showTitles: true,
                   margin: 15.0,
-                  textStyle: axisStepsTextStyle,
+                  getTextStyles: (_) => axisStepsTextStyle,
                   interval: (this.totalStreamTime * 1000) / 5,
                   getTitles: (interval) => DateFormat.Hm('de_DE').format(
                     DateTime.fromMillisecondsSinceEpoch(

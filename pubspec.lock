@@ -29,13 +29,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.6.0"
-  assorted_layout_widgets:
-    dependency: "direct main"
-    description:
-      name: assorted_layout_widgets
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "3.0.0"
   async:
     dependency: transitive
     description:
@@ -287,7 +280,7 @@ packages:
       name: fl_chart
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.11.1"
+    version: "0.12.2"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -391,7 +384,7 @@ packages:
       name: hive_generator
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.7.2+1"
+    version: "0.8.2"
   html:
     dependency: transitive
     description:
@@ -433,7 +426,7 @@ packages:
       name: import_js_library
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   intl:
     dependency: "direct main"
     description:
@@ -468,7 +461,7 @@ packages:
       name: keyboard_actions
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.3.0+1"
+    version: "3.3.1+1"
   logging:
     dependency: transitive
     description:
@@ -483,13 +476,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.12.10-nullsafety.1"
-  matrix4_transform:
-    dependency: transitive
-    description:
-      name: matrix4_transform
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.1.6"
   meta:
     dependency: transitive
     description:
@@ -531,7 +517,7 @@ packages:
       name: modal_bottom_sheet
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.2"
+    version: "1.0.0+1"
   nested:
     dependency: transitive
     description:
@@ -851,7 +837,7 @@ packages:
       name: url_launcher
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.7.2"
+    version: "5.7.10"
   url_launcher_linux:
     dependency: transitive
     description:
@@ -872,14 +858,14 @@ packages:
       name: url_launcher_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.8"
+    version: "1.0.9"
   url_launcher_web:
     dependency: transitive
     description:
       name: url_launcher_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.4+1"
+    version: "0.1.5+1"
   url_launcher_windows:
     dependency: transitive
     description:
@@ -907,7 +893,7 @@ packages:
       name: wakelock
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.1"
+    version: "0.2.1+1"
   wakelock_platform_interface:
     dependency: transitive
     description:
@@ -921,7 +907,7 @@ packages:
       name: wakelock_web
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.0+2"
+    version: "0.1.0+3"
   watcher:
     dependency: transitive
     description:
@@ -936,13 +922,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.0"
-  webview_flutter:
-    dependency: "direct main"
-    description:
-      name: webview_flutter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
   win32:
     dependency: transitive
     description:

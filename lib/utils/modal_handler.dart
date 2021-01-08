@@ -65,7 +65,7 @@ class ModalHandler {
         context: context,
         backgroundColor: Colors.transparent,
         useRootNavigator: useRootNavigator,
-        builder: (context, scrollController) => BackdropFilter(
+        builder: (context) => BackdropFilter(
           filter: ImageFilter.blur(
             sigmaX: StylingHelper.sigma_blurry,
             sigmaY: StylingHelper.sigma_blurry,
@@ -76,7 +76,8 @@ class ModalHandler {
                 .withOpacity(StylingHelper.opacity_blurry),
             body: SafeArea(
               bottom: false,
-              child: modalWidgetBuilder(context, scrollController),
+              child: modalWidgetBuilder(
+                  context, ModalScrollController.of(context)),
             ),
           ),
         ),
