@@ -8,7 +8,7 @@ part of 'hidden_scene_item.dart';
 
 class HiddenSceneItemAdapter extends TypeAdapter<HiddenSceneItem> {
   @override
-  final int typeId = 0;
+  final int typeId = 3;
 
   @override
   HiddenSceneItem read(BinaryReader reader) {
@@ -18,20 +18,23 @@ class HiddenSceneItemAdapter extends TypeAdapter<HiddenSceneItem> {
     };
     return HiddenSceneItem(
       fields[0] as String,
-      fields[1] as int,
-      fields[2] as String,
+      fields[1] as SceneItemType,
+      fields[2] as int,
+      fields[3] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiddenSceneItem obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.sceneName)
       ..writeByte(1)
-      ..write(obj.id)
+      ..write(obj.type)
       ..writeByte(2)
+      ..write(obj.id)
+      ..writeByte(3)
       ..write(obj.name);
   }
 

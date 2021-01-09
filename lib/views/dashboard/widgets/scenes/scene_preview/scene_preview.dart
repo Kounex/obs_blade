@@ -59,16 +59,24 @@ class ScenePreview extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Observer(
-              builder: (_) => dashboardStore.scenePreviewImageBytes != null
-                  ? Image.memory(
+              builder: (_) => Stack(
+                children: [
+                  if (dashboardStore.scenePreviewImageBytes != null)
+                    Image.memory(
                       dashboardStore.scenePreviewImageBytes,
                       // height: maxImageHeight,
                       fit: BoxFit.contain,
                       gaplessPlayback: true,
-                    )
-                  : BaseProgressIndicator(
-                      text: 'Fetching preview...',
                     ),
+                  if (dashboardStore.scenePreviewImageBytes == null)
+                    SizedBox(
+                      height: 100.0,
+                      child: BaseProgressIndicator(
+                        text: 'Fetching preview...',
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../models/enums/scene_item_type.dart';
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
+import 'visibility_edit_toggle.dart';
 
 class SceneContentMobile extends StatelessWidget {
   @override
@@ -28,11 +30,14 @@ class SceneContentMobile extends StatelessWidget {
             height: 300,
             child:
                 TabBarView(physics: NeverScrollableScrollPhysics(), children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+              VisibilityEditToggle(
+                sceneItemType: SceneItemType.Source,
                 child: SceneItems(),
               ),
-              AudioInputs(),
+              VisibilityEditToggle(
+                sceneItemType: SceneItemType.Audio,
+                child: AudioInputs(),
+              ),
             ]),
           )
         ],

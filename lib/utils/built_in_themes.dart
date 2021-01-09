@@ -49,5 +49,20 @@ class BuiltInThemes {
           '0c85f35d-be62-485c-9169-6a00526101c0',
           1600249329020,
         ),
+        CustomTheme(
+          'Snowstorm',
+          'An eye friendly light theme in icey colors.',
+          false,
+          'DAE9FF',
+          'CCE0FC',
+          'CCE0FC',
+          '7391D1',
+          StylingHelper.highlight_color.toHex(),
+          'EBEFF5',
+          'ffffff',
+          true,
+          'd5ee18fd-9078-4342-94d8-b8239689b84a',
+          1600249329020,
+        ),
       ];
 }

@@ -48,7 +48,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
             Padding(
               padding: const EdgeInsets.only(top: 14.0),
               child: Transform.translate(
-                offset: Offset(-8, 0),
+                offset: Offset(-4, 0),
                 child: Row(
                   children: [
                     Material(

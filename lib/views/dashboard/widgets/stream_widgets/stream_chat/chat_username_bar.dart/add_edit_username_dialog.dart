@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
+import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../shared/general/validation_cupertino_textfield.dart';
 import '../../../../../../types/enums/settings_keys.dart';
@@ -23,26 +24,23 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
   CustomValidationTextEditingController _usernameController;
   CustomValidationTextEditingController _youtubeLinkController;
 
-  String _chatType;
+  ChatType _chatType;
 
   @override
   void initState() {
     super.initState();
 
-    _chatType = this
-        .widget
-        .settingsBox
-        .get(SettingsKeys.SelectedChatType.name, defaultValue: 'twitch');
+    _chatType = this.widget.settingsBox.get(
+          SettingsKeys.SelectedChatType.name,
+          defaultValue: ChatType.Twitch,
+        );
 
     _usernameController = CustomValidationTextEditingController(
       text: this.widget.username,
       check: (username) => _usernameValidation(_chatType, username),
     );
     _youtubeLinkController = CustomValidationTextEditingController(
-      text: this.widget.settingsBox.get(SettingsKeys.SelectedChatType.name,
-                      defaultValue: 'twitch') ==
-                  'youtube' &&
-              this.widget.username != null
+      text: _chatType == ChatType.YouTube && this.widget.username != null
           ? this
               .widget
               .settingsBox
@@ -52,18 +50,18 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
     );
   }
 
-  String _usernameValidation(String chatType, String username) {
+  String _usernameValidation(ChatType chatType, String username) {
     if (username == null || username.isEmpty)
       return 'Please provide a username!';
     if (this.widget.username != null && username == this.widget.username)
       return null;
-    if (chatType.toLowerCase() == 'twitch') {
+    if (chatType == ChatType.Twitch) {
       return this.widget.settingsBox.get(SettingsKeys.TwitchUsernames.name,
               defaultValue: <String>[]).contains(username)
           ? 'Username already exists'
           : null;
     }
-    if (chatType.toLowerCase() == 'youtube') {
+    if (chatType == ChatType.YouTube) {
       return this
               .widget
               .settingsBox
@@ -85,26 +83,20 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
 
   @override
   Widget build(BuildContext context) {
-    String chatTypeText = _chatType == 'twitch'
-        ? 'Twitch'
-        : _chatType == 'youtube'
-            ? 'YouTube'
-            : 'unknown';
-
     return ConfirmationDialog(
       title:
-          '${(this.widget.username == null ? 'Add' : 'Edit')} $chatTypeText Username',
+          '${(this.widget.username == null ? 'Add' : 'Edit')} ${_chatType.text} Username',
       bodyWidget: Column(
         children: [
           Text(
-            'Add the name of a $chatTypeText user to be able to view this user\'s chat',
+            'Add the name of a ${_chatType.text} user to be able to view this user\'s chat',
           ),
           SizedBox(height: 12.0),
           ValidationCupertinoTextfield(
             controller: _usernameController,
-            placeholder: '$chatTypeText username',
+            placeholder: '${_chatType.text} username',
           ),
-          if (_chatType.toLowerCase() == 'youtube') ...[
+          if (_chatType == ChatType.YouTube) ...[
             SizedBox(height: 8.0),
             Text(
                 'For Youtube you also need to provide the Channel ID of the livestream - Usually at the end of the livestream link, for example:\n\nm-i_0DcfF1s'),
@@ -124,8 +116,10 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
         _youtubeLinkController.submit();
 
         if (_usernameController.isValid &&
-            (_chatType == 'youtube' ? _youtubeLinkController.isValid : true)) {
-          if (_chatType.toLowerCase() == 'twitch') {
+            (_chatType == ChatType.YouTube
+                ? _youtubeLinkController.isValid
+                : true)) {
+          if (_chatType == ChatType.Twitch) {
             List<String> twitchUsernames = this.widget.settingsBox.get(
                 SettingsKeys.TwitchUsernames.name,
                 defaultValue: <String>[]);
@@ -142,7 +136,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
             this.widget.settingsBox.put(
                 SettingsKeys.SelectedTwitchUsername.name,
                 _usernameController.text);
-          } else if (_chatType.toLowerCase() == 'youtube') {
+          } else if (_chatType == ChatType.YouTube) {
             Map<String, String> youtubeUsernames = Map<String, String>.from(
                 (this.widget.settingsBox.get(SettingsKeys.YoutubeUsernames.name,
                     defaultValue: <String, String>{})));

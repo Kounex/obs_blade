@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/general/base_card.dart';
 import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/dashboard.dart';
@@ -50,15 +51,10 @@ class _StreamChatState extends State<StreamChat>
               SettingsKeys.SelectedYoutubeUsername.name,
             ]),
             builder: (context, Box settingsBox, child) {
-              String chatType = settingsBox.get(
-                  SettingsKeys.SelectedChatType.name,
-                  defaultValue: 'twitch');
-
-              String chatTypeText = chatType == 'twitch'
-                  ? 'Twitch'
-                  : chatType == 'youtube'
-                      ? 'YouTube'
-                      : 'unknown';
+              ChatType chatType = settingsBox.get(
+                SettingsKeys.SelectedChatType.name,
+                defaultValue: ChatType.Twitch,
+              );
 
               return Stack(
                 alignment: Alignment.center,
@@ -79,7 +75,7 @@ class _StreamChatState extends State<StreamChat>
                         dashboardStore.setPointerOnChat(false),
                     child: InAppWebView(
                       key: Key(
-                        chatType +
+                        chatType.toString() +
                             settingsBox
                                 .get(SettingsKeys.SelectedTwitchUsername.name)
                                 .toString() +
@@ -87,12 +83,12 @@ class _StreamChatState extends State<StreamChat>
                                 .get(SettingsKeys.SelectedYoutubeUsername.name)
                                 .toString(),
                       ),
-                      initialUrl: chatType.toLowerCase() == 'twitch' &&
+                      initialUrl: chatType == ChatType.Twitch &&
                               settingsBox.get(SettingsKeys
                                       .SelectedTwitchUsername.name) !=
                                   null
                           ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-                          : chatType.toLowerCase() == 'youtube' &&
+                          : chatType == ChatType.YouTube &&
                                   settingsBox.get(SettingsKeys
                                           .SelectedYoutubeUsername.name) !=
                                       null
@@ -113,11 +109,11 @@ class _StreamChatState extends State<StreamChat>
                       },
                     ),
                   ),
-                  if (chatType.toLowerCase() == 'twitch' &&
+                  if (chatType == ChatType.Twitch &&
                           settingsBox.get(
                                   SettingsKeys.SelectedTwitchUsername.name) ==
                               null ||
-                      chatType.toLowerCase() == 'youtube' &&
+                      chatType == ChatType.YouTube &&
                           settingsBox.get(
                                   SettingsKeys.SelectedYoutubeUsername.name) ==
                               null)
@@ -128,9 +124,10 @@ class _StreamChatState extends State<StreamChat>
                         width: 225,
                         child: BaseCard(
                           child: BaseResult(
-                              icon: BaseResultIcon.Negative,
-                              text:
-                                  'No $chatTypeText username selected, so no ones chat can be displayed!'),
+                            icon: BaseResultIcon.Negative,
+                            text:
+                                'No ${chatType.text} username selected, so no ones chat can be displayed!',
+                          ),
                         ),
                       ),
                     ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
+
+import '../../../../../../models/enums/chat_type.dart';
+import '../../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../../types/enums/settings_keys.dart';
 
 class DeleteUsernameDialog extends StatelessWidget {
   final Box settingsBox;
@@ -11,23 +13,17 @@ class DeleteUsernameDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String chatType = this
+    ChatType chatType = this
         .settingsBox
-        .get(SettingsKeys.SelectedChatType.name, defaultValue: 'twitch');
-
-    String chatTypeText = chatType == 'twitch'
-        ? 'Twitch'
-        : chatType == 'youtube'
-            ? 'YouTube'
-            : 'unknown';
+        .get(SettingsKeys.SelectedChatType.name, defaultValue: ChatType.Twitch);
 
     return ConfirmationDialog(
-      title: 'Delete $chatTypeText Username',
+      title: 'Delete ${chatType.text} Username',
       body:
-          'Are you sure you want to delete the currently selected $chatTypeText username? This action can\'t be undone!',
+          'Are you sure you want to delete the currently selected ${chatType.text} username? This action can\'t be undone!',
       isYesDestructive: true,
       onOk: (_) {
-        if (chatType.toLowerCase() == 'twitch') {
+        if (chatType == ChatType.Twitch) {
           List<String> twitchUsernames = this
               .settingsBox
               .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[]);
@@ -37,7 +33,7 @@ class DeleteUsernameDialog extends StatelessWidget {
               .put(SettingsKeys.TwitchUsernames.name, twitchUsernames);
           this.settingsBox.put(SettingsKeys.SelectedTwitchUsername.name,
               twitchUsernames.length > 0 ? twitchUsernames.last : null);
-        } else if (chatType.toLowerCase() == 'youtube') {
+        } else if (chatType == ChatType.YouTube) {
           Map<String, String> youtubeUsernames = Map<String, String>.from((this
               .settingsBox
               .get(SettingsKeys.YoutubeUsernames.name,

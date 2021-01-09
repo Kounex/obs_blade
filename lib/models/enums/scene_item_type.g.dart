@@ -8,7 +8,7 @@ part of 'scene_item_type.dart';
 
 class SceneItemTypeAdapter extends TypeAdapter<SceneItemType> {
   @override
-  final int typeId = 0;
+  final int typeId = 5;
 
   @override
   SceneItemType read(BinaryReader reader) {

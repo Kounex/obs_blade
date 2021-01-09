@@ -11,6 +11,9 @@ enum HiveKeys {
 
   /// Returns a List of [CustomTheme]
   CustomTheme,
+
+  /// Returns a List of [HiddenSceneItem]
+  HiddenSceneItem,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -19,5 +22,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.PastStreamData: 'past-stream-data',
         HiveKeys.Settings: 'settings',
         HiveKeys.CustomTheme: 'custom-theme',
+        HiveKeys.HiddenSceneItem: 'hidden-scene-item',
       }[this];
 }

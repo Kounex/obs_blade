@@ -1,17 +1,18 @@
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:obs_blade/models/custom_theme.dart';
+import 'package:obs_blade/models/hidden_scene_item.dart';
 
 import 'app.dart';
 import 'models/connection.dart';
+import 'models/custom_theme.dart';
+import 'models/enums/chat_type.dart';
+import 'models/enums/scene_item_type.dart';
 import 'models/past_stream_data.dart';
 import 'types/enums/hive_keys.dart';
-
-import 'package:flutter/widgets.dart';
 
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
@@ -54,9 +55,15 @@ void main() async {
 
   await Hive.initFlutter();
 
+  /// Classes which represent models which teherfore get persisted
   Hive.registerAdapter(ConnectionAdapter());
   Hive.registerAdapter(PastStreamDataAdapter());
   Hive.registerAdapter(CustomThemeAdapter());
+  Hive.registerAdapter(HiddenSceneItemAdapter());
+
+  /// Enums which can also be persisted as part of the models
+  Hive.registerAdapter(ChatTypeAdapter());
+  Hive.registerAdapter(SceneItemTypeAdapter());
 
   /// Open Hive boxes which are coupled to HiveObjects (models)
   await Hive.openBox<Connection>(
@@ -69,6 +76,10 @@ void main() async {
   );
   await Hive.openBox<CustomTheme>(
     HiveKeys.CustomTheme.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<HiddenSceneItem>(
+    HiveKeys.HiddenSceneItem.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 

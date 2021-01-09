@@ -124,6 +124,14 @@ abstract class _DashboardStore with Store {
   @observable
   bool reconnecting = false;
 
+  /// Toggles the visibility of the hide/show sliding pane of the scene items
+  @observable
+  bool editSceneItemVisibility = false;
+
+  /// Toggles the visibility of the hide/show sliding pane of the audios
+  @observable
+  bool editAudioVisibility = false;
+
   /// Currently I hold a reference to the [NetworkStore] object to be able
   /// to listen to the WebSocket stream and toggle some stuff. [NetworkStore]
   /// is one of the shared stores, indicate that those kind of stores are not
@@ -304,6 +312,14 @@ abstract class _DashboardStore with Store {
     sceneItem.displayGroup = !sceneItem.displayGroup;
     this.currentSceneItems = ObservableList.of(this.currentSceneItems);
   }
+
+  @action
+  void setEditSceneItemVisibility(bool editSceneItemVisibility) =>
+      this.editSceneItemVisibility = editSceneItemVisibility;
+
+  @action
+  void setEditAudioVisibility(bool editAudioVisibility) =>
+      this.editAudioVisibility = editAudioVisibility;
 
   @action
   Future<void> _handleEvent(BaseEvent event) async {

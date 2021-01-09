@@ -279,6 +279,39 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$editSceneItemVisibilityAtom =
+      Atom(name: '_DashboardStore.editSceneItemVisibility');
+
+  @override
+  bool get editSceneItemVisibility {
+    _$editSceneItemVisibilityAtom.reportRead();
+    return super.editSceneItemVisibility;
+  }
+
+  @override
+  set editSceneItemVisibility(bool value) {
+    _$editSceneItemVisibilityAtom
+        .reportWrite(value, super.editSceneItemVisibility, () {
+      super.editSceneItemVisibility = value;
+    });
+  }
+
+  final _$editAudioVisibilityAtom =
+      Atom(name: '_DashboardStore.editAudioVisibility');
+
+  @override
+  bool get editAudioVisibility {
+    _$editAudioVisibilityAtom.reportRead();
+    return super.editAudioVisibility;
+  }
+
+  @override
+  set editAudioVisibility(bool value) {
+    _$editAudioVisibilityAtom.reportWrite(value, super.editAudioVisibility, () {
+      super.editAudioVisibility = value;
+    });
+  }
+
   final _$_checkOBSConnectionAsyncAction =
       AsyncAction('_DashboardStore._checkOBSConnection');
 
@@ -343,6 +376,28 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
+  void setEditSceneItemVisibility(bool editSceneItemVisibility) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setEditSceneItemVisibility');
+    try {
+      return super.setEditSceneItemVisibility(editSceneItemVisibility);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setEditAudioVisibility(bool editAudioVisibility) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setEditAudioVisibility');
+    try {
+      return super.setEditAudioVisibility(editAudioVisibility);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _handleResponse(BaseResponse response) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
         name: '_DashboardStore._handleResponse');
@@ -372,6 +427,8 @@ shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
 isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
+editSceneItemVisibility: ${editSceneItemVisibility},
+editAudioVisibility: ${editAudioVisibility},
 currentSoundboardSceneItems: ${currentSoundboardSceneItems},
 currentAudioSceneItems: ${currentAudioSceneItems}
     ''';

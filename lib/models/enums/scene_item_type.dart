@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'scene_item_type.g.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId: 5)
 enum SceneItemType {
   /// Source related to items in the "Sources" list of OBS.
   /// Basically the "actual" scene items

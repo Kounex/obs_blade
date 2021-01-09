@@ -61,6 +61,7 @@ class BaseCard extends StatelessWidget {
             left: this.leftPadding,
           ),
           child: Card(
+            clipBehavior: Clip.hardEdge,
             shadowColor: this.backgroundColor != null &&
                     this.backgroundColor.value == Colors.transparent.value
                 ? Colors.transparent

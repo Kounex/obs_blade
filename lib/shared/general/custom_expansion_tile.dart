@@ -72,7 +72,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).appBarTheme.color,
+      color: Theme.of(context).cardColor,
       child: ExpandablePanel(
         controller: _expandController,
         theme: ExpandableThemeData(

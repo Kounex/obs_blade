@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
+import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 
 class UsernameDropdown extends StatelessWidget {
@@ -10,15 +11,15 @@ class UsernameDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String chatType = this
+    ChatType chatType = this
         .settingsBox
-        .get(SettingsKeys.SelectedChatType.name, defaultValue: 'twitch');
+        .get(SettingsKeys.SelectedChatType.name, defaultValue: ChatType.Twitch);
 
     return Flexible(
       child: ConstrainedBox(
         constraints: BoxConstraints(minWidth: 100.0),
         child: DropdownButton<String>(
-          value: chatType.toLowerCase() == 'twitch'
+          value: chatType == ChatType.Twitch
               ? settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)
               : settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name),
           isExpanded: true,
@@ -28,7 +29,7 @@ class UsernameDropdown extends StatelessWidget {
             softWrap: false,
             overflow: TextOverflow.fade,
           ),
-          items: (chatType.toLowerCase() == 'twitch'
+          items: (chatType == ChatType.Twitch
                   ? settingsBox.get(SettingsKeys.TwitchUsernames.name,
                       defaultValue: <String>[])
                   : settingsBox.get(SettingsKeys.YoutubeUsernames.name,
@@ -47,7 +48,7 @@ class UsernameDropdown extends StatelessWidget {
               .toList(),
           onChanged: (chatUsername) {
             settingsBox.put(
-                chatType.toLowerCase() == 'twitch'
+                chatType == ChatType.Twitch
                     ? SettingsKeys.SelectedTwitchUsername.name
                     : SettingsKeys.SelectedYoutubeUsername.name,
                 chatUsername);

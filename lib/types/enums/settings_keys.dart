@@ -8,10 +8,7 @@ enum SettingsKeys {
   /// [bool]: If user wants to use tablet mode (layout) even if size is not optimal
   EnforceTabletMode,
 
-  /// [String]: Not typesafe (usually should be an enum) but easier with hive in this
-  /// case. Will be one of those currently:
-  /// [Twitch]
-  /// [Youtube]
+  /// [ChatType]: enum which can be peristed with Hive as well
   SelectedChatType,
 
   /// [List<String>]: All entered twitch usernames by the user
@@ -46,7 +43,17 @@ enum SettingsKeys {
 
   /// [bool]: If the user saw the warning regarding displaying the live preview of
   /// the current OBS scene and doesn't want to see this warning again
-  DontShowPreviewWarning
+  DontShowPreviewWarning,
+
+  /// [bool]: If the user saw the warning regarding hiding scene items which could
+  /// lead to items "reappearing" if the scenes name has been changed or the hidden item
+  /// has been renamed or re-inserted (since the combination of scene name, id and name has
+  /// to remain the same) and doesn't want to see this warning again
+  DontShowHidingSceneItemsWarning,
+
+  /// [bool]: If the user saw the warning regarding youtube chat support being in
+  /// beta and might cause trouble and doesn't want to see this warning again
+  DontShowYouTubeChatBetaWarning,
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
@@ -64,5 +71,9 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.WakeLock: 'wake-lock',
         SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
+        SettingsKeys.DontShowHidingSceneItemsWarning:
+            'dont-show-hiding-scene-items-warning',
+        SettingsKeys.DontShowYouTubeChatBetaWarning:
+            'dont-show-youtube-chat-beta-warning',
       }[this];
 }
