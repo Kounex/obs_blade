@@ -30,11 +30,21 @@ class HiddenSceneItem extends HiveObject {
   @HiveField(3)
   String name;
 
-  HiddenSceneItem(this.sceneName, this.type, this.id, this.name);
+  /// Indicates what kind of item this is. Primarly used (currently) to find out
+  /// if this hidden item is a group container, meaning children should be hidden
+  /// as well (will be checked by mathing this name and the scene items parentName
+  /// property while also checking whether this item is from type 'group')
+  /// [IMPORTANT]: Is new since production, might be null!
+  @HiveField(4)
+  String sourceType;
+
+  HiddenSceneItem(
+      this.sceneName, this.type, this.id, this.name, this.sourceType);
 
   bool isSceneItem(String sceneName, SceneItemType type, SceneItem sceneItem) =>
       this.sceneName == sceneName &&
       this.type == type &&
       this.id == sceneItem.id &&
-      this.name == sceneItem.name;
+      this.name == sceneItem.name &&
+      this.sourceType == sceneItem.type;
 }

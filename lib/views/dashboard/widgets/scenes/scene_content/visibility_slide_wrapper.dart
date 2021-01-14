@@ -74,7 +74,15 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
 
         return Observer(
           builder: (_) => Offstage(
-            offstage: hiddenSceneItem != null &&
+            offstage: (this.widget.sceneItem.parentGroupName != null &&
+                        hiddenSceneItemsBox.values.toList().any(
+                            (hiddenParent) =>
+                                hiddenParent.name ==
+                                    this.widget.sceneItem.parentGroupName &&
+                                (hiddenParent.sourceType != null
+                                    ? hiddenParent.sourceType == 'group'
+                                    : true)) ||
+                    hiddenSceneItem != null) &&
                 !(this.widget.sceneItemType == SceneItemType.Source
                     ? dashboardStore.editSceneItemVisibility
                     : dashboardStore.editAudioVisibility),
@@ -101,13 +109,16 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                   closeOnTap: false,
                   onTap: () {
                     if (hiddenSceneItem != null) {
+                      // if (hiddenSceneItemsBox.values.toList().where((hiddenChildItem) => hiddenChildItem.))
                       hiddenSceneItem.delete();
                     } else {
                       hiddenSceneItem = HiddenSceneItem(
-                          dashboardStore.activeSceneName,
-                          this.widget.sceneItemType,
-                          this.widget.sceneItem.id,
-                          this.widget.sceneItem.name);
+                        dashboardStore.activeSceneName,
+                        this.widget.sceneItemType,
+                        this.widget.sceneItem.id,
+                        this.widget.sceneItem.name,
+                        this.widget.sceneItem.type,
+                      );
 
                       hiddenSceneItemsBox.add(hiddenSceneItem);
                     }

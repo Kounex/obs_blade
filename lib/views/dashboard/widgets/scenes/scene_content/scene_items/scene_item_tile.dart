@@ -20,9 +20,12 @@ class SceneItemTile extends StatelessWidget {
         padding: EdgeInsets.only(
             left: this.sceneItem.parentGroupName != null ? 42.0 : 0.0),
         child: GestureDetector(
-          onTap: () => context
-              .read<DashboardStore>()
-              .toggleSceneItemGroupVisibility(this.sceneItem),
+          onTap: () => (!context.read<DashboardStore>().editAudioVisibility &&
+                  !context.read<DashboardStore>().editSceneItemVisibility)
+              ? context
+                  .read<DashboardStore>()
+                  .toggleSceneItemGroupVisibility(this.sceneItem)
+              : null,
           child: Icon(
             this.sceneItem.type == 'group'
                 ? this.sceneItem.displayGroup

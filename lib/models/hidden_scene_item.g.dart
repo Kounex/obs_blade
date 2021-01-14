@@ -21,13 +21,14 @@ class HiddenSceneItemAdapter extends TypeAdapter<HiddenSceneItem> {
       fields[1] as SceneItemType,
       fields[2] as int,
       fields[3] as String,
+      fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiddenSceneItem obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.sceneName)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class HiddenSceneItemAdapter extends TypeAdapter<HiddenSceneItem> {
       ..writeByte(2)
       ..write(obj.id)
       ..writeByte(3)
-      ..write(obj.name);
+      ..write(obj.name)
+      ..writeByte(4)
+      ..write(obj.sourceType);
   }
 
   @override
