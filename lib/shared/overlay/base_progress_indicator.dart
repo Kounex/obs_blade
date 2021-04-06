@@ -4,10 +4,13 @@ class BaseProgressIndicator extends StatelessWidget {
   final double size;
   final double strokeWidth;
 
-  final String text;
+  final String? text;
 
-  BaseProgressIndicator({this.text, this.size = 32.0, this.strokeWidth = 2.0})
-      : assert((text != null && text.length > 0 || text == null) &&
+  BaseProgressIndicator({
+    this.text,
+    this.size = 32.0,
+    this.strokeWidth = 2.0,
+  }) : assert((text != null && text.length > 0 || text == null) &&
             size != null &&
             strokeWidth != null);
 
@@ -25,7 +28,7 @@ class BaseProgressIndicator extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(top: 14.0),
             child: Text(
-              this.text,
+              this.text!,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.caption,
             ),

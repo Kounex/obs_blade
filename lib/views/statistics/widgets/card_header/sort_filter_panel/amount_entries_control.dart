@@ -13,7 +13,7 @@ class AmountEntriesControl extends StatelessWidget {
     return Observer(
       builder: (_) => SizedBox(
         width: double.infinity,
-        child: CupertinoSlidingSegmentedControl(
+        child: CupertinoSlidingSegmentedControl<AmountStatisticEntries>(
           groupValue: statisticsStore.amountStatisticEntries,
           padding: EdgeInsets.all(0),
           // selectedColor: Theme.of(context).toggleableActiveColor,
@@ -28,7 +28,7 @@ class AmountEntriesControl extends StatelessWidget {
               ),
             ),
           onValueChanged: (amountEntries) =>
-              statisticsStore.setAmountStatisticEntries(amountEntries),
+              statisticsStore.setAmountStatisticEntries(amountEntries!),
         ),
       ),
     );

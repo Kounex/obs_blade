@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class FormattedText extends StatelessWidget {
   final String label;
-  final String text;
+  final String? text;
   final double width;
-  final String unit;
+  final String? unit;
 
   FormattedText({
-    @required this.label,
+    required this.label,
     this.text,
     this.width = 50.0,
     this.unit,

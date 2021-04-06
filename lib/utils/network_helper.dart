@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
@@ -25,29 +26,40 @@ class NetworkHelper {
         pingInterval: Duration(seconds: 3),
       );
 
+  static Future<Iterable<String>> getLocalIPAdress() async {
+    final List<NetworkInterface> interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4, includeLinkLocal: true);
+
+    return interfaces.expand((interface) =>
+        interface.addresses.map((addresses) => addresses.address));
+  }
+
   /// Initiating an autodiscover process (based on [TCPScanner]) to look for
   /// applications in the local network which listen on the given port (default
   /// port is 4444)
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
     if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
-      String baseIP =
-          (await Connectivity().getWifiIP()).split('.').take(3).join('.');
-      List<int> availableIPs = [];
-      List<ScanResult> results = [];
+      List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
+      List<String> availableIPs = [];
 
-      results = await Future.wait<ScanResult>(
-          List.generate(256, (index) => index).map((index) =>
-              TCPScanner('$baseIP.${index.toString()}', [port], timeout: 1000)
-                  .noIsolateScan()));
+      print(baseIPs);
 
-      results.forEach((r) => r.open.length > 0
-          ? availableIPs.add(int.parse(r.host.split('.').last))
-          : null);
+      for (int i = 0; i < baseIPs.length; i++) {
+        List<ScanResult> results = [];
+        String baseIP = baseIPs[i].split('.').take(3).join('.');
 
-      return availableIPs.map((i) => Connection('$baseIP.$i', port)).toList();
-    } else {
-      throw NotInWLANException();
+        results = await Future.wait<ScanResult>(
+            List.generate(256, (index) => index).map((index) =>
+                TCPScanner('$baseIP.${index.toString()}', [port], timeout: 1000)
+                    .noIsolateScan()));
+
+        results.forEach(
+            (r) => r.open.length > 0 ? availableIPs.add(r.host) : null);
+      }
+
+      return availableIPs.map((address) => Connection(address, port)).toList();
     }
+    throw NotInWLANException();
   }
 
   /// This is the content of the auth field which is needed to correctly
@@ -67,7 +79,7 @@ class NetworkHelper {
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
   static void makeRequest(IOWebSocketChannel channel, RequestType request,
-      [Map<String, dynamic> fields]) {
+      [Map<String, dynamic>? fields]) {
     print(request);
     channel.sink.add(json.encode({
       'message-id': request.index.toString(),

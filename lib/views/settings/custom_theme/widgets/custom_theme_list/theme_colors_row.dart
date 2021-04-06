@@ -6,7 +6,7 @@ import '../../../../../types/extensions/string.dart';
 class ThemeColorsRow extends StatelessWidget {
   final CustomTheme customTheme;
 
-  ThemeColorsRow({@required this.customTheme});
+  ThemeColorsRow({required this.customTheme});
 
   @override
   Widget build(BuildContext context) {

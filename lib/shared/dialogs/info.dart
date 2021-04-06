@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class InfoDialog extends StatelessWidget {
-  final String title;
+  final String? title;
   final String body;
 
   InfoDialog({
-    @required this.body,
+    required this.body,
     this.title,
   });
 
@@ -16,7 +16,7 @@ class InfoDialog extends StatelessWidget {
       title: this.title != null
           ? Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(this.title),
+              child: Text(this.title!),
             )
           : null,
       content: Text(

@@ -21,7 +21,8 @@ class StatisticDetailView extends StatefulWidget {
 class _StatisticDetailViewState extends State<StatisticDetailView> {
   @override
   Widget build(BuildContext context) {
-    PastStreamData pastStreamData = ModalRoute.of(context).settings.arguments;
+    PastStreamData pastStreamData =
+        ModalRoute.of(context)!.settings.arguments as PastStreamData;
 
     List<StreamChart> streamCharts = [
       StreamChart(
@@ -30,7 +31,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         dataName: 'FPS',
         chartColor: Colors.greenAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime,
+        totalStreamTime: pastStreamData.totalStreamTime!,
       ),
       StreamChart(
         data: pastStreamData.cpuUsageList,
@@ -41,7 +42,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         yMax: 100,
         chartColor: Colors.blueAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime,
+        totalStreamTime: pastStreamData.totalStreamTime!,
       ),
       StreamChart(
         data: pastStreamData.kbitsPerSecList
@@ -52,7 +53,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         minYInterval: 250,
         chartColor: Colors.orangeAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime,
+        totalStreamTime: pastStreamData.totalStreamTime!,
       ),
       StreamChart(
         data: pastStreamData.memoryUsageList
@@ -66,7 +67,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         minYInterval: 0.1,
         chartColor: Colors.redAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime,
+        totalStreamTime: pastStreamData.totalStreamTime!,
       ),
     ];
 
@@ -77,16 +78,16 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         actions: AppBarCupertinoActions(
           actions: [
             AppBarCupertinoActionEntry(
-                title: pastStreamData.starred != null && pastStreamData.starred
+                title: pastStreamData.starred != null && pastStreamData.starred!
                     ? 'Delete from Favorites'
                     : 'Mark as Favorite',
                 onAction: () {
                   if (pastStreamData.starred != null) {
-                    pastStreamData.starred = !pastStreamData.starred;
+                    pastStreamData.starred = !pastStreamData.starred!;
                   } else {
                     pastStreamData.starred = true;
                   }
-                  pastStreamData.box.put(pastStreamData.key, pastStreamData);
+                  pastStreamData.box!.put(pastStreamData.key, pastStreamData);
                   setState(() {});
                 }),
             AppBarCupertinoActionEntry(
@@ -177,7 +178,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     children: [
                       FormattedText(
                         label: 'Total stream time',
-                        text: pastStreamData.totalStreamTime
+                        text: pastStreamData.totalStreamTime!
                             .secondsToFormattedDurationString(),
                         width: 100.0,
                       ),

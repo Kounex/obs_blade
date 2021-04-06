@@ -9,11 +9,11 @@ import '../intro.dart';
 class IntroSlide extends StatelessWidget {
   final String imagePath;
   final List<InlineSpan> slideTextSpans;
-  final Widget additionalChild;
+  final Widget? additionalChild;
 
   IntroSlide({
-    @required this.imagePath,
-    @required this.slideTextSpans,
+    required this.imagePath,
+    required this.slideTextSpans,
     this.additionalChild,
   });
 
@@ -51,7 +51,7 @@ class IntroSlide extends StatelessWidget {
                       textAlign: TextAlign.justify,
                       textStyle: Theme.of(context).textTheme.headline6,
                     ),
-                    if (this.additionalChild != null) this.additionalChild,
+                    if (this.additionalChild != null) this.additionalChild!,
                   ],
                 ),
               ),

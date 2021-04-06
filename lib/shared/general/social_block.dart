@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,15 +7,15 @@ const double kSocialEntryDefaultIconSize = 28.0;
 
 class SocialEntry {
   final String link;
-  final String deepLink;
-  final String svgPath;
-  final IconData icon;
-  final String linkText;
+  final String? deepLink;
+  final String? svgPath;
+  final IconData? icon;
+  final String? linkText;
   final double iconSize;
-  final TextStyle textStyle;
+  final TextStyle? textStyle;
 
   SocialEntry({
-    @required this.link,
+    required this.link,
     this.deepLink,
     this.svgPath,
     this.icon,
@@ -34,7 +33,7 @@ class SocialBlock extends StatelessWidget {
   final double bottomPadding;
 
   SocialBlock({
-    @required this.socialInfos,
+    required this.socialInfos,
     this.topPadding = 18.0,
     this.bottomPadding = 18.0,
   }) : assert(socialInfos != null && socialInfos.length > 0);
@@ -44,15 +43,15 @@ class SocialBlock extends StatelessWidget {
     try {
       if (social.deepLink != null &&
           await canLaunch(
-            social.deepLink,
+            social.deepLink!,
           )) {
         if (!await launch(
-          social.deepLink,
+          social.deepLink!,
           forceSafariVC: false,
           universalLinksOnly: true,
         )) {
           await launch(
-            social.deepLink,
+            social.deepLink!,
           );
         }
       } else if (await canLaunch(
@@ -98,21 +97,26 @@ class SocialBlock extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: SizedBox(
-                    width: kSocialEntryDefaultIconSize >= social.iconSize
-                        ? kSocialEntryDefaultIconSize
-                        : social.iconSize,
-                    child: social.icon != null
-                        ? Icon(
-                            social.icon,
-                            size: social.iconSize,
-                            color: Theme.of(context).iconTheme.color,
-                          )
-                        : SvgPicture.asset(
-                            social.svgPath,
-                            height: social.iconSize,
-                            color: Theme.of(context).iconTheme.color,
-                          ),
-                  ),
+                      width: kSocialEntryDefaultIconSize >= social.iconSize
+                          ? kSocialEntryDefaultIconSize
+                          : social.iconSize,
+                      child: social.icon != null
+                          ? Icon(
+                              social.icon,
+                              size: social.iconSize,
+                              color: Theme.of(context).iconTheme.color,
+                            )
+                          : Icon(
+                              Icons.warning,
+                              size: social.iconSize,
+                              color: Theme.of(context).iconTheme.color,
+                            )
+                      // : SvgPicture.asset(
+                      //     social.svgPath,
+                      //     height: social.iconSize,
+                      //     color: Theme.of(context).iconTheme.color,
+                      //   ),
+                      ),
                 ),
               Flexible(
                 child: Text(

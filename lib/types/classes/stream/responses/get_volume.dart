@@ -8,7 +8,7 @@ class GetVolumeResponse extends BaseResponse {
   String get name => this.json['name'];
 
   /// Volume of the source. Between 0.0 and 1.0
-  num get volume => this.json['volume'];
+  double get volume => this.json['volume'];
 
   /// Indicates whether the source is muted
   bool get muted => this.json['muted'];

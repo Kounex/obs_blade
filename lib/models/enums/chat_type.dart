@@ -17,10 +17,10 @@ extension ChatTypeFunctions on ChatType {
   String get text => const {
         ChatType.Twitch: 'Twitch',
         ChatType.YouTube: 'YouTube',
-      }[this];
+      }[this]!;
 
   IconData get icon => const {
         ChatType.Twitch: JamIcons.twitch,
         ChatType.YouTube: JamIcons.youtube,
-      }[this];
+      }[this]!;
 }

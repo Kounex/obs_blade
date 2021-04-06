@@ -16,53 +16,54 @@ import 'types/extensions/string.dart';
 
 class App extends StatelessWidget {
   ThemeData _getCurrentTheme(Box settingsBox) {
-    Brightness brightness;
-    Color scaffoldBackgroundColor;
-    Color accentColor;
-    Color backgroundColor;
-    Color canvasColor;
-    Color cardColor;
-    Color indicatorColor;
-    Color toggleableActiveColor;
-    Color sliderColor;
-    Color appBarColor;
-    Color buttonColor;
-    Color extraButtonColor;
-    Color tabBarColor;
-    Color cursorColor;
-    Color cupertinoPrimaryColor;
+    Brightness? brightness;
+    Color? scaffoldBackgroundColor;
+    Color? accentColor;
+    Color? backgroundColor;
+    Color? canvasColor;
+    Color? cardColor;
+    Color? indicatorColor;
+    Color? toggleableActiveColor;
+    Color? sliderColor;
+    Color? appBarColor;
+    Color? buttonColor;
+    Color? extraButtonColor;
+    Color? tabBarColor;
+    Color? cursorColor;
+    Color? cupertinoPrimaryColor;
 
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
-      CustomTheme activeCustomTheme = [
-        ...BuiltInThemes.themes,
-        ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values
-      ].firstWhere(
-          (customTheme) =>
-              customTheme.uuid ==
-              settingsBox.get(SettingsKeys.ActiveCustomThemeUUID.name,
-                  defaultValue: ''),
-          orElse: () => null);
+      CustomTheme? activeCustomTheme;
+      try {
+        activeCustomTheme = [
+          ...BuiltInThemes.themes,
+          ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values
+        ].firstWhere((customTheme) =>
+            customTheme.uuid ==
+            settingsBox.get(SettingsKeys.ActiveCustomThemeUUID.name,
+                defaultValue: ''));
+      } catch (e) {}
       if (activeCustomTheme != null) {
         brightness = activeCustomTheme.useLightBrightness != null &&
                 activeCustomTheme.useLightBrightness
             ? Brightness.light
             : Brightness.dark;
         scaffoldBackgroundColor =
-            activeCustomTheme.backgroundColorHex?.hexToColor();
-        accentColor = activeCustomTheme.accentColorHex?.hexToColor();
-        backgroundColor = activeCustomTheme.cardColorHex?.hexToColor();
-        canvasColor = activeCustomTheme.cardColorHex?.hexToColor();
-        cardColor = activeCustomTheme.cardColorHex?.hexToColor();
-        indicatorColor = activeCustomTheme.accentColorHex?.hexToColor();
-        toggleableActiveColor = activeCustomTheme.accentColorHex?.hexToColor();
-        sliderColor = activeCustomTheme.accentColorHex?.hexToColor();
-        appBarColor = activeCustomTheme.appBarColorHex?.hexToColor();
-        buttonColor = activeCustomTheme.accentColorHex?.hexToColor();
-        extraButtonColor = activeCustomTheme.highlightColorHex?.hexToColor();
-        tabBarColor = activeCustomTheme.tabBarColorHex?.hexToColor();
-        cursorColor = activeCustomTheme.accentColorHex?.hexToColor();
+            activeCustomTheme.backgroundColorHex.hexToColor();
+        accentColor = activeCustomTheme.accentColorHex.hexToColor();
+        backgroundColor = activeCustomTheme.cardColorHex.hexToColor();
+        canvasColor = activeCustomTheme.cardColorHex.hexToColor();
+        cardColor = activeCustomTheme.cardColorHex.hexToColor();
+        indicatorColor = activeCustomTheme.accentColorHex.hexToColor();
+        toggleableActiveColor = activeCustomTheme.accentColorHex.hexToColor();
+        sliderColor = activeCustomTheme.accentColorHex.hexToColor();
+        appBarColor = activeCustomTheme.appBarColorHex.hexToColor();
+        buttonColor = activeCustomTheme.accentColorHex.hexToColor();
+        extraButtonColor = activeCustomTheme.highlightColorHex.hexToColor();
+        tabBarColor = activeCustomTheme.tabBarColorHex.hexToColor();
+        cursorColor = activeCustomTheme.accentColorHex.hexToColor();
         cupertinoPrimaryColor =
-            activeCustomTheme.highlightColorHex?.hexToColor();
+            activeCustomTheme.highlightColorHex.hexToColor();
       }
     }
 
@@ -87,7 +88,9 @@ class App extends StatelessWidget {
       dividerColor: Colors.grey[500],
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      textSelectionColor: accentColor ?? StylingHelper.highlight_color,
+      textSelectionTheme: TextSelectionThemeData(
+        selectionColor: accentColor ?? StylingHelper.highlight_color,
+      ),
       toggleableActiveColor:
           toggleableActiveColor ?? StylingHelper.accent_color,
 
@@ -187,7 +190,7 @@ class App extends StatelessWidget {
                   : AppRoutingKeys.Intro.route,
               onGenerateInitialRoutes: (initialRoute) => [
                 MaterialPageRoute(
-                  builder: RoutingHelper.appRoutes[initialRoute],
+                  builder: RoutingHelper.appRoutes[initialRoute]!,
                   settings: RouteSettings(name: initialRoute),
                 ),
               ],

@@ -14,7 +14,7 @@ class ConnectionBox extends StatelessWidget {
   final double width;
 
   ConnectionBox(
-      {@required this.connection, this.height = 200.0, this.width = 250.0});
+      {required this.connection, this.height = 200.0, this.width = 250.0});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,7 @@ class ConnectionBox extends StatelessWidget {
                 children: [
                   if (this.connection.name != null)
                     Text(
-                      this.connection.name,
+                      this.connection.name!,
                       style: Theme.of(context).textTheme.headline6,
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
@@ -54,11 +54,12 @@ class ConnectionBox extends StatelessWidget {
               ),
               Center(
                 child: StatusDot(
-                  color: this.connection.reachable
+                  color: this.connection.reachable!
                       ? Colors.green
                       : CupertinoColors.destructiveRed,
-                  text:
-                      this.connection.reachable ? 'Reachable' : 'Not reachable',
+                  text: this.connection.reachable!
+                      ? 'Reachable'
+                      : 'Not reachable',
                 ),
               ),
               Row(

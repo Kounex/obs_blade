@@ -29,8 +29,8 @@ class Scenes extends StatelessWidget {
                   runSpacing: kSceneButtonSpace,
                   spacing: kSceneButtonSpace,
                   children: dashboardStore.scenes != null &&
-                          dashboardStore.scenes.length > 0
-                      ? dashboardStore.scenes
+                          dashboardStore.scenes!.length > 0
+                      ? dashboardStore.scenes!
                           .map((scene) => SceneButton(scene: scene))
                           .toList()
                       : [Text('No Scenes available')],

@@ -7,7 +7,7 @@ import '../dialogs/info.dart';
 class QuestionMarkTooltip extends StatelessWidget {
   final String message;
 
-  QuestionMarkTooltip({@required this.message});
+  QuestionMarkTooltip({required this.message});
 
   @override
   Widget build(BuildContext context) {

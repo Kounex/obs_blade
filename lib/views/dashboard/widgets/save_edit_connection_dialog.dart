@@ -20,7 +20,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
       title: (this.newConnection ? 'Save' : 'Edit') + ' Connection',
       body:
           'Please choose a name for the connection so you can recognize it later on',
-      inputText: networkStore.activeSession.connection.name,
+      inputText: networkStore.activeSession!.connection.name,
       inputPlaceholder: 'Name of the connection',
       inputCheck: (name) {
         name = name.trim();
@@ -28,24 +28,24 @@ class SaveEditConnectionDialog extends StatelessWidget {
           return 'Please provide a name!';
         }
         if (box.values.any((connection) =>
-            name != networkStore.activeSession.connection.name &&
+            name != networkStore.activeSession!.connection.name &&
             connection.name == name)) {
           return 'Name already used!';
         }
         return null;
       },
       onSave: (name) {
-        name = name.trim();
+        name = name?.trim();
         // if the challenge (or salt) is null, we didn't have to connect with a password.
         // a user might still enter a password, we don't want this password to be
         // saved, thats why we set it to null explicitly if thats the case
-        if (networkStore.activeSession.connection.challenge == null) {
-          networkStore.activeSession.connection.pw = null;
+        if (networkStore.activeSession!.connection.challenge == null) {
+          networkStore.activeSession!.connection.pw = null;
         }
-        networkStore.activeSession.connection.name = name;
+        networkStore.activeSession!.connection.name = name;
         this.newConnection
-            ? box.add(networkStore.activeSession.connection)
-            : networkStore.activeSession.connection.save();
+            ? box.add(networkStore.activeSession!.connection)
+            : networkStore.activeSession!.connection.save();
       },
     );
   }

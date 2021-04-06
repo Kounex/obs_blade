@@ -63,7 +63,7 @@ class ScenePreview extends StatelessWidget {
                 children: [
                   if (dashboardStore.scenePreviewImageBytes != null)
                     Image.memory(
-                      dashboardStore.scenePreviewImageBytes,
+                      dashboardStore.scenePreviewImageBytes!,
                       // height: maxImageHeight,
                       fit: BoxFit.contain,
                       gaplessPlayback: true,

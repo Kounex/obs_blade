@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 class ConfirmationDialog extends StatefulWidget {
   final String title;
-  final String body;
-  final Widget bodyWidget;
+  final String? body;
+  final Widget? bodyWidget;
   final void Function(bool) onOk;
   final bool popDialogOnOk;
   final bool isYesDestructive;
@@ -15,10 +15,10 @@ class ConfirmationDialog extends StatefulWidget {
   final bool enableDontShowAgainOption;
 
   ConfirmationDialog({
-    @required this.title,
+    required this.title,
     this.body,
     this.bodyWidget,
-    @required this.onOk,
+    required this.onOk,
     this.popDialogOnOk = true,
     this.isYesDestructive = false,
     this.okText = 'Yes',
@@ -43,7 +43,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
       ),
       content: Column(
         children: [
-          this.widget.bodyWidget ?? Text(this.widget.body),
+          this.widget.bodyWidget ?? Text(this.widget.body!),
           if (this.widget.enableDontShowAgainOption)
             Padding(
               padding: const EdgeInsets.only(top: 14.0),
@@ -57,7 +57,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
                         value: _dontShowChecked,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         onChanged: (checked) =>
-                            setState(() => _dontShowChecked = checked),
+                            setState(() => _dontShowChecked = checked!),
                       ),
                     ),
                     Text('Don\'t show this again'),

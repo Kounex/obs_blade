@@ -20,12 +20,12 @@ class OutputFlags {
   bool service;
 
   OutputFlags({
-    @required this.rawValue,
-    @required this.audio,
-    @required this.video,
-    @required this.encoded,
-    @required this.multiTrack,
-    @required this.service,
+    required this.rawValue,
+    required this.audio,
+    required this.video,
+    required this.encoded,
+    required this.multiTrack,
+    required this.service,
   });
 
   static OutputFlags fromJSON(Map<String, dynamic> json) => OutputFlags(

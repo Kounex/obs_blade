@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
 
-  SceneItemTile({@required this.sceneItem});
+  SceneItemTile({required this.sceneItem});
 
   @override
   Widget build(BuildContext context) {
@@ -42,15 +42,15 @@ class SceneItemTile extends StatelessWidget {
       ),
       trailing: IconButton(
         icon: Icon(
-          this.sceneItem.render ? Icons.visibility : Icons.visibility_off,
-          color: this.sceneItem.render
+          this.sceneItem.render! ? Icons.visibility : Icons.visibility_off,
+          color: this.sceneItem.render!
               ? Theme.of(context).buttonColor
               : CupertinoColors.destructiveRed,
         ),
         onPressed: () => NetworkHelper.makeRequest(
-            context.read<NetworkStore>().activeSession.socket,
+            context.read<NetworkStore>().activeSession!.socket,
             RequestType.SetSceneItemProperties,
-            {'item': this.sceneItem.name, 'visible': !this.sceneItem.render}),
+            {'item': this.sceneItem.name, 'visible': !this.sceneItem.render!}),
       ),
     );
   }

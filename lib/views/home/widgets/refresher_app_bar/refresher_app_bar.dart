@@ -10,12 +10,12 @@ import 'scroll_refresh_icon.dart';
 const double kRefresherAppBarHeight = 44.0;
 
 class RefresherAppBar extends StatelessWidget {
-  final double expandedHeight;
+  final double? expandedHeight;
   final String imagePath;
 
   RefresherAppBar({
     this.expandedHeight,
-    @required this.imagePath,
+    required this.imagePath,
   });
 
   @override

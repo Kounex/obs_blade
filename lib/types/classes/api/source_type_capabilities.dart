@@ -23,13 +23,13 @@ class SourceTypeCapabilities {
   bool doNotSelfMonitor;
 
   SourceTypeCapabilities({
-    @required this.isAsync,
-    @required this.hasVideo,
-    @required this.hasAudio,
-    @required this.canInteract,
-    @required this.isComposite,
-    @required this.doNotDuplicate,
-    @required this.doNotSelfMonitor,
+    required this.isAsync,
+    required this.hasVideo,
+    required this.hasAudio,
+    required this.canInteract,
+    required this.isComposite,
+    required this.doNotDuplicate,
+    required this.doNotSelfMonitor,
   });
 
   static SourceTypeCapabilities fromJSON(Map<String, dynamic> json) =>

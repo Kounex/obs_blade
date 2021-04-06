@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import '../../../../../shared/general/keyboard_number_header.dart';
 
 class ColorSlider extends StatefulWidget {
-  final String label;
-  final int value;
-  final Color activeColor;
+  final String? label;
+  final int? value;
+  final Color? activeColor;
 
-  final void Function(String) onChanged;
+  final void Function(String)? onChanged;
 
   ColorSlider({
     this.label,
@@ -22,7 +22,7 @@ class ColorSlider extends StatefulWidget {
 }
 
 class _ColorSliderState extends State<ColorSlider> {
-  TextEditingController _colorVal;
+  late TextEditingController _colorVal;
   FocusNode _colorValueFocusNode = FocusNode();
 
   @override
@@ -58,7 +58,7 @@ class _ColorSliderState extends State<ColorSlider> {
             divisions: 255,
             activeColor: this.widget.activeColor,
             onChanged: (value) {
-              this.widget.onChanged(value.toStringAsFixed(0));
+              this.widget.onChanged?.call(value.toStringAsFixed(0));
               setState(() => _colorVal.text = value.toStringAsFixed(0));
             },
           ),
@@ -83,7 +83,7 @@ class _ColorSliderState extends State<ColorSlider> {
               ],
               autocorrect: false,
               maxLength: 3,
-              maxLengthEnforced: true,
+              maxLengthEnforcement: MaxLengthEnforcement.enforced,
               onChanged: (value) {
                 if (value.length == 0) {
                   _colorVal.value = TextEditingValue(
@@ -96,7 +96,7 @@ class _ColorSliderState extends State<ColorSlider> {
                       selection:
                           TextSelection.fromPosition(TextPosition(offset: 1)));
                 }
-                this.widget.onChanged(value);
+                this.widget.onChanged?.call(value);
                 setState(() {});
               },
             ),

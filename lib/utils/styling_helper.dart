@@ -33,7 +33,7 @@ class StylingHelper {
           : BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 
   static Color surroundingAwareAccent(BuildContext context,
-          {Color surroundingColor}) =>
+          {Color? surroundingColor}) =>
       (surroundingColor ?? Theme.of(context).cardColor).computeLuminance() < 0.2
           ? Colors.grey
           : Colors.black;

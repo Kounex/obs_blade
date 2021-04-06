@@ -38,7 +38,7 @@ class FavoriteControl extends StatelessWidget {
             ),
           },
           onValueChanged: (value) => statisticsStore
-              .setShowOnlyFavorites(value == 'null' ? null : value),
+              .setShowOnlyFavorites(value == 'null' ? null : value as bool),
         ),
       ),
     );

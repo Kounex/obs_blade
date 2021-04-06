@@ -15,7 +15,7 @@ extension FilterTypeFunctions on FilterType {
         FilterType.Name: 'Name',
         FilterType.TotalTime: 'Total stream time',
         FilterType.Kbits: 'kbit/s',
-      }[this];
+      }[this]!;
 }
 
 enum FilterOrder {
@@ -27,7 +27,7 @@ extension FilterOrderFunctions on FilterOrder {
   String get text => const {
         FilterOrder.Ascending: 'Asc.',
         FilterOrder.Descending: 'Desc.',
-      }[this];
+      }[this]!;
 }
 
 enum AmountStatisticEntries {
@@ -43,7 +43,7 @@ extension AmountStatisticEntriesFunctions on AmountStatisticEntries {
         AmountStatisticEntries.Ten: 10,
         AmountStatisticEntries.TwentyFive: 25,
         AmountStatisticEntries.Fifty: 50,
-      }[this];
+      }[this]!;
 }
 
 class StatisticsStore = _StatisticsStore with _$StatisticsStore;
@@ -62,16 +62,16 @@ abstract class _StatisticsStore with Store {
   String filterName = '';
 
   @observable
-  bool showOnlyFavorites = false;
+  bool? showOnlyFavorites = false;
 
   @observable
-  DateTime fromDate;
+  DateTime? fromDate;
 
   @observable
-  DateTime toDate;
+  DateTime? toDate;
 
   @observable
-  bool excludeUnnamedStreams = false;
+  bool? excludeUnnamedStreams = false;
 
   @action
   void setFilterType(FilterType filterType) => this.filterType = filterType;
@@ -91,16 +91,16 @@ abstract class _StatisticsStore with Store {
   void setFilterName(String filterName) => this.filterName = filterName;
 
   @action
-  void setShowOnlyFavorites(bool showOnlyFavorites) =>
+  void setShowOnlyFavorites(bool? showOnlyFavorites) =>
       this.showOnlyFavorites = showOnlyFavorites;
 
   @action
-  void setFromDate(DateTime fromDate) => this.fromDate = fromDate;
+  void setFromDate(DateTime? fromDate) => this.fromDate = fromDate;
 
   @action
-  void setToDate(DateTime toDate) => this.toDate = toDate;
+  void setToDate(DateTime? toDate) => this.toDate = toDate;
 
   @action
-  void setExcludeUnnamedStreams(bool excludeUnnamedStreams) =>
+  void setExcludeUnnamedStreams(bool? excludeUnnamedStreams) =>
       this.excludeUnnamedStreams = excludeUnnamedStreams;
 }

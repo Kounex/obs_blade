@@ -40,7 +40,7 @@ class StatusAppBar extends StatelessWidget {
                       dashboardStore.finishPastStreamData();
                       Navigator.of(context).pushReplacementNamed(
                         HomeTabRoutingKeys.Landing.route,
-                        arguments: ModalRoute.of(context).settings.arguments,
+                        arguments: ModalRoute.of(context)!.settings.arguments,
                       );
                       context.read<NetworkStore>().closeSession();
                     },
@@ -63,7 +63,7 @@ class StatusAppBar extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       StatusDot(
-                        key: Key(dashboardStore.isLive?.toString()),
+                        key: Key(dashboardStore.isLive.toString()),
                         size: 10.0,
                         color: dashboardStore.isLive
                             ? Colors.green
@@ -74,7 +74,7 @@ class StatusAppBar extends StatelessWidget {
                       SizedBox(width: 8.0),
                       StatusDot(
                         key: Key(
-                            '${dashboardStore.isRecording?.toString()}+${dashboardStore.isRecordingPaused?.toString()}'),
+                            '${dashboardStore.isRecording.toString()}+${dashboardStore.isRecordingPaused.toString()}'),
                         size: 10.0,
                         color: dashboardStore.isRecording
                             ? dashboardStore.isRecordingPaused

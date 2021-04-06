@@ -22,7 +22,7 @@ class MetaSceneItem {
   /// Scene item unique ID
   final int itemID;
 
-  MetaSceneItem({@required this.sourceName, @required this.itemID});
+  MetaSceneItem({required this.sourceName, required this.itemID});
 
   static MetaSceneItem fromJSON(Map<String, dynamic> json) {
     return MetaSceneItem(

@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class AppBarCupertinoActionEntry {
-  final String title;
-  final void Function() onAction;
+  final String? title;
+  final void Function()? onAction;
 
   final bool isDestructive;
 
@@ -12,10 +12,13 @@ class AppBarCupertinoActionEntry {
 }
 
 class AppBarCupertinoActions extends StatelessWidget {
-  final String actionSheetTitle;
+  final String? actionSheetTitle;
   final List<AppBarCupertinoActionEntry> actions;
 
-  AppBarCupertinoActions({this.actionSheetTitle, @required this.actions});
+  AppBarCupertinoActions({
+    this.actionSheetTitle,
+    required this.actions,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +31,14 @@ class AppBarCupertinoActions extends StatelessWidget {
         builder: (context) {
           return CupertinoActionSheet(
             title: this.actionSheetTitle != null
-                ? Text(this.actionSheetTitle)
+                ? Text(this.actionSheetTitle!)
                 : null,
             actions: this
                 .actions
                 .map(
                   (action) => CupertinoActionSheetAction(
                     child: Text(
-                      action.title,
+                      action.title!,
                       style: action.onAction == null
                           ? TextStyle(
                               color:
@@ -47,7 +50,7 @@ class AppBarCupertinoActions extends StatelessWidget {
                     onPressed: () {
                       if (action.onAction != null) {
                         Navigator.of(context).pop();
-                        action.onAction.call();
+                        action.onAction!.call();
                       }
                     },
                   ),

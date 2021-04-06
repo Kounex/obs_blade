@@ -16,7 +16,7 @@ class _TabBaseState extends State<TabBase> {
   Map<Tabs, HeroController> _heroControllers = {};
   Map<Tabs, ScrollController> _tabScrollController = {};
 
-  RectTween _createRectTween(Rect begin, Rect end) {
+  Tween<Rect?> _createRectTween(Rect? begin, Rect? end) {
     return MaterialRectArcTween(begin: begin, end: end);
   }
 
@@ -37,7 +37,7 @@ class _TabBaseState extends State<TabBase> {
           tabsStore.activeRoutePerNavigator[tab] = route;
           return [
             CupertinoPageRoute(
-              builder: tab.routes[route],
+              builder: tab.routes[route]!,
               settings: RouteSettings(
                 name: route,
                 arguments: _tabScrollController[tab],
@@ -46,13 +46,13 @@ class _TabBaseState extends State<TabBase> {
           ];
         },
         onGenerateRoute: (routeSettings) {
-          tabsStore.activeRoutePerNavigator[tab] = routeSettings.name;
+          tabsStore.activeRoutePerNavigator[tab] = routeSettings.name!;
           return CupertinoPageRoute(
-            builder: tab.routes[routeSettings.name],
+            builder: tab.routes[routeSettings.name]!,
             settings: routeSettings,
           );
         },
-        observers: [_heroControllers[tab]],
+        observers: [_heroControllers[tab]!],
       );
     });
   }
@@ -87,11 +87,11 @@ class _TabBaseState extends State<TabBase> {
             Tabs tappedTab = Tabs.values[index];
             if (tabsStore.activeTab == tappedTab) {
               tabsStore.setPerformTabClickAction(true);
-              if (tabsStore.navigatorKeys[tappedTab].currentState.canPop()) {
-                tabsStore.navigatorKeys[tappedTab].currentState.pop();
-              } else if (_tabScrollController[tappedTab].hasClients &&
-                  _tabScrollController[tappedTab].offset > 0) {
-                _tabScrollController[tappedTab].animateTo(0.0,
+              if (tabsStore.navigatorKeys[tappedTab]!.currentState!.canPop()) {
+                tabsStore.navigatorKeys[tappedTab]!.currentState!.pop();
+              } else if (_tabScrollController[tappedTab]!.hasClients &&
+                  _tabScrollController[tappedTab]!.offset > 0) {
+                _tabScrollController[tappedTab]!.animateTo(0.0,
                     duration: Duration(milliseconds: 250),
                     curve: Curves.easeIn);
               }

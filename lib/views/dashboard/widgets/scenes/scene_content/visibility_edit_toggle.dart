@@ -12,13 +12,13 @@ import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider
 import 'package:provider/provider.dart';
 
 class VisibilityEditToggle extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
   final SceneItemType sceneItemType;
   final bool tabletMode;
 
   VisibilityEditToggle({
     this.child,
-    @required this.sceneItemType,
+    required this.sceneItemType,
     this.tabletMode = false,
   }) : assert(!tabletMode && child != null || tabletMode);
 
@@ -80,7 +80,7 @@ class VisibilityEditToggle extends StatelessWidget {
               ),
               LightDivider(),
               Expanded(
-                child: this.child,
+                child: this.child!,
               ),
             ],
           );

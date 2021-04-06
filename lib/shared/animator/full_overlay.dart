@@ -8,9 +8,9 @@ class FullOverlay extends StatefulWidget {
   final Duration showDuration;
 
   FullOverlay({
-    @required this.content,
-    @required this.animationDuration,
-    @required this.showDuration,
+    required this.content,
+    required this.animationDuration,
+    required this.showDuration,
   });
 
   @override
@@ -19,9 +19,9 @@ class FullOverlay extends StatefulWidget {
 
 class _FullOverlayState extends State<FullOverlay>
     with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  Animation<double> _blur;
-  Animation<double> _opacity;
+  late AnimationController _controller;
+  late Animation<double> _blur;
+  late Animation<double> _opacity;
 
   @override
   void initState() {

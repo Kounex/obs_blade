@@ -16,20 +16,20 @@ const Color kDialogColor = CupertinoDynamicColor.withBrightness(
 const double kDialogBlurAmount = 20.0;
 
 class ModalHandler {
-  static Future<T> showBaseDialog<T>({
-    @required BuildContext context,
-    @required Widget dialogWidget,
+  static Future<T?> showBaseDialog<T>({
+    required BuildContext context,
+    required Widget dialogWidget,
     bool barrierDismissible = false,
   }) async =>
-      showDialog(
+      showDialog<T>(
         context: context,
         barrierDismissible: barrierDismissible,
         builder: (context) => dialogWidget,
       );
 
-  static Future<T> showBaseBottomSheet<T>({
-    @required BuildContext context,
-    @required Widget modalWidget,
+  static Future<T?> showBaseBottomSheet<T>({
+    required BuildContext context,
+    required Widget modalWidget,
     bool useRootNavigator = true,
     bool barrierDismissible = false,
   }) async =>
@@ -54,10 +54,9 @@ class ModalHandler {
         ),
       );
 
-  static Future<T> showBaseCupertinoBottomSheet<T>({
-    @required BuildContext context,
-    @required
-        Widget Function(BuildContext, ScrollController) modalWidgetBuilder,
+  static Future<T?> showBaseCupertinoBottomSheet<T>({
+    required BuildContext context,
+    required Widget Function(BuildContext, ScrollController) modalWidgetBuilder,
     bool useRootNavigator = true,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(
@@ -77,7 +76,9 @@ class ModalHandler {
             body: SafeArea(
               bottom: false,
               child: modalWidgetBuilder(
-                  context, ModalScrollController.of(context)),
+                context,
+                ModalScrollController.of(context)!,
+              ),
             ),
           ),
         ),

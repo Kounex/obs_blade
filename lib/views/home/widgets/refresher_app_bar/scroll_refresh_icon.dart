@@ -9,7 +9,7 @@ import '../../../../stores/views/home.dart';
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
 
-  ScrollRefreshIcon({@required expandedBarHeight})
+  ScrollRefreshIcon({required expandedBarHeight})
       : expandedBarHeight = expandedBarHeight + 28.0;
 
   @override
@@ -18,8 +18,8 @@ class ScrollRefreshIcon extends StatefulWidget {
 
 class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     with SingleTickerProviderStateMixin {
-  AnimationController _animController;
-  Animation<double> _scaleAnimation;
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
 
   @override
   initState() {

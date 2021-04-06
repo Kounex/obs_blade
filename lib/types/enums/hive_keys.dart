@@ -23,5 +23,5 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.Settings: 'settings',
         HiveKeys.CustomTheme: 'custom-theme',
         HiveKeys.HiddenSceneItem: 'hidden-scene-item',
-      }[this];
+      }[this]!;
 }

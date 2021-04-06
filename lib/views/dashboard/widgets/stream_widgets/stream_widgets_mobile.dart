@@ -15,8 +15,9 @@ class StreamWidgetsMobile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Material(
-                color:
-                    Theme.of(context).cupertinoOverrideTheme.barBackgroundColor,
+                color: Theme.of(context)
+                    .cupertinoOverrideTheme!
+                    .barBackgroundColor,
                 child: TabBar(
                   tabs: [
                     Tab(

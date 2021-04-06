@@ -19,12 +19,12 @@ class NetworkStore = _NetworkStore with _$NetworkStore;
 
 abstract class _NetworkStore with Store {
   @observable
-  Session activeSession;
+  Session? activeSession;
 
   @observable
   bool connectionInProgress = false;
   @observable
-  BaseResponse connectionResponse;
+  BaseResponse? connectionResponse;
 
   @observable
   bool obsTerminated = false;
@@ -44,14 +44,14 @@ abstract class _NetworkStore with Store {
         Session(NetworkHelper.establishWebSocket(connection), connection);
     Completer<BaseResponse> authCompleter = Completer();
 
-    this.activeSession.socketStream =
-        this.activeSession.socket.stream.asBroadcastStream();
+    this.activeSession!.socketStream =
+        this.activeSession!.socket.stream.asBroadcastStream();
 
     StreamSubscription subscription =
         _handleInitialWebSocket(connection, authCompleter);
 
     NetworkHelper.makeRequest(
-        this.activeSession.socket, RequestType.GetAuthRequired);
+        this.activeSession!.socket, RequestType.GetAuthRequired);
     this.connectionResponse = await Future.any([
       authCompleter.future,
       Future.delayed(
@@ -60,8 +60,8 @@ abstract class _NetworkStore with Store {
 
     subscription.cancel();
     if (!reconnect) {
-      if (this.connectionResponse.status != BaseResponse.ok) {
-        this.activeSession.socket.sink.close();
+      if (this.connectionResponse!.status != BaseResponse.ok) {
+        this.activeSession!.socket.sink.close();
         this.activeSession = null;
       } else {
         // this.activeSession.connection.ssid = await Connectivity().getWifiName();
@@ -69,14 +69,14 @@ abstract class _NetworkStore with Store {
       }
     }
     this.connectionInProgress = false;
-    return this.connectionResponse;
+    return this.connectionResponse!;
   }
 
   @action
   void closeSession({bool manually = true}) {
     this.obsTerminated = !manually;
     if (this.activeSession != null) {
-      this.activeSession.socket.sink.close();
+      this.activeSession!.socket.sink.close();
       this.activeSession = null;
       this.connectionResponse = null;
     }
@@ -95,7 +95,7 @@ abstract class _NetworkStore with Store {
 
   StreamSubscription _handleInitialWebSocket(
           Connection connection, Completer authCompleter) =>
-      this.activeSession.socketStream.listen(
+      this.activeSession!.socketStream!.listen(
         (event) {
           Map<String, dynamic> jsonObject = json.decode(event);
           BaseResponse response = BaseResponse(jsonObject);
@@ -103,12 +103,12 @@ abstract class _NetworkStore with Store {
             case RequestType.GetAuthRequired:
               GetAuthRequiredResponse getAuthResponse =
                   GetAuthRequiredResponse(jsonObject);
-              this.activeSession.connection.challenge =
+              this.activeSession!.connection.challenge =
                   getAuthResponse.challenge;
-              this.activeSession.connection.salt = getAuthResponse.salt;
+              this.activeSession!.connection.salt = getAuthResponse.salt;
               if (getAuthResponse.authRequired) {
                 NetworkHelper.makeRequest(
-                    this.activeSession.socket,
+                    this.activeSession!.socket,
                     RequestType.Authenticate,
                     {'auth': NetworkHelper.getAuthRequestContent(connection)});
               } else {
@@ -128,7 +128,7 @@ abstract class _NetworkStore with Store {
 
   Stream<Message> watchOBSStream() async* {
     try {
-      await for (final event in this.activeSession.socketStream) {
+      await for (final event in this.activeSession!.socketStream!) {
         Map<String, dynamic> fullJSON = json.decode(event);
         if (fullJSON['update-type'] != null) {
           yield BaseEvent(fullJSON);
@@ -137,7 +137,7 @@ abstract class _NetworkStore with Store {
         }
       }
     } finally {
-      this.activeSession?.socket?.sink?.close();
+      this.activeSession?.socket.sink.close();
     }
   }
 

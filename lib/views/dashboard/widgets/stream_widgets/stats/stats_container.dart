@@ -5,11 +5,11 @@ import '../../../../../shared/general/base_card.dart';
 class StatsContainer extends StatelessWidget {
   final String title;
   final List<Widget> children;
-  final double elevation;
+  final double? elevation;
 
   StatsContainer({
-    @required this.title,
-    this.children,
+    required this.title,
+    required this.children,
     this.elevation,
   });
 

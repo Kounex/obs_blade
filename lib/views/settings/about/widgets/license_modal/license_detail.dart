@@ -8,7 +8,7 @@ class LicenseDetail extends StatelessWidget {
   final String package;
   final List<LicenseEntry> licenseEntries;
 
-  LicenseDetail({@required this.package, @required this.licenseEntries});
+  LicenseDetail({required this.package, required this.licenseEntries});
 
   @override
   Widget build(BuildContext context) {

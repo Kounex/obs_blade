@@ -19,10 +19,10 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
     return Connection(
       fields[1] as String,
       fields[3] as int,
-      fields[4] as String,
+      fields[4] as String?,
     )
-      ..name = fields[0] as String
-      ..ssid = fields[2] as String;
+      ..name = fields[0] as String?
+      ..ssid = fields[2] as String?;
   }
 
   @override

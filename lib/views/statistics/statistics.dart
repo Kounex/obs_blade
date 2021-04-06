@@ -108,7 +108,7 @@ class _StatisticsViewState extends State<_StatisticsView> {
               break;
             case FilterType.TotalTime:
               sortResult =
-                  dataOrder1.totalStreamTime - dataOrder2.totalStreamTime;
+                  dataOrder1.totalStreamTime! - dataOrder2.totalStreamTime!;
               break;
             case FilterType.Name:
               sortResult = (dataOrder1.name ?? 'Unnamed stream')
@@ -144,11 +144,11 @@ class _StatisticsViewState extends State<_StatisticsView> {
         /// Fitler statistics which are either starred, not starred or both
         .where((data) {
           if (statisticsStore.showOnlyFavorites != null) {
-            return statisticsStore.showOnlyFavorites
+            return statisticsStore.showOnlyFavorites!
                 ? data.starred ?? false
                 : true;
           }
-          return data.starred == null || !data.starred;
+          return data.starred == null || !data.starred!;
         })
 
         /// Filter statistics which are inside the date range the user might have set
@@ -162,7 +162,7 @@ class _StatisticsViewState extends State<_StatisticsView> {
         /// Filter statistics which are not unnamed or specifically unnamed if user set this checkbox (or tristate)
         .where((data) {
           if (statisticsStore.excludeUnnamedStreams != null) {
-            return statisticsStore.excludeUnnamedStreams
+            return statisticsStore.excludeUnnamedStreams!
                 ? data.name != null
                 : true;
           }
@@ -179,7 +179,8 @@ class _StatisticsViewState extends State<_StatisticsView> {
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
         title: 'Statistics',
-        scrollController: ModalRoute.of(context).settings.arguments,
+        scrollController:
+            ModalRoute.of(context)!.settings.arguments as ScrollController,
         listViewChildren: [
           ValueListenableBuilder(
             valueListenable:

@@ -56,24 +56,24 @@ class StreamStats {
   double freeDiskSpace;
 
   StreamStats(
-      {@required this.streaming,
-      @required this.recording,
-      @required this.replayBufferActive,
-      @required this.bytesPerSec,
-      @required this.kbitsPerSec,
-      @required this.strain,
-      @required this.totalStreamTime,
-      @required this.numTotalFrames,
-      @required this.numDroppedFrames,
-      @required this.fps,
-      @required this.renderTotalFrames,
-      @required this.renderMissedFrames,
-      @required this.outputTotalFrames,
-      @required this.outputSkippedFrames,
-      @required this.averageFrameTime,
-      @required this.cpuUsage,
-      @required this.memoryUsage,
-      @required this.freeDiskSpace});
+      {required this.streaming,
+      required this.recording,
+      required this.replayBufferActive,
+      required this.bytesPerSec,
+      required this.kbitsPerSec,
+      required this.strain,
+      required this.totalStreamTime,
+      required this.numTotalFrames,
+      required this.numDroppedFrames,
+      required this.fps,
+      required this.renderTotalFrames,
+      required this.renderMissedFrames,
+      required this.outputTotalFrames,
+      required this.outputSkippedFrames,
+      required this.averageFrameTime,
+      required this.cpuUsage,
+      required this.memoryUsage,
+      required this.freeDiskSpace});
 
   static StreamStats fromJSON(Map<String, dynamic> json) {
     return StreamStats(

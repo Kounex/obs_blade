@@ -75,5 +75,5 @@ extension SettingsKeysFunctions on SettingsKeys {
             'dont-show-hiding-scene-items-warning',
         SettingsKeys.DontShowYouTubeChatBetaWarning:
             'dont-show-youtube-chat-beta-warning',
-      }[this];
+      }[this]!;
 }

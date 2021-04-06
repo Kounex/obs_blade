@@ -19,11 +19,11 @@ class SourceType {
   SourceTypeCapabilities caps;
 
   SourceType({
-    @required this.typeID,
-    @required this.displayName,
-    @required this.type,
-    @required this.defaultSettings,
-    @required this.caps,
+    required this.typeID,
+    required this.displayName,
+    required this.type,
+    required this.defaultSettings,
+    required this.caps,
   });
 
   static SourceType fromJSON(Map<String, dynamic> json) {

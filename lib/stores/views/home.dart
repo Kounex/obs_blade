@@ -10,7 +10,7 @@ class HomeStore = _HomeStore with _$HomeStore;
 
 abstract class _HomeStore with Store {
   @observable
-  Future<List<Connection>> autodiscoverConnections;
+  Future<List<Connection>>? autodiscoverConnections;
   @observable
   String autodiscoverPort = '4444';
 
@@ -28,8 +28,8 @@ abstract class _HomeStore with Store {
   @action
   void updateAutodiscoverConnections() {
     if (ValidationHelper.portValidation(this.autodiscoverPort) == null) {
-      this.autodiscoverConnections =
-          NetworkHelper.getAvailableOBSIPs(int.tryParse(this.autodiscoverPort));
+      this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
+          int.tryParse(this.autodiscoverPort) ?? 4444);
     }
   }
 
@@ -37,6 +37,6 @@ abstract class _HomeStore with Store {
   void setRefreshable(bool refreshable) => this.refreshable = refreshable;
 
   @action
-  void toggleManualMode([bool manualMode]) =>
+  void toggleManualMode([bool? manualMode]) =>
       this.manualMode = manualMode != null ? manualMode : !this.manualMode;
 }

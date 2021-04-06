@@ -13,13 +13,13 @@ mixin _$HomeStore on _HomeStore, Store {
       Atom(name: '_HomeStore.autodiscoverConnections');
 
   @override
-  Future<List<Connection>> get autodiscoverConnections {
+  Future<List<Connection>>? get autodiscoverConnections {
     _$autodiscoverConnectionsAtom.reportRead();
     return super.autodiscoverConnections;
   }
 
   @override
-  set autodiscoverConnections(Future<List<Connection>> value) {
+  set autodiscoverConnections(Future<List<Connection>>? value) {
     _$autodiscoverConnectionsAtom
         .reportWrite(value, super.autodiscoverConnections, () {
       super.autodiscoverConnections = value;
@@ -107,7 +107,7 @@ mixin _$HomeStore on _HomeStore, Store {
   }
 
   @override
-  void toggleManualMode([bool manualMode]) {
+  void toggleManualMode([bool? manualMode]) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
         name: '_HomeStore.toggleManualMode');
     try {

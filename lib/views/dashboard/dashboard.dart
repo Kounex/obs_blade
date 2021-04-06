@@ -32,10 +32,10 @@ import 'widgets/stream_widgets/stream_widgets_mobile.dart';
 class DashboardScroll extends InheritedWidget {
   final ScrollController scrollController = ScrollController();
 
-  DashboardScroll({@required Widget child}) : super(child: child);
+  DashboardScroll({required Widget child}) : super(child: child);
 
   static DashboardScroll of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<DashboardScroll>();
+      context.dependOnInheritedWidgetOfExactType<DashboardScroll>()!;
 
   @override
   bool updateShouldNotify(DashboardScroll oldWidget) =>
@@ -73,15 +73,15 @@ class _DashboardViewState extends State<_DashboardView> {
 
     when(
         (_) =>
-            context.read<NetworkStore>().activeSession.connection.name == null,
-        () => SchedulerBinding.instance
+            context.read<NetworkStore>().activeSession!.connection.name == null,
+        () => SchedulerBinding.instance!
             .addPostFrameCallback((_) => _saveConnectionDialog(context)));
 
     when(
         (_) => context.read<NetworkStore>().obsTerminated,
         () => Navigator.of(context).pushReplacementNamed(
               HomeTabRoutingKeys.Landing.route,
-              arguments: ModalRoute.of(context).settings.arguments,
+              arguments: ModalRoute.of(context)!.settings.arguments,
             ));
     super.initState();
   }
@@ -122,7 +122,8 @@ class _DashboardViewState extends State<_DashboardView> {
               physics: context.read<DashboardStore>().isPointerOnChat
                   ? NeverScrollableScrollPhysics()
                   : ClampingScrollPhysics(),
-              controller: ModalRoute.of(context).settings.arguments,
+              controller: ModalRoute.of(context)!.settings.arguments
+                  as ScrollController,
               slivers: [
                 StatusAppBar(),
                 CustomSliverList(

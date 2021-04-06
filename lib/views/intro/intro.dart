@@ -38,7 +38,7 @@ class _IntroView extends StatefulWidget {
 
 class _IntroViewState extends State<_IntroView> {
   PageController _pageController = PageController();
-  List<Widget> _pageChildren;
+  late List<Widget> _pageChildren;
 
   @override
   void initState() {

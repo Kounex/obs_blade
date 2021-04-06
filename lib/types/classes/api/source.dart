@@ -11,9 +11,9 @@ class Source {
   String type;
 
   Source({
-    @required this.name,
-    @required this.typeID,
-    @required this.type,
+    required this.name,
+    required this.typeID,
+    required this.type,
   });
 
   static Source fromJSON(Map<String, dynamic> json) => Source(

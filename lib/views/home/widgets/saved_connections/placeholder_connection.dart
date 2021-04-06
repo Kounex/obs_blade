@@ -8,7 +8,7 @@ class PlaceholderConnection extends StatelessWidget {
   final double height;
   final double width;
 
-  PlaceholderConnection({@required this.height, @required this.width})
+  PlaceholderConnection({required this.height, required this.width})
       : assert(height != null && width != null);
 
   @override

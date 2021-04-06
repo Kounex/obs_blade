@@ -5,7 +5,7 @@ import 'block_entry.dart';
 import 'light_divider.dart';
 
 class ActionBlock extends StatelessWidget {
-  final String title;
+  final String? title;
   final List<BlockEntry> blockEntries;
   final bool dense;
 
@@ -13,7 +13,7 @@ class ActionBlock extends StatelessWidget {
   final double iconSize = 32.0;
   final double entryHeight = 42.0;
 
-  ActionBlock({this.title, @required this.blockEntries, this.dense = false});
+  ActionBlock({this.title, required this.blockEntries, this.dense = false});
 
   @override
   Widget build(BuildContext context) {
@@ -40,12 +40,12 @@ class ActionBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (this.title != null && this.title.length > 0)
+          if (this.title != null && this.title!.length > 0)
             Padding(
               padding:
                   EdgeInsets.only(left: this.generalizedPadding, bottom: 7.0),
               child: Text(
-                this.title.toUpperCase(),
+                this.title!.toUpperCase(),
                 style: Theme.of(context).textTheme.caption,
               ),
             ),

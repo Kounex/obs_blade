@@ -20,12 +20,12 @@ class CardHeader extends StatelessWidget {
   final String title;
   final String description;
 
-  final IconData headerDecorationIcon;
+  final IconData? headerDecorationIcon;
 
   final List<Widget> additionalCardWidgets;
 
   CardHeader({
-    @required this.title,
+    required this.title,
     this.description = '',
     this.headerDecorationIcon,
     this.additionalCardWidgets = const [],

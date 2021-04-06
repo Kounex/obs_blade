@@ -39,19 +39,19 @@ extension TabsFunctions on Tabs {
         Tabs.Home: 'Home',
         Tabs.Statistics: 'Statistics',
         Tabs.Settings: 'Settings',
-      }[this];
+      }[this]!;
 
   IconData get icon => const {
         Tabs.Home: CupertinoIcons.house_alt,
         Tabs.Statistics: CupertinoIcons.chart_bar_alt_fill,
         Tabs.Settings: CupertinoIcons.settings,
-      }[this];
+      }[this]!;
 
   Map<String, Widget Function(BuildContext)> get routes => {
         Tabs.Home: RoutingHelper.homeTabRoutes,
         Tabs.Statistics: RoutingHelper.statisticsTabRoutes,
         Tabs.Settings: RoutingHelper.settingsTabRoutes,
-      }[this];
+      }[this]!;
 }
 
 /// Routing keys for the home tab
@@ -75,7 +75,7 @@ extension AppRoutingKeysFunctions on AppRoutingKeys {
   String get route => const {
         AppRoutingKeys.Intro: '/intro',
         AppRoutingKeys.Tabs: '/tabs',
-      }[this];
+      }[this]!;
 }
 
 /// Extension method for [HomeTabRoutingKeys] enum to get the actual route
@@ -85,7 +85,7 @@ extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
         HomeTabRoutingKeys.Landing: AppRoutingKeys.Tabs.route + '/home',
         HomeTabRoutingKeys.Dashboard:
             AppRoutingKeys.Tabs.route + '/home/dashboard',
-      }[this];
+      }[this]!;
 }
 
 /// Extension method for [StaticticsTabRoutingKeys] enum to get the actual route
@@ -96,7 +96,7 @@ extension StaticticsTabRoutingKeysFunctions on StaticticsTabRoutingKeys {
             AppRoutingKeys.Tabs.route + '/statistics',
         StaticticsTabRoutingKeys.Detail:
             AppRoutingKeys.Tabs.route + '/statistics/detail',
-      }[this];
+      }[this]!;
 }
 
 /// Extension method for [SettingsTabRoutingKeys] enum to get the actual route
@@ -110,7 +110,7 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
             AppRoutingKeys.Tabs.route + '/settings/about',
         SettingsTabRoutingKeys.CustomTheme:
             AppRoutingKeys.Tabs.route + '/settings/custom-theme',
-      }[this];
+      }[this]!;
 }
 
 /// Used to summarize routing tasks and information at one point

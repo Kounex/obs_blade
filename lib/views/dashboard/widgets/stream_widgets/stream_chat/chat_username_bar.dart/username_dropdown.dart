@@ -7,7 +7,7 @@ import '../../../../../../types/enums/settings_keys.dart';
 class UsernameDropdown extends StatelessWidget {
   final Box settingsBox;
 
-  UsernameDropdown({@required this.settingsBox});
+  UsernameDropdown({required this.settingsBox});
 
   @override
   Widget build(BuildContext context) {

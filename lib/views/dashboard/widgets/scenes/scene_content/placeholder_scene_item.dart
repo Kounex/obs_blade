@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class PlaceholderSceneItem extends StatelessWidget {
   final String text;
 
-  PlaceholderSceneItem({@required this.text}) : assert(text != null);
+  PlaceholderSceneItem({required this.text}) : assert(text != null);
 
   @override
   Widget build(BuildContext context) {

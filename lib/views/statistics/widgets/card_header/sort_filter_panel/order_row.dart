@@ -19,11 +19,11 @@ class OrderRow extends StatefulWidget {
 }
 
 class _OrderRowState extends State<OrderRow> with TickerProviderStateMixin {
-  AnimationController _controllerUp;
-  AnimationController _controllerDown;
+  late AnimationController _controllerUp;
+  late AnimationController _controllerDown;
 
-  Animation<double> _halfTurnUp;
-  Animation<double> _halfTurnDown;
+  late Animation<double> _halfTurnUp;
+  late Animation<double> _halfTurnDown;
 
   @override
   void initState() {
@@ -91,7 +91,7 @@ class _OrderRowState extends State<OrderRow> with TickerProviderStateMixin {
                         )
                         .toList(),
                     onChanged: (filterType) =>
-                        statisticsStore.setFilterType(filterType),
+                        statisticsStore.setFilterType(filterType!),
                   ),
                 ),
               ),

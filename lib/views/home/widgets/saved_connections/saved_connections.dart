@@ -54,14 +54,16 @@ class SavedConnections extends StatelessWidget {
 
                         savedConnections.forEach((connection) =>
                             connection.reachable = snapshot.hasData &&
-                                snapshot.data.any((discoverConnection) =>
+                                snapshot.data!.any((discoverConnection) =>
                                     discoverConnection.ip == connection.ip &&
                                     discoverConnection.port ==
                                         connection.port));
-                        savedConnections.sort((c1, c2) =>
-                            c1.reachable != c2.reachable
-                                ? c1.reachable ? 0 : 1
-                                : c1.name.compareTo(c2.name));
+                        savedConnections
+                            .sort((c1, c2) => c1.reachable != c2.reachable
+                                ? c1.reachable!
+                                    ? 0
+                                    : 1
+                                : c1.name!.compareTo(c2.name!));
 
                         return MediaQuery.of(context).size.width < width * 2.5
                             ? SizedBox(

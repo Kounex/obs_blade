@@ -10,7 +10,7 @@ import '../../../../../../types/enums/settings_keys.dart';
 class ChatTypeDropdown extends StatelessWidget {
   final Box settingsBox;
 
-  ChatTypeDropdown({@required this.settingsBox});
+  ChatTypeDropdown({required this.settingsBox});
 
   @override
   Widget build(BuildContext context) {

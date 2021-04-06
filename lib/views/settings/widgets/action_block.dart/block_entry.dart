@@ -17,16 +17,16 @@ const Color kPressedColor = CupertinoDynamicColor.withBrightness(
 );
 
 class BlockEntry extends StatefulWidget {
-  final IconData leading;
+  final IconData? leading;
   final double leadingSize;
-  final IconData heroPlaceholder;
-  final String title;
-  final String help;
-  final Widget trailing;
-  final Function onTap;
-  final String navigateTo;
+  final IconData? heroPlaceholder;
+  final String? title;
+  final String? help;
+  final Widget? trailing;
+  final Function? onTap;
+  final String? navigateTo;
   final bool rootNavigation;
-  final String navigateToResult;
+  final String? navigateToResult;
 
   BlockEntry({
     this.leading,
@@ -66,10 +66,10 @@ class _BlockEntryState extends State<BlockEntry> {
       onTap: this.widget.navigateTo != null
           ? () => this.widget.rootNavigation
               ? Navigator.of(context, rootNavigator: true)
-                  .pushReplacementNamed(this.widget.navigateTo)
-              : Navigator.of(context).pushNamed(this.widget.navigateTo)
+                  .pushReplacementNamed(this.widget.navigateTo!)
+              : Navigator.of(context).pushNamed(this.widget.navigateTo!)
           : this.widget.onTap != null
-              ? () => this.widget.onTap()
+              ? () => this.widget.onTap!()
               : null,
       child: Container(
         color: _isPressed
@@ -88,14 +88,14 @@ class _BlockEntryState extends State<BlockEntry> {
                   child: SizedBox(
                     width: kblockEntryIconSize,
                     child: Hero(
-                      tag: this.widget.title,
+                      tag: this.widget.title!,
                       placeholderBuilder: this.widget.heroPlaceholder != null
                           ? (context, heroSize, child) =>
                               Icon(this.widget.heroPlaceholder)
                           : null,
                       child: Icon(
                         this.widget.leading,
-                        size: this.widget.leadingSize ?? kblockEntryIconSize,
+                        size: this.widget.leadingSize,
                       ),
                     ),
                   ),
@@ -103,14 +103,14 @@ class _BlockEntryState extends State<BlockEntry> {
               Expanded(
                 child: Row(
                   children: [
-                    Text(this.widget.title,
+                    Text(this.widget.title!,
                         style: Theme.of(context).textTheme.subtitle1
                         // .copyWith(fontSize: 15.0),
                         ),
                     if (this.widget.help != null)
                       Padding(
                         padding: const EdgeInsets.only(left: 12.0),
-                        child: QuestionMarkTooltip(message: this.widget.help),
+                        child: QuestionMarkTooltip(message: this.widget.help!),
                       )
                   ],
                 ),
@@ -120,10 +120,10 @@ class _BlockEntryState extends State<BlockEntry> {
                       children: [
                         if (this.widget.navigateToResult != null)
                           Text(
-                            this.widget.navigateToResult,
+                            this.widget.navigateToResult!,
                             style: Theme.of(context)
                                 .textTheme
-                                .caption
+                                .caption!
                                 .copyWith(fontSize: 14.0),
                           ),
                         Icon(
@@ -132,7 +132,7 @@ class _BlockEntryState extends State<BlockEntry> {
                         ),
                       ],
                     )
-                  : this.widget.trailing,
+                  : this.widget.trailing!,
             ],
           ),
         ),

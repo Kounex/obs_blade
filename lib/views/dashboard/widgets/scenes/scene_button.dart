@@ -10,16 +10,16 @@ import '../../../../utils/network_helper.dart';
 
 class SceneButton extends StatelessWidget {
   final Scene scene;
-  const SceneButton({@required this.scene});
+  const SceneButton({required this.scene});
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
+    DashboardStore dashboardStore = context.read<DashboardStore>();
 
     return Observer(
       builder: (_) => GestureDetector(
         onTap: () => NetworkHelper.makeRequest(
-            context.read<NetworkStore>().activeSession.socket,
+            context.read<NetworkStore>().activeSession!.socket,
             RequestType.SetCurrentScene,
             {'scene-name': scene.name}),
         child: Stack(
@@ -28,8 +28,8 @@ class SceneButton extends StatelessWidget {
               duration: Duration(
                   milliseconds:
                       dashboardStore.sceneTransitionDurationMS != null &&
-                              dashboardStore.sceneTransitionDurationMS >= 0
-                          ? dashboardStore.sceneTransitionDurationMS
+                              dashboardStore.sceneTransitionDurationMS! >= 0
+                          ? dashboardStore.sceneTransitionDurationMS!
                           : 0),
               alignment: Alignment.center,
               height: 100.0,

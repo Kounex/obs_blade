@@ -5,7 +5,7 @@ class KeyboardNumberHeader extends StatelessWidget {
   final Widget child;
   final FocusNode focusNode;
 
-  KeyboardNumberHeader({@required this.child, @required this.focusNode});
+  KeyboardNumberHeader({required this.child, required this.focusNode});
 
   @override
   Widget build(BuildContext context) {

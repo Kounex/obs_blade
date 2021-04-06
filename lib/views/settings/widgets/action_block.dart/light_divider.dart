@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 class LightDivider extends StatelessWidget {
-  final double height;
+  final double? height;
 
   LightDivider({this.height});
 

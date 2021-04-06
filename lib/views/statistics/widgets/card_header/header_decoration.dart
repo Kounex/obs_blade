@@ -7,7 +7,11 @@ class IconClipper extends CustomClipper<Path> {
 
   final double borderRadius;
 
-  IconClipper({@required this.xCut, this.yCut, this.borderRadius = 4.0});
+  IconClipper({
+    required this.xCut,
+    required this.yCut,
+    this.borderRadius = 4.0,
+  });
 
   @override
   Path getClip(Size size) => Path()
@@ -24,7 +28,7 @@ class IconClipper extends CustomClipper<Path> {
 }
 
 class HeaderDecoration extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final double iconSize;
 
   final double iconXOffset;

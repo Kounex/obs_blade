@@ -6,5 +6,5 @@
 abstract class Message {
   /// It's enough to agree on this json property as the common
   /// information
-  Map<String, dynamic> json;
+  late Map<String, dynamic> json;
 }

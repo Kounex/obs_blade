@@ -11,12 +11,18 @@ class BaseEvent implements Message {
   String get updateType => this.json['update-type'];
 
   /// (Optional): time elapsed between now and stream start (only present if OBS Studio is streaming)
-  String get streamTimecode => this.json['stream-timecode'];
+  String? get streamTimecode => this.json['stream-timecode'];
 
   /// (Optional): time elapsed between now and recording start (only present if OBS Studio is recording)
-  String get recTimecode => this.json['rec-timecode'];
+  String? get recTimecode => this.json['rec-timecode'];
 
-  EventType get eventType => EventType.values.firstWhere(
-      (eventType) => eventType.toString().split('.')[1] == this.updateType,
-      orElse: () => null);
+  EventType? get eventType {
+    try {
+      return EventType.values.firstWhere(
+        (eventType) => eventType.toString().split('.')[1] == this.updateType,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 }

@@ -45,56 +45,56 @@ class PastStreamData extends HiveObject {
 
   /// Percentage of dropped frames
   @HiveField(3)
-  double strain;
+  double? strain;
 
   /// Total time (in seconds) since the stream started
   @HiveField(4)
-  int totalStreamTime;
+  int? totalStreamTime;
 
   /// Total number of frames transmitted since the stream started
   @HiveField(5)
-  int numTotalFrames;
+  int? numTotalFrames;
 
   /// Number of frames dropped by the encoder since the stream started
   @HiveField(6)
-  int numDroppedFrames;
+  int? numDroppedFrames;
 
   /// Number of frames rendered
   @HiveField(7)
-  int renderTotalFrames;
+  int? renderTotalFrames;
 
   /// Number of frames missed due to rendering lag
   @HiveField(8)
-  int renderMissedFrames;
+  int? renderMissedFrames;
 
   /// Number of frames outputted
   @HiveField(9)
-  int outputTotalFrames;
+  int? outputTotalFrames;
 
   /// Number of frames skipped due to encoding lag
   @HiveField(10)
-  int outputSkippedFrames;
+  int? outputSkippedFrames;
 
   /// Average frame time (in milliseconds)
   @HiveField(11)
-  double averageFrameTime;
+  double? averageFrameTime;
 
   /// Custom properties which will not be set / transmitted by OBS but set
   /// by the user or internally for checks
 
   /// Name of this [PastStreamData] to find it later / filtering etc.
   @HiveField(13)
-  String name;
+  String? name;
 
   /// If this [PastStreamData] has been starred by the user (like favourite).
   /// Also suitable for filtering etc.
   @HiveField(14)
-  bool starred;
+  bool? starred;
 
   /// Notes a user can write down for this [PastStreamData] for additional
   /// information on the stream or whatever
   @HiveField(15)
-  String notes;
+  String? notes;
 
   /// List of current [StreamStats] which will be used to fill the
   /// list of stats (see above). As soon as we reach [kAmountStreamStatsForAverage]

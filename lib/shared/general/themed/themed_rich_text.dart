@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 
 class ThemedRichText extends StatelessWidget {
   final List<InlineSpan> textSpans;
-  final TextAlign textAlign;
-  final TextStyle textStyle;
+  final TextAlign? textAlign;
+  final TextStyle? textStyle;
 
-  ThemedRichText({@required this.textSpans, this.textAlign, this.textStyle});
+  ThemedRichText({
+    required this.textSpans,
+    this.textAlign,
+    this.textStyle,
+  });
 
   @override
   Widget build(BuildContext context) {

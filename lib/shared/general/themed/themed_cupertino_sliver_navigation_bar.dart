@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class ThemedCupertinoSliverNavigationBar extends StatelessWidget {
   final Widget largeTitle;
 
-  ThemedCupertinoSliverNavigationBar({@required this.largeTitle});
+  ThemedCupertinoSliverNavigationBar({required this.largeTitle});
 
   @override
   Widget build(BuildContext context) {

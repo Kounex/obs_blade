@@ -5,8 +5,8 @@ class StreamDateChip extends StatelessWidget {
   final String content;
 
   StreamDateChip({
-    @required this.label,
-    @required this.content,
+    required this.label,
+    required this.content,
   });
 
   @override

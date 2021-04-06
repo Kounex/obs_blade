@@ -9,7 +9,7 @@ import '../../../../../stores/views/dashboard.dart';
 import 'stats_container.dart';
 
 class Stats extends StatefulWidget {
-  final EdgeInsets pageIndicatorPadding;
+  final EdgeInsets? pageIndicatorPadding;
 
   Stats({this.pageIndicatorPadding});
 
@@ -18,7 +18,7 @@ class Stats extends StatefulWidget {
 }
 
 class _StatsState extends State<Stats> {
-  ScrollController _pageController = PageController();
+  PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
@@ -55,26 +55,26 @@ class _StatsState extends State<Stats> {
                       FormattedText(
                         label: 'Total stream time',
                         text: dashboardStore.latestStreamStats?.totalStreamTime
-                            ?.secondsToFormattedDurationString(),
+                            .secondsToFormattedDurationString(),
                         width: 100.0,
                       ),
                       FormattedText(
                         label: 'FPS',
                         text: dashboardStore.latestStreamStats?.fps
-                            ?.round()
-                            ?.toString(),
+                            .round()
+                            .toString(),
                       ),
                       FormattedText(
                         label: 'kbit/s',
                         text: dashboardStore.latestStreamStats?.kbitsPerSec
-                            ?.toString(),
+                            .toString(),
                         width: 75.0,
                       ),
                       FormattedText(
                         label: 'CPU Usage',
                         unit: '%',
                         text: dashboardStore.latestStreamStats?.cpuUsage
-                            ?.toStringAsFixed(2),
+                            .toStringAsFixed(2),
                         width: 70.0,
                       ),
                       FormattedText(
@@ -82,7 +82,7 @@ class _StatsState extends State<Stats> {
                         unit: ' GB',
                         text: dashboardStore.latestStreamStats?.memoryUsage !=
                                 null
-                            ? (dashboardStore.latestStreamStats.memoryUsage /
+                            ? (dashboardStore.latestStreamStats!.memoryUsage /
                                     1000)
                                 .toStringAsFixed(2)
                             : null,
@@ -91,8 +91,8 @@ class _StatsState extends State<Stats> {
                       FormattedText(
                         label: 'Dropped Frames',
                         unit: '%',
-                        text: dashboardStore.latestStreamStats?.strain
-                            ?.toString(),
+                        text:
+                            dashboardStore.latestStreamStats?.strain.toString(),
                         width: 95.0,
                       ),
                     ],
@@ -108,28 +108,28 @@ class _StatsState extends State<Stats> {
                         label: 'Missed Frames (render)',
                         text: dashboardStore
                             .latestStreamStats?.renderMissedFrames
-                            ?.toStringAsFixed(2),
+                            .toStringAsFixed(2),
                         width: 135.0,
                       ),
                       FormattedText(
                         label: 'Skipped Frames (encoder)',
                         text: dashboardStore
                             .latestStreamStats?.outputSkippedFrames
-                            ?.toString(),
+                            .toString(),
                         width: 150.0,
                       ),
                       FormattedText(
                         label: 'Total Output Frames (encoder)',
                         text: dashboardStore
                             .latestStreamStats?.outputTotalFrames
-                            ?.toString(),
+                            .toString(),
                         width: 175.0,
                       ),
                       FormattedText(
                         label: 'Total Output Frames (render)',
                         text: dashboardStore
                             .latestStreamStats?.renderTotalFrames
-                            ?.toString(),
+                            .toString(),
                         width: 165.0,
                       ),
                       FormattedText(
@@ -137,7 +137,7 @@ class _StatsState extends State<Stats> {
                         unit: ' GB',
                         text: dashboardStore.latestStreamStats?.freeDiskSpace !=
                                 null
-                            ? (dashboardStore.latestStreamStats.freeDiskSpace
+                            ? (dashboardStore.latestStreamStats!.freeDiskSpace
                                         .round() /
                                     1000)
                                 .toString()

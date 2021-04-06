@@ -2,13 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class PaginationControl extends StatelessWidget {
-  final int currentPage;
-  final int amountPages;
+  final int? currentPage;
+  final int? amountPages;
 
-  final void Function() onBackMax;
-  final void Function() onBack;
-  final void Function() onForward;
-  final void Function() onForwardMax;
+  final void Function()? onBackMax;
+  final void Function()? onBack;
+  final void Function()? onForward;
+  final void Function()? onForwardMax;
 
   PaginationControl({
     this.currentPage,

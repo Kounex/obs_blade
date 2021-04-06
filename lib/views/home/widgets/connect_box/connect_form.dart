@@ -13,7 +13,7 @@ import '../../../../types/classes/stream/responses/base.dart';
 import '../../../../utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
-  final Connection connection;
+  final Connection? connection;
   final bool saveCredentials;
 
   ConnectForm({this.connection, this.saveCredentials = false});
@@ -24,9 +24,10 @@ class ConnectForm extends StatefulWidget {
 
 class _ConnectFormState extends State<ConnectForm> {
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  TextEditingController _ip;
-  TextEditingController _port;
-  TextEditingController _pw;
+
+  late TextEditingController _ip;
+  late TextEditingController _port;
+  late TextEditingController _pw;
 
   FocusNode _portFocusNode = FocusNode();
 
@@ -39,7 +40,7 @@ class _ConnectFormState extends State<ConnectForm> {
     super.initState();
     _ip = TextEditingController(text: this.widget.connection?.ip);
     _port = TextEditingController(
-        text: this.widget.connection?.port?.toString() ?? '4444');
+        text: this.widget.connection?.port.toString() ?? '4444');
     _pw = TextEditingController(text: this.widget.connection?.pw);
   }
 
@@ -106,7 +107,7 @@ class _ConnectFormState extends State<ConnectForm> {
                 obscureText: _obscurePWText,
                 decoration: InputDecoration(
                   errorText: snapshot.hasData &&
-                          snapshot.data.error ==
+                          snapshot.data!.error ==
                               BaseResponse.failedAuthentication
                       ? 'Wrong password'
                       : null,
@@ -130,7 +131,7 @@ class _ConnectFormState extends State<ConnectForm> {
                 RaisedButton(
                   child: Text('Connect'),
                   onPressed: () {
-                    if (_formKey.currentState.validate()) {
+                    if (_formKey.currentState!.validate()) {
                       FocusScope.of(context).unfocus();
                       networkStore
                           .setOBSWebSocket(

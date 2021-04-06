@@ -18,7 +18,7 @@ class ThemeActive extends StatelessWidget {
               Text(
                 'Use Custom Theme',
                 style:
-                    Theme.of(context).textTheme.button.copyWith(fontSize: 16),
+                    Theme.of(context).textTheme.button!.copyWith(fontSize: 16),
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 4.0),

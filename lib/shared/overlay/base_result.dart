@@ -8,12 +8,12 @@ extension BaseResultIconFunctions on BaseResultIcon {
         BaseResultIcon.Positive: CupertinoIcons.check_mark_circled,
         BaseResultIcon.Negative: CupertinoIcons.clear_circled,
         BaseResultIcon.Missing: Icons.search_off,
-      }[this];
+      }[this]!;
 }
 
 class BaseResult extends StatelessWidget {
   final BaseResultIcon icon;
-  final String text;
+  final String? text;
 
   final double iconSize;
 
@@ -36,7 +36,7 @@ class BaseResult extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(top: 14.0),
             child: Text(
-              this.text,
+              this.text!,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.caption,
             ),

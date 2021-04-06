@@ -9,7 +9,7 @@ import '../../../widgets/action_block.dart/light_divider.dart';
 import '../license_modal/license_entries.dart';
 
 class LicenseModal extends StatelessWidget {
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
   LicenseModal({this.scrollController});
 

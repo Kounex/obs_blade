@@ -11,17 +11,17 @@ import '../../utils/styling_helper.dart';
 /// border instead through the whole bar (like [CupertinoSliverNavigationBar] does
 /// it for example)
 class TransculentCupertinoNavBarWrapper extends StatelessWidget {
-  final String previousTitle;
-  final String title;
-  final Widget titleWidget;
+  final String? previousTitle;
+  final String? title;
+  final Widget? titleWidget;
 
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
   final bool showScrollBar;
 
   final List<Widget> listViewChildren;
-  final Widget customBody;
+  final Widget? customBody;
 
-  final Widget actions;
+  final Widget? actions;
 
   TransculentCupertinoNavBarWrapper({
     this.previousTitle,
@@ -71,7 +71,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
           previousPageTitle: this.previousTitle,
           middle: this.titleWidget ??
               Text(
-                this.title,
+                this.title!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

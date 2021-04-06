@@ -10,8 +10,8 @@ class Scene {
   List<SceneItem> sources;
 
   Scene({
-    @required this.name,
-    @required this.sources,
+    required this.name,
+    required this.sources,
   });
 
   static Scene fromJSON(Map<String, dynamic> json) => Scene(

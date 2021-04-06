@@ -5,13 +5,13 @@ import 'package:flutter/services.dart';
 class CustomValidationTextEditingController extends TextEditingController {
   bool submitted = false;
 
-  String textAtSubmission;
+  late String textAtSubmission;
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
   /// the error text which should be displayed
-  final String Function(String) check;
+  final String? Function(String) check;
 
-  CustomValidationTextEditingController({@required this.check, String text})
+  CustomValidationTextEditingController({required this.check, String? text})
       : super(text: text);
 
   bool get isValid => this.check(this.text) == null;
@@ -25,17 +25,17 @@ class CustomValidationTextEditingController extends TextEditingController {
 
 class ValidationCupertinoTextfield extends StatefulWidget {
   final CustomValidationTextEditingController controller;
-  final String placeholder;
-  final FocusNode focusNode;
+  final String? placeholder;
+  final FocusNode? focusNode;
   final TextInputType keyboardType;
-  final List<TextInputFormatter> inputFormatters;
+  final List<TextInputFormatter>? inputFormatters;
   final double bottomPadding;
   final int minLines;
-  final int maxLines;
+  final int? maxLines;
 
   ValidationCupertinoTextfield({
-    Key key,
-    @required this.controller,
+    Key? key,
+    required this.controller,
     this.placeholder,
     this.focusNode,
     this.keyboardType = TextInputType.text,
@@ -52,14 +52,14 @@ class ValidationCupertinoTextfield extends StatefulWidget {
 
 class ValidationCupertinoTextfieldState
     extends State<ValidationCupertinoTextfield> {
-  String _validationText;
-  VoidCallback _textEditingListener;
+  String? _validationText;
+  late VoidCallback _textEditingListener;
 
   @override
   void initState() {
     _textEditingListener = () {
       if (this.widget.controller.submitted && _validationText == null) {
-        String tempVal =
+        String? tempVal =
             this.widget.controller.check(this.widget.controller.text);
         if (tempVal != _validationText)
           setState(() => _validationText = tempVal);

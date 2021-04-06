@@ -28,7 +28,8 @@ class _AudioInputsState extends State<AudioInputs>
 
     return Observer(
       builder: (_) => NestedScrollManager(
-        parentScrollController: ModalRoute.of(context).settings.arguments,
+        parentScrollController:
+            ModalRoute.of(context)!.settings.arguments as ScrollController,
         child: Scrollbar(
           controller: _controller,
           isAlwaysShown: true,

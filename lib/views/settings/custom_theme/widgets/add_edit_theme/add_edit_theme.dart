@@ -13,8 +13,8 @@ import '../../../widgets/action_block.dart/light_divider.dart';
 import 'color_row.dart';
 
 class AddEditTheme extends StatefulWidget {
-  final CustomTheme customTheme;
-  final ScrollController scrollController;
+  final CustomTheme? customTheme;
+  final ScrollController? scrollController;
 
   AddEditTheme({this.customTheme, this.scrollController});
 
@@ -23,10 +23,10 @@ class AddEditTheme extends StatefulWidget {
 }
 
 class _AddEditThemeState extends State<AddEditTheme> {
-  CustomTheme _customTheme;
+  late CustomTheme _customTheme;
 
-  CustomValidationTextEditingController _name;
-  TextEditingController _description;
+  late CustomValidationTextEditingController _name;
+  late TextEditingController _description;
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
     super.initState();
   }
 
-  String _nameValidation(String name) {
+  String? _nameValidation(String name) {
     if (name.trim().length == 0) {
       return 'Please provide a theme name!';
     }
@@ -48,7 +48,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
         .values
         .any((customTheme) => customTheme.name == name)) {
       if (this.widget.customTheme != null &&
-          this.widget.customTheme.name != name) {
+          this.widget.customTheme!.name != name) {
         return 'A theme with this name already exists!';
       }
     }
@@ -159,7 +159,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                               description:
                                   'If this theme is intended to be a light theme, this option should be checked so text / system UI correctly adapts',
                               colorHex: _customTheme.cardColorHex,
-                              active: _customTheme.useLightBrightness ?? false,
+                              active: _customTheme.useLightBrightness,
                               onActiveChanged: (active) => setState(() =>
                                   _customTheme.useLightBrightness = active),
                             ),

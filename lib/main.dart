@@ -17,7 +17,7 @@ import 'types/enums/hive_keys.dart';
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
 
-  LifecycleWatcher({@required this.app}) : assert(app != null);
+  LifecycleWatcher({required this.app}) : assert(app != null);
 
   @override
   _LifecycleWatcherState createState() => _LifecycleWatcherState();
@@ -25,17 +25,17 @@ class LifecycleWatcher extends StatefulWidget {
 
 class _LifecycleWatcherState extends State<LifecycleWatcher>
     with WidgetsBindingObserver {
-  AppLifecycleState _lastLifecycleState;
+  late AppLifecycleState _lastLifecycleState;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance!.addObserver(this);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 

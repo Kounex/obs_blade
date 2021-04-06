@@ -17,20 +17,20 @@ class CustomThemeAdapter extends TypeAdapter<CustomTheme> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return CustomTheme(
-      fields[1] as String,
-      fields[2] as String,
-      fields[3] as bool,
+      fields[1] as String?,
+      fields[2] as String?,
+      fields[3] as bool?,
       fields[4] as String,
       fields[5] as String,
       fields[6] as String,
       fields[7] as String,
       fields[8] as String,
       fields[9] as String,
-      fields[10] as String,
+      fields[10] as String?,
       fields[11] as bool,
-      fields[0] as String,
-      fields[12] as int,
-    )..dateUpdatedMS = fields[13] as int;
+      fields[0] as String?,
+      fields[12] as int?,
+    )..dateUpdatedMS = fields[13] as int?;
   }
 
   @override

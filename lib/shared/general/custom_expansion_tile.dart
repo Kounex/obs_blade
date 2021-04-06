@@ -2,20 +2,20 @@ import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 
 class CustomExpansionTile extends StatefulWidget {
-  final IconData leadingIcon;
+  final IconData? leadingIcon;
   final String headerText;
-  final TextStyle headerTextStyle;
+  final TextStyle? headerTextStyle;
   final EdgeInsetsGeometry headerPadding;
   final Widget expandedBody;
-  final VoidCallback onExpand;
-  final void Function(VoidCallback, bool) manualExpand;
+  final VoidCallback? onExpand;
+  final void Function(VoidCallback, bool)? manualExpand;
 
   CustomExpansionTile({
     this.leadingIcon,
-    @required this.headerText,
+    required this.headerText,
     this.headerTextStyle,
     this.headerPadding = const EdgeInsets.all(12.0),
-    @required this.expandedBody,
+    required this.expandedBody,
     this.onExpand,
     this.manualExpand,
   });
@@ -28,12 +28,12 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
     with SingleTickerProviderStateMixin {
   ExpandableController _expandController = ExpandableController();
 
-  AnimationController _animController;
+  late AnimationController _animController;
 
-  Animation<double> _rotation;
-  Animation<Color> _color;
+  late Animation<double> _rotation;
+  late Animation<Color?> _color;
 
-  VoidCallback _startExpandAnimation;
+  late VoidCallback _startExpandAnimation;
 
   @override
   void initState() {
@@ -89,7 +89,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
           onTap: () {
             if (!_animController.isAnimating) {
               if (this.widget.manualExpand != null) {
-                this.widget.manualExpand(
+                this.widget.manualExpand!(
                     _startExpandAnimation, _expandController.expanded);
               } else {
                 if (!_expandController.expanded) this.widget.onExpand?.call();
@@ -117,7 +117,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                     builder: (context, _) => Text(
                       this.widget.headerText,
                       style: (this.widget.headerTextStyle ??
-                              Theme.of(context).textTheme.subtitle1)
+                              Theme.of(context).textTheme.subtitle1)!
                           .copyWith(color: _color.value),
                     ),
                   ),
@@ -136,6 +136,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
             ),
           ),
         ),
+        collapsed: Container(),
         expanded: this.widget.expandedBody,
       ),
     );

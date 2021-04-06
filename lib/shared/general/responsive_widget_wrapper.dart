@@ -10,7 +10,7 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
   final Widget tabletWidget;
 
   ResponsiveWidgetWrapper(
-      {@required this.mobileWidget, @required this.tabletWidget});
+      {required this.mobileWidget, required this.tabletWidget});
 
   @override
   Widget build(BuildContext context) {

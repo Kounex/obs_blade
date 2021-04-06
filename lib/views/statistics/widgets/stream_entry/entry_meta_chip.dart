@@ -4,11 +4,11 @@ class EntryMetaChip extends StatelessWidget {
   final String title;
   final String content;
 
-  final double width;
+  final double? width;
 
   EntryMetaChip({
-    @required this.title,
-    @required this.content,
+    required this.title,
+    required this.content,
     this.width,
   });
 
@@ -28,7 +28,7 @@ class EntryMetaChip extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4.0),
                   child: Text(
                     this.title,
-                    style: Theme.of(context).textTheme.subtitle2.copyWith(
+                    style: Theme.of(context).textTheme.subtitle2!.copyWith(
                           decoration: TextDecoration.underline,
                         ),
                   ),

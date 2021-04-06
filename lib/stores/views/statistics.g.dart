@@ -75,13 +75,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
       Atom(name: '_StatisticsStore.showOnlyFavorites');
 
   @override
-  bool get showOnlyFavorites {
+  bool? get showOnlyFavorites {
     _$showOnlyFavoritesAtom.reportRead();
     return super.showOnlyFavorites;
   }
 
   @override
-  set showOnlyFavorites(bool value) {
+  set showOnlyFavorites(bool? value) {
     _$showOnlyFavoritesAtom.reportWrite(value, super.showOnlyFavorites, () {
       super.showOnlyFavorites = value;
     });
@@ -90,13 +90,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   final _$fromDateAtom = Atom(name: '_StatisticsStore.fromDate');
 
   @override
-  DateTime get fromDate {
+  DateTime? get fromDate {
     _$fromDateAtom.reportRead();
     return super.fromDate;
   }
 
   @override
-  set fromDate(DateTime value) {
+  set fromDate(DateTime? value) {
     _$fromDateAtom.reportWrite(value, super.fromDate, () {
       super.fromDate = value;
     });
@@ -105,13 +105,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   final _$toDateAtom = Atom(name: '_StatisticsStore.toDate');
 
   @override
-  DateTime get toDate {
+  DateTime? get toDate {
     _$toDateAtom.reportRead();
     return super.toDate;
   }
 
   @override
-  set toDate(DateTime value) {
+  set toDate(DateTime? value) {
     _$toDateAtom.reportWrite(value, super.toDate, () {
       super.toDate = value;
     });
@@ -121,13 +121,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
       Atom(name: '_StatisticsStore.excludeUnnamedStreams');
 
   @override
-  bool get excludeUnnamedStreams {
+  bool? get excludeUnnamedStreams {
     _$excludeUnnamedStreamsAtom.reportRead();
     return super.excludeUnnamedStreams;
   }
 
   @override
-  set excludeUnnamedStreams(bool value) {
+  set excludeUnnamedStreams(bool? value) {
     _$excludeUnnamedStreamsAtom.reportWrite(value, super.excludeUnnamedStreams,
         () {
       super.excludeUnnamedStreams = value;
@@ -183,7 +183,7 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setShowOnlyFavorites(bool showOnlyFavorites) {
+  void setShowOnlyFavorites(bool? showOnlyFavorites) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
         name: '_StatisticsStore.setShowOnlyFavorites');
     try {
@@ -194,7 +194,7 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setFromDate(DateTime fromDate) {
+  void setFromDate(DateTime? fromDate) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
         name: '_StatisticsStore.setFromDate');
     try {
@@ -205,7 +205,7 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setToDate(DateTime toDate) {
+  void setToDate(DateTime? toDate) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
         name: '_StatisticsStore.setToDate');
     try {
@@ -216,7 +216,7 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setExcludeUnnamedStreams(bool excludeUnnamedStreams) {
+  void setExcludeUnnamedStreams(bool? excludeUnnamedStreams) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
         name: '_StatisticsStore.setExcludeUnnamedStreams');
     try {

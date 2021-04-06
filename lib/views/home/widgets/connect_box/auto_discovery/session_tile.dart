@@ -9,7 +9,7 @@ import '../connect_form.dart';
 class SessionTile extends StatelessWidget {
   final Connection connection;
 
-  SessionTile({@required this.connection});
+  SessionTile({required this.connection});
 
   @override
   Widget build(BuildContext context) {

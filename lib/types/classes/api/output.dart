@@ -40,18 +40,18 @@ class Output {
   int totalBytes;
 
   Output({
-    @required this.name,
-    @required this.type,
-    @required this.width,
-    @required this.height,
-    @required this.flags,
-    @required this.settings,
-    @required this.active,
-    @required this.reconnecting,
-    @required this.congestion,
-    @required this.totalFrames,
-    @required this.droppedFrames,
-    @required this.totalBytes,
+    required this.name,
+    required this.type,
+    required this.width,
+    required this.height,
+    required this.flags,
+    required this.settings,
+    required this.active,
+    required this.reconnecting,
+    required this.congestion,
+    required this.totalFrames,
+    required this.droppedFrames,
+    required this.totalBytes,
   });
 
   static Output fromJSON(Map<String, dynamic> json) => Output(

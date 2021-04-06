@@ -101,7 +101,7 @@ class _HomeViewState extends State<_HomeView> {
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
     MobX.when((_) => context.read<NetworkStore>().obsTerminated, () {
-      SchedulerBinding.instance.addPostFrameCallback((_) =>
+      SchedulerBinding.instance!.addPostFrameCallback((_) =>
           ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: InfoDialog(
@@ -116,7 +116,7 @@ class _HomeViewState extends State<_HomeView> {
     /// route to the [DashboardView]
     _disposers.add(
         MobX.reaction((_) => context.read<NetworkStore>().connectionInProgress,
-            (connectionInProgress) {
+            (bool connectionInProgress) {
       NetworkStore networkStore = context.read<NetworkStore>();
 
       if (connectionInProgress) {
@@ -127,12 +127,12 @@ class _HomeViewState extends State<_HomeView> {
               text: 'Connecting...',
             ));
       } else if (!connectionInProgress) {
-        if (networkStore.connectionResponse.status == BaseResponse.ok) {
+        if (networkStore.connectionResponse!.status == BaseResponse.ok) {
           OverlayHandler.closeAnyOverlay();
           Navigator.pushReplacementNamed(
             context,
             HomeTabRoutingKeys.Dashboard.route,
-            arguments: ModalRoute.of(context).settings.arguments,
+            arguments: ModalRoute.of(context)!.settings.arguments,
           );
         }
 
@@ -140,7 +140,7 @@ class _HomeViewState extends State<_HomeView> {
         /// it is due to providing a wrong password (or none at all) and we don't want to
         /// display an overlay for that - we trigger the validation of the password field
         /// in our [ConnectForm]
-        else if (!networkStore.connectionResponse.error
+        else if (!networkStore.connectionResponse!.error
             .contains(BaseResponse.failedAuthentication)) {
           OverlayHandler.showStatusOverlay(
             context: context,
@@ -187,7 +187,8 @@ class _HomeViewState extends State<_HomeView> {
           }
         },
         child: CustomScrollView(
-          controller: ModalRoute.of(context).settings.arguments,
+          controller:
+              ModalRoute.of(context)!.settings.arguments as ScrollController,
 
           /// Scrolling has a unique behaviour on iOS and macOS where we bounce as soon as
           /// we reach the end. Since we are using the stretch of [RefresherAppBar], which uses

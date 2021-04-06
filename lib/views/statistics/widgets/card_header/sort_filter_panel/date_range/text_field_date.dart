@@ -6,15 +6,15 @@ import '../../../../../../utils/modal_handler.dart';
 import 'date_picker_sheet.dart';
 
 class TextFieldDate extends StatefulWidget {
-  final String placeholder;
-  final DateTime selectedDate;
-  final DateTime minimumDate;
-  final DateTime maximumDate;
-  final void Function(DateTime) updateDateTime;
+  final String? placeholder;
+  final DateTime? selectedDate;
+  final DateTime? minimumDate;
+  final DateTime? maximumDate;
+  final void Function(DateTime?) updateDateTime;
 
   TextFieldDate({
-    @required this.selectedDate,
-    @required this.updateDateTime,
+    required this.selectedDate,
+    required this.updateDateTime,
     this.placeholder,
     this.minimumDate,
     this.maximumDate,
@@ -25,7 +25,7 @@ class TextFieldDate extends StatefulWidget {
 }
 
 class _TextFieldDateState extends State<TextFieldDate> {
-  TextEditingController _controller;
+  late TextEditingController _controller;
 
   @override
   void initState() {

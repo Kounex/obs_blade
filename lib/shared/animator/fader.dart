@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 class Fader extends StatefulWidget {
   final Widget child;
   final Duration duration;
-  final Duration showDuration;
+  final Duration? showDuration;
 
   Fader({
-    @required this.child,
+    required this.child,
     this.duration = const Duration(milliseconds: 200),
     this.showDuration,
   });
@@ -16,8 +16,8 @@ class Fader extends StatefulWidget {
 }
 
 class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  Animation<double> _animation;
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     _controller.forward();
     if (this.widget.showDuration != null) {
-      Future.delayed(this.widget.showDuration, () => _controller.reverse());
+      Future.delayed(this.widget.showDuration!, () => _controller.reverse());
     }
     return FadeTransition(
       opacity: _animation,

@@ -20,7 +20,7 @@ class HiddenSceneItem extends HiveObject {
   /// The id of the audio scene item to hide - will be used as the main indicator
   /// of which item to hide
   @HiveField(2)
-  int id;
+  int? id;
 
   /// The name of the audio "scene item". Global audio items like Mic or special
   /// Desktop occasions are not bound to a scene but available everywhere, hence
@@ -36,7 +36,7 @@ class HiddenSceneItem extends HiveObject {
   /// property while also checking whether this item is from type 'group')
   /// [IMPORTANT]: Is new since production, might be null!
   @HiveField(4)
-  String sourceType;
+  String? sourceType;
 
   HiddenSceneItem(
       this.sceneName, this.type, this.id, this.name, this.sourceType);

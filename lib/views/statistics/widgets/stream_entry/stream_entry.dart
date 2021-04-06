@@ -11,7 +11,7 @@ class StreamEntry extends StatelessWidget {
   final bool usedInDetail;
 
   StreamEntry({
-    @required this.pastStreamData,
+    required this.pastStreamData,
     this.usedInDetail = false,
   });
 
@@ -26,7 +26,7 @@ class StreamEntry extends StatelessWidget {
               padding: const EdgeInsets.only(right: 12.0),
               child: Icon(
                 this.pastStreamData.starred != null &&
-                        this.pastStreamData.starred
+                        this.pastStreamData.starred!
                     ? Icons.star
                     : Icons.star_border,
               ),
@@ -34,7 +34,7 @@ class StreamEntry extends StatelessWidget {
             Expanded(
               child: Text(
                 this.pastStreamData.name ?? 'Unnamed stream',
-                style: Theme.of(context).textTheme.button.copyWith(
+                style: Theme.of(context).textTheme.button!.copyWith(
                       fontSize: 18.0,
                     ),
                 maxLines: 2,
@@ -45,11 +45,13 @@ class StreamEntry extends StatelessWidget {
           ],
         ),
       ),
-      onTap: () => Navigator.pushNamed(
-        context,
-        StaticticsTabRoutingKeys.Detail.route,
-        arguments: this.pastStreamData,
-      ),
+      onTap: !this.usedInDetail
+          ? () => Navigator.pushNamed(
+                context,
+                StaticticsTabRoutingKeys.Detail.route,
+                arguments: this.pastStreamData,
+              )
+          : null,
       subtitle: Wrap(
         spacing: 8.0,
         runSpacing: 4.0,
@@ -59,7 +61,7 @@ class StreamEntry extends StatelessWidget {
             child: StreamDateChip(
               label: 'From:',
               content:
-                  '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedDateString()} - ${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime * 1000).millisecondsToFormattedTimeString()}',
+                  '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime! * 1000).millisecondsToFormattedDateString()} - ${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime! * 1000).millisecondsToFormattedTimeString()}',
             ),
           ),
           ConstrainedBox(

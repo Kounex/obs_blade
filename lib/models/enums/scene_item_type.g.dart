@@ -18,7 +18,7 @@ class SceneItemTypeAdapter extends TypeAdapter<SceneItemType> {
       case 1:
         return SceneItemType.Audio;
       default:
-        return null;
+        return SceneItemType.Source;
     }
   }
 

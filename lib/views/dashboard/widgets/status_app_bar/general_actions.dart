@@ -27,7 +27,7 @@ class GeneralActions extends StatelessWidget {
           Hive.box<Connection>(HiveKeys.SavedConnections.name).listenable(),
       builder: (context, savedConnectionsBox, _) {
         bool newConnection =
-            networkStore.activeSession?.connection?.name == null;
+            networkStore.activeSession?.connection.name == null;
         return Observer(
           builder: (_) => AppBarCupertinoActions(
             actions: [
@@ -45,7 +45,7 @@ class GeneralActions extends StatelessWidget {
                           : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',
                       isYesDestructive: true,
                       onOk: (_) => NetworkHelper.makeRequest(
-                          networkStore.activeSession.socket,
+                          networkStore.activeSession!.socket,
                           RequestType.StartStopStreaming),
                     ),
                   );
@@ -65,7 +65,7 @@ class GeneralActions extends StatelessWidget {
                           : 'Do you want to start recording? Recording unintentionally is not as bad as suddenly starting to stream!\n\nStill asking just to be sure!',
                       isYesDestructive: true,
                       onOk: (_) => NetworkHelper.makeRequest(
-                          networkStore.activeSession.socket,
+                          networkStore.activeSession!.socket,
                           RequestType.StartStopRecording),
                     ),
                   );
@@ -76,7 +76,7 @@ class GeneralActions extends StatelessWidget {
                     ' Recording',
                 onAction: dashboardStore.isRecording
                     ? () => NetworkHelper.makeRequest(
-                          networkStore.activeSession.socket,
+                          networkStore.activeSession!.socket,
                           dashboardStore.isRecordingPaused
                               ? RequestType.ResumeRecording
                               : RequestType.PauseRecording,

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_version.dart';
 import 'package:obs_blade/types/classes/stream/responses/take_source_screenshot.dart';
 
 import '../../models/past_stream_data.dart';
@@ -44,18 +45,18 @@ abstract class _DashboardStore with Store {
   @observable
   bool isRecordingPaused = false;
   @observable
-  int goneLiveMS;
+  int? goneLiveMS;
   @observable
-  int startedRecordingMS;
+  int? startedRecordingMS;
   @observable
-  PastStreamData streamData;
+  PastStreamData? streamData;
   @observable
-  StreamStats latestStreamStats;
+  StreamStats? latestStreamStats;
 
   @observable
-  String activeSceneName;
+  String? activeSceneName;
   @observable
-  ObservableList<Scene> scenes;
+  ObservableList<Scene>? scenes;
 
   /// WebSocket API will return all top level scene items for
   /// the current scene and elements of groups are inside the
@@ -66,7 +67,7 @@ abstract class _DashboardStore with Store {
   /// will be displayed or not, but this makes searching and
   /// updating scene items easier
   @observable
-  ObservableList<SceneItem> currentSceneItems;
+  ObservableList<SceneItem>? currentSceneItems;
 
   /// Not used currently as the WebSocket API does not expose working
   /// with such sources (playing, stopping, etc.) right now. This will likely
@@ -74,8 +75,8 @@ abstract class _DashboardStore with Store {
   @computed
   ObservableList<SceneItem> get currentSoundboardSceneItems =>
       this.currentSceneItems != null
-          ? ObservableList.of(currentSceneItems.where((sceneItem) =>
-              sceneItem.type == 'ffmpeg_source' && sceneItem.render))
+          ? ObservableList.of(this.currentSceneItems!.where((sceneItem) =>
+              sceneItem.type == 'ffmpeg_source' && sceneItem.render!))
           : ObservableList();
 
   /// [SceneItem] works as the master object for all kind of sources
@@ -85,8 +86,8 @@ abstract class _DashboardStore with Store {
   @computed
   ObservableList<SceneItem> get currentAudioSceneItems =>
       this.currentSceneItems != null
-          ? ObservableList.of(currentSceneItems.where((sceneItem) => this
-              .sourceTypes
+          ? ObservableList.of(currentSceneItems!.where((sceneItem) => this
+              .sourceTypes!
               .any((sourceType) =>
                   sourceType.caps.hasAudio &&
                   sourceType.typeID == sceneItem.type)))
@@ -97,7 +98,7 @@ abstract class _DashboardStore with Store {
   ObservableList<SceneItem> globalAudioSceneItems = ObservableList();
 
   @observable
-  int sceneTransitionDurationMS;
+  int? sceneTransitionDurationMS;
 
   /// Indicates whether the the [requestPreviewImage] method should be called.
   /// Will do so as long as it stays true and stops once its false again
@@ -109,7 +110,7 @@ abstract class _DashboardStore with Store {
   /// is true and will therefore be used as the workaround of a live preview of the
   /// active scene
   @observable
-  Uint8List scenePreviewImageBytes;
+  Uint8List? scenePreviewImageBytes;
 
   /// Checks whether the user is trying to scroll while the pointer (finger) is
   /// on the chat - this means the user probably wants to scroll the chat.
@@ -145,11 +146,11 @@ abstract class _DashboardStore with Store {
   /// stuff (as the name already indicates) is not bound to anything really and it
   /// could be accessed from everywhere and "controlling" those stuff can get out
   /// of hand quickly.
-  NetworkStore networkStore;
+  NetworkStore? networkStore;
 
-  List<SourceType> sourceTypes;
+  List<SourceType>? sourceTypes;
 
-  Timer checkConnectionTimer;
+  Timer? checkConnectionTimer;
 
   @action
   void setupNetworkStoreHandling(NetworkStore networkStore) {
@@ -169,9 +170,11 @@ abstract class _DashboardStore with Store {
 
   void initialRequests() {
     NetworkHelper.makeRequest(
-        this.networkStore.activeSession.socket, RequestType.GetSceneList);
+        this.networkStore!.activeSession!.socket, RequestType.GetSceneList);
+    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        RequestType.GetSourceTypesList);
     NetworkHelper.makeRequest(
-        this.networkStore.activeSession.socket, RequestType.GetSourceTypesList);
+        this.networkStore!.activeSession!.socket, RequestType.GetVersion);
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
     // NetworkHelper.makeRequest(
@@ -179,24 +182,22 @@ abstract class _DashboardStore with Store {
   }
 
   void handleStream() {
-    this.networkStore.watchOBSStream().listen((message) {
+    this.networkStore!.watchOBSStream().listen((message) {
       if (message is BaseEvent) {
         _handleEvent(message);
       } else {
-        _handleResponse(message);
+        _handleResponse(message as BaseResponse);
       }
     });
   }
 
   void requestPreviewImage() => NetworkHelper.makeRequest(
-        this.networkStore.activeSession.socket,
+        this.networkStore!.activeSession!.socket,
         RequestType.TakeSourceScreenshot,
         {
           'sourceName': this.activeSceneName,
-          'embedPictureFormat': 'jpg',
-          'compressionQuality': 25,
-          // 'width': 100,
-          // 'height': 100,
+          'embedPictureFormat': 'png',
+          'compressionQuality': 10,
         },
       );
 
@@ -220,8 +221,8 @@ abstract class _DashboardStore with Store {
     sceneItems.forEach((sceneItem) {
       tmpSceneItems.add(sceneItem);
       if (sceneItem.groupChildren != null &&
-          sceneItem.groupChildren.length > 0) {
-        tmpSceneItems.addAll(sceneItem.groupChildren);
+          sceneItem.groupChildren!.length > 0) {
+        tmpSceneItems.addAll(sceneItem.groupChildren!);
       }
     });
     return tmpSceneItems;
@@ -244,12 +245,12 @@ abstract class _DashboardStore with Store {
     /// connected to an OBS session we already were connected to
     if (tmp.length > 0 &&
         DateTime.now().millisecondsSinceEpoch -
-                this.latestStreamStats.totalStreamTime * 1000 <=
+                this.latestStreamStats!.totalStreamTime * 1000 <=
             tmp.last.listEntryDateMS.last) {
       this.streamData = tmp.last;
     } else {
       this.streamData = PastStreamData();
-      await pastStreamDataBox.add(this.streamData);
+      await pastStreamDataBox.add(this.streamData!);
     }
   }
 
@@ -263,20 +264,20 @@ abstract class _DashboardStore with Store {
   /// we get back to our [HomeView]
   @action
   Future<void> _checkOBSConnection() async {
-    if (this.networkStore.activeSession?.socket?.closeCode != null) {
+    if (this.networkStore!.activeSession?.socket.closeCode != null) {
       this.reconnecting = true;
-      BaseResponse response;
+      BaseResponse? response;
       int tries = 0;
 
       while (tries < 5 && response?.status != BaseResponse.ok) {
-        response = await this.networkStore.setOBSWebSocket(
-              this.networkStore.activeSession.connection,
+        response = await this.networkStore!.setOBSWebSocket(
+              this.networkStore!.activeSession!.connection,
               reconnect: true,
             );
         tries++;
       }
       if (response?.status != BaseResponse.ok) {
-        this.networkStore.obsTerminated = true;
+        this.networkStore!.obsTerminated = true;
       } else {
         this.reconnecting = false;
         this.handleStream();
@@ -310,7 +311,7 @@ abstract class _DashboardStore with Store {
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
     sceneItem.displayGroup = !sceneItem.displayGroup;
-    this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+    this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
   }
 
   @action
@@ -354,30 +355,29 @@ abstract class _DashboardStore with Store {
         if (this.goneLiveMS == null) {
           this.isLive = true;
           this.goneLiveMS = DateTime.now().millisecondsSinceEpoch -
-              (this.latestStreamStats.totalStreamTime * 1000);
+              (this.latestStreamStats!.totalStreamTime * 1000);
         }
-        if (this.latestStreamStats.recording &&
+        if (this.latestStreamStats!.recording &&
             this.startedRecordingMS == null) {
           this.isRecording = true;
         }
         if (this.streamData == null) {
           _manageStreamDataInit();
         }
-        this.streamData.addStreamStats(this.latestStreamStats);
-        await this.streamData.save();
+        this.streamData!.addStreamStats(this.latestStreamStats!);
+        await this.streamData!.save();
         break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(
-            this.networkStore.activeSession.socket, RequestType.GetSceneList);
+            this.networkStore!.activeSession!.socket, RequestType.GetSceneList);
         break;
       case EventType.SwitchScenes:
         SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
         this.currentSceneItems =
             ObservableList.of(_flattenSceneItems(switchSceneEvent.sources));
-        this.currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
-            this.networkStore.activeSession.socket,
-            RequestType.GetMute,
-            {'source': sceneItem.name}));
+        this.currentSceneItems!.forEach((sceneItem) =>
+            NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+                RequestType.GetMute, {'source': sceneItem.name}));
         break;
       case EventType.TransitionBegin:
         TransitionBeginEvent transitionBeginEvent =
@@ -389,50 +389,49 @@ abstract class _DashboardStore with Store {
       case EventType.SceneItemAdded:
         // SceneItemAddedEvent sceneItemAddedEvent =
         //     SceneItemAddedEvent(event.json);
-        NetworkHelper.makeRequest(this.networkStore.activeSession.socket,
+        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
             RequestType.GetCurrentScene);
         break;
       case EventType.SceneItemRemoved:
         SceneItemRemovedEvent sceneItemRemovedEvent =
             SceneItemRemovedEvent(event.json);
-        this.currentSceneItems.removeWhere(
+        this.currentSceneItems!.removeWhere(
             (sceneItem) => sceneItem.id == sceneItemRemovedEvent.itemID);
         break;
       case EventType.SourceRenamed:
         SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(event.json);
         this
-            .currentSceneItems
+            .currentSceneItems!
             .firstWhere((sceneItem) =>
                 sceneItem.name == sourceRenamedEvent.previousName)
             .name = sourceRenamedEvent.newName;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         break;
       case EventType.SourceOrderChanged:
-        print(event.json);
         // SourceOrderChangedEvent sourceOrderChangedEvent =
         //     SourceOrderChangedEvent(event.json);
-        NetworkHelper.makeRequest(this.networkStore.activeSession.socket,
+        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
             RequestType.GetCurrentScene);
         break;
       case EventType.SourceVolumeChanged:
         SourceVolumeChangedEvent sourceVolumeChangedEvent =
             SourceVolumeChangedEvent(event.json);
-        [...this.currentSceneItems, ...this.globalAudioSceneItems]
+        [...this.currentSceneItems!, ...this.globalAudioSceneItems]
             .firstWhere((audioSceneItem) =>
                 audioSceneItem.name == sourceVolumeChangedEvent.sourceName)
             .volume = sourceVolumeChangedEvent.volume;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         this.globalAudioSceneItems =
             ObservableList.of(this.globalAudioSceneItems);
         break;
       case EventType.SourceMuteStateChanged:
         SourceMuteStateChangedEvent sourceMuteStateChangedEvent =
             SourceMuteStateChangedEvent(event.json);
-        [...this.currentSceneItems, ...this.globalAudioSceneItems]
+        [...this.currentSceneItems!, ...this.globalAudioSceneItems]
             .firstWhere((audioSceneItem) =>
                 audioSceneItem.name == sourceMuteStateChangedEvent.sourceName)
             .muted = sourceMuteStateChangedEvent.muted;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         this.globalAudioSceneItems =
             ObservableList.of(this.globalAudioSceneItems);
         break;
@@ -440,16 +439,16 @@ abstract class _DashboardStore with Store {
         SceneItemVisibilityChangedEvent sceneItemVisibilityChangedEvent =
             SceneItemVisibilityChangedEvent(event.json);
         this
-            .currentSceneItems
+            .currentSceneItems!
             .firstWhere((sceneItem) =>
                 sceneItem.name == sceneItemVisibilityChangedEvent.itemName)
             .render = sceneItemVisibilityChangedEvent.itemVisible;
 
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         break;
       case EventType.Exiting:
         await this.finishPastStreamData();
-        this.networkStore.obsTerminated = true;
+        this.networkStore!.obsTerminated = true;
         break;
       default:
         break;
@@ -459,12 +458,19 @@ abstract class _DashboardStore with Store {
   @action
   void _handleResponse(BaseResponse response) {
     switch (response.requestType) {
+      case RequestType.GetVersion:
+        GetVersionResponse getVersionResponse =
+            GetVersionResponse(response.json);
+        print(
+            'supportd file formats: ${getVersionResponse.supportedImageExportFormats}');
+        print('supportd file formats: ${getVersionResponse.obsStudioVersion}');
+        break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
             GetSceneListResponse(response.json);
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
-        this.scenes.forEach((scene) => scene.sources.forEach(
+        this.scenes!.forEach((scene) => scene.sources.forEach(
             (item) => print('${scene.name} | ${item.id} | ${item.name}')));
         break;
       case RequestType.GetCurrentScene:
@@ -473,41 +479,40 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getCurrentSceneResponse.sources));
-        this.currentSceneItems.forEach((sceneItem) => NetworkHelper.makeRequest(
-            this.networkStore.activeSession.socket,
-            RequestType.GetMute,
-            {'source': sceneItem.name}));
+        this.currentSceneItems!.forEach((sceneItem) =>
+            NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+                RequestType.GetMute, {'source': sceneItem.name}));
         break;
       case RequestType.GetSpecialSources:
         GetSpecialSourcesResponse getSpecialSourcesResponse =
             GetSpecialSourcesResponse(response.json);
         if (getSpecialSourcesResponse.desktop1 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore.activeSession.socket,
+              this.networkStore!.activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.desktop1});
         }
         if (getSpecialSourcesResponse.desktop2 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore.activeSession.socket,
+              this.networkStore!.activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.desktop2});
         }
         if (getSpecialSourcesResponse.mic1 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore.activeSession.socket,
+              this.networkStore!.activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic1});
         }
         if (getSpecialSourcesResponse.mic2 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore.activeSession.socket,
+              this.networkStore!.activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic2});
         }
         if (getSpecialSourcesResponse.mic3 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore.activeSession.socket,
+              this.networkStore!.activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic3});
         }
@@ -528,9 +533,9 @@ abstract class _DashboardStore with Store {
         this.sourceTypes = getSourceTypesList.types;
         // (response.json['types'] as List<dynamic>)
         //     .forEach((type) => print(type['typeId']));
-        NetworkHelper.makeRequest(this.networkStore.activeSession.socket,
+        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
             RequestType.GetCurrentScene);
-        NetworkHelper.makeRequest(this.networkStore.activeSession.socket,
+        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
             RequestType.GetSpecialSources);
         break;
       case RequestType.GetVolume:
@@ -547,10 +552,10 @@ abstract class _DashboardStore with Store {
       case RequestType.GetMute:
         GetMuteResponse getMuteResponse = GetMuteResponse(response.json);
         this
-            .currentSceneItems
+            .currentSceneItems!
             .firstWhere((sceneItem) => sceneItem.name == getMuteResponse.name)
             .muted = getMuteResponse.muted;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems);
+        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         break;
       case RequestType.GetSourceSettings:
         // GetSourceSettingsResponse getSourceSettingsResponse =

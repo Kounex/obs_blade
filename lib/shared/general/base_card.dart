@@ -6,14 +6,14 @@ class BaseCard extends StatelessWidget {
   final Widget child;
   final bool centerChild;
 
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final bool paintBorder;
-  final Color borderColor;
+  final Color? borderColor;
 
-  final String title;
-  final Widget titleWidget;
+  final String? title;
+  final Widget? titleWidget;
 
-  final Widget trailingTitleWidget;
+  final Widget? trailingTitleWidget;
 
   final double topPadding;
   final double rightPadding;
@@ -25,11 +25,11 @@ class BaseCard extends StatelessWidget {
 
   final CrossAxisAlignment titleCrossAlignment;
 
-  final double elevation;
+  final double? elevation;
 
   BaseCard({
-    Key key,
-    @required this.child,
+    Key? key,
+    required this.child,
     this.centerChild = true,
     this.backgroundColor,
     this.paintBorder = false,
@@ -63,7 +63,7 @@ class BaseCard extends StatelessWidget {
           child: Card(
             clipBehavior: Clip.hardEdge,
             shadowColor: this.backgroundColor != null &&
-                    this.backgroundColor.value == Colors.transparent.value
+                    this.backgroundColor!.value == Colors.transparent.value
                 ? Colors.transparent
                 : null,
             shape: this.paintBorder
@@ -90,20 +90,19 @@ class BaseCard extends StatelessWidget {
                   Padding(
                     padding: this.titlePadding,
                     child: Row(
-                      crossAxisAlignment:
-                          this.titleCrossAlignment ?? CrossAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                             child: this.titleWidget == null
                                 ? Text(
-                                    this.title,
+                                    this.title!,
                                     style:
                                         Theme.of(context).textTheme.headline5,
                                   )
-                                : this.titleWidget),
+                                : this.titleWidget!),
                         if (this.trailingTitleWidget != null)
-                          this.trailingTitleWidget
+                          this.trailingTitleWidget!
                       ],
                     ),
                   ),

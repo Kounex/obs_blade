@@ -18,9 +18,9 @@ class VisibilitySlideWrapper extends StatefulWidget {
   final Widget child;
 
   VisibilitySlideWrapper({
-    @required this.child,
-    @required this.sceneItem,
-    @required this.sceneItemType,
+    required this.child,
+    required this.sceneItem,
+    required this.sceneItemType,
   });
 
   @override
@@ -29,6 +29,7 @@ class VisibilitySlideWrapper extends StatefulWidget {
 
 class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
   SlidableController _controller = SlidableController();
+
   List<ReactionDisposer> _disposers = [];
 
   @override
@@ -55,6 +56,35 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
     );
   }
 
+  bool _isItemHidden(
+      DashboardStore dashboardStore,
+      Box<HiddenSceneItem> hiddenSceneItemsBox,
+      HiddenSceneItem? hiddenSceneItem) {
+    bool isEditing = this.widget.sceneItemType == SceneItemType.Source
+        ? dashboardStore.editSceneItemVisibility
+        : dashboardStore.editAudioVisibility;
+
+    if (isEditing) {
+      return false;
+    } else {
+      if (hiddenSceneItem != null) {
+        return true;
+      } else if (this.widget.sceneItem.parentGroupName != null) {
+        bool parentHidden = hiddenSceneItemsBox.values.toList().any(
+            (hiddenSceneItemInBox) =>
+                hiddenSceneItemInBox.name ==
+                    this.widget.sceneItem.parentGroupName &&
+                (hiddenSceneItemInBox.sourceType != null
+                    ? hiddenSceneItemInBox.sourceType == 'group'
+                    : true));
+
+        return parentHidden;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = context.watch<DashboardStore>();
@@ -63,29 +93,34 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
       valueListenable:
           Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).listenable(),
       builder: (context, Box<HiddenSceneItem> hiddenSceneItemsBox, child) {
-        HiddenSceneItem hiddenSceneItem =
-            hiddenSceneItemsBox.values.toList().firstWhere(
-                  (hiddenSceneItem) => hiddenSceneItem.isSceneItem(
-                      dashboardStore.activeSceneName,
-                      this.widget.sceneItemType,
-                      this.widget.sceneItem),
-                  orElse: () => null,
-                );
+        HiddenSceneItem? hiddenSceneItem;
+        try {
+          hiddenSceneItem = hiddenSceneItemsBox.values.toList().firstWhere(
+                (hiddenSceneItem) => hiddenSceneItem.isSceneItem(
+                    dashboardStore.activeSceneName!,
+                    this.widget.sceneItemType,
+                    this.widget.sceneItem),
+              );
+        } catch (e) {
+          hiddenSceneItem = null;
+        }
 
         return Observer(
           builder: (_) => Offstage(
-            offstage: (this.widget.sceneItem.parentGroupName != null &&
-                        hiddenSceneItemsBox.values.toList().any(
-                            (hiddenParent) =>
-                                hiddenParent.name ==
-                                    this.widget.sceneItem.parentGroupName &&
-                                (hiddenParent.sourceType != null
-                                    ? hiddenParent.sourceType == 'group'
-                                    : true)) ||
-                    hiddenSceneItem != null) &&
-                !(this.widget.sceneItemType == SceneItemType.Source
-                    ? dashboardStore.editSceneItemVisibility
-                    : dashboardStore.editAudioVisibility),
+            offstage: _isItemHidden(
+                dashboardStore, hiddenSceneItemsBox, hiddenSceneItem),
+            // (this.widget.sceneItem.parentGroupName != null &&
+            //             hiddenSceneItemsBox.values.toList().any(
+            //                 (hiddenParent) =>
+            //                     hiddenParent.name ==
+            //                         this.widget.sceneItem.parentGroupName &&
+            //                     (hiddenParent.sourceType != null
+            //                         ? hiddenParent.sourceType == 'group'
+            //                         : true)) ||
+            //         hiddenSceneItem != null) &&
+            //     !(this.widget.sceneItemType == SceneItemType.Source
+            //         ? dashboardStore.editSceneItemVisibility
+            //         : dashboardStore.editAudioVisibility),
             child: Slidable(
               controller: _controller,
               closeOnScroll: false,
@@ -93,7 +128,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
               actionExtentRatio: 0.2,
               child: Builder(
                 builder: (context) {
-                  _registerReaction(dashboardStore, Slidable.of(context));
+                  _registerReaction(dashboardStore, Slidable.of(context)!);
                   return this.widget.child;
                 },
               ),
@@ -110,17 +145,17 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                   onTap: () {
                     if (hiddenSceneItem != null) {
                       // if (hiddenSceneItemsBox.values.toList().where((hiddenChildItem) => hiddenChildItem.))
-                      hiddenSceneItem.delete();
+                      hiddenSceneItem!.delete();
                     } else {
                       hiddenSceneItem = HiddenSceneItem(
-                        dashboardStore.activeSceneName,
+                        dashboardStore.activeSceneName!,
                         this.widget.sceneItemType,
                         this.widget.sceneItem.id,
                         this.widget.sceneItem.name,
                         this.widget.sceneItem.type,
                       );
 
-                      hiddenSceneItemsBox.add(hiddenSceneItem);
+                      hiddenSceneItemsBox.add(hiddenSceneItem!);
                     }
                   },
                 ),

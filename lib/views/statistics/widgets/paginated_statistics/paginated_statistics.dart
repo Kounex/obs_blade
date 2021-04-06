@@ -13,7 +13,7 @@ import 'pagination_control.dart';
 class PaginatedStatistics extends StatefulWidget {
   final List<PastStreamData> filteredAndSortedStreamData;
 
-  PaginatedStatistics({@required this.filteredAndSortedStreamData});
+  PaginatedStatistics({required this.filteredAndSortedStreamData});
 
   @override
   _PaginatedStatisticsState createState() => _PaginatedStatisticsState();

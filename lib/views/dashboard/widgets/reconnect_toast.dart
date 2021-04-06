@@ -14,13 +14,13 @@ class ReconnectToast extends StatefulWidget {
 
 class _ReconnectToastState extends State<ReconnectToast>
     with TickerProviderStateMixin {
-  AnimationController _controllerReconnecting;
-  Animation<double> _opacityReconnecting;
-  Animation<Offset> _offsetReconnecting;
+  late AnimationController _controllerReconnecting;
+  late Animation<double> _opacityReconnecting;
+  late Animation<Offset> _offsetReconnecting;
 
-  AnimationController _controllerConnected;
-  Animation<double> _opacityConnected;
-  Animation<Offset> _offsetConnected;
+  late AnimationController _controllerConnected;
+  late Animation<double> _opacityConnected;
+  late Animation<Offset> _offsetConnected;
 
   List<ReactionDisposer> _disposers = [];
 
@@ -51,7 +51,7 @@ class _ReconnectToastState extends State<ReconnectToast>
     _disposers.add(
       reaction(
         (_) => context.read<DashboardStore>().reconnecting,
-        (reconnecting) {
+        (bool reconnecting) {
           if (reconnecting && _controllerReconnecting.isDismissed) {
             _controllerReconnecting.forward();
           } else if (!reconnecting && !_controllerReconnecting.isDismissed) {

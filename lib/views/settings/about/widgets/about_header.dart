@@ -43,7 +43,7 @@ class AboutHeader extends StatelessWidget {
                     ),
                     if (snapshot.hasData)
                       Text(
-                        '${snapshot.data.version} (${snapshot.data.buildNumber})',
+                        '${snapshot.data!.version} (${snapshot.data!.buildNumber})',
                         style: Theme.of(context).textTheme.caption,
                       ),
                   ],

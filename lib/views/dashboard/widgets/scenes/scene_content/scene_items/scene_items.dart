@@ -30,7 +30,8 @@ class _SceneItemsState extends State<SceneItems>
 
     return Observer(builder: (_) {
       return NestedScrollManager(
-        parentScrollController: ModalRoute.of(context).settings.arguments,
+        parentScrollController:
+            ModalRoute.of(context)!.settings.arguments as ScrollController,
         child: Scrollbar(
           controller: _controller,
           isAlwaysShown: true,
@@ -40,13 +41,13 @@ class _SceneItemsState extends State<SceneItems>
             padding: EdgeInsets.all(0.0),
             children: [
               ...dashboardStore.currentSceneItems != null &&
-                      dashboardStore.currentSceneItems.length > 0
-                  ? dashboardStore.currentSceneItems
+                      dashboardStore.currentSceneItems!.length > 0
+                  ? dashboardStore.currentSceneItems!
                       .where(
                         (sceneItem) =>
                             sceneItem.parentGroupName == null ||
                             (sceneItem.parentGroupName != null &&
-                                dashboardStore.currentSceneItems
+                                dashboardStore.currentSceneItems!
                                     .firstWhere((parentSceneItem) =>
                                         parentSceneItem.name ==
                                         sceneItem.parentGroupName)

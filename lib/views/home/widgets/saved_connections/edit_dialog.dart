@@ -13,18 +13,18 @@ import '../../../../utils/validation_helper.dart';
 class EditConnectionDialog extends StatefulWidget {
   final Connection connection;
 
-  EditConnectionDialog({@required this.connection});
+  EditConnectionDialog({required this.connection});
 
   @override
   _EditConnectionDialogState createState() => _EditConnectionDialogState();
 }
 
 class _EditConnectionDialogState extends State<EditConnectionDialog> {
-  CustomValidationTextEditingController _name;
-  CustomValidationTextEditingController _ip;
-  CustomValidationTextEditingController _port;
+  late CustomValidationTextEditingController _name;
+  late CustomValidationTextEditingController _ip;
+  late CustomValidationTextEditingController _port;
 
-  TextEditingController _pw;
+  late TextEditingController _pw;
 
   FocusNode _portFocusNode = FocusNode();
 
@@ -47,7 +47,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
     _pw = TextEditingController(text: this.widget.connection.pw);
   }
 
-  String _nameValidator(String name) => name.trim().length == 0
+  String? _nameValidator(String name) => name.trim().length == 0
       ? 'Please provide a name!'
       : name.trim() != this.widget.connection.name &&
               Hive.box<Connection>(HiveKeys.SavedConnections.name)

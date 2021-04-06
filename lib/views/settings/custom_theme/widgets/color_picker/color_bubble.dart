@@ -5,7 +5,7 @@ class ColorBubble extends StatelessWidget {
   final Color color;
   final double size;
 
-  ColorBubble({@required this.color, this.size = 24.0});
+  ColorBubble({required this.color, this.size = 24.0});
 
   @override
   Widget build(BuildContext context) {

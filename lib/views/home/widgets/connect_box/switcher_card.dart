@@ -13,8 +13,8 @@ class SwitcherCard extends StatelessWidget {
   final EdgeInsetsGeometry paddingChild;
 
   SwitcherCard(
-      {@required this.title,
-      @required this.child,
+      {required this.title,
+      required this.child,
       this.paddingChild = const EdgeInsets.all(0)});
 
   @override

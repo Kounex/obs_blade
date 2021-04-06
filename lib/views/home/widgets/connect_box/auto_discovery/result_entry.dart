@@ -5,7 +5,7 @@ import 'package:obs_blade/shared/general/themed/themed_rich_text.dart';
 class ResultEntry extends StatelessWidget {
   final String result;
 
-  ResultEntry({@required this.result}) : assert(result != null);
+  ResultEntry({required this.result}) : assert(result != null);
 
   @override
   Widget build(BuildContext context) {

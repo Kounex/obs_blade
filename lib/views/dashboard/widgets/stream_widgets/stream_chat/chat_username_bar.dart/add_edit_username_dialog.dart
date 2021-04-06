@@ -9,10 +9,10 @@ import '../../../../../../types/enums/settings_keys.dart';
 
 class AddEditUsernameDialog extends StatefulWidget {
   final Box settingsBox;
-  final String username;
+  final String? username;
 
   AddEditUsernameDialog({
-    @required this.settingsBox,
+    required this.settingsBox,
     this.username,
   });
 
@@ -21,10 +21,10 @@ class AddEditUsernameDialog extends StatefulWidget {
 }
 
 class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
-  CustomValidationTextEditingController _usernameController;
-  CustomValidationTextEditingController _youtubeLinkController;
+  late CustomValidationTextEditingController _usernameController;
+  late CustomValidationTextEditingController _youtubeLinkController;
 
-  ChatType _chatType;
+  late ChatType _chatType;
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
     );
   }
 
-  String _usernameValidation(ChatType chatType, String username) {
+  String? _usernameValidation(ChatType chatType, String? username) {
     if (username == null || username.isEmpty)
       return 'Please provide a username!';
     if (this.widget.username != null && username == this.widget.username)
@@ -75,7 +75,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
     return 'Unexpected Error';
   }
 
-  String _youtubeLinkValidation(String link) {
+  String? _youtubeLinkValidation(String? link) {
     if (link == null || link.isEmpty) return 'Channel ID is required!';
     // if (link.contains('/watch?v=')) return 'Not a valid live stream link!';
     return null;
@@ -126,7 +126,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
             if (this.widget.username == null) {
               twitchUsernames.add(_usernameController.text);
             } else {
-              twitchUsernames[twitchUsernames.indexOf(this.widget.username)] =
+              twitchUsernames[twitchUsernames.indexOf(this.widget.username!)] =
                   _usernameController.text;
             }
             this

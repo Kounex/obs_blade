@@ -24,7 +24,7 @@ class LicenseData {
       // Bind this license to the package using the next index value. This
       // creates a contract that this license must be inserted at this same
       // index value.
-      packageLicenseBindings[package].add(licenses.length);
+      packageLicenseBindings[package]!.add(licenses.length);
     }
     licenses.add(entry); // Completion of the contract above.
   }
@@ -41,14 +41,14 @@ class LicenseData {
   /// Sort the packages using some comparison method, or by the default manner,
   /// which is to put the application package first, followed by every other
   /// package in case-insensitive alphabetical order.
-  void sortPackages([int compare(String a, String b)]) {
+  void sortPackages([int compare(String a, String b)?]) {
     packages.sort(compare ??
         (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()));
   }
 }
 
 class LicenseEntries extends StatefulWidget {
-  final ScrollController scrollController;
+  final ScrollController? scrollController;
 
   LicenseEntries({this.scrollController});
 
@@ -57,7 +57,7 @@ class LicenseEntries extends StatefulWidget {
 }
 
 class _LicenseEntriesState extends State<LicenseEntries> {
-  Future<LicenseData> _licenses;
+  late Future<LicenseData> _licenses;
 
   @override
   void initState() {
@@ -73,7 +73,7 @@ class _LicenseEntriesState extends State<LicenseEntries> {
   List<LicenseEntry> _getLicensesForPackage(
       LicenseData licenseData, String packageName) {
     List<LicenseEntry> entries = [];
-    licenseData.packageLicenseBindings[packageName].forEach(
+    licenseData.packageLicenseBindings[packageName]!.forEach(
       (licenseIndex) => entries.add(
         licenseData.licenses.elementAt(licenseIndex),
       ),
@@ -93,21 +93,21 @@ class _LicenseEntriesState extends State<LicenseEntries> {
               controller: this.widget.scrollController,
               padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).padding.bottom),
-              itemCount: snapshot.data.packages.length,
+              itemCount: snapshot.data!.packages.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,
                 onTap: () => Navigator.of(context, rootNavigator: true).push(
                   CupertinoModalBottomSheetRoute(
                     expanded: true,
                     builder: (context) => LicenseDetail(
-                        package: snapshot.data.packages[index],
+                        package: snapshot.data!.packages[index],
                         licenseEntries: _getLicensesForPackage(
-                            snapshot.data, snapshot.data.packages[index])),
+                            snapshot.data!, snapshot.data!.packages[index])),
                   ),
                 ),
-                title: Text(snapshot.data.packages[index]),
+                title: Text(snapshot.data!.packages[index]),
                 subtitle: Text(
-                  '${snapshot.data.packageLicenseBindings[snapshot.data.packages[index]].length} licenses',
+                  '${snapshot.data!.packageLicenseBindings[snapshot.data!.packages[index]]!.length} licenses',
                 ),
               ),
             ),

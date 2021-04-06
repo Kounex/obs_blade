@@ -18,7 +18,7 @@ class ChatTypeAdapter extends TypeAdapter<ChatType> {
       case 1:
         return ChatType.YouTube;
       default:
-        return null;
+        return ChatType.Twitch;
     }
   }
 

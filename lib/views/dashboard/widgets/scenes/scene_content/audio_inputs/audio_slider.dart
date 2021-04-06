@@ -10,7 +10,7 @@ import '../../../../../../utils/network_helper.dart';
 class AudioSlider extends StatelessWidget {
   final SceneItem audioSceneItem;
 
-  AudioSlider({@required this.audioSceneItem});
+  AudioSlider({required this.audioSceneItem});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class AudioSlider extends StatelessWidget {
                 ),
                 padding: EdgeInsets.all(0.0),
                 onPressed: () => NetworkHelper.makeRequest(
-                    networkStore.activeSession.socket, RequestType.SetMute, {
+                    networkStore.activeSession!.socket, RequestType.SetMute, {
                   'source': this.audioSceneItem.name,
                   'mute': !this.audioSceneItem.muted
                 }),
@@ -48,9 +48,9 @@ class AudioSlider extends StatelessWidget {
                 child: Slider(
                   min: 0.0,
                   max: 1.0,
-                  value: this.audioSceneItem.volume,
+                  value: this.audioSceneItem.volume as double,
                   onChanged: (volume) => NetworkHelper.makeRequest(
-                      networkStore.activeSession.socket,
+                      networkStore.activeSession!.socket,
                       RequestType.SetVolume,
                       {'source': this.audioSceneItem.name, 'volume': volume}),
                 ),

@@ -12,13 +12,13 @@ import 'color_slider.dart';
 class ColorPicker extends StatefulWidget {
   final String title;
   final String description;
-  final String color;
+  final String? color;
   final bool useAlpha;
-  final void Function(String) onSave;
+  final void Function(String)? onSave;
 
   ColorPicker({
-    @required this.title,
-    @required this.description,
+    required this.title,
+    required this.description,
     this.color,
     this.useAlpha = false,
     this.onSave,
@@ -29,9 +29,9 @@ class ColorPicker extends StatefulWidget {
 }
 
 class _ColorPickerState extends State<ColorPicker> {
-  TextEditingController _color;
+  late TextEditingController _color;
   FocusNode _colorFocusNode = FocusNode();
-  Key _colorContainerKey;
+  late Key _colorContainerKey;
 
   @override
   void initState() {
@@ -130,7 +130,8 @@ class _ColorPickerState extends State<ColorPicker> {
                                 autovalidateMode: AutovalidateMode.always,
                                 autocorrect: false,
                                 maxLength: this.widget.useAlpha ? 8 : 6,
-                                maxLengthEnforced: true,
+                                maxLengthEnforcement:
+                                    MaxLengthEnforcement.enforced,
                                 // inputFormatters: [
                                 //   FilteringTextInputFormatter.allow(
                                 //     r'^[a-fA-F0-9]+$',

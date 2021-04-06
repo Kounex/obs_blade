@@ -11,15 +11,15 @@ class ColorRow extends StatelessWidget {
   final String description;
   final String colorHex;
 
-  final bool active;
-  final void Function(bool) onActiveChanged;
+  final bool? active;
+  final void Function(bool)? onActiveChanged;
 
-  final void Function(String) onSave;
+  final void Function(String)? onSave;
 
   ColorRow({
-    @required this.title,
-    @required this.description,
-    @required this.colorHex,
+    required this.title,
+    required this.description,
+    required this.colorHex,
     this.active,
     this.onActiveChanged,
     this.onSave,
@@ -68,8 +68,8 @@ class ColorRow extends StatelessWidget {
             width: 75.0,
             child: this.onActiveChanged != null
                 ? ThemedCupertinoSwitch(
-                    value: this.active,
-                    onChanged: this.onActiveChanged,
+                    value: this.active!,
+                    onChanged: this.onActiveChanged!,
                   )
                 : Column(
                     children: [

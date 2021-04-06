@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 
 class ThemedCupertinoButton extends StatelessWidget {
   final String text;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final bool isDestructive;
-  final void Function() onPressed;
+  final void Function()? onPressed;
 
   ThemedCupertinoButton(
-      {@required this.text,
+      {required this.text,
       this.padding,
       this.isDestructive = false,
       this.onPressed});
@@ -23,7 +23,7 @@ class ThemedCupertinoButton extends StatelessWidget {
           color: this.onPressed != null
               ? this.isDestructive
                   ? CupertinoColors.destructiveRed
-                  : Theme.of(context).cupertinoOverrideTheme.primaryColor
+                  : Theme.of(context).cupertinoOverrideTheme!.primaryColor
               : null,
         ),
       ),

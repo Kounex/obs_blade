@@ -9,7 +9,7 @@ part of 'dashboard.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$DashboardStore on _DashboardStore, Store {
-  Computed<ObservableList<SceneItem>> _$currentSoundboardSceneItemsComputed;
+  Computed<ObservableList<SceneItem>>? _$currentSoundboardSceneItemsComputed;
 
   @override
   ObservableList<SceneItem> get currentSoundboardSceneItems =>
@@ -18,7 +18,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
                   () => super.currentSoundboardSceneItems,
                   name: '_DashboardStore.currentSoundboardSceneItems'))
           .value;
-  Computed<ObservableList<SceneItem>> _$currentAudioSceneItemsComputed;
+  Computed<ObservableList<SceneItem>>? _$currentAudioSceneItemsComputed;
 
   @override
   ObservableList<SceneItem> get currentAudioSceneItems =>
@@ -76,13 +76,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
   final _$goneLiveMSAtom = Atom(name: '_DashboardStore.goneLiveMS');
 
   @override
-  int get goneLiveMS {
+  int? get goneLiveMS {
     _$goneLiveMSAtom.reportRead();
     return super.goneLiveMS;
   }
 
   @override
-  set goneLiveMS(int value) {
+  set goneLiveMS(int? value) {
     _$goneLiveMSAtom.reportWrite(value, super.goneLiveMS, () {
       super.goneLiveMS = value;
     });
@@ -92,13 +92,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.startedRecordingMS');
 
   @override
-  int get startedRecordingMS {
+  int? get startedRecordingMS {
     _$startedRecordingMSAtom.reportRead();
     return super.startedRecordingMS;
   }
 
   @override
-  set startedRecordingMS(int value) {
+  set startedRecordingMS(int? value) {
     _$startedRecordingMSAtom.reportWrite(value, super.startedRecordingMS, () {
       super.startedRecordingMS = value;
     });
@@ -107,13 +107,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
   final _$streamDataAtom = Atom(name: '_DashboardStore.streamData');
 
   @override
-  PastStreamData get streamData {
+  PastStreamData? get streamData {
     _$streamDataAtom.reportRead();
     return super.streamData;
   }
 
   @override
-  set streamData(PastStreamData value) {
+  set streamData(PastStreamData? value) {
     _$streamDataAtom.reportWrite(value, super.streamData, () {
       super.streamData = value;
     });
@@ -123,13 +123,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.latestStreamStats');
 
   @override
-  StreamStats get latestStreamStats {
+  StreamStats? get latestStreamStats {
     _$latestStreamStatsAtom.reportRead();
     return super.latestStreamStats;
   }
 
   @override
-  set latestStreamStats(StreamStats value) {
+  set latestStreamStats(StreamStats? value) {
     _$latestStreamStatsAtom.reportWrite(value, super.latestStreamStats, () {
       super.latestStreamStats = value;
     });
@@ -138,13 +138,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
   final _$activeSceneNameAtom = Atom(name: '_DashboardStore.activeSceneName');
 
   @override
-  String get activeSceneName {
+  String? get activeSceneName {
     _$activeSceneNameAtom.reportRead();
     return super.activeSceneName;
   }
 
   @override
-  set activeSceneName(String value) {
+  set activeSceneName(String? value) {
     _$activeSceneNameAtom.reportWrite(value, super.activeSceneName, () {
       super.activeSceneName = value;
     });
@@ -153,13 +153,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
   final _$scenesAtom = Atom(name: '_DashboardStore.scenes');
 
   @override
-  ObservableList<Scene> get scenes {
+  ObservableList<Scene>? get scenes {
     _$scenesAtom.reportRead();
     return super.scenes;
   }
 
   @override
-  set scenes(ObservableList<Scene> value) {
+  set scenes(ObservableList<Scene>? value) {
     _$scenesAtom.reportWrite(value, super.scenes, () {
       super.scenes = value;
     });
@@ -169,13 +169,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.currentSceneItems');
 
   @override
-  ObservableList<SceneItem> get currentSceneItems {
+  ObservableList<SceneItem>? get currentSceneItems {
     _$currentSceneItemsAtom.reportRead();
     return super.currentSceneItems;
   }
 
   @override
-  set currentSceneItems(ObservableList<SceneItem> value) {
+  set currentSceneItems(ObservableList<SceneItem>? value) {
     _$currentSceneItemsAtom.reportWrite(value, super.currentSceneItems, () {
       super.currentSceneItems = value;
     });
@@ -202,13 +202,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.sceneTransitionDurationMS');
 
   @override
-  int get sceneTransitionDurationMS {
+  int? get sceneTransitionDurationMS {
     _$sceneTransitionDurationMSAtom.reportRead();
     return super.sceneTransitionDurationMS;
   }
 
   @override
-  set sceneTransitionDurationMS(int value) {
+  set sceneTransitionDurationMS(int? value) {
     _$sceneTransitionDurationMSAtom
         .reportWrite(value, super.sceneTransitionDurationMS, () {
       super.sceneTransitionDurationMS = value;
@@ -236,13 +236,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.scenePreviewImageBytes');
 
   @override
-  Uint8List get scenePreviewImageBytes {
+  Uint8List? get scenePreviewImageBytes {
     _$scenePreviewImageBytesAtom.reportRead();
     return super.scenePreviewImageBytes;
   }
 
   @override
-  set scenePreviewImageBytes(Uint8List value) {
+  set scenePreviewImageBytes(Uint8List? value) {
     _$scenePreviewImageBytesAtom
         .reportWrite(value, super.scenePreviewImageBytes, () {
       super.scenePreviewImageBytes = value;

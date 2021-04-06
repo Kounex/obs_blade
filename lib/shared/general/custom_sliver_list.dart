@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class CustomSliverList extends StatelessWidget {
   final List<Widget> children;
 
-  final double customTopPadding;
-  final double customBottomPadding;
+  final double? customTopPadding;
+  final double? customBottomPadding;
 
   CustomSliverList(
-      {@required this.children,
+      {required this.children,
       this.customTopPadding,
       this.customBottomPadding});
 

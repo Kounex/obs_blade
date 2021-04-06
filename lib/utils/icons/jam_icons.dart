@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class JamIcons {
   static const String iconFont = 'JamIcons';
-  static const String iconFontPackage = null;
+  static const String? iconFontPackage = null;
 
   static const IconData five_hundred_px = const IconData(0xe900,
       fontFamily: JamIcons.iconFont, fontPackage: JamIcons.iconFontPackage);

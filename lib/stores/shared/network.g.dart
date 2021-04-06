@@ -12,13 +12,13 @@ mixin _$NetworkStore on _NetworkStore, Store {
   final _$activeSessionAtom = Atom(name: '_NetworkStore.activeSession');
 
   @override
-  Session get activeSession {
+  Session? get activeSession {
     _$activeSessionAtom.reportRead();
     return super.activeSession;
   }
 
   @override
-  set activeSession(Session value) {
+  set activeSession(Session? value) {
     _$activeSessionAtom.reportWrite(value, super.activeSession, () {
       super.activeSession = value;
     });
@@ -45,13 +45,13 @@ mixin _$NetworkStore on _NetworkStore, Store {
       Atom(name: '_NetworkStore.connectionResponse');
 
   @override
-  BaseResponse get connectionResponse {
+  BaseResponse? get connectionResponse {
     _$connectionResponseAtom.reportRead();
     return super.connectionResponse;
   }
 
   @override
-  set connectionResponse(BaseResponse value) {
+  set connectionResponse(BaseResponse? value) {
     _$connectionResponseAtom.reportWrite(value, super.connectionResponse, () {
       super.connectionResponse = value;
     });

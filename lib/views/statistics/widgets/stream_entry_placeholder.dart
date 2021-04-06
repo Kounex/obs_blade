@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class StreamEntryPlaceholder extends StatelessWidget {
   final String text;
 
-  StreamEntryPlaceholder({@required this.text}) : assert(text != null);
+  StreamEntryPlaceholder({required this.text}) : assert(text != null);
 
   @override
   Widget build(BuildContext context) {

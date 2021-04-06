@@ -9,7 +9,7 @@ class DeleteUsernameDialog extends StatelessWidget {
   final Box settingsBox;
   final String username;
 
-  DeleteUsernameDialog({@required this.settingsBox, @required this.username});
+  DeleteUsernameDialog({required this.settingsBox, required this.username});
 
   @override
   Widget build(BuildContext context) {

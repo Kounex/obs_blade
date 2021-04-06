@@ -23,7 +23,8 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
-        controller: ModalRoute.of(context).settings.arguments,
+        controller:
+            ModalRoute.of(context)!.settings.arguments as ScrollController,
         physics: StylingHelper.platformAwareScrollPhysics,
         slivers: <Widget>[
           ThemedCupertinoSliverNavigationBar(
@@ -185,7 +186,7 @@ class SettingsView extends StatelessWidget {
                           ),
                           if (snapshot.hasData)
                             Text(
-                              snapshot.data.version,
+                              snapshot.data!.version,
                               style: Theme.of(context).textTheme.caption,
                             ),
                         ],

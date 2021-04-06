@@ -1,38 +1,38 @@
 import 'package:flutter/material.dart';
 
 class SceneItem {
-  num cy;
-  num cx;
+  num? cy;
+  num? cx;
 
   /// The point on the source that the item is manipulated from. The sum of 1=Left or 2=Right, and 4=Top or 8=Bottom, or omit to center on that axis.
-  num alignment;
+  num? alignment;
   String name;
 
   /// Scene item ID
-  int id;
+  int? id;
 
   /// Whether or not this Scene Item is set to "visible"
-  bool render;
+  bool? render;
 
   /// Whether or not this Scene Item is muted.
   bool muted;
 
   /// Whether or not this Scene Item is locked and can't be moved around
-  bool locked;
-  num sourceCy;
-  num sourceCx;
+  bool? locked;
+  num? sourceCy;
+  num? sourceCx;
 
   /// Source type. Value is one of the following: "input", "filter", "transition", "scene" or "unknown"
-  String type;
+  String? type;
   num volume;
-  num x;
-  num y;
+  num? x;
+  num? y;
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
-  String parentGroupName;
+  String? parentGroupName;
 
   /// OPTIONAL - List of children (if this item is a group)
-  List<SceneItem> groupChildren;
+  List<SceneItem>? groupChildren;
 
   /// CUSTOM - added myself to handle stuff internally
 
@@ -40,28 +40,29 @@ class SceneItem {
   /// (if this [SceneItem] is a group)
   bool displayGroup = false;
 
-  SceneItem(
-      {@required this.cy,
-      @required this.cx,
-      @required this.alignment,
-      @required this.name,
-      @required this.id,
-      @required this.render,
-      @required this.muted,
-      @required this.locked,
-      @required this.sourceCy,
-      @required this.sourceCx,
-      @required this.type,
-      @required this.volume,
-      @required this.x,
-      @required this.y,
-      this.parentGroupName,
-      this.groupChildren});
+  SceneItem({
+    required this.cy,
+    required this.cx,
+    required this.alignment,
+    required this.name,
+    required this.id,
+    required this.render,
+    required this.muted,
+    required this.locked,
+    required this.sourceCy,
+    required this.sourceCx,
+    required this.type,
+    required this.volume,
+    required this.x,
+    required this.y,
+    this.parentGroupName,
+    this.groupChildren,
+  });
 
   SceneItem.audio({
-    @required this.name,
-    @required this.volume,
-    @required this.muted,
+    required this.name,
+    required this.volume,
+    required this.muted,
   });
 
   static SceneItem fromJSON(Map<String, dynamic> json) {
@@ -81,8 +82,8 @@ class SceneItem {
         x: json['x'],
         y: json['y'],
         parentGroupName: json['parentGroupName'],
-        groupChildren: (json['groupChildren'] as List<dynamic>)
+        groupChildren: (json['groupChildren'] as List<dynamic>?)
             ?.map((rawSceneItem) => SceneItem.fromJSON(rawSceneItem))
-            ?.toList());
+            .toList());
   }
 }

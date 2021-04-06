@@ -17,8 +17,8 @@ class SlideControls extends StatelessWidget {
   final bool manually;
 
   SlideControls({
-    @required this.pageController,
-    @required this.amountChildren,
+    required this.pageController,
+    required this.amountChildren,
     this.manually = false,
   });
 

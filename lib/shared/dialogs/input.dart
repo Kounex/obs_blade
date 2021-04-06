@@ -7,18 +7,18 @@ class InputDialog extends StatefulWidget {
   final String title;
   final String body;
 
-  final String inputText;
-  final String inputPlaceholder;
-  final void Function(String) onSave;
+  final String? inputText;
+  final String? inputPlaceholder;
+  final void Function(String?) onSave;
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
   /// the error text which should be displayed (prevents the 'Ok' dialog callback)
-  final String Function(String) inputCheck;
+  final String? Function(String)? inputCheck;
 
   InputDialog({
-    @required this.title,
-    @required this.body,
-    @required this.onSave,
+    required this.title,
+    required this.body,
+    required this.onSave,
     this.inputText,
     this.inputPlaceholder,
     this.inputCheck,
@@ -29,14 +29,14 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
-  TextEditingController _controller;
+  late TextEditingController _controller;
 
   @override
   void initState() {
     _controller = this.widget.inputCheck != null
         ? CustomValidationTextEditingController(
             text: this.widget.inputText ?? '',
-            check: this.widget.inputCheck,
+            check: this.widget.inputCheck!,
           )
         : TextEditingController(
             text: this.widget.inputText ?? '',
@@ -64,7 +64,8 @@ class _InputDialogState extends State<InputDialog> {
             padding: const EdgeInsets.only(top: 8.0),
             child: this.widget.inputCheck != null
                 ? ValidationCupertinoTextfield(
-                    controller: _controller,
+                    controller:
+                        _controller as CustomValidationTextEditingController,
                     placeholder: this.widget.inputPlaceholder,
                   )
                 : CupertinoTextField(

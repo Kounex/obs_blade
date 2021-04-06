@@ -64,7 +64,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onChanged: (text) {
                   landingStore.setAutodiscoverPort(text);
-                  _formKey.currentState.validate();
+                  _formKey.currentState!.validate();
                 },
                 validator: (text) => ValidationHelper.portValidation(text),
               ),
@@ -77,10 +77,10 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             future: landingStore.autodiscoverConnections,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData && snapshot.data.length > 0) {
+                if (snapshot.hasData && snapshot.data!.length > 0) {
                   return Fader(
                     child: Column(
-                      children: snapshot.data
+                      children: snapshot.data!
                           .expand(
                             (availableObsConnection) => [
                               SessionTile(
@@ -95,7 +95,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   );
                 }
                 return ResultEntry(
-                  result: snapshot.hasData && snapshot.data.length == 0
+                  result: snapshot.hasData && snapshot.data!.length == 0
                       ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!' +
                           (PlatformCheck.isIOS
                               ? '\n\n(On iOS 14 and above make sure you granted the "Local Network" permission:\nSettings > Privacy > Local Network > OBS Blade)'

@@ -6,13 +6,13 @@ class StatusDot extends StatefulWidget {
   final Color color;
   final String text;
   final Axis direction;
-  final TextStyle style;
+  final TextStyle? style;
 
   StatusDot({
-    Key key,
+    Key? key,
     this.size = 12.0,
     this.color = CupertinoColors.destructiveRed,
-    @required this.text,
+    required this.text,
     this.direction = Axis.horizontal,
     this.style,
   }) : super(key: key);
@@ -23,10 +23,10 @@ class StatusDot extends StatefulWidget {
 
 class _StatusDotState extends State<StatusDot>
     with SingleTickerProviderStateMixin {
-  AnimationController _controller;
+  late AnimationController _controller;
 
-  Animation<double> _opacity;
-  Animation<double> _scale;
+  late Animation<double> _opacity;
+  late Animation<double> _scale;
 
   @override
   void initState() {

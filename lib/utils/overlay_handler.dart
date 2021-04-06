@@ -11,16 +11,16 @@ const Duration kAnimationDuration = Duration(milliseconds: 250);
 /// cover the full screen and make the app unusable while the overlay is active so
 /// the focus lies on the overlay and the process which is running in the background
 class OverlayHandler {
-  static OverlayEntry currentOverlayEntry;
-  static Timer currentOverlayTimer;
-  static Timer delayTimer;
+  static OverlayEntry? currentOverlayEntry;
+  static Timer? currentOverlayTimer;
+  static Timer? delayTimer;
 
   /// Any [content] can be displayed, just needs to be a [Widget]. [replaceIfActive], if true,
   /// will close any other overlay which may be active right now and display the new one then, otherwise
   /// the new overlay will be inserted on top
   static void showStatusOverlay(
-      {BuildContext context,
-      Widget content,
+      {required BuildContext context,
+      required Widget content,
       Duration showDuration = kShowDuration,
       Duration delayDuration = const Duration(milliseconds: 250),
       bool replaceIfActive = false}) async {
@@ -42,9 +42,9 @@ class OverlayHandler {
       /// shown
       OverlayHandler.delayTimer = Timer(delayDuration, () {
         OverlayHandler.currentOverlayEntry = OverlayHandler.getStatusOverlay(
-            context: context, content: content, showDuration: showDuration);
-        Overlay.of(context, rootOverlay: true)
-            .insert(OverlayHandler.currentOverlayEntry);
+            content: content, showDuration: showDuration);
+        Overlay.of(context, rootOverlay: true)!
+            .insert(OverlayHandler.currentOverlayEntry!);
       });
 
       /// Calculating the maximum amount of time an overlay will be shown with all
@@ -75,8 +75,10 @@ class OverlayHandler {
   /// Function which actually returns the [OverlayEntry] used in
   /// [OverlayHelper.showStatusOverlay] and doesn't need to be called
   /// manually
-  static OverlayEntry getStatusOverlay(
-          {BuildContext context, Widget content, Duration showDuration}) =>
+  static OverlayEntry getStatusOverlay({
+    required Widget content,
+    required Duration showDuration,
+  }) =>
       OverlayEntry(
         builder: (context) => FullOverlay(
           content: content,

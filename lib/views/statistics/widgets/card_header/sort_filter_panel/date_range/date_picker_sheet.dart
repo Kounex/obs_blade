@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import '../../../../../settings/widgets/action_block.dart/light_divider.dart';
 
 class DatePickerSheet extends StatefulWidget {
-  final DateTime minimumDate;
-  final DateTime maximumDate;
-  final DateTime selectedDate;
-  final void Function(DateTime) updateDateTime;
+  final DateTime? minimumDate;
+  final DateTime? maximumDate;
+  final DateTime? selectedDate;
+  final void Function(DateTime?) updateDateTime;
 
   DatePickerSheet({
-    @required this.selectedDate,
-    @required this.updateDateTime,
+    required this.selectedDate,
+    required this.updateDateTime,
     this.minimumDate,
     this.maximumDate,
   });
@@ -23,7 +23,7 @@ class DatePickerSheet extends StatefulWidget {
 }
 
 class _DatePickerSheetState extends State<DatePickerSheet> {
-  DateTime _date;
+  late DateTime _date;
 
   @override
   void initState() {
@@ -35,11 +35,11 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
     DateTime now = DateTime.now();
     now = DateTime(now.year, now.month, now.day);
     if (this.widget.selectedDate != null) {
-      return this.widget.selectedDate;
+      return this.widget.selectedDate!;
     } else {
       if (this.widget.maximumDate != null &&
-          this.widget.maximumDate.isBefore(now)) {
-        return this.widget.maximumDate;
+          this.widget.maximumDate!.isBefore(now)) {
+        return this.widget.maximumDate!;
       }
     }
     return now;

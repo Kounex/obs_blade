@@ -23,7 +23,7 @@ class StreamChat extends StatefulWidget {
 
 class _StreamChatState extends State<StreamChat>
     with AutomaticKeepAliveClientMixin {
-  InAppWebViewController _webController;
+  late InAppWebViewController _webController;
 
   @override
   bool get wantKeepAlive => true;
@@ -83,22 +83,23 @@ class _StreamChatState extends State<StreamChat>
                                 .get(SettingsKeys.SelectedYoutubeUsername.name)
                                 .toString(),
                       ),
-                      initialUrl: chatType == ChatType.Twitch &&
-                              settingsBox.get(SettingsKeys
-                                      .SelectedTwitchUsername.name) !=
-                                  null
-                          ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-                          : chatType == ChatType.YouTube &&
-                                  settingsBox.get(SettingsKeys
-                                          .SelectedYoutubeUsername.name) !=
-                                      null
-                              ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
-                              : 'about:blank',
+                      initialUrlRequest: URLRequest(
+                        url: Uri.parse(chatType == ChatType.Twitch &&
+                                settingsBox.get(SettingsKeys
+                                        .SelectedTwitchUsername.name) !=
+                                    null
+                            ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
+                            : chatType == ChatType.YouTube &&
+                                    settingsBox.get(SettingsKeys
+                                            .SelectedYoutubeUsername.name) !=
+                                        null
+                                ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
+                                : 'about:blank'),
+                      ),
                       initialOptions: InAppWebViewGroupOptions(
                         crossPlatform: InAppWebViewOptions(
                           transparentBackground: true,
                           supportZoom: false,
-                          debuggingEnabled: false,
                           javaScriptCanOpenWindowsAutomatically: false,
                           userAgent:
                               'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15',

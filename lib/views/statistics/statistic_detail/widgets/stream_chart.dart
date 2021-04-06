@@ -17,7 +17,7 @@ class StreamChart extends StatelessWidget {
   final List<int> dataTimesMS;
   final int amountFixedTooltipValue;
   final int amountFixedYAxis;
-  final double yMax;
+  final double? yMax;
 
   /// The minimum interval which should be used: we want to have reasonable
   /// interval steps depending on the possible values for a graph. Since we
@@ -34,17 +34,17 @@ class StreamChart extends StatelessWidget {
   final int totalStreamTime;
 
   StreamChart({
-    @required this.data,
-    @required this.dataTimesMS,
+    required this.data,
+    required this.dataTimesMS,
     this.amountFixedTooltipValue = 0,
     this.amountFixedYAxis = 0,
     this.yMax,
     this.minYInterval = 5,
-    @required this.dataName,
+    required this.dataName,
     this.dataUnit = '',
     this.chartColor = Colors.white,
-    @required this.streamEndedMS,
-    @required this.totalStreamTime,
+    required this.streamEndedMS,
+    required this.totalStreamTime,
   }) : assert(data != null && streamEndedMS != null && totalStreamTime != null);
 
   @override
@@ -54,8 +54,8 @@ class StreamChart extends StatelessWidget {
           (value, element) => max(value, element),
         );
 
-    double yInterval =
-        this.yMax != null ? (this.yMax / this.minYInterval) : null;
+    double? yInterval =
+        this.yMax != null ? (this.yMax! / this.minYInterval) : null;
     if (yInterval == null) {
       if (maxData > 0) {
         if (this.minYInterval < 1) {
@@ -74,9 +74,9 @@ class StreamChart extends StatelessWidget {
       }
     }
 
-    TextStyle tooltipTextStyle = Theme.of(context).textTheme.bodyText1;
-    TextStyle axisStepsTextStyle = Theme.of(context).textTheme.caption;
-    TextStyle axisTitleTextStyle = Theme.of(context).textTheme.subtitle1;
+    TextStyle tooltipTextStyle = Theme.of(context).textTheme.bodyText1!;
+    TextStyle axisStepsTextStyle = Theme.of(context).textTheme.caption!;
+    TextStyle axisTitleTextStyle = Theme.of(context).textTheme.subtitle1!;
 
     return Column(
       children: [

@@ -12,7 +12,7 @@ import 'delete_username_dialog.dart';
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;
 
-  UsernameActionRow({@required this.settingsBox}) : assert(settingsBox != null);
+  UsernameActionRow({required this.settingsBox}) : assert(settingsBox != null);
 
   @override
   Widget build(BuildContext context) {
