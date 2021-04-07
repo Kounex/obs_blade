@@ -139,13 +139,7 @@ class App extends StatelessWidget {
         buttonColor: buttonColor ?? StylingHelper.accent_color,
         splashColor: Colors.transparent,
       ),
-      // tooltipTheme: TooltipThemeData(
-      //   decoration: BoxDecoration(
-      //     color: Colors.grey[800],
-      //     borderRadius: BorderRadius.circular(12.0),
-      //   ),
-      //   textStyle: TextStyle(color: Colors.white),
-      // ),
+
       cupertinoOverrideTheme: CupertinoThemeData(
         scaffoldBackgroundColor: scaffoldBackgroundColor ??
             (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)

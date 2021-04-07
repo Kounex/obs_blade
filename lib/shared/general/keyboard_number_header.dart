@@ -5,7 +5,13 @@ class KeyboardNumberHeader extends StatelessWidget {
   final Widget child;
   final FocusNode focusNode;
 
-  KeyboardNumberHeader({required this.child, required this.focusNode});
+  final void Function()? onDone;
+
+  KeyboardNumberHeader({
+    required this.child,
+    required this.focusNode,
+    this.onDone,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +23,7 @@ class KeyboardNumberHeader extends StatelessWidget {
         actions: [
           KeyboardActionsItem(
             focusNode: this.focusNode,
+            onTapAction: this.onDone,
           ),
         ],
       ),

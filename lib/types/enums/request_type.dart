@@ -61,6 +61,16 @@ enum RequestType {
   /// No specified parameters
   GetSpecialSources,
 
+  /// Get configured special sources like Desktop Audio and Mic/Aux sources
+  ///
+  /// No specified parameters
+  GetTransitionList,
+
+  /// Get the name of the currently selected transition in the frontend's dropdown menu
+  ///
+  /// No specified parameters
+  GetCurrentTransition,
+
   /// At least embedPictureFormat or saveToFilePath must be specified. Clients can specify width and height parameters to receive scaled pictures. Aspect ratio is preserved if only one of these two parameters is specified.
   ///
   /// (Optional) { 'sourceName':	String } - Source name. Note that, since scenes are also sources, you can also provide a scene name. If not provided, the currently active scene is used
@@ -136,4 +146,14 @@ enum RequestType {
   ///
   /// No specified parameters
   ResumeRecording,
+
+  /// Set the duration of the currently selected transition if supported
+  ///
+  /// {'duration': int } - Desired duration of the transition (in milliseconds)
+  SetTransitionDuration,
+
+  /// Set the active transition
+  ///
+  /// {'transition-name': String } - The name of the transition
+  SetCurrentTransition,
 }

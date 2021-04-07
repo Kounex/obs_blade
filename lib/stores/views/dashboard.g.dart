@@ -198,6 +198,23 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$currentTransitionNameAtom =
+      Atom(name: '_DashboardStore.currentTransitionName');
+
+  @override
+  String? get currentTransitionName {
+    _$currentTransitionNameAtom.reportRead();
+    return super.currentTransitionName;
+  }
+
+  @override
+  set currentTransitionName(String? value) {
+    _$currentTransitionNameAtom.reportWrite(value, super.currentTransitionName,
+        () {
+      super.currentTransitionName = value;
+    });
+  }
+
   final _$sceneTransitionDurationMSAtom =
       Atom(name: '_DashboardStore.sceneTransitionDurationMS');
 
@@ -212,6 +229,23 @@ mixin _$DashboardStore on _DashboardStore, Store {
     _$sceneTransitionDurationMSAtom
         .reportWrite(value, super.sceneTransitionDurationMS, () {
       super.sceneTransitionDurationMS = value;
+    });
+  }
+
+  final _$availableTransitionsNamesAtom =
+      Atom(name: '_DashboardStore.availableTransitionsNames');
+
+  @override
+  List<String>? get availableTransitionsNames {
+    _$availableTransitionsNamesAtom.reportRead();
+    return super.availableTransitionsNames;
+  }
+
+  @override
+  set availableTransitionsNames(List<String>? value) {
+    _$availableTransitionsNamesAtom
+        .reportWrite(value, super.availableTransitionsNames, () {
+      super.availableTransitionsNames = value;
     });
   }
 
@@ -422,7 +456,9 @@ activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},
 globalAudioSceneItems: ${globalAudioSceneItems},
+currentTransitionName: ${currentTransitionName},
 sceneTransitionDurationMS: ${sceneTransitionDurationMS},
+availableTransitionsNames: ${availableTransitionsNames},
 shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
 isPointerOnChat: ${isPointerOnChat},

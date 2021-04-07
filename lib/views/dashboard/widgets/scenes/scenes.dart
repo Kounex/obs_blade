@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/scene_preview/scene_preview.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/transition/transition.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
@@ -46,11 +47,15 @@ class Scenes extends StatelessWidget {
           //   child: Text('SOUND'),
           // ),
           Padding(
-            padding: const EdgeInsets.only(top: 48.0),
+            padding: const EdgeInsets.only(top: 32.0, right: 12.0),
+            child: Transition(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 24.0),
             child: ScenePreview(),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 32.0),
+            padding: const EdgeInsets.only(top: 24.0),
             child: ResponsiveWidgetWrapper(
               mobileWidget: SceneContentMobile(),
               tabletWidget: SceneContent(),

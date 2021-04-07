@@ -29,6 +29,15 @@ enum EventType {
   /// A transition (other than "cut") has begun
   TransitionBegin,
 
+  /// The list of available transitions has been modified. Transitions have been added, removed, or renamed
+  TransitionListChanged,
+
+  /// The active transition duration has been changed
+  TransitionDurationChanged,
+
+  /// The active transition has been changed
+  SwitchTransition,
+
   /// A scene item has been added to a scene
   SceneItemAdded,
 

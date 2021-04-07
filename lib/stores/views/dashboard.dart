@@ -4,8 +4,7 @@ import 'dart:typed_data';
 
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/types/classes/stream/responses/get_version.dart';
-import 'package:obs_blade/types/classes/stream/responses/take_source_screenshot.dart';
+import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -19,14 +18,20 @@ import '../../types/classes/stream/events/source_mute_state_changed.dart';
 import '../../types/classes/stream/events/source_renamed.dart';
 import '../../types/classes/stream/events/source_volume_changed.dart';
 import '../../types/classes/stream/events/switch_scenes.dart';
+import '../../types/classes/stream/events/switch_transition.dart';
 import '../../types/classes/stream/events/transition_begin.dart';
+import '../../types/classes/stream/events/transition_list_changed.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
 import '../../types/classes/stream/responses/get_mute.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_source_types_list.dart';
 import '../../types/classes/stream/responses/get_special_sources.dart';
+import '../../types/classes/stream/responses/get_current_transition.dart';
+import '../../types/classes/stream/responses/get_transition_list.dart';
+import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/classes/stream/responses/get_volume.dart';
+import '../../types/classes/stream/responses/take_source_screenshot.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/request_type.dart';
@@ -98,7 +103,13 @@ abstract class _DashboardStore with Store {
   ObservableList<SceneItem> globalAudioSceneItems = ObservableList();
 
   @observable
+  String? currentTransitionName;
+
+  @observable
   int? sceneTransitionDurationMS;
+
+  @observable
+  List<String>? availableTransitionsNames;
 
   /// Indicates whether the the [requestPreviewImage] method should be called.
   /// Will do so as long as it stays true and stops once its false again
@@ -152,6 +163,8 @@ abstract class _DashboardStore with Store {
 
   Timer? checkConnectionTimer;
 
+  String previewFileFormat = 'jpeg';
+
   @action
   void setupNetworkStoreHandling(NetworkStore networkStore) {
     this.networkStore = networkStore;
@@ -170,11 +183,15 @@ abstract class _DashboardStore with Store {
 
   void initialRequests() {
     NetworkHelper.makeRequest(
+        this.networkStore!.activeSession!.socket, RequestType.GetVersion);
+    NetworkHelper.makeRequest(
         this.networkStore!.activeSession!.socket, RequestType.GetSceneList);
     NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
         RequestType.GetSourceTypesList);
-    NetworkHelper.makeRequest(
-        this.networkStore!.activeSession!.socket, RequestType.GetVersion);
+    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        RequestType.GetTransitionList);
+    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        RequestType.GetCurrentTransition);
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
     // NetworkHelper.makeRequest(
@@ -196,12 +213,12 @@ abstract class _DashboardStore with Store {
         RequestType.TakeSourceScreenshot,
         {
           'sourceName': this.activeSceneName,
-          'embedPictureFormat': 'png',
-          'compressionQuality': 10,
+          'embedPictureFormat': this.previewFileFormat,
+          'compressionQuality': -1,
         },
       );
 
-  /// Check if we have an ongoing statistics going (!= null) and set it
+  /// Check if we have ongoing statistics (!= null) and set it
   /// to null to indicate that we are done with this one and can start
   /// a new one
   Future<void> finishPastStreamData() async {
@@ -382,10 +399,30 @@ abstract class _DashboardStore with Store {
       case EventType.TransitionBegin:
         TransitionBeginEvent transitionBeginEvent =
             TransitionBeginEvent(event.json);
-        this.sceneTransitionDurationMS = transitionBeginEvent.duration;
+        this.sceneTransitionDurationMS = transitionBeginEvent.duration >= 0
+            ? transitionBeginEvent.duration
+            : 0;
         this.activeSceneName = transitionBeginEvent.toScene;
         break;
+      case EventType.TransitionListChanged:
+        TransitionListChangedEvent transitionListChangedEvent =
+            TransitionListChangedEvent(event.json);
+        this.availableTransitionsNames = transitionListChangedEvent.transitions;
+        break;
+      case EventType.TransitionDurationChanged:
+        TransitionDurationChangedEvent transitionDurationChangedEvent =
+            TransitionDurationChangedEvent(event.json);
 
+        this.sceneTransitionDurationMS =
+            transitionDurationChangedEvent.newDuration;
+        break;
+      case EventType.SwitchTransition:
+        SwitchTransitionEvent switchTransitionEventEvent =
+            SwitchTransitionEvent(event.json);
+        this.currentTransitionName = switchTransitionEventEvent.transitionName;
+        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+            RequestType.GetCurrentTransition);
+        break;
       case EventType.SceneItemAdded:
         // SceneItemAddedEvent sceneItemAddedEvent =
         //     SceneItemAddedEvent(event.json);
@@ -461,9 +498,10 @@ abstract class _DashboardStore with Store {
       case RequestType.GetVersion:
         GetVersionResponse getVersionResponse =
             GetVersionResponse(response.json);
-        print(
-            'supportd file formats: ${getVersionResponse.supportedImageExportFormats}');
-        print('supportd file formats: ${getVersionResponse.obsStudioVersion}');
+
+        if (!getVersionResponse.supportedImageExportFormats.contains('jpg') &&
+            !getVersionResponse.supportedImageExportFormats.contains('jpeg'))
+          this.previewFileFormat = 'png';
         break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
@@ -482,6 +520,19 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems!.forEach((sceneItem) =>
             NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
                 RequestType.GetMute, {'source': sceneItem.name}));
+        break;
+      case RequestType.GetTransitionList:
+        GetTransitionListResponse getTransitionListResponse =
+            GetTransitionListResponse(response.json);
+
+        this.availableTransitionsNames = getTransitionListResponse.transitions;
+        break;
+      case RequestType.GetCurrentTransition:
+        GetCurrentTransitionResponse getCurrentTransitionResponse =
+            GetCurrentTransitionResponse(response.json);
+
+        this.currentTransitionName = getCurrentTransitionResponse.name;
+        this.sceneTransitionDurationMS = getCurrentTransitionResponse.duration;
         break;
       case RequestType.GetSpecialSources:
         GetSpecialSourcesResponse getSpecialSourcesResponse =
