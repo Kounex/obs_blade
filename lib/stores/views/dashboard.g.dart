@@ -346,6 +346,38 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$studioModeAtom = Atom(name: '_DashboardStore.studioMode');
+
+  @override
+  bool get studioMode {
+    _$studioModeAtom.reportRead();
+    return super.studioMode;
+  }
+
+  @override
+  set studioMode(bool value) {
+    _$studioModeAtom.reportWrite(value, super.studioMode, () {
+      super.studioMode = value;
+    });
+  }
+
+  final _$studioModePreviewSceneNameAtom =
+      Atom(name: '_DashboardStore.studioModePreviewSceneName');
+
+  @override
+  String? get studioModePreviewSceneName {
+    _$studioModePreviewSceneNameAtom.reportRead();
+    return super.studioModePreviewSceneName;
+  }
+
+  @override
+  set studioModePreviewSceneName(String? value) {
+    _$studioModePreviewSceneNameAtom
+        .reportWrite(value, super.studioModePreviewSceneName, () {
+      super.studioModePreviewSceneName = value;
+    });
+  }
+
   final _$_checkOBSConnectionAsyncAction =
       AsyncAction('_DashboardStore._checkOBSConnection');
 
@@ -465,6 +497,8 @@ isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
 editSceneItemVisibility: ${editSceneItemVisibility},
 editAudioVisibility: ${editAudioVisibility},
+studioMode: ${studioMode},
+studioModePreviewSceneName: ${studioModePreviewSceneName},
 currentSoundboardSceneItems: ${currentSoundboardSceneItems},
 currentAudioSceneItems: ${currentAudioSceneItems}
     ''';

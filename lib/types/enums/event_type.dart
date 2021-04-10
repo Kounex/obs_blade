@@ -59,6 +59,12 @@ enum EventType {
   /// A scene item's visibility has been toggled
   SceneItemVisibilityChanged,
 
+  /// Studio Mode has been enabled or disabled
+  StudioModeSwitched,
+
+  /// The selected preview scene has changed (only available in Studio Mode)
+  PreviewSceneChanged,
+
   /// OBS is exiting
   Exiting,
 }

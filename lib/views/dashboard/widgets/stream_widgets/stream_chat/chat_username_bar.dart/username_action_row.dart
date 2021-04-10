@@ -16,7 +16,7 @@ class UsernameActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String selectedChatUsername = this.settingsBox.get(
+    String? selectedChatUsername = this.settingsBox.get(
                 SettingsKeys.SelectedChatType.name,
                 defaultValue: ChatType.Twitch) ==
             ChatType.Twitch

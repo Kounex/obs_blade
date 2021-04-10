@@ -35,6 +35,93 @@ class SettingsView extends StatelessWidget {
             builder: (context, Box settingsBox, child) => CustomSliverList(
               children: [
                 ActionBlock(
+                  title: 'General',
+                  blockEntries: [
+                    BlockEntry(
+                      leading: CupertinoIcons.device_phone_portrait,
+                      title: 'Wake Lock',
+                      help:
+                          'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(SettingsKeys.WakeLock.name,
+                            defaultValue: true),
+                        onChanged: (wakeLock) {
+                          settingsBox.put(SettingsKeys.WakeLock.name, wakeLock);
+                          if (wakeLock) {
+                            /// Check if user is currently in the [DashboardView], therefore
+                            /// connected to an OBS instance, we will then activate [Wakelock]
+                            /// now since otherwise it won't affect the current connection because
+                            /// it will only trigger when entereing the [DashboardView]
+                            if (context
+                                    .read<TabsStore>()
+                                    .activeRoutePerNavigator[Tabs.Home] ==
+                                HomeTabRoutingKeys.Dashboard.route) {
+                              Wakelock.enable();
+                            }
+                          } else {
+                            Wakelock.disable();
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                ActionBlock(
+                  title: 'DASHBOARD',
+                  blockEntries: [
+                    BlockEntry(
+                      leading: CupertinoIcons.recordingtape,
+                      leadingSize: 30.0,
+                      title: 'Recording Controls',
+                      help:
+                          'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.ExposeRecordingControls.name,
+                            defaultValue: false),
+                        onChanged: (exposeRecordingControls) {
+                          settingsBox.put(
+                              SettingsKeys.ExposeRecordingControls.name,
+                              exposeRecordingControls);
+                        },
+                      ),
+                    ),
+                    BlockEntry(
+                      leading: CupertinoIcons.film,
+                      leadingSize: 30.0,
+                      title: 'Studio Mode Support',
+                      help:
+                          'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard!',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.ExposeStudioControls.name,
+                            defaultValue: false),
+                        onChanged: (exposeStudioControls) {
+                          settingsBox.put(
+                              SettingsKeys.ExposeStudioControls.name,
+                              exposeStudioControls);
+                        },
+                      ),
+                    ),
+                    BlockEntry(
+                      leading: CupertinoIcons.lock_fill,
+                      leadingSize: 30.0,
+                      title: 'Enforce Tablet Mode',
+                      help:
+                          'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen!',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.EnforceTabletMode.name,
+                            defaultValue: false),
+                        onChanged: (enforceTabletMode) {
+                          settingsBox.put(SettingsKeys.EnforceTabletMode.name,
+                              enforceTabletMode);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                ActionBlock(
                   title: 'Theme',
                   blockEntries: [
                     BlockEntry(
@@ -79,62 +166,14 @@ class SettingsView extends StatelessWidget {
                   ],
                 ),
                 ActionBlock(
-                  title: 'Layout',
+                  title: 'Misc.',
                   blockEntries: [
-                    BlockEntry(
-                      leading: CupertinoIcons.device_phone_portrait,
-                      title: 'Wake Lock',
-                      help:
-                          'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(SettingsKeys.WakeLock.name,
-                            defaultValue: true),
-                        onChanged: (wakeLock) {
-                          settingsBox.put(SettingsKeys.WakeLock.name, wakeLock);
-                          if (wakeLock) {
-                            /// Check if user is currently in the [DashboardView], therefore
-                            /// connected to an OBS instance, we will then activate [Wakelock]
-                            /// now since otherwise it won't affect the current connection because
-                            /// it will only trigger when entereing the [DashboardView]
-                            if (context
-                                    .read<TabsStore>()
-                                    .activeRoutePerNavigator[Tabs.Home] ==
-                                HomeTabRoutingKeys.Dashboard.route) {
-                              Wakelock.enable();
-                            }
-                          } else {
-                            Wakelock.disable();
-                          }
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.lock_fill,
-                      leadingSize: 30.0,
-                      title: 'Enforce Tablet Mode',
-                      help:
-                          'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen!',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                            SettingsKeys.EnforceTabletMode.name,
-                            defaultValue: false),
-                        onChanged: (enforceTabletMode) {
-                          settingsBox.put(SettingsKeys.EnforceTabletMode.name,
-                              enforceTabletMode);
-                        },
-                      ),
-                    ),
                     BlockEntry(
                       leading: CupertinoIcons.book_fill,
                       title: 'Intro Slides',
                       navigateTo: AppRoutingKeys.Intro.route,
                       rootNavigation: true,
                     ),
-                  ],
-                ),
-                ActionBlock(
-                  title: 'Misc.',
-                  blockEntries: [
                     BlockEntry(
                       leading: CupertinoIcons.info_circle_fill,
                       title: 'About',

@@ -22,27 +22,42 @@ class Transition extends StatelessWidget {
 
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButton<String>(
-            value: dashboardStore.currentTransitionName,
-            disabledHint: Text('Empty...'),
-            isDense: true,
-            items: dashboardStore.availableTransitionsNames
-                ?.map(
-                  (transition) => DropdownMenuItem<String>(
-                    value: transition,
-                    child: Text(transition),
-                  ),
-                )
-                .toList(),
-            onChanged: (selectedTransition) => NetworkHelper.makeRequest(
-              context.read<NetworkStore>().activeSession!.socket,
-              RequestType.SetCurrentTransition,
-              {'transition-name': selectedTransition},
+          /// TODO: Check if there is a better solution to constrain the max
+          /// width of the Text widget in the DropdownButton. Currently need to
+          /// hard code maxWidth from LayoutBuilder - 24
+          Flexible(
+            child: LayoutBuilder(
+              builder: (context, constraints) => DropdownButton<String>(
+                value: dashboardStore.currentTransitionName,
+                disabledHint: Text('Empty...'),
+                isDense: true,
+                items: dashboardStore.availableTransitionsNames
+                    ?.map(
+                      (transition) => DropdownMenuItem<String>(
+                        value: transition,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxWidth: constraints.maxWidth - 24),
+                          child: Text(
+                            transition,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (selectedTransition) => NetworkHelper.makeRequest(
+                  context.read<NetworkStore>().activeSession!.socket,
+                  RequestType.SetCurrentTransition,
+                  {'transition-name': selectedTransition},
+                ),
+              ),
             ),
           ),
           SizedBox(
-            width: 24.0,
+            width: 12.0,
           ),
           SizedBox(
             width: 72.0,

@@ -1,16 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:obs_blade/models/hidden_scene_item.dart';
 
 import 'app.dart';
 import 'models/connection.dart';
 import 'models/custom_theme.dart';
 import 'models/enums/chat_type.dart';
 import 'models/enums/scene_item_type.dart';
+import 'models/hidden_scene_item.dart';
 import 'models/past_stream_data.dart';
 import 'types/enums/hive_keys.dart';
 
@@ -52,6 +52,10 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
 void main() async {
   /// Initialize Date Formatting - using European style
   await initializeDateFormatting('de_DE', null);
+
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIOverlays(
+      [SystemUiOverlay.bottom, SystemUiOverlay.top]);
 
   await Hive.initFlutter();
 

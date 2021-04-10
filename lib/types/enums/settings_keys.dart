@@ -54,6 +54,14 @@ enum SettingsKeys {
   /// [bool]: If the user saw the warning regarding youtube chat support being in
   /// beta and might cause trouble and doesn't want to see this warning again
   DontShowYouTubeChatBetaWarning,
+
+  /// [bool]: If the recording functions (start/stop/pause) should be shown in the
+  /// dashboard instead of in the menu action list of the app bar
+  ExposeRecordingControls,
+
+  /// [bool]: If the studio mode controls should be enabled and shown in the dashboard
+  /// (won't be shown anywhere else if disabled)
+  ExposeStudioControls,
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
@@ -75,5 +83,7 @@ extension SettingsKeysFunctions on SettingsKeys {
             'dont-show-hiding-scene-items-warning',
         SettingsKeys.DontShowYouTubeChatBetaWarning:
             'dont-show-youtube-chat-beta-warning',
+        SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
+        SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
       }[this]!;
 }

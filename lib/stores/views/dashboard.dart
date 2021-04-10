@@ -4,7 +4,8 @@ import 'dart:typed_data';
 
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_studio_mode_status.dart';
+import '../../types/classes/stream/events/preview_scene_changed.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -17,17 +18,19 @@ import '../../types/classes/stream/events/scene_item_visibility_changed.dart';
 import '../../types/classes/stream/events/source_mute_state_changed.dart';
 import '../../types/classes/stream/events/source_renamed.dart';
 import '../../types/classes/stream/events/source_volume_changed.dart';
+import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/events/switch_scenes.dart';
 import '../../types/classes/stream/events/switch_transition.dart';
 import '../../types/classes/stream/events/transition_begin.dart';
+import '../../types/classes/stream/events/transition_duration_changed.dart';
 import '../../types/classes/stream/events/transition_list_changed.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
+import '../../types/classes/stream/responses/get_current_transition.dart';
 import '../../types/classes/stream/responses/get_mute.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_source_types_list.dart';
 import '../../types/classes/stream/responses/get_special_sources.dart';
-import '../../types/classes/stream/responses/get_current_transition.dart';
 import '../../types/classes/stream/responses/get_transition_list.dart';
 import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/classes/stream/responses/get_volume.dart';
@@ -144,6 +147,14 @@ abstract class _DashboardStore with Store {
   @observable
   bool editAudioVisibility = false;
 
+  /// Whether studio mode is active
+  @observable
+  bool studioMode = false;
+
+  /// Currently selected preview scene (only in studio mode)
+  @observable
+  String? studioModePreviewSceneName;
+
   /// Currently I hold a reference to the [NetworkStore] object to be able
   /// to listen to the WebSocket stream and toggle some stuff. [NetworkStore]
   /// is one of the shared stores, indicate that those kind of stores are not
@@ -192,6 +203,8 @@ abstract class _DashboardStore with Store {
         RequestType.GetTransitionList);
     NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
         RequestType.GetCurrentTransition);
+    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        RequestType.GetStudioModeStatus);
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
     // NetworkHelper.makeRequest(
@@ -421,7 +434,19 @@ abstract class _DashboardStore with Store {
             SwitchTransitionEvent(event.json);
         this.currentTransitionName = switchTransitionEventEvent.transitionName;
         NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+            RequestType.GetTransitionList);
+        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
             RequestType.GetCurrentTransition);
+        break;
+      case EventType.StudioModeSwitched:
+        StudioModeSwitchedEvent studioModeSwitchedEvent =
+            StudioModeSwitchedEvent(event.json);
+        this.studioMode = studioModeSwitchedEvent.newState;
+        break;
+      case EventType.PreviewSceneChanged:
+        PreviewSceneChangedEvent previewSceneChangedEvent =
+            PreviewSceneChangedEvent(event.json);
+        this.studioModePreviewSceneName = previewSceneChangedEvent.sceneName;
         break;
       case EventType.SceneItemAdded:
         // SceneItemAddedEvent sceneItemAddedEvent =
@@ -534,6 +559,12 @@ abstract class _DashboardStore with Store {
         this.currentTransitionName = getCurrentTransitionResponse.name;
         this.sceneTransitionDurationMS = getCurrentTransitionResponse.duration;
         break;
+      case RequestType.GetStudioModeStatus:
+        GetStudioModeStatusResponse getStudioModeStatusResponse =
+            GetStudioModeStatusResponse(response.json);
+
+        this.studioMode = getStudioModeStatusResponse.studioMode;
+        break;
       case RequestType.GetSpecialSources:
         GetSpecialSourcesResponse getSpecialSourcesResponse =
             GetSpecialSourcesResponse(response.json);
@@ -602,10 +633,12 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.GetMute:
         GetMuteResponse getMuteResponse = GetMuteResponse(response.json);
-        this
-            .currentSceneItems!
-            .firstWhere((sceneItem) => sceneItem.name == getMuteResponse.name)
-            .muted = getMuteResponse.muted;
+        try {
+          this
+              .currentSceneItems!
+              .firstWhere((sceneItem) => sceneItem.name == getMuteResponse.name)
+              .muted = getMuteResponse.muted;
+        } catch (e) {}
         this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         break;
       case RequestType.GetSourceSettings:

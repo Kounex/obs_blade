@@ -71,6 +71,11 @@ enum RequestType {
   /// No specified parameters
   GetCurrentTransition,
 
+  /// Indicates if Studio Mode is currently enabled
+  ///
+  /// No specified parameters
+  GetStudioModeStatus,
+
   /// At least embedPictureFormat or saveToFilePath must be specified. Clients can specify width and height parameters to receive scaled pictures. Aspect ratio is preserved if only one of these two parameters is specified.
   ///
   /// (Optional) { 'sourceName':	String } - Source name. Note that, since scenes are also sources, you can also provide a scene name. If not provided, the currently active scene is used
@@ -156,4 +161,21 @@ enum RequestType {
   ///
   /// {'transition-name': String } - The name of the transition
   SetCurrentTransition,
+
+  /// Toggles Studio Mode (depending on the current state of studio mode)
+  ///
+  /// No specified parameters
+  ToggleStudioMode,
+
+  /// Set the active preview scene. Will return an error if Studio Mode is not enabled
+  ///
+  /// {'scene-name': String } - The name of the scene to preview
+  SetPreviewScene,
+
+  /// Transitions the currently previewed scene to the main output. Will return an error if Studio Mode is not enabled
+  ///
+  /// (Optional) {'with-transition': Object } - Change the active transition before switching scenes. Defaults to the active transition
+  /// (Optional) {'with-transition.name': String } - Name of the transition
+  /// (Optional) {'with-transition.duration': int } - Transition duration (in milliseconds)
+  TransitionToProgram,
 }
