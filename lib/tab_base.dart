@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:provider/provider.dart';
 
@@ -23,6 +24,11 @@ class _TabBaseState extends State<TabBase> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsFlutterBinding.ensureInitialized();
+    SystemChrome.setEnabledSystemUIOverlays(
+        [SystemUiOverlay.bottom, SystemUiOverlay.top]);
+
     TabsStore tabsStore = context.read<TabsStore>();
     Tabs.values.forEach((tab) {
       tabsStore.navigatorKeys[tab] =

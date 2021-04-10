@@ -87,6 +87,11 @@ enum RequestType {
   /// (Optional) { 'height': int } - Screenshot height. Defaults to the source's base width
   TakeSourceScreenshot,
 
+  /// Get current recording status
+  ///
+  /// No specified parameters
+  GetRecordingStatus,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters

@@ -14,7 +14,15 @@ import '../../../../utils/network_helper.dart';
 
 class SceneButton extends StatelessWidget {
   final Scene scene;
-  const SceneButton({required this.scene});
+
+  final double height;
+  final double width;
+
+  const SceneButton({
+    required this.scene,
+    this.height = 100.0,
+    this.width = 100.0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +59,8 @@ class SceneButton extends StatelessWidget {
                             ? dashboardStore.sceneTransitionDurationMS!
                             : 0),
                 alignment: Alignment.center,
-                height: 100.0,
-                width: 100.0,
+                height: this.height,
+                width: this.width,
                 decoration: BoxDecoration(
                   color: dashboardStore.activeSceneName == scene.name
                       ? Theme.of(context).accentColor
@@ -69,8 +77,8 @@ class SceneButton extends StatelessWidget {
               ),
               AnimatedContainer(
                 duration: Duration(milliseconds: 50),
-                height: 100.0,
-                width: 100.0,
+                height: this.height,
+                width: this.width,
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: (settingsBox.get(

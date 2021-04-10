@@ -53,10 +53,6 @@ void main() async {
   /// Initialize Date Formatting - using European style
   await initializeDateFormatting('de_DE', null);
 
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIOverlays(
-      [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-
   await Hive.initFlutter();
 
   /// Classes which represent models which teherfore get persisted

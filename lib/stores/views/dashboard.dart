@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_recording_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_studio_mode_status.dart';
 import '../../types/classes/stream/events/preview_scene_changed.dart';
 
@@ -205,6 +206,8 @@ abstract class _DashboardStore with Store {
         RequestType.GetCurrentTransition);
     NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
         RequestType.GetStudioModeStatus);
+    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        RequestType.GetRecordingStatus);
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
     // NetworkHelper.makeRequest(
@@ -387,9 +390,9 @@ abstract class _DashboardStore with Store {
           this.goneLiveMS = DateTime.now().millisecondsSinceEpoch -
               (this.latestStreamStats!.totalStreamTime * 1000);
         }
-        if (this.latestStreamStats!.recording &&
-            this.startedRecordingMS == null) {
-          this.isRecording = true;
+        if (this.latestStreamStats!.recording && !this.isRecording) {
+          NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+              RequestType.GetRecordingStatus);
         }
         if (this.streamData == null) {
           _manageStreamDataInit();
@@ -564,6 +567,27 @@ abstract class _DashboardStore with Store {
             GetStudioModeStatusResponse(response.json);
 
         this.studioMode = getStudioModeStatusResponse.studioMode;
+        break;
+      case RequestType.GetRecordingStatus:
+        GetRecordingStatusResponse getRecordingStatusResponse =
+            GetRecordingStatusResponse(response.json);
+
+        this.isRecording = getRecordingStatusResponse.isRecording;
+        this.isRecordingPaused = getRecordingStatusResponse.isRecordingPaused;
+
+        if (this.isRecording) {
+          List<String> recTimeFragments =
+              getRecordingStatusResponse.recordTimecode!.split(':');
+          DateTime startedRecTime = DateTime.now();
+
+          startedRecTime = startedRecTime.subtract(Duration(
+            hours: int.parse(recTimeFragments[0]),
+            minutes: int.parse(recTimeFragments[1]),
+            seconds: int.parse(recTimeFragments[2].split('.')[0]),
+          ));
+
+          this.startedRecordingMS = startedRecTime.millisecondsSinceEpoch;
+        }
         break;
       case RequestType.GetSpecialSources:
         GetSpecialSourcesResponse getSpecialSourcesResponse =
