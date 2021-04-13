@@ -38,7 +38,6 @@ class NetworkHelper {
     /// is empty, all interfaces will be searched which will increase
     /// the probability of finding the correct one but might take a longer
     /// time than anticipated
-
     Iterable<NetworkInterface> candidateInterfaces = interfaces.where(
         (interface) =>
             interface.name.contains('en') ||
@@ -58,12 +57,14 @@ class NetworkHelper {
 
       print(baseIPs);
 
-      Completer completer = Completer();
+      Completer<List<Connection?>> completer = Completer();
       ReceivePort receivePort = ReceivePort();
-      Isolate.spawn(_isolateScan, {
+
+      Isolate.spawn(_isolateFullScan, {
         'sendPort': receivePort.sendPort,
         'baseIPs': baseIPs,
         'port': port,
+        'timeout': Duration(milliseconds: 3000),
       });
 
       receivePort.listen((availableConnections) {
@@ -71,43 +72,43 @@ class NetworkHelper {
         completer.complete(availableConnections);
       });
 
-      return await completer.future;
+      return List.from(
+          (await completer.future).where((connection) => connection != null));
     }
     throw NotInWLANException();
   }
 
-  static void _isolateScan(Map<dynamic, dynamic> arguments) async {
+  static void _isolateFullScan(Map<dynamic, dynamic> arguments) async {
     SendPort sendPort = arguments['sendPort'];
     List<String> baseIPs = List.from(arguments['baseIPs']);
     int port = arguments['port'];
+    Duration timeout = arguments['timeout'];
 
-    List<Connection> availableConnections = [];
-
-    Socket? socket;
+    List<Future<Connection?>> availableConnections = [];
     String? address;
-    Connection? connection;
 
     for (int i = 0; i < baseIPs.length; i++) {
       String baseIP = baseIPs[i].split('.').take(3).join('.');
 
-      print('$baseIP.x');
-
       for (int k = 0; k < 256; k++) {
         address = '$baseIP.${k.toString()}';
-        connection = Connection(address, port);
-        try {
-          availableConnections.add(connection);
-          socket = await Socket.connect(address, port,
-              timeout: Duration(milliseconds: 1));
-        } catch (e) {
-          availableConnections.remove(connection);
-        } finally {
-          if (socket != null) socket.destroy();
-        }
+        availableConnections.add(_singleScan(address, port, timeout));
       }
     }
 
-    sendPort.send(availableConnections);
+    sendPort.send(await Future.wait(availableConnections));
+  }
+
+  static Future<Connection?> _singleScan(
+      String address, int port, Duration timeout) async {
+    Socket? socket;
+    try {
+      socket = await Socket.connect(address, port, timeout: timeout);
+      return Connection(address, port);
+    } catch (e) {} finally {
+      socket?.destroy();
+    }
+    return null;
   }
 
   /// This is the content of the auth field which is needed to correctly
