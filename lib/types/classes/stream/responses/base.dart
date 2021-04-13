@@ -25,7 +25,7 @@ class BaseResponse implements Message {
   String get status => this.json['status'];
 
   /// An error message accompanying an [error] status
-  String get error =>
+  String? get error =>
       this.status != BaseResponse.ok ? this.json['error'] : null;
 
   RequestType get requestType => RequestType.values[this.messageID];

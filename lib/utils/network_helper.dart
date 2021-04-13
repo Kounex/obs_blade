@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
 import 'package:obs_blade/types/exceptions/network.dart';
-import 'package:tcp_scanner/tcp_scanner.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
@@ -26,40 +26,88 @@ class NetworkHelper {
         pingInterval: Duration(seconds: 3),
       );
 
+  /// Returns a list of network addresses which are candidates for the assigned
+  /// local wifi address
   static Future<Iterable<String>> getLocalIPAdress() async {
-    final List<NetworkInterface> interfaces = await NetworkInterface.list(
-        type: InternetAddressType.IPv4, includeLinkLocal: true);
+    final List<NetworkInterface> interfaces =
+        await NetworkInterface.list(type: InternetAddressType.IPv4);
 
-    return interfaces.expand((interface) =>
-        interface.addresses.map((addresses) => addresses.address));
+    /// Currently checking if any of the network interfaces contain those
+    /// names since they can have different names in different OS environments.
+    /// Need to test this on several Android devices. If this filtered list
+    /// is empty, all interfaces will be searched which will increase
+    /// the probability of finding the correct one but might take a longer
+    /// time than anticipated
+
+    Iterable<NetworkInterface> candidateInterfaces = interfaces.where(
+        (interface) =>
+            interface.name.contains('en') ||
+            interface.name.contains('eth') ||
+            interface.name.contains('wlan'));
+
+    return (candidateInterfaces.isEmpty ? interfaces : candidateInterfaces)
+        .expand((interface) =>
+            interface.addresses.map((addresses) => addresses.address));
   }
 
-  /// Initiating an autodiscover process (based on [TCPScanner]) to look for
-  /// applications in the local network which listen on the given port (default
-  /// port is 4444)
+  /// Initiating an autodiscover process with an isolate function to make this
+  /// kind of resource hungry operation threaded.
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
     if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
       List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
-      List<String> availableIPs = [];
 
       print(baseIPs);
 
-      for (int i = 0; i < baseIPs.length; i++) {
-        List<ScanResult> results = [];
-        String baseIP = baseIPs[i].split('.').take(3).join('.');
+      Completer completer = Completer();
+      ReceivePort receivePort = ReceivePort();
+      Isolate.spawn(_isolateScan, {
+        'sendPort': receivePort.sendPort,
+        'baseIPs': baseIPs,
+        'port': port,
+      });
 
-        results = await Future.wait<ScanResult>(
-            List.generate(256, (index) => index).map((index) =>
-                TCPScanner('$baseIP.${index.toString()}', [port], timeout: 1000)
-                    .noIsolateScan()));
+      receivePort.listen((availableConnections) {
+        receivePort.close();
+        completer.complete(availableConnections);
+      });
 
-        results.forEach(
-            (r) => r.open.length > 0 ? availableIPs.add(r.host) : null);
-      }
-
-      return availableIPs.map((address) => Connection(address, port)).toList();
+      return await completer.future;
     }
     throw NotInWLANException();
+  }
+
+  static void _isolateScan(Map<dynamic, dynamic> arguments) async {
+    SendPort sendPort = arguments['sendPort'];
+    List<String> baseIPs = List.from(arguments['baseIPs']);
+    int port = arguments['port'];
+
+    List<Connection> availableConnections = [];
+
+    Socket? socket;
+    String? address;
+    Connection? connection;
+
+    for (int i = 0; i < baseIPs.length; i++) {
+      String baseIP = baseIPs[i].split('.').take(3).join('.');
+
+      print('$baseIP.x');
+
+      for (int k = 0; k < 256; k++) {
+        address = '$baseIP.${k.toString()}';
+        connection = Connection(address, port);
+        try {
+          availableConnections.add(connection);
+          socket = await Socket.connect(address, port,
+              timeout: Duration(milliseconds: 1));
+        } catch (e) {
+          availableConnections.remove(connection);
+        } finally {
+          if (socket != null) socket.destroy();
+        }
+      }
+    }
+
+    sendPort.send(availableConnections);
   }
 
   /// This is the content of the auth field which is needed to correctly

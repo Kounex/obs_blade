@@ -292,7 +292,7 @@ packages:
       name: flutter_slidable
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.7"
+    version: "0.6.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -647,10 +647,12 @@ packages:
   tcp_scanner:
     dependency: "direct main"
     description:
-      name: tcp_scanner
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.1.1"
+      path: "."
+      ref: HEAD
+      resolved-ref: cbc1d162a5bf5e391dd983649e7cfabb1b285fa8
+      url: "git://github.com/shpak86/tcp_scanner.git"
+    source: git
+    version: "1.1.2"
   term_glyph:
     dependency: transitive
     description:
