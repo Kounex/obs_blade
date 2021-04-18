@@ -50,17 +50,25 @@ class NetworkHelper {
   }
 
   /// Initiating an autodiscover process with an isolate function to make this
-  /// kind of resource hungry operation threaded.
+  /// kind of resource hungry operation threaded. Basically initiating a [Socket]
+  /// connection to each IP in the corresponding IP range and see if timeout
+  /// is triggered (therefore [SocketException] is thrown) or if not, there is
+  /// an application (most likely OBS in this case) which listens on this port
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
     if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
       List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
 
       print(baseIPs);
 
+      /// Completer used to manully deal with Future. [Completer] enables us to
+      /// call the [complete] funciton which will finalise the Future of
+      /// [Completer.future] so we can await this
       Completer<List<Connection?>> completer = Completer();
       ReceivePort receivePort = ReceivePort();
 
-      Isolate.spawn(_isolateFullScan, {
+      /// "Spawning" the [Isolate] (thread) to deal with multiple [Socket]
+      /// connection tries.
+      Isolate.spawn<Map<String, dynamic>>(_isolateFullScan, {
         'sendPort': receivePort.sendPort,
         'baseIPs': baseIPs,
         'port': port,
@@ -78,7 +86,7 @@ class NetworkHelper {
     throw NotInWLANException();
   }
 
-  static void _isolateFullScan(Map<dynamic, dynamic> arguments) async {
+  static void _isolateFullScan(Map<String, dynamic> arguments) async {
     SendPort sendPort = arguments['sendPort'];
     List<String> baseIPs = List.from(arguments['baseIPs']);
     int port = arguments['port'];
@@ -96,6 +104,16 @@ class NetworkHelper {
       }
     }
 
+    /// It's important to start and collect all scans (which return a [Future]
+    /// in a list and then make use of [Future.wait] so all those scans
+    /// run in parallel and we just wait until all are finished. Otherwise it
+    /// will run in sequence and it will take approximately:
+    ///
+    ///   (amount available IP's) * (timeout duration)
+    ///
+    /// until the scan is done - way too long. In (kinda) parallel, even though more
+    /// resource hungry (thats why it's in an [Isolate]), it will be finished around
+    /// timeout duration!
     sendPort.send(await Future.wait(availableConnections));
   }
 
@@ -103,6 +121,12 @@ class NetworkHelper {
       String address, int port, Duration timeout) async {
     Socket? socket;
     try {
+      /// We try to establish a [Socket] connection for every IP of
+      /// available IP ranges for the device. If an attempt hits the timeout,
+      /// an exception is thrown and the IP address tested is not added
+      /// to the list. If no timeout and therefore exception occurs, it means
+      /// that there is a device listeneing on the IP:port combination (in this
+      /// case very likely OBS WebSocket) and we will add it to the list
       socket = await Socket.connect(address, port, timeout: timeout);
       return Connection(address, port);
     } catch (e) {} finally {

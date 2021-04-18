@@ -264,7 +264,7 @@ packages:
       name: flutter_inappwebview
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "5.3.1+1"
+    version: "5.3.2"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -323,7 +323,7 @@ packages:
       name: hive
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.2"
+    version: "2.0.3"
   hive_flutter:
     dependency: "direct main"
     description:
@@ -644,15 +644,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.0"
-  tcp_scanner:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: HEAD
-      resolved-ref: cbc1d162a5bf5e391dd983649e7cfabb1b285fa8
-      url: "git://github.com/shpak86/tcp_scanner.git"
-    source: git
-    version: "1.1.2"
   term_glyph:
     dependency: transitive
     description:
@@ -729,7 +720,7 @@ packages:
       name: uuid
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "3.0.3"
+    version: "3.0.4"
   vector_math:
     dependency: transitive
     description:

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -17,7 +16,7 @@ import 'types/enums/hive_keys.dart';
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
 
-  LifecycleWatcher({required this.app}) : assert(app != null);
+  LifecycleWatcher({required this.app});
 
   @override
   _LifecycleWatcherState createState() => _LifecycleWatcherState();

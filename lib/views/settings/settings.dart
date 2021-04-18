@@ -175,6 +175,11 @@ class SettingsView extends StatelessWidget {
                       rootNavigation: true,
                     ),
                     BlockEntry(
+                      leading: CupertinoIcons.chat_bubble_text_fill,
+                      title: 'FAQ | Help',
+                      navigateTo: SettingsTabRoutingKeys.FAQ.route,
+                    ),
+                    BlockEntry(
                       leading: CupertinoIcons.info_circle_fill,
                       title: 'About',
                       navigateTo: SettingsTabRoutingKeys.About.route,

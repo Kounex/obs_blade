@@ -1,16 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/intro/intro.dart';
-import 'package:obs_blade/views/settings/custom_theme/custom_theme.dart';
-import 'package:obs_blade/views/settings/privacy_policy/privacy_policy.dart';
-import 'package:obs_blade/views/statistics/statistic_detail/statistic_detail.dart';
-import 'package:obs_blade/views/statistics/statistics.dart';
 
 import '../tab_base.dart';
-import '../views/settings/about/about.dart';
 import '../views/dashboard/dashboard.dart';
 import '../views/home/home.dart';
+import '../views/intro/intro.dart';
+import '../views/settings/about/about.dart';
+import '../views/settings/custom_theme/custom_theme.dart';
+import '../views/settings/faq/faq.dart';
+import '../views/settings/privacy_policy/privacy_policy.dart';
 import '../views/settings/settings.dart';
+import '../views/statistics/statistic_detail/statistic_detail.dart';
+import '../views/statistics/statistics.dart';
 
 /// All routing keys available on root level - for now the whole app
 /// is wrapped in tabs and no other root level views (which are not inside
@@ -67,7 +68,13 @@ enum StaticticsTabRoutingKeys {
 }
 
 /// Routing keys for the settings tab
-enum SettingsTabRoutingKeys { Landing, PrivacyPolicy, About, CustomTheme }
+enum SettingsTabRoutingKeys {
+  Landing,
+  PrivacyPolicy,
+  About,
+  CustomTheme,
+  FAQ,
+}
 
 /// Extension method for [AppRoutingKeys] enum to get the actual route
 /// path for an enum
@@ -110,6 +117,7 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
             AppRoutingKeys.Tabs.route + '/settings/about',
         SettingsTabRoutingKeys.CustomTheme:
             AppRoutingKeys.Tabs.route + '/settings/custom-theme',
+        SettingsTabRoutingKeys.FAQ: AppRoutingKeys.Tabs.route + '/settings/faq',
       }[this]!;
 }
 
@@ -130,6 +138,7 @@ class RoutingHelper {
     SettingsTabRoutingKeys.PrivacyPolicy.route: (_) => PrivacyPolicyView(),
     SettingsTabRoutingKeys.About.route: (_) => AboutView(),
     SettingsTabRoutingKeys.CustomTheme.route: (_) => CustomThemeView(),
+    SettingsTabRoutingKeys.FAQ.route: (_) => FAQView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {

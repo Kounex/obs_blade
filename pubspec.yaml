@@ -4,112 +4,109 @@ description: Control your OBS instance and manage your stream - live!
 version: 1.3.0+20210411
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+    sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
-  flutter:
-    sdk: flutter
+    flutter:
+        sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.2
+    # The following adds the Cupertino Icons font to your application.
+    # Use with the CupertinoIcons class for iOS style icons.
+    cupertino_icons: ^1.0.2
 
-  # CUSTOM
-  # Language stuff
-  intl: ^0.17.0
+    # CUSTOM
+    # Language stuff
+    intl: ^0.17.0
 
-  # Get project meta info
-  package_info: ^2.0.0
+    # Get project meta info
+    package_info: ^2.0.0
 
-  # Webview
-  flutter_inappwebview: ^5.3.1+1
+    # Webview
+    flutter_inappwebview: ^5.3.2
 
-  # State Management and DI
-  provider: ^5.0.0
-  mobx: ^2.0.1
-  flutter_mobx: ^2.0.0
-  path: ^1.8.0
+    # State Management and DI
+    provider: ^5.0.0
+    mobx: ^2.0.1
+    flutter_mobx: ^2.0.0
+    path: ^1.8.0
 
-  # Network stuff
-  tcp_scanner:
-    git:
-      url: git://github.com/shpak86/tcp_scanner.git
-  connectivity: ^3.0.2
-  web_socket_channel: ^2.0.0
+    # Network stuff
+    connectivity: ^3.0.2
+    web_socket_channel: ^2.0.0
 
-  # Security
-  crypto: ^3.0.1
+    # Security
+    crypto: ^3.0.1
 
-  # Local persistance stuff
-  hive: ^2.0.2
-  hive_flutter: ^1.0.0
+    # Local persistance stuff
+    hive: ^2.0.3
+    hive_flutter: ^1.0.0
 
-  # To enable unique identifiable objects (models)
-  uuid: ^3.0.3
+    # To enable unique identifiable objects (models)
+    uuid: ^3.0.4
 
-  # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
-  url_launcher: ^6.0.3
+    # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
+    url_launcher: ^6.0.3
 
-  # See app layout on different device sizes on the fly
-  #device_preview: ^0.4.8
+    # See app layout on different device sizes on the fly
+    #device_preview: ^0.4.8
 
-  # Enable keeping the device active
-  wakelock: ^0.5.0+2
+    # Enable keeping the device active
+    wakelock: ^0.5.0+2
 
-  # Fancy done layout shit
-  modal_bottom_sheet: ^2.0.0
-  fl_chart: ^0.35.0
-  smooth_page_indicator: ^0.3.0-nullsafety.0
-  keyboard_actions: ^3.4.0
-  #flutter_svg: ^0.19.3
-  expandable: ^5.0.1
-  flutter_slidable: ^0.6.0
+    # Fancy done layout shit
+    modal_bottom_sheet: ^2.0.0
+    fl_chart: ^0.35.0
+    smooth_page_indicator: ^0.3.0-nullsafety.0
+    keyboard_actions: ^3.4.0
+    #flutter_svg: ^0.19.3
+    expandable: ^5.0.1
+    flutter_slidable: ^0.6.0
 
-  # Additional dependencies for packages
-  xml: ^5.1.0
+    # Additional dependencies for packages
+    xml: ^5.1.0
 
 dependency_overrides: null
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+    flutter_test:
+        sdk: flutter
 
-  #analyzer: ^0.39.14
+    #analyzer: ^0.39.14
 
-  # Codegen
-  build_resolvers: ^2.0.0
-  build_runner: ^1.12.2
-  hive_generator: ^1.0.1
-  mobx_codegen: ^2.0.1+2
+    # Codegen
+    build_resolvers: ^2.0.0
+    build_runner: ^1.12.2
+    hive_generator: ^1.0.1
+    mobx_codegen: ^2.0.1+2
 
-  # Mock for testing
-  mockito: ^5.0.3
+    # Mock for testing
+    mockito: ^5.0.3
 
-  # App icons
-  flutter_launcher_icons: ^0.9.0
+    # App icons
+    flutter_launcher_icons: ^0.9.0
 
-  # Splashscreen ios and android
-  flutter_native_splash: ^1.1.7+1
+    # Splashscreen ios and android
+    flutter_native_splash: ^1.1.7+1
 
 flutter_icons:
-  android: true
-  ios: true
-  image_path_android: 'assets/icons/app/app_logo_android.png'
-  image_path_ios: 'assets/icons/app/app_logo_ios.png'
+    android: true
+    ios: true
+    image_path_android: 'assets/icons/app/app_logo_android.png'
+    image_path_ios: 'assets/icons/app/app_logo_ios.png'
 
 flutter_native_splash:
-  image: assets/icons/app/splash.png
-  color: '101823'
+    image: assets/icons/app/splash.png
+    color: '101823'
 
 flutter:
-  uses-material-design: true
+    uses-material-design: true
 
-  assets:
-    - assets/icons/app/
-    - assets/images/
-    - assets/images/intro/
+    assets:
+        - assets/icons/app/
+        - assets/images/
+        - assets/images/intro/
 
-  fonts:
-    - family: JamIcons
-      fonts:
-        - asset: assets/fonts/JamIcons.ttf
+    fonts:
+        - family: JamIcons
+          fonts:
+              - asset: assets/fonts/JamIcons.ttf
