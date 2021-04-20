@@ -22,14 +22,12 @@ class RecordingControls extends StatelessWidget {
           SizedBox(
             width: 128.0,
             child: ElevatedButton.icon(
-              onPressed: dashboardStore.isLive
-                  ? () => ModalHandler.showBaseDialog(
-                        context: context,
-                        dialogWidget: StartStopRecordingDialog(
-                          isRecording: dashboardStore.isRecording,
-                        ),
-                      )
-                  : null,
+              onPressed: () => ModalHandler.showBaseDialog(
+                context: context,
+                dialogWidget: StartStopRecordingDialog(
+                  isRecording: dashboardStore.isRecording,
+                ),
+              ),
               icon: Icon(
                 dashboardStore.isRecording
                     ? CupertinoIcons.stop

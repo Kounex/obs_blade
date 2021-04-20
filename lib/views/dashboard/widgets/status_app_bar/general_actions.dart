@@ -62,16 +62,12 @@ class GeneralActions extends StatelessWidget {
                   AppBarCupertinoActionEntry(
                     title: (dashboardStore.isRecording ? 'Stop' : 'Start') +
                         ' Recording',
-                    onAction: dashboardStore.isLive
-                        ? () {
-                            ModalHandler.showBaseDialog(
-                              context: context,
-                              dialogWidget: StartStopRecordingDialog(
-                                isRecording: dashboardStore.isRecording,
-                              ),
-                            );
-                          }
-                        : null,
+                    onAction: () => ModalHandler.showBaseDialog(
+                      context: context,
+                      dialogWidget: StartStopRecordingDialog(
+                        isRecording: dashboardStore.isRecording,
+                      ),
+                    ),
                   ),
                   AppBarCupertinoActionEntry(
                     title: (dashboardStore.isRecordingPaused
