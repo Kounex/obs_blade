@@ -62,6 +62,13 @@ enum SettingsKeys {
   /// [bool]: If the studio mode controls should be enabled and shown in the dashboard
   /// (won't be shown anywhere else if disabled)
   ExposeStudioControls,
+
+  /// [bool]: If the user saw the warning regarding hiding scenes which could
+  /// have false behaviour due to OBS WebSocket only transmitting the scene name
+  /// without any identifier. Therefore I have to rely on the connection name
+  /// (if present) or the used ip address which could change and make scenes
+  /// either reappear or be hidden in wrong occassions
+  DontShowHidingScenesWarning,
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
@@ -85,5 +92,7 @@ extension SettingsKeysFunctions on SettingsKeys {
             'dont-show-youtube-chat-beta-warning',
         SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
+        SettingsKeys.DontShowHidingScenesWarning:
+            'dont-show-hiding-scenes-warning',
       }[this]!;
 }

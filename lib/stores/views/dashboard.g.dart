@@ -378,6 +378,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$editSceneVisibilityAtom =
+      Atom(name: '_DashboardStore.editSceneVisibility');
+
+  @override
+  bool get editSceneVisibility {
+    _$editSceneVisibilityAtom.reportRead();
+    return super.editSceneVisibility;
+  }
+
+  @override
+  set editSceneVisibility(bool value) {
+    _$editSceneVisibilityAtom.reportWrite(value, super.editSceneVisibility, () {
+      super.editSceneVisibility = value;
+    });
+  }
+
   final _$_checkOBSConnectionAsyncAction =
       AsyncAction('_DashboardStore._checkOBSConnection');
 
@@ -464,6 +480,17 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
+  void setEditSceneVisibility(bool editSceneVisibility) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setEditSceneVisibility');
+    try {
+      return super.setEditSceneVisibility(editSceneVisibility);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _handleResponse(BaseResponse response) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
         name: '_DashboardStore._handleResponse');
@@ -499,6 +526,7 @@ editSceneItemVisibility: ${editSceneItemVisibility},
 editAudioVisibility: ${editAudioVisibility},
 studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
+editSceneVisibility: ${editSceneVisibility},
 currentSoundboardSceneItems: ${currentSoundboardSceneItems},
 currentAudioSceneItems: ${currentAudioSceneItems}
     ''';

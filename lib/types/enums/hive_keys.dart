@@ -14,6 +14,9 @@ enum HiveKeys {
 
   /// Returns a List of [HiddenSceneItem]
   HiddenSceneItem,
+
+  /// Returns a List of [HiddenScene]
+  HiddenScene,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -23,5 +26,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.Settings: 'settings',
         HiveKeys.CustomTheme: 'custom-theme',
         HiveKeys.HiddenSceneItem: 'hidden-scene-item',
+        HiveKeys.HiddenScene: 'hidden-scene',
       }[this]!;
 }

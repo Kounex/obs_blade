@@ -134,13 +134,13 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
               ),
               actions: [
                 IconSlideAction(
-                  caption: hiddenSceneItem != null ? 'Show' : 'Hide',
+                  caption: hiddenSceneItem != null ? 'Hidden' : 'Visible',
                   color: hiddenSceneItem != null
-                      ? Theme.of(context).buttonColor
-                      : CupertinoColors.destructiveRed,
+                      ? CupertinoColors.destructiveRed
+                      : Theme.of(context).buttonColor,
                   icon: hiddenSceneItem != null
-                      ? Icons.visibility
-                      : Icons.visibility_off,
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   closeOnTap: false,
                   onTap: () {
                     if (hiddenSceneItem != null) {

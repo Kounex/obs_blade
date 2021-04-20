@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_blade/models/custom_theme.dart';
+import 'package:obs_blade/models/hidden_scene.dart';
 import 'package:obs_blade/models/hidden_scene_item.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/stores/shared/tabs.dart';
@@ -18,6 +19,7 @@ class DataManagementView extends StatelessWidget {
   Future<void> _deleteAll(BuildContext context) async {
     await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
     await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).clear();
+    await Hive.box<HiddenScene>(HiveKeys.HiddenSceneItem.name).clear();
     await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
     await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
     await Hive.box(HiveKeys.Settings.name).clear();
@@ -68,6 +70,13 @@ class DataManagementView extends StatelessWidget {
                         .clear(),
               ),
               DataEntry(
+                title: 'Hidden Scenes',
+                description:
+                    'All scenes that have been hidden in the dashboard of a connected OBS instance.',
+                onClear: () =>
+                    Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear(),
+              ),
+              DataEntry(
                 title: 'Hidden Scene Items',
                 description:
                     'All scene items that have been hidden in the dashboard of a connected OBS instance.',
@@ -102,6 +111,8 @@ class DataManagementView extends StatelessWidget {
                 description:
                     'All checks set in the dialogs popped up to explain something very important but could get annoying very fast and aren\'t showing up anymore. If you want to see them again - here you go!',
                 onClear: () {
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.DontShowHidingScenesWarning.name);
                   Hive.box(HiveKeys.Settings.name).delete(
                       SettingsKeys.DontShowHidingSceneItemsWarning.name);
                   Hive.box(HiveKeys.Settings.name)

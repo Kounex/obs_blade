@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/hidden_scene.dart';
 
 import 'app.dart';
 import 'models/connection.dart';
@@ -59,6 +60,7 @@ void main() async {
   Hive.registerAdapter(PastStreamDataAdapter());
   Hive.registerAdapter(CustomThemeAdapter());
   Hive.registerAdapter(HiddenSceneItemAdapter());
+  Hive.registerAdapter(HiddenSceneAdapter());
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
@@ -79,6 +81,10 @@ void main() async {
   );
   await Hive.openBox<HiddenSceneItem>(
     HiveKeys.HiddenSceneItem.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<HiddenScene>(
+    HiveKeys.HiddenScene.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 

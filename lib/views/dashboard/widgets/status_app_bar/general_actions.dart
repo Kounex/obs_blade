@@ -33,6 +33,7 @@ class GeneralActions extends StatelessWidget {
         return ValueListenableBuilder(
           valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
             SettingsKeys.ExposeRecordingControls.name,
+            SettingsKeys.DontShowHidingScenesWarning.name,
           ]),
           builder: (context, Box settingsBox, child) => Observer(
             builder: (_) => AppBarCupertinoActions(
@@ -84,6 +85,37 @@ class GeneralActions extends StatelessWidget {
                         : null,
                   ),
                 ],
+                AppBarCupertinoActionEntry(
+                  title:
+                      (dashboardStore.editSceneVisibility ? 'Finish' : 'Edit') +
+                          ' Scene Visibility',
+                  onAction: dashboardStore.editSceneVisibility
+                      ? () => dashboardStore.setEditSceneVisibility(false)
+                      : settingsBox.get(
+                              SettingsKeys.DontShowHidingScenesWarning.name,
+                              defaultValue: false)
+                          ? () => dashboardStore.setEditSceneVisibility(true)
+                          : () {
+                              ModalHandler.showBaseDialog(
+                                context: context,
+                                dialogWidget: ConfirmationDialog(
+                                  title: 'Warning on hiding scenes',
+                                  body:
+                                      'Unfortunately OBS WebSocket only transmits the scene name, nothing else. Therefore I can\'t distinguish between a scene from one specific OBS instance.\n\nUsing a saved connection is advised because then I can bound the scene name to the saved connection - otherwise trying with the ip address which might cause trouble but is still better than nothing!',
+                                  enableDontShowAgainOption: true,
+                                  noText: 'Cancel',
+                                  okText: 'Ok',
+                                  onOk: (checked) {
+                                    settingsBox.put(
+                                        SettingsKeys
+                                            .DontShowHidingScenesWarning.name,
+                                        checked);
+                                    dashboardStore.setEditSceneVisibility(true);
+                                  },
+                                ),
+                              );
+                            },
+                ),
                 AppBarCupertinoActionEntry(
                   title: (newConnection ? 'Save' : 'Edit') + ' Connection',
                   onAction: () {

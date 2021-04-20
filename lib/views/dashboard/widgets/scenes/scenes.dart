@@ -4,8 +4,11 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../models/hidden_scene.dart';
 import '../../../../shared/general/responsive_widget_wrapper.dart';
+import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
+import '../../../../types/classes/api/scene.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
 import 'recording_controls.dart';
@@ -21,6 +24,7 @@ class Scenes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
+    NetworkStore networkStore = context.read<NetworkStore>();
 
     return LayoutBuilder(builder: (context, constraints) {
       double size = 100.0;
@@ -47,21 +51,60 @@ class Scenes extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(
                   left: kSceneButtonSpace, right: kSceneButtonSpace),
-              child: Observer(
-                builder: (_) => Wrap(
-                  runSpacing: kSceneButtonSpace,
-                  spacing: kSceneButtonSpace,
-                  children: dashboardStore.scenes != null &&
-                          dashboardStore.scenes!.length > 0
-                      ? dashboardStore.scenes!
-                          .map((scene) => SceneButton(
-                                scene: scene,
-                                height: size,
-                                width: size,
-                              ))
-                          .toList()
-                      : [Text('No Scenes available')],
-                ),
+              child: ValueListenableBuilder(
+                valueListenable:
+                    Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
+                        .listenable(),
+                builder: (context, Box<HiddenScene> hiddenScenesBox, child) =>
+                    Observer(builder: (_) {
+                  Iterable<Scene>? visibleScenes = dashboardStore.scenes;
+
+                  if (!dashboardStore.editSceneVisibility) {
+                    visibleScenes = visibleScenes?.where((scene) {
+                      HiddenScene? hiddenScene;
+
+                      try {
+                        hiddenScene = hiddenScenesBox.values
+                            .firstWhere((hiddenSceneInBox) {
+                          bool isHiddenScene =
+                              hiddenSceneInBox.sceneName == scene.name;
+
+                          if (isHiddenScene) {
+                            if (networkStore.activeSession!.connection.name !=
+                                    null &&
+                                hiddenSceneInBox.connectionName != null) {
+                              isHiddenScene =
+                                  networkStore.activeSession!.connection.name ==
+                                      hiddenSceneInBox.connectionName;
+                            } else {
+                              isHiddenScene =
+                                  networkStore.activeSession!.connection.ip ==
+                                      hiddenSceneInBox.ipAddress;
+                            }
+                          }
+
+                          return isHiddenScene;
+                        });
+                      } catch (e) {}
+
+                      return hiddenScene == null;
+                    });
+                  }
+
+                  return Wrap(
+                    runSpacing: kSceneButtonSpace,
+                    spacing: kSceneButtonSpace,
+                    children: visibleScenes != null && visibleScenes.length > 0
+                        ? visibleScenes
+                            .map((scene) => SceneButton(
+                                  scene: scene,
+                                  height: size,
+                                  width: size,
+                                ))
+                            .toList()
+                        : [Text('No Scenes available')],
+                  );
+                }),
               ),
             ),
           ),

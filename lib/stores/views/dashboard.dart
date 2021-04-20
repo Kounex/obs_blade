@@ -156,6 +156,9 @@ abstract class _DashboardStore with Store {
   @observable
   String? studioModePreviewSceneName;
 
+  @observable
+  bool editSceneVisibility = false;
+
   /// Currently I hold a reference to the [NetworkStore] object to be able
   /// to listen to the WebSocket stream and toggle some stuff. [NetworkStore]
   /// is one of the shared stores, indicate that those kind of stores are not
@@ -354,6 +357,10 @@ abstract class _DashboardStore with Store {
   @action
   void setEditAudioVisibility(bool editAudioVisibility) =>
       this.editAudioVisibility = editAudioVisibility;
+
+  @action
+  void setEditSceneVisibility(bool editSceneVisibility) =>
+      this.editSceneVisibility = editSceneVisibility;
 
   @action
   Future<void> _handleEvent(BaseEvent event) async {
