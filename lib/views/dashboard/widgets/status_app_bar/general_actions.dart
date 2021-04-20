@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/models/connection.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/shared/general/app_bar_cupertino_actions.dart';
-import 'package:obs_blade/stores/shared/network.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/network_helper.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/start_stop_recording_dialog.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../models/connection.dart';
+import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/dashboard.dart';
+import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/request_type.dart';
+import '../../../../types/enums/settings_keys.dart';
+import '../../../../utils/modal_handler.dart';
+import '../../../../utils/network_helper.dart';
+import '../../services/record_stream.dart';
 import '../save_edit_connection_dialog.dart';
 
 class GeneralActions extends StatelessWidget {
@@ -32,42 +32,47 @@ class GeneralActions extends StatelessWidget {
             networkStore.activeSession?.connection.name == null;
         return ValueListenableBuilder(
           valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
+            SettingsKeys.ExposeStreamingControls.name,
             SettingsKeys.ExposeRecordingControls.name,
             SettingsKeys.DontShowHidingScenesWarning.name,
+            SettingsKeys.DontShowRecordStartMessage.name,
+            SettingsKeys.DontShowRecordStopMessage.name,
+            SettingsKeys.DontShowStreamStartMessage.name,
+            SettingsKeys.DontShowStreamStopMessage.name,
           ]),
           builder: (context, Box settingsBox, child) => Observer(
             builder: (_) => AppBarCupertinoActions(
               actions: [
-                AppBarCupertinoActionEntry(
-                  title:
-                      (dashboardStore.isLive ? 'Stop' : 'Start') + ' Streaming',
-                  onAction: () {
-                    ModalHandler.showBaseDialog(
-                      context: context,
-                      dialogWidget: ConfirmationDialog(
-                        title: (dashboardStore.isLive ? 'Stop' : 'Start') +
-                            ' Streaming',
-                        body: dashboardStore.isLive
-                            ? 'Are you sure you want to stop the stream? Nothing more to show or talk about? Or just tired or no time?\n\n... just to make sure it\'s intentional!'
-                            : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',
-                        isYesDestructive: true,
-                        onOk: (_) => NetworkHelper.makeRequest(
-                            networkStore.activeSession!.socket,
-                            RequestType.StartStopStreaming),
-                      ),
-                    );
-                  },
-                ),
+                if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
+                    defaultValue: false))
+                  AppBarCupertinoActionEntry(
+                    title: (dashboardStore.isLive ? 'Stop' : 'Start') +
+                        ' Streaming',
+                    onAction: () => RecordStreamService.triggerStreamStartStop(
+                      context,
+                      dashboardStore.isLive,
+                      settingsBox.get(
+                          SettingsKeys.DontShowStreamStartMessage.name,
+                          defaultValue: false),
+                      settingsBox.get(
+                          SettingsKeys.DontShowStreamStopMessage.name,
+                          defaultValue: false),
+                    ),
+                  ),
                 if (!settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
                     defaultValue: false)) ...[
                   AppBarCupertinoActionEntry(
                     title: (dashboardStore.isRecording ? 'Stop' : 'Start') +
                         ' Recording',
-                    onAction: () => ModalHandler.showBaseDialog(
-                      context: context,
-                      dialogWidget: StartStopRecordingDialog(
-                        isRecording: dashboardStore.isRecording,
-                      ),
+                    onAction: () => RecordStreamService.triggerRecordStartStop(
+                      context,
+                      dashboardStore.isRecording,
+                      settingsBox.get(
+                          SettingsKeys.DontShowRecordStartMessage.name,
+                          defaultValue: false),
+                      settingsBox.get(
+                          SettingsKeys.DontShowRecordStopMessage.name,
+                          defaultValue: false),
                     ),
                   ),
                   AppBarCupertinoActionEntry(

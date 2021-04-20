@@ -1,4 +1,16 @@
 enum SettingsKeys {
+  /// ******************************************************************************
+  /// Internally used properties which won't be changeable / seeable for the user
+  /// ******************************************************************************
+
+  /// [bool]: If the user already saw the intro - will be set after being in landing
+  /// of Home Tab and will prevent the user from seeing the intro slides again
+  HasUserSeenIntro,
+
+  /// ******************************************************************************
+  /// Actively set by user via settings page or using the app
+  /// ******************************************************************************
+
   /// [bool]: Using fully dark mode or not
   TrueDark,
 
@@ -35,11 +47,21 @@ enum SettingsKeys {
   /// Active by default
   WakeLock,
 
-  /// Internally used properties which won't be changeable / seeable for the user
+  /// [bool]: If the recording functions (start/stop/pause) should be shown in the
+  /// dashboard instead of in the menu action list of the app bar
+  ExposeRecordingControls,
 
-  /// [bool]: If the user already saw the intro - will be set after being in landing
-  /// of Home Tab and will prevent the user from seeing the intro slides again
-  HasUserSeenIntro,
+  /// [bool]: If the studio mode controls should be enabled and shown in the dashboard
+  /// (won't be shown anywhere else if disabled)
+  ExposeStudioControls,
+
+  /// [bool]: If the streaming controls (start / stop) should be shown in the dashboard
+  /// instead of in the menu action list of the app bar
+  ExposeStreamingControls,
+
+  /// ******************************************************************************
+  /// "Don't show dialog again" - settings set by user by checkbox in dialog
+  /// ******************************************************************************
 
   /// [bool]: If the user saw the warning regarding displaying the live preview of
   /// the current OBS scene and doesn't want to see this warning again
@@ -55,24 +77,33 @@ enum SettingsKeys {
   /// beta and might cause trouble and doesn't want to see this warning again
   DontShowYouTubeChatBetaWarning,
 
-  /// [bool]: If the recording functions (start/stop/pause) should be shown in the
-  /// dashboard instead of in the menu action list of the app bar
-  ExposeRecordingControls,
-
-  /// [bool]: If the studio mode controls should be enabled and shown in the dashboard
-  /// (won't be shown anywhere else if disabled)
-  ExposeStudioControls,
-
   /// [bool]: If the user saw the warning regarding hiding scenes which could
   /// have false behaviour due to OBS WebSocket only transmitting the scene name
   /// without any identifier. Therefore I have to rely on the connection name
   /// (if present) or the used ip address which could change and make scenes
   /// either reappear or be hidden in wrong occassions
   DontShowHidingScenesWarning,
+
+  /// [bool]: If the user saw the message regarding going live and doesn't want
+  /// to see this warning again
+  DontShowStreamStartMessage,
+
+  /// [bool]: If the user saw the message regarding going offline and doesn't want
+  /// to see this warning again
+  DontShowStreamStopMessage,
+
+  /// [bool]: If the user saw the message regarding start recording and doesn't want
+  /// to see this warning again
+  DontShowRecordStartMessage,
+
+  /// [bool]: If the user saw the message regarding stop recording and doesn't want
+  /// to see this warning again
+  DontShowRecordStopMessage,
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
   String get name => const {
+        SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
         SettingsKeys.TrueDark: 'true-dark',
         SettingsKeys.ReduceSmearing: 'reduce-smearing',
         SettingsKeys.EnforceTabletMode: 'enforce-tablet-mode',
@@ -84,15 +115,21 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.WakeLock: 'wake-lock',
-        SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
+        SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
+        SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
+        SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:
             'dont-show-hiding-scene-items-warning',
         SettingsKeys.DontShowYouTubeChatBetaWarning:
             'dont-show-youtube-chat-beta-warning',
-        SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
-        SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
         SettingsKeys.DontShowHidingScenesWarning:
             'dont-show-hiding-scenes-warning',
+        SettingsKeys.DontShowStreamStartMessage:
+            'dont-show-stream-start-message',
+        SettingsKeys.DontShowStreamStopMessage: 'dont-show-stream-stop-message',
+        SettingsKeys.DontShowRecordStartMessage:
+            'dont-show-record-start-message',
+        SettingsKeys.DontShowRecordStopMessage: 'dont-show-record-stop-message',
       }[this]!;
 }

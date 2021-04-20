@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/streaming_controls.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/hidden_scene.dart';
@@ -39,12 +42,28 @@ class Scenes extends StatelessWidget {
           ValueListenableBuilder(
             valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
               SettingsKeys.ExposeRecordingControls.name,
+              SettingsKeys.ExposeStreamingControls.name,
             ]),
-            builder: (context, Box settingsBox, child) => settingsBox.get(
-                    SettingsKeys.ExposeRecordingControls.name,
-                    defaultValue: false)
-                ? RecordingControls()
-                : Container(),
+            builder: (context, Box settingsBox, child) {
+              List<Widget> exposedControls = [];
+
+              if (settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
+                  defaultValue: false))
+                exposedControls.add(StreamingControls());
+
+              if (settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
+                  defaultValue: false))
+                exposedControls.add(RecordingControls());
+
+              exposedControls = List.from(exposedControls
+                  .expand((control) => [control, SizedBox(height: 12.0)]));
+
+              if (exposedControls.isNotEmpty) exposedControls.removeLast();
+
+              return Column(
+                children: exposedControls,
+              );
+            },
           ),
           SizedBox(height: 24.0),
           Center(

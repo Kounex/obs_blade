@@ -75,6 +75,23 @@ class SettingsView extends StatelessWidget {
                   title: 'DASHBOARD',
                   blockEntries: [
                     BlockEntry(
+                      leading: Icons.live_tv_rounded,
+                      leadingSize: 28.0,
+                      title: 'Streaming Controls',
+                      help:
+                          'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.ExposeStreamingControls.name,
+                            defaultValue: false),
+                        onChanged: (exposeStreamingControls) {
+                          settingsBox.put(
+                              SettingsKeys.ExposeStreamingControls.name,
+                              exposeStreamingControls);
+                        },
+                      ),
+                    ),
+                    BlockEntry(
                       leading: CupertinoIcons.recordingtape,
                       leadingSize: 30.0,
                       title: 'Recording Controls',
@@ -93,7 +110,7 @@ class SettingsView extends StatelessWidget {
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.film,
-                      leadingSize: 30.0,
+                      leadingSize: 26.0,
                       title: 'Studio Mode Support',
                       help:
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard!',

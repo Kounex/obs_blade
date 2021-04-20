@@ -119,6 +119,14 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.DontShowPreviewWarning.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.DontShowYouTubeChatBetaWarning.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.DontShowRecordStartMessage.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.DontShowRecordStopMessage.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.DontShowStreamStartMessage.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.DontShowStreamStopMessage.name);
                 },
               ),
             ],
