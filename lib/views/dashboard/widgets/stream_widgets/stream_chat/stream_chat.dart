@@ -60,7 +60,7 @@ class _StreamChatState extends State<StreamChat>
                 alignment: Alignment.center,
                 children: [
                   /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
-                  /// the main Scroll (the [CustomScrollView] of this view) whie trying to scroll
+                  /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
                   /// in the region where the Twitch chat is. The Listener is used to determine
                   /// where the user is trying to scroll and if it's where the Twitch chat is,
                   /// we change to [NeverScrollableScrollPhysics] so the WebView can consume

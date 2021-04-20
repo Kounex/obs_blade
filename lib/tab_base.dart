@@ -25,10 +25,6 @@ class _TabBaseState extends State<TabBase> {
   void initState() {
     super.initState();
 
-    WidgetsFlutterBinding.ensureInitialized();
-    SystemChrome.setEnabledSystemUIOverlays(
-        [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-
     TabsStore tabsStore = context.read<TabsStore>();
     Tabs.values.forEach((tab) {
       tabsStore.navigatorKeys[tab] =

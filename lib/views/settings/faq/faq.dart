@@ -1,14 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/settings/faq/widgets/enumeration_block/enumeration_entry.dart';
-import 'package:obs_blade/views/settings/faq/widgets/enumeration_block/enumeration_block.dart';
-import 'package:obs_blade/views/settings/faq/widgets/faq_block.dart';
 
 import '../../../shared/general/base_card.dart';
-import '../../../shared/general/social_block.dart';
-import '../../../shared/general/themed/themed_rich_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../../utils/icons/jam_icons.dart';
+import 'widgets/enumeration_block/enumeration_block.dart';
+import 'widgets/enumeration_block/enumeration_entry.dart';
+import 'widgets/faq_block.dart';
+
+const kFAQSpaceHeight = 24.0;
 
 class FAQView extends StatelessWidget {
   @override
@@ -71,6 +70,14 @@ class FAQView extends StatelessWidget {
                       ),
                       EnumerationEntry(
                         text:
+                            'The port where OBS is running is not opened. Your firewall might block this port or your router might not allow communicating with this port (port forwarding)',
+                      ),
+                      EnumerationEntry(
+                        text:
+                            'On iOS: make sure you enabled the "Local Network Permission" in your phone settings:\nSettings > Privacy > Local Network > OBS Blade',
+                      ),
+                      EnumerationEntry(
+                        text:
                             'Additionally to being in the same network, they also have to be in the same IP range (subnet). By default, devices being in different subnets cannot communicate with each other. Make sure only the last digit of the IP address differ:',
                       ),
                       EnumerationEntry(
@@ -86,48 +93,36 @@ class FAQView extends StatelessWidget {
                     ],
                   ),
                 ),
-                ThemedRichText(
-                  textSpans: [
-                    TextSpan(
-                      text: 'Currently ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
+                SizedBox(height: kFAQSpaceHeight),
+                FAQBlock(
+                  heading: 'I can\'t connect to OBS, what to do?',
+                  customBody: EnumerationBlock(
+                    title:
+                        'In most cases you should be able to connect to OBS if it\'s listed in autodiscover. If you try to connect to OBS manually because it\'s not listed in autodiscover, there is usually an underlying problem (check the list above). Additionally check that:',
+                    customEntries: [
+                      EnumerationEntry(
+                        text:
+                            'The correct password is used (if set in the OBS WebSocket settings)',
                       ),
-                    ),
-                    TextSpan(
-                      text:
-                          'OBS Blade does not collect and send any data to any kind of server on its own! The respective app stores (Google Play Store and Apple App Store) will collect analytics data about app usage, crashes, etc. but I\'m not collecting anything. If you want to know more about what those app stores collect, take a look at their privacy policies:',
-                    ),
-                  ],
+                      EnumerationEntry(
+                        text:
+                            'The host (device running OBS) is reachable with the given IP address. The internal IP address can only be used when both devices are in the same network and the previous points are covered',
+                      ),
+                    ],
+                  ),
                 ),
-                SocialBlock(
-                  socialInfos: [
-                    SocialEntry(
-                      icon: JamIcons.google,
-                      iconSize: 24.0,
-                      link: 'https://policies.google.com/privacy',
-                    ),
-                    SocialEntry(
-                      icon: JamIcons.apple,
-                      link: 'https://apple.com/legal/privacy/en-ww/',
-                    ),
-                  ],
+                SizedBox(height: kFAQSpaceHeight),
+                FAQBlock(
+                  heading: 'When will feature XY be available?',
+                  text:
+                      'I have quite a backlog to work through - some stuff I want to implement in general and some have been requested by you! I dont\'t have a public board showcasing all the tasks currently (might be added in the future). Feel free to contact me for feature requests / bugs or check the GitHub page!',
                 ),
-                Text(
-                  'I might add third party providers later on to help me out with stuff like device-sync, error handling, feedback, statistics, etc. and if I do and this third party provider collects any personal data about you, I will add this to this privacy policy! Since data privacy is very important to me, I will try to be very strict about which third party I will work with.\n\nIf you have any concerns about your data or would like to help me improve in this regard, don\'t hesitate to contact me. You can visit the "About" page inside the app to see possible ways to get in touch me with. The preferred way to contact me for such things though is via email:',
+                SizedBox(height: kFAQSpaceHeight),
+                FAQBlock(
+                  heading: 'I think I found a bug! What to do?',
+                  text:
+                      'This app does not have any bugs, they are all features of course... All jokes aside, feel free to contact me (check the About page for different ways) or check the GitHub page for issues - if your bug is not listed, please add a new issue! If it already exists, leave a thumbs up or a comment to emphasize it so I will focus on fixing it!',
                 ),
-                SocialBlock(
-                  socialInfos: [
-                    SocialEntry(
-                      icon: CupertinoIcons.mail_solid,
-                      iconSize: 24.0,
-                      link: 'mailto:contact@kounex.com',
-                      linkText: 'contact@kounex.com',
-                    ),
-                  ],
-                ),
-                Text('Thanks for reading! :)')
               ],
             ),
           ),

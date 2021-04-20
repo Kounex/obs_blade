@@ -11,9 +11,7 @@ class ThemedCupertinoScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoScaffold(
       transitionBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Builder(
-        builder: (context) => this.body,
-      ),
+      body: this.body,
     );
   }
 }

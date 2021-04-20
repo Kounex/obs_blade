@@ -64,6 +64,11 @@ class SettingsView extends StatelessWidget {
                         },
                       ),
                     ),
+                    BlockEntry(
+                      leading: CupertinoIcons.archivebox_fill,
+                      title: 'Data Management',
+                      navigateTo: SettingsTabRoutingKeys.DataManagement.route,
+                    ),
                   ],
                 ),
                 ActionBlock(

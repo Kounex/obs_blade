@@ -35,8 +35,6 @@ class EnumerationBlock extends StatelessWidget {
 
     if (usedEntries.isNotEmpty) usedEntries.removeLast();
 
-    print(usedEntries);
-
     return Column(
       children: [
         if (this.title != null) ...[

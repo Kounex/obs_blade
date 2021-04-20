@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/settings/data_management/data_management.dart';
 
 import '../tab_base.dart';
 import '../views/dashboard/dashboard.dart';
@@ -74,6 +75,7 @@ enum SettingsTabRoutingKeys {
   About,
   CustomTheme,
   FAQ,
+  DataManagement,
 }
 
 /// Extension method for [AppRoutingKeys] enum to get the actual route
@@ -118,6 +120,8 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
         SettingsTabRoutingKeys.CustomTheme:
             AppRoutingKeys.Tabs.route + '/settings/custom-theme',
         SettingsTabRoutingKeys.FAQ: AppRoutingKeys.Tabs.route + '/settings/faq',
+        SettingsTabRoutingKeys.DataManagement:
+            AppRoutingKeys.Tabs.route + '/settings/data-management',
       }[this]!;
 }
 
@@ -139,6 +143,7 @@ class RoutingHelper {
     SettingsTabRoutingKeys.About.route: (_) => AboutView(),
     SettingsTabRoutingKeys.CustomTheme.route: (_) => CustomThemeView(),
     SettingsTabRoutingKeys.FAQ.route: (_) => FAQView(),
+    SettingsTabRoutingKeys.DataManagement.route: (_) => DataManagementView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {
