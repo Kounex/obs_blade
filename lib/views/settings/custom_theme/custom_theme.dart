@@ -4,18 +4,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../shared/general/base_card.dart';
+import '../../../shared/general/clean_list_tile.dart';
 import '../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
+import '../../../shared/general/themed/themed_cupertino_switch.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../shared/overlay/base_result.dart';
-import '../../../utils/modal_handler.dart';
-import 'widgets/add_edit_theme/add_edit_theme.dart';
+import '../../../types/enums/hive_keys.dart';
+import '../../../types/enums/settings_keys.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
-import 'widgets/theme_active.dart';
 
 class CustomThemeView extends StatelessWidget {
   @override
@@ -32,6 +31,7 @@ class CustomThemeView extends StatelessWidget {
         valueListenable: Hive.box(HiveKeys.Settings.name).listenable(
           keys: [
             SettingsKeys.ActiveCustomThemeUUID.name,
+            SettingsKeys.CustomTheme.name,
           ],
         ),
         builder: (context, Box settingsBox, child) =>
@@ -41,7 +41,19 @@ class CustomThemeView extends StatelessWidget {
           listViewChildren: [
             BaseCard(
               bottomPadding: 12.0,
-              child: ThemeActive(),
+              child: CleanListTile(
+                title: 'Use Custom Theme',
+                description:
+                    'Once active the selected theme below will be used for this app. Select between predefined themes or your own!',
+                trailing: ThemedCupertinoSwitch(
+                  value: settingsBox.get(SettingsKeys.CustomTheme.name,
+                      defaultValue: false),
+                  onChanged: (customTheme) => settingsBox.put(
+                    SettingsKeys.CustomTheme.name,
+                    customTheme,
+                  ),
+                ),
+              ),
             ),
             BaseCard(
               title: 'Predefined Themes',

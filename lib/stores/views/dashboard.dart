@@ -242,6 +242,14 @@ abstract class _DashboardStore with Store {
   /// a new one
   Future<void> finishPastStreamData() async {
     if (this.streamData != null) {
+      /// Check if [streamData] is even "legit" - if [totalStreamTime]
+      /// is not greater than 0, it's not worth the statistic entry and
+      /// will probably cause problems anyway. We will delete it therefore
+      if (this.streamData!.isInBox &&
+          (this.streamData!.totalStreamTime == null ||
+              this.streamData!.totalStreamTime! <= 0)) {
+        await this.streamData!.delete();
+      }
       this.streamData = null;
     }
   }

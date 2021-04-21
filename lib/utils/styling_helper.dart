@@ -19,7 +19,7 @@ class StylingHelper {
       const Color.fromRGBO(5, 5, 5, 1.0);
 
   static const Color light_divider_color =
-      const Color.fromRGBO(111, 111, 111, 1.0);
+      const Color.fromRGBO(111, 111, 111, 0.6);
 
   static const double opacity_blurry = 0.75;
 

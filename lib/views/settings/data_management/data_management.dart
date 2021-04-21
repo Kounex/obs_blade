@@ -65,9 +65,18 @@ class DataManagementView extends StatelessWidget {
                 title: 'Statistics',
                 description:
                     'All entries listed in the statistics tab which are created for every live stream OBS Blade is connected to.',
-                onClear: () =>
-                    Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
-                        .clear(),
+                onClear: () {
+                  /// Since the user might be in a detailed statistic view, we pop until
+                  /// we are back in the root view
+                  context
+                      .read<TabsStore>()
+                      .navigatorKeys[Tabs.Statistics]
+                      ?.currentState
+                      ?.popUntil((route) => route.isFirst);
+
+                  Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
+                      .clear();
+                },
               ),
               DataEntry(
                 title: 'Hidden Scenes',

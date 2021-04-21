@@ -10,7 +10,7 @@ class LightDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Divider(
       color: StylingHelper.light_divider_color,
-      height: this.height ?? 0.0,
+      height: this.height ?? 1.0,
       thickness: 0.0,
     );
   }

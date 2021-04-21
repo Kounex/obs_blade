@@ -15,9 +15,9 @@ class ThemedCupertinoSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoSwitch(
-        activeColor:
-            this.activeColor ?? Theme.of(context).toggleableActiveColor,
-        value: this.value,
-        onChanged: this.onChanged);
+      activeColor: this.activeColor ?? Theme.of(context).toggleableActiveColor,
+      value: this.value,
+      onChanged: this.onChanged,
+    );
   }
 }
