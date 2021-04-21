@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_recording_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_studio_mode_status.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import '../../types/classes/stream/events/preview_scene_changed.dart';
 
 import '../../models/past_stream_data.dart';
@@ -231,7 +232,12 @@ abstract class _DashboardStore with Store {
         this.networkStore!.activeSession!.socket,
         RequestType.TakeSourceScreenshot,
         {
-          'sourceName': this.activeSceneName,
+          'sourceName': Hive.box(HiveKeys.Settings.name).get(
+                      SettingsKeys.ExposeStudioControls.name,
+                      defaultValue: false) &&
+                  this.studioMode
+              ? this.studioModePreviewSceneName
+              : this.activeSceneName,
           'embedPictureFormat': this.previewFileFormat,
           'compressionQuality': -1,
         },
