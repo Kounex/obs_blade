@@ -33,27 +33,29 @@ class SceneButtons extends StatelessWidget {
           Iterable<Scene>? visibleScenes = dashboardStore.scenes;
           List<HiddenScene> hiddenScenes = [];
 
-          visibleScenes?.forEach(
-            (scene) => hiddenScenes.addAll(
-              hiddenScenesBox.values.where((hiddenSceneInBox) {
-                bool isHiddenScene = hiddenSceneInBox.sceneName == scene.name;
+          if (networkStore.activeSession != null)
+            visibleScenes?.forEach(
+              (scene) => hiddenScenes.addAll(
+                hiddenScenesBox.values.where((hiddenSceneInBox) {
+                  bool isHiddenScene = hiddenSceneInBox.sceneName == scene.name;
 
-                if (isHiddenScene) {
-                  if (networkStore.activeSession!.connection.name != null &&
-                      hiddenSceneInBox.connectionName != null) {
-                    isHiddenScene =
-                        networkStore.activeSession!.connection.name ==
-                            hiddenSceneInBox.connectionName;
-                  } else {
-                    isHiddenScene = networkStore.activeSession!.connection.ip ==
-                        hiddenSceneInBox.ipAddress;
+                  if (isHiddenScene) {
+                    if (networkStore.activeSession!.connection.name != null &&
+                        hiddenSceneInBox.connectionName != null) {
+                      isHiddenScene =
+                          networkStore.activeSession!.connection.name ==
+                              hiddenSceneInBox.connectionName;
+                    } else {
+                      isHiddenScene =
+                          networkStore.activeSession!.connection.ip ==
+                              hiddenSceneInBox.ipAddress;
+                    }
                   }
-                }
 
-                return isHiddenScene;
-              }),
-            ),
-          );
+                  return isHiddenScene;
+                }),
+              ),
+            );
 
           if (!dashboardStore.editSceneVisibility) {
             visibleScenes = visibleScenes?.where((scene) => hiddenScenes

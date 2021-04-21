@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/connection.dart';
-import 'package:obs_blade/shared/dialogs/input.dart';
-import 'package:obs_blade/stores/shared/network.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:provider/provider.dart';
+
+import '../../../models/connection.dart';
+import '../../../models/hidden_scene.dart';
+import '../../../shared/dialogs/input.dart';
+import '../../../stores/shared/network.dart';
+import '../../../types/enums/hive_keys.dart';
 
 class SaveEditConnectionDialog extends StatelessWidget {
   final bool newConnection;
@@ -36,9 +38,28 @@ class SaveEditConnectionDialog extends StatelessWidget {
       },
       onSave: (name) {
         name = name?.trim();
-        // if the challenge (or salt) is null, we didn't have to connect with a password.
-        // a user might still enter a password, we don't want this password to be
-        // saved, thats why we set it to null explicitly if thats the case
+
+        /// Since [HiddenScene] elements are based on the connection name and
+        /// ip address, once the user updates the connection, we need to update
+        /// these elements as well to preserve the status
+        if (name != networkStore.activeSession!.connection.name) {
+          Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
+              .values
+              .forEach((hiddenScene) {
+            if (hiddenScene.connectionName ==
+                    networkStore.activeSession!.connection.name ||
+                (hiddenScene.connectionName == null &&
+                    hiddenScene.ipAddress ==
+                        networkStore.activeSession!.connection.ip)) {
+              hiddenScene.connectionName = name;
+              hiddenScene.save();
+            }
+          });
+        }
+
+        /// If the challenge (or salt) is null, we didn't have to connect with a password.
+        /// a user might still enter a password, we don't want this password to be
+        /// saved, thats why we set it to null explicitly if thats the case
         if (networkStore.activeSession!.connection.challenge == null) {
           networkStore.activeSession!.connection.pw = null;
         }
