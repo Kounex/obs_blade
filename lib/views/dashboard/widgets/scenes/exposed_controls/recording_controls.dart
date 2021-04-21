@@ -5,13 +5,13 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../stores/shared/network.dart';
-import '../../../../stores/views/dashboard.dart';
-import '../../../../types/enums/hive_keys.dart';
-import '../../../../types/enums/request_type.dart';
-import '../../../../types/enums/settings_keys.dart';
-import '../../../../utils/network_helper.dart';
-import '../../services/record_stream.dart';
+import '../../../../../stores/shared/network.dart';
+import '../../../../../stores/views/dashboard.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/request_type.dart';
+import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/network_helper.dart';
+import '../../../services/record_stream.dart';
 
 class RecordingControls extends StatelessWidget {
   @override
