@@ -19,7 +19,7 @@ class DataManagementView extends StatelessWidget {
   Future<void> _deleteAll(BuildContext context) async {
     await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
     await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).clear();
-    await Hive.box<HiddenScene>(HiveKeys.HiddenSceneItem.name).clear();
+    await Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
     await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
     await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
     await Hive.box(HiveKeys.Settings.name).clear();
