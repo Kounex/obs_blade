@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../models/hidden_scene.dart';
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/classes/api/scene.dart';
@@ -25,11 +25,9 @@ class SceneButtons extends StatelessWidget {
 
       size = buttonSizeToFitThree < size ? buttonSizeToFitThree : size;
 
-      return ValueListenableBuilder(
-        valueListenable:
-            Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).listenable(),
-        builder: (context, Box<HiddenScene> hiddenScenesBox, child) =>
-            Observer(builder: (_) {
+      return HiveBuilder<HiddenScene>(
+        hiveKey: HiveKeys.HiddenScene,
+        builder: (context, hiddenScenesBox, child) => Observer(builder: (_) {
           Iterable<Scene>? visibleScenes = dashboardStore.scenes;
           List<HiddenScene> hiddenScenes = [];
 

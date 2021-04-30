@@ -19,7 +19,7 @@ class SwitcherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.watch<HomeStore>();
+    HomeStore landingStore = context.read<HomeStore>();
 
     return BaseCard(
       paddingChild: this.paddingChild,

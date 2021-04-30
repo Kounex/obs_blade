@@ -24,7 +24,7 @@ class SlideControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IntroStore introStore = context.watch<IntroStore>();
+    IntroStore introStore = context.read<IntroStore>();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

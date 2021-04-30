@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/app_log.dart';
 import 'package:obs_blade/models/custom_theme.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
 import 'package:obs_blade/models/hidden_scene_item.dart';
@@ -22,6 +23,7 @@ class DataManagementView extends StatelessWidget {
     await Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
     await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
     await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
+    await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
     await Hive.box(HiveKeys.Settings.name).clear();
 
     context.read<TabsStore>().setActiveTab(Tabs.Home);
@@ -137,6 +139,12 @@ class DataManagementView extends StatelessWidget {
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.DontShowStreamStopMessage.name);
                 },
+              ),
+              DataEntry(
+                title: 'Logs',
+                description:
+                    'All log entries found under "Logs" in the settings tab. You can delete them selectively in the logs view!',
+                onClear: () => Hive.box<AppLog>(HiveKeys.AppLog.name).clear(),
               ),
             ],
           ),

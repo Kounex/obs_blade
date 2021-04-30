@@ -17,6 +17,9 @@ enum HiveKeys {
 
   /// Returns a List of [HiddenScene]
   HiddenScene,
+
+  /// Returns a List of [AppLog]
+  AppLog,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -27,5 +30,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.CustomTheme: 'custom-theme',
         HiveKeys.HiddenSceneItem: 'hidden-scene-item',
         HiveKeys.HiddenScene: 'hidden-scene',
+        HiveKeys.AppLog: 'app-log',
       }[this]!;
 }

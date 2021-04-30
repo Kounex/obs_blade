@@ -2,11 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../shared/general/base_card.dart';
 import '../../../shared/general/clean_list_tile.dart';
+import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
 import '../../../shared/general/themed/themed_cupertino_switch.dart';
@@ -27,14 +26,13 @@ class CustomThemeView extends StatelessWidget {
       /// the current theme works but this subtree doesn't get rebuilded
       /// in this process - need to investigate the precise reason for that
       /// since I assumed this part would get rebuilded as well
-      body: ValueListenableBuilder(
-        valueListenable: Hive.box(HiveKeys.Settings.name).listenable(
-          keys: [
-            SettingsKeys.ActiveCustomThemeUUID.name,
-            SettingsKeys.CustomTheme.name,
-          ],
-        ),
-        builder: (context, Box settingsBox, child) =>
+      body: HiveBuilder<dynamic>(
+        hiveKey: HiveKeys.Settings,
+        rebuildKeys: [
+          SettingsKeys.ActiveCustomThemeUUID,
+          SettingsKeys.CustomTheme
+        ],
+        builder: (context, settingsBox, child) =>
             TransculentCupertinoNavBarWrapper(
           previousTitle: 'Settings',
           title: 'Custom Theme',

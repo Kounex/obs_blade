@@ -46,8 +46,8 @@ class _ConnectFormState extends State<ConnectForm> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.watch<HomeStore>();
-    NetworkStore networkStore = context.watch<NetworkStore>();
+    HomeStore landingStore = context.read<HomeStore>();
+    NetworkStore networkStore = context.read<NetworkStore>();
 
     return Form(
       key: _formKey,

@@ -61,7 +61,7 @@ class _TabBaseState extends State<TabBase> {
 
   @override
   Widget build(BuildContext context) {
-    TabsStore tabsStore = context.watch<TabsStore>();
+    TabsStore tabsStore = context.read<TabsStore>();
 
     return Scaffold(
       body: Observer(builder: (_) {

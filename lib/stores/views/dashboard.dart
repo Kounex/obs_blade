@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_preview_scene.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_recording_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_studio_mode_status.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -427,11 +428,18 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.SwitchScenes:
         SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
-        this.currentSceneItems =
-            ObservableList.of(_flattenSceneItems(switchSceneEvent.sources));
-        this.currentSceneItems!.forEach((sceneItem) =>
-            NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
-                RequestType.GetMute, {'source': sceneItem.name}));
+        if (!Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false) ||
+            !this.studioMode) {
+          this.currentSceneItems =
+              ObservableList.of(_flattenSceneItems(switchSceneEvent.sources));
+          this.currentSceneItems!.forEach((sceneItem) =>
+              NetworkHelper.makeRequest(
+                  this.networkStore!.activeSession!.socket,
+                  RequestType.GetMute,
+                  {'source': sceneItem.name}));
+        }
         break;
       case EventType.TransitionBegin:
         TransitionBeginEvent transitionBeginEvent =
@@ -465,12 +473,35 @@ abstract class _DashboardStore with Store {
       case EventType.StudioModeSwitched:
         StudioModeSwitchedEvent studioModeSwitchedEvent =
             StudioModeSwitchedEvent(event.json);
+
         this.studioMode = studioModeSwitchedEvent.newState;
+
+        NetworkHelper.makeRequest(
+          this.networkStore!.activeSession!.socket,
+          Hive.box(HiveKeys.Settings.name).get(
+                      SettingsKeys.ExposeStudioControls.name,
+                      defaultValue: false) &&
+                  this.studioMode
+              ? RequestType.GetPreviewScene
+              : RequestType.GetCurrentScene,
+        );
         break;
       case EventType.PreviewSceneChanged:
         PreviewSceneChangedEvent previewSceneChangedEvent =
             PreviewSceneChangedEvent(event.json);
-        this.studioModePreviewSceneName = previewSceneChangedEvent.sceneName;
+
+        if (Hive.box(HiveKeys.Settings.name)
+                .get(SettingsKeys.ExposeStudioControls, defaultValue: false) &&
+            this.studioMode) {
+          this.studioModePreviewSceneName = previewSceneChangedEvent.sceneName;
+          this.currentSceneItems = ObservableList.of(
+              _flattenSceneItems(previewSceneChangedEvent.sources));
+          this.currentSceneItems!.forEach((sceneItem) =>
+              NetworkHelper.makeRequest(
+                  this.networkStore!.activeSession!.socket,
+                  RequestType.GetMute,
+                  {'source': sceneItem.name}));
+        }
         break;
       case EventType.SceneItemAdded:
         // SceneItemAddedEvent sceneItemAddedEvent =
@@ -555,6 +586,7 @@ abstract class _DashboardStore with Store {
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
             GetSceneListResponse(response.json);
+
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
         this.scenes!.forEach((scene) => scene.sources.forEach(
@@ -566,6 +598,17 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getCurrentSceneResponse.sources));
+        this.currentSceneItems!.forEach((sceneItem) =>
+            NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+                RequestType.GetMute, {'source': sceneItem.name}));
+        break;
+      case RequestType.GetPreviewScene:
+        GetPreviewSceneResponse getPreviewSceneResponse =
+            GetPreviewSceneResponse(response.json);
+
+        this.studioModePreviewSceneName = getPreviewSceneResponse.name;
+        this.currentSceneItems = ObservableList.of(
+            _flattenSceneItems(getPreviewSceneResponse.sources));
         this.currentSceneItems!.forEach((sceneItem) =>
             NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
                 RequestType.GetMute, {'source': sceneItem.name}));
@@ -588,6 +631,16 @@ abstract class _DashboardStore with Store {
             GetStudioModeStatusResponse(response.json);
 
         this.studioMode = getStudioModeStatusResponse.studioMode;
+
+        if (Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false) &&
+            this.studioMode) {
+          NetworkHelper.makeRequest(
+            this.networkStore!.activeSession!.socket,
+            RequestType.GetPreviewScene,
+          );
+        }
         break;
       case RequestType.GetRecordingStatus:
         GetRecordingStatusResponse getRecordingStatusResponse =

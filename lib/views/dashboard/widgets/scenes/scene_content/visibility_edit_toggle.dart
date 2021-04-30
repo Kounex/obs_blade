@@ -24,7 +24,7 @@ class VisibilityEditToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.watch<DashboardStore>();
+    DashboardStore dashboardStore = context.read<DashboardStore>();
 
     VoidCallback onEdit = () {
       if (this.sceneItemType == SceneItemType.Source) {

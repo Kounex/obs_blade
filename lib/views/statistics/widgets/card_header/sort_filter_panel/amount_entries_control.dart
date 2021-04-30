@@ -8,7 +8,7 @@ import '../../../../../stores/views/statistics.dart';
 class AmountEntriesControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+    StatisticsStore statisticsStore = context.read<StatisticsStore>();
 
     return Observer(
       builder: (_) => SizedBox(

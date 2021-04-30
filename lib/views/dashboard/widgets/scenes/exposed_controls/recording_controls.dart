@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -18,12 +17,13 @@ class RecordingControls extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = context.read<DashboardStore>();
 
-    return ValueListenableBuilder(
-      valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-        SettingsKeys.DontShowRecordStartMessage.name,
-        SettingsKeys.DontShowRecordStopMessage.name,
-      ]),
-      builder: (context, Box settingsBox, child) => Observer(
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: [
+        SettingsKeys.DontShowRecordStartMessage,
+        SettingsKeys.DontShowRecordStopMessage,
+      ],
+      builder: (context, settingsBox, child) => Observer(
         builder: (context) => Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

@@ -11,7 +11,7 @@ import 'connect_form.dart';
 class ConnectBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.watch<HomeStore>();
+    HomeStore landingStore = context.read<HomeStore>();
 
     return Align(
       child: Observer(

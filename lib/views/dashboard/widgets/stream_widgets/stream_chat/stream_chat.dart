@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -30,7 +29,7 @@ class _StreamChatState extends State<StreamChat>
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.watch<DashboardStore>();
+    DashboardStore dashboardStore = context.read<DashboardStore>();
 
     super.build(context);
     return Column(
@@ -44,13 +43,14 @@ class _StreamChatState extends State<StreamChat>
           child: ChatUsernameBar(),
         ),
         Expanded(
-          child: ValueListenableBuilder(
-            valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-              SettingsKeys.SelectedChatType.name,
-              SettingsKeys.SelectedTwitchUsername.name,
-              SettingsKeys.SelectedYoutubeUsername.name,
-            ]),
-            builder: (context, Box settingsBox, child) {
+          child: HiveBuilder<dynamic>(
+            hiveKey: HiveKeys.Settings,
+            rebuildKeys: [
+              SettingsKeys.SelectedChatType,
+              SettingsKeys.SelectedTwitchUsername,
+              SettingsKeys.SelectedYoutubeUsername,
+            ],
+            builder: (context, settingsBox, child) {
               ChatType chatType = settingsBox.get(
                 SettingsKeys.SelectedChatType.name,
                 defaultValue: ChatType.Twitch,

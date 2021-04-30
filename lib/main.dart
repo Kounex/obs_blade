@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/app_log.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
 
 import 'app.dart';
@@ -49,6 +53,13 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   Widget build(BuildContext context) => this.widget.app;
 }
 
+bool _isLogNew(LogLevel level, String entry) => !List<AppLog>.from(
+    Hive.box<AppLog>(HiveKeys.AppLog.name)
+        .values
+        .where((log) => log.level == level)).reversed.take(5).any((prevLog) =>
+    prevLog.timestampMS - DateTime.now().millisecondsSinceEpoch < 1000 &&
+    prevLog.entry == entry);
+
 void main() async {
   /// Initialize Date Formatting - using European style
   await initializeDateFormatting('de_DE', null);
@@ -61,10 +72,12 @@ void main() async {
   Hive.registerAdapter(CustomThemeAdapter());
   Hive.registerAdapter(HiddenSceneItemAdapter());
   Hive.registerAdapter(HiddenSceneAdapter());
+  Hive.registerAdapter(AppLogAdapter());
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
   Hive.registerAdapter(SceneItemTypeAdapter());
+  Hive.registerAdapter(LogLevelAdapter());
 
   /// Open Hive boxes which are coupled to HiveObjects (models)
   await Hive.openBox<Connection>(
@@ -87,6 +100,10 @@ void main() async {
     HiveKeys.HiddenScene.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
+  await Hive.openBox<AppLog>(
+    HiveKeys.AppLog.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
 
   /// Open Hive boxes which are not bound to models
   await Hive.openBox(
@@ -94,9 +111,41 @@ void main() async {
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 
-  runApp(
-    LifecycleWatcher(
-      app: App(),
-    ),
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.dumpErrorToConsole(details);
+      };
+      runApp(
+        LifecycleWatcher(
+          app: App(),
+        ),
+      );
+    },
+    (Object error, StackTrace stack) {
+      if (_isLogNew(LogLevel.Error, error.toString())) {
+        Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+          AppLog(
+            DateTime.now().millisecondsSinceEpoch,
+            LogLevel.Error,
+            error.toString(),
+            stack.toString(),
+          ),
+        );
+      }
+    },
+    zoneSpecification: ZoneSpecification(print: (self, parent, zone, line) {
+      parent.print(zone, line);
+      if (_isLogNew(LogLevel.Info, line)) {
+        Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+          AppLog(
+            DateTime.now().millisecondsSinceEpoch,
+            LogLevel.Info,
+            line,
+          ),
+        );
+      }
+    }),
   );
 }

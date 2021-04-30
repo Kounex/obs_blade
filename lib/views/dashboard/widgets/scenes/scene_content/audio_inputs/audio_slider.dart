@@ -14,7 +14,7 @@ class AudioSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.watch<NetworkStore>();
+    NetworkStore networkStore = context.read<NetworkStore>();
 
     return Padding(
       padding: const EdgeInsets.only(left: 12.0, right: 12.0),

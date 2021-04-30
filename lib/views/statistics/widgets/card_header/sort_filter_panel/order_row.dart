@@ -52,7 +52,7 @@ class _OrderRowState extends State<OrderRow> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+    StatisticsStore statisticsStore = context.read<StatisticsStore>();
 
     return Row(
       children: [

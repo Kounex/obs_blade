@@ -1,11 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/stores/shared/network.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/types/classes/api/scene_item.dart';
-import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/utils/network_helper.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../../../shared/general/hive_builder.dart';
+import '../../../../../../stores/shared/network.dart';
+import '../../../../../../stores/views/dashboard.dart';
+import '../../../../../../types/classes/api/scene_item.dart';
+import '../../../../../../types/enums/hive_keys.dart';
+import '../../../../../../types/enums/request_type.dart';
+import '../../../../../../types/enums/settings_keys.dart';
+import '../../../../../../utils/network_helper.dart';
 
 class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
@@ -14,6 +18,8 @@ class SceneItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    DashboardStore dashboardStore = context.read<DashboardStore>();
+
     return ListTile(
       dense: true,
       leading: Padding(
@@ -40,17 +46,29 @@ class SceneItemTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: IconButton(
-        icon: Icon(
-          this.sceneItem.render! ? Icons.visibility : Icons.visibility_off,
-          color: this.sceneItem.render!
-              ? Theme.of(context).buttonColor
-              : CupertinoColors.destructiveRed,
+      trailing: HiveBuilder<dynamic>(
+        hiveKey: HiveKeys.Settings,
+        rebuildKeys: [SettingsKeys.ExposeStudioControls],
+        builder: (context, settingsBox, child) => IconButton(
+          icon: Icon(
+            this.sceneItem.render! ? Icons.visibility : Icons.visibility_off,
+            color: this.sceneItem.render!
+                ? Theme.of(context).buttonColor
+                : CupertinoColors.destructiveRed,
+          ),
+          onPressed: () => NetworkHelper.makeRequest(
+              context.read<NetworkStore>().activeSession!.socket,
+              RequestType.SetSceneItemProperties, {
+            'scene-name': settingsBox.get(
+                        SettingsKeys.ExposeStudioControls.name,
+                        defaultValue: false) &&
+                    dashboardStore.studioMode
+                ? dashboardStore.studioModePreviewSceneName
+                : dashboardStore.activeSceneName,
+            'item': this.sceneItem.name,
+            'visible': !this.sceneItem.render!,
+          }),
         ),
-        onPressed: () => NetworkHelper.makeRequest(
-            context.read<NetworkStore>().activeSession!.socket,
-            RequestType.SetSceneItemProperties,
-            {'item': this.sceneItem.name, 'visible': !this.sceneItem.render!}),
       ),
     );
   }

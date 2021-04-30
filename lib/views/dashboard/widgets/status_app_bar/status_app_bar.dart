@@ -16,7 +16,7 @@ import 'general_actions.dart';
 class StatusAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.watch<DashboardStore>();
+    DashboardStore dashboardStore = context.read<DashboardStore>();
 
     return TransculentSliverAppBar(
       pinned: true,

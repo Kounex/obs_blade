@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
@@ -15,12 +14,13 @@ class StreamingControls extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = context.read<DashboardStore>();
 
-    return ValueListenableBuilder(
-      valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-        SettingsKeys.DontShowStreamStartMessage.name,
-        SettingsKeys.DontShowStreamStopMessage.name,
-      ]),
-      builder: (context, Box settingsBox, child) => Observer(
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: [
+        SettingsKeys.DontShowStreamStartMessage,
+        SettingsKeys.DontShowStreamStopMessage,
+      ],
+      builder: (context, settingsBox, child) => Observer(
         builder: (context) => SizedBox(
           width: 268.0,
           child: ElevatedButton.icon(

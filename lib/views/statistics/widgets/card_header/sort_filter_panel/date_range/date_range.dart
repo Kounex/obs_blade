@@ -9,7 +9,7 @@ import 'text_field_date.dart';
 class DateRange extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+    StatisticsStore statisticsStore = context.read<StatisticsStore>();
 
     return Observer(
       builder: (_) => Row(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/connection.dart';
@@ -21,26 +22,26 @@ import '../save_edit_connection_dialog.dart';
 class GeneralActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.watch<NetworkStore>();
-    DashboardStore dashboardStore = context.watch<DashboardStore>();
+    NetworkStore networkStore = context.read<NetworkStore>();
+    DashboardStore dashboardStore = context.read<DashboardStore>();
 
-    return ValueListenableBuilder(
-      valueListenable:
-          Hive.box<Connection>(HiveKeys.SavedConnections.name).listenable(),
-      builder: (context, savedConnectionsBox, _) {
+    return HiveBuilder<Connection>(
+      hiveKey: HiveKeys.SavedConnections,
+      builder: (context, savedConnectionsBox, child) {
         bool newConnection =
             networkStore.activeSession?.connection.name == null;
-        return ValueListenableBuilder(
-          valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-            SettingsKeys.ExposeStreamingControls.name,
-            SettingsKeys.ExposeRecordingControls.name,
-            SettingsKeys.DontShowHidingScenesWarning.name,
-            SettingsKeys.DontShowRecordStartMessage.name,
-            SettingsKeys.DontShowRecordStopMessage.name,
-            SettingsKeys.DontShowStreamStartMessage.name,
-            SettingsKeys.DontShowStreamStopMessage.name,
-          ]),
-          builder: (context, Box settingsBox, child) => Observer(
+        return HiveBuilder<dynamic>(
+          hiveKey: HiveKeys.Settings,
+          rebuildKeys: [
+            SettingsKeys.ExposeStreamingControls,
+            SettingsKeys.ExposeRecordingControls,
+            SettingsKeys.DontShowHidingScenesWarning,
+            SettingsKeys.DontShowRecordStartMessage,
+            SettingsKeys.DontShowRecordStopMessage,
+            SettingsKeys.DontShowStreamStartMessage,
+            SettingsKeys.DontShowStreamStopMessage,
+          ],
+          builder: (context, settingsBox, child) => Observer(
             builder: (_) => AppBarCupertinoActions(
               actions: [
                 if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,

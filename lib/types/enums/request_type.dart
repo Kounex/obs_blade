@@ -92,6 +92,11 @@ enum RequestType {
   /// No specified parameters
   GetRecordingStatus,
 
+  /// Get the name of the currently previewed scene and its list of sources. Will return an error if Studio Mode is not enabled
+  ///
+  /// No specified parameters
+  GetPreviewScene,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
@@ -126,9 +131,9 @@ enum RequestType {
 
   /// Sets the scene specific properties of a source. Unspecified properties will remain unchanged. Coordinates are relative to the item's parent (the scene or group it belongs to)
   ///
+  /// (Optional) {'scene-name': String } - Name of the scene the source item belongs to. Defaults to the current scene.
   /// {'item': String } - Scene Item name (currently)
-  /// {'name': String } - Scene Item name (new)
-  /// {'visible': bool} - The new visibility of the source. 'true' shows source, 'false' hides source
+  /// (Optional) {'visible': bool} - The new visibility of the source. 'true' shows source, 'false' hides source
   SetSceneItemProperties,
 
   /// Toggle streaming on or off (depending on the current stream state)

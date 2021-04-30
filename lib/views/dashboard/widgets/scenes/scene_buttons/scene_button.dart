@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/classes/api/scene.dart';
@@ -33,11 +32,10 @@ class SceneButton extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = context.read<DashboardStore>();
 
-    return ValueListenableBuilder(
-      valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-        SettingsKeys.ExposeStudioControls.name,
-      ]),
-      builder: (context, Box settingsBox, child) => Observer(
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: [SettingsKeys.ExposeStudioControls],
+      builder: (context, settingsBox, child) => Observer(
         builder: (_) => GestureDetector(
           onTap: () {
             if (dashboardStore.editSceneVisibility) {
@@ -105,16 +103,13 @@ class SceneButton extends StatelessWidget {
               ),
               if (dashboardStore.editSceneVisibility)
                 Positioned(
-                  top: 1.0,
-                  right: 1.0,
+                  top: 0.0,
+                  right: 0.0,
                   child: Container(
                     height: 32.0,
                     width: 32.0,
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
-                      // hiddenScene != null
-                      //     ? CupertinoColors.destructiveRed
-                      //     : Theme.of(context).buttonColor,
                       borderRadius: BorderRadius.only(
                         topRight: Radius.circular(12.0),
                         bottomLeft: Radius.circular(12.0),

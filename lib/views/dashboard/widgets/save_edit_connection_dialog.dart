@@ -15,7 +15,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.watch<NetworkStore>();
+    NetworkStore networkStore = context.read<NetworkStore>();
 
     Box<Connection> box = Hive.box<Connection>(HiveKeys.SavedConnections.name);
     return InputDialog(

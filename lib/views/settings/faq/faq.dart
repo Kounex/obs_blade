@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/general/base_card.dart';
+import '../../../shared/general/enumeration_block/enumeration_block.dart';
+import '../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import 'widgets/enumeration_block/enumeration_block.dart';
-import 'widgets/enumeration_block/enumeration_entry.dart';
 import 'widgets/faq_block.dart';
 
 const kFAQSpaceHeight = 24.0;

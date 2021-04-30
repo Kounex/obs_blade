@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -17,11 +16,10 @@ class StudioModeTransition extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = context.read<DashboardStore>();
 
-    return ValueListenableBuilder(
-      valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-        SettingsKeys.ExposeStudioControls.name,
-      ]),
-      builder: (context, Box settingsBox, child) => Observer(
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: [SettingsKeys.ExposeStudioControls],
+      builder: (context, settingsBox, child) => Observer(
         builder: (_) => Column(
           children: [
             if (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
@@ -61,11 +59,12 @@ class StudioModeTransition extends StatelessWidget {
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (studioMode) =>
                                     NetworkHelper.makeRequest(
-                                        context
-                                            .read<NetworkStore>()
-                                            .activeSession!
-                                            .socket,
-                                        RequestType.ToggleStudioMode),
+                                  context
+                                      .read<NetworkStore>()
+                                      .activeSession!
+                                      .socket,
+                                  RequestType.ToggleStudioMode,
+                                ),
                               ),
                               Text('Studio Mode'),
                             ],

@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 class ExcludeUnnamedCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+    StatisticsStore statisticsStore = context.read<StatisticsStore>();
 
     return Transform.translate(
       offset: Offset(-12.0, 0.0),

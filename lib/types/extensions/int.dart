@@ -13,4 +13,13 @@ extension IntStuff on int {
 
   String millisecondsToFormattedTimeString() =>
       DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this));
+
+  bool millisecondsSameDay(int ms) {
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(this);
+    DateTime otherDate = DateTime.fromMillisecondsSinceEpoch(ms);
+
+    return date.day == otherDate.day &&
+        date.month == otherDate.month &&
+        date.year == otherDate.year;
+  }
 }

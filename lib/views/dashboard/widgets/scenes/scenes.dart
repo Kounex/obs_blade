@@ -33,7 +33,11 @@ class Scenes extends StatelessWidget {
         //   child: Text('SOUND'),
         // ),
         Padding(
-          padding: const EdgeInsets.only(top: 32.0, right: 12.0),
+          padding: const EdgeInsets.only(
+            top: 32.0,
+            left: 12.0,
+            right: 12.0,
+          ),
           child: StudioModeTransition(),
         ),
 

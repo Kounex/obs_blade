@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../models/connection.dart';
+import '../../../../shared/general/hive_builder.dart';
 import '../../../../stores/views/home.dart';
 import '../../../../types/enums/hive_keys.dart';
 import 'connection_box.dart';
@@ -31,11 +30,9 @@ class SavedConnections extends StatelessWidget {
             padding: const EdgeInsets.only(
               top: 18.0,
             ),
-            child: ValueListenableBuilder(
-              valueListenable:
-                  Hive.box<Connection>(HiveKeys.SavedConnections.name)
-                      .listenable(),
-              builder: (context, Box<Connection> savedConnectionsBox, child) {
+            child: HiveBuilder<Connection>(
+              hiveKey: HiveKeys.SavedConnections,
+              builder: (context, savedConnectionsBox, child) {
                 double height = 180.0;
                 double width = 250.0;
 

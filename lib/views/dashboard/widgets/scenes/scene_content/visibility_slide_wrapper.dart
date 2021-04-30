@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/models/enums/scene_item_type.dart';
-import 'package:obs_blade/models/hidden_scene_item.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/types/classes/api/scene_item.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../../models/enums/scene_item_type.dart';
+import '../../../../../models/hidden_scene_item.dart';
+import '../../../../../shared/general/hive_builder.dart';
+import '../../../../../stores/views/dashboard.dart';
+import '../../../../../types/classes/api/scene_item.dart';
+import '../../../../../types/enums/hive_keys.dart';
 
 class VisibilitySlideWrapper extends StatefulWidget {
   final SceneItem sceneItem;
@@ -87,12 +88,11 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.watch<DashboardStore>();
+    DashboardStore dashboardStore = context.read<DashboardStore>();
 
-    return ValueListenableBuilder(
-      valueListenable:
-          Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).listenable(),
-      builder: (context, Box<HiddenSceneItem> hiddenSceneItemsBox, child) {
+    return HiveBuilder<HiddenSceneItem>(
+      hiveKey: HiveKeys.HiddenSceneItem,
+      builder: (context, hiddenSceneItemsBox, child) {
         HiddenSceneItem? hiddenSceneItem;
         try {
           hiddenSceneItem = hiddenSceneItemsBox.values.toList().firstWhere(

@@ -1,12 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base_card.dart';
+import '../../shared/general/hive_builder.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/views/statistics.dart';
 import '../../types/enums/hive_keys.dart';
@@ -174,7 +173,7 @@ class _StatisticsViewState extends State<_StatisticsView> {
 
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+    StatisticsStore statisticsStore = context.read<StatisticsStore>();
 
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
@@ -182,11 +181,9 @@ class _StatisticsViewState extends State<_StatisticsView> {
         scrollController:
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         listViewChildren: [
-          ValueListenableBuilder(
-            valueListenable:
-                Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
-                    .listenable(),
-            builder: (context, Box<PastStreamData> pastStreamDataBox, child) {
+          HiveBuilder<PastStreamData>(
+            hiveKey: HiveKeys.PastStreamData,
+            builder: (context, pastStreamDataBox, child) {
               List<PastStreamData> pastStreamData = pastStreamDataBox.values
                   .toList()
                     ..sort((a, b) =>

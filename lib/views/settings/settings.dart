@@ -1,15 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/shared/general/custom_sliver_list.dart';
-import 'package:obs_blade/shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
 import 'package:package_info/package_info.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock/wakelock.dart';
 
+import '../../shared/general/custom_sliver_list.dart';
+import '../../shared/general/hive_builder.dart';
+import '../../shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
 import '../../shared/general/themed/themed_cupertino_switch.dart';
+import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/routing_helper.dart';
@@ -30,9 +29,9 @@ class SettingsView extends StatelessWidget {
           ThemedCupertinoSliverNavigationBar(
             largeTitle: Text('Settings'),
           ),
-          ValueListenableBuilder(
-            valueListenable: Hive.box(HiveKeys.Settings.name).listenable(),
-            builder: (context, Box settingsBox, child) => CustomSliverList(
+          HiveBuilder<dynamic>(
+            hiveKey: HiveKeys.Settings,
+            builder: (context, settingsBox, child) => CustomSliverList(
               children: [
                 ActionBlock(
                   title: 'General',
@@ -210,6 +209,11 @@ class SettingsView extends StatelessWidget {
                       leading: CupertinoIcons.doc_person_fill,
                       title: 'Privacy Policy',
                       navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
+                    ),
+                    BlockEntry(
+                      leading: CupertinoIcons.square_list_fill,
+                      title: 'Logs',
+                      navigateTo: SettingsTabRoutingKeys.Logs.route,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.heart_solid,

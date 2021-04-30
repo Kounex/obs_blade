@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/utils/built_in_themes.dart';
 import 'package:provider/provider.dart';
 
@@ -164,17 +165,17 @@ class App extends StatelessWidget {
         Provider<NetworkStore>(create: (_) => NetworkStore()),
         Provider<TabsStore>(create: (_) => TabsStore()),
       ],
-      child: ValueListenableBuilder(
-        valueListenable: Hive.box(HiveKeys.Settings.name).listenable(keys: [
-          SettingsKeys.TrueDark.name,
-          SettingsKeys.ReduceSmearing.name,
-          SettingsKeys.CustomTheme.name,
-          SettingsKeys.ActiveCustomThemeUUID.name,
-        ]),
-        builder: (context, Box settingsBox, child) => ValueListenableBuilder(
-          valueListenable:
-              Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).listenable(),
-          builder: (context, Box<CustomTheme> customThemeBox, child) {
+      child: HiveBuilder(
+        hiveKey: HiveKeys.Settings,
+        rebuildKeys: [
+          SettingsKeys.TrueDark,
+          SettingsKeys.ReduceSmearing,
+          SettingsKeys.CustomTheme,
+          SettingsKeys.ActiveCustomThemeUUID,
+        ],
+        builder: (context, Box settingsBox, child) => HiveBuilder<CustomTheme>(
+          hiveKey: HiveKeys.CustomTheme,
+          builder: (context, customThemeBox, child) {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: _getCurrentTheme(settingsBox),

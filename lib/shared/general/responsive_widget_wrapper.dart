@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+
+import '../../types/enums/hive_keys.dart';
+import '../../types/enums/settings_keys.dart';
+import '../../utils/styling_helper.dart';
+import 'hive_builder.dart';
 
 class ResponsiveWidgetWrapper extends StatelessWidget {
   final Widget mobileWidget;
@@ -14,10 +14,10 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: Hive.box(HiveKeys.Settings.name)
-          .listenable(keys: [SettingsKeys.EnforceTabletMode.name]),
-      builder: (context, Box settingsBox, child) =>
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: [SettingsKeys.EnforceTabletMode],
+      builder: (context, settingsBox, child) =>
           MediaQuery.of(context).size.width > StylingHelper.max_width_mobile ||
                   settingsBox.get(SettingsKeys.EnforceTabletMode.name,
                       defaultValue: false)

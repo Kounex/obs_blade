@@ -28,7 +28,7 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
 
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.watch<StatisticsStore>();
+    StatisticsStore statisticsStore = context.read<StatisticsStore>();
 
     return Observer(
       builder: (_) {

@@ -18,7 +18,7 @@ class ConnectionBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.watch<NetworkStore>();
+    NetworkStore networkStore = context.read<NetworkStore>();
 
     return SizedBox(
       width: this.width,
