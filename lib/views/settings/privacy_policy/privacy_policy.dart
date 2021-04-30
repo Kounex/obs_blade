@@ -34,7 +34,6 @@ class PrivacyPolicyView extends StatelessWidget {
             ),
           ),
           BaseCard(
-            paddingChild: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -29,7 +29,6 @@ class AboutView extends StatelessWidget {
                   //   height: 32.0,
                   // ),
                   BaseCard(
-                    paddingChild: EdgeInsets.all(12.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
