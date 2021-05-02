@@ -68,7 +68,8 @@ class OverlayHandler {
       OverlayHandler.currentOverlayEntry?.remove();
       OverlayHandler.currentOverlayEntry = null;
     } catch (e) {
-      print(e);
+      throw Exception(
+          'Could not handle "closeAnyOverlay" (utils/overlay_handler.dart) | $e');
     }
   }
 

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 class CustomExpansionTile extends StatefulWidget {
   final IconData? leadingIcon;
-  final String headerText;
+  final String? headerText;
+  final Widget? customHeader;
   final TextStyle? headerTextStyle;
   final EdgeInsetsGeometry headerPadding;
   final Widget expandedBody;
@@ -12,13 +13,14 @@ class CustomExpansionTile extends StatefulWidget {
 
   CustomExpansionTile({
     this.leadingIcon,
-    required this.headerText,
+    this.headerText,
+    this.customHeader,
     this.headerTextStyle,
     this.headerPadding = const EdgeInsets.all(12.0),
     required this.expandedBody,
     this.onExpand,
     this.manualExpand,
-  });
+  }) : assert(headerText != null || customHeader != null);
 
   @override
   _CustomExpansionTileState createState() => _CustomExpansionTileState();
@@ -112,15 +114,16 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                   SizedBox(width: 24.0),
                 ],
                 Expanded(
-                  child: AnimatedBuilder(
-                    animation: _animController,
-                    builder: (context, _) => Text(
-                      this.widget.headerText,
-                      style: (this.widget.headerTextStyle ??
-                              Theme.of(context).textTheme.subtitle1)!
-                          .copyWith(color: _color.value),
-                    ),
-                  ),
+                  child: this.widget.customHeader ??
+                      AnimatedBuilder(
+                        animation: _animController,
+                        builder: (context, _) => Text(
+                          this.widget.headerText!,
+                          style: (this.widget.headerTextStyle ??
+                                  Theme.of(context).textTheme.subtitle1)!
+                              .copyWith(color: _color.value),
+                        ),
+                      ),
                 ),
                 AnimatedBuilder(
                   animation: _animController,

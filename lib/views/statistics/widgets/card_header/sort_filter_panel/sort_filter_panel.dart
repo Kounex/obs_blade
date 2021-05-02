@@ -1,10 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
-import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/exclude_unnamed_checkbox.dart';
+import 'package:obs_blade/stores/views/statistics.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/statistics_date_range.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../../shared/general/custom_expansion_tile.dart';
+import '../../../../../shared/general/date_range/date_range.dart';
 import 'amount_entries_control.dart';
-import 'date_range/date_range.dart';
+import 'exclude_unnamed_checkbox.dart';
 import 'favorite_control.dart';
 import 'filter_name.dart';
 import 'order_row.dart';
@@ -40,7 +43,7 @@ class SortFilterPanel extends StatelessWidget {
                       SizedBox(height: _kControlsPadding),
                       FilterName(),
                       SizedBox(height: _kControlsPadding),
-                      DateRange(),
+                      StatisticsDateRange(),
                       SizedBox(height: _kControlsPadding + 2.0),
                       FavoriteControl(),
                       SizedBox(height: _kControlsPadding + 2.0),

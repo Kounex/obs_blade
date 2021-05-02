@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
 
 import '../../../../shared/general/base_card.dart';
 import '../../../../shared/general/custom_expansion_tile.dart';
@@ -10,6 +11,7 @@ class LogExplanation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseCard(
+      bottomPadding: 12.0,
       child: CustomExpansionTile(
         headerText: 'Information about logs',
         headerPadding: const EdgeInsets.all(0.0),
@@ -18,7 +20,7 @@ class LogExplanation extends StatelessWidget {
           children: [
             SizedBox(height: 12.0),
             Text(
-                'Logs listed here have been created programmatically by me and are only available locally. I\'m not sending them to any servers or alike. You can view them here and decide to share them (for example with me), if you encounter any problems and would like to give me more information to work on or even want to try to figure out the problem on your own!'),
+                'Logs listed here have been created programmatically by me and are only available locally. I\'m not sending them to any servers or alike. You can view them here and decide to share them (for example with me) if you encounter any problems and would like to give me more information to work on or even want to try to figure out the problem on your own!'),
             SizedBox(height: 12.0),
             Text(
                 'You can delete log entries selectively here or all together in "Data Management" in the settings tab.'),
@@ -34,12 +36,13 @@ class LogExplanation extends StatelessWidget {
                         text: 'Info',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                          color: LogLevel.Info.color,
+                          // decoration: TextDecoration.underline,
                         ),
                       ),
                       TextSpan(
                         text:
-                            ': triggered by used packages or manually by myself for further investigation',
+                            ': triggered by used packages or manually by myself to provide helpful informations',
                       ),
                     ],
                   ),
@@ -51,7 +54,8 @@ class LogExplanation extends StatelessWidget {
                         text: 'Warning',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                          color: LogLevel.Warning.color,
+                          // decoration: TextDecoration.underline,
                         ),
                       ),
                       TextSpan(
@@ -68,7 +72,8 @@ class LogExplanation extends StatelessWidget {
                         text: 'Error',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                          color: LogLevel.Error.color,
+                          // decoration: TextDecoration.underline,
                         ),
                       ),
                       TextSpan(

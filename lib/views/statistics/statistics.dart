@@ -221,6 +221,13 @@ class _StatisticsViewState extends State<_StatisticsView> {
                     paddingChild: EdgeInsets.all(0),
                     child: Observer(
                       builder: (_) {
+                        /// Only purpose of this line is to omit the debug message of
+                        /// missing observable (which is not correct) since I pass the
+                        /// store to internal functions to handle sort and filter where
+                        /// those observables are used. It even gets rebuilt propely but
+                        /// the message keeps coming up
+                        statisticsStore.filterName;
+
                         List<PastStreamData> sortedFilteredStreamData =
                             _sortAndFilterPastStreamData(
                           statisticsStore,

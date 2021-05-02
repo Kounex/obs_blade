@@ -1,8 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
+import 'package:obs_blade/shared/overlay/base_result.dart';
 
+import '../../../../../shared/general/base_card.dart';
 import 'log_box.dart';
 
 class LogGrid extends StatelessWidget {
@@ -15,6 +16,7 @@ class LogGrid extends StatelessWidget {
     return Center(
       child: Padding(
         padding: EdgeInsets.only(
+          top: 12.0,
           left: 24.0,
           right: 24.0,
         ),
@@ -34,6 +36,14 @@ class LogGrid extends StatelessWidget {
               spacing: spacing,
               runSpacing: spacing,
               children: [
+                if (this.datesMSWithLogs.isEmpty)
+                  BaseCard(
+                    topPadding: 0,
+                    child: BaseResult(
+                      icon: BaseResultIcon.Missing,
+                      text: 'No logs created yet.',
+                    ),
+                  ),
                 ...this.datesMSWithLogs.map(
                       (dateMS) => LogBox(
                         dateMS: dateMS,

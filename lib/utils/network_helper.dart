@@ -6,6 +6,7 @@ import 'dart:isolate';
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
 import 'package:obs_blade/types/exceptions/network.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
@@ -58,7 +59,9 @@ class NetworkHelper {
     if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
       List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
 
-      print(baseIPs);
+      GeneralHelper.advLog(
+        'Autodiscover IPs: ' + baseIPs.toString(),
+      );
 
       /// Completer used to manully deal with Future. [Completer] enables us to
       /// call the [complete] funciton which will finalise the Future of
@@ -153,7 +156,9 @@ class NetworkHelper {
   /// sent back through the stream so we every listener can act accordingly
   static void makeRequest(IOWebSocketChannel channel, RequestType request,
       [Map<String, dynamic>? fields]) {
-    print(request);
+    GeneralHelper.advLog(
+      'Outgoing: $request',
+    );
     channel.sink.add(json.encode({
       'message-id': request.index.toString(),
       'request-type': request.toString().split('.')[1],

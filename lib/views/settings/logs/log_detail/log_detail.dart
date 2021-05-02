@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../../../models/app_log.dart';
 import '../../../../shared/general/hive_builder.dart';
@@ -18,7 +19,8 @@ class LogDetailView extends StatelessWidget {
         builder: (context, appLogBox, child) {
           Map<String, List<AppLog>> mergedLogs = {};
 
-          appLogBox.values
+          List<AppLog>.from(appLogBox.values)
+              .reversed
               .where((log) => log.timestampMS.millisecondsSameDay(dateMS))
               .forEach(
                 (log) => mergedLogs

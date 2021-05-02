@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../models/connection.dart';
 import '../../types/classes/session.dart';
@@ -122,8 +123,14 @@ abstract class _NetworkStore with Store {
               break;
           }
         },
-        onDone: () => print('done'),
-        onError: (error) => print(error),
+        onDone: () => GeneralHelper.advLog(
+          'Initial WebSocket connection done',
+          includeInLogs: true,
+        ),
+        onError: (error) => GeneralHelper.advLog(
+          'Error initial WebSocket connection (stores/shared/network.dart) | $error',
+          includeInLogs: true,
+        ),
       );
 
   Stream<Message> watchOBSStream() async* {

@@ -7,6 +7,35 @@ import '../../../../../../stores/views/statistics.dart';
 import 'text_field_date.dart';
 
 class DateRange extends StatelessWidget {
+  final DateTime? selectedFromDate;
+  final DateTime? selectedToDate;
+
+  final DateTime? minimumFromDate;
+  final DateTime maximumFromDate;
+
+  final DateTime? minimumToDate;
+  final DateTime? maximumToDate;
+
+  final void Function(DateTime?)? updateFromDate;
+  final void Function(DateTime?)? updateToDate;
+
+  final String placeholderFrom;
+  final String placeholderTo;
+
+  DateRange({
+    this.selectedFromDate,
+    this.selectedToDate,
+    this.minimumFromDate,
+    DateTime? maximumFromDate,
+    DateTime? minimumToDate,
+    this.maximumToDate,
+    this.updateFromDate,
+    this.updateToDate,
+    this.placeholderFrom = 'From...',
+    this.placeholderTo = 'To...',
+  })  : this.maximumFromDate = selectedToDate ?? DateTime.now(),
+        this.minimumToDate = selectedFromDate;
+
   @override
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = context.read<StatisticsStore>();

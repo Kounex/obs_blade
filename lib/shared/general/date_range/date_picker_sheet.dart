@@ -1,19 +1,17 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../settings/widgets/action_block.dart/light_divider.dart';
+import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
 
 class DatePickerSheet extends StatefulWidget {
   final DateTime? minimumDate;
   final DateTime? maximumDate;
   final DateTime? selectedDate;
-  final void Function(DateTime?) updateDateTime;
+  final void Function(DateTime?)? updateDateTime;
 
   DatePickerSheet({
-    required this.selectedDate,
-    required this.updateDateTime,
+    this.selectedDate,
+    this.updateDateTime,
     this.minimumDate,
     this.maximumDate,
   });
@@ -61,7 +59,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
                 ),
               ),
               onPressed: () {
-                this.widget.updateDateTime(null);
+                this.widget.updateDateTime?.call(null);
                 Navigator.of(context, rootNavigator: true).pop();
               },
             ),
@@ -77,7 +75,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
                 CupertinoButton(
                   child: Text('Save'),
                   onPressed: () {
-                    this.widget.updateDateTime(_date);
+                    this.widget.updateDateTime?.call(_date);
                     Navigator.of(context, rootNavigator: true).pop();
                   },
                 )

@@ -19,8 +19,9 @@ class StudioModeTransition extends StatelessWidget {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
       rebuildKeys: [SettingsKeys.ExposeStudioControls],
-      builder: (context, settingsBox, child) => Observer(
-        builder: (_) => Column(
+      builder: (context, settingsBox, child) => Observer(builder: (_) {
+        dashboardStore.studioMode;
+        return Column(
           children: [
             if (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
                     defaultValue: false) &&
@@ -78,8 +79,8 @@ class StudioModeTransition extends StatelessWidget {
               ),
             )
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }

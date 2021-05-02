@@ -10,7 +10,7 @@ class TextFieldDate extends StatefulWidget {
   final DateTime? selectedDate;
   final DateTime? minimumDate;
   final DateTime? maximumDate;
-  final void Function(DateTime?) updateDateTime;
+  final void Function(DateTime?)? updateDateTime;
 
   TextFieldDate({
     required this.selectedDate,
@@ -50,11 +50,11 @@ class _TextFieldDateState extends State<TextFieldDate> {
           updateDateTime: (date) {
             _controller.text =
                 date == null ? '' : DateFormat.yMd('de_DE').format(date);
-            this.widget.updateDateTime(date);
+            this.widget.updateDateTime?.call(date);
           },
         ),
       ),
-      onChanged: (_) => this.widget.updateDateTime(null),
+      onChanged: (_) => this.widget.updateDateTime?.call(null),
     );
   }
 }

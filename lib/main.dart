@@ -8,6 +8,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:obs_blade/models/app_log.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 
 import 'app.dart';
 import 'models/connection.dart';
@@ -46,19 +47,22 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _lastLifecycleState = state;
-    print(_lastLifecycleState);
+    GeneralHelper.advLog(_lastLifecycleState);
   }
 
   @override
   Widget build(BuildContext context) => this.widget.app;
 }
 
-bool _isLogNew(LogLevel level, String entry) => !List<AppLog>.from(
-    Hive.box<AppLog>(HiveKeys.AppLog.name)
-        .values
-        .where((log) => log.level == level)).reversed.take(5).any((prevLog) =>
-    prevLog.timestampMS - DateTime.now().millisecondsSinceEpoch < 1000 &&
-    prevLog.entry == entry);
+bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
+        Hive.box<AppLog>(HiveKeys.AppLog.name)
+            .values
+            .where((log) => level.contains(log.level)))
+    .reversed
+    .take(5 * level.length)
+    .any((prevLog) =>
+        DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
+        prevLog.entry == entry);
 
 void main() async {
   /// Initialize Date Formatting - using European style
@@ -124,7 +128,9 @@ void main() async {
       );
     },
     (Object error, StackTrace stack) {
-      if (_isLogNew(LogLevel.Error, error.toString())) {
+      GeneralHelper.advLog('$error');
+      GeneralHelper.advLog('$stack');
+      if (_isLogNew([LogLevel.Error], error.toString())) {
         Hive.box<AppLog>(HiveKeys.AppLog.name).add(
           AppLog(
             DateTime.now().millisecondsSinceEpoch,
@@ -137,12 +143,32 @@ void main() async {
     },
     zoneSpecification: ZoneSpecification(print: (self, parent, zone, line) {
       parent.print(zone, line);
-      if (_isLogNew(LogLevel.Info, line)) {
+
+      LogLevel level = LogLevel.Info;
+      bool shouldLog = true;
+      bool manually = false;
+
+      Iterable<LogLevel> lineLevel =
+          LogLevel.values.where((level) => line.startsWith(level.prefix));
+
+      if (lineLevel.length > 0) {
+        manually = true;
+        level = lineLevel.first;
+        line = line.split(level.prefix)[1];
+
+        shouldLog = line.startsWith('[ON]');
+
+        line = line.split(shouldLog ? '[ON]' : '[OFF]')[1].trim();
+      }
+
+      if (shouldLog && _isLogNew([LogLevel.Info, LogLevel.Warning], line)) {
         Hive.box<AppLog>(HiveKeys.AppLog.name).add(
           AppLog(
             DateTime.now().millisecondsSinceEpoch,
-            LogLevel.Info,
+            level,
             line,
+            null,
+            manually,
           ),
         );
       }

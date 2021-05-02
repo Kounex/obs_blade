@@ -21,7 +21,7 @@ class SupportDialog extends StatelessWidget {
           children: [
             CupertinoAlertDialog(
               content: SizedBox(
-                height: 175.0,
+                height: 184.0,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [

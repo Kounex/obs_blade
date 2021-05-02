@@ -7,6 +7,7 @@ import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/views/logs.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/extensions/int.dart';
+import '../../../utils/general_helper.dart';
 import 'widgets/log_explanation.dart';
 import 'widgets/log_grid/log_grid.dart';
 

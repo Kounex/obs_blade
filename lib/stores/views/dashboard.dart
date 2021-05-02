@@ -8,6 +8,7 @@ import 'package:obs_blade/types/classes/stream/responses/get_preview_scene.dart'
 import 'package:obs_blade/types/classes/stream/responses/get_recording_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_studio_mode_status.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 import '../../types/classes/stream/events/preview_scene_changed.dart';
 
 import '../../models/past_stream_data.dart';
@@ -379,7 +380,9 @@ abstract class _DashboardStore with Store {
 
   @action
   Future<void> _handleEvent(BaseEvent event) async {
-    print(event.json['update-type']);
+    GeneralHelper.advLog(
+      'Incoming: ${event.eventType}',
+    );
     switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
@@ -490,8 +493,9 @@ abstract class _DashboardStore with Store {
         PreviewSceneChangedEvent previewSceneChangedEvent =
             PreviewSceneChangedEvent(event.json);
 
-        if (Hive.box(HiveKeys.Settings.name)
-                .get(SettingsKeys.ExposeStudioControls, defaultValue: false) &&
+        if (Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false) &&
             this.studioMode) {
           this.studioModePreviewSceneName = previewSceneChangedEvent.sceneName;
           this.currentSceneItems = ObservableList.of(
@@ -574,6 +578,9 @@ abstract class _DashboardStore with Store {
 
   @action
   void _handleResponse(BaseResponse response) {
+    GeneralHelper.advLog(
+      'Incoming: ${response.requestType}',
+    );
     switch (response.requestType) {
       case RequestType.GetVersion:
         GetVersionResponse getVersionResponse =
@@ -589,8 +596,6 @@ abstract class _DashboardStore with Store {
 
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
-        this.scenes!.forEach((scene) => scene.sources.forEach(
-            (item) => print('${scene.name} | ${item.id} | ${item.name}')));
         break;
       case RequestType.GetCurrentScene:
         GetCurrentSceneResponse getCurrentSceneResponse =

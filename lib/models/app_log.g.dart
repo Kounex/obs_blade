@@ -21,13 +21,14 @@ class AppLogAdapter extends TypeAdapter<AppLog> {
       fields[1] as LogLevel,
       fields[2] as String,
       fields[3] as String?,
+      fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppLog obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.timestampMS)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class AppLogAdapter extends TypeAdapter<AppLog> {
       ..writeByte(2)
       ..write(obj.entry)
       ..writeByte(3)
-      ..write(obj.stackTrace);
+      ..write(obj.stackTrace)
+      ..writeByte(4)
+      ..write(obj.manually);
   }
 
   @override
