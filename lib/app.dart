@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
+import 'package:obs_blade/stores/views/logs.dart';
 import 'package:obs_blade/utils/built_in_themes.dart';
 import 'package:provider/provider.dart';
 
@@ -164,6 +165,7 @@ class App extends StatelessWidget {
       providers: [
         Provider<NetworkStore>(create: (_) => NetworkStore()),
         Provider<TabsStore>(create: (_) => TabsStore()),
+        Provider<LogsStore>(create: (_) => LogsStore()),
       ],
       child: HiveBuilder(
         hiveKey: HiveKeys.Settings,

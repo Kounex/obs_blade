@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../../../utils/modal_handler.dart';
 import 'date_picker_sheet.dart';
 
-class TextFieldDate extends StatefulWidget {
+class TextFieldDate extends StatelessWidget {
   final String? placeholder;
   final DateTime? selectedDate;
   final DateTime? minimumDate;
@@ -20,41 +20,34 @@ class TextFieldDate extends StatefulWidget {
     this.maximumDate,
   });
 
-  @override
-  _TextFieldDateState createState() => _TextFieldDateState();
-}
-
-class _TextFieldDateState extends State<TextFieldDate> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    _controller =
-        TextEditingController(text: this.widget.selectedDate?.toString());
-    super.initState();
-  }
+  late final TextEditingController _controller;
 
   @override
   Widget build(BuildContext context) {
+    _controller = TextEditingController(
+        text: this.selectedDate != null
+            ? DateFormat.yMd('de_DE').format(this.selectedDate!)
+            : '');
+
     return CupertinoTextField(
       controller: _controller,
       clearButtonMode: OverlayVisibilityMode.always,
-      placeholder: this.widget.placeholder,
+      placeholder: this.placeholder,
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,
         modalWidget: DatePickerSheet(
-          selectedDate: this.widget.selectedDate,
-          minimumDate: this.widget.minimumDate,
-          maximumDate: this.widget.maximumDate,
+          selectedDate: this.selectedDate,
+          minimumDate: this.minimumDate,
+          maximumDate: this.maximumDate,
           updateDateTime: (date) {
             _controller.text =
                 date == null ? '' : DateFormat.yMd('de_DE').format(date);
-            this.widget.updateDateTime?.call(date);
+            this.updateDateTime?.call(date);
           },
         ),
       ),
-      onChanged: (_) => this.widget.updateDateTime?.call(null),
+      onChanged: (_) => this.updateDateTime?.call(null),
     );
   }
 }

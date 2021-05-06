@@ -27,13 +27,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   final _$filterOrderAtom = Atom(name: '_StatisticsStore.filterOrder');
 
   @override
-  FilterOrder get filterOrder {
+  Order get filterOrder {
     _$filterOrderAtom.reportRead();
     return super.filterOrder;
   }
 
   @override
-  set filterOrder(FilterOrder value) {
+  set filterOrder(Order value) {
     _$filterOrderAtom.reportWrite(value, super.filterOrder, () {
       super.filterOrder = value;
     });

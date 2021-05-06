@@ -11,6 +11,7 @@ class LogExplanation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseCard(
+      topPadding: 12.0,
       bottomPadding: 12.0,
       child: CustomExpansionTile(
         headerText: 'Information about logs',

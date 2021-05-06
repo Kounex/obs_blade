@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_blade/models/app_log.dart';
 import 'package:obs_blade/models/custom_theme.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
 import 'package:obs_blade/models/hidden_scene_item.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/stores/shared/tabs.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
 import 'package:provider/provider.dart';
 
@@ -46,7 +48,7 @@ class DataManagementView extends StatelessWidget {
                 description:
                     'All the data the app persisted so far including settings set like custom theme, wakelock etc. or any saved connections and so on.',
                 customConfirmationText:
-                    'Woah chill... you sure? Like I mean all kind of things set like settings or entries added like connections or statistics will be deleted. This is very There is no turning back!',
+                    'Are you sure? Like I mean all kind of things set like settings or entries added like connections or statistics will be deleted. There is no turning back!',
                 additionalConfirmationText:
                     'It seems you are sure about this, right? Well, go ahead... just want to make sure it\'s actually intended! :)',
                 onClear: () => _deleteAll(context),
@@ -59,9 +61,17 @@ class DataManagementView extends StatelessWidget {
                 title: 'Saved Connections',
                 description:
                     'All saved connections which are listed beneath the autodiscover / connect box in the home tab (at least once you saved any connections).',
-                onClear: () =>
-                    Hive.box<Connection>(HiveKeys.SavedConnections.name)
-                        .clear(),
+                onClear: () {
+                  Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All saved connections have been deleted by the user.',
+                    null,
+                    true,
+                  ));
+                },
               ),
               DataEntry(
                 title: 'Statistics',
@@ -78,22 +88,48 @@ class DataManagementView extends StatelessWidget {
 
                   Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
                       .clear();
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All statistics have been deleted by the user.',
+                    null,
+                    true,
+                  ));
                 },
               ),
               DataEntry(
                 title: 'Hidden Scenes',
                 description:
                     'All scenes that have been hidden in the dashboard of a connected OBS instance.',
-                onClear: () =>
-                    Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear(),
+                onClear: () {
+                  Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All hidden scenes have been deleted by the user.',
+                    null,
+                    true,
+                  ));
+                },
               ),
               DataEntry(
                 title: 'Hidden Scene Items',
                 description:
                     'All scene items that have been hidden in the dashboard of a connected OBS instance.',
-                onClear: () =>
-                    Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
-                        .clear(),
+                onClear: () {
+                  Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
+                      .clear();
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All hidden scene items have been deleted by the user.',
+                    null,
+                    true,
+                  ));
+                },
               ),
               DataEntry(
                 title: 'Twitch Chats',
@@ -104,6 +140,14 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.SelectedTwitchUsername.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.TwitchUsernames.name);
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All twitch chats have been deleted by the user.',
+                    null,
+                    true,
+                  ));
                 },
               ),
               DataEntry(
@@ -115,6 +159,14 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.SelectedYoutubeUsername.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.YoutubeUsernames.name);
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All youtube chats have been deleted by the user.',
+                    null,
+                    true,
+                  ));
                 },
               ),
               DataEntry(
@@ -138,6 +190,14 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.DontShowStreamStartMessage.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.DontShowStreamStopMessage.name);
+
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
+                    DateTime.now().millisecondsSinceEpoch,
+                    LogLevel.Warning,
+                    'All don\'t ask me again checks have been deleted by the user.',
+                    null,
+                    true,
+                  ));
                 },
               ),
               DataEntry(

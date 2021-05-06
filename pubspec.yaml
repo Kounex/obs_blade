@@ -1,7 +1,7 @@
 name: obs_blade
 description: Control your OBS instance and manage your stream - live!
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
-version: 1.4.0+2021042104
+version: 1.4.1+2021050601
 
 environment:
     sdk: '>=2.12.0 <3.0.0'
@@ -52,6 +52,9 @@ dependencies:
 
     # Enable keeping the device active
     wakelock: ^0.5.0+2
+
+    # Initiate native share sheet
+    share: ^2.0.1
 
     # Fancy done layout shit
     modal_bottom_sheet: ^2.0.0

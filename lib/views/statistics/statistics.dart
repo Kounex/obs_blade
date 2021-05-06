@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:obs_blade/types/enums/order.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/past_stream_data.dart';
@@ -93,7 +94,7 @@ class _StatisticsViewState extends State<_StatisticsView> {
           PastStreamData dataOrder1;
           PastStreamData dataOrder2;
           int sortResult = 0;
-          if (statisticsStore.filterOrder == FilterOrder.Ascending) {
+          if (statisticsStore.filterOrder == Order.Ascending) {
             dataOrder1 = data1;
             dataOrder2 = data2;
           } else {

@@ -1,5 +1,7 @@
 import 'package:mobx/mobx.dart';
 
+import '../../types/enums/order.dart';
+
 part 'statistics.g.dart';
 
 enum FilterType {
@@ -15,18 +17,6 @@ extension FilterTypeFunctions on FilterType {
         FilterType.Name: 'Name',
         FilterType.TotalTime: 'Total stream time',
         FilterType.Kbits: 'kbit/s',
-      }[this]!;
-}
-
-enum FilterOrder {
-  Ascending,
-  Descending,
-}
-
-extension FilterOrderFunctions on FilterOrder {
-  String get text => const {
-        FilterOrder.Ascending: 'Asc.',
-        FilterOrder.Descending: 'Desc.',
       }[this]!;
 }
 
@@ -53,7 +43,7 @@ abstract class _StatisticsStore with Store {
   FilterType filterType = FilterType.StatisticTime;
 
   @observable
-  FilterOrder filterOrder = FilterOrder.Descending;
+  Order filterOrder = Order.Descending;
 
   @observable
   AmountStatisticEntries amountStatisticEntries = AmountStatisticEntries.Five;
@@ -77,10 +67,8 @@ abstract class _StatisticsStore with Store {
   void setFilterType(FilterType filterType) => this.filterType = filterType;
 
   @action
-  void toggleFilterOrder() =>
-      this.filterOrder = this.filterOrder == FilterOrder.Ascending
-          ? FilterOrder.Descending
-          : FilterOrder.Ascending;
+  void toggleFilterOrder() => this.filterOrder =
+      this.filterOrder == Order.Ascending ? Order.Descending : Order.Ascending;
 
   @action
   void setAmountStatisticEntries(

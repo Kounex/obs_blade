@@ -1,18 +1,23 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/overlay/base_result.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../../models/app_log.dart';
 import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/hive_builder.dart';
+import '../../../../../shared/overlay/base_result.dart';
+import '../../../../../stores/views/logs.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/extensions/int.dart';
 import 'log_box.dart';
 
 class LogGrid extends StatelessWidget {
-  final List<int> datesMSWithLogs;
-
-  LogGrid({required this.datesMSWithLogs});
-
   @override
   Widget build(BuildContext context) {
+    LogsStore logsStore = context.read<LogsStore>();
+
     return Center(
       child: Padding(
         padding: EdgeInsets.only(
@@ -31,27 +36,66 @@ class LogGrid extends StatelessWidget {
                 MediaQuery.of(context).padding.right;
             double size = (constrainedWidth - (3 * spacing + outterSpace)) / 3;
 
-            return Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: spacing,
-              runSpacing: spacing,
-              children: [
-                if (this.datesMSWithLogs.isEmpty)
-                  BaseCard(
-                    topPadding: 0,
-                    child: BaseResult(
-                      icon: BaseResultIcon.Missing,
-                      text: 'No logs created yet.',
-                    ),
-                  ),
-                ...this.datesMSWithLogs.map(
-                      (dateMS) => LogBox(
-                        dateMS: dateMS,
-                        size: size > maxSize ? maxSize : size,
-                      ),
-                    ),
-              ],
-            );
+            return HiveBuilder<AppLog>(
+                hiveKey: HiveKeys.AppLog,
+                builder: (context, appLogBox, child) {
+                  return Observer(builder: (_) {
+                    List<int> datesMSWithLogs = [];
+
+                    Iterable<AppLog> filteredOrderedLogs = appLogBox.values
+                        .where((log) {
+                      bool reqMet = true;
+
+                      if (logsStore.fromDate != null)
+                        reqMet = log.timestampMS >=
+                            logsStore.fromDate!.millisecondsSinceEpoch;
+
+                      if (logsStore.toDate != null)
+                        reqMet = log.timestampMS <=
+                            logsStore.toDate!.millisecondsSinceEpoch;
+
+                      if (logsStore.logLevel != null)
+                        reqMet = log.level == logsStore.logLevel;
+
+                      return reqMet;
+                    }).toList()
+                          ..sort((log1, log2) =>
+                              log1.timestampMS - log2.timestampMS);
+
+                    if (logsStore.amountLogEntries != null)
+                      filteredOrderedLogs = filteredOrderedLogs
+                          .take(logsStore.amountLogEntries!.number);
+
+                    filteredOrderedLogs.forEach((log) {
+                      if (!datesMSWithLogs.any((dateMS) =>
+                          dateMS.millisecondsSameDay(log.timestampMS))) {
+                        datesMSWithLogs.add(log.timestampMS);
+                      }
+                    });
+
+                    return Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        if (datesMSWithLogs.isEmpty)
+                          BaseCard(
+                            topPadding: 0,
+                            child: BaseResult(
+                              icon: BaseResultIcon.Missing,
+                              text: 'No logs found!',
+                            ),
+                          ),
+                        ...datesMSWithLogs.map(
+                          (dateMS) => LogBox(
+                            dateMS: dateMS,
+                            size: size > maxSize ? maxSize : size,
+                          ),
+                        ),
+                      ],
+                    );
+                  });
+                });
           }),
         ),
       ),

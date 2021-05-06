@@ -1,9 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
 
-import '../../../../../../stores/views/statistics.dart';
 import 'text_field_date.dart';
 
 class DateRange extends StatelessWidget {
@@ -38,32 +35,28 @@ class DateRange extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.read<StatisticsStore>();
-
-    return Observer(
-      builder: (_) => Row(
-        children: [
-          Expanded(
-            child: TextFieldDate(
-              placeholder: 'From...',
-              selectedDate: statisticsStore.fromDate,
-              maximumDate: statisticsStore.toDate,
-              updateDateTime: (date) => statisticsStore.setFromDate(date),
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: TextFieldDate(
+            placeholder: this.placeholderFrom,
+            selectedDate: this.selectedFromDate,
+            minimumDate: this.minimumFromDate,
+            maximumDate: this.maximumFromDate,
+            updateDateTime: this.updateFromDate,
           ),
-          SizedBox(width: 12.0),
-          Expanded(
-            child: TextFieldDate(
-              placeholder: 'To...',
-              selectedDate: statisticsStore.toDate,
-              minimumDate: statisticsStore.fromDate,
-              updateDateTime: (date) => statisticsStore.setToDate(date
-                  ?.add(Duration(days: 1))
-                  .subtract(Duration(milliseconds: 1))),
-            ),
+        ),
+        SizedBox(width: 12.0),
+        Expanded(
+          child: TextFieldDate(
+            placeholder: this.placeholderTo,
+            selectedDate: this.selectedToDate,
+            minimumDate: this.minimumToDate,
+            maximumDate: this.maximumToDate,
+            updateDateTime: this.updateToDate,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

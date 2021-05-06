@@ -32,39 +32,46 @@ class LogEntry extends StatelessWidget {
     if (temp.isNotEmpty) groupedLogs.add([...temp]);
 
     return BaseCard(
-      bottomPadding: 12.0,
+      topPadding: 12.0,
+      bottomPadding: 0.0,
       paddingChild: const EdgeInsets.all(12.0),
       child: CustomExpansionTile(
         customHeader: Row(
           children: [
-            Column(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Theme.of(context).textTheme.bodyText1!.color!,
+            SizedBox(
+              width: 84.0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context).textTheme.bodyText1!.color!,
+                        ),
                       ),
                     ),
+                    child: Text(dateFormatted),
                   ),
-                  child: Text(dateFormatted),
-                ),
-                SizedBox(height: 4.0),
-                Text(
-                  '${this.logs.length} entries',
-                  style: Theme.of(context).textTheme.caption,
-                ),
-              ],
+                  SizedBox(height: 4.0),
+                  Text(
+                    '${this.logs.length} entries',
+                    style: Theme.of(context).textTheme.caption,
+                  ),
+                ],
+              ),
             ),
-            SizedBox(width: 24.0),
             for (LogLevel level in LogLevel.values) ...[
               if (groupedLogs
                   .any((logs) => logs.any((log) => log.level == level))) ...[
                 SizedBox(width: 12.0),
-                StatusDot(
-                  text: level.name,
-                  color: level.color,
-                  direction: Axis.vertical,
+                SizedBox(
+                  width: 64.0,
+                  child: StatusDot(
+                    text: level.name,
+                    color: level.color,
+                    direction: Axis.vertical,
+                  ),
                 ),
               ],
             ],
