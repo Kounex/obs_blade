@@ -323,7 +323,7 @@ packages:
       name: hive
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.3"
+    version: "2.0.4"
   hive_flutter:
     dependency: "direct main"
     description:
@@ -741,7 +741,7 @@ packages:
       name: wakelock
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.5.0+2"
+    version: "0.5.1"
   wakelock_macos:
     dependency: transitive
     description:
@@ -783,7 +783,7 @@ packages:
       name: web_socket_channel
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.0"
+    version: "2.1.0"
   win32:
     dependency: transitive
     description:

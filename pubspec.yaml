@@ -32,13 +32,13 @@ dependencies:
 
     # Network stuff
     connectivity: ^3.0.2
-    web_socket_channel: ^2.0.0
+    web_socket_channel: ^2.1.0
 
     # Security
     crypto: ^3.0.1
 
     # Local persistance stuff
-    hive: ^2.0.3
+    hive: ^2.0.4
     hive_flutter: ^1.0.0
 
     # To enable unique identifiable objects (models)
@@ -51,7 +51,7 @@ dependencies:
     #device_preview: ^0.4.8
 
     # Enable keeping the device active
-    wakelock: ^0.5.0+2
+    wakelock: ^0.5.1
 
     # Initiate native share sheet
     share: ^2.0.1

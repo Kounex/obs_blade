@@ -23,7 +23,7 @@ class NetworkHelper {
   /// [HomeView] otherwise
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
-        'ws://${connection.ip}:${connection.port.toString()}',
+        Uri.parse('ws://${connection.ip}:${connection.port.toString()}'),
         pingInterval: Duration(seconds: 3),
       );
 
