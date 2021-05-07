@@ -105,11 +105,13 @@ class LogEntry extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    index.toString(),
+                                    (index + 1).toString(),
                                   ),
                                   SizedBox(width: 12.0),
                                   Expanded(
                                     child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(log.entry),
                                         if (log.stackTrace != null)

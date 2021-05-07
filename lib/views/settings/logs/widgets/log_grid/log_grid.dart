@@ -67,16 +67,17 @@ class LogGrid extends StatelessWidget {
                                 : log1.timestampMS.compareTo(log2.timestampMS),
                           );
 
-                    if (logsStore.amountLogEntries != null)
-                      filteredOrderedLogs = filteredOrderedLogs
-                          .take(logsStore.amountLogEntries!.number);
-
                     filteredOrderedLogs.forEach((log) {
                       if (!datesMSWithLogs.any((dateMS) =>
                           dateMS.millisecondsSameDay(log.timestampMS))) {
                         datesMSWithLogs.add(log.timestampMS);
                       }
                     });
+
+                    if (logsStore.amountLogEntries != null)
+                      datesMSWithLogs = datesMSWithLogs
+                          .take(logsStore.amountLogEntries!.number)
+                          .toList();
 
                     return Wrap(
                       alignment: WrapAlignment.spaceBetween,
