@@ -55,17 +55,19 @@ class LogDetailView extends StatelessWidget {
                       String condensedLog = '';
 
                       mergedLogs.entries.forEach((dateLog) {
-                        condensedLog += '<---${dateLog.key}--->\n';
+                        condensedLog += '<------${dateLog.key}------>\n';
+                        condensedLog +=
+                            'Level: ${dateLog.value.first.level.name}\n';
+                        condensedLog +=
+                            'Manual: ${dateLog.value.first.manually}\n\n';
 
                         dateLog.value.forEach((log) {
-                          condensedLog += 'Level: ${log.level.name}\n';
-                          condensedLog += 'Manually: ${log.manually}\n\n';
-                          condensedLog += 'Entry: ${log.entry}\n';
+                          condensedLog += '${log.entry}\n';
                           if (log.stackTrace != null)
                             condensedLog += 'StackTrace: ${log.stackTrace}\n';
                         });
 
-                        condensedLog += '<--------------->';
+                        condensedLog += '<--------------------->\n';
                       });
 
                       Share.share(condensedLog, subject: 'OBS Blade Log');

@@ -5,7 +5,7 @@ import 'package:get_it/get_it.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import 'widgets/log_explanation.dart';
 import 'widgets/log_filter.dart';
-import 'widgets/log_grid/log_grid.dart';
+import 'widgets/log_grid/log_list.dart';
 
 class LogsView extends StatelessWidget {
   @override
@@ -20,7 +20,7 @@ class LogsView extends StatelessWidget {
         listViewChildren: [
           LogExplanation(),
           LogFilter(),
-          LogGrid(),
+          LogList(),
         ],
       ),
     );

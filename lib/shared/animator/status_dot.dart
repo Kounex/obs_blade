@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class StatusDot extends StatefulWidget {
   final double size;
   final Color color;
-  final String text;
+  final String? text;
   final Axis direction;
   final TextStyle? style;
 
@@ -12,7 +12,7 @@ class StatusDot extends StatefulWidget {
     Key? key,
     this.size = 12.0,
     this.color = CupertinoColors.destructiveRed,
-    required this.text,
+    this.text,
     this.direction = Axis.horizontal,
     this.style,
   }) : super(key: key);
@@ -77,16 +77,17 @@ class _StatusDotState extends State<StatusDot>
           dot,
         ],
       ),
-      Padding(
-        padding: EdgeInsets.only(
-          top: this.widget.direction == Axis.horizontal ? 0.0 : 4.0,
-          left: this.widget.direction == Axis.horizontal ? 8.0 : 0.0,
+      if (this.widget.text != null)
+        Padding(
+          padding: EdgeInsets.only(
+            top: this.widget.direction == Axis.horizontal ? 0.0 : 4.0,
+            left: this.widget.direction == Axis.horizontal ? 8.0 : 0.0,
+          ),
+          child: Text(
+            this.widget.text!,
+            style: this.widget.style ?? Theme.of(context).textTheme.bodyText1,
+          ),
         ),
-        child: Text(
-          this.widget.text,
-          style: this.widget.style ?? Theme.of(context).textTheme.bodyText1,
-        ),
-      ),
     ];
     return this.widget.direction == Axis.horizontal
         ? Row(

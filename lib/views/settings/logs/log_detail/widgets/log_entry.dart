@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/models/app_log.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/shared/animator/status_dot.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
-import 'package:obs_blade/shared/general/column_separated.dart';
-import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
-import 'package:obs_blade/utils/general_helper.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
+import '../../../../../models/app_log.dart';
+import '../../../../../models/enums/log_level.dart';
+import '../../../../../shared/animator/status_dot.dart';
+import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/column_separated.dart';
+import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../types/extensions/list.dart';
 
 class LogEntry extends StatelessWidget {
