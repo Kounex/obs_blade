@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../../models/enums/scene_item_type.dart';
 import '../../../../../models/hidden_scene_item.dart';
@@ -88,7 +88,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<HiddenSceneItem>(
       hiveKey: HiveKeys.HiddenSceneItem,

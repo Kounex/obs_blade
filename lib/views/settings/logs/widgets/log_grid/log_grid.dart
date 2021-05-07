@@ -2,7 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:obs_blade/types/enums/order.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../models/app_log.dart';
 import '../../../../../shared/general/base_card.dart';
@@ -16,7 +17,7 @@ import 'log_box.dart';
 class LogGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    LogsStore logsStore = context.read<LogsStore>();
+    LogsStore logsStore = GetIt.instance<LogsStore>();
 
     return Center(
       child: Padding(
@@ -42,8 +43,8 @@ class LogGrid extends StatelessWidget {
                   return Observer(builder: (_) {
                     List<int> datesMSWithLogs = [];
 
-                    Iterable<AppLog> filteredOrderedLogs = appLogBox.values
-                        .where((log) {
+                    Iterable<AppLog> filteredOrderedLogs =
+                        appLogBox.values.where((log) {
                       bool reqMet = true;
 
                       if (logsStore.fromDate != null)
@@ -59,8 +60,12 @@ class LogGrid extends StatelessWidget {
 
                       return reqMet;
                     }).toList()
-                          ..sort((log1, log2) =>
-                              log1.timestampMS - log2.timestampMS);
+                          ..sort(
+                            (log1, log2) => logsStore.filterOrder ==
+                                    Order.Descending
+                                ? log2.timestampMS.compareTo(log1.timestampMS)
+                                : log1.timestampMS.compareTo(log2.timestampMS),
+                          );
 
                     if (logsStore.amountLogEntries != null)
                       filteredOrderedLogs = filteredOrderedLogs

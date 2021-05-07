@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../shared/general/base_card.dart';
 import '../../../../shared/general/themed/themed_cupertino_button.dart';
@@ -19,7 +19,7 @@ class SwitcherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.read<HomeStore>();
+    HomeStore landingStore = GetIt.instance<HomeStore>();
 
     return BaseCard(
       paddingChild: this.paddingChild,

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/shared/general/keyboard_number_header.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/connection.dart';
+import '../../../../shared/general/keyboard_number_header.dart';
 import '../../../../shared/general/question_mark_tooltip.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/home.dart';
@@ -46,8 +46,8 @@ class _ConnectFormState extends State<ConnectForm> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.read<HomeStore>();
-    NetworkStore networkStore = context.read<NetworkStore>();
+    HomeStore landingStore = GetIt.instance<HomeStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
     return Form(
       key: _formKey,

@@ -5,7 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/general/social_block.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../stores/views/intro.dart';
 import 'widgets/intro_slide.dart';
@@ -13,30 +13,16 @@ import 'widgets/slide_controls.dart';
 
 const double kIntroControlsBottomPadding = 24.0;
 
-class IntroView extends StatelessWidget {
+class IntroView extends StatefulWidget {
   final bool manually;
 
   IntroView({this.manually = false});
 
   @override
-  Widget build(BuildContext context) {
-    return Provider<IntroStore>(
-      create: (_) => IntroStore(),
-      builder: (context, _) => _IntroView(this.manually),
-    );
-  }
-}
-
-class _IntroView extends StatefulWidget {
-  final bool manually;
-
-  _IntroView(this.manually);
-
-  @override
   _IntroViewState createState() => _IntroViewState();
 }
 
-class _IntroViewState extends State<_IntroView> {
+class _IntroViewState extends State<IntroView> {
   PageController _pageController = PageController();
   late List<Widget> _pageChildren;
 
@@ -74,6 +60,8 @@ class _IntroViewState extends State<_IntroView> {
 
   @override
   Widget build(BuildContext context) {
+    GetIt.instance.resetLazySingleton<IntroStore>();
+
     _pageChildren = [
       IntroSlide(
         imagePath: 'assets/images/base_logo.png',
@@ -134,7 +122,7 @@ class _IntroViewState extends State<_IntroView> {
                 itemCount: _pageChildren.length,
                 itemBuilder: (context, index) => _pageChildren[index],
                 onPageChanged: (page) =>
-                    context.read<IntroStore>().setCurrentPage(page),
+                    GetIt.instance<IntroStore>().setCurrentPage(page),
               ),
             ),
             Padding(

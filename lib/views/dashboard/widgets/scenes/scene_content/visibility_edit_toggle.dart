@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/enums/scene_item_type.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
-import 'package:provider/provider.dart';
+
+import '../../../../../models/enums/scene_item_type.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../stores/views/dashboard.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/modal_handler.dart';
+import '../../../../settings/widgets/action_block.dart/light_divider.dart';
 
 class VisibilityEditToggle extends StatelessWidget {
   final Widget? child;
@@ -24,7 +25,7 @@ class VisibilityEditToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     VoidCallback onEdit = () {
       if (this.sceneItemType == SceneItemType.Source) {

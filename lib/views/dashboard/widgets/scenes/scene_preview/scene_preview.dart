@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../shared/general/hive_builder.dart';
@@ -17,7 +17,7 @@ import 'preview_warning_dialog.dart';
 class ScenePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     double maxImageHeight = min(
       MediaQuery.of(context).size.height -

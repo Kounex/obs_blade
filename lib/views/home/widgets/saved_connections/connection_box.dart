@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
@@ -18,7 +18,7 @@ class ConnectionBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.read<NetworkStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
     return SizedBox(
       width: this.width,

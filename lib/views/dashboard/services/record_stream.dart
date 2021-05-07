@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/stores/shared/network.dart';
-import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/network_helper.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/start_stop_recording_dialog.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/start_stop_streaming_dialog.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
+
+import '../../../stores/shared/network.dart';
+import '../../../types/enums/request_type.dart';
+import '../../../utils/modal_handler.dart';
+import '../../../utils/network_helper.dart';
+import '../widgets/scenes/start_stop_recording_dialog.dart';
+import '../widgets/scenes/start_stop_streaming_dialog.dart';
 
 class RecordStreamService {
   static void triggerRecordStartStop(
@@ -15,7 +16,7 @@ class RecordStreamService {
     bool checkedDontShowRecordStop,
   ) {
     VoidCallback onRecordStartStop = () => NetworkHelper.makeRequest(
-          context.read<NetworkStore>().activeSession!.socket,
+          GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.StartStopRecording,
         );
 
@@ -38,7 +39,7 @@ class RecordStreamService {
     bool checkedDontShowStreamStop,
   ) {
     VoidCallback onStreamStartStop = () => NetworkHelper.makeRequest(
-          context.read<NetworkStore>().activeSession!.socket,
+          GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.StartStopStreaming,
         );
 

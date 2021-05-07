@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -14,7 +14,7 @@ import 'transition.dart';
 class StudioModeTransition extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
@@ -34,7 +34,7 @@ class StudioModeTransition extends StatelessWidget {
                     width: 128.0,
                     child: ElevatedButton(
                       onPressed: () => NetworkHelper.makeRequest(
-                        context.read<NetworkStore>().activeSession!.socket,
+                        GetIt.instance<NetworkStore>().activeSession!.socket,
                         RequestType.TransitionToProgram,
                       ),
                       child: Text('Transition'),
@@ -60,8 +60,7 @@ class StudioModeTransition extends StatelessWidget {
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (studioMode) =>
                                     NetworkHelper.makeRequest(
-                                  context
-                                      .read<NetworkStore>()
+                                  GetIt.instance<NetworkStore>()
                                       .activeSession!
                                       .socket,
                                   RequestType.ToggleStudioMode,

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import 'stores/shared/tabs.dart';
 import 'utils/routing_helper.dart';
@@ -25,7 +25,8 @@ class _TabBaseState extends State<TabBase> {
   void initState() {
     super.initState();
 
-    TabsStore tabsStore = context.read<TabsStore>();
+    TabsStore tabsStore = GetIt.instance<TabsStore>();
+
     Tabs.values.forEach((tab) {
       tabsStore.navigatorKeys[tab] =
           GlobalKey<NavigatorState>(debugLabel: tab.name);
@@ -61,7 +62,7 @@ class _TabBaseState extends State<TabBase> {
 
   @override
   Widget build(BuildContext context) {
-    TabsStore tabsStore = context.read<TabsStore>();
+    TabsStore tabsStore = GetIt.instance<TabsStore>();
 
     return Scaffold(
       body: Observer(builder: (_) {

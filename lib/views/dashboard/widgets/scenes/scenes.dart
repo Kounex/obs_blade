@@ -27,7 +27,7 @@ class Scenes extends StatelessWidget {
         ),
         // RaisedButton(
         //   onPressed: () => NetworkHelper.makeRequest(
-        //       context.read<NetworkStore>().activeSession.socket,
+        //       GetIt.instance<NetworkStore>().activeSession.socket,
         //       RequestType.PlayPauseMedia,
         //       {'sourceName': 'was geht ab', 'playPause': false}),
         //   child: Text('SOUND'),

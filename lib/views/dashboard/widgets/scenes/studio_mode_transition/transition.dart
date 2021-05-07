@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../stores/shared/network.dart';
@@ -13,7 +13,7 @@ import '../../../../../utils/network_helper.dart';
 class Transition extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
     FocusNode focusNode = FocusNode();
 
     return Observer(builder: (_) {
@@ -49,7 +49,7 @@ class Transition extends StatelessWidget {
                     )
                     .toList(),
                 onChanged: (selectedTransition) => NetworkHelper.makeRequest(
-                  context.read<NetworkStore>().activeSession!.socket,
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
                   RequestType.SetCurrentTransition,
                   {'transition-name': selectedTransition},
                 ),
@@ -70,7 +70,7 @@ class Transition extends StatelessWidget {
                       TextSelection.fromPosition(TextPosition(offset: 1));
                 }
                 NetworkHelper.makeRequest(
-                  context.read<NetworkStore>().activeSession!.socket,
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
                   RequestType.SetTransitionDuration,
                   {'duration': int.tryParse(controller.text) ?? 0},
                 );

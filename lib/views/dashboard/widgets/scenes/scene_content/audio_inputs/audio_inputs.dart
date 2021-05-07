@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/models/enums/scene_item_type.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/placeholder_scene_item.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
-import '../../../../../../stores/views/dashboard.dart';
+import '../../../../../../models/enums/scene_item_type.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
+import '../../../../../../stores/views/dashboard.dart';
+import '../placeholder_scene_item.dart';
 import '../visibility_slide_wrapper.dart';
 import 'audio_slider.dart';
 
@@ -24,7 +24,7 @@ class _AudioInputsState extends State<AudioInputs>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return Observer(
       builder: (_) => NestedScrollManager(

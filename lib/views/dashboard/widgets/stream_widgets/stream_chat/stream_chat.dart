@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/general/base_card.dart';
@@ -29,7 +29,7 @@ class _StreamChatState extends State<StreamChat>
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     super.build(context);
     return Column(

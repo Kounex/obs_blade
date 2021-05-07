@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart' as MobX;
-import 'package:provider/provider.dart';
 
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';
@@ -19,47 +19,12 @@ import 'widgets/connect_box/connect_box.dart';
 import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 
-/// Using the "Facade Pattern" here, where I wrap my actual ViewWidget with a WrapperWidget
-/// which only purpose is to expose the ViewModel via Provider. Since the context available in
-/// our build / state is effectively the context of our parent, without the WrapperWidget I would
-/// not have access to the provided ViewModel directly.
-/// I can counter this by using the builder property of Provider to solve this problem in the build
-/// method, but it does not work in my structure where I also register MobX reactions in
-/// [initState] where i (might) access the ViewModel which is part of this View and is
-/// provided just here. With the WrapperWidget in this Facade Pattern the parent has just provided
-/// the ViewModel and I can access it in my reactions!
-/// It does not use a special name, instead the actual View got private (_) since it is nothing which
-/// has to be exposed (logically)
-class HomeView extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Provider<HomeStore>(
-      create: (_) {
-        HomeStore landingStore = HomeStore();
-
-        // if (!context.read<NetworkStore>().obsTerminated) {
-        //   context.read<NetworkStore>().obsTerminated = false;
-
-        /// Trigger autodiscover on startup
-        /// Delay autodiscover to let the view render and ask for permission etc.
-        Future.delayed(
-          Duration(milliseconds: 1000),
-          () => landingStore.updateAutodiscoverConnections(),
-        );
-        // }
-        return landingStore;
-      },
-      builder: (context, _) => _HomeView(),
-    );
-  }
-}
-
-class _HomeView extends StatefulWidget {
+class HomeView extends StatefulWidget {
   @override
   _HomeViewState createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<_HomeView> {
+class _HomeViewState extends State<HomeView> {
   /// Since I'm using (at least one) reaction in this State, I need to dispose
   /// it when this Widget / State is disposing itself as well. I add each reaction call
   /// to this list and dispose every instance in the dispose call of this Widget
@@ -67,7 +32,7 @@ class _HomeViewState extends State<_HomeView> {
 
   /// Using [didChangeDependencies] since it is called after [initState] and has access
   /// to a [BuildContext] of this [StatelessWidget] which we need to access the MobX
-  /// stores through Provider; context.read<NetworkStore>() for example
+  /// stores through Provider; GetIt.instance<NetworkStore>() for example
   ///
   /// NEW: Not making use of [didChangeDependencies] since it gets triggered quite often.
   /// Initially I wanted to use this since I thought I would have access to a context
@@ -91,6 +56,11 @@ class _HomeViewState extends State<_HomeView> {
   void initState() {
     super.initState();
 
+    Future.delayed(
+      Duration(milliseconds: 1000),
+      () => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
+    );
+
     /// I have to import the MobX part above with 'as MobX' since the Widget Listener
     /// is part of Material and MobX therefore it can't be resolved on its own. By
     /// naming one import I have to exlicitly use the import name as an prefix to
@@ -100,7 +70,7 @@ class _HomeViewState extends State<_HomeView> {
     /// in my Widget tree; I named the MobX import so now if I mean the MobX 'Listener' I would
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
-    MobX.when((_) => context.read<NetworkStore>().obsTerminated, () {
+    MobX.when((_) => GetIt.instance<NetworkStore>().obsTerminated, () {
       SchedulerBinding.instance!.addPostFrameCallback((_) =>
           ModalHandler.showBaseDialog(
             context: context,
@@ -108,16 +78,16 @@ class _HomeViewState extends State<_HomeView> {
                 body:
                     'Your connection to OBS has been lost and the app was not able to reconnect!'),
           ).then((_) =>
-              context.read<HomeStore>().updateAutodiscoverConnections()));
+              GetIt.instance<HomeStore>().updateAutodiscoverConnections()));
     });
 
     /// Once we recognize a connection attempt inside our reaction ([connectionInProgress] is true)
     /// we will check whether the connection was successfull or not and display overlays and / or
     /// route to the [DashboardView]
-    _disposers.add(
-        MobX.reaction((_) => context.read<NetworkStore>().connectionInProgress,
-            (bool connectionInProgress) {
-      NetworkStore networkStore = context.read<NetworkStore>();
+    _disposers.add(MobX.reaction(
+        (_) => GetIt.instance<NetworkStore>().connectionInProgress,
+        (bool connectionInProgress) {
+      NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
       if (connectionInProgress) {
         OverlayHandler.showStatusOverlay(
@@ -170,7 +140,7 @@ class _HomeViewState extends State<_HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.read<HomeStore>();
+    HomeStore landingStore = GetIt.instance<HomeStore>();
     return Scaffold(
       /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
       /// our extendedHeight, where we are ready to trigger searching for OBS connections,

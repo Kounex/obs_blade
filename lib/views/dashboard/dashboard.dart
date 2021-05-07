@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:provider/provider.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/dialogs/confirmation.dart';
@@ -16,8 +16,8 @@ import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
-import 'widgets/save_edit_connection_dialog.dart';
 import 'widgets/reconnect_toast.dart';
+import 'widgets/save_edit_connection_dialog.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
 import 'widgets/stream_widgets/stream_widgets.dart';
@@ -42,30 +42,20 @@ class DashboardScroll extends InheritedWidget {
       oldWidget.scrollController != this.scrollController;
 }
 
-class DashboardView extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Provider<DashboardStore>(create: (_) {
-      DashboardStore dashboardStore = DashboardStore();
-
-      // Setting the active session and make initial requests
-      // to display data on connect
-      dashboardStore.setupNetworkStoreHandling(context.read<NetworkStore>());
-      return dashboardStore;
-    }, builder: (context, _) {
-      return _DashboardView();
-    });
-  }
-}
-
-class _DashboardView extends StatefulWidget {
+class DashboardView extends StatefulWidget {
   @override
   _DashboardViewState createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<_DashboardView> {
+class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
+    GetIt.instance.resetLazySingleton<DashboardStore>();
+
+    /// Initiate the [DashboardStore] object by initiating socket listeners
+    /// and first calls etc.
+    GetIt.instance<DashboardStore>().init();
+
     if (Hive.box(HiveKeys.Settings.name)
         .get(SettingsKeys.WakeLock.name, defaultValue: true)) {
       Wakelock.enable();
@@ -73,12 +63,13 @@ class _DashboardViewState extends State<_DashboardView> {
 
     when(
         (_) =>
-            context.read<NetworkStore>().activeSession!.connection.name == null,
+            GetIt.instance<NetworkStore>().activeSession!.connection.name ==
+            null,
         () => SchedulerBinding.instance!
             .addPostFrameCallback((_) => _saveConnectionDialog(context)));
 
     when(
-        (_) => context.read<NetworkStore>().obsTerminated,
+        (_) => GetIt.instance<NetworkStore>().obsTerminated,
         () => Navigator.of(context).pushReplacementNamed(
               HomeTabRoutingKeys.Landing.route,
               arguments: ModalRoute.of(context)!.settings.arguments,
@@ -119,7 +110,7 @@ class _DashboardViewState extends State<_DashboardView> {
           alignment: Alignment.topCenter,
           children: [
             CustomScrollView(
-              physics: context.read<DashboardStore>().isPointerOnChat
+              physics: GetIt.instance<DashboardStore>().isPointerOnChat
                   ? NeverScrollableScrollPhysics()
                   : ClampingScrollPhysics(),
               controller: ModalRoute.of(context)!.settings.arguments

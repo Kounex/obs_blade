@@ -1,8 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/types/enums/order.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base_card.dart';
@@ -10,28 +9,19 @@ import '../../shared/general/hive_builder.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/views/statistics.dart';
 import '../../types/enums/hive_keys.dart';
+import '../../types/enums/order.dart';
 import 'widgets/card_header/card_header.dart';
 import 'widgets/card_header/sort_filter_panel/sort_filter_panel.dart';
 import 'widgets/paginated_statistics/paginated_statistics.dart';
 import 'widgets/stream_entry/stream_entry.dart';
 import 'widgets/stream_entry_placeholder.dart';
 
-class StatisticsView extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Provider(
-      create: (context) => StatisticsStore(),
-      child: _StatisticsView(),
-    );
-  }
-}
-
-class _StatisticsView extends StatefulWidget {
+class StatisticsView extends StatefulWidget {
   @override
   _StatisticsViewState createState() => _StatisticsViewState();
 }
 
-class _StatisticsViewState extends State<_StatisticsView> {
+class _StatisticsViewState extends State<StatisticsView> {
   // List<ReactionDisposer> _disposers = [];
 
   // List<PastStreamData> _pastStreamData;
@@ -69,10 +59,10 @@ class _StatisticsViewState extends State<_StatisticsView> {
   //   });
 
   // _disposers.add(
-  //     reaction((_) => context.read<TabsStore>().performTabClickAction,
+  //     reaction((_) => GetIt.instance<TabsStore>().performTabClickAction,
   //         (performTabClickAction) {
   //   if (performTabClickAction && ModalRoute.of(context).isCurrent) {
-  //     context.read<TabsStore>().setPerformTabClickAction(false);
+  //     GetIt.instance<TabsStore>().setPerformTabClickAction(false);
   //   }
   // }));
   // super.initState();
@@ -174,7 +164,8 @@ class _StatisticsViewState extends State<_StatisticsView> {
 
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.read<StatisticsStore>();
+    GetIt.instance.resetLazySingleton<StatisticsStore>();
+    StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(

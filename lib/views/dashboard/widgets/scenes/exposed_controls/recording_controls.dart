@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -15,7 +15,7 @@ import '../../../services/record_stream.dart';
 class RecordingControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
@@ -57,8 +57,8 @@ class RecordingControls extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: dashboardStore.isRecording
                     ? () => NetworkHelper.makeRequest(
-                          context.read<NetworkStore>().activeSession!.socket,
-                          context.read<DashboardStore>().isRecordingPaused
+                          GetIt.instance<NetworkStore>().activeSession!.socket,
+                          GetIt.instance<DashboardStore>().isRecordingPaused
                               ? RequestType.ResumeRecording
                               : RequestType.PauseRecording,
                         )

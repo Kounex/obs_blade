@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/hidden_scene.dart';
 
 import '../../../../models/connection.dart';
+import '../../../../models/hidden_scene.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
 import '../../../../shared/general/validation_cupertino_textfield.dart';

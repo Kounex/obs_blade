@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/app_log.dart';
-import 'package:obs_blade/models/custom_theme.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/models/hidden_scene.dart';
-import 'package:obs_blade/models/hidden_scene_item.dart';
-import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/general_helper.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
-import 'package:provider/provider.dart';
 
+import '../../../models/app_log.dart';
 import '../../../models/connection.dart';
+import '../../../models/custom_theme.dart';
+import '../../../models/enums/log_level.dart';
+import '../../../models/hidden_scene.dart';
+import '../../../models/hidden_scene_item.dart';
+import '../../../models/past_stream_data.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../stores/shared/tabs.dart';
 import '../../../types/enums/hive_keys.dart';
+import '../../../types/enums/settings_keys.dart';
+import '../../../utils/routing_helper.dart';
 import 'widgets/data_block.dart';
 import 'widgets/data_entry.dart';
 
@@ -28,7 +27,7 @@ class DataManagementView extends StatelessWidget {
     await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
     await Hive.box(HiveKeys.Settings.name).clear();
 
-    context.read<TabsStore>().setActiveTab(Tabs.Home);
+    GetIt.instance<TabsStore>().setActiveTab(Tabs.Home);
 
     Navigator.of(context, rootNavigator: true)
         .pushReplacementNamed(AppRoutingKeys.Intro.route);
@@ -80,8 +79,7 @@ class DataManagementView extends StatelessWidget {
                 onClear: () {
                   /// Since the user might be in a detailed statistic view, we pop until
                   /// we are back in the root view
-                  context
-                      .read<TabsStore>()
+                  GetIt.instance<TabsStore>()
                       .navigatorKeys[Tabs.Statistics]
                       ?.currentState
                       ?.popUntil((route) => route.isFirst);

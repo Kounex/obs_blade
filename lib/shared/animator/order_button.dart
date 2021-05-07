@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/types/enums/order.dart';
 
 class OrderButton extends StatefulWidget {
+  final Order order;
   final VoidCallback? toggle;
 
-  OrderButton({this.toggle});
+  OrderButton({this.order = Order.Descending, this.toggle});
 
   @override
   _OrderButtonState createState() => _OrderButtonState();
@@ -33,6 +35,10 @@ class _OrderButtonState extends State<OrderButton>
 
     _halfTurnDown = Tween<double>(begin: 0.0, end: 0.5).animate(
         CurvedAnimation(parent: _controllerDown, curve: Curves.easeOutCubic));
+
+    if (this.widget.order == Order.Ascending)
+      _controllerUp.animateTo(_controllerUp.upperBound,
+          duration: Duration.zero);
   }
 
   @override

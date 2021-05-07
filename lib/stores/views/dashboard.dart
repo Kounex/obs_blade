@@ -2,14 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/types/classes/stream/responses/get_preview_scene.dart';
-import 'package:obs_blade/types/classes/stream/responses/get_recording_status.dart';
-import 'package:obs_blade/types/classes/stream/responses/get_studio_mode_status.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/general_helper.dart';
-import '../../types/classes/stream/events/preview_scene_changed.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -17,6 +12,7 @@ import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/source_type.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/stream/events/base.dart';
+import '../../types/classes/stream/events/preview_scene_changed.dart';
 import '../../types/classes/stream/events/scene_item_removed.dart';
 import '../../types/classes/stream/events/scene_item_visibility_changed.dart';
 import '../../types/classes/stream/events/source_mute_state_changed.dart';
@@ -32,9 +28,12 @@ import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
 import '../../types/classes/stream/responses/get_current_transition.dart';
 import '../../types/classes/stream/responses/get_mute.dart';
+import '../../types/classes/stream/responses/get_preview_scene.dart';
+import '../../types/classes/stream/responses/get_recording_status.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_source_types_list.dart';
 import '../../types/classes/stream/responses/get_special_sources.dart';
+import '../../types/classes/stream/responses/get_studio_mode_status.dart';
 import '../../types/classes/stream/responses/get_transition_list.dart';
 import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/classes/stream/responses/get_volume.dart';
@@ -42,6 +41,8 @@ import '../../types/classes/stream/responses/take_source_screenshot.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/request_type.dart';
+import '../../types/enums/settings_keys.dart';
+import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
 import '../shared/network.dart';
 
@@ -162,57 +163,33 @@ abstract class _DashboardStore with Store {
   @observable
   bool editSceneVisibility = false;
 
-  /// Currently I hold a reference to the [NetworkStore] object to be able
-  /// to listen to the WebSocket stream and toggle some stuff. [NetworkStore]
-  /// is one of the shared stores, indicate that those kind of stores are not
-  /// bound to specific views but are rather "global". Those can be seen as
-  /// the "real" app states / stores. Therefore they are used in several views /
-  /// widgets but also in other stores. I don't have a better solution right now
-  /// other than passing a reference to the [NetworkStore] as soon as this store
-  /// [DashboardStore] gets instantiated in the Provider create property.
-  ///
-  /// I want to avoid having such things as global entities at all because global
-  /// stuff (as the name already indicates) is not bound to anything really and it
-  /// could be accessed from everywhere and "controlling" those stuff can get out
-  /// of hand quickly.
-  NetworkStore? networkStore;
-
   List<SourceType>? sourceTypes;
 
   Timer? checkConnectionTimer;
 
   String previewFileFormat = 'jpeg';
 
-  @action
-  void setupNetworkStoreHandling(NetworkStore networkStore) {
-    this.networkStore = networkStore;
-    this.handleStream();
-    this.initialRequests();
-
-    /// Since [setupNetworkStoreHandling] gets called as soon as we connect
-    /// to an OBS instance, we trigger this [Timer] which will check if
-    /// the connection is still alive periodically - see [_checkOBSConnection]
-    /// for more information
-    this.checkConnectionTimer = Timer(
-      Duration(seconds: 5),
-      () => _checkOBSConnection(),
-    );
-  }
-
   void initialRequests() {
     NetworkHelper.makeRequest(
-        this.networkStore!.activeSession!.socket, RequestType.GetVersion);
+        GetIt.instance<NetworkStore>().activeSession!.socket,
+        RequestType.GetVersion);
     NetworkHelper.makeRequest(
-        this.networkStore!.activeSession!.socket, RequestType.GetSceneList);
-    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        GetIt.instance<NetworkStore>().activeSession!.socket,
+        RequestType.GetSceneList);
+    NetworkHelper.makeRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.GetSourceTypesList);
-    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+    NetworkHelper.makeRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.GetTransitionList);
-    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+    NetworkHelper.makeRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.GetCurrentTransition);
-    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+    NetworkHelper.makeRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.GetStudioModeStatus);
-    NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+    NetworkHelper.makeRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.GetRecordingStatus);
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
@@ -221,7 +198,7 @@ abstract class _DashboardStore with Store {
   }
 
   void handleStream() {
-    this.networkStore!.watchOBSStream().listen((message) {
+    GetIt.instance<NetworkStore>().watchOBSStream().listen((message) {
       if (message is BaseEvent) {
         _handleEvent(message);
       } else {
@@ -231,7 +208,7 @@ abstract class _DashboardStore with Store {
   }
 
   void requestPreviewImage() => NetworkHelper.makeRequest(
-        this.networkStore!.activeSession!.socket,
+        GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.TakeSourceScreenshot,
         {
           'sourceName': Hive.box(HiveKeys.Settings.name).get(
@@ -306,6 +283,21 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  @action
+  void init() {
+    this.handleStream();
+    this.initialRequests();
+
+    /// Since [setupNetworkStoreHandling] gets called as soon as we connect
+    /// to an OBS instance, we trigger this [Timer] which will check if
+    /// the connection is still alive periodically - see [_checkOBSConnection]
+    /// for more information
+    this.checkConnectionTimer = Timer(
+      Duration(seconds: 5),
+      () => _checkOBSConnection(),
+    );
+  }
+
   /// While using the device this app is running on while connected to an OBS
   /// instance, it may happen that we lose the connection due to OS background
   /// behaviour or because we lose network connection or other reasons. This function
@@ -316,20 +308,21 @@ abstract class _DashboardStore with Store {
   /// we get back to our [HomeView]
   @action
   Future<void> _checkOBSConnection() async {
-    if (this.networkStore!.activeSession?.socket.closeCode != null) {
+    if (GetIt.instance<NetworkStore>().activeSession?.socket.closeCode !=
+        null) {
       this.reconnecting = true;
       BaseResponse? response;
       int tries = 0;
 
       while (tries < 5 && response?.status != BaseResponse.ok) {
-        response = await this.networkStore!.setOBSWebSocket(
-              this.networkStore!.activeSession!.connection,
-              reconnect: true,
-            );
+        response = await GetIt.instance<NetworkStore>().setOBSWebSocket(
+          GetIt.instance<NetworkStore>().activeSession!.connection,
+          reconnect: true,
+        );
         tries++;
       }
       if (response?.status != BaseResponse.ok) {
-        this.networkStore!.obsTerminated = true;
+        GetIt.instance<NetworkStore>().obsTerminated = true;
       } else {
         this.reconnecting = false;
         this.handleStream();
@@ -416,7 +409,8 @@ abstract class _DashboardStore with Store {
               (this.latestStreamStats!.totalStreamTime * 1000);
         }
         if (this.latestStreamStats!.recording && !this.isRecording) {
-          NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+          NetworkHelper.makeRequest(
+              GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetRecordingStatus);
         }
         if (this.streamData == null) {
@@ -427,7 +421,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(
-            this.networkStore!.activeSession!.socket, RequestType.GetSceneList);
+            GetIt.instance<NetworkStore>().activeSession!.socket,
+            RequestType.GetSceneList);
         break;
       case EventType.SwitchScenes:
         SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
@@ -439,7 +434,7 @@ abstract class _DashboardStore with Store {
               ObservableList.of(_flattenSceneItems(switchSceneEvent.sources));
           this.currentSceneItems!.forEach((sceneItem) =>
               NetworkHelper.makeRequest(
-                  this.networkStore!.activeSession!.socket,
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
                   RequestType.GetMute,
                   {'source': sceneItem.name}));
         }
@@ -468,9 +463,11 @@ abstract class _DashboardStore with Store {
         SwitchTransitionEvent switchTransitionEventEvent =
             SwitchTransitionEvent(event.json);
         this.currentTransitionName = switchTransitionEventEvent.transitionName;
-        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetTransitionList);
-        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetCurrentTransition);
         break;
       case EventType.StudioModeSwitched:
@@ -480,7 +477,7 @@ abstract class _DashboardStore with Store {
         this.studioMode = studioModeSwitchedEvent.newState;
 
         NetworkHelper.makeRequest(
-          this.networkStore!.activeSession!.socket,
+          GetIt.instance<NetworkStore>().activeSession!.socket,
           Hive.box(HiveKeys.Settings.name).get(
                       SettingsKeys.ExposeStudioControls.name,
                       defaultValue: false) &&
@@ -502,7 +499,7 @@ abstract class _DashboardStore with Store {
               _flattenSceneItems(previewSceneChangedEvent.sources));
           this.currentSceneItems!.forEach((sceneItem) =>
               NetworkHelper.makeRequest(
-                  this.networkStore!.activeSession!.socket,
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
                   RequestType.GetMute,
                   {'source': sceneItem.name}));
         }
@@ -510,7 +507,8 @@ abstract class _DashboardStore with Store {
       case EventType.SceneItemAdded:
         // SceneItemAddedEvent sceneItemAddedEvent =
         //     SceneItemAddedEvent(event.json);
-        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetCurrentScene);
         break;
       case EventType.SceneItemRemoved:
@@ -531,7 +529,8 @@ abstract class _DashboardStore with Store {
       case EventType.SourceOrderChanged:
         // SourceOrderChangedEvent sourceOrderChangedEvent =
         //     SourceOrderChangedEvent(event.json);
-        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetCurrentScene);
         break;
       case EventType.SourceVolumeChanged:
@@ -569,7 +568,7 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.Exiting:
         await this.finishPastStreamData();
-        this.networkStore!.obsTerminated = true;
+        GetIt.instance<NetworkStore>().obsTerminated = true;
         break;
       default:
         break;
@@ -604,8 +603,10 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getCurrentSceneResponse.sources));
         this.currentSceneItems!.forEach((sceneItem) =>
-            NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
-                RequestType.GetMute, {'source': sceneItem.name}));
+            NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.GetMute,
+                {'source': sceneItem.name}));
         break;
       case RequestType.GetPreviewScene:
         GetPreviewSceneResponse getPreviewSceneResponse =
@@ -615,8 +616,10 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getPreviewSceneResponse.sources));
         this.currentSceneItems!.forEach((sceneItem) =>
-            NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
-                RequestType.GetMute, {'source': sceneItem.name}));
+            NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.GetMute,
+                {'source': sceneItem.name}));
         break;
       case RequestType.GetTransitionList:
         GetTransitionListResponse getTransitionListResponse =
@@ -642,7 +645,7 @@ abstract class _DashboardStore with Store {
                 defaultValue: false) &&
             this.studioMode) {
           NetworkHelper.makeRequest(
-            this.networkStore!.activeSession!.socket,
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetPreviewScene,
           );
         }
@@ -673,31 +676,31 @@ abstract class _DashboardStore with Store {
             GetSpecialSourcesResponse(response.json);
         if (getSpecialSourcesResponse.desktop1 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore!.activeSession!.socket,
+              GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.desktop1});
         }
         if (getSpecialSourcesResponse.desktop2 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore!.activeSession!.socket,
+              GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.desktop2});
         }
         if (getSpecialSourcesResponse.mic1 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore!.activeSession!.socket,
+              GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic1});
         }
         if (getSpecialSourcesResponse.mic2 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore!.activeSession!.socket,
+              GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic2});
         }
         if (getSpecialSourcesResponse.mic3 != null) {
           NetworkHelper.makeRequest(
-              this.networkStore!.activeSession!.socket,
+              GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetVolume,
               {'source': getSpecialSourcesResponse.mic3});
         }
@@ -718,9 +721,11 @@ abstract class _DashboardStore with Store {
         this.sourceTypes = getSourceTypesList.types;
         // (response.json['types'] as List<dynamic>)
         //     .forEach((type) => print(type['typeId']));
-        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetCurrentScene);
-        NetworkHelper.makeRequest(this.networkStore!.activeSession!.socket,
+        NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetSpecialSources);
         break;
       case RequestType.GetVolume:

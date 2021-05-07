@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-import '../../../../../types/extensions/int.dart';
 import '../../../../../shared/general/formatted_text.dart';
 import '../../../../../stores/views/dashboard.dart';
+import '../../../../../types/extensions/int.dart';
 import 'stats_container.dart';
 
 class Stats extends StatefulWidget {
@@ -22,7 +22,7 @@ class _StatsState extends State<Stats> {
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = Provider.of<DashboardStore>(context);
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return Observer(builder: (_) {
       return Column(

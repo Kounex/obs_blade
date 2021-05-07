@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
-import 'package:provider/provider.dart';
 
 import '../../../models/connection.dart';
 import '../../../models/hidden_scene.dart';
@@ -15,7 +15,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.read<NetworkStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
     Box<Connection> box = Hive.box<Connection>(HiveKeys.SavedConnections.name);
     return InputDialog(

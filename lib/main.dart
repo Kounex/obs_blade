@@ -2,12 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obs_blade/models/app_log.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
+import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/stores/shared/tabs.dart';
+import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/stores/views/home.dart';
+import 'package:obs_blade/stores/views/intro.dart';
+import 'package:obs_blade/stores/views/logs.dart';
+import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 
 import 'app.dart';
@@ -54,20 +62,21 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   Widget build(BuildContext context) => this.widget.app;
 }
 
-bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
-        Hive.box<AppLog>(HiveKeys.AppLog.name)
-            .values
-            .where((log) => level.contains(log.level)))
-    .reversed
-    .take(5 * level.length)
-    .any((prevLog) =>
-        DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
-        prevLog.entry == entry);
+void _initializeStores() {
+  /// Shared stores used app-wide
+  GetIt.instance.registerLazySingleton<NetworkStore>(() => NetworkStore());
+  GetIt.instance.registerLazySingleton<TabsStore>(() => TabsStore());
 
-void main() async {
-  /// Initialize Date Formatting - using European style
-  await initializeDateFormatting('de_DE', null);
+  /// View stores designated for specific views
+  GetIt.instance.registerLazySingleton<IntroStore>(() => IntroStore());
+  GetIt.instance.registerLazySingleton<HomeStore>(() => HomeStore());
+  GetIt.instance.registerLazySingleton<DashboardStore>(() => DashboardStore());
+  GetIt.instance
+      .registerLazySingleton<StatisticsStore>(() => StatisticsStore());
+  GetIt.instance.registerLazySingleton<LogsStore>(() => LogsStore());
+}
 
+Future<void> _initializeHive() async {
   await Hive.initFlutter();
 
   /// Classes which represent models which teherfore get persisted
@@ -114,6 +123,27 @@ void main() async {
     HiveKeys.Settings.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
+}
+
+bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
+        Hive.box<AppLog>(HiveKeys.AppLog.name)
+            .values
+            .where((log) => level.contains(log.level)))
+    .reversed
+    .take(5 * level.length)
+    .any((prevLog) =>
+        DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
+        prevLog.entry == entry);
+
+void main() async {
+  /// Initialize Date Formatting - using European style
+  await initializeDateFormatting('de_DE', null);
+
+  /// Create all store objects and make them available in the app (DI)
+  _initializeStores();
+
+  /// Create all hive objects with references to the persistant boxes
+  await _initializeHive();
 
   runZonedGuarded(
     () async {

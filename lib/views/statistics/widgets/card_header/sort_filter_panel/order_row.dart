@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:obs_blade/shared/animator/order_button.dart';
 import 'package:obs_blade/shared/general/cupertino_dropdown.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../stores/views/statistics.dart';
 
@@ -18,7 +18,7 @@ const List<FilterType> kActiveFilterTypes = [
 class OrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    StatisticsStore statisticsStore = context.read<StatisticsStore>();
+    StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Row(
       children: [

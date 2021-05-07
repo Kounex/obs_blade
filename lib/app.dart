@@ -1,20 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/stores/views/logs.dart';
-import 'package:obs_blade/utils/built_in_themes.dart';
-import 'package:provider/provider.dart';
 
 import 'models/custom_theme.dart';
-import 'stores/shared/network.dart';
-import 'stores/shared/tabs.dart';
+import 'shared/general/hive_builder.dart';
 import 'types/enums/hive_keys.dart';
 import 'types/enums/settings_keys.dart';
+import 'types/extensions/string.dart';
+import 'utils/built_in_themes.dart';
 import 'utils/routing_helper.dart';
 import 'utils/styling_helper.dart';
-import 'types/extensions/string.dart';
 
 class App extends StatelessWidget {
   ThemeData _getCurrentTheme(Box settingsBox) {
@@ -161,40 +156,33 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<NetworkStore>(create: (_) => NetworkStore()),
-        Provider<TabsStore>(create: (_) => TabsStore()),
-        Provider<LogsStore>(create: (_) => LogsStore()),
+    return HiveBuilder(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: [
+        SettingsKeys.TrueDark,
+        SettingsKeys.ReduceSmearing,
+        SettingsKeys.CustomTheme,
+        SettingsKeys.ActiveCustomThemeUUID,
       ],
-      child: HiveBuilder(
-        hiveKey: HiveKeys.Settings,
-        rebuildKeys: [
-          SettingsKeys.TrueDark,
-          SettingsKeys.ReduceSmearing,
-          SettingsKeys.CustomTheme,
-          SettingsKeys.ActiveCustomThemeUUID,
-        ],
-        builder: (context, Box settingsBox, child) => HiveBuilder<CustomTheme>(
-          hiveKey: HiveKeys.CustomTheme,
-          builder: (context, customThemeBox, child) {
-            return MaterialApp(
-              debugShowCheckedModeBanner: false,
-              theme: _getCurrentTheme(settingsBox),
-              initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
-                      defaultValue: false)
-                  ? AppRoutingKeys.Tabs.route
-                  : AppRoutingKeys.Intro.route,
-              onGenerateInitialRoutes: (initialRoute) => [
-                MaterialPageRoute(
-                  builder: RoutingHelper.appRoutes[initialRoute]!,
-                  settings: RouteSettings(name: initialRoute),
-                ),
-              ],
-              routes: RoutingHelper.appRoutes,
-            );
-          },
-        ),
+      builder: (context, Box settingsBox, child) => HiveBuilder<CustomTheme>(
+        hiveKey: HiveKeys.CustomTheme,
+        builder: (context, customThemeBox, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: _getCurrentTheme(settingsBox),
+            initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
+                    defaultValue: false)
+                ? AppRoutingKeys.Tabs.route
+                : AppRoutingKeys.Intro.route,
+            onGenerateInitialRoutes: (initialRoute) => [
+              MaterialPageRoute(
+                builder: RoutingHelper.appRoutes[initialRoute]!,
+                settings: RouteSettings(name: initialRoute),
+              ),
+            ],
+            routes: RoutingHelper.appRoutes,
+          );
+        },
       ),
     );
   }

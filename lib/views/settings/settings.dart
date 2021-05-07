@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info/package_info.dart';
-import 'package:provider/provider.dart';
+
 import 'package:wakelock/wakelock.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/hive_builder.dart';
@@ -51,8 +52,7 @@ class SettingsView extends StatelessWidget {
                             /// connected to an OBS instance, we will then activate [Wakelock]
                             /// now since otherwise it won't affect the current connection because
                             /// it will only trigger when entereing the [DashboardView]
-                            if (context
-                                    .read<TabsStore>()
+                            if (GetIt.instance<TabsStore>()
                                     .activeRoutePerNavigator[Tabs.Home] ==
                                 HomeTabRoutingKeys.Dashboard.route) {
                               Wakelock.enable();

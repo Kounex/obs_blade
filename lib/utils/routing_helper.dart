@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/views/settings/logs/log_detail/log_detail.dart';
+import 'package:get_it/get_it.dart';
 
 import '../tab_base.dart';
 import '../views/dashboard/dashboard.dart';

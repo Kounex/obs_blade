@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/statistics_date_range.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../shared/general/date_range/date_range.dart';

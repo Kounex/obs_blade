@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/general/hive_builder.dart';
@@ -44,7 +44,8 @@ class SavedConnections extends StatelessWidget {
                 } else {
                   return Observer(
                     builder: (_) => FutureBuilder<List<Connection>>(
-                      future: context.read<HomeStore>().autodiscoverConnections,
+                      future:
+                          GetIt.instance<HomeStore>().autodiscoverConnections,
                       builder: (context, snapshot) {
                         List<Connection> savedConnections =
                             savedConnectionsBox.values.toList();

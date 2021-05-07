@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/overlay/base_result.dart';
 
 import '../../../../shared/general/base_card.dart';
+import '../../../../shared/overlay/base_result.dart';
 
 class PlaceholderConnection extends StatelessWidget {
   final double height;

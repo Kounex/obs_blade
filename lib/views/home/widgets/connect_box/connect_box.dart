@@ -1,17 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/views/home/widgets/connect_box/switcher_card.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../stores/views/home.dart';
 import 'auto_discovery/auto_discovery.dart';
 import 'connect_form.dart';
+import 'switcher_card.dart';
 
 class ConnectBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.read<HomeStore>();
+    HomeStore landingStore = GetIt.instance<HomeStore>();
 
     return Align(
       child: Observer(

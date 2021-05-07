@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+
 import 'package:share/share.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
@@ -17,7 +18,7 @@ import 'widgets/log_entry.dart';
 class LogDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    LogsStore logsStore = context.read<LogsStore>();
+    LogsStore logsStore = GetIt.instance<LogsStore>();
     int dateMS = ModalRoute.of(context)!.settings.arguments as int;
 
     return Scaffold(

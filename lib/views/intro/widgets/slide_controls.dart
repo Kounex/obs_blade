@@ -2,8 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive/hive.dart';
-import 'package:provider/provider.dart';
+
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../stores/views/intro.dart';
@@ -24,7 +25,7 @@ class SlideControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    IntroStore introStore = context.read<IntroStore>();
+    IntroStore introStore = GetIt.instance<IntroStore>();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

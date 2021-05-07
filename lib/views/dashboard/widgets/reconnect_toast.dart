@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
-import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
-import 'package:obs_blade/shared/overlay/base_result.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:provider/provider.dart';
+
+import '../../../shared/general/base_card.dart';
+import '../../../shared/overlay/base_progress_indicator.dart';
+import '../../../shared/overlay/base_result.dart';
+import '../../../stores/views/dashboard.dart';
 
 class ReconnectToast extends StatefulWidget {
   @override
@@ -50,7 +51,7 @@ class _ReconnectToastState extends State<ReconnectToast>
 
     _disposers.add(
       reaction(
-        (_) => context.read<DashboardStore>().reconnecting,
+        (_) => GetIt.instance<DashboardStore>().reconnecting,
         (bool reconnecting) {
           if (reconnecting && _controllerReconnecting.isDismissed) {
             _controllerReconnecting.forward();

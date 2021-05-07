@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../../models/hidden_scene.dart';
 import '../../../../../shared/general/hive_builder.dart';
@@ -15,8 +15,8 @@ import 'scene_button.dart';
 class SceneButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
-    NetworkStore networkStore = context.read<NetworkStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
     return LayoutBuilder(builder: (context, constraints) {
       double size = 100.0;

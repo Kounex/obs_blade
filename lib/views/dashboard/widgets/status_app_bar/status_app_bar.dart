@@ -1,22 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/shared/general/themed/themed_cupertino_button.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
-import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
+import '../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
+import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import 'general_actions.dart';
 
 class StatusAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return TransculentSliverAppBar(
       pinned: true,
@@ -42,7 +42,7 @@ class StatusAppBar extends StatelessWidget {
                         HomeTabRoutingKeys.Landing.route,
                         arguments: ModalRoute.of(context)!.settings.arguments,
                       );
-                      context.read<NetworkStore>().closeSession();
+                      GetIt.instance<NetworkStore>().closeSession();
                     },
                   ),
                 ),

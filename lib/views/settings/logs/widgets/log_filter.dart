@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/animator/order_button.dart';
@@ -12,7 +12,7 @@ import '../../../../stores/views/logs.dart';
 class LogFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    LogsStore logsStore = context.read<LogsStore>();
+    LogsStore logsStore = GetIt.instance<LogsStore>();
 
     return BaseCard(
       topPadding: 12.0,
@@ -73,6 +73,7 @@ class LogFilter extends StatelessWidget {
                   ),
                   SizedBox(width: 12.0),
                   OrderButton(
+                    order: logsStore.filterOrder,
                     toggle: logsStore.toggleFilterOrder,
                   ),
                 ],

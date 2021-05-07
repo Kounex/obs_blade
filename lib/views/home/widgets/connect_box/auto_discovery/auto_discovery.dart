@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:keyboard_actions/external/platform_check/platform_check.dart';
-import 'package:obs_blade/shared/general/keyboard_number_header.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/animator/fader.dart';
+import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/question_mark_tooltip.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../../stores/views/home.dart';
 import '../../../../../utils/validation_helper.dart';
+import '../../../../settings/widgets/action_block.dart/light_divider.dart';
 import 'result_entry.dart';
 import 'session_tile.dart';
 
@@ -26,7 +25,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = context.read<HomeStore>();
+    HomeStore landingStore = GetIt.instance<HomeStore>();
 
     return Column(
       // mainAxisAlignment: MainAxisAlignment.center,

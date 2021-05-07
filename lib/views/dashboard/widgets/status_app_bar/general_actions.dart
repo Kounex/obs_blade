@@ -1,14 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../shared/general/hive_builder.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
@@ -22,8 +20,8 @@ import '../save_edit_connection_dialog.dart';
 class GeneralActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    NetworkStore networkStore = context.read<NetworkStore>();
-    DashboardStore dashboardStore = context.read<DashboardStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
+    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<Connection>(
       hiveKey: HiveKeys.SavedConnections,

@@ -414,11 +414,11 @@ mixin _$DashboardStore on _DashboardStore, Store {
       ActionController(name: '_DashboardStore');
 
   @override
-  void setupNetworkStoreHandling(NetworkStore networkStore) {
+  void init() {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
-        name: '_DashboardStore.setupNetworkStoreHandling');
+        name: '_DashboardStore.init');
     try {
-      return super.setupNetworkStoreHandling(networkStore);
+      return super.init();
     } finally {
       _$_DashboardStoreActionController.endAction(_$actionInfo);
     }
