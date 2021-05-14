@@ -5,6 +5,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/dialogs/confirmation.dart';
@@ -50,6 +52,7 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
+    super.initState();
     GetIt.instance.resetLazySingleton<DashboardStore>();
 
     /// Initiate the [DashboardStore] object by initiating socket listeners
@@ -70,11 +73,11 @@ class _DashboardViewState extends State<DashboardView> {
 
     when(
         (_) => GetIt.instance<NetworkStore>().obsTerminated,
-        () => Navigator.of(context).pushReplacementNamed(
-              HomeTabRoutingKeys.Landing.route,
-              arguments: ModalRoute.of(context)!.settings.arguments,
+        () => SchedulerBinding.instance!.addPostFrameCallback(
+              (_) => Navigator.of(context).pushReplacementNamed(
+                  HomeTabRoutingKeys.Landing.route,
+                  arguments: ModalRoute.of(context)!.settings.arguments),
             ));
-    super.initState();
   }
 
   @override

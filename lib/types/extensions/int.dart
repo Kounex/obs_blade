@@ -11,8 +11,16 @@ extension IntStuff on int {
   String millisecondsToFormattedDateString() =>
       DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this));
 
-  String millisecondsToFormattedTimeString() =>
-      DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this));
+  String millisecondsToFormattedTimeString([bool withoutSeconds = false]) =>
+      (withoutSeconds ? DateFormat.Hm('de_DE') : DateFormat.Hms('de_DE'))
+          .format(DateTime.fromMillisecondsSinceEpoch(this));
+
+  String millisecondsToFileNameDate() {
+    DateTime now = DateTime.fromMillisecondsSinceEpoch(this);
+    String month = (now.month < 10 ? '0' : '') + now.month.toString();
+    String day = (now.day < 10 ? '0' : '') + now.day.toString();
+    return '${now.year}$month$day';
+  }
 
   bool millisecondsSameDay(int ms) {
     DateTime date = DateTime.fromMillisecondsSinceEpoch(this);

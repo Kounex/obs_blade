@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart' as MobX;
+import 'package:obs_blade/models/enums/log_level.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';
@@ -71,14 +73,22 @@ class _HomeViewState extends State<HomeView> {
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
     MobX.when((_) => GetIt.instance<NetworkStore>().obsTerminated, () {
-      SchedulerBinding.instance!.addPostFrameCallback((_) =>
+      SchedulerBinding.instance!.addPostFrameCallback((_) {
+        GeneralHelper.advLog(
+          'Your connection to OBS has been lost and the app was not able to reconnect!',
+          level: LogLevel.Warning,
+          includeInLogs: true,
+        );
+        if (this.mounted)
           ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: InfoDialog(
                 body:
                     'Your connection to OBS has been lost and the app was not able to reconnect!'),
-          ).then((_) =>
-              GetIt.instance<HomeStore>().updateAutodiscoverConnections()));
+          ).then(
+            (_) => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
+          );
+      });
     });
 
     /// Once we recognize a connection attempt inside our reaction ([connectionInProgress] is true)

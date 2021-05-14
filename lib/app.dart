@@ -1,3 +1,4 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -169,6 +170,8 @@ class App extends StatelessWidget {
         builder: (context, customThemeBox, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
+            locale: DevicePreview.locale(context),
+            builder: DevicePreview.appBuilder,
             theme: _getCurrentTheme(settingsBox),
             initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
                     defaultValue: false)

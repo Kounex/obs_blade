@@ -1,8 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-
-import 'package:share/share.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/dialogs/confirmation.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
+import 'package:share/share.dart';
 
 import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
@@ -13,9 +17,76 @@ import '../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../../stores/views/logs.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/extensions/int.dart';
+import '../../../../utils/general_helper.dart';
 import 'widgets/log_entry.dart';
 
 class LogDetailView extends StatelessWidget {
+  Future<File?> _createLogFile(
+      List<Map<String, String>> jsonLogs, int timestampMS) async {
+    File logFile = File((await Directory.systemTemp.createTemp()).path +
+        '/${timestampMS.millisecondsToFileNameDate()}_obs_logs.json');
+
+    try {
+      logFile = await logFile.writeAsString(jsonEncode(jsonLogs));
+
+      return logFile;
+    } catch (e) {
+      GeneralHelper.advLog(
+        'Unable to create log file!\n$e',
+        level: LogLevel.Error,
+        includeInLogs: true,
+      );
+    }
+  }
+
+  Map<String, String> _addLogMetaData(String date, AppLog log) {
+    Map<String, String> logEntry = {};
+    logEntry.putIfAbsent('date', () => date);
+    logEntry.putIfAbsent('level', () => log.level.name);
+    logEntry.putIfAbsent('manual', () => log.manually.toString());
+
+    return logEntry;
+  }
+
+  Future<void> _createLogFileAndExport(
+      Map<String, List<AppLog>> mergedLogs) async {
+    List<Map<String, String>> jsonLogs = [];
+
+    mergedLogs.entries.forEach((dateLog) {
+      Map<String, String> logEntry =
+          _addLogMetaData(dateLog.key, dateLog.value.first);
+
+      dateLog.value.forEach((log) {
+        if (log.level.name != logEntry['level']) {
+          jsonLogs.add(logEntry);
+          logEntry = _addLogMetaData(dateLog.key, log);
+        }
+
+        logEntry['entry'] =
+            (logEntry['entry'] != null ? logEntry['entry']! + '\n' : '') +
+                log.entry +
+                (log.stackTrace != null ? '\n${log.stackTrace}' : '');
+      });
+
+      jsonLogs.add(logEntry);
+    });
+
+    File? logFile = await _createLogFile(
+        jsonLogs, mergedLogs.values.first.first.timestampMS);
+
+    if (logFile != null) {
+      try {
+        await Share.shareFiles([logFile.path], subject: 'OBS Blade Log');
+      } catch (e) {
+        GeneralHelper.advLog(
+          'Unable to share log file!\n$e',
+          level: LogLevel.Error,
+          includeInLogs: true,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     LogsStore logsStore = GetIt.instance<LogsStore>();
@@ -38,7 +109,8 @@ class LogDetailView extends StatelessWidget {
                 .forEach(
                   (log) => mergedLogs
                       .putIfAbsent(
-                          log.timestampMS.millisecondsToFormattedTimeString(),
+                          log.timestampMS
+                              .millisecondsToFormattedTimeString(true),
                           () => [])
                       .add(log),
                 );
@@ -51,37 +123,27 @@ class LogDetailView extends StatelessWidget {
                 actions: [
                   AppBarCupertinoActionEntry(
                     title: 'Export',
-                    onAction: () {
-                      String condensedLog = '';
-
-                      mergedLogs.entries.forEach((dateLog) {
-                        condensedLog += '<------${dateLog.key}------>\n';
-                        condensedLog +=
-                            'Level: ${dateLog.value.first.level.name}\n';
-                        condensedLog +=
-                            'Manual: ${dateLog.value.first.manually}\n\n';
-
-                        dateLog.value.forEach((log) {
-                          condensedLog += '${log.entry}\n';
-                          if (log.stackTrace != null)
-                            condensedLog += 'StackTrace: ${log.stackTrace}\n';
-                        });
-
-                        condensedLog += '<--------------------->\n';
-                      });
-
-                      Share.share(condensedLog, subject: 'OBS Blade Log');
-                    },
+                    onAction: () => _createLogFileAndExport(mergedLogs),
                   ),
                   AppBarCupertinoActionEntry(
                     title: 'Delete',
                     isDestructive: true,
                     onAction: () {
-                      mergedLogs.values.forEach(
-                        (logList) => logList.forEach(
-                            (log) => log.isInBox ? log.delete() : null),
+                      ModalHandler.showBaseDialog(
+                        context: context,
+                        dialogWidget: ConfirmationDialog(
+                            title: 'Delete Logs',
+                            body:
+                                'Are you sure you want to delete all logs listed here? This action can\'t be undone!',
+                            isYesDestructive: true,
+                            onOk: (_) {
+                              mergedLogs.values.forEach(
+                                (logList) => logList.forEach(
+                                    (log) => log.isInBox ? log.delete() : null),
+                              );
+                              Navigator.of(context).pop();
+                            }),
                       );
-                      Navigator.of(context).pop();
                     },
                   )
                 ],

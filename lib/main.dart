@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
@@ -153,13 +155,18 @@ void main() async {
       };
       runApp(
         LifecycleWatcher(
-          app: App(),
+          app: DevicePreview(
+            enabled: false,
+            builder: (context) => App(),
+          ),
         ),
       );
     },
     (Object error, StackTrace stack) {
-      GeneralHelper.advLog('$error');
-      GeneralHelper.advLog('$stack');
+      GeneralHelper.advLog(
+        '$error\n$stack',
+        level: LogLevel.Error,
+      );
       if (_isLogNew([LogLevel.Error], error.toString())) {
         Hive.box<AppLog>(HiveKeys.AppLog.name).add(
           AppLog(
@@ -191,7 +198,8 @@ void main() async {
         line = line.split(shouldLog ? '[ON]' : '[OFF]')[1].trim();
       }
 
-      if (shouldLog && _isLogNew([LogLevel.Info, LogLevel.Warning], line)) {
+      if (shouldLog &&
+          _isLogNew([LogLevel.Info, LogLevel.Warning, LogLevel.Error], line)) {
         Hive.box<AppLog>(HiveKeys.AppLog.name).add(
           AppLog(
             DateTime.now().millisecondsSinceEpoch,

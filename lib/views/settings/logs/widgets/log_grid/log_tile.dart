@@ -29,6 +29,10 @@ class LogTile extends StatelessWidget {
               .map((level) => StatusDot(
                     text: '',
                     color: level.color,
+                    // size: logs.where((log) => log.level == level).length /
+                    //         logs.length *
+                    //         5 +
+                    //     7.0,
                   )),
         ],
       ),

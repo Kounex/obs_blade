@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -309,10 +310,17 @@ abstract class _DashboardStore with Store {
   @action
   Future<void> _checkOBSConnection() async {
     if (GetIt.instance<NetworkStore>().activeSession?.socket.closeCode !=
-        null) {
+            null &&
+        !GetIt.instance<NetworkStore>().obsTerminated) {
       this.reconnecting = true;
       BaseResponse? response;
       int tries = 0;
+
+      GeneralHelper.advLog(
+        'Lost active connection to OBS, trying to reconnect',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
 
       while (tries < 5 && response?.status != BaseResponse.ok) {
         response = await GetIt.instance<NetworkStore>().setOBSWebSocket(
@@ -320,10 +328,26 @@ abstract class _DashboardStore with Store {
           reconnect: true,
         );
         tries++;
+        GeneralHelper.advLog(
+          '$tries. attempt to reconnect...',
+          level: LogLevel.Warning,
+          includeInLogs: true,
+        );
       }
       if (response?.status != BaseResponse.ok) {
+        GeneralHelper.advLog(
+          'Not able to reconnect to OBS, initiating termination process!',
+          level: LogLevel.Warning,
+          includeInLogs: true,
+        );
         GetIt.instance<NetworkStore>().obsTerminated = true;
       } else {
+        GeneralHelper.advLog(
+          'Successfully reconnected to OBS!',
+          level: LogLevel.Warning,
+          includeInLogs: true,
+        );
+
         this.reconnecting = false;
         this.handleStream();
         this.initialRequests();

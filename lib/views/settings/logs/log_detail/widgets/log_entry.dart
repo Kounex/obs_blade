@@ -23,11 +23,15 @@ class LogEntry extends StatelessWidget {
       if (temp.isEmpty || temp.last.level == log.level) {
         temp.add(log);
       } else {
+        temp.sort((log1, log2) => log1.timestampMS.compareTo(log2.timestampMS));
         groupedLogs.add([...temp]);
         temp.clear();
       }
     });
-    if (temp.isNotEmpty) groupedLogs.add([...temp]);
+    if (temp.isNotEmpty) {
+      temp.sort((log1, log2) => log1.timestampMS.compareTo(log2.timestampMS));
+      groupedLogs.add([...temp]);
+    }
 
     return BaseCard(
       topPadding: 12.0,
@@ -37,7 +41,7 @@ class LogEntry extends StatelessWidget {
         customHeader: Row(
           children: [
             SizedBox(
-              width: 84.0,
+              width: 64.0,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -45,16 +49,22 @@ class LogEntry extends StatelessWidget {
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: Theme.of(context).textTheme.bodyText1!.color!,
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodyText1!
+                              .color!
+                              .withOpacity(0.5),
                         ),
                       ),
                     ),
                     child: Text(dateFormatted),
                   ),
                   SizedBox(height: 4.0),
-                  Text(
-                    '${this.logs.length} entries',
-                    style: Theme.of(context).textTheme.caption,
+                  FittedBox(
+                    child: Text(
+                      '${this.logs.length} entries',
+                      style: Theme.of(context).textTheme.caption,
+                    ),
                   ),
                 ],
               ),
@@ -64,9 +74,14 @@ class LogEntry extends StatelessWidget {
                   .any((logs) => logs.any((log) => log.level == level))) ...[
                 SizedBox(width: 12.0),
                 SizedBox(
-                  width: 64.0,
+                  width: 48.0,
                   child: StatusDot(
                     text: level.name,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyText1!
+                        .copyWith(fontSize: 12.0),
+                    verticalSpacing: 6.0,
                     color: level.color,
                     direction: Axis.vertical,
                   ),
@@ -81,7 +96,10 @@ class LogEntry extends StatelessWidget {
             ...groupedLogs.map((levelLogs) => Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(levelLogs.first.level.prefix),
+                    SizedBox(
+                      width: 84.0,
+                      child: Text(levelLogs.first.level.prefix),
+                    ),
                     Expanded(
                       child: Container(
                         padding: EdgeInsets.only(left: 12.0),
@@ -102,10 +120,10 @@ class LogEntry extends StatelessWidget {
                               (log, index) => Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    (index + 1).toString(),
-                                  ),
-                                  SizedBox(width: 12.0),
+                                  // Text(
+                                  //   (index + 1).toString(),
+                                  // ),
+                                  // SizedBox(width: 12.0),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:

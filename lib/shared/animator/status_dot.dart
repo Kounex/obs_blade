@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 class StatusDot extends StatefulWidget {
   final double size;
+  final double horizontalSpacing;
+  final double verticalSpacing;
   final Color color;
   final String? text;
   final Axis direction;
@@ -11,6 +13,8 @@ class StatusDot extends StatefulWidget {
   StatusDot({
     Key? key,
     this.size = 12.0,
+    this.horizontalSpacing = 8.0,
+    this.verticalSpacing = 4.0,
     this.color = CupertinoColors.destructiveRed,
     this.text,
     this.direction = Axis.horizontal,
@@ -80,8 +84,12 @@ class _StatusDotState extends State<StatusDot>
       if (this.widget.text != null)
         Padding(
           padding: EdgeInsets.only(
-            top: this.widget.direction == Axis.horizontal ? 0.0 : 4.0,
-            left: this.widget.direction == Axis.horizontal ? 8.0 : 0.0,
+            top: this.widget.direction == Axis.horizontal
+                ? 0.0
+                : this.widget.verticalSpacing,
+            left: this.widget.direction == Axis.horizontal
+                ? this.widget.horizontalSpacing
+                : 0.0,
           ),
           child: Text(
             this.widget.text!,

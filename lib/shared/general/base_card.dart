@@ -40,7 +40,7 @@ class BaseCard extends StatelessWidget {
     this.title,
     this.titleWidget,
     this.trailingTitleWidget,
-    this.paddingChild = const EdgeInsets.all(24.0),
+    this.paddingChild = const EdgeInsets.all(18.0),
     this.topPadding = 24.0,
     this.rightPadding = 24.0,
     this.bottomPadding = 24.0,
