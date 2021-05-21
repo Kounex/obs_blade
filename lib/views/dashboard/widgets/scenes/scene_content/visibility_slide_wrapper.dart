@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -29,7 +30,7 @@ class VisibilitySlideWrapper extends StatefulWidget {
 }
 
 class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
-  SlidableController _controller = SlidableController();
+  // SlidableController _controller = SlidableController();
 
   List<ReactionDisposer> _disposers = [];
 
@@ -40,7 +41,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
   }
 
   void _registerReaction(
-      DashboardStore dashboardStore, SlidableState slidableState) {
+      DashboardStore dashboardStore, SlidableController slidableController) {
     _disposers.add(
       reaction(
         this.widget.sceneItemType == SceneItemType.Source
@@ -50,8 +51,8 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
           Future.delayed(
               Duration(milliseconds: 50),
               () => editVisibility
-                  ? slidableState.open()
-                  : slidableState.close());
+                  ? slidableController.openStartActionPane()
+                  : slidableController.close());
         },
       ),
     );
@@ -109,57 +110,65 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
           builder: (_) => Offstage(
             offstage: _isItemHidden(
                 dashboardStore, hiddenSceneItemsBox, hiddenSceneItem),
-            // (this.widget.sceneItem.parentGroupName != null &&
-            //             hiddenSceneItemsBox.values.toList().any(
-            //                 (hiddenParent) =>
-            //                     hiddenParent.name ==
-            //                         this.widget.sceneItem.parentGroupName &&
-            //                     (hiddenParent.sourceType != null
-            //                         ? hiddenParent.sourceType == 'group'
-            //                         : true)) ||
-            //         hiddenSceneItem != null) &&
-            //     !(this.widget.sceneItemType == SceneItemType.Source
-            //         ? dashboardStore.editSceneItemVisibility
-            //         : dashboardStore.editAudioVisibility),
             child: Slidable(
-              controller: _controller,
               closeOnScroll: false,
-              actionPane: SlidableScrollActionPane(),
-              actionExtentRatio: 0.2,
+              enabled: false,
               child: Builder(
                 builder: (context) {
                   _registerReaction(dashboardStore, Slidable.of(context)!);
                   return this.widget.child;
                 },
               ),
-              actions: [
-                IconSlideAction(
-                  caption: hiddenSceneItem != null ? 'Hidden' : 'Visible',
-                  color: hiddenSceneItem != null
-                      ? CupertinoColors.destructiveRed
-                      : Theme.of(context).buttonColor,
-                  icon: hiddenSceneItem != null
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  closeOnTap: false,
-                  onTap: () {
-                    if (hiddenSceneItem != null) {
-                      // if (hiddenSceneItemsBox.values.toList().where((hiddenChildItem) => hiddenChildItem.))
-                      hiddenSceneItem!.delete();
-                    } else {
-                      hiddenSceneItem = HiddenSceneItem(
-                        dashboardStore.activeSceneName!,
-                        this.widget.sceneItemType,
-                        this.widget.sceneItem.id,
-                        this.widget.sceneItem.name,
-                        this.widget.sceneItem.type,
-                      );
+              startActionPane: ActionPane(
+                motion: const BehindMotion(),
+                extentRatio: 0.2,
+                children: [
+                  CustomSlidableAction(
+                    backgroundColor: hiddenSceneItem != null
+                        ? CupertinoColors.destructiveRed
+                        : Theme.of(context).buttonColor,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Icon(
+                            hiddenSceneItem != null
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            size: 18.0,
+                          ),
+                        ),
+                        SizedBox(height: 2.0),
+                        Flexible(
+                          child: Text(
+                            hiddenSceneItem != null ? 'Hidden' : 'Visible',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyText2!
+                                .copyWith(fontSize: 12.0),
+                          ),
+                        ),
+                      ],
+                    ),
+                    autoClose: false,
+                    onPressed: (_) {
+                      if (hiddenSceneItem != null) {
+                        hiddenSceneItem!.delete();
+                      } else {
+                        hiddenSceneItem = HiddenSceneItem(
+                          dashboardStore.activeSceneName!,
+                          this.widget.sceneItemType,
+                          this.widget.sceneItem.id,
+                          this.widget.sceneItem.name,
+                          this.widget.sceneItem.type,
+                        );
 
-                      hiddenSceneItemsBox.add(hiddenSceneItem!);
-                    }
-                  },
-                ),
-              ],
+                        hiddenSceneItemsBox.add(hiddenSceneItem!);
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );

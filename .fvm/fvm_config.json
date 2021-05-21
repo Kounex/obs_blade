@@ -1,3 +1,4 @@
 {
-  "flutterSdkVersion": "master"
+  "flutterSdkVersion": "stable",
+  "flavors": {}
 }

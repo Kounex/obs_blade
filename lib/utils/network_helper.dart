@@ -60,7 +60,11 @@ class NetworkHelper {
       List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
 
       GeneralHelper.advLog(
-        'Autodiscover IPs: ' + baseIPs.toString(),
+        'Autodiscover IPs: ' +
+            baseIPs.map((ip) {
+              List<String> ipSplit = ip.split('.')..removeLast();
+              return '${ipSplit.join('.')}.0/24';
+            }).toString(),
       );
 
       /// Completer used to manully deal with Future. [Completer] enables us to

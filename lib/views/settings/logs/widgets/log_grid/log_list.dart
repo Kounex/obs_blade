@@ -1,17 +1,15 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/shared/general/column_separated.dart';
-import 'package:obs_blade/types/enums/order.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../models/app_log.dart';
 import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/column_separated.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/logs.dart';
 import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/order.dart';
 import '../../../../../types/extensions/int.dart';
 import 'log_tile.dart';
 
@@ -68,9 +66,12 @@ class LogList extends StatelessWidget {
                 paddingSeparator: EdgeInsets.all(0),
                 children: [
                   if (datesMSWithLogs.isEmpty)
-                    BaseResult(
-                      icon: BaseResultIcon.Missing,
-                      text: 'No logs found!',
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      child: BaseResult(
+                        icon: BaseResultIcon.Missing,
+                        text: 'No logs found!',
+                      ),
                     ),
                   ...datesMSWithLogs.map(
                     (dateMS) => LogTile(

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -155,31 +154,37 @@ void main() async {
       };
       runApp(
         LifecycleWatcher(
-          app: DevicePreview(
-            enabled: false,
-            builder: (context) => App(),
-          ),
+          app: App(),
         ),
       );
     },
     (Object error, StackTrace stack) {
       GeneralHelper.advLog(
-        '$error\n$stack',
+        '$error\n[STACK]$stack',
         level: LogLevel.Error,
+        includeInLogs: true,
       );
-      if (_isLogNew([LogLevel.Error], error.toString())) {
-        Hive.box<AppLog>(HiveKeys.AppLog.name).add(
-          AppLog(
-            DateTime.now().millisecondsSinceEpoch,
-            LogLevel.Error,
-            error.toString(),
-            stack.toString(),
-          ),
-        );
-      }
     },
-    zoneSpecification: ZoneSpecification(print: (self, parent, zone, line) {
-      parent.print(zone, line);
+    zoneSpecification: ZoneSpecification(
+        // errorCallback: (self, parent, zone, error, stackTrace) {
+        //   GeneralHelper.advLog(
+        //     '$error\n[STACK]$stackTrace',
+        //     level: LogLevel.Error,
+        //     includeInLogs: true,
+        //   );
+        //   return AsyncError(error, stackTrace);
+        // },
+        // handleUncaughtError: (self, parent, zone, error, stackTrace) =>
+        //     GeneralHelper.advLog(
+        //       '$error\n[STACK]$stackTrace',
+        //       level: LogLevel.Error,
+        //       includeInLogs: true,
+        //     ),
+        print: (self, parent, zone, line) {
+      /// First print it out to see them while debugging
+      parent.print(zone, '!!!!!!!!!!!!!$line');
+
+      String? stack;
 
       LogLevel level = LogLevel.Info;
       bool shouldLog = true;
@@ -196,6 +201,13 @@ void main() async {
         shouldLog = line.startsWith('[ON]');
 
         line = line.split(shouldLog ? '[ON]' : '[OFF]')[1].trim();
+
+        if (line.contains('[STACK]')) {
+          List<String> temp = line.split('[STACK]');
+
+          line = temp[0];
+          stack = temp[1];
+        }
       }
 
       if (shouldLog &&
@@ -205,7 +217,7 @@ void main() async {
             DateTime.now().millisecondsSinceEpoch,
             level,
             line,
-            null,
+            stack,
             manually,
           ),
         );

@@ -69,25 +69,33 @@ class LogEntry extends StatelessWidget {
                 ],
               ),
             ),
-            for (LogLevel level in LogLevel.values) ...[
-              if (groupedLogs
-                  .any((logs) => logs.any((log) => log.level == level))) ...[
-                SizedBox(width: 12.0),
-                SizedBox(
-                  width: 48.0,
-                  child: StatusDot(
-                    text: level.name,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1!
-                        .copyWith(fontSize: 12.0),
-                    verticalSpacing: 6.0,
-                    color: level.color,
-                    direction: Axis.vertical,
-                  ),
+            Flexible(
+              child: FittedBox(
+                child: Row(
+                  children: [
+                    for (LogLevel level in LogLevel.values) ...[
+                      if (groupedLogs.any(
+                          (logs) => logs.any((log) => log.level == level))) ...[
+                        SizedBox(width: 12.0),
+                        SizedBox(
+                          width: 48.0,
+                          child: StatusDot(
+                            text: level.name,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyText1!
+                                .copyWith(fontSize: 12.0),
+                            verticalSpacing: 6.0,
+                            color: level.color,
+                            direction: Axis.vertical,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ],
         ),
         expandedBody: ColumnSeparated(
