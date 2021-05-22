@@ -36,7 +36,7 @@ class SocialBlock extends StatelessWidget {
     required this.socialInfos,
     this.topPadding = 18.0,
     this.bottomPadding = 18.0,
-  }) : assert(socialInfos != null && socialInfos.length > 0);
+  }) : assert(socialInfos.length > 0);
 
   Future<void> _handleSocialTap(
       BuildContext context, SocialEntry social) async {

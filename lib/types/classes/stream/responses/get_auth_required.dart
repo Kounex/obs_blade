@@ -13,5 +13,5 @@ class GetAuthRequiredResponse extends BaseResponse {
   String get challenge => this.json['challenge'];
 
   /// Used to authentication if required to
-  String get salt => this.json['salt'];
+  String? get salt => this.json['salt'];
 }

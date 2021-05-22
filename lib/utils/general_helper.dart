@@ -1,6 +1,4 @@
-import 'dart:developer';
-
-import 'package:obs_blade/models/enums/log_level.dart';
+import '../models/enums/log_level.dart';
 
 class GeneralHelper {
   static void advLog(

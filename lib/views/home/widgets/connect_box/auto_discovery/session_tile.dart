@@ -1,9 +1,8 @@
-import 'package:expandable/expandable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
 
 import '../../../../../models/connection.dart';
+import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../connect_form.dart';
 
 class SessionTile extends StatelessWidget {

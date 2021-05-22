@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:obs_blade/types/classes/stream/events/base.dart';
+import 'base.dart';
 
 /// Scene items within a scene have been reordered
 class SourceOrderChangedEvent extends BaseEvent {

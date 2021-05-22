@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 import 'scene_item.dart';
 
 class Scene {

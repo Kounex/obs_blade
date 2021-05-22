@@ -1,7 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/settings/logs/log_detail/log_detail.dart';
-import 'package:get_it/get_it.dart';
 
 import '../tab_base.dart';
 import '../views/dashboard/dashboard.dart';
@@ -11,6 +9,7 @@ import '../views/settings/about/about.dart';
 import '../views/settings/custom_theme/custom_theme.dart';
 import '../views/settings/data_management/data_management.dart';
 import '../views/settings/faq/faq.dart';
+import '../views/settings/logs/log_detail/log_detail.dart';
 import '../views/settings/logs/logs.dart';
 import '../views/settings/privacy_policy/privacy_policy.dart';
 import '../views/settings/settings.dart';

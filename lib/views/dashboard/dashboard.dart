@@ -5,8 +5,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/utils/general_helper.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/dialogs/confirmation.dart';

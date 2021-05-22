@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class SourceTypeCapabilities {
   /// True if source of this type provide frames asynchronously
   bool isAsync;

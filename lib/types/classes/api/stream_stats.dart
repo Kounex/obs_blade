@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class StreamStats {
   /// Current streaming state
   bool streaming;

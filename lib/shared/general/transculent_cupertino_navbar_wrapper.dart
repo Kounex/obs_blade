@@ -33,8 +33,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.customBody,
     this.actions,
   }) : assert((title != null || titleWidget != null) &&
-            (customBody == null ||
-                listViewChildren.isEmpty && customBody != null));
+            (customBody == null || listViewChildren.isEmpty));
 
   @override
   Widget build(BuildContext context) {

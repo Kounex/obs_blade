@@ -76,12 +76,10 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
         CupertinoDialogAction(
           child: Text(this.widget.okText),
           isDestructiveAction: this.widget.isYesDestructive,
-          onPressed: this.widget.onOk != null
-              ? () {
-                  if (this.widget.popDialogOnOk) Navigator.of(context).pop();
-                  this.widget.onOk(_dontShowChecked);
-                }
-              : null,
+          onPressed: () {
+            if (this.widget.popDialogOnOk) Navigator.of(context).pop();
+            this.widget.onOk(_dontShowChecked);
+          },
         ),
       ],
     );

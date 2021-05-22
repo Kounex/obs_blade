@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import 'output_flags.dart';
 
 class Output {

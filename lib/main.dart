@@ -136,6 +136,47 @@ bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
         DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
         prevLog.entry == entry);
 
+void _logging(String line) {
+  String? stack;
+
+  LogLevel level = LogLevel.Info;
+  bool shouldLog = true;
+  bool manually = false;
+
+  Iterable<LogLevel> lineLevel =
+      LogLevel.values.where((level) => line.startsWith(level.prefix));
+
+  if (lineLevel.length > 0) {
+    manually = true;
+    level = lineLevel.first;
+    line = line.split(level.prefix)[1];
+
+    shouldLog = line.startsWith('[ON]');
+
+    line = line.split(shouldLog ? '[ON]' : '[OFF]')[1].trim();
+
+    if (line.contains('[STACK]')) {
+      List<String> temp = line.split('[STACK]');
+
+      line = temp[0].trim();
+      stack = temp[1].trim();
+    }
+  }
+
+  if (shouldLog &&
+      _isLogNew([LogLevel.Info, LogLevel.Warning, LogLevel.Error], line)) {
+    Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+      AppLog(
+        DateTime.now().millisecondsSinceEpoch,
+        level,
+        line,
+        stack,
+        manually,
+      ),
+    );
+  }
+}
+
 void main() async {
   /// Initialize Date Formatting - using European style
   await initializeDateFormatting('de_DE', null);
@@ -147,7 +188,7 @@ void main() async {
   await _initializeHive();
 
   runZonedGuarded(
-    () async {
+    () {
       WidgetsFlutterBinding.ensureInitialized();
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.dumpErrorToConsole(details);
@@ -158,70 +199,16 @@ void main() async {
         ),
       );
     },
-    (Object error, StackTrace stack) {
-      GeneralHelper.advLog(
-        '$error\n[STACK]$stack',
-        level: LogLevel.Error,
-        includeInLogs: true,
-      );
-    },
+    (Object error, StackTrace stack) => _logging('$error\n[STACK]\n$stack'),
     zoneSpecification: ZoneSpecification(
-        // errorCallback: (self, parent, zone, error, stackTrace) {
-        //   GeneralHelper.advLog(
-        //     '$error\n[STACK]$stackTrace',
-        //     level: LogLevel.Error,
-        //     includeInLogs: true,
-        //   );
-        //   return AsyncError(error, stackTrace);
-        // },
-        // handleUncaughtError: (self, parent, zone, error, stackTrace) =>
-        //     GeneralHelper.advLog(
-        //       '$error\n[STACK]$stackTrace',
-        //       level: LogLevel.Error,
-        //       includeInLogs: true,
-        //     ),
-        print: (self, parent, zone, line) {
-      /// First print it out to see them while debugging
-      parent.print(zone, '!!!!!!!!!!!!!$line');
+      // handleUncaughtError: (self, parent, zone, error, stackTrace) =>
+      //     _logging('$error\n[STACK]\n$stackTrace'),
+      print: (self, parent, zone, line) {
+        /// First print it out to see them while debugging
+        parent.print(zone, '!!!!!!!!!!!!!$line');
 
-      String? stack;
-
-      LogLevel level = LogLevel.Info;
-      bool shouldLog = true;
-      bool manually = false;
-
-      Iterable<LogLevel> lineLevel =
-          LogLevel.values.where((level) => line.startsWith(level.prefix));
-
-      if (lineLevel.length > 0) {
-        manually = true;
-        level = lineLevel.first;
-        line = line.split(level.prefix)[1];
-
-        shouldLog = line.startsWith('[ON]');
-
-        line = line.split(shouldLog ? '[ON]' : '[OFF]')[1].trim();
-
-        if (line.contains('[STACK]')) {
-          List<String> temp = line.split('[STACK]');
-
-          line = temp[0];
-          stack = temp[1];
-        }
-      }
-
-      if (shouldLog &&
-          _isLogNew([LogLevel.Info, LogLevel.Warning, LogLevel.Error], line)) {
-        Hive.box<AppLog>(HiveKeys.AppLog.name).add(
-          AppLog(
-            DateTime.now().millisecondsSinceEpoch,
-            level,
-            line,
-            stack,
-            manually,
-          ),
-        );
-      }
-    }),
+        _logging(line);
+      },
+    ),
   );
 }

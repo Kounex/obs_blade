@@ -4,8 +4,7 @@ class DonateButton extends StatelessWidget {
   final String text;
   final double value;
 
-  DonateButton({required this.text, required this.value})
-      : assert(text != null && value != null);
+  DonateButton({required this.text, required this.value});
 
   @override
   Widget build(BuildContext context) {

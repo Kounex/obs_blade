@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class OutputFlags {
   ///Raw flags value
   int rawValue;

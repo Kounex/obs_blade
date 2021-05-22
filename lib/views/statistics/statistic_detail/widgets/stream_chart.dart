@@ -45,7 +45,7 @@ class StreamChart extends StatelessWidget {
     this.chartColor = Colors.white,
     required this.streamEndedMS,
     required this.totalStreamTime,
-  }) : assert(data != null && streamEndedMS != null && totalStreamTime != null);
+  });
 
   @override
   Widget build(BuildContext context) {

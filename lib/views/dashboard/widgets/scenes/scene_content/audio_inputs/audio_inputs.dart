@@ -51,8 +51,7 @@ class _AudioInputsState extends State<AudioInputs>
                 ),
               ),
               Column(
-                children: dashboardStore.globalAudioSceneItems != null &&
-                        dashboardStore.globalAudioSceneItems.length > 0
+                children: dashboardStore.globalAudioSceneItems.length > 0
                     ? dashboardStore.globalAudioSceneItems
                         .map(
                           (globalAudioItem) => VisibilitySlideWrapper(
@@ -81,8 +80,7 @@ class _AudioInputsState extends State<AudioInputs>
                 ),
               ),
               Column(
-                children: dashboardStore.currentAudioSceneItems != null &&
-                        dashboardStore.currentAudioSceneItems.length > 0
+                children: dashboardStore.currentAudioSceneItems.length > 0
                     ? dashboardStore.currentAudioSceneItems
                         .map(
                           (currentAudioSceneItem) => VisibilitySlideWrapper(

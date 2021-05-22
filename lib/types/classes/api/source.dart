@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class Source {
   /// Unique source name
   String name;

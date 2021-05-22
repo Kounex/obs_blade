@@ -125,7 +125,6 @@ abstract class _NetworkStore with Store {
         },
         onDone: () => GeneralHelper.advLog(
           'Initial WebSocket connection done',
-          includeInLogs: true,
         ),
         onError: (error) => GeneralHelper.advLog(
           'Error initial WebSocket connection (stores/shared/network.dart) | $error',

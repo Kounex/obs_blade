@@ -61,10 +61,12 @@ class NetworkHelper {
 
       GeneralHelper.advLog(
         'Autodiscover IPs: ' +
-            baseIPs.map((ip) {
-              List<String> ipSplit = ip.split('.')..removeLast();
-              return '${ipSplit.join('.')}.0/24';
-            }).toString(),
+            baseIPs.map(
+              (ip) {
+                List<String> ipSplit = ip.split('.')..removeLast();
+                return '${ipSplit.join('.')}.0/24';
+              },
+            ).toString(),
       );
 
       /// Completer used to manully deal with Future. [Completer] enables us to

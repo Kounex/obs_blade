@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import 'source_type_capabilities.dart';
 
 class SourceType {

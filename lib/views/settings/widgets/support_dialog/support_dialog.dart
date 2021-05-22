@@ -2,9 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:keyboard_actions/external/platform_check/platform_check.dart';
-import 'package:obs_blade/shared/general/social_block.dart';
-import 'package:obs_blade/utils/icons/jam_icons.dart';
+
+import '../../../../shared/general/social_block.dart';
 
 class SupportDialog extends StatelessWidget {
   @override

@@ -1,12 +1,10 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:obs_blade/shared/animator/order_button.dart';
-import 'package:obs_blade/shared/general/cupertino_dropdown.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../shared/animator/order_button.dart';
+import '../../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../../stores/views/statistics.dart';
 
 const List<FilterType> kActiveFilterTypes = [
