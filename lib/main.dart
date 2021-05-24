@@ -205,7 +205,7 @@ void main() async {
       //     _logging('$error\n[STACK]\n$stackTrace'),
       print: (self, parent, zone, line) {
         /// First print it out to see them while debugging
-        parent.print(zone, '!!!!!!!!!!!!!$line');
+        parent.print(zone, '$line');
 
         _logging(line);
       },

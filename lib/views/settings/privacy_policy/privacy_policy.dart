@@ -58,10 +58,12 @@ class PrivacyPolicyView extends StatelessWidget {
                       icon: JamIcons.google,
                       iconSize: 24.0,
                       link: 'https://policies.google.com/privacy',
+                      linkText: 'Google Privacy Policy',
                     ),
                     SocialEntry(
                       icon: JamIcons.apple,
                       link: 'https://apple.com/legal/privacy/en-ww/',
+                      linkText: 'Apple Privacy Policy',
                     ),
                   ],
                 ),
