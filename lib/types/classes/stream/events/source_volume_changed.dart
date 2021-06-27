@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// The volume of a source has changed
 class SourceVolumeChangedEvent extends BaseEvent {
-  SourceVolumeChangedEvent(json) : super(json);
+  SourceVolumeChangedEvent(Map<String, dynamic> json) : super(json);
 
   /// Source name
   String get sourceName => this.json['sourceName'];

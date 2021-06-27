@@ -1,7 +1,7 @@
 import 'base.dart';
 
 class SourceMuteStateChangedEvent extends BaseEvent {
-  SourceMuteStateChangedEvent(json) : super(json);
+  SourceMuteStateChangedEvent(Map<String, dynamic> json) : super(json);
 
   /// Source name
   String get sourceName => this.json['sourceName'];

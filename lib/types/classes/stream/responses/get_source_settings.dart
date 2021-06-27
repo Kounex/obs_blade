@@ -2,7 +2,7 @@ import 'package:obs_blade/types/classes/stream/responses/base.dart';
 
 /// Get settings of the specified source
 class GetSourceSettingsResponse extends BaseResponse {
-  GetSourceSettingsResponse(json) : super(json);
+  GetSourceSettingsResponse(Map<String, dynamic> json) : super(json);
 
   /// Source name
   String get sourceName => this.json['sourceName'];

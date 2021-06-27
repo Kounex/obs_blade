@@ -27,7 +27,10 @@ class ExposedControls extends StatelessWidget {
         exposedControls = List.from(exposedControls
             .expand((control) => [control, SizedBox(height: 12.0)]));
 
-        if (exposedControls.isNotEmpty) exposedControls.removeLast();
+        if (exposedControls.isNotEmpty) {
+          exposedControls.insert(0, SizedBox(height: 24.0));
+          exposedControls.removeLast();
+        }
 
         return Column(
           children: exposedControls,

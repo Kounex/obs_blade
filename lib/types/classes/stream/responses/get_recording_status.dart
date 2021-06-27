@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Get current recording status
 class GetRecordingStatusResponse extends BaseResponse {
-  GetRecordingStatusResponse(json) : super(json);
+  GetRecordingStatusResponse(Map<String, dynamic> json) : super(json);
 
   /// Current recording status
   bool get isRecording => this.json['isRecording'];

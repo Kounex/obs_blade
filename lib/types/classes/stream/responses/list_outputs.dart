@@ -3,7 +3,7 @@ import 'base.dart';
 
 /// List existing outputs
 class ListOutputsResponse extends BaseResponse {
-  ListOutputsResponse(json) : super(json);
+  ListOutputsResponse(Map<String, dynamic> json) : super(json);
 
   /// Outputs list
   List<Output> get outputs => (this.json['outputs'] as List<dynamic>)

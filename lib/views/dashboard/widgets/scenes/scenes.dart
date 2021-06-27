@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_collection_control.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import 'exposed_controls/exposed_controls.dart';
@@ -15,8 +16,12 @@ class Scenes extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 24.0),
         ExposedControls(),
+        SizedBox(height: 24.0),
+        Padding(
+          padding: const EdgeInsets.only(right: 12.0),
+          child: SceneCollectionControl(),
+        ),
         SizedBox(height: 24.0),
         Center(
           child: Padding(
@@ -34,23 +39,18 @@ class Scenes extends StatelessWidget {
         // ),
         Padding(
           padding: const EdgeInsets.only(
-            top: 32.0,
+            top: 24.0,
             left: 12.0,
             right: 12.0,
           ),
           child: StudioModeTransition(),
         ),
-
-        Padding(
-          padding: const EdgeInsets.only(top: 24.0),
-          child: ScenePreview(),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 24.0),
-          child: ResponsiveWidgetWrapper(
-            mobileWidget: SceneContentMobile(),
-            tabletWidget: SceneContent(),
-          ),
+        SizedBox(height: 24.0),
+        ScenePreview(),
+        SizedBox(height: 24.0),
+        ResponsiveWidgetWrapper(
+          mobileWidget: SceneContentMobile(),
+          tabletWidget: SceneContent(),
         ),
       ],
     );

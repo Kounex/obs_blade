@@ -2,7 +2,7 @@ import 'package:obs_blade/types/classes/stream/events/base.dart';
 
 /// A scene item has been removed from a scene
 class SceneItemRemovedEvent extends BaseEvent {
-  SceneItemRemovedEvent(json) : super(json);
+  SceneItemRemovedEvent(Map<String, dynamic> json) : super(json);
 
   /// Name of the scene
   String get sceneName => this.json['scene-name'];

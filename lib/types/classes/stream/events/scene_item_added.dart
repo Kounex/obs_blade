@@ -2,7 +2,7 @@ import 'package:obs_blade/types/classes/stream/events/base.dart';
 
 /// A scene item has been added to a scene
 class SceneItemAddedEvent extends BaseEvent {
-  SceneItemAddedEvent(json) : super(json);
+  SceneItemAddedEvent(Map<String, dynamic> json) : super(json);
 
   /// Name of the scene
   String get sceneName => this.json['scene-name'];

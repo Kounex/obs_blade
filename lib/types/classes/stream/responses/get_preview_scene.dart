@@ -3,7 +3,7 @@ import 'base.dart';
 
 /// Get the name of the currently previewed scene and its list of sources. Will return an error if Studio Mode is not enabled
 class GetPreviewSceneResponse extends BaseResponse {
-  GetPreviewSceneResponse(json) : super(json);
+  GetPreviewSceneResponse(Map<String, dynamic> json) : super(json);
 
   /// The name of the active preview scene
   String get name => this.json['name'];

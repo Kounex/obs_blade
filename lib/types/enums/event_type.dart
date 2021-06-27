@@ -20,6 +20,12 @@ enum EventType {
   /// Emitted every 2 seconds when stream is active
   StreamStatus,
 
+  /// Triggered when switching to another scene collection or when renaming the current scene collection
+  SceneCollectionChanged,
+
+  /// Triggered when a scene collection is created, added, renamed, or removed
+  SceneCollectionListChanged,
+
   /// Note: This event is not fired when the scenes are reordered
   ScenesChanged,
 

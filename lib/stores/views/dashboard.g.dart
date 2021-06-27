@@ -135,6 +135,38 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$currentSceneCollectionNameAtom =
+      Atom(name: '_DashboardStore.currentSceneCollectionName');
+
+  @override
+  String? get currentSceneCollectionName {
+    _$currentSceneCollectionNameAtom.reportRead();
+    return super.currentSceneCollectionName;
+  }
+
+  @override
+  set currentSceneCollectionName(String? value) {
+    _$currentSceneCollectionNameAtom
+        .reportWrite(value, super.currentSceneCollectionName, () {
+      super.currentSceneCollectionName = value;
+    });
+  }
+
+  final _$sceneCollectionsAtom = Atom(name: '_DashboardStore.sceneCollections');
+
+  @override
+  ObservableList<SceneCollection>? get sceneCollections {
+    _$sceneCollectionsAtom.reportRead();
+    return super.sceneCollections;
+  }
+
+  @override
+  set sceneCollections(ObservableList<SceneCollection>? value) {
+    _$sceneCollectionsAtom.reportWrite(value, super.sceneCollections, () {
+      super.sceneCollections = value;
+    });
+  }
+
   final _$activeSceneNameAtom = Atom(name: '_DashboardStore.activeSceneName');
 
   @override
@@ -511,6 +543,8 @@ goneLiveMS: ${goneLiveMS},
 startedRecordingMS: ${startedRecordingMS},
 streamData: ${streamData},
 latestStreamStats: ${latestStreamStats},
+currentSceneCollectionName: ${currentSceneCollectionName},
+sceneCollections: ${sceneCollections},
 activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},

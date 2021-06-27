@@ -2,7 +2,7 @@ import 'package:obs_blade/types/classes/stream/responses/base.dart';
 
 /// Get the volume of the specified source
 class GetVersionResponse extends BaseResponse {
-  GetVersionResponse(json) : super(json);
+  GetVersionResponse(Map<String, dynamic> json) : super(json);
 
   /// OBSRemote compatible API version. Fixed to 1.1 for retrocompatibility
   num get version => this.json['version'];

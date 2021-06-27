@@ -4,7 +4,7 @@ import 'base.dart';
 /// authentication parameters challenge and salt
 /// (see "Authentication" for more information)
 class GetAuthRequiredResponse extends BaseResponse {
-  GetAuthRequiredResponse(json) : super(json);
+  GetAuthRequiredResponse(Map<String, dynamic> json) : super(json);
 
   /// Indicates whether authentication is required
   bool get authRequired => this.json['authRequired'];

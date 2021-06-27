@@ -6,6 +6,11 @@ import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
+import 'package:obs_blade/types/classes/api/scene_collection.dart';
+import 'package:obs_blade/types/classes/stream/events/scene_collection_changed.dart';
+import 'package:obs_blade/types/classes/stream/events/scene_collection_list_changed.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_current_scene_collection.dart';
+import 'package:obs_blade/types/classes/stream/responses/list_scene_collections.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -67,6 +72,10 @@ abstract class _DashboardStore with Store {
   @observable
   StreamStats? latestStreamStats;
 
+  @observable
+  String? currentSceneCollectionName;
+  @observable
+  ObservableList<SceneCollection>? sceneCollections;
   @observable
   String? activeSceneName;
   @observable
@@ -172,26 +181,41 @@ abstract class _DashboardStore with Store {
 
   void initialRequests() {
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetVersion);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetVersion,
+    );
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetSceneList);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.ListSceneCollections,
+    );
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetSourceTypesList);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetCurrentSceneCollection,
+    );
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetTransitionList);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetSceneList,
+    );
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetCurrentTransition);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetSourceTypesList,
+    );
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetStudioModeStatus);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetTransitionList,
+    );
     NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetRecordingStatus);
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetCurrentTransition,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetStudioModeStatus,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetRecordingStatus,
+    );
     // NetworkHelper.makeRequest(
     //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
     // NetworkHelper.makeRequest(
@@ -397,9 +421,10 @@ abstract class _DashboardStore with Store {
 
   @action
   Future<void> _handleEvent(BaseEvent event) async {
-    GeneralHelper.advLog(
-      'Incoming: ${event.eventType}',
-    );
+    if (event.eventType != null)
+      GeneralHelper.advLog(
+        'Event Incoming: ${event.eventType}',
+      );
     switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
@@ -442,6 +467,20 @@ abstract class _DashboardStore with Store {
         }
         this.streamData!.addStreamStats(this.latestStreamStats!);
         await this.streamData!.save();
+        break;
+      case EventType.SceneCollectionChanged:
+        SceneCollectionChangedEvent sceneCollectionChangedEvent =
+            SceneCollectionChangedEvent(event.json);
+
+        this.currentSceneCollectionName =
+            sceneCollectionChangedEvent.sceneCollection;
+        break;
+      case EventType.SceneCollectionListChanged:
+        SceneCollectionListChangedEvent sceneCollectionListChangedEvent =
+            SceneCollectionListChangedEvent(event.json);
+
+        this.sceneCollections =
+            ObservableList.of(sceneCollectionListChangedEvent.sceneCollections);
         break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(
@@ -602,7 +641,7 @@ abstract class _DashboardStore with Store {
   @action
   void _handleResponse(BaseResponse response) {
     GeneralHelper.advLog(
-      'Incoming: ${response.requestType}',
+      'Response Incoming: ${response.requestType}',
     );
     switch (response.requestType) {
       case RequestType.GetVersion:
@@ -619,6 +658,20 @@ abstract class _DashboardStore with Store {
 
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
+        break;
+      case RequestType.ListSceneCollections:
+        ListSceneCollectionsResponse listSceneCollectionsResponse =
+            ListSceneCollectionsResponse(response.json);
+
+        this.sceneCollections =
+            ObservableList.of(listSceneCollectionsResponse.sceneCollections);
+        break;
+      case RequestType.GetCurrentSceneCollection:
+        GetCurrentSceneCollectionResponse getCurrentSceneCollectionResponse =
+            GetCurrentSceneCollectionResponse(response.json);
+
+        this.currentSceneCollectionName =
+            getCurrentSceneCollectionResponse.scName;
         break;
       case RequestType.GetCurrentScene:
         GetCurrentSceneResponse getCurrentSceneResponse =

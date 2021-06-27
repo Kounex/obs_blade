@@ -2,7 +2,7 @@ import 'package:obs_blade/types/classes/stream/responses/base.dart';
 
 /// Get the volume of the specified source
 class GetVolumeResponse extends BaseResponse {
-  GetVolumeResponse(json) : super(json);
+  GetVolumeResponse(Map<String, dynamic> json) : super(json);
 
   /// Source name
   String get name => this.json['name'];

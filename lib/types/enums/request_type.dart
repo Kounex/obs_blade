@@ -97,6 +97,16 @@ enum RequestType {
   /// No specified parameters
   GetPreviewScene,
 
+  /// Get the name of the current scene collection
+  ///
+  /// No specified parameters
+  GetCurrentSceneCollection,
+
+  /// List available scene collections
+  ///
+  /// No specified parameters
+  ListSceneCollections,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
@@ -188,4 +198,9 @@ enum RequestType {
   /// (Optional) {'with-transition.name': String } - Name of the transition
   /// (Optional) {'with-transition.duration': int } - Transition duration (in milliseconds)
   TransitionToProgram,
+
+  /// Change the active scene collection
+  ///
+  /// {'sc-name': String } - Name of the desired scene collection
+  SetCurrentSceneCollection,
 }

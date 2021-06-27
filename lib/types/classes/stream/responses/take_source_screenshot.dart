@@ -2,7 +2,7 @@ import 'package:obs_blade/types/classes/stream/responses/base.dart';
 
 /// Get the volume of the specified source
 class TakeSourceScreenshotResponse extends BaseResponse {
-  TakeSourceScreenshotResponse(json) : super(json);
+  TakeSourceScreenshotResponse(Map<String, dynamic> json) : super(json);
 
   /// Source name
   String get sourceName => this.json['sourceName'];
