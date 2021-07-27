@@ -71,7 +71,7 @@ class SettingsView extends StatelessWidget {
                   ],
                 ),
                 ActionBlock(
-                  title: 'DASHBOARD',
+                  title: 'Dashboard',
                   blockEntries: [
                     BlockEntry(
                       leading: Icons.live_tv_rounded,
@@ -137,6 +137,20 @@ class SettingsView extends StatelessWidget {
                         onChanged: (enforceTabletMode) {
                           settingsBox.put(SettingsKeys.EnforceTabletMode.name,
                               enforceTabletMode);
+                        },
+                      ),
+                    ),
+                    BlockEntry(
+                      leading: CupertinoIcons.person_2_square_stack,
+                      leadingSize: 30.0,
+                      title: 'Scene Preview',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.ExposeScenePreview.name,
+                            defaultValue: true),
+                        onChanged: (exposeScenePreview) {
+                          settingsBox.put(SettingsKeys.ExposeScenePreview.name,
+                              exposeScenePreview);
                         },
                       ),
                     ),

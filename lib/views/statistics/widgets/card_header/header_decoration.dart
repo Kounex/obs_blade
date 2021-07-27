@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../shared/general/base/base_card.dart';
+
 class IconClipper extends CustomClipper<Path> {
   final double xCut;
   final double yCut;
@@ -45,7 +47,7 @@ class HeaderDecoration extends StatelessWidget {
     this.iconYOffset = -42.0,
     this.iconXCut = 28.0,
     this.iconYCut = 42.0,
-    this.iconCornerRadius = 12.0,
+    this.iconCornerRadius = kBaseCardBorderRadius,
   });
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
 
 const double kBaseCardMaxWidth = 772.0;
+const double kBaseCardBorderRadius = 10.0;
 
 class BaseCard extends StatelessWidget {
   final Widget child;
@@ -69,7 +70,7 @@ class BaseCard extends StatelessWidget {
             ? Colors.transparent
             : null,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
+          borderRadius: BorderRadius.circular(kBaseCardBorderRadius),
           side: this.paintBorder
               ? BorderSide(
                   color: this.borderColor ??

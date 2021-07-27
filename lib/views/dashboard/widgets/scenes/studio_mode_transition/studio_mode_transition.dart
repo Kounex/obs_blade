@@ -34,11 +34,12 @@ class StudioModeTransition extends StatelessWidget {
                   child: SizedBox(
                     width: 128.0,
                     child: BaseButton(
+                      text: 'Transition',
+                      secondary: true,
                       onPressed: () => NetworkHelper.makeRequest(
                         GetIt.instance<NetworkStore>().activeSession!.socket,
                         RequestType.TransitionToProgram,
                       ),
-                      text: 'Transition',
                     ),
                   ),
                 ),

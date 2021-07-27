@@ -47,7 +47,6 @@ class Scenes extends StatelessWidget {
         ),
         SizedBox(height: 24.0),
         ScenePreview(),
-        SizedBox(height: 24.0),
         ResponsiveWidgetWrapper(
           mobileWidget: SceneContentMobile(),
           tabletWidget: SceneContent(),

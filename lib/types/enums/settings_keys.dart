@@ -59,6 +59,10 @@ enum SettingsKeys {
   /// instead of in the menu action list of the app bar
   ExposeStreamingControls,
 
+  /// [bool]: If the OBS scene preview should be shown in the dashboard (on by default)
+  /// but if someone wants to minimise their view, they can even remove that
+  ExposeScenePreview,
+
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
   /// ******************************************************************************
@@ -118,6 +122,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
         SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
+        SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:
             'dont-show-hiding-scene-items-warning',
