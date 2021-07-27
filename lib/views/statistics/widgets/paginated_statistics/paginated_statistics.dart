@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../models/past_stream_data.dart';
 import '../../../../stores/views/statistics.dart';
+import '../../../settings/widgets/action_block.dart/light_divider.dart';
 import '../stream_entry/stream_entry.dart';
 import 'pagination_control.dart';
 
@@ -48,14 +49,14 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
                       ((_page - 1) *
                               statisticsStore.amountStatisticEntries.number) +
                           index]),
-              separatorBuilder: (context, index) => Divider(height: 0),
+              separatorBuilder: (context, index) => LightDivider(),
               itemCount: min(
                   this.widget.filteredAndSortedStreamData.length -
                       ((_page - 1) *
                           statisticsStore.amountStatisticEntries.number),
                   statisticsStore.amountStatisticEntries.number),
             ),
-            Divider(height: 0),
+            LightDivider(),
             PaginationControl(
               currentPage: _page,
               amountPages: amountPages,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
+
 const double kBaseCardMaxWidth = 772.0;
 
 class BaseCard extends StatelessWidget {
@@ -105,11 +107,7 @@ class BaseCard extends StatelessWidget {
                   ],
                 ),
               ),
-            if (this.titleWidget != null || this.title != null)
-              Divider(
-                height: 0.0,
-                color: Theme.of(context).dividerColor,
-              ),
+            if (this.titleWidget != null || this.title != null) LightDivider(),
             Padding(
               padding: this.paddingChild,
               child: this.child,

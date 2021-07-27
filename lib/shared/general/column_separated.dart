@@ -34,7 +34,7 @@ class ColumnSeparated extends StatelessWidget {
       itemCount: this.children.length,
       separatorBuilder: (context, index) => Padding(
         padding: this.paddingSeparator + this.additionalPaddingSeparator,
-        child: this.lightDivider ? LightDivider() : Divider(height: 1.0),
+        child: this.lightDivider ? LightDivider() : LightDivider(),
       ),
       itemBuilder: (context, index) => this.children.elementAt(index),
     );

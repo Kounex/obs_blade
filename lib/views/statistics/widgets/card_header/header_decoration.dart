@@ -45,7 +45,7 @@ class HeaderDecoration extends StatelessWidget {
     this.iconYOffset = -42.0,
     this.iconXCut = 28.0,
     this.iconYCut = 42.0,
-    this.iconCornerRadius = 4.0,
+    this.iconCornerRadius = 12.0,
   });
 
   @override

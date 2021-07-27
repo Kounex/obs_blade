@@ -2,20 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'header_decoration.dart';
 
-class IconClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => Path()
-    ..moveTo(0.0, 42.0)
-    ..lineTo(size.width - 32, 42.0)
-    ..quadraticBezierTo(size.width - 28, 42.0, size.width - 28, 46.0)
-    ..lineTo(size.width - 28, size.height)
-    ..lineTo(0.0, size.height)
-    ..close();
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
-}
-
 class CardHeader extends StatelessWidget {
   final String title;
   final String description;

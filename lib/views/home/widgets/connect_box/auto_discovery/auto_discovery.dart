@@ -70,7 +70,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             ),
           ),
         ),
-        Divider(height: 1.0),
+        LightDivider(),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
             future: landingStore.autodiscoverConnections,

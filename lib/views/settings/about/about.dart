@@ -1,14 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/base_button.dart';
-import 'package:obs_blade/shared/general/themed/themed_rich_text.dart';
 
+import '../../../shared/general/base/base_button.dart';
 import '../../../shared/general/base/base_card.dart';
 import '../../../shared/general/social_block.dart';
 import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
+import '../../../shared/general/themed/themed_rich_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../utils/icons/jam_icons.dart';
 import '../../../utils/modal_handler.dart';
+import '../widgets/action_block.dart/light_divider.dart';
 import 'widgets/about_header.dart';
 import 'widgets/license_modal/license_modal.dart';
 
@@ -100,7 +101,7 @@ class AboutView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Divider(height: 0),
+                        LightDivider(),
                         Padding(
                           padding:
                               const EdgeInsets.only(top: 14.0, bottom: 8.0),
