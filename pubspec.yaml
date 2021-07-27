@@ -115,3 +115,68 @@ flutter:
         - family: JamIcons
           fonts:
               - asset: assets/fonts/JamIcons.ttf
+        # - family: Montserrat
+        #   fonts:
+        #       - asset: assets/fonts/Montserrat/Montserrat-Bold.ttf
+        #         weight: 700
+        #       - asset: assets/fonts/Montserrat/Montserrat-BoldItalic.ttf
+        #         style: italic
+        #         weight: 700
+        #       - asset: assets/fonts/Montserrat/Montserrat-ExtraBold.ttf
+        #         weight: 800
+        #       - asset: assets/fonts/Montserrat/Montserrat-ExtraBoldItalic.ttf
+        #         style: italic
+        #         weight: 800
+        #       - asset: assets/fonts/Montserrat/Montserrat-ExtraLight.ttf
+        #         weight: 200
+        #       - asset: assets/fonts/Montserrat/Montserrat-ExtraLightItalic.ttf
+        #         style: italic
+        #         weight: 200
+        #       - asset: assets/fonts/Montserrat/Montserrat-Italic.ttf
+        #         style: italic
+        #       - asset: assets/fonts/Montserrat/Montserrat-Light.ttf
+        #         weight: 300
+        #       - asset: assets/fonts/Montserrat/Montserrat-LightItalic.ttf
+        #         weight: 300
+        #         style: italic
+        #       - asset: assets/fonts/Montserrat/Montserrat-Medium.ttf
+        #         weight: 500
+        #       - asset: assets/fonts/Montserrat/Montserrat-MediumItalic.ttf
+        #         weight: 500
+        #         style: italic
+        #       - asset: assets/fonts/Montserrat/Montserrat-Regular.ttf
+        #       - asset: assets/fonts/Montserrat/Montserrat-SemiBold.ttf
+        #         weight: 600
+        #       - asset: assets/fonts/Montserrat/Montserrat-SemiBoldItalic.ttf
+        #         weight: 600
+        #         style: italic
+        #       - asset: assets/fonts/Montserrat/Montserrat-Thin.ttf
+        #         weight: 100
+        #       - asset: assets/fonts/Montserrat/Montserrat-ThinItalic.ttf
+        #         weight: 100
+        #         style: italic
+        # - family: Roboto
+        #   fonts:
+        #       - asset: assets/fonts/Roboto/Roboto-Bold.ttf
+        #         weight: 700
+        #       - asset: assets/fonts/Roboto/Roboto-BoldItalic.ttf
+        #         style: italic
+        #         weight: 700
+        #       - asset: assets/fonts/Roboto/Roboto-Italic.ttf
+        #         style: italic
+        #       - asset: assets/fonts/Roboto/Roboto-Light.ttf
+        #         weight: 300
+        #       - asset: assets/fonts/Roboto/Roboto-LightItalic.ttf
+        #         weight: 300
+        #         style: italic
+        #       - asset: assets/fonts/Roboto/Roboto-Medium.ttf
+        #         weight: 500
+        #       - asset: assets/fonts/Roboto/Roboto-MediumItalic.ttf
+        #         weight: 500
+        #         style: italic
+        #       - asset: assets/fonts/Roboto/Roboto-Regular.ttf
+        #       - asset: assets/fonts/Roboto/Roboto-Thin.ttf
+        #         weight: 100
+        #       - asset: assets/fonts/Roboto/Roboto-ThinItalic.ttf
+        #         weight: 100 
+        #         style: italic

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
@@ -128,8 +129,8 @@ class _ConnectFormState extends State<ConnectForm> {
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
-                RaisedButton(
-                  child: Text('Connect'),
+                BaseButton(
+                  text: 'Connect',
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       FocusScope.of(context).unfocus();

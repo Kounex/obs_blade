@@ -3,7 +3,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../models/enums/chat_type.dart';
-import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/base/base_card.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/dashboard.dart';

@@ -30,12 +30,12 @@ class Scenes extends StatelessWidget {
             child: SceneButtons(),
           ),
         ),
-        // RaisedButton(
+        // BaseButton(
         //   onPressed: () => NetworkHelper.makeRequest(
         //       GetIt.instance<NetworkStore>().activeSession.socket,
         //       RequestType.PlayPauseMedia,
         //       {'sourceName': 'was geht ab', 'playPause': false}),
-        //   child: Text('SOUND'),
+        //   text: 'SOUND',
         // ),
         Padding(
           padding: const EdgeInsets.only(

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -29,7 +30,7 @@ class RecordingControls extends StatelessWidget {
           children: [
             SizedBox(
               width: 128.0,
-              child: ElevatedButton.icon(
+              child: BaseButton(
                 onPressed: () => RecordStreamService.triggerRecordStartStop(
                   context,
                   dashboardStore.isRecording,
@@ -43,18 +44,16 @@ class RecordingControls extends StatelessWidget {
                       ? CupertinoIcons.stop
                       : CupertinoIcons.recordingtape,
                 ),
-                style: ElevatedButton.styleFrom(
-                  primary: dashboardStore.isRecording
-                      ? CupertinoColors.destructiveRed
-                      : Colors.green,
-                ),
-                label: Text(dashboardStore.isRecording ? 'Stop' : 'Start'),
+                color: dashboardStore.isRecording
+                    ? CupertinoColors.destructiveRed
+                    : Colors.green,
+                text: dashboardStore.isRecording ? 'Stop' : 'Start',
               ),
             ),
             SizedBox(width: 12.0),
             SizedBox(
               width: 128.0,
-              child: ElevatedButton.icon(
+              child: BaseButton(
                 onPressed: dashboardStore.isRecording
                     ? () => NetworkHelper.makeRequest(
                           GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -68,11 +67,8 @@ class RecordingControls extends StatelessWidget {
                       ? CupertinoIcons.play
                       : CupertinoIcons.pause,
                 ),
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.orange,
-                ),
-                label:
-                    Text(dashboardStore.isRecordingPaused ? 'Resume' : 'Pause'),
+                color: Colors.orange,
+                text: dashboardStore.isRecordingPaused ? 'Resume' : 'Pause',
               ),
             ),
           ],

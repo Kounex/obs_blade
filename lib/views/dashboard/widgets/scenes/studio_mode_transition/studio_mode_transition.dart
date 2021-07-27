@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -32,12 +33,12 @@ class StudioModeTransition extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 24.0),
                   child: SizedBox(
                     width: 128.0,
-                    child: ElevatedButton(
+                    child: BaseButton(
                       onPressed: () => NetworkHelper.makeRequest(
                         GetIt.instance<NetworkStore>().activeSession!.socket,
                         RequestType.TransitionToProgram,
                       ),
-                      child: Text('Transition'),
+                      text: 'Transition',
                     ),
                   ),
                 ),

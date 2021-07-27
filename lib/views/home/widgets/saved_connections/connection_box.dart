@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
-import '../../../../shared/general/base_card.dart';
+import '../../../../shared/general/base/base_card.dart';
 import '../../../../stores/shared/network.dart';
 import 'edit_dialog.dart';
 
@@ -65,12 +66,13 @@ class ConnectionBox extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  RaisedButton(
-                      child: Text('Connect'),
-                      onPressed: () {
-                        FocusScope.of(context).unfocus();
-                        networkStore.setOBSWebSocket(this.connection);
-                      }),
+                  BaseButton(
+                    text: 'Connect',
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      networkStore.setOBSWebSocket(this.connection);
+                    },
+                  ),
                   IconButton(
                     icon: Icon(Icons.edit),
                     onPressed: () => showCupertinoDialog(

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
@@ -23,7 +24,7 @@ class StreamingControls extends StatelessWidget {
       builder: (context, settingsBox, child) => Observer(
         builder: (context) => SizedBox(
           width: 268.0,
-          child: ElevatedButton.icon(
+          child: BaseButton(
             onPressed: () => RecordStreamService.triggerStreamStartStop(
               context,
               dashboardStore.isLive,
@@ -40,12 +41,10 @@ class StreamingControls extends StatelessWidget {
                     : Icons.live_tv_rounded,
               ),
             ),
-            style: ElevatedButton.styleFrom(
-              primary: dashboardStore.isLive
-                  ? CupertinoColors.destructiveRed
-                  : Colors.green,
-            ),
-            label: Text(dashboardStore.isLive ? 'Go Offline' : 'Go Live'),
+            color: dashboardStore.isLive
+                ? CupertinoColors.destructiveRed
+                : Colors.green,
+            text: dashboardStore.isLive ? 'Go Offline' : 'Go Live',
           ),
         ),
       ),

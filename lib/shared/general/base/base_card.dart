@@ -66,17 +66,17 @@ class BaseCard extends StatelessWidget {
                 this.backgroundColor!.value == Colors.transparent.value
             ? Colors.transparent
             : null,
-        shape: this.paintBorder
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4.0),
-                side: BorderSide(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          side: this.paintBorder
+              ? BorderSide(
                   color: this.borderColor ??
                       (Theme.of(context).cardColor.computeLuminance() <= 0.2
                           ? Colors.white
                           : Colors.black),
-                ),
-              )
-            : null,
+                )
+              : BorderSide.none,
+        ),
         color: this.backgroundColor ?? Theme.of(context).cardColor,
         elevation: this.elevation,
         margin: EdgeInsets.all(0),
@@ -85,7 +85,7 @@ class BaseCard extends StatelessWidget {
               ? MainAxisAlignment.center
               : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
+          children: [
             if (this.titleWidget != null || this.title != null)
               Padding(
                 padding: this.titlePadding,
@@ -108,6 +108,7 @@ class BaseCard extends StatelessWidget {
             if (this.titleWidget != null || this.title != null)
               Divider(
                 height: 0.0,
+                color: Theme.of(context).dividerColor,
               ),
             Padding(
               padding: this.paddingChild,

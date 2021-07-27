@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../shared/general/base_card.dart';
+import '../../../shared/general/base/base_card.dart';
 import '../../../shared/general/clean_list_tile.dart';
 import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/themed/themed_cupertino_button.dart';

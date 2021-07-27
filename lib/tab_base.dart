@@ -98,6 +98,21 @@ class _TabBaseState extends State<TabBase> {
         builder: (_) => CupertinoTabBar(
           activeColor: Theme.of(context).accentColor,
           currentIndex: tabsStore.activeTab.index,
+
+          /// Used the standard implementation for [border] as seen
+          /// in [CupertinoTabBar] but adjusted the [darkColor] property
+          /// from 0x29000000 to 0x29FFFFFF (remain opacity but actually
+          /// make the border visible on dark themes)
+          border: const Border(
+            top: BorderSide(
+              color: CupertinoDynamicColor.withBrightness(
+                color: Color(0x4C000000),
+                darkColor: Color(0x29FFFFFF),
+              ),
+              width: 0.0,
+              style: BorderStyle.solid,
+            ),
+          ),
           onTap: (index) {
             Tabs tappedTab = Tabs.values[index];
             if (tabsStore.activeTab == tappedTab) {

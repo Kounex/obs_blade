@@ -4,7 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../models/past_stream_data.dart';
-import '../../shared/general/base_card.dart';
+import '../../shared/general/base/base_card.dart';
 import '../../shared/general/hive_builder.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/views/statistics.dart';

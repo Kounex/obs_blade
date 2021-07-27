@@ -27,7 +27,7 @@ class BaseResult extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
+      children: [
         Icon(
           this.icon.data,
           size: this.iconSize,

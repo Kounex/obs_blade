@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 
 class DonateButton extends StatelessWidget {
   final String text;
@@ -11,7 +12,7 @@ class DonateButton extends StatelessWidget {
     return SizedBox(
       height: 65.0,
       width: 65.0,
-      child: RaisedButton(
+      child: BaseButton(
         padding: const EdgeInsets.all(0.0),
         onPressed: () {},
         child: Column(

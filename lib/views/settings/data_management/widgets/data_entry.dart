@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base/base_button.dart';
 import 'package:obs_blade/shared/general/clean_list_tile.dart';
 
 import '../../../../shared/dialogs/confirmation.dart';
@@ -26,9 +27,9 @@ class DataEntry extends StatelessWidget {
     return CleanListTile(
       title: this.title,
       description: this.description,
-      trailing: RaisedButton(
-        child: Text('Clear'),
-        color: CupertinoColors.destructiveRed,
+      trailing: BaseButton(
+        text: 'Clear',
+        isDestructive: true,
         onPressed: () => ModalHandler.showBaseDialog(
           context: context,
           dialogWidget: ConfirmationDialog(

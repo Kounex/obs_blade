@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stream_chat/stream_chat.dart';
 
-import '../../../../shared/general/base_card.dart';
+import '../../../../shared/general/base/base_card.dart';
 import 'stats/stats.dart';
 
 class StreamWidgets extends StatelessWidget {

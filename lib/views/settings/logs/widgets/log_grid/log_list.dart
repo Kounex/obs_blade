@@ -3,7 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../models/app_log.dart';
-import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/base/base_card.dart';
 import '../../../../../shared/general/column_separated.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';

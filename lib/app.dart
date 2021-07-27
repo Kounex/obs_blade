@@ -64,10 +64,12 @@ class App extends StatelessWidget {
       }
     }
 
-    return (brightness != null && brightness == Brightness.light
+    ThemeData baseThemeData =
+        (brightness != null && brightness == Brightness.light
             ? ThemeData.light()
-            : ThemeData.dark())
-        .copyWith(
+            : ThemeData.dark());
+
+    return baseThemeData.copyWith(
       scaffoldBackgroundColor: scaffoldBackgroundColor ??
           (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
               ? settingsBox.get(SettingsKeys.ReduceSmearing.name,

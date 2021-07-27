@@ -20,7 +20,10 @@ class AboutHeader extends StatelessWidget {
               offset: Offset(-4.0, 0.0),
               child: Text(
                 'OBS Blade',
-                style: Theme.of(context).textTheme.headline4,
+                style: Theme.of(context)
+                    .textTheme
+                    .headline4!
+                    .copyWith(fontWeight: FontWeight.w100),
               ),
             ),
             Container(
@@ -30,7 +33,10 @@ class AboutHeader extends StatelessWidget {
             ),
             Text(
               'by Kounex (René Schramowski)',
-              style: Theme.of(context).textTheme.caption,
+              style: Theme.of(context)
+                  .textTheme
+                  .caption!
+                  .copyWith(fontWeight: FontWeight.w100),
             ),
             FutureBuilder<PackageInfo>(
               future: PackageInfo.fromPlatform(),
@@ -39,12 +45,18 @@ class AboutHeader extends StatelessWidget {
                   children: [
                     Text(
                       'Version ',
-                      style: Theme.of(context).textTheme.caption,
+                      style: Theme.of(context)
+                          .textTheme
+                          .caption!
+                          .copyWith(fontWeight: FontWeight.w100),
                     ),
                     if (snapshot.hasData)
                       Text(
                         '${snapshot.data!.version} (${snapshot.data!.buildNumber})',
-                        style: Theme.of(context).textTheme.caption,
+                        style: Theme.of(context)
+                            .textTheme
+                            .caption!
+                            .copyWith(fontWeight: FontWeight.w100),
                       ),
                   ],
                 );

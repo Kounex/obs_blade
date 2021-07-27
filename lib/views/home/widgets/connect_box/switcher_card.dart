@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../../shared/general/base_card.dart';
+import '../../../../shared/general/base/base_card.dart';
 import '../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../stores/views/home.dart';
 

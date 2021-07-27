@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base_card.dart';
+import 'package:obs_blade/shared/general/base/base_card.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/statistics/widgets/stream_entry/stream_entry.dart';
 

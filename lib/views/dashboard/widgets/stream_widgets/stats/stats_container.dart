@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/general/base_card.dart';
+import '../../../../../shared/general/base/base_card.dart';
 
 class StatsContainer extends StatelessWidget {
   final String title;

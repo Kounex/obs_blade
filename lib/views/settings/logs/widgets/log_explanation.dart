@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
 
-import '../../../../shared/general/base_card.dart';
+import '../../../../shared/general/base/base_card.dart';
 import '../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../shared/general/enumeration_block/enumeration_block.dart';
 import '../../../../shared/general/enumeration_block/enumeration_entry.dart';
