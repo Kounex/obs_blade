@@ -159,8 +159,12 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                               constraints: BoxConstraints(
                                 maxWidth: 350.0,
                               ),
-                              child: Card(
-                                margin: EdgeInsets.all(0),
+                              child: BaseCard(
+                                topPadding: 0,
+                                rightPadding: 0,
+                                bottomPadding: 0,
+                                leftPadding: 0,
+                                paddingChild: EdgeInsets.all(0),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0) +
                                       EdgeInsets.only(
