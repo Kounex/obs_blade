@@ -16,21 +16,23 @@ class SceneCollectionControl extends StatelessWidget {
       alignment: Alignment.centerRight,
       child: Observer(
         builder: (_) => DropdownButton<String>(
-            value: dashboardStore.currentSceneCollectionName,
-            isDense: true,
-            onChanged: (sceneCollectionName) => NetworkHelper.makeRequest(
-                GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.SetCurrentSceneCollection,
-                {'sc-name': sceneCollectionName}),
-            items: dashboardStore.sceneCollections
-                    ?.map(
-                      (sceneCollection) => DropdownMenuItem(
-                        value: sceneCollection.scName,
-                        child: Text(sceneCollection.scName),
-                      ),
-                    )
-                    .toList() ??
-                []),
+          value: dashboardStore.currentSceneCollectionName,
+          isDense: true,
+          onChanged: (sceneCollectionName) => NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
+            RequestType.SetCurrentSceneCollection,
+            {'sc-name': sceneCollectionName},
+          ),
+          items: dashboardStore.sceneCollections
+                  ?.map(
+                    (sceneCollection) => DropdownMenuItem(
+                      value: sceneCollection.scName,
+                      child: Text(sceneCollection.scName),
+                    ),
+                  )
+                  .toList() ??
+              [],
+        ),
       ),
     );
   }

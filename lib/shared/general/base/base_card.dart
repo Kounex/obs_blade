@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
 
 const double kBaseCardMaxWidth = 772.0;
-const double kBaseCardBorderRadius = 10.0;
+const double kBaseCardBorderRadius = 12.0;
 
 class BaseCard extends StatelessWidget {
   final Widget child;

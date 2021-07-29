@@ -125,6 +125,20 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     BlockEntry(
+                      leading: CupertinoIcons.person_2_square_stack,
+                      leadingSize: 30.0,
+                      title: 'Scene Preview',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.ExposeScenePreview.name,
+                            defaultValue: true),
+                        onChanged: (exposeScenePreview) {
+                          settingsBox.put(SettingsKeys.ExposeScenePreview.name,
+                              exposeScenePreview);
+                        },
+                      ),
+                    ),
+                    BlockEntry(
                       leading: CupertinoIcons.lock_fill,
                       leadingSize: 30.0,
                       title: 'Enforce Tablet Mode',
@@ -137,20 +151,6 @@ class SettingsView extends StatelessWidget {
                         onChanged: (enforceTabletMode) {
                           settingsBox.put(SettingsKeys.EnforceTabletMode.name,
                               enforceTabletMode);
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.person_2_square_stack,
-                      leadingSize: 30.0,
-                      title: 'Scene Preview',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                            SettingsKeys.ExposeScenePreview.name,
-                            defaultValue: true),
-                        onChanged: (exposeScenePreview) {
-                          settingsBox.put(SettingsKeys.ExposeScenePreview.name,
-                              exposeScenePreview);
                         },
                       ),
                     ),
