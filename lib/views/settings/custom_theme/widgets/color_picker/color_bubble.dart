@@ -16,8 +16,8 @@ class ColorBubble extends StatelessWidget {
         color: this.color,
         borderRadius: BorderRadius.circular(this.size / 2),
         border: Border.all(
-          color: StylingHelper.surroundingAwareAccent(context),
-          width: 1.0,
+          color: StylingHelper.surroundingAwareAccent(context: context),
+          width: 0.0,
         ),
       ),
     );

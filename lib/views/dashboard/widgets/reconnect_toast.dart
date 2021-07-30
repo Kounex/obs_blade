@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../../shared/general/base/base_card.dart';
 import '../../../shared/overlay/base_progress_indicator.dart';
@@ -53,6 +54,7 @@ class _ReconnectToastState extends State<ReconnectToast>
       reaction(
         (_) => GetIt.instance<DashboardStore>().reconnecting,
         (bool reconnecting) {
+          GeneralHelper.advLog('RECONNECTING!!!!! - $reconnecting');
           if (reconnecting && _controllerReconnecting.isDismissed) {
             _controllerReconnecting.forward();
           } else if (!reconnecting && !_controllerReconnecting.isDismissed) {

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
+import 'package:obs_blade/shared/general/base/base_card.dart';
+import 'package:obs_blade/shared/overlay/base_result.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:share/share.dart';
 
@@ -149,28 +151,33 @@ class LogDetailView extends StatelessWidget {
                 ],
               ),
               listViewChildren: [
-                Padding(
-                  padding: EdgeInsets.only(left: 24.0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      width: 102.0,
-                      child: CupertinoDropdown<LogLevel>(
-                        value: logsStore.logLevel,
-                        items: [
-                          DropdownMenuItem(
-                            value: null,
-                            child: Text('All'),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: kBaseCardMaxWidth),
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 24.0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: 102.0,
+                          child: CupertinoDropdown<LogLevel>(
+                            value: logsStore.logLevel,
+                            items: [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text('All'),
+                              ),
+                              ...LogLevel.values.map(
+                                (logLevel) => DropdownMenuItem(
+                                  value: logLevel,
+                                  child: Text(logLevel.name),
+                                ),
+                              ),
+                            ],
+                            onChanged: (logLevel) =>
+                                logsStore.setLogLevel(logLevel),
                           ),
-                          ...LogLevel.values.map(
-                            (logLevel) => DropdownMenuItem(
-                              value: logLevel,
-                              child: Text(logLevel.name),
-                            ),
-                          ),
-                        ],
-                        onChanged: (logLevel) =>
-                            logsStore.setLogLevel(logLevel),
+                        ),
                       ),
                     ),
                   ),
@@ -180,7 +187,15 @@ class LogDetailView extends StatelessWidget {
                     dateFormatted: mergedLog.key,
                     logs: mergedLog.value,
                   ),
-                )
+                ),
+                if (mergedLogs.entries.length == 0)
+                  BaseCard(
+                    child: BaseResult(
+                      icon: BaseResultIcon.Missing,
+                      text:
+                          'No logs found for type: ${logsStore.logLevel!.name}',
+                    ),
+                  ),
               ],
             );
           },

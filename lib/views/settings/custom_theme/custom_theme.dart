@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -10,7 +8,6 @@ import '../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../shared/general/themed/themed_cupertino_scaffold.dart';
 import '../../../shared/general/themed/themed_cupertino_switch.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../../../shared/overlay/base_result.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
 import '../../../utils/modal_handler.dart';

@@ -49,6 +49,7 @@ class AudioSlider extends StatelessWidget {
                   min: 0.0,
                   max: 1.0,
                   value: this.audioSceneItem.volume as double,
+                  activeColor: Theme.of(context).accentColor,
                   onChanged: (volume) => NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
                       RequestType.SetVolume,

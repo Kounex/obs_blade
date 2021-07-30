@@ -59,7 +59,7 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
 
     Future.delayed(
-      Duration(milliseconds: 1000),
+      Duration(milliseconds: 0),
       () => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
     );
 

@@ -109,7 +109,7 @@ class AboutView extends StatelessWidget {
                               'For a short overview of the used libraries, you can take a look here:'),
                         ),
                         BaseButton(
-                          text: 'Packages',
+                          text: 'Credits',
                           onPressed: () =>
                               // showAboutDialog(context: context),
                               ModalHandler.showBaseCupertinoBottomSheet(
