@@ -151,9 +151,11 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             controller: _description,
                             placeholder: 'Description (Optional)',
                             minLines: 3,
+                            maxLines: 3,
                           ),
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 32.0),
+                            padding:
+                                const EdgeInsets.only(top: 32.0, bottom: 32.0),
                             child: ColorRow(
                               title: 'Is this a light theme?',
                               description:

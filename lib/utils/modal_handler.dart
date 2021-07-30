@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:obs_blade/shared/general/base/base_card.dart';
 import 'styling_helper.dart';
 
 // A translucent color that is painted on top of the blurred backdrop as the
@@ -58,26 +59,32 @@ class ModalHandler {
     required BuildContext context,
     required Widget Function(BuildContext, ScrollController) modalWidgetBuilder,
     bool useRootNavigator = true,
+    double maxWidth = kBaseCardMaxWidth,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(
         expand: false,
         context: context,
         backgroundColor: Colors.transparent,
         useRootNavigator: useRootNavigator,
-        builder: (context) => BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: StylingHelper.sigma_blurry,
-            sigmaY: StylingHelper.sigma_blurry,
-          ),
-          child: Scaffold(
-            backgroundColor: Theme.of(context)
-                .cardColor
-                .withOpacity(StylingHelper.opacity_blurry),
-            body: SafeArea(
-              bottom: false,
-              child: modalWidgetBuilder(
-                context,
-                ModalScrollController.of(context)!,
+        builder: (context) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: StylingHelper.sigma_blurry,
+                sigmaY: StylingHelper.sigma_blurry,
+              ),
+              child: Scaffold(
+                backgroundColor: Theme.of(context)
+                    .cardColor
+                    .withOpacity(StylingHelper.opacity_blurry),
+                body: SafeArea(
+                  bottom: false,
+                  child: modalWidgetBuilder(
+                    context,
+                    ModalScrollController.of(context)!,
+                  ),
+                ),
               ),
             ),
           ),

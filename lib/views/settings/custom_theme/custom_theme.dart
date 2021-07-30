@@ -13,6 +13,8 @@ import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../shared/overlay/base_result.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
+import '../../../utils/modal_handler.dart';
+import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
 
 class CustomThemeView extends StatelessWidget {
@@ -70,13 +72,13 @@ class CustomThemeView extends StatelessWidget {
                   trailingTitleWidget: ThemedCupertinoButton(
                     padding: const EdgeInsets.all(0),
                     onPressed: () {
-                      // ModalHandler.showBaseCupertinoBottomSheet(
-                      //   context: context,
-                      //   modalWidgetBuilder: (context, scrollController) =>
-                      //       AddEditTheme(
-                      //     scrollController: scrollController,
-                      //   ),
-                      // );
+                      ModalHandler.showBaseCupertinoBottomSheet(
+                        context: context,
+                        modalWidgetBuilder: (context, scrollController) =>
+                            AddEditTheme(
+                          scrollController: scrollController,
+                        ),
+                      );
                     },
                     text: 'Add Theme',
                   ),
@@ -84,23 +86,23 @@ class CustomThemeView extends StatelessWidget {
                   paddingChild: EdgeInsets.all(0),
                   child: CustomThemeList(),
                 ),
-                Positioned.fill(
-                  child: ClipRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 1.25, sigmaY: 1.25),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: BaseCard(
-                          paintBorder: true,
-                          child: BaseResult(
-                            icon: BaseResultIcon.Missing,
-                            text: 'Available soon...',
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                // Positioned.fill(
+                //   child: ClipRect(
+                //     child: BackdropFilter(
+                //       filter: ImageFilter.blur(sigmaX: 1.25, sigmaY: 1.25),
+                //       child: FittedBox(
+                //         fit: BoxFit.scaleDown,
+                //         child: BaseCard(
+                //           paintBorder: true,
+                //           child: BaseResult(
+                //             icon: BaseResultIcon.Missing,
+                //             text: 'Available soon...',
+                //           ),
+                //         ),
+                //       ),
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ],
