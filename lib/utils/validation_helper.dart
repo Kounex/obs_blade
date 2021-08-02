@@ -1,3 +1,5 @@
+import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_slider.dart';
+
 /// Helper class to summarize common validation which are used
 /// in several places
 class ValidationHelper {
@@ -32,11 +34,13 @@ class ValidationHelper {
     return 'Not a valid color hex code';
   }
 
-  static String? colorRGBValidator(String text) {
-    int? val = int.tryParse(text);
-    if (text.length <= 3 && val != null && val >= 0) {
-      return null;
+  static String? colorTypeValidator(String? text, ColorType type) {
+    if (text != null && text.length <= 3) {
+      int? val = int.tryParse(text);
+      if (val != null && val >= 0 && val <= type.divisions) {
+        return null;
+      }
     }
-    return 'Valid: 0 - 255';
+    return '0 - ${type.divisions}';
   }
 }

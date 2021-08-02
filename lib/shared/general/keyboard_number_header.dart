@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 
 class KeyboardNumberHeader extends StatelessWidget {
@@ -18,7 +19,9 @@ class KeyboardNumberHeader extends StatelessWidget {
     return KeyboardActions(
       config: KeyboardActionsConfig(
         keyboardActionsPlatform: KeyboardActionsPlatform.IOS,
-        keyboardBarColor: Color.fromRGBO(45, 45, 45, 1.0),
+        keyboardBarColor: Theme.of(context).brightness == Brightness.dark
+            ? Color.fromRGBO(45, 45, 45, 1.0)
+            : Color.fromRGBO(245, 245, 245, 1.0),
         nextFocus: false,
         actions: [
           KeyboardActionsItem(

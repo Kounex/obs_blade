@@ -13,102 +13,6 @@ import 'utils/built_in_themes.dart';
 import 'utils/routing_helper.dart';
 import 'utils/styling_helper.dart';
 
-class BorderRoundSliderThumbShape extends SliderComponentShape {
-  final double enabledThumbRadius;
-
-  final double? disabledThumbRadius;
-  double get _disabledThumbRadius => disabledThumbRadius ?? enabledThumbRadius;
-
-  final double elevation;
-  final double pressedElevation;
-
-  final double borderWidth;
-  final Color borderColor;
-
-  const BorderRoundSliderThumbShape({
-    this.enabledThumbRadius = 10.0,
-    this.disabledThumbRadius,
-    this.elevation = 0.0,
-    this.pressedElevation = 0.0,
-    this.borderWidth = 1.0,
-    required this.borderColor,
-  });
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return Size.fromRadius(
-        isEnabled == true ? enabledThumbRadius : _disabledThumbRadius);
-  }
-
-  @override
-  void paint(
-    PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
-    required RenderBox parentBox,
-    required SliderThemeData sliderTheme,
-    required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
-  }) {
-    assert(sliderTheme.disabledThumbColor != null);
-    assert(sliderTheme.thumbColor != null);
-
-    final Canvas canvas = context.canvas;
-    final Tween<double> radiusTween = Tween<double>(
-      begin: _disabledThumbRadius,
-      end: enabledThumbRadius,
-    );
-    final ColorTween colorTween = ColorTween(
-      begin: sliderTheme.disabledThumbColor,
-      end: sliderTheme.thumbColor,
-    );
-
-    final ColorTween borderColorTween = ColorTween(
-      begin: sliderTheme.disabledThumbColor,
-      end: this.borderColor,
-    );
-
-    final Color color = colorTween.evaluate(enableAnimation)!;
-    final Color borderColor = borderColorTween.evaluate(enableAnimation)!;
-    final double radius = radiusTween.evaluate(enableAnimation);
-
-    final Tween<double> elevationTween = Tween<double>(
-      begin: elevation,
-      end: pressedElevation,
-    );
-
-    // final double evaluatedElevation =
-    //     elevationTween.evaluate(activationAnimation);
-    // final Path path = Path()
-    //   ..addArc(
-    //       Rect.fromCenter(
-    //           center: center, width: 2 * radius, height: 2 * radius),
-    //       0,
-    //       pi * 2);
-    // canvas.drawShadow(path, Colors.black, evaluatedElevation, true);
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..color = borderColor
-        ..strokeWidth = 1.0
-        ..style = PaintingStyle.stroke,
-    );
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()..color = color,
-    );
-  }
-}
-
 class App extends StatelessWidget {
   ThemeData _getCurrentTheme(Box settingsBox) {
     Brightness? brightness;
@@ -167,6 +71,7 @@ class App extends StatelessWidget {
             : ThemeData.dark());
 
     return baseThemeData.copyWith(
+      primaryColorBrightness: brightness,
       scaffoldBackgroundColor: scaffoldBackgroundColor ??
           (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
               ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
@@ -290,6 +195,102 @@ class App extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class BorderRoundSliderThumbShape extends SliderComponentShape {
+  final double enabledThumbRadius;
+
+  final double? disabledThumbRadius;
+  double get _disabledThumbRadius => disabledThumbRadius ?? enabledThumbRadius;
+
+  final double elevation;
+  final double pressedElevation;
+
+  final double borderWidth;
+  final Color borderColor;
+
+  const BorderRoundSliderThumbShape({
+    this.enabledThumbRadius = 10.0,
+    this.disabledThumbRadius,
+    this.elevation = 0.0,
+    this.pressedElevation = 0.0,
+    this.borderWidth = 1.0,
+    required this.borderColor,
+  });
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size.fromRadius(
+        isEnabled == true ? enabledThumbRadius : _disabledThumbRadius);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    assert(sliderTheme.disabledThumbColor != null);
+    assert(sliderTheme.thumbColor != null);
+
+    final Canvas canvas = context.canvas;
+    final Tween<double> radiusTween = Tween<double>(
+      begin: _disabledThumbRadius,
+      end: enabledThumbRadius,
+    );
+    final ColorTween colorTween = ColorTween(
+      begin: sliderTheme.disabledThumbColor,
+      end: sliderTheme.thumbColor,
+    );
+
+    final ColorTween borderColorTween = ColorTween(
+      begin: sliderTheme.disabledThumbColor,
+      end: this.borderColor,
+    );
+
+    final Color color = colorTween.evaluate(enableAnimation)!;
+    final Color borderColor = borderColorTween.evaluate(enableAnimation)!;
+    final double radius = radiusTween.evaluate(enableAnimation);
+
+    final Tween<double> elevationTween = Tween<double>(
+      begin: elevation,
+      end: pressedElevation,
+    );
+
+    // final double evaluatedElevation =
+    //     elevationTween.evaluate(activationAnimation);
+    // final Path path = Path()
+    //   ..addArc(
+    //       Rect.fromCenter(
+    //           center: center, width: 2 * radius, height: 2 * radius),
+    //       0,
+    //       pi * 2);
+    // canvas.drawShadow(path, Colors.black, evaluatedElevation, true);
+
+    canvas.drawCircle(
+      center,
+      radius + 0.5,
+      Paint()
+        ..color = borderColor
+        ..strokeWidth = borderWidth
+        ..style = PaintingStyle.stroke,
+    );
+
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()..color = color,
     );
   }
 }

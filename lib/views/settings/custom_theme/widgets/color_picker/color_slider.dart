@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_picker.dart';
 
 import '../../../../../shared/general/keyboard_number_header.dart';
+import '../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../utils/validation_helper.dart';
+import 'color_picker.dart';
 
 enum ColorType {
   R,
@@ -57,6 +59,8 @@ extension ColorTypeFunction on ColorType {
 }
 
 class ColorSlider extends StatefulWidget {
+  final CustomValidationTextEditingController controller;
+
   final String? label;
   final double? value;
   final Color? activeColor;
@@ -71,6 +75,7 @@ class ColorSlider extends StatefulWidget {
   final void Function(String)? onChanged;
 
   ColorSlider({
+    required this.controller,
     this.label,
     this.value,
     this.activeColor,
@@ -87,17 +92,19 @@ class ColorSlider extends StatefulWidget {
 }
 
 class _ColorSliderState extends State<ColorSlider> {
-  late TextEditingController _colorVal;
   FocusNode _colorValueFocusNode = FocusNode();
+
+  late double _latestValidSliderValue;
 
   @override
   void initState() {
-    String value = this.widget.value?.toString() ?? '0';
-    _colorVal = TextEditingController(text: value.split('.')[0]);
+    _latestValidSliderValue = this.widget.value ?? 0;
+    _setColorVal(this.widget.value);
+
     _colorValueFocusNode.addListener(() {
       if (_colorValueFocusNode.hasFocus) {
-        _colorVal.selection =
-            TextSelection(baseOffset: 0, extentOffset: _colorVal.text.length);
+        this.widget.controller.selection = TextSelection(
+            baseOffset: 0, extentOffset: this.widget.controller.text.length);
       }
     });
     super.initState();
@@ -106,8 +113,18 @@ class _ColorSliderState extends State<ColorSlider> {
   @override
   void didUpdateWidget(covariant ColorSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    String value = this.widget.value?.toString() ?? '0';
-    _colorVal = TextEditingController(text: value.split('.')[0]);
+    if (oldWidget.value != this.widget.value) {
+      _latestValidSliderValue = this.widget.value ?? 0;
+      _setColorVal(this.widget.value);
+    }
+  }
+
+  void _setColorVal(double? colorVal) {
+    String value = colorVal?.toString().split('.')[0] ?? '0';
+    this.widget.controller.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
   }
 
   @override
@@ -151,7 +168,7 @@ class _ColorSliderState extends State<ColorSlider> {
                 ),
               ),
             Slider(
-              value: double.parse(_colorVal.text),
+              value: _latestValidSliderValue,
               min: 0.0,
               max: this.widget.colorType.max,
               divisions: this.widget.colorType.divisions,
@@ -163,17 +180,22 @@ class _ColorSliderState extends State<ColorSlider> {
                   : null,
               onChanged: (value) {
                 this.widget.onChanged?.call(value.toStringAsFixed(0));
-                setState(() => _colorVal.text = value.toStringAsFixed(0));
+                setState(() {
+                  _latestValidSliderValue = value;
+                  this.widget.controller.text = value.toStringAsFixed(0);
+                });
               },
             ),
           ],
         )),
         SizedBox(
-          width: 42.0,
+          width: 44.0,
           child: KeyboardNumberHeader(
             focusNode: _colorValueFocusNode,
+            // onDone: () => setState(() => this.widget.controller.text =
+            //     _latestValidSliderValue.toString().split('.')[0]),
             child: TextFormField(
-              controller: _colorVal,
+              controller: this.widget.controller,
               focusNode: _colorValueFocusNode,
               textAlign: TextAlign.center,
               decoration: InputDecoration(
@@ -181,32 +203,29 @@ class _ColorSliderState extends State<ColorSlider> {
                 counterText: '',
               ),
               keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(
-                    RegExp(r"^([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"),
-                    replacementString: _colorVal.text)
-              ],
+              // inputFormatters: [
+              //   FilteringTextInputFormatter.allow(
+              //     RegExp(r"^([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"),
+              //     replacementString: _colorVal.text,
+              //   )
+              // ],
+              validator: (value) => ValidationHelper.colorTypeValidator(
+                  value, this.widget.colorType),
+              autovalidateMode: AutovalidateMode.always,
               autocorrect: false,
               maxLength: 3,
               maxLengthEnforcement: MaxLengthEnforcement.enforced,
               onChanged: (value) {
-                if (value.length == 0) {
-                  _colorVal.value = TextEditingValue(
-                      text: '0',
-                      selection:
-                          TextSelection.fromPosition(TextPosition(offset: 1)));
-                } else if (value.length > 1 && value[0] == '0') {
-                  _colorVal.value = TextEditingValue(
-                      text: value.substring(1, 2),
-                      selection:
-                          TextSelection.fromPosition(TextPosition(offset: 1)));
+                if (ValidationHelper.colorTypeValidator(
+                        value, this.widget.colorType) ==
+                    null) {
+                  _latestValidSliderValue = double.parse(value);
+                  this.widget.onChanged?.call(value);
                 }
-                this.widget.onChanged?.call(value);
-                setState(() {});
               },
             ),
           ),
-        )
+        ),
       ],
     );
   }

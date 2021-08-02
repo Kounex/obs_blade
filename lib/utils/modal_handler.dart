@@ -35,6 +35,7 @@ class ModalHandler {
     bool useRootNavigator = true,
     bool barrierDismissible = false,
     double maxWidth = kBaseCardMaxWidth,
+    double additionalBottomViewInsets = 0,
   }) async =>
       showModalBottomSheet(
         context: context,
@@ -45,6 +46,7 @@ class ModalHandler {
         isScrollControlled: true,
         builder: (context) => _bottomSheetWrapper(
           context: context,
+          additionalBottomViewInsets: additionalBottomViewInsets,
           modalWidget: modalWidget,
           maxHeight: MediaQuery.of(context).size.height / 1.5,
           maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
@@ -56,6 +58,7 @@ class ModalHandler {
     required Widget Function(BuildContext, ScrollController) modalWidgetBuilder,
     bool useRootNavigator = true,
     double maxWidth = kBaseCardMaxWidth,
+    double additionalBottomViewInsets = 0,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(
         expand: false,
@@ -66,6 +69,7 @@ class ModalHandler {
         useRootNavigator: useRootNavigator,
         builder: (context) => _bottomSheetWrapper(
           context: context,
+          additionalBottomViewInsets: additionalBottomViewInsets,
           modalWidget: modalWidgetBuilder(
             context,
             ModalScrollController.of(context)!,
@@ -81,6 +85,7 @@ class ModalHandler {
     double maxWidth = double.infinity,
     double maxHeight = double.infinity,
     bool blurryBackground = false,
+    double additionalBottomViewInsets = 0,
   }) {
     Widget child = Container(
       decoration: BoxDecoration(
@@ -122,8 +127,11 @@ class ModalHandler {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  (MediaQuery.of(context).viewInsets.bottom > 0
+                      ? additionalBottomViewInsets
+                      : 0)),
           child: child,
         ),
       ),

@@ -102,10 +102,14 @@ class ValidationCupertinoTextfieldState
           child: Padding(
             padding: EdgeInsets.only(
                 top: 4.0, left: 4.0, bottom: this.widget.bottomPadding),
-            child: Text(
-              _validationText ?? '',
-              style: TextStyle(
-                color: CupertinoColors.destructiveRed,
+            child: AnimatedOpacity(
+              opacity: _validationText != null ? 1 : 0,
+              duration: Duration(milliseconds: 200),
+              child: Text(
+                _validationText ?? '',
+                style: TextStyle(
+                  color: CupertinoColors.destructiveRed,
+                ),
               ),
             ),
           ),

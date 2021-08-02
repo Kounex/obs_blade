@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../shared/general/validation_cupertino_textfield.dart';
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/validation_helper.dart';
 import '../../../widgets/action_block.dart/light_divider.dart';
@@ -41,11 +42,46 @@ class ColorPicker extends StatefulWidget {
 }
 
 class _ColorPickerState extends State<ColorPicker> {
-  late TextEditingController _color;
-  FocusNode _colorFocusNode = FocusNode();
-  late Key _colorContainerKey;
-
   PickerType _pickerType = PickerType.RGB;
+
+  late CustomValidationTextEditingController _hexController;
+  late String _latestValidHexValue;
+  FocusNode _hexFocusNode = FocusNode();
+
+  CustomValidationTextEditingController _rController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.R));
+
+  CustomValidationTextEditingController _gController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.G));
+
+  CustomValidationTextEditingController _bController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.B));
+
+  CustomValidationTextEditingController _hController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.H));
+
+  CustomValidationTextEditingController _sController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.S));
+
+  CustomValidationTextEditingController _lController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.L));
+
+  CustomValidationTextEditingController _aController =
+      CustomValidationTextEditingController(
+          check: (value) =>
+              ValidationHelper.colorTypeValidator(value, ColorType.A));
 
   late double _hue;
   late double _saturation;
@@ -53,15 +89,19 @@ class _ColorPickerState extends State<ColorPicker> {
 
   @override
   void initState() {
-    _color = TextEditingController(text: this.widget.color ?? '000000');
-    _colorContainerKey = Key(_color.text);
+    _hexController = CustomValidationTextEditingController(
+      text: this.widget.color ?? '000000',
+      check: (value) => ValidationHelper.colorHexValidator(value,
+          useAlpha: this.widget.useAlpha),
+    );
+    _latestValidHexValue = _hexController.text;
 
     _setHSLColor();
 
-    _colorFocusNode.addListener(() {
-      if (_colorFocusNode.hasFocus) {
-        _color.selection =
-            TextSelection(baseOffset: 0, extentOffset: _color.text.length);
+    _hexFocusNode.addListener(() {
+      if (_hexFocusNode.hasFocus) {
+        _hexController.selection = TextSelection(
+            baseOffset: 0, extentOffset: _hexController.text.length);
       }
     });
     super.initState();
@@ -69,7 +109,7 @@ class _ColorPickerState extends State<ColorPicker> {
 
   void _setHSLColor() {
     HSLColor hslColor =
-        HSLColor.fromColor(Color(int.parse(_color.text, radix: 16)));
+        HSLColor.fromColor(Color(int.parse(_latestValidHexValue, radix: 16)));
 
     _hue = hslColor.hue;
     _saturation = (hslColor.saturation * 100).roundToDouble();
@@ -81,11 +121,12 @@ class _ColorPickerState extends State<ColorPicker> {
       int offset = type == ColorType.A
           ? 0
           : (this.widget.useAlpha ? 0 : -2) + type.hexOffset;
-      return int.parse(_color.text.substring(offset, offset + 2), radix: 16)
+      return int.parse(_latestValidHexValue.substring(offset, offset + 2),
+              radix: 16)
           .toDouble();
     }
     HSLColor color =
-        HSLColor.fromColor(Color(int.parse(_color.text, radix: 16)));
+        HSLColor.fromColor(Color(int.parse(_latestValidHexValue, radix: 16)));
     switch (type) {
       case ColorType.H:
         return _hue;
@@ -101,17 +142,17 @@ class _ColorPickerState extends State<ColorPicker> {
   }
 
   void _onColorSlideChange(String value, ColorType type) {
+    _hexController.text = _latestValidHexValue;
     if (_pickerType == PickerType.RGB) {
       int offset = type == ColorType.A
           ? 0
           : (this.widget.useAlpha ? 0 : -2) + type.hexOffset;
       String hex = int.parse(value).toRadixString(16);
-      _color.text =
-          _color.text.replaceRange(offset, offset + 2, hex.padLeft(2, '0'));
+      _hexController.text = _hexController.text
+          .replaceRange(offset, offset + 2, hex.padLeft(2, '0'));
     } else {
       HSLColor color =
           HSLColor.fromAHSL(1.0, _hue, _saturation / 100, _lightness / 100);
-      // HSLColor.fromColor(Color(int.parse(_color.text, radix: 16)));
       switch (type) {
         case ColorType.H:
           _hue = double.parse(value);
@@ -135,9 +176,10 @@ class _ColorPickerState extends State<ColorPicker> {
       String redHex = rgbColor.red.toRadixString(16).padLeft(2, '0');
       String greenHex = rgbColor.green.toRadixString(16).padLeft(2, '0');
       String blueHex = rgbColor.blue.toRadixString(16).padLeft(2, '0');
-      _color.text =
+      _hexController.text =
           (this.widget.useAlpha ? alphaHex : '') + redHex + greenHex + blueHex;
     }
+    _latestValidHexValue = _hexController.text;
     setState(() {});
   }
 
@@ -161,15 +203,27 @@ class _ColorPickerState extends State<ColorPicker> {
               Row(
                 children: [
                   ThemedCupertinoButton(
-                    onPressed: () => Navigator.of(context).pop(),
                     text: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                   ThemedCupertinoButton(
-                    onPressed: () {
-                      this.widget.onSave?.call(_color.text);
-                      Navigator.of(context).pop();
-                    },
                     text: 'Save',
+                    onPressed: () {
+                      if (_hexController.isValid &&
+                          (_pickerType == PickerType.RGB
+                              ? (_rController.isValid &&
+                                  _gController.isValid &&
+                                  _bController.isValid)
+                              : (_hController.isValid &&
+                                  _sController.isValid &&
+                                  _lController.isValid)) &&
+                          (this.widget.useAlpha
+                              ? _aController.isValid
+                              : true)) {
+                        this.widget.onSave?.call(_hexController.text);
+                        Navigator.of(context).pop();
+                      }
+                    },
                   ),
                 ],
               ),
@@ -237,13 +291,15 @@ class _ColorPickerState extends State<ColorPicker> {
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 24.0),
                                     child: TextFormField(
-                                      controller: _color,
-                                      focusNode: _colorFocusNode,
+                                      controller: _hexController,
+                                      focusNode: _hexFocusNode,
                                       decoration: InputDecoration(
                                         isDense: true,
                                         counterText: '',
                                         suffixText:
-                                            '${_color.text.length} / ${this.widget.useAlpha ? 8 : 6}',
+                                            '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
+                                        suffixStyle:
+                                            Theme.of(context).textTheme.caption,
                                       ),
                                       validator: (color) =>
                                           ValidationHelper.colorHexValidator(
@@ -261,9 +317,10 @@ class _ColorPickerState extends State<ColorPicker> {
                                       // ],
                                       onChanged: (value) {
                                         if (ValidationHelper.colorHexValidator(
-                                                _color.text) ==
+                                                _hexController.text) ==
                                             null) {
-                                          _colorContainerKey = Key(_color.text);
+                                          _latestValidHexValue = value;
+                                          _setHSLColor();
                                           setState(() {});
                                         }
                                         setInnerState(() {});
@@ -277,7 +334,7 @@ class _ColorPickerState extends State<ColorPicker> {
                       Padding(
                         padding: const EdgeInsets.only(right: 10.0),
                         child: ColorBubble(
-                          color: _color.text.hexToColor(),
+                          color: _latestValidHexValue.hexToColor(),
                           size: 42.0,
                         ),
                       ),
@@ -289,10 +346,10 @@ class _ColorPickerState extends State<ColorPicker> {
                   padding:
                       const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),
                   child: Column(
-                    key: _colorContainerKey,
                     children: [
                       if (_pickerType == PickerType.RGB) ...[
                         ColorSlider(
+                          controller: _rController,
                           pickerType: _pickerType,
                           colorType: ColorType.R,
                           value: _getColorSliderValue(ColorType.R),
@@ -303,6 +360,7 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
+                          controller: _gController,
                           pickerType: _pickerType,
                           colorType: ColorType.G,
                           value: _getColorSliderValue(ColorType.G),
@@ -313,6 +371,7 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
+                          controller: _bController,
                           pickerType: _pickerType,
                           colorType: ColorType.B,
                           value: _getColorSliderValue(ColorType.B),
@@ -325,6 +384,7 @@ class _ColorPickerState extends State<ColorPicker> {
                       ],
                       if (_pickerType == PickerType.HSL) ...[
                         ColorSlider(
+                          controller: _hController,
                           pickerType: _pickerType,
                           colorType: ColorType.H,
                           value: _getColorSliderValue(ColorType.H),
@@ -336,6 +396,7 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
+                          controller: _sController,
                           pickerType: _pickerType,
                           colorType: ColorType.S,
                           value: _getColorSliderValue(ColorType.S),
@@ -347,6 +408,7 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
+                          controller: _lController,
                           pickerType: _pickerType,
                           colorType: ColorType.L,
                           value: _getColorSliderValue(ColorType.L),
@@ -360,6 +422,7 @@ class _ColorPickerState extends State<ColorPicker> {
                       ],
                       if (this.widget.useAlpha)
                         ColorSlider(
+                          controller: _aController,
                           pickerType: _pickerType,
                           colorType: ColorType.A,
                           value: _getColorSliderValue(ColorType.A),
