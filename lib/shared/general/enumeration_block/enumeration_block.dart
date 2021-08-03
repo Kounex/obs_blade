@@ -36,6 +36,7 @@ class EnumerationBlock extends StatelessWidget {
     if (usedEntries.isNotEmpty) usedEntries.removeLast();
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (this.title != null) ...[
           Text(this.title!),

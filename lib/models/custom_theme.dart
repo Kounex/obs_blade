@@ -78,4 +78,22 @@ class CustomTheme extends HiveObject {
         this.highlightColorHex = StylingHelper.highlight_color.toHex(),
         this.backgroundColorHex = StylingHelper.background_color.toHex(),
         this.useLightBrightness = false;
+
+  static void copyFrom(CustomTheme fromTheme, CustomTheme toTheme,
+      {bool full = false}) {
+    if (full) {
+      toTheme.name = fromTheme.name;
+      toTheme.description = fromTheme.description;
+      toTheme.dateCreatedMS = fromTheme.dateCreatedMS;
+      toTheme.dateUpdatedMS = fromTheme.dateUpdatedMS;
+      toTheme.starred = fromTheme.starred;
+    }
+    toTheme.cardColorHex = fromTheme.cardColorHex;
+    toTheme.appBarColorHex = fromTheme.appBarColorHex;
+    toTheme.tabBarColorHex = fromTheme.tabBarColorHex;
+    toTheme.accentColorHex = fromTheme.accentColorHex;
+    toTheme.highlightColorHex = fromTheme.highlightColorHex;
+    toTheme.backgroundColorHex = fromTheme.backgroundColorHex;
+    toTheme.useLightBrightness = fromTheme.useLightBrightness;
+  }
 }

@@ -26,6 +26,7 @@ class ColorPicker extends StatefulWidget {
   final String title;
   final String description;
   final String? color;
+  final bool editableColorValues;
   final bool useAlpha;
   final void Function(String)? onSave;
 
@@ -33,6 +34,7 @@ class ColorPicker extends StatefulWidget {
     required this.title,
     required this.description,
     this.color,
+    this.editableColorValues = false,
     this.useAlpha = false,
     this.onSave,
   });
@@ -210,15 +212,17 @@ class _ColorPickerState extends State<ColorPicker> {
                     text: 'Save',
                     onPressed: () {
                       if (_hexController.isValid &&
-                          (_pickerType == PickerType.RGB
-                              ? (_rController.isValid &&
-                                  _gController.isValid &&
-                                  _bController.isValid)
-                              : (_hController.isValid &&
-                                  _sController.isValid &&
-                                  _lController.isValid)) &&
-                          (this.widget.useAlpha
-                              ? _aController.isValid
+                          (this.widget.editableColorValues
+                              ? (_pickerType == PickerType.RGB
+                                      ? (_rController.isValid &&
+                                          _gController.isValid &&
+                                          _bController.isValid)
+                                      : (_hController.isValid &&
+                                          _sController.isValid &&
+                                          _lController.isValid)) &&
+                                  (this.widget.useAlpha
+                                      ? _aController.isValid
+                                      : true)
                               : true)) {
                         this.widget.onSave?.call(_hexController.text);
                         Navigator.of(context).pop();
@@ -284,58 +288,59 @@ class _ColorPickerState extends State<ColorPicker> {
                             ),
                           ),
                           SizedBox(
-                              width: 150.0,
-                              height: 82.0,
-                              child: StatefulBuilder(
-                                builder: (context, setInnerState) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 24.0),
-                                    child: TextFormField(
-                                      controller: _hexController,
-                                      focusNode: _hexFocusNode,
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        counterText: '',
-                                        suffixText:
-                                            '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
-                                        suffixStyle:
-                                            Theme.of(context).textTheme.caption,
-                                      ),
-                                      validator: (color) =>
-                                          ValidationHelper.colorHexValidator(
-                                              color),
-                                      autovalidateMode: AutovalidateMode.always,
-                                      autocorrect: false,
-                                      maxLength: this.widget.useAlpha ? 8 : 6,
-                                      maxLengthEnforcement:
-                                          MaxLengthEnforcement.enforced,
-                                      // inputFormatters: [
-                                      //   FilteringTextInputFormatter.allow(
-                                      //     r'^[a-fA-F0-9]+$',
-                                      //     replacementString: _color.text,
-                                      //   )
-                                      // ],
-                                      onChanged: (value) {
-                                        if (ValidationHelper.colorHexValidator(
-                                                _hexController.text) ==
-                                            null) {
-                                          _latestValidHexValue = value;
-                                          _setHSLColor();
-                                          setState(() {});
-                                        }
-                                        setInnerState(() {});
-                                      },
+                            width: 150.0,
+                            height: 82.0,
+                            child: StatefulBuilder(
+                              builder: (context, setInnerState) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 24.0),
+                                  child: TextFormField(
+                                    controller: _hexController,
+                                    focusNode: _hexFocusNode,
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      counterText: '',
+                                      suffixText:
+                                          '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
+                                      suffixStyle:
+                                          Theme.of(context).textTheme.caption,
                                     ),
-                                  );
-                                },
-                              )),
+                                    validator: (color) =>
+                                        ValidationHelper.colorHexValidator(
+                                            color),
+                                    autovalidateMode: AutovalidateMode.always,
+                                    autocorrect: false,
+                                    maxLength: this.widget.useAlpha ? 8 : 6,
+                                    maxLengthEnforcement:
+                                        MaxLengthEnforcement.enforced,
+                                    // inputFormatters: [
+                                    //   FilteringTextInputFormatter.allow(
+                                    //     r'^[a-fA-F0-9]+$',
+                                    //     replacementString: _color.text,
+                                    //   )
+                                    // ],
+                                    onChanged: (value) {
+                                      if (ValidationHelper.colorHexValidator(
+                                              _hexController.text) ==
+                                          null) {
+                                        _latestValidHexValue = value;
+                                        _setHSLColor();
+                                        setState(() {});
+                                      }
+                                      setInnerState(() {});
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ],
                       ),
                       Padding(
                         padding: const EdgeInsets.only(right: 10.0),
                         child: ColorBubble(
                           color: _latestValidHexValue.hexToColor(),
-                          size: 42.0,
+                          size: 38.0,
                         ),
                       ),
                     ],
@@ -349,7 +354,9 @@ class _ColorPickerState extends State<ColorPicker> {
                     children: [
                       if (_pickerType == PickerType.RGB) ...[
                         ColorSlider(
-                          controller: _rController,
+                          controller: this.widget.editableColorValues
+                              ? _rController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.R,
                           value: _getColorSliderValue(ColorType.R),
@@ -360,7 +367,9 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
-                          controller: _gController,
+                          controller: this.widget.editableColorValues
+                              ? _gController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.G,
                           value: _getColorSliderValue(ColorType.G),
@@ -371,7 +380,9 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
-                          controller: _bController,
+                          controller: this.widget.editableColorValues
+                              ? _bController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.B,
                           value: _getColorSliderValue(ColorType.B),
@@ -384,7 +395,9 @@ class _ColorPickerState extends State<ColorPicker> {
                       ],
                       if (_pickerType == PickerType.HSL) ...[
                         ColorSlider(
-                          controller: _hController,
+                          controller: this.widget.editableColorValues
+                              ? _hController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.H,
                           value: _getColorSliderValue(ColorType.H),
@@ -396,7 +409,9 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
-                          controller: _sController,
+                          controller: this.widget.editableColorValues
+                              ? _sController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.S,
                           value: _getColorSliderValue(ColorType.S),
@@ -408,7 +423,9 @@ class _ColorPickerState extends State<ColorPicker> {
                           ),
                         ),
                         ColorSlider(
-                          controller: _lController,
+                          controller: this.widget.editableColorValues
+                              ? _lController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.L,
                           value: _getColorSliderValue(ColorType.L),
@@ -422,7 +439,9 @@ class _ColorPickerState extends State<ColorPicker> {
                       ],
                       if (this.widget.useAlpha)
                         ColorSlider(
-                          controller: _aController,
+                          controller: this.widget.editableColorValues
+                              ? _aController
+                              : null,
                           pickerType: _pickerType,
                           colorType: ColorType.A,
                           value: _getColorSliderValue(ColorType.A),
