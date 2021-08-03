@@ -41,7 +41,7 @@ class CustomThemeView extends StatelessWidget {
               child: CleanListTile(
                 title: 'Use Custom Theme',
                 description:
-                    'Once active the selected theme below will be used for this app. Select between predefined themes or your own!',
+                    'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
                 trailing: ThemedCupertinoSwitch(
                   value: settingsBox.get(SettingsKeys.CustomTheme.name,
                       defaultValue: false),
