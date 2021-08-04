@@ -11,7 +11,7 @@ import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../widgets/action_block.dart/light_divider.dart';
-import 'color_row.dart';
+import 'theme_row.dart';
 
 class AddEditTheme extends StatefulWidget {
   final CustomTheme? customTheme;
@@ -166,17 +166,16 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 CustomTheme.copyFrom(theme, _customTheme)),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'Is this a light theme?',
                             description:
                                 'If this theme is intended to be a light theme, this option should be checked so text / system UI correctly adapts',
-                            colorHex: _customTheme.cardColorHex,
                             active: _customTheme.useLightBrightness,
                             onActiveChanged: (active) => setState(
                                 () => _customTheme.useLightBrightness = active),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'Card Color',
                             description:
                                 'Most UI elements are inside Cards so this is kinda the primary color of the app',
@@ -185,7 +184,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 () => _customTheme.cardColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'AppBar Color',
                             description:
                                 'The top UI element which contains the title of the current view, back navigation etc.',
@@ -194,7 +193,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 () => _customTheme.appBarColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'TabBar Color',
                             description:
                                 'The bottom navigation bar containing the tabs for this app',
@@ -203,7 +202,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 () => _customTheme.tabBarColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'Accent Color',
                             description:
                                 'Is being used by action / toggle elements like Switch, Button, etc.',
@@ -212,7 +211,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 () => _customTheme.accentColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'Highlight Color',
                             description:
                                 'Active state is being displayed with this color like active scene, active tab, some buttons, etc.',
@@ -221,7 +220,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 _customTheme.highlightColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
-                          ColorRow(
+                          ThemeRow(
                             title: 'Background Color',
                             description:
                                 'Color for the typical background which behind all the UI elements',
