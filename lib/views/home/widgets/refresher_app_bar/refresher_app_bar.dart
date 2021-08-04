@@ -53,9 +53,16 @@ class RefresherAppBar extends StatelessWidget {
             ),
           ],
         ),
-        background: Padding(
-            padding: EdgeInsets.only(top: 32.0),
-            child: Image.asset(this.imagePath)),
+        background: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              /// TODO: Will be managed later for pro subscribers when choosing their own logo
+              color: Colors.transparent,
+            ),
+            Image.asset(this.imagePath),
+          ],
+        ),
         collapseMode: CollapseMode.parallax,
         stretchModes: [StretchMode.blurBackground, StretchMode.zoomBackground],
       ),

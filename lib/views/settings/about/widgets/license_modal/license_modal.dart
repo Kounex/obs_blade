@@ -23,10 +23,12 @@ class LicenseModal extends StatelessWidget {
       customBody: Column(
         children: [
           Align(
-            child: Container(
-              padding: EdgeInsets.only(bottom: 12.0),
-              width: 300.0,
-              child: Image.asset('assets/images/base_logo.png'),
+            child: Transform.translate(
+              offset: Offset(0, -24),
+              child: Container(
+                width: 256.0,
+                child: Image.asset('assets/images/base_logo.png'),
+              ),
             ),
           ),
           LightDivider(),
