@@ -42,9 +42,11 @@ class _HomeViewState extends State<HomeView> {
   /// passed to our build method is the one from the parent, we won't have access to the
   /// provided ViewModel on this way at all - thats why i used the Facade Pattern and
   /// used a Wrapper Widget which has the only pupose to expose the ViewModel via Provider
-  /// and making it accessible with the given context here. The reactions I registered
-  /// here should only be registered once (making use of reaction and when) so thats why
-  /// its now in [initState]
+  /// and making it accessible with the given context here (NEW: this has also been changed
+  /// since I switched to GetIt which registers the stores globally (without context) and we
+  /// don't need to initialize them in a facade pattern manner and do it in main but now need
+  /// to reset those stores). The reactions I registered here should only be registered once
+  /// (making use of reaction and when) so thats why its now in [initState]
   ///
   /// Since I'm checking here if the [obsTerminated] value is true (meaning we came to this
   /// view because OBS has terminated) I want to disaplay dialog informing the user about it.

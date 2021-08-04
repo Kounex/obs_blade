@@ -52,6 +52,10 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
     super.initState();
+
+    /// Since GetIt exposes stores in a global manner and I want a view
+    /// store to be clean once a view is entered / inititalized, we need to
+    /// reset them on every view (just in initState)
     GetIt.instance.resetLazySingleton<DashboardStore>();
 
     /// Initiate the [DashboardStore] object by initiating socket listeners
