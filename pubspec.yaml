@@ -47,11 +47,8 @@ dependencies:
     # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
     url_launcher: ^6.0.3
 
-    # See app layout on different device sizes on the fly
-    #device_preview: ^0.4.8
-
     # Enable keeping the device active
-    wakelock: ^0.5.1
+    wakelock: ^0.5.3+3
 
     # Initiate native share sheet
     share: ^2.0.1

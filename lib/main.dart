@@ -179,7 +179,7 @@ void _logging(String line) {
 
 void main() async {
   /// Initialize Date Formatting - using European style
-  await initializeDateFormatting('de_DE', null);
+  await initializeDateFormatting('de_DE');
 
   /// Create all store objects and make them available in the app (DI)
   _initializeStores();

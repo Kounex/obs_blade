@@ -110,7 +110,7 @@ class SettingsView extends StatelessWidget {
                     BlockEntry(
                       leading: CupertinoIcons.film,
                       leadingSize: 26.0,
-                      title: 'Studio Mode Support',
+                      title: 'Studio Mode',
                       help:
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard!',
                       trailing: ThemedCupertinoSwitch(
@@ -141,7 +141,7 @@ class SettingsView extends StatelessWidget {
                     BlockEntry(
                       leading: CupertinoIcons.lock_fill,
                       leadingSize: 30.0,
-                      title: 'Enforce Tablet Mode',
+                      title: 'Force Tablet Mode',
                       help:
                           'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen!',
                       trailing: ThemedCupertinoSwitch(

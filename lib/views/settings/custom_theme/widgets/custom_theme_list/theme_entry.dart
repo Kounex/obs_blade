@@ -65,20 +65,15 @@ class ThemeEntry extends StatelessWidget {
                           this.customTheme.name ?? 'Unnamed theme',
                           overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 2.0),
                         Text(
                           this.customTheme.description ?? 'No description',
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.caption,
                           maxLines: 2,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 8.0,
-                          ),
-                          child: ThemeColorsRow(
-                            customTheme: this.customTheme,
-                          ),
-                        ),
+                        const SizedBox(height: 8.0),
+                        ThemeColorsRow(customTheme: this.customTheme),
                       ],
                     ),
                   ),

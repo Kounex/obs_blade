@@ -60,47 +60,24 @@ class CustomThemeView extends StatelessWidget {
                 predefinedThemes: true,
               ),
             ),
-            Stack(
-              fit: StackFit.loose,
-              alignment: Alignment.bottomCenter,
-              children: [
-                BaseCard(
-                  title: 'Your Themes',
-                  trailingTitleWidget: ThemedCupertinoButton(
-                    padding: const EdgeInsets.all(0),
-                    onPressed: () {
-                      ModalHandler.showBaseCupertinoBottomSheet(
-                        context: context,
-                        modalWidgetBuilder: (context, scrollController) =>
-                            AddEditTheme(
-                          scrollController: scrollController,
-                        ),
-                      );
-                    },
-                    text: 'Add Theme',
-                  ),
-                  bottomPadding: 12.0,
-                  paddingChild: EdgeInsets.all(0),
-                  child: CustomThemeList(),
-                ),
-                // Positioned.fill(
-                //   child: ClipRect(
-                //     child: BackdropFilter(
-                //       filter: ImageFilter.blur(sigmaX: 1.25, sigmaY: 1.25),
-                //       child: FittedBox(
-                //         fit: BoxFit.scaleDown,
-                //         child: BaseCard(
-                //           paintBorder: true,
-                //           child: BaseResult(
-                //             icon: BaseResultIcon.Missing,
-                //             text: 'Available soon...',
-                //           ),
-                //         ),
-                //       ),
-                //     ),
-                //   ),
-                // ),
-              ],
+            BaseCard(
+              title: 'Your Themes',
+              trailingTitleWidget: ThemedCupertinoButton(
+                padding: const EdgeInsets.all(0),
+                onPressed: () {
+                  ModalHandler.showBaseCupertinoBottomSheet(
+                    context: context,
+                    modalWidgetBuilder: (context, scrollController) =>
+                        AddEditTheme(
+                      scrollController: scrollController,
+                    ),
+                  );
+                },
+                text: 'Add Theme',
+              ),
+              bottomPadding: 12.0,
+              paddingChild: EdgeInsets.all(0),
+              child: CustomThemeList(),
             ),
           ],
         ),
