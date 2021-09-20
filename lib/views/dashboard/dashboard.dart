@@ -33,7 +33,8 @@ import 'widgets/stream_widgets/stream_widgets_mobile.dart';
 class DashboardScroll extends InheritedWidget {
   final ScrollController scrollController = ScrollController();
 
-  DashboardScroll({required Widget child}) : super(child: child);
+  DashboardScroll({Key? key, required Widget child})
+      : super(key: key, child: child);
 
   static DashboardScroll of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<DashboardScroll>()!;
@@ -44,6 +45,8 @@ class DashboardScroll extends InheritedWidget {
 }
 
 class DashboardView extends StatefulWidget {
+  const DashboardView({Key? key}) : super(key: key);
+
   @override
   _DashboardViewState createState() => _DashboardViewState();
 }
@@ -101,7 +104,7 @@ class _DashboardViewState extends State<DashboardView> {
         onOk: (_) {
           ModalHandler.showBaseDialog(
             context: context,
-            dialogWidget: SaveEditConnectionDialog(),
+            dialogWidget: const SaveEditConnectionDialog(),
           );
         },
       ),
@@ -117,12 +120,12 @@ class _DashboardViewState extends State<DashboardView> {
           children: [
             CustomScrollView(
               physics: GetIt.instance<DashboardStore>().isPointerOnChat
-                  ? NeverScrollableScrollPhysics()
-                  : ClampingScrollPhysics(),
+                  ? const NeverScrollableScrollPhysics()
+                  : const ClampingScrollPhysics(),
               controller: ModalRoute.of(context)!.settings.arguments
                   as ScrollController,
               slivers: [
-                StatusAppBar(),
+                const StatusAppBar(),
                 CustomSliverList(
                   children: [
                     Align(
@@ -130,8 +133,8 @@ class _DashboardViewState extends State<DashboardView> {
                         // width: MediaQuery.of(context).size.width / 100 * 85,
                         child: Column(
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 24.0),
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 24.0),
                               child: Scenes(),
                             ),
                             Container(
@@ -142,11 +145,11 @@ class _DashboardViewState extends State<DashboardView> {
                                 style: Theme.of(context).textTheme.headline4,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8.0),
                               child: LightDivider(),
                             ),
-                            ResponsiveWidgetWrapper(
+                            const ResponsiveWidgetWrapper(
                               mobileWidget: StreamWidgetsMobile(),
                               tabletWidget: StreamWidgets(),
                             ),
@@ -163,7 +166,7 @@ class _DashboardViewState extends State<DashboardView> {
             ),
             Positioned(
               top: kToolbarHeight + MediaQuery.of(context).padding.top,
-              child: Align(
+              child: const Align(
                 alignment: Alignment.center,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,

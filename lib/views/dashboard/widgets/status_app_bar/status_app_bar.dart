@@ -14,6 +14,8 @@ import '../../../../utils/routing_helper.dart';
 import 'general_actions.dart';
 
 class StatusAppBar extends StatelessWidget {
+  const StatusAppBar({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
@@ -47,7 +49,7 @@ class StatusAppBar extends StatelessWidget {
                   ),
                 ),
               ),
-              GeneralActions(),
+              const GeneralActions(),
             ],
           ),
           Column(
@@ -71,7 +73,7 @@ class StatusAppBar extends StatelessWidget {
                         text: dashboardStore.isLive ? 'Live' : 'Not Live',
                         style: Theme.of(context).textTheme.caption,
                       ),
-                      SizedBox(width: 8.0),
+                      const SizedBox(width: 8.0),
                       StatusDot(
                         key: Key(
                             '${dashboardStore.isRecording.toString()}+${dashboardStore.isRecordingPaused.toString()}'),

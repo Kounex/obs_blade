@@ -8,7 +8,9 @@ class LicenseDetail extends StatelessWidget {
   final String package;
   final List<LicenseEntry> licenseEntries;
 
-  LicenseDetail({required this.package, required this.licenseEntries});
+  const LicenseDetail(
+      {Key? key, required this.package, required this.licenseEntries})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

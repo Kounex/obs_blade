@@ -10,11 +10,12 @@ class HiveBuilder<T> extends StatelessWidget {
   final Widget Function(BuildContext context, Box<T> box, Widget? child)
       builder;
 
-  HiveBuilder({
+  const HiveBuilder({
+    Key? key,
     required this.hiveKey,
     required this.builder,
     this.rebuildKeys,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

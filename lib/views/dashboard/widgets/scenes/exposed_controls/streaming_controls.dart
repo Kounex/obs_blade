@@ -11,13 +11,15 @@ import '../../../../../types/enums/settings_keys.dart';
 import '../../../services/record_stream.dart';
 
 class StreamingControls extends StatelessWidget {
+  const StreamingControls({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [
+      rebuildKeys: const [
         SettingsKeys.DontShowStreamStartMessage,
         SettingsKeys.DontShowStreamStopMessage,
       ],

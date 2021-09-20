@@ -11,7 +11,10 @@ import '../../../types/enums/hive_keys.dart';
 class SaveEditConnectionDialog extends StatelessWidget {
   final bool newConnection;
 
-  SaveEditConnectionDialog({this.newConnection = true});
+  const SaveEditConnectionDialog({
+    Key? key,
+    this.newConnection = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +29,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
       inputPlaceholder: 'Name of the connection',
       inputCheck: (name) {
         name = name.trim();
-        if (name.length == 0) {
+        if (name.isEmpty) {
           return 'Please provide a name!';
         }
         if (box.values.any((connection) =>

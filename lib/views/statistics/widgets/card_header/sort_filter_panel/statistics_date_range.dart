@@ -6,6 +6,8 @@ import '../../../../../shared/general/date_range/date_range.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class StatisticsDateRange extends StatelessWidget {
+  const StatisticsDateRange({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
@@ -15,8 +17,9 @@ class StatisticsDateRange extends StatelessWidget {
         selectedFromDate: statisticsStore.fromDate,
         updateFromDate: (date) => statisticsStore.setFromDate(date),
         selectedToDate: statisticsStore.toDate,
-        updateToDate: (date) => statisticsStore.setToDate(
-            date?.add(Duration(days: 1)).subtract(Duration(milliseconds: 1))),
+        updateToDate: (date) => statisticsStore.setToDate(date
+            ?.add(const Duration(days: 1))
+            .subtract(const Duration(milliseconds: 1))),
       ),
     );
   }

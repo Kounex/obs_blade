@@ -33,7 +33,7 @@ class ValidationCupertinoTextfield extends StatefulWidget {
   final int minLines;
   final int? maxLines;
 
-  ValidationCupertinoTextfield({
+  const ValidationCupertinoTextfield({
     Key? key,
     required this.controller,
     this.placeholder,
@@ -61,8 +61,9 @@ class ValidationCupertinoTextfieldState
       if (this.widget.controller.submitted && _validationText == null) {
         String? tempVal =
             this.widget.controller.check(this.widget.controller.text);
-        if (tempVal != _validationText)
+        if (tempVal != _validationText) {
           setState(() => _validationText = tempVal);
+        }
       }
       if (this.widget.controller.submitted &&
           this.widget.controller.textAtSubmission !=
@@ -104,10 +105,10 @@ class ValidationCupertinoTextfieldState
                 top: 4.0, left: 4.0, bottom: this.widget.bottomPadding),
             child: AnimatedOpacity(
               opacity: _validationText != null ? 1 : 0,
-              duration: Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               child: Text(
                 _validationText ?? '',
-                style: TextStyle(
+                style: const TextStyle(
                   color: CupertinoColors.destructiveRed,
                 ),
               ),

@@ -10,7 +10,10 @@ import '../../../../../../utils/network_helper.dart';
 class AudioSlider extends StatelessWidget {
   final SceneItem audioSceneItem;
 
-  AudioSlider({required this.audioSceneItem});
+  const AudioSlider({
+    Key? key,
+    required this.audioSceneItem,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +40,7 @@ class AudioSlider extends StatelessWidget {
                       ? CupertinoColors.destructiveRed
                       : Theme.of(context).buttonColor,
                 ),
-                padding: EdgeInsets.all(0.0),
+                padding: const EdgeInsets.all(0.0),
                 onPressed: () => NetworkHelper.makeRequest(
                     networkStore.activeSession!.socket, RequestType.SetMute, {
                   'source': this.audioSceneItem.name,
@@ -49,7 +52,7 @@ class AudioSlider extends StatelessWidget {
                   min: 0.0,
                   max: 1.0,
                   value: this.audioSceneItem.volume as double,
-                  activeColor: Theme.of(context).accentColor,
+                  activeColor: Theme.of(context).colorScheme.secondary,
                   onChanged: (volume) => NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
                       RequestType.SetVolume,
@@ -58,7 +61,7 @@ class AudioSlider extends StatelessWidget {
               ),
               Container(
                 width: 48.0,
-                padding: EdgeInsets.only(right: 12.0),
+                padding: const EdgeInsets.only(right: 12.0),
                 alignment: Alignment.center,
                 child: Text((((this.audioSceneItem.volume * 100).toInt()) / 100)
                     .toString()

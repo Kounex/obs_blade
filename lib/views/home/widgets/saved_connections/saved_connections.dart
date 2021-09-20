@@ -10,6 +10,8 @@ import 'connection_box.dart';
 import 'placeholder_connection.dart';
 
 class SavedConnections extends StatelessWidget {
+  const SavedConnections({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -23,7 +25,7 @@ class SavedConnections extends StatelessWidget {
             style: Theme.of(context).textTheme.headline5,
           ),
         ),
-        Divider(),
+        const Divider(),
         Flexible(
           fit: FlexFit.loose,
           child: Padding(
@@ -36,7 +38,7 @@ class SavedConnections extends StatelessWidget {
                 double height = 180.0;
                 double width = 250.0;
 
-                if (savedConnectionsBox.values.length == 0) {
+                if (savedConnectionsBox.values.isEmpty) {
                   return PlaceholderConnection(
                     height: height,
                     width: width,
@@ -50,12 +52,12 @@ class SavedConnections extends StatelessWidget {
                         List<Connection> savedConnections =
                             savedConnectionsBox.values.toList();
 
-                        savedConnections.forEach((connection) =>
-                            connection.reachable = snapshot.hasData &&
-                                snapshot.data!.any((discoverConnection) =>
-                                    discoverConnection.ip == connection.ip &&
-                                    discoverConnection.port ==
-                                        connection.port));
+                        for (var connection in savedConnections) {
+                          connection.reachable = snapshot.hasData &&
+                              snapshot.data!.any((discoverConnection) =>
+                                  discoverConnection.ip == connection.ip &&
+                                  discoverConnection.port == connection.port);
+                        }
                         savedConnections
                             .sort((c1, c2) => c1.reachable != c2.reachable
                                 ? c1.reachable!

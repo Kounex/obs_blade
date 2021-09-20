@@ -14,6 +14,8 @@ import 'widgets/about_header.dart';
 import 'widgets/license_modal/license_modal.dart';
 
 class AboutView extends StatelessWidget {
+  const AboutView({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return ThemedCupertinoScaffold(
@@ -23,10 +25,10 @@ class AboutView extends StatelessWidget {
           title: 'About',
           listViewChildren: [
             Padding(
-              padding: EdgeInsets.only(top: 12.0),
+              padding: const EdgeInsets.only(top: 12.0),
               child: Column(
                 children: [
-                  AboutHeader(),
+                  const AboutHeader(),
                   // LightDivider(
                   //   height: 32.0,
                   // ),
@@ -34,11 +36,11 @@ class AboutView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Greetings!\n',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        ThemedRichText(
+                        const ThemedRichText(
                           textSpans: [
                             TextSpan(
                                 text:
@@ -77,7 +79,7 @@ class AboutView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Text(
+                        const Text(
                             'OBS Blade is open source which means you can take look behind the scenes and see the actual source code. I might need to hide some sensitive stuff like keys / tokens / credentials (obviously), but everything else should be accessible.'),
                         SocialBlock(
                           socialInfos: [
@@ -89,7 +91,7 @@ class AboutView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Text(
+                        const Text(
                             'This app (as in a lot of cases) started as a small passion project since I wanted to be able to control OBS on the fly without the need of any third party apps / devices. Sometimes I stream some stuff myself - gaming related - so if you want to drop by:'),
                         SocialBlock(
                           socialInfos: [
@@ -101,10 +103,9 @@ class AboutView extends StatelessWidget {
                             ),
                           ],
                         ),
-                        LightDivider(),
-                        Padding(
-                          padding:
-                              const EdgeInsets.only(top: 14.0, bottom: 8.0),
+                        const LightDivider(),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 14.0, bottom: 8.0),
                           child: Text(
                               'For a short overview of the used libraries, you can take a look here:'),
                         ),

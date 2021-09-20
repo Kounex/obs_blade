@@ -3,13 +3,15 @@ import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider
 import 'package:package_info/package_info.dart';
 
 class AboutHeader extends StatelessWidget {
+  const AboutHeader({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          padding: EdgeInsets.only(right: 24.0),
+          padding: const EdgeInsets.only(right: 24.0),
           height: 82.0,
           child: Image.asset('assets/images/kounex_logo_ai_no_background.png'),
         ),
@@ -17,7 +19,7 @@ class AboutHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Transform.translate(
-              offset: Offset(-4.0, 0.0),
+              offset: const Offset(-4.0, 0.0),
               child: Text(
                 'OBS Blade',
                 style: Theme.of(context)
@@ -27,9 +29,9 @@ class AboutHeader extends StatelessWidget {
               ),
             ),
             Container(
-              padding: EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 8.0),
               width: 180.0,
-              child: LightDivider(),
+              child: const LightDivider(),
             ),
             Text(
               'by Kounex (René Schramowski)',

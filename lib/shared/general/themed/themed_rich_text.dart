@@ -5,11 +5,12 @@ class ThemedRichText extends StatelessWidget {
   final TextAlign? textAlign;
   final TextStyle? textStyle;
 
-  ThemedRichText({
+  const ThemedRichText({
+    Key? key,
     required this.textSpans,
     this.textAlign,
     this.textStyle,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

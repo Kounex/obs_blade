@@ -8,16 +8,17 @@ import 'data_entry.dart';
 class DataBlock extends StatelessWidget {
   final List<DataEntry> dataEntries;
 
-  DataBlock({
+  const DataBlock({
+    Key? key,
     required this.dataEntries,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BaseCard(
       bottomPadding: 12.0,
       child: ColumnSeparated(
-        paddingSeparator: EdgeInsets.symmetric(vertical: 16.0),
+        paddingSeparator: const EdgeInsets.symmetric(vertical: 16.0),
         children: this.dataEntries,
       ),
     );

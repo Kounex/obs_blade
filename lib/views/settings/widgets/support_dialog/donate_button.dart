@@ -5,7 +5,8 @@ class DonateButton extends StatelessWidget {
   final String text;
   final double value;
 
-  DonateButton({required this.text, required this.value});
+  const DonateButton({Key? key, required this.text, required this.value})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

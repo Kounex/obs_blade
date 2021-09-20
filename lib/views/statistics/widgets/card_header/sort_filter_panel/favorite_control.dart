@@ -6,6 +6,8 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class FavoriteControl extends StatelessWidget {
+  const FavoriteControl({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
@@ -14,14 +16,12 @@ class FavoriteControl extends StatelessWidget {
       builder: (_) => SizedBox(
         width: double.infinity,
         child: CupertinoSlidingSegmentedControl(
-          groupValue: statisticsStore.showOnlyFavorites == null
-              ? 'null'
-              : statisticsStore.showOnlyFavorites,
-          padding: EdgeInsets.all(0),
+          groupValue: statisticsStore.showOnlyFavorites ?? 'null',
+          padding: const EdgeInsets.all(0),
           children: {
             false: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+              children: const [
                 Icon(
                   Icons.star,
                 ),
@@ -30,10 +30,10 @@ class FavoriteControl extends StatelessWidget {
                 ),
               ],
             ),
-            true: Icon(
+            true: const Icon(
               Icons.star,
             ),
-            'null': Icon(
+            'null': const Icon(
               Icons.star_border,
             ),
           },

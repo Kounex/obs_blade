@@ -4,8 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/shared/general/social_block.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/social_block.dart';
 
 import '../../stores/views/intro.dart';
 import 'widgets/intro_slide.dart';
@@ -16,14 +16,14 @@ const double kIntroControlsBottomPadding = 24.0;
 class IntroView extends StatefulWidget {
   final bool manually;
 
-  IntroView({this.manually = false});
+  const IntroView({Key? key, this.manually = false}) : super(key: key);
 
   @override
   _IntroViewState createState() => _IntroViewState();
 }
 
 class _IntroViewState extends State<IntroView> {
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   late List<Widget> _pageChildren;
 
   @override
@@ -63,7 +63,7 @@ class _IntroViewState extends State<IntroView> {
     GetIt.instance.resetLazySingleton<IntroStore>();
 
     _pageChildren = [
-      IntroSlide(
+      const IntroSlide(
         imagePath: 'assets/images/base_logo.png',
         slideTextSpans: [
           TextSpan(
@@ -74,7 +74,7 @@ class _IntroViewState extends State<IntroView> {
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_page.png',
-        slideTextSpans: [
+        slideTextSpans: const [
           TextSpan(
             text:
                 'Visit the OBS WebSocket GitHub page to get the plugin to make this app work:',
@@ -86,12 +86,15 @@ class _IntroViewState extends State<IntroView> {
           socialInfos: [
             SocialEntry(
               link: 'https://github.com/Palakis/obs-websocket',
-              textStyle: Theme.of(context).textTheme.headline6,
+              textStyle: Theme.of(context)
+                  .textTheme
+                  .headline6!
+                  .copyWith(color: Colors.blue),
             ),
           ],
         ),
       ),
-      IntroSlide(
+      const IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_download.png',
         slideTextSpans: [
           TextSpan(
@@ -100,7 +103,7 @@ class _IntroViewState extends State<IntroView> {
           ),
         ],
       ),
-      IntroSlide(
+      const IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_settings.png',
         slideTextSpans: [
           TextSpan(

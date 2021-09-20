@@ -64,12 +64,12 @@ class CustomTheme extends HiveObject {
     this.useLightBrightness, [
     String? uuid,
     int? dateCreatedMS,
-  ])  : this.uuid = uuid ?? Uuid().v4(),
+  ])  : this.uuid = uuid ?? const Uuid().v4(),
         this.dateCreatedMS =
             dateCreatedMS ?? DateTime.now().millisecondsSinceEpoch;
 
   CustomTheme.basic()
-      : this.uuid = Uuid().v4(),
+      : this.uuid = const Uuid().v4(),
         this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch,
         this.cardColorHex = StylingHelper.primary_color.toHex(),
         this.appBarColorHex = StylingHelper.primary_color.toHex(),

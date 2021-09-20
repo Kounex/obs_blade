@@ -10,13 +10,15 @@ import '../visibility_slide_wrapper.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatefulWidget {
+  const AudioInputs({Key? key}) : super(key: key);
+
   @override
   _AudioInputsState createState() => _AudioInputsState();
 }
 
 class _AudioInputsState extends State<AudioInputs>
     with AutomaticKeepAliveClientMixin {
-  ScrollController _controller = ScrollController();
+  final ScrollController _controller = ScrollController();
 
   @override
   bool get wantKeepAlive => true;
@@ -35,11 +37,11 @@ class _AudioInputsState extends State<AudioInputs>
           isAlwaysShown: true,
           child: ListView(
             controller: _controller,
-            physics: ClampingScrollPhysics(),
-            padding: EdgeInsets.only(top: 24.0),
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.only(top: 24.0),
             children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12.0),
                 child: Align(
                   child: Text(
                     'Global',
@@ -51,7 +53,7 @@ class _AudioInputsState extends State<AudioInputs>
                 ),
               ),
               Column(
-                children: dashboardStore.globalAudioSceneItems.length > 0
+                children: dashboardStore.globalAudioSceneItems.isNotEmpty
                     ? dashboardStore.globalAudioSceneItems
                         .map(
                           (globalAudioItem) => VisibilitySlideWrapper(
@@ -62,13 +64,13 @@ class _AudioInputsState extends State<AudioInputs>
                         )
                         .toList()
                     : [
-                        PlaceholderSceneItem(
+                        const PlaceholderSceneItem(
                             text: 'No Global Audio source available...')
                       ],
               ),
-              Divider(),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0, bottom: 12.0),
                 child: Align(
                   child: Text(
                     'Scene',
@@ -80,7 +82,7 @@ class _AudioInputsState extends State<AudioInputs>
                 ),
               ),
               Column(
-                children: dashboardStore.currentAudioSceneItems.length > 0
+                children: dashboardStore.currentAudioSceneItems.isNotEmpty
                     ? dashboardStore.currentAudioSceneItems
                         .map(
                           (currentAudioSceneItem) => VisibilitySlideWrapper(
@@ -92,7 +94,7 @@ class _AudioInputsState extends State<AudioInputs>
                         )
                         .toList()
                     : [
-                        PlaceholderSceneItem(
+                        const PlaceholderSceneItem(
                             text: 'No Audio source in this scene...')
                       ],
               ),

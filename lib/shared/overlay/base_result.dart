@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 enum BaseResultIcon { Positive, Negative, Missing }
 
@@ -17,11 +17,12 @@ class BaseResult extends StatelessWidget {
 
   final double iconSize;
 
-  BaseResult({
+  const BaseResult({
+    Key? key,
     this.icon = BaseResultIcon.Positive,
     this.text,
     this.iconSize = 32.0,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,7 @@ class BaseResult extends StatelessWidget {
         ),
         if (this.text != null)
           Padding(
-            padding: EdgeInsets.only(top: 14.0),
+            padding: const EdgeInsets.only(top: 14.0),
             child: Text(
               this.text!,
               textAlign: TextAlign.center,

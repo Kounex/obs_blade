@@ -14,6 +14,8 @@ const List<FilterType> kActiveFilterTypes = [
 ];
 
 class OrderRow extends StatelessWidget {
+  const OrderRow({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();

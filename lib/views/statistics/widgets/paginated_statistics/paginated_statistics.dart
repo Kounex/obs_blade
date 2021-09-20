@@ -14,7 +14,9 @@ import 'pagination_control.dart';
 class PaginatedStatistics extends StatefulWidget {
   final List<PastStreamData> filteredAndSortedStreamData;
 
-  PaginatedStatistics({required this.filteredAndSortedStreamData});
+  const PaginatedStatistics(
+      {Key? key, required this.filteredAndSortedStreamData})
+      : super(key: key);
 
   @override
   _PaginatedStatisticsState createState() => _PaginatedStatisticsState();
@@ -41,22 +43,22 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
         return Column(
           children: [
             ListView.separated(
-              padding: EdgeInsets.all(0),
+              padding: const EdgeInsets.all(0),
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) => StreamEntry(
                   pastStreamData: this.widget.filteredAndSortedStreamData[
                       ((_page - 1) *
                               statisticsStore.amountStatisticEntries.number) +
                           index]),
-              separatorBuilder: (context, index) => LightDivider(),
+              separatorBuilder: (context, index) => const LightDivider(),
               itemCount: min(
                   this.widget.filteredAndSortedStreamData.length -
                       ((_page - 1) *
                           statisticsStore.amountStatisticEntries.number),
                   statisticsStore.amountStatisticEntries.number),
             ),
-            LightDivider(),
+            const LightDivider(),
             PaginationControl(
               currentPage: _page,
               amountPages: amountPages,

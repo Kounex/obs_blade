@@ -6,13 +6,15 @@ import 'package:flutter/material.dart';
 import '../../../../shared/general/social_block.dart';
 
 class SupportDialog extends StatelessWidget {
+  const SupportDialog({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key('support'),
+      key: const Key('support'),
       direction: DismissDirection.vertical,
       onDismissed: (_) => Navigator.of(context).pop(),
-      dismissThresholds: {DismissDirection.vertical: 0.2},
+      dismissThresholds: const {DismissDirection.vertical: 0.2},
       child: Material(
         type: MaterialType.transparency,
         child: Stack(
@@ -24,22 +26,22 @@ class SupportDialog extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (!Platform.isAndroid) SizedBox(height: 12.0),
+                    if (!Platform.isAndroid) const SizedBox(height: 12.0),
                     Text(
                       'Support',
                       style: Theme.of(context).textTheme.headline6,
                     ),
                     if (Platform.isAndroid) ...[
-                      Text(
+                      const Text(
                         'Due to Google Play Payment policies I\'m not allowed to leave donation options here. There are ways to support me available online.',
                       ),
-                      Text(
+                      const Text(
                         'If you really want to, you will find them - you can also contact me directly!',
                       ),
                     ],
                     if (!Platform.isAndroid) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4.0),
                         child: Text(
                           'You sure? Tapped accidentaly? Or just curious? I mean, I always appreciate the love! Motivates me to keep this app updated - but it\'s completly optional :)',
                         ),
@@ -76,7 +78,7 @@ class SupportDialog extends StatelessWidget {
                   color: Theme.of(context).toggleableActiveColor,
                   shape: BoxShape.circle,
                 ),
-                child: Hero(
+                child: const Hero(
                   tag: 'Support Me',
                   child: Icon(
                     CupertinoIcons.heart_solid,
@@ -88,7 +90,7 @@ class SupportDialog extends StatelessWidget {
             Transform(
               transform: Matrix4.identity()..translate(105.0, -80.0),
               child: IconButton(
-                icon: Icon(
+                icon: const Icon(
                   CupertinoIcons.clear_circled_solid,
                   size: 24.0,
                 ),

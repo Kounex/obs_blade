@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info/package_info.dart';
-
-import 'package:wakelock/wakelock.dart';
 import 'package:get_it/get_it.dart';
+import 'package:package_info/package_info.dart';
+import 'package:wakelock/wakelock.dart';
 
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/hive_builder.dart';
@@ -19,6 +18,8 @@ import 'widgets/action_block.dart/block_entry.dart';
 import 'widgets/support_dialog/support_dialog.dart';
 
 class SettingsView extends StatelessWidget {
+  const SettingsView({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +28,7 @@ class SettingsView extends StatelessWidget {
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         physics: StylingHelper.platformAwareScrollPhysics,
         slivers: <Widget>[
-          ThemedCupertinoSliverNavigationBar(
+          const ThemedCupertinoSliverNavigationBar(
             largeTitle: Text('Settings'),
           ),
           HiveBuilder<dynamic>(
@@ -242,8 +243,9 @@ class SettingsView extends StatelessWidget {
                               (context, animation, secondaryAnimation, child) =>
                                   DecoratedBoxTransition(
                             decoration: DecorationTween(
-                              begin: BoxDecoration(color: Colors.transparent),
-                              end: BoxDecoration(color: Colors.black54),
+                              begin: const BoxDecoration(
+                                  color: Colors.transparent),
+                              end: const BoxDecoration(color: Colors.black54),
                             ).animate(animation),
                             child: FadeTransition(
                               opacity: animation,
@@ -251,7 +253,7 @@ class SettingsView extends StatelessWidget {
                             ),
                           ),
                           pageBuilder: (BuildContext context, _, __) =>
-                              SupportDialog(),
+                              const SupportDialog(),
                         ),
                       ),
                     ),

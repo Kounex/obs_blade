@@ -10,7 +10,7 @@ class StatusDot extends StatefulWidget {
   final Axis direction;
   final TextStyle? style;
 
-  StatusDot({
+  const StatusDot({
     Key? key,
     this.size = 12.0,
     this.horizontalSpacing = 8.0,
@@ -35,13 +35,15 @@ class _StatusDotState extends State<StatusDot>
   @override
   void initState() {
     _controller = AnimationController(
-        duration: Duration(milliseconds: 4000), vsync: this);
+        duration: const Duration(milliseconds: 4000), vsync: this);
 
     _opacity = Tween<double>(begin: 0.5, end: 0.0).animate(CurvedAnimation(
-        parent: _controller, curve: Interval(0.2, 0.5, curve: Curves.easeOut)));
+        parent: _controller,
+        curve: const Interval(0.2, 0.5, curve: Curves.easeOut)));
 
     _scale = Tween<double>(begin: 1.0, end: 2.0).animate(CurvedAnimation(
-        parent: _controller, curve: Interval(0.2, 0.5, curve: Curves.easeOut)));
+        parent: _controller,
+        curve: const Interval(0.2, 0.5, curve: Curves.easeOut)));
 
     _controller.repeat();
 
@@ -58,11 +60,11 @@ class _StatusDotState extends State<StatusDot>
   @override
   Widget build(BuildContext context) {
     Widget dot = Container(
-      height: this.widget.size,
-      width: this.widget.size,
+      height: widget.size,
+      width: widget.size,
       decoration: BoxDecoration(
-        color: this.widget.color,
-        borderRadius: BorderRadius.all(Radius.circular(this.widget.size)),
+        color: widget.color,
+        borderRadius: BorderRadius.all(Radius.circular(widget.size)),
       ),
     );
     List<Widget> children = [
@@ -81,23 +83,23 @@ class _StatusDotState extends State<StatusDot>
           dot,
         ],
       ),
-      if (this.widget.text != null)
+      if (widget.text != null)
         Padding(
           padding: EdgeInsets.only(
-            top: this.widget.direction == Axis.horizontal
+            top: widget.direction == Axis.horizontal
                 ? 0.0
-                : this.widget.verticalSpacing,
-            left: this.widget.direction == Axis.horizontal
-                ? this.widget.horizontalSpacing
+                : widget.verticalSpacing,
+            left: widget.direction == Axis.horizontal
+                ? widget.horizontalSpacing
                 : 0.0,
           ),
           child: Text(
-            this.widget.text!,
-            style: this.widget.style ?? Theme.of(context).textTheme.bodyText1,
+            widget.text!,
+            style: widget.style ?? Theme.of(context).textTheme.bodyText1,
           ),
         ),
     ];
-    return this.widget.direction == Axis.horizontal
+    return widget.direction == Axis.horizontal
         ? Row(
             mainAxisSize: MainAxisSize.min,
             children: children,

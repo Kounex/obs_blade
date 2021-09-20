@@ -10,42 +10,43 @@ class PaginationControl extends StatelessWidget {
   final void Function()? onForward;
   final void Function()? onForwardMax;
 
-  PaginationControl({
+  const PaginationControl({
+    Key? key,
     this.currentPage,
     this.amountPages,
     this.onBackMax,
     this.onBack,
     this.onForward,
     this.onForwardMax,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 64.0,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            icon: Icon(CupertinoIcons.chevron_left_2),
+            icon: const Icon(CupertinoIcons.chevron_left_2),
             onPressed: this.onBackMax,
           ),
           IconButton(
-            icon: Icon(CupertinoIcons.chevron_left),
+            icon: const Icon(CupertinoIcons.chevron_left),
             onPressed: this.onBack,
           ),
-          SizedBox(width: 14.0),
+          const SizedBox(width: 14.0),
           Text(
             '${this.currentPage} / ${this.amountPages}',
             style: Theme.of(context).textTheme.subtitle1,
           ),
-          SizedBox(width: 14.0),
+          const SizedBox(width: 14.0),
           IconButton(
-            icon: Icon(CupertinoIcons.chevron_right),
+            icon: const Icon(CupertinoIcons.chevron_right),
             onPressed: this.onForward,
           ),
           IconButton(
-            icon: Icon(CupertinoIcons.chevron_right_2),
+            icon: const Icon(CupertinoIcons.chevron_right_2),
             onPressed: this.onForwardMax,
           ),
         ],

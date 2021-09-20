@@ -7,7 +7,8 @@ import '../../../../../../types/enums/settings_keys.dart';
 class UsernameDropdown extends StatelessWidget {
   final Box settingsBox;
 
-  UsernameDropdown({required this.settingsBox});
+  const UsernameDropdown({Key? key, required this.settingsBox})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +18,13 @@ class UsernameDropdown extends StatelessWidget {
 
     return Flexible(
       child: ConstrainedBox(
-        constraints: BoxConstraints(minWidth: 100.0),
+        constraints: const BoxConstraints(minWidth: 100.0),
         child: DropdownButton<String>(
           value: chatType == ChatType.Twitch
               ? settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)
               : settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name),
           isExpanded: true,
-          disabledHint: Text(
+          disabledHint: const Text(
             'No usernames',
             maxLines: 1,
             softWrap: false,

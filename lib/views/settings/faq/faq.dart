@@ -11,6 +11,8 @@ import 'widgets/faq_block.dart';
 const kFAQSpaceHeight = 24.0;
 
 class FAQView extends StatelessWidget {
+  const FAQView({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,13 +28,13 @@ class FAQView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Flexible(
+                const Flexible(
                   child: Icon(
                     CupertinoIcons.chat_bubble_text_fill,
                     size: 92.0,
                   ),
                 ),
-                SizedBox(width: 24.0),
+                const SizedBox(width: 24.0),
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -48,7 +50,7 @@ class FAQView extends StatelessWidget {
           BaseCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: const [
                 Text(
                     'Since I received several questions and problems regarding using OBS Blade, I tried to compile some information here which might help others as well if they encounter problems or are not sure about some functions / possibilities.'),
                 SizedBox(height: 12.0),

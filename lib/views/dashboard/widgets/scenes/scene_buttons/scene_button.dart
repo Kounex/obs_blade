@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -21,12 +21,13 @@ class SceneButton extends StatelessWidget {
   final double width;
 
   const SceneButton({
+    Key? key,
     required this.scene,
     required this.visible,
     required this.onVisibilityTap,
     this.height = 100.0,
     this.width = 100.0,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,7 @@ class SceneButton extends StatelessWidget {
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [SettingsKeys.ExposeStudioControls],
+      rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) => Observer(
         builder: (_) => GestureDetector(
           onTap: () {
@@ -70,7 +71,7 @@ class SceneButton extends StatelessWidget {
                 width: this.width,
                 decoration: BoxDecoration(
                   color: dashboardStore.activeSceneName == scene.name
-                      ? Theme.of(context).accentColor
+                      ? Theme.of(context).colorScheme.secondary
                       : Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12.0),
                 ),
@@ -83,7 +84,7 @@ class SceneButton extends StatelessWidget {
                 ),
               ),
               AnimatedContainer(
-                duration: Duration(milliseconds: 50),
+                duration: const Duration(milliseconds: 50),
                 height: this.height,
                 width: this.width,
                 decoration: BoxDecoration(
@@ -95,7 +96,7 @@ class SceneButton extends StatelessWidget {
                             ? dashboardStore.studioModePreviewSceneName ==
                                 scene.name
                             : dashboardStore.activeSceneName == scene.name)
-                        ? Theme.of(context).accentColor
+                        ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context).cardColor,
                   ),
                   borderRadius: BorderRadius.circular(12.0),
@@ -110,7 +111,7 @@ class SceneButton extends StatelessWidget {
                     width: 32.0,
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.only(
+                      borderRadius: const BorderRadius.only(
                         topRight: Radius.circular(12.0),
                         bottomLeft: Radius.circular(12.0),
                       ),

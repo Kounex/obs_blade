@@ -6,7 +6,8 @@ class OrderButton extends StatefulWidget {
   final Order order;
   final VoidCallback? toggle;
 
-  OrderButton({this.order = Order.Descending, this.toggle});
+  const OrderButton({Key? key, this.order = Order.Descending, this.toggle})
+      : super(key: key);
 
   @override
   _OrderButtonState createState() => _OrderButtonState();
@@ -24,11 +25,11 @@ class _OrderButtonState extends State<OrderButton>
   void initState() {
     super.initState();
 
-    _controllerUp =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 250));
+    _controllerUp = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
 
-    _controllerDown =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 250));
+    _controllerDown = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
 
     _halfTurnUp = Tween<double>(begin: 0.0, end: 0.5).animate(
         CurvedAnimation(parent: _controllerUp, curve: Curves.easeOutCubic));
@@ -36,9 +37,10 @@ class _OrderButtonState extends State<OrderButton>
     _halfTurnDown = Tween<double>(begin: 0.0, end: 0.5).animate(
         CurvedAnimation(parent: _controllerDown, curve: Curves.easeOutCubic));
 
-    if (this.widget.order == Order.Ascending)
+    if (this.widget.order == Order.Ascending) {
       _controllerUp.animateTo(_controllerUp.upperBound,
           duration: Duration.zero);
+    }
   }
 
   @override
@@ -66,16 +68,16 @@ class _OrderButtonState extends State<OrderButton>
         }
       },
       child: Container(
-        padding: EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(4.0),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Theme.of(context).accentColor,
+          color: Theme.of(context).colorScheme.secondary,
         ),
         child: AnimatedBuilder(
           animation: _controllerUp,
           child: AnimatedBuilder(
             animation: _controllerDown,
-            child: Icon(
+            child: const Icon(
               CupertinoIcons.down_arrow,
               size: 22.0,
             ),

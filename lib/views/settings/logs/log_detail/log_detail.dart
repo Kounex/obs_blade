@@ -23,6 +23,8 @@ import '../../../../utils/general_helper.dart';
 import 'widgets/log_entry.dart';
 
 class LogDetailView extends StatelessWidget {
+  const LogDetailView({Key? key}) : super(key: key);
+
   Future<File?> _createLogFile(
       List<Map<String, String>> jsonLogs, int timestampMS) async {
     File logFile = File((await Directory.systemTemp.createTemp()).path +
@@ -54,11 +56,11 @@ class LogDetailView extends StatelessWidget {
       Map<String, List<AppLog>> mergedLogs) async {
     List<Map<String, String>> jsonLogs = [];
 
-    mergedLogs.entries.forEach((dateLog) {
+    for (var dateLog in mergedLogs.entries) {
       Map<String, String> logEntry =
           _addLogMetaData(dateLog.key, dateLog.value.first);
 
-      dateLog.value.forEach((log) {
+      for (var log in dateLog.value) {
         if (log.level.name != logEntry['level']) {
           jsonLogs.add(logEntry);
           logEntry = _addLogMetaData(dateLog.key, log);
@@ -68,10 +70,10 @@ class LogDetailView extends StatelessWidget {
             (logEntry['entry'] != null ? logEntry['entry']! + '\n' : '') +
                 log.entry +
                 (log.stackTrace != null ? '\n${log.stackTrace}' : '');
-      });
+      }
 
       jsonLogs.add(logEntry);
-    });
+    }
 
     File? logFile = await _createLogFile(
         jsonLogs, mergedLogs.values.first.first.timestampMS);
@@ -139,10 +141,11 @@ class LogDetailView extends StatelessWidget {
                                 'Are you sure you want to delete all logs listed here? This action can\'t be undone!',
                             isYesDestructive: true,
                             onOk: (_) {
-                              mergedLogs.values.forEach(
-                                (logList) => logList.forEach(
-                                    (log) => log.isInBox ? log.delete() : null),
-                              );
+                              for (var logList in mergedLogs.values) {
+                                for (var log in logList) {
+                                  log.isInBox ? log.delete() : null;
+                                }
+                              }
                               Navigator.of(context).pop();
                             }),
                       );
@@ -153,9 +156,10 @@ class LogDetailView extends StatelessWidget {
               listViewChildren: [
                 Center(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: kBaseCardMaxWidth),
+                    constraints:
+                        const BoxConstraints(maxWidth: kBaseCardMaxWidth),
                     child: Padding(
-                      padding: EdgeInsets.only(left: 24.0),
+                      padding: const EdgeInsets.only(left: 24.0),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: SizedBox(
@@ -163,7 +167,7 @@ class LogDetailView extends StatelessWidget {
                           child: CupertinoDropdown<LogLevel>(
                             value: logsStore.logLevel,
                             items: [
-                              DropdownMenuItem(
+                              const DropdownMenuItem(
                                 value: null,
                                 child: Text('All'),
                               ),
@@ -188,7 +192,7 @@ class LogDetailView extends StatelessWidget {
                     logs: mergedLog.value,
                   ),
                 ),
-                if (mergedLogs.entries.length == 0)
+                if (mergedLogs.entries.isEmpty)
                   BaseCard(
                     child: BaseResult(
                       icon: BaseResultIcon.Missing,

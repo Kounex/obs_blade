@@ -5,11 +5,13 @@ class FAQBlock extends StatelessWidget {
   final String? text;
   final Widget? customBody;
 
-  FAQBlock({
+  const FAQBlock({
+    Key? key,
     required this.heading,
     this.text,
     this.customBody,
-  }) : assert(text != null || customBody != null);
+  })  : assert(text != null || customBody != null),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,7 @@ class FAQBlock extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 12.0),
+        const SizedBox(height: 12.0),
         this.text != null ? Text(this.text!) : this.customBody!,
       ],
     );

@@ -15,6 +15,8 @@ import '../../../../../utils/modal_handler.dart';
 import 'preview_warning_dialog.dart';
 
 class ScenePreview extends StatelessWidget {
+  const ScenePreview({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
@@ -29,7 +31,7 @@ class ScenePreview extends StatelessWidget {
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [
+      rebuildKeys: const [
         SettingsKeys.DontShowPreviewWarning,
         SettingsKeys.ExposeScenePreview,
       ],
@@ -40,6 +42,7 @@ class ScenePreview extends StatelessWidget {
               child: CustomExpansionTile(
                 headerText: 'Current OBS scene preview',
                 manualExpand: (expandFunction, expanded) {
+                  // ignore: prefer_function_declarations_over_variables
                   VoidCallback onExpand = () {
                     expandFunction();
                     dashboardStore.setShouldRequestPreviewImage(

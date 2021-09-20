@@ -5,10 +5,11 @@ class InfoDialog extends StatelessWidget {
   final String? title;
   final String body;
 
-  InfoDialog({
+  const InfoDialog({
+    Key? key,
     required this.body,
     this.title,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class InfoDialog extends StatelessWidget {
       ),
       actions: [
         CupertinoDialogAction(
-          child: Text('OK'),
+          child: const Text('OK'),
           isDefaultAction: false,
           onPressed: () => Navigator.of(context).pop(),
         ),

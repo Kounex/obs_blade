@@ -9,10 +9,11 @@ class StartStopStreamingDialog extends StatelessWidget {
   final bool isLive;
   final VoidCallback onStreamStartStop;
 
-  StartStopStreamingDialog({
+  const StartStopStreamingDialog({
+    Key? key,
     required this.isLive,
     required this.onStreamStartStop,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

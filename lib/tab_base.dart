@@ -7,14 +7,16 @@ import 'stores/shared/tabs.dart';
 import 'utils/routing_helper.dart';
 
 class TabBase extends StatefulWidget {
+  const TabBase({Key? key}) : super(key: key);
+
   @override
   _TabBaseState createState() => _TabBaseState();
 }
 
 class _TabBaseState extends State<TabBase> {
-  Map<Tabs, Navigator> _tabViews = {};
-  Map<Tabs, HeroController> _heroControllers = {};
-  Map<Tabs, ScrollController> _tabScrollController = {};
+  final Map<Tabs, Navigator> _tabViews = {};
+  final Map<Tabs, HeroController> _heroControllers = {};
+  final Map<Tabs, ScrollController> _tabScrollController = {};
 
   Tween<Rect?> _createRectTween(Rect? begin, Rect? end) {
     return MaterialRectArcTween(begin: begin, end: end);
@@ -26,7 +28,7 @@ class _TabBaseState extends State<TabBase> {
 
     TabsStore tabsStore = GetIt.instance<TabsStore>();
 
-    Tabs.values.forEach((tab) {
+    for (var tab in Tabs.values) {
       tabsStore.navigatorKeys[tab] =
           GlobalKey<NavigatorState>(debugLabel: tab.name);
       _heroControllers[tab] = HeroController(createRectTween: _createRectTween);
@@ -56,7 +58,7 @@ class _TabBaseState extends State<TabBase> {
         },
         observers: [_heroControllers[tab]!],
       );
-    });
+    }
   }
 
   @override
@@ -96,7 +98,7 @@ class _TabBaseState extends State<TabBase> {
       }),
       bottomNavigationBar: Observer(
         builder: (_) => CupertinoTabBar(
-          activeColor: Theme.of(context).accentColor,
+          activeColor: Theme.of(context).colorScheme.secondary,
           currentIndex: tabsStore.activeTab.index,
 
           /// Used the standard implementation for [border] as seen
@@ -122,7 +124,7 @@ class _TabBaseState extends State<TabBase> {
               } else if (_tabScrollController[tappedTab]!.hasClients &&
                   _tabScrollController[tappedTab]!.offset > 0) {
                 _tabScrollController[tappedTab]!.animateTo(0.0,
-                    duration: Duration(milliseconds: 250),
+                    duration: const Duration(milliseconds: 250),
                     curve: Curves.easeIn);
               }
             } else {

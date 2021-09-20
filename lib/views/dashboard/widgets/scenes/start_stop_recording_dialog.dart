@@ -9,10 +9,11 @@ class StartStopRecordingDialog extends StatelessWidget {
   final bool isRecording;
   final VoidCallback onRecordStartStop;
 
-  StartStopRecordingDialog({
+  const StartStopRecordingDialog({
+    Key? key,
     required this.isRecording,
     required this.onRecordStartStop,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

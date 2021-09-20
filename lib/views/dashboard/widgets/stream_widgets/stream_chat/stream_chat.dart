@@ -14,7 +14,8 @@ import 'chat_username_bar.dart/chat_username_bar.dart';
 class StreamChat extends StatefulWidget {
   final bool usernameRowPadding;
 
-  StreamChat({this.usernameRowPadding = false});
+  const StreamChat({Key? key, this.usernameRowPadding = false})
+      : super(key: key);
 
   @override
   _StreamChatState createState() => _StreamChatState();
@@ -40,12 +41,12 @@ class _StreamChatState extends State<StreamChat>
             right: this.widget.usernameRowPadding ? 4.0 : 0.0,
             bottom: 12.0,
           ),
-          child: ChatUsernameBar(),
+          child: const ChatUsernameBar(),
         ),
         Expanded(
           child: HiveBuilder<dynamic>(
             hiveKey: HiveKeys.Settings,
-            rebuildKeys: [
+            rebuildKeys: const [
               SettingsKeys.SelectedChatType,
               SettingsKeys.SelectedTwitchUsername,
               SettingsKeys.SelectedYoutubeUsername,

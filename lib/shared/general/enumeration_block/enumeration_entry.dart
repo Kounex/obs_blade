@@ -11,7 +11,8 @@ class EnumerationEntry extends StatelessWidget {
   final double levelSpacing;
   final int level;
 
-  EnumerationEntry({
+  const EnumerationEntry({
+    Key? key,
     this.text,
     this.customEntry,
     this.enumerationTopPadding = 0,
@@ -19,7 +20,8 @@ class EnumerationEntry extends StatelessWidget {
     this.order,
     this.levelSpacing = 12.0,
     this.level = 1,
-  }) : assert(text != null || customEntry != null && level > 0);
+  })  : assert(text != null || customEntry != null && level > 0),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +44,7 @@ class EnumerationEntry extends StatelessWidget {
                 )
               : Transform.scale(
                   scale: 3.0,
-                  origin: Offset(1, 1),
+                  origin: const Offset(1, 1),
                   child: Text(
                     '·',
                     style: TextStyle(fontSize: enumerationSize),

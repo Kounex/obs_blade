@@ -14,7 +14,8 @@ class ThemeEntry extends StatelessWidget {
   final CustomTheme customTheme;
   final bool isEditable;
 
-  ThemeEntry({Key? key, required this.customTheme, this.isEditable = true})
+  const ThemeEntry(
+      {Key? key, required this.customTheme, this.isEditable = true})
       : super(key: key);
 
   @override
@@ -34,7 +35,7 @@ class ThemeEntry extends StatelessWidget {
                 SizedBox(
                   width: 64.0,
                   child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 200),
+                    duration: const Duration(milliseconds: 200),
                     transitionBuilder: (child, animation) => FadeTransition(
                       opacity: animation,
                       child: ScaleTransition(
@@ -49,7 +50,7 @@ class ThemeEntry extends StatelessWidget {
                         ? Icon(
                             CupertinoIcons.checkmark_alt,
                             size: 32.0,
-                            color: Theme.of(context).accentColor,
+                            color: Theme.of(context).colorScheme.secondary,
                           )
                         : Container(),
                   ),

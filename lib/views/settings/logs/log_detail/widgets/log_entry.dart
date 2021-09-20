@@ -12,14 +12,15 @@ class LogEntry extends StatelessWidget {
   final String dateFormatted;
   final List<AppLog> logs;
 
-  LogEntry({required this.dateFormatted, required this.logs});
+  const LogEntry({Key? key, required this.dateFormatted, required this.logs})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     List<List<AppLog>> groupedLogs = [];
 
     List<AppLog> temp = [];
-    this.logs.forEach((log) {
+    for (var log in this.logs) {
       if (temp.isEmpty || temp.last.level == log.level) {
         temp.add(log);
       } else {
@@ -27,7 +28,7 @@ class LogEntry extends StatelessWidget {
         groupedLogs.add([...temp]);
         temp.clear();
       }
-    });
+    }
     if (temp.isNotEmpty) {
       temp.sort((log1, log2) => log1.timestampMS.compareTo(log2.timestampMS));
       groupedLogs.add([...temp]);
@@ -59,7 +60,7 @@ class LogEntry extends StatelessWidget {
                     ),
                     child: Text(dateFormatted),
                   ),
-                  SizedBox(height: 4.0),
+                  const SizedBox(height: 4.0),
                   FittedBox(
                     child: Text(
                       '${this.logs.length} entries',
@@ -76,7 +77,7 @@ class LogEntry extends StatelessWidget {
                     for (LogLevel level in LogLevel.values) ...[
                       if (groupedLogs.any(
                           (logs) => logs.any((log) => log.level == level))) ...[
-                        SizedBox(width: 12.0),
+                        const SizedBox(width: 12.0),
                         SizedBox(
                           width: 48.0,
                           child: StatusDot(
@@ -110,8 +111,8 @@ class LogEntry extends StatelessWidget {
                     ),
                     Expanded(
                       child: Container(
-                        padding: EdgeInsets.only(left: 12.0),
-                        margin: EdgeInsets.only(left: 12.0),
+                        padding: const EdgeInsets.only(left: 12.0),
+                        margin: const EdgeInsets.only(left: 12.0),
                         decoration: BoxDecoration(
                           border: Border(
                             left: BorderSide(

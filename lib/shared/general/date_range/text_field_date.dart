@@ -12,13 +12,15 @@ class TextFieldDate extends StatelessWidget {
   final DateTime? maximumDate;
   final void Function(DateTime?)? updateDateTime;
 
+  // ignore: prefer_const_constructors_in_immutables
   TextFieldDate({
+    Key? key,
     required this.selectedDate,
     required this.updateDateTime,
     this.placeholder,
     this.minimumDate,
     this.maximumDate,
-  });
+  }) : super(key: key);
 
   late final TextEditingController _controller;
 

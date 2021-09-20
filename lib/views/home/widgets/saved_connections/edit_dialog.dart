@@ -14,7 +14,8 @@ import '../../../../utils/validation_helper.dart';
 class EditConnectionDialog extends StatefulWidget {
   final Connection connection;
 
-  EditConnectionDialog({required this.connection});
+  const EditConnectionDialog({Key? key, required this.connection})
+      : super(key: key);
 
   @override
   _EditConnectionDialogState createState() => _EditConnectionDialogState();
@@ -27,7 +28,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
 
   late TextEditingController _pw;
 
-  FocusNode _portFocusNode = FocusNode();
+  final FocusNode _portFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
     _pw = TextEditingController(text: this.widget.connection.pw);
   }
 
-  String? _nameValidator(String name) => name.trim().length == 0
+  String? _nameValidator(String name) => name.trim().isEmpty
       ? 'Please provide a name!'
       : name.trim() != this.widget.connection.name &&
               Hive.box<Connection>(HiveKeys.SavedConnections.name)
@@ -65,12 +66,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: [
-            Text('Edit Connection'),
+            const Text('Edit Connection'),
             Positioned(
               top: -18.0,
               right: -12.0,
               child: CupertinoButton(
-                child: Text(
+                child: const Text(
                   'Delete',
                   style: TextStyle(color: CupertinoColors.destructiveRed),
                 ),
@@ -96,7 +97,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       ),
       content: Column(
         children: [
-          Text(
+          const Text(
               'Change the following information to change your saved connection'),
           Padding(
             padding: const EdgeInsets.only(top: 12.0),
@@ -140,12 +141,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       ),
       actions: [
         CupertinoDialogAction(
-          child: Text('Cancel'),
+          child: const Text('Cancel'),
           isDefaultAction: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
         CupertinoDialogAction(
-          child: Text('Save'),
+          child: const Text('Save'),
           onPressed: () {
             _name.submit();
             _ip.submit();

@@ -12,6 +12,8 @@ import 'utils/routing_helper.dart';
 import 'utils/styling_helper.dart';
 
 class App extends StatelessWidget {
+  const App({Key? key}) : super(key: key);
+
   ThemeData _getCurrentTheme(Box settingsBox) {
     Brightness? brightness;
     Color? scaffoldBackgroundColor;
@@ -69,21 +71,18 @@ class App extends StatelessWidget {
             : ThemeData.dark());
 
     return baseThemeData.copyWith(
-      primaryColorBrightness: brightness,
       scaffoldBackgroundColor: scaffoldBackgroundColor ??
           (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
               ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
                       defaultValue: false)
                   ? StylingHelper.background_reduced_smearing_color
                   : StylingHelper.background_color
-              : '212123'.hexToColor()), //Colors.grey[900]),
-      accentColor: accentColor ?? StylingHelper.highlight_color,
+              : '212123'.hexToColor()),
       backgroundColor: backgroundColor ?? StylingHelper.primary_color,
       canvasColor: canvasColor ?? StylingHelper.primary_color,
       cardColor: cardColor ?? StylingHelper.primary_color,
       // cursorColor: cursorColor ?? StylingHelper.highlight_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
-      buttonColor: extraButtonColor,
       dividerColor: Colors.grey[500],
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
@@ -160,6 +159,10 @@ class App extends StatelessWidget {
         barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),
+      colorScheme: ColorScheme.fromSwatch(
+        accentColor: accentColor ?? StylingHelper.highlight_color,
+        brightness: brightness ?? Brightness.dark,
+      ),
     );
   }
 
@@ -167,7 +170,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return HiveBuilder(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [
+      rebuildKeys: const [
         SettingsKeys.TrueDark,
         SettingsKeys.ReduceSmearing,
         SettingsKeys.CustomTheme,

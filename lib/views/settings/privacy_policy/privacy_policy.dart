@@ -8,6 +8,8 @@ import '../../../shared/general/base/base_card.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
+  const PrivacyPolicyView({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,7 +21,7 @@ class PrivacyPolicyView extends StatelessWidget {
             padding: const EdgeInsets.only(top: 12.0),
             child: Column(
               children: [
-                Icon(
+                const Icon(
                   CupertinoIcons.doc_person_fill,
                   size: 92.0,
                 ),
@@ -37,7 +39,7 @@ class PrivacyPolicyView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ThemedRichText(
+                const ThemedRichText(
                   textSpans: [
                     TextSpan(
                       text: 'Currently ',
@@ -67,7 +69,7 @@ class PrivacyPolicyView extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text(
+                const Text(
                   'I might add third party providers later on to help me out with stuff like device-sync, error handling, feedback, statistics, etc. and if I do and this third party provider collects any personal data about you, I will add this to this privacy policy! Since data privacy is very important to me, I will try to be very strict about which third party I will work with.\n\nIf you have any concerns about your data or would like to help me improve in this regard, don\'t hesitate to contact me. You can visit the "About" page inside the app to see possible ways to get in touch me with. The preferred way to contact me for such things though is via email:',
                 ),
                 SocialBlock(
@@ -80,7 +82,7 @@ class PrivacyPolicyView extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('Thanks for reading! :)')
+                const Text('Thanks for reading! :)')
               ],
             ),
           ),

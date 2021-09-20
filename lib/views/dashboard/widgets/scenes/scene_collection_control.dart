@@ -8,6 +8,8 @@ import 'package:obs_blade/utils/network_helper.dart';
 import '../../../../stores/views/dashboard.dart';
 
 class SceneCollectionControl extends StatelessWidget {
+  const SceneCollectionControl({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();

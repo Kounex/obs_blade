@@ -1,15 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
+import '../../../../settings/widgets/action_block.dart/light_divider.dart';
 import '../connect_form.dart';
 
 class SessionTile extends StatelessWidget {
   final Connection connection;
 
-  SessionTile({required this.connection});
+  const SessionTile({Key? key, required this.connection}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class SessionTile extends StatelessWidget {
       ),
       expandedBody: Column(
         children: [
-          LightDivider(),
+          const LightDivider(),
           Padding(
             padding: const EdgeInsets.only(
               top: 12.0,

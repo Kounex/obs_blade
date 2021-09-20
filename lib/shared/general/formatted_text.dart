@@ -6,12 +6,13 @@ class FormattedText extends StatelessWidget {
   final double width;
   final String? unit;
 
-  FormattedText({
+  const FormattedText({
+    Key? key,
     required this.label,
     this.text,
     this.width = 50.0,
     this.unit,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class FormattedText extends StatelessWidget {
           isDense: true,
           enabled: false,
           labelText: this.label,
-          labelStyle: TextStyle(height: 0.75),
+          labelStyle: const TextStyle(height: 0.75),
         ),
       ),
     );

@@ -13,13 +13,15 @@ import '../../../../../utils/network_helper.dart';
 import 'transition.dart';
 
 class StudioModeTransition extends StatelessWidget {
+  const StudioModeTransition({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [SettingsKeys.ExposeStudioControls],
+      rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) => Observer(builder: (_) {
         dashboardStore.studioMode;
         return Column(
@@ -68,12 +70,12 @@ class StudioModeTransition extends StatelessWidget {
                                   RequestType.ToggleStudioMode,
                                 ),
                               ),
-                              Text('Studio Mode'),
+                              const Text('Studio Mode'),
                             ],
                           ),
                         )
                       : Container(),
-                  Flexible(
+                  const Flexible(
                     child: Transition(),
                   ),
                 ],

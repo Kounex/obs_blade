@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get_it/get_it.dart';
-import 'package:mobx/mobx.dart' as MobX;
+import 'package:mobx/mobx.dart' as mob_x;
 import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 
@@ -22,6 +22,8 @@ import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 
 class HomeView extends StatefulWidget {
+  const HomeView({Key? key}) : super(key: key);
+
   @override
   _HomeViewState createState() => _HomeViewState();
 }
@@ -30,7 +32,7 @@ class _HomeViewState extends State<HomeView> {
   /// Since I'm using (at least one) reaction in this State, I need to dispose
   /// it when this Widget / State is disposing itself as well. I add each reaction call
   /// to this list and dispose every instance in the dispose call of this Widget
-  List<MobX.ReactionDisposer> _disposers = [];
+  final List<mob_x.ReactionDisposer> _disposers = [];
 
   /// Using [didChangeDependencies] since it is called after [initState] and has access
   /// to a [BuildContext] of this [StatelessWidget] which we need to access the MobX
@@ -61,7 +63,7 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
 
     Future.delayed(
-      Duration(milliseconds: 0),
+      const Duration(milliseconds: 0),
       () => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
     );
 
@@ -74,37 +76,38 @@ class _HomeViewState extends State<HomeView> {
     /// in my Widget tree; I named the MobX import so now if I mean the MobX 'Listener' I would
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
-    MobX.when((_) => GetIt.instance<NetworkStore>().obsTerminated, () {
+    mob_x.when((_) => GetIt.instance<NetworkStore>().obsTerminated, () {
       SchedulerBinding.instance!.addPostFrameCallback((_) {
         GeneralHelper.advLog(
           'Your connection to OBS has been lost and the app was not able to reconnect!',
           level: LogLevel.Warning,
           includeInLogs: true,
         );
-        if (this.mounted)
+        if (this.mounted) {
           ModalHandler.showBaseDialog(
             context: context,
-            dialogWidget: InfoDialog(
+            dialogWidget: const InfoDialog(
                 body:
                     'Your connection to OBS has been lost and the app was not able to reconnect!'),
           ).then(
             (_) => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
           );
+        }
       });
     });
 
     /// Once we recognize a connection attempt inside our reaction ([connectionInProgress] is true)
     /// we will check whether the connection was successfull or not and display overlays and / or
     /// route to the [DashboardView]
-    _disposers.add(MobX.reaction(
-        (_) => GetIt.instance<NetworkStore>().connectionInProgress,
-        (bool connectionInProgress) {
+    _disposers.add(mob_x
+        .reaction((_) => GetIt.instance<NetworkStore>().connectionInProgress,
+            (bool connectionInProgress) {
       NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
       if (connectionInProgress) {
         OverlayHandler.showStatusOverlay(
             context: context,
-            showDuration: Duration(seconds: 5),
+            showDuration: const Duration(seconds: 5),
             content: BaseProgressIndicator(
               text: 'Connecting...',
             ));
@@ -127,7 +130,7 @@ class _HomeViewState extends State<HomeView> {
           OverlayHandler.showStatusOverlay(
             context: context,
             replaceIfActive: true,
-            content: Align(
+            content: const Align(
               alignment: Alignment.center,
               child: BaseResult(
                 icon: BaseResultIcon.Negative,
@@ -147,7 +150,9 @@ class _HomeViewState extends State<HomeView> {
     super.dispose();
 
     /// disposing each [ReactionDisposer] of our MobX reactions
-    _disposers.forEach((d) => d());
+    for (var d in _disposers) {
+      d();
+    }
   }
 
   @override
@@ -179,7 +184,7 @@ class _HomeViewState extends State<HomeView> {
           /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
           /// for the first group and [BouncingScrollPhysics] for the second
           physics: StylingHelper.platformAwareScrollPhysics,
-          slivers: <Widget>[
+          slivers: const [
             RefresherAppBar(
               expandedHeight: 200.0,
               imagePath: 'assets/images/base_logo.png',

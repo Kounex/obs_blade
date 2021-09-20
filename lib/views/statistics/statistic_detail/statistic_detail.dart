@@ -14,6 +14,8 @@ import '../widgets/stream_entry/stream_entry.dart';
 import 'widgets/stream_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {
+  const StatisticDetailView({Key? key}) : super(key: key);
+
   @override
   _StatisticDetailViewState createState() => _StatisticDetailViewState();
 }
@@ -134,7 +136,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         listViewChildren: [
           Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: kBaseCardMaxWidth),
+              constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
               child: Column(
                 children: [
                   BaseCard(
@@ -156,7 +158,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                       children: streamCharts
                           .map(
                             (streamChart) => ConstrainedBox(
-                              constraints: BoxConstraints(
+                              constraints: const BoxConstraints(
                                 maxWidth: 350.0,
                               ),
                               child: BaseCard(
@@ -164,10 +166,10 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                                 rightPadding: 0,
                                 bottomPadding: 0,
                                 leftPadding: 0,
-                                paddingChild: EdgeInsets.all(0),
+                                paddingChild: const EdgeInsets.all(0),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0) +
-                                      EdgeInsets.only(
+                                      const EdgeInsets.only(
                                           top: 4.0, left: 20.0, right: 24.0),
                                   child: streamChart,
                                 ),

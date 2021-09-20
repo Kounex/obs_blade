@@ -11,16 +11,17 @@ class IntroSlide extends StatelessWidget {
   final List<InlineSpan> slideTextSpans;
   final Widget? additionalChild;
 
-  IntroSlide({
+  const IntroSlide({
+    Key? key,
     required this.imagePath,
     required this.slideTextSpans,
     this.additionalChild,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Fader(
-      duration: Duration(milliseconds: 750),
+      duration: const Duration(milliseconds: 750),
       child: Padding(
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).padding.top + 32.0,
@@ -40,12 +41,12 @@ class IntroSlide extends StatelessWidget {
               height: 275.0,
               child: BaseCard(
                 backgroundColor: Colors.transparent,
-                paddingChild: EdgeInsets.all(0),
+                paddingChild: const EdgeInsets.all(0),
                 centerChild: false,
                 child: Column(
                   children: [
-                    Divider(),
-                    SizedBox(height: 32.0),
+                    const Divider(),
+                    const SizedBox(height: 32.0),
                     ThemedRichText(
                       textSpans: this.slideTextSpans,
                       textAlign: TextAlign.justify,

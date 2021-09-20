@@ -31,7 +31,7 @@ import 'types/enums/hive_keys.dart';
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
 
-  LifecycleWatcher({required this.app});
+  const LifecycleWatcher({Key? key, required this.app}) : super(key: key);
 
   @override
   _LifecycleWatcherState createState() => _LifecycleWatcherState();
@@ -146,7 +146,7 @@ void _logging(String line) {
   Iterable<LogLevel> lineLevel =
       LogLevel.values.where((level) => line.startsWith(level.prefix));
 
-  if (lineLevel.length > 0) {
+  if (lineLevel.isNotEmpty) {
     manually = true;
     level = lineLevel.first;
     line = line.split(level.prefix)[1];
@@ -194,7 +194,7 @@ void main() async {
         FlutterError.dumpErrorToConsole(details);
       };
       runApp(
-        LifecycleWatcher(
+        const LifecycleWatcher(
           app: App(),
         ),
       );
@@ -205,7 +205,7 @@ void main() async {
       //     _logging('$error\n[STACK]\n$stackTrace'),
       print: (self, parent, zone, line) {
         /// First print it out to see them while debugging
-        parent.print(zone, '$line');
+        parent.print(zone, line);
 
         _logging(line);
       },

@@ -5,11 +5,13 @@ import '../../../../shared/general/base/base_card.dart';
 import 'stats/stats.dart';
 
 class StreamWidgets extends StatelessWidget {
+  const StreamWidgets({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
+      children: const [
         Flexible(
           child: BaseCard(
             title: 'Chat',

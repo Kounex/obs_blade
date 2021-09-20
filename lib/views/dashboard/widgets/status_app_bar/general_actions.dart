@@ -18,6 +18,8 @@ import '../../services/record_stream.dart';
 import '../save_edit_connection_dialog.dart';
 
 class GeneralActions extends StatelessWidget {
+  const GeneralActions({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
@@ -30,7 +32,7 @@ class GeneralActions extends StatelessWidget {
             networkStore.activeSession?.connection.name == null;
         return HiveBuilder<dynamic>(
           hiveKey: HiveKeys.Settings,
-          rebuildKeys: [
+          rebuildKeys: const [
             SettingsKeys.ExposeStreamingControls,
             SettingsKeys.ExposeRecordingControls,
             SettingsKeys.DontShowHidingScenesWarning,

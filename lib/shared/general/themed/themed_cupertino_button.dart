@@ -9,13 +9,14 @@ class ThemedCupertinoButton extends StatelessWidget {
 
   final void Function()? onPressed;
 
-  ThemedCupertinoButton({
+  const ThemedCupertinoButton({
+    Key? key,
     required this.text,
     this.padding,
     this.isDestructive = false,
     this.minSize,
     this.onPressed,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

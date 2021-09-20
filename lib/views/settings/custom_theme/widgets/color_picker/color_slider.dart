@@ -75,7 +75,8 @@ class ColorSlider extends StatefulWidget {
 
   final void Function(String)? onChanged;
 
-  ColorSlider({
+  const ColorSlider({
+    Key? key,
     this.controller,
     this.label,
     this.value,
@@ -86,13 +87,14 @@ class ColorSlider extends StatefulWidget {
     this.saturation,
     this.lightness,
     this.onChanged,
-  });
+  }) : super(key: key);
 
   @override
   _ColorSliderState createState() => _ColorSliderState();
 }
 
 class _ColorSliderState extends State<ColorSlider> {
+  // ignore: prefer_final_fields
   FocusNode _colorValueFocusNode = FocusNode();
 
   late double _latestValidSliderValue;
@@ -146,7 +148,7 @@ class _ColorSliderState extends State<ColorSlider> {
                     height: 6.0,
                     decoration: BoxDecoration(
                       color: Colors.red,
-                      borderRadius: BorderRadius.all(
+                      borderRadius: const BorderRadius.all(
                         Radius.circular(4.0),
                       ),
                       gradient: LinearGradient(
@@ -196,7 +198,7 @@ class _ColorSliderState extends State<ColorSlider> {
                     controller: this.widget.controller,
                     focusNode: _colorValueFocusNode,
                     textAlign: TextAlign.center,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       isDense: true,
                       counterText: '',
                     ),

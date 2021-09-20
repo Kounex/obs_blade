@@ -11,14 +11,14 @@ import 'stats_container.dart';
 class Stats extends StatefulWidget {
   final EdgeInsets? pageIndicatorPadding;
 
-  Stats({this.pageIndicatorPadding});
+  const Stats({Key? key, this.pageIndicatorPadding}) : super(key: key);
 
   @override
   _StatsState createState() => _StatsState();
 }
 
 class _StatsState extends State<Stats> {
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class _StatsState extends State<Stats> {
         children: [
           Padding(
             padding: this.widget.pageIndicatorPadding ??
-                EdgeInsets.only(
+                const EdgeInsets.only(
                   top: 12.0,
                 ),
             child: SmoothPageIndicator(
@@ -46,7 +46,7 @@ class _StatsState extends State<Stats> {
             child: PageView(
               controller: _pageController,
               children: <Widget>[
-                Container(
+                SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: StatsContainer(
                     elevation: 0.0,
@@ -98,7 +98,7 @@ class _StatsState extends State<Stats> {
                     ],
                   ),
                 ),
-                Container(
+                SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: StatsContainer(
                     elevation: 0.0,

@@ -7,10 +7,12 @@ class BaseProgressIndicator extends StatelessWidget {
   final String? text;
 
   BaseProgressIndicator({
+    Key? key,
     this.text,
     this.size = 32.0,
     this.strokeWidth = 2.0,
-  }) : assert(text != null && text.length > 0 || text == null);
+  })  : assert(text != null && text.isNotEmpty || text == null),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,13 +23,13 @@ class BaseProgressIndicator extends StatelessWidget {
           height: this.size,
           width: this.size,
           child: CircularProgressIndicator(
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).colorScheme.secondary,
             strokeWidth: this.strokeWidth,
           ),
         ),
         if (this.text != null)
           Padding(
-            padding: EdgeInsets.only(top: 14.0),
+            padding: const EdgeInsets.only(top: 14.0),
             child: Text(
               this.text!,
               textAlign: TextAlign.center,

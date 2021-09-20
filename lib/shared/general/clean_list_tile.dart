@@ -6,11 +6,12 @@ class CleanListTile extends StatelessWidget {
 
   final Widget? trailing;
 
-  CleanListTile({
+  const CleanListTile({
+    Key? key,
     required this.title,
     required this.description,
     this.trailing,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class CleanListTile extends StatelessWidget {
                 style:
                     Theme.of(context).textTheme.button!.copyWith(fontSize: 16),
               ),
-              SizedBox(height: 4.0),
+              const SizedBox(height: 4.0),
               Text(
                 this.description,
                 style: Theme.of(context).textTheme.caption,
@@ -34,7 +35,7 @@ class CleanListTile extends StatelessWidget {
           ),
         ),
         if (this.trailing != null) ...[
-          SizedBox(width: 32.0),
+          const SizedBox(width: 32.0),
           this.trailing!,
         ],
       ],

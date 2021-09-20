@@ -7,11 +7,12 @@ class StatsContainer extends StatelessWidget {
   final List<Widget> children;
   final double? elevation;
 
-  StatsContainer({
+  const StatsContainer({
+    Key? key,
     required this.title,
     required this.children,
     this.elevation,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

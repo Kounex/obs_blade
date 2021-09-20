@@ -12,20 +12,22 @@ import 'studio_mode_transition/studio_mode_transition.dart';
 const double kSceneButtonSpace = 18.0;
 
 class Scenes extends StatelessWidget {
+  const Scenes({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: [
+      children: const [
         ExposedControls(),
         SizedBox(height: 24.0),
         Padding(
-          padding: const EdgeInsets.only(right: 12.0),
+          padding: EdgeInsets.only(right: 12.0),
           child: SceneCollectionControl(),
         ),
         SizedBox(height: 24.0),
         Center(
           child: Padding(
-            padding: const EdgeInsets.only(
+            padding: EdgeInsets.only(
                 left: kSceneButtonSpace, right: kSceneButtonSpace),
             child: SceneButtons(),
           ),
@@ -38,7 +40,7 @@ class Scenes extends StatelessWidget {
         //   text: 'SOUND',
         // ),
         Padding(
-          padding: const EdgeInsets.only(
+          padding: EdgeInsets.only(
             top: 24.0,
             left: 12.0,
             right: 12.0,

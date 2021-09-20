@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:obs_blade/views/statistics/widgets/stream_entry/stream_date_chip.dart';
 
 import '../../../../models/past_stream_data.dart';
-import '../../../../utils/routing_helper.dart';
-
 import '../../../../types/extensions/int.dart';
+import '../../../../utils/routing_helper.dart';
 
 class StreamEntry extends StatelessWidget {
   final PastStreamData pastStreamData;
   final bool usedInDetail;
 
-  StreamEntry({
+  const StreamEntry({
+    Key? key,
     required this.pastStreamData,
     this.usedInDetail = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +57,7 @@ class StreamEntry extends StatelessWidget {
         runSpacing: 4.0,
         children: [
           ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 250.0),
+            constraints: const BoxConstraints(maxWidth: 250.0),
             child: StreamDateChip(
               label: 'From:',
               content:
@@ -65,7 +65,7 @@ class StreamEntry extends StatelessWidget {
             ),
           ),
           ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: 250.0),
+            constraints: const BoxConstraints(maxWidth: 250.0),
             child: StreamDateChip(
               label: 'To:',
               content:
@@ -85,8 +85,8 @@ class StreamEntry extends StatelessWidget {
                 Expanded(
                   child: listTile,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+                const Padding(
+                  padding: EdgeInsets.only(right: 8.0),
                   child: Icon(
                     Icons.chevron_right,
                     color: Colors.grey,

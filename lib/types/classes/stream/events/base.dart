@@ -3,6 +3,7 @@ import '../../../interfaces/message.dart';
 
 /// Initial Wrapper object for an event which is received from the OBS WebSocket
 class BaseEvent implements Message {
+  @override
   Map<String, dynamic> json;
 
   BaseEvent(this.json);

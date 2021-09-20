@@ -17,24 +17,25 @@ class ConnectForm extends StatefulWidget {
   final Connection? connection;
   final bool saveCredentials;
 
-  ConnectForm({this.connection, this.saveCredentials = false});
+  const ConnectForm({Key? key, this.connection, this.saveCredentials = false})
+      : super(key: key);
 
   @override
   _ConnectFormState createState() => _ConnectFormState();
 }
 
 class _ConnectFormState extends State<ConnectForm> {
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late TextEditingController _ip;
   late TextEditingController _port;
   late TextEditingController _pw;
 
-  FocusNode _portFocusNode = FocusNode();
+  final FocusNode _portFocusNode = FocusNode();
 
   bool _obscurePWText = true;
 
-  StreamController<BaseResponse> _connectResponse = StreamController();
+  final StreamController<BaseResponse> _connectResponse = StreamController();
 
   @override
   void initState() {
@@ -66,14 +67,14 @@ class _ConnectFormState extends State<ConnectForm> {
                   onChanged: (ip) => this.widget.saveCredentials
                       ? landingStore.typedInConnection.ip = ip
                       : null,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'IP Address (internal)',
                     hintText: 'e.g. 192.168.178.10',
                   ),
                   validator: (text) => ValidationHelper.ipValidation(text),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Flexible(
                 flex: 2,
                 child: KeyboardNumberHeader(
@@ -89,8 +90,8 @@ class _ConnectFormState extends State<ConnectForm> {
                     onChanged: (port) => this.widget.saveCredentials
                         ? landingStore.typedInConnection.port = int.parse(port)
                         : null,
-                    decoration:
-                        InputDecoration(labelText: 'Port', errorMaxLines: 2),
+                    decoration: const InputDecoration(
+                        labelText: 'Port', errorMaxLines: 2),
                     validator: (text) => ValidationHelper.portValidation(text),
                   ),
                 ),
@@ -143,8 +144,8 @@ class _ConnectFormState extends State<ConnectForm> {
                     }
                   },
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 192.0),
+                const Padding(
+                  padding: EdgeInsets.only(left: 192.0),
                   child: QuestionMarkTooltip(
                       message:
                           'Password is optional. You have to set it manually in the OBS WebSocket Plugin.\n\nIt is highly recommended though!'),

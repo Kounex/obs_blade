@@ -9,8 +9,9 @@ import '../../../../stores/views/home.dart';
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
 
-  ScrollRefreshIcon({required expandedBarHeight})
-      : expandedBarHeight = expandedBarHeight + 28.0;
+  const ScrollRefreshIcon({Key? key, required expandedBarHeight})
+      : expandedBarHeight = expandedBarHeight + 28.0,
+        super(key: key);
 
   @override
   _ScrollRefreshIconState createState() => _ScrollRefreshIconState();
@@ -26,7 +27,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 100),
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(curve: Curves.bounceInOut, parent: _animController),
@@ -75,7 +76,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
               child: Container(
                 width: 32.0,
                 height: 32.0,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
@@ -85,7 +86,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
                     scale: _scaleAnimation,
                     child: child,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.arrow_downward,
                     color: Colors.black,
                   ),

@@ -41,7 +41,7 @@ class LicenseData {
   /// Sort the packages using some comparison method, or by the default manner,
   /// which is to put the application package first, followed by every other
   /// package in case-insensitive alphabetical order.
-  void sortPackages([int compare(String a, String b)?]) {
+  void sortPackages([int Function(String a, String b)? compare]) {
     packages.sort(compare ??
         (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()));
   }
@@ -50,7 +50,7 @@ class LicenseData {
 class LicenseEntries extends StatefulWidget {
   final ScrollController? scrollController;
 
-  LicenseEntries({this.scrollController});
+  const LicenseEntries({Key? key, this.scrollController}) : super(key: key);
 
   @override
   _LicenseEntriesState createState() => _LicenseEntriesState();
@@ -73,11 +73,11 @@ class _LicenseEntriesState extends State<LicenseEntries> {
   List<LicenseEntry> _getLicensesForPackage(
       LicenseData licenseData, String packageName) {
     List<LicenseEntry> entries = [];
-    licenseData.packageLicenseBindings[packageName]!.forEach(
-      (licenseIndex) => entries.add(
+    for (var licenseIndex in licenseData.packageLicenseBindings[packageName]!) {
+      entries.add(
         licenseData.licenses.elementAt(licenseIndex),
-      ),
-    );
+      );
+    }
     return entries;
   }
 

@@ -14,7 +14,8 @@ class ConfirmationDialog extends StatefulWidget {
 
   final bool enableDontShowAgainOption;
 
-  ConfirmationDialog({
+  const ConfirmationDialog({
+    Key? key,
     required this.title,
     this.body,
     this.bodyWidget,
@@ -24,8 +25,9 @@ class ConfirmationDialog extends StatefulWidget {
     this.okText = 'Yes',
     this.noText = 'No',
     this.enableDontShowAgainOption = false,
-  }) : assert(body != null && bodyWidget == null ||
-            body == null && bodyWidget != null);
+  })  : assert(body != null && bodyWidget == null ||
+            body == null && bodyWidget != null),
+        super(key: key);
 
   @override
   _ConfirmationDialogState createState() => _ConfirmationDialogState();
@@ -48,7 +50,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
             Padding(
               padding: const EdgeInsets.only(top: 14.0),
               child: Transform.translate(
-                offset: Offset(-4, 0),
+                offset: const Offset(-4, 0),
                 child: Row(
                   children: [
                     Material(
@@ -60,7 +62,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
                             setState(() => _dontShowChecked = checked!),
                       ),
                     ),
-                    Text('Don\'t show this again'),
+                    const Text('Don\'t show this again'),
                   ],
                 ),
               ),

@@ -272,13 +272,13 @@ abstract class _DashboardStore with Store {
   /// identify them in the flat list
   List<SceneItem> _flattenSceneItems(Iterable<SceneItem> sceneItems) {
     List<SceneItem> tmpSceneItems = [];
-    sceneItems.forEach((sceneItem) {
+    for (var sceneItem in sceneItems) {
       tmpSceneItems.add(sceneItem);
       if (sceneItem.groupChildren != null &&
-          sceneItem.groupChildren!.length > 0) {
+          sceneItem.groupChildren!.isNotEmpty) {
         tmpSceneItems.addAll(sceneItem.groupChildren!);
       }
-    });
+    }
     return tmpSceneItems;
   }
 
@@ -297,7 +297,7 @@ abstract class _DashboardStore with Store {
     /// Check if the latest stream has its last entry (based on [listEntryDateMS]
     ///  set later than current time - [totalStreamTime] which means that we
     /// connected to an OBS session we already were connected to
-    if (tmp.length > 0 &&
+    if (tmp.isNotEmpty &&
         DateTime.now().millisecondsSinceEpoch -
                 this.latestStreamStats!.totalStreamTime * 1000 <=
             tmp.last.listEntryDateMS.last) {
@@ -318,7 +318,7 @@ abstract class _DashboardStore with Store {
     /// the connection is still alive periodically - see [_checkOBSConnection]
     /// for more information
     this.checkConnectionTimer = Timer(
-      Duration(seconds: 5),
+      const Duration(seconds: 5),
       () => _checkOBSConnection(),
     );
   }
@@ -376,13 +376,13 @@ abstract class _DashboardStore with Store {
         this.handleStream();
         this.initialRequests();
         this.checkConnectionTimer = Timer(
-          Duration(seconds: 3),
+          const Duration(seconds: 3),
           () => _checkOBSConnection(),
         );
       }
     } else {
       this.checkConnectionTimer = Timer(
-        Duration(seconds: 3),
+        const Duration(seconds: 3),
         () => _checkOBSConnection(),
       );
     }
@@ -421,10 +421,11 @@ abstract class _DashboardStore with Store {
 
   @action
   Future<void> _handleEvent(BaseEvent event) async {
-    if (event.eventType != null)
+    if (event.eventType != null) {
       GeneralHelper.advLog(
         'Event Incoming: ${event.eventType}',
       );
+    }
     switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
@@ -495,11 +496,12 @@ abstract class _DashboardStore with Store {
             !this.studioMode) {
           this.currentSceneItems =
               ObservableList.of(_flattenSceneItems(switchSceneEvent.sources));
-          this.currentSceneItems!.forEach((sceneItem) =>
-              NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
-                  RequestType.GetMute,
-                  {'source': sceneItem.name}));
+          for (var sceneItem in this.currentSceneItems!) {
+            NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.GetMute,
+                {'source': sceneItem.name});
+          }
         }
         break;
       case EventType.TransitionBegin:
@@ -560,11 +562,12 @@ abstract class _DashboardStore with Store {
           this.studioModePreviewSceneName = previewSceneChangedEvent.sceneName;
           this.currentSceneItems = ObservableList.of(
               _flattenSceneItems(previewSceneChangedEvent.sources));
-          this.currentSceneItems!.forEach((sceneItem) =>
-              NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
-                  RequestType.GetMute,
-                  {'source': sceneItem.name}));
+          for (var sceneItem in this.currentSceneItems!) {
+            NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.GetMute,
+                {'source': sceneItem.name});
+          }
         }
         break;
       case EventType.SceneItemAdded:
@@ -649,8 +652,9 @@ abstract class _DashboardStore with Store {
             GetVersionResponse(response.json);
 
         if (!getVersionResponse.supportedImageExportFormats.contains('jpg') &&
-            !getVersionResponse.supportedImageExportFormats.contains('jpeg'))
+            !getVersionResponse.supportedImageExportFormats.contains('jpeg')) {
           this.previewFileFormat = 'png';
+        }
         break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
@@ -679,11 +683,12 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getCurrentSceneResponse.sources));
-        this.currentSceneItems!.forEach((sceneItem) =>
-            NetworkHelper.makeRequest(
-                GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.GetMute,
-                {'source': sceneItem.name}));
+        for (var sceneItem in this.currentSceneItems!) {
+          NetworkHelper.makeRequest(
+              GetIt.instance<NetworkStore>().activeSession!.socket,
+              RequestType.GetMute,
+              {'source': sceneItem.name});
+        }
         break;
       case RequestType.GetPreviewScene:
         GetPreviewSceneResponse getPreviewSceneResponse =
@@ -692,11 +697,12 @@ abstract class _DashboardStore with Store {
         this.studioModePreviewSceneName = getPreviewSceneResponse.name;
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getPreviewSceneResponse.sources));
-        this.currentSceneItems!.forEach((sceneItem) =>
-            NetworkHelper.makeRequest(
-                GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.GetMute,
-                {'source': sceneItem.name}));
+        for (var sceneItem in this.currentSceneItems!) {
+          NetworkHelper.makeRequest(
+              GetIt.instance<NetworkStore>().activeSession!.socket,
+              RequestType.GetMute,
+              {'source': sceneItem.name});
+        }
         break;
       case RequestType.GetTransitionList:
         GetTransitionListResponse getTransitionListResponse =

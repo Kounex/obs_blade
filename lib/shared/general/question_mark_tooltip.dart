@@ -7,7 +7,10 @@ import '../dialogs/info.dart';
 class QuestionMarkTooltip extends StatelessWidget {
   final String message;
 
-  QuestionMarkTooltip({required this.message});
+  const QuestionMarkTooltip({
+    Key? key,
+    required this.message,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +21,7 @@ class QuestionMarkTooltip extends StatelessWidget {
                 body: this.message,
               ),
             ),
-        child: Icon(
+        child: const Icon(
           CupertinoIcons.question_circle_fill,
         ));
     // return CustomTooltip(

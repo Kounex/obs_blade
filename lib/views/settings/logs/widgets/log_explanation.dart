@@ -8,6 +8,8 @@ import '../../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../../shared/general/themed/themed_rich_text.dart';
 
 class LogExplanation extends StatelessWidget {
+  const LogExplanation({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return BaseCard(
@@ -19,15 +21,15 @@ class LogExplanation extends StatelessWidget {
         expandedBody: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 12.0),
-            Text(
+            const SizedBox(height: 12.0),
+            const Text(
                 'Logs listed here have been created programmatically by me and are only available locally. I\'m not sending them to any servers or alike. You can view them here and decide to share them (for example with me) if you encounter any problems and would like to give me more information to work on or even want to try to figure out the problem on your own!'),
-            SizedBox(height: 12.0),
-            Text(
+            const SizedBox(height: 12.0),
+            const Text(
                 'You can delete log entries selectively here or all together in "Data Management" in the settings tab.'),
-            SizedBox(height: 12.0),
-            Text('Used log types:'),
-            SizedBox(height: 4.0),
+            const SizedBox(height: 12.0),
+            const Text('Used log types:'),
+            const SizedBox(height: 4.0),
             EnumerationBlock(
               customEntries: [
                 EnumerationEntry(
@@ -41,7 +43,7 @@ class LogExplanation extends StatelessWidget {
                           // decoration: TextDecoration.underline,
                         ),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text:
                             ': triggered by used packages or manually by myself to provide helpful informations',
                       ),
@@ -59,7 +61,7 @@ class LogExplanation extends StatelessWidget {
                           // decoration: TextDecoration.underline,
                         ),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text:
                             ': triggered manually by me to log important informations / events',
                       ),
@@ -77,7 +79,7 @@ class LogExplanation extends StatelessWidget {
                           // decoration: TextDecoration.underline,
                         ),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text:
                             ': triggered by different kind of exceptions and (mostly) unintended events',
                       ),
@@ -86,8 +88,8 @@ class LogExplanation extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 12.0),
-            Text(
+            const SizedBox(height: 12.0),
+            const Text(
                 'Logs are grouped by days and can be filtered to find the relevant ones easier. Feel free to suggest improvements!')
           ],
         ),

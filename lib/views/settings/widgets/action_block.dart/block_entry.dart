@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
 
 const double kblockEntryPadding = 14.0;
@@ -28,7 +28,8 @@ class BlockEntry extends StatefulWidget {
   final bool rootNavigation;
   final String? navigateToResult;
 
-  BlockEntry({
+  const BlockEntry({
+    Key? key,
     this.leading,
     this.leadingSize = 28.0,
     this.heroPlaceholder,
@@ -39,10 +40,11 @@ class BlockEntry extends StatefulWidget {
     this.navigateTo,
     this.rootNavigation = false,
     this.navigateToResult,
-  }) : assert((trailing == null &&
+  })  : assert((trailing == null &&
                 ((navigateTo != null && onTap == null) ||
                     (navigateTo == null && onTap != null)) ||
-            (trailing != null && (navigateTo == null && onTap == null))));
+            (trailing != null && (navigateTo == null && onTap == null)))),
+        super(key: key);
 
   @override
   _BlockEntryState createState() => _BlockEntryState();
@@ -78,13 +80,13 @@ class _BlockEntryState extends State<BlockEntry> {
         height: kblockEntryHeight,
         width: MediaQuery.of(context).size.width,
         child: Padding(
-          padding: EdgeInsets.only(
+          padding: const EdgeInsets.only(
               left: kblockEntryPadding, right: kblockEntryPadding),
           child: Row(
             children: [
               if (this.widget.leading != null)
                 Padding(
-                  padding: EdgeInsets.only(right: kblockEntryPadding),
+                  padding: const EdgeInsets.only(right: kblockEntryPadding),
                   child: SizedBox(
                     width: kblockEntryIconSize,
                     child: Hero(
@@ -126,7 +128,7 @@ class _BlockEntryState extends State<BlockEntry> {
                                 .caption!
                                 .copyWith(fontSize: 14.0),
                           ),
-                        Icon(
+                        const Icon(
                           Icons.chevron_right,
                           color: Colors.grey,
                         ),

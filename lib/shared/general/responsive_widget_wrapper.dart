@@ -9,14 +9,17 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
   final Widget mobileWidget;
   final Widget tabletWidget;
 
-  ResponsiveWidgetWrapper(
-      {required this.mobileWidget, required this.tabletWidget});
+  const ResponsiveWidgetWrapper({
+    Key? key,
+    required this.mobileWidget,
+    required this.tabletWidget,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [SettingsKeys.EnforceTabletMode],
+      rebuildKeys: const [SettingsKeys.EnforceTabletMode],
       builder: (context, settingsBox, child) =>
           MediaQuery.of(context).size.width > StylingHelper.max_width_mobile ||
                   settingsBox.get(SettingsKeys.EnforceTabletMode.name,

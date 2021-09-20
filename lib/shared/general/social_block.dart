@@ -33,10 +33,12 @@ class SocialBlock extends StatelessWidget {
   final double bottomPadding;
 
   SocialBlock({
+    Key? key,
     required this.socialInfos,
     this.topPadding = 18.0,
     this.bottomPadding = 18.0,
-  }) : assert(socialInfos.length > 0);
+  })  : assert(socialInfos.isNotEmpty),
+        super(key: key);
 
   Future<void> _handleSocialTap(
       BuildContext context, SocialEntry social) async {
@@ -85,7 +87,7 @@ class SocialBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Widget> socialEntries = [];
 
-    this.socialInfos.forEach((social) {
+    for (var social in this.socialInfos) {
       socialEntries.add(
         GestureDetector(
           onTap: () => _handleSocialTap(context, social),
@@ -122,8 +124,8 @@ class SocialBlock extends StatelessWidget {
                 child: Text(
                   social.linkText ?? social.link,
                   softWrap: true,
-                  style: (social.textStyle ?? TextStyle()).copyWith(
-                    color: Theme.of(context).accentColor,
+                  style: (social.textStyle ?? const TextStyle()).copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -132,7 +134,7 @@ class SocialBlock extends StatelessWidget {
           ),
         ),
       );
-    });
+    }
 
     return Padding(
       padding:

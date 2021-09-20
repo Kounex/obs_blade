@@ -24,7 +24,8 @@ class ThemeRow extends StatelessWidget {
 
   final void Function(String)? onSave;
 
-  ThemeRow({
+  const ThemeRow({
+    Key? key,
     this.title,
     this.titleWidget,
     this.description,
@@ -35,7 +36,7 @@ class ThemeRow extends StatelessWidget {
     this.buttonText,
     this.onButtonPressed,
     this.onSave,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +67,7 @@ class ThemeRow extends StatelessWidget {
                     ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: this.useDivider ? LightDivider() : Container(),
+                  child: this.useDivider ? const LightDivider() : Container(),
                 ),
                 Text(
                   this.description ?? 'Title',
@@ -75,7 +76,7 @@ class ThemeRow extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 32.0),
+          const SizedBox(width: 32.0),
           SizedBox(
             width: 75.0,
             child: this.onActiveChanged != null

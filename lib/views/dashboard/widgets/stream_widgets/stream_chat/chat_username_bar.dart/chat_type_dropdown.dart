@@ -10,7 +10,8 @@ import '../../../../../../types/enums/settings_keys.dart';
 class ChatTypeDropdown extends StatelessWidget {
   final Box settingsBox;
 
-  ChatTypeDropdown({required this.settingsBox});
+  const ChatTypeDropdown({Key? key, required this.settingsBox})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class ChatTypeDropdown extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(chatType.icon),
-                    SizedBox(width: 12.0),
+                    const SizedBox(width: 12.0),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -39,7 +40,7 @@ class ChatTypeDropdown extends StatelessWidget {
                           ),
                       ],
                     ),
-                    SizedBox(width: 8.0),
+                    const SizedBox(width: 8.0),
                   ],
                 ),
               ),
@@ -59,10 +60,11 @@ class ChatTypeDropdown extends StatelessWidget {
                   noText: 'Cancel',
                   okText: 'Ok',
                   onOk: (checked) {
-                    if (checked)
+                    if (checked) {
                       this.settingsBox.put(
                           SettingsKeys.DontShowYouTubeChatBetaWarning.name,
                           checked);
+                    }
                     this
                         .settingsBox
                         .put(SettingsKeys.SelectedChatType.name, chatType);

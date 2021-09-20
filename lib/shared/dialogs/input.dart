@@ -15,14 +15,15 @@ class InputDialog extends StatefulWidget {
   /// the error text which should be displayed (prevents the 'Ok' dialog callback)
   final String? Function(String)? inputCheck;
 
-  InputDialog({
+  const InputDialog({
+    Key? key,
     required this.title,
     required this.body,
     required this.onSave,
     this.inputText,
     this.inputPlaceholder,
     this.inputCheck,
-  });
+  }) : super(key: key);
 
   @override
   _InputDialogState createState() => _InputDialogState();
@@ -77,12 +78,12 @@ class _InputDialogState extends State<InputDialog> {
       ),
       actions: [
         CupertinoDialogAction(
-          child: Text('Cancel'),
+          child: const Text('Cancel'),
           isDestructiveAction: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
         CupertinoDialogAction(
-          child: Text('Save'),
+          child: const Text('Save'),
           onPressed: () {
             bool valid = true;
             if (this.widget.inputCheck != null) {

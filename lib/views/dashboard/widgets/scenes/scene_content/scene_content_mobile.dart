@@ -6,6 +6,8 @@ import 'scene_items/scene_items.dart';
 import 'visibility_edit_toggle.dart';
 
 class SceneContentMobile extends StatelessWidget {
+  const SceneContentMobile({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -15,7 +17,7 @@ class SceneContentMobile extends StatelessWidget {
         children: [
           Material(
             color: Theme.of(context).cupertinoOverrideTheme!.barBackgroundColor,
-            child: TabBar(
+            child: const TabBar(
               tabs: [
                 Tab(
                   child: Text('Scene Items'),
@@ -26,7 +28,7 @@ class SceneContentMobile extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 300,
             child:
                 TabBarView(physics: NeverScrollableScrollPhysics(), children: [

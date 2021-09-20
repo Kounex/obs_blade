@@ -11,6 +11,8 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
 class Transition extends StatelessWidget {
+  const Transition({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
@@ -31,7 +33,7 @@ class Transition extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) => DropdownButton<String>(
                 value: dashboardStore.currentTransitionName,
-                disabledHint: Text('Empty...'),
+                disabledHint: const Text('Empty...'),
                 isDense: true,
                 items: dashboardStore.availableTransitionsNames
                     ?.map(
@@ -56,7 +58,7 @@ class Transition extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(
+          const SizedBox(
             width: 12.0,
           ),
           SizedBox(
@@ -67,7 +69,7 @@ class Transition extends StatelessWidget {
                 if (controller.text.isEmpty) {
                   controller.text = '0';
                   controller.selection =
-                      TextSelection.fromPosition(TextPosition(offset: 1));
+                      TextSelection.fromPosition(const TextPosition(offset: 1));
                 }
                 NetworkHelper.makeRequest(
                   GetIt.instance<NetworkStore>().activeSession!.socket,

@@ -8,11 +8,12 @@ class KeyboardNumberHeader extends StatelessWidget {
 
   final void Function()? onDone;
 
-  KeyboardNumberHeader({
+  const KeyboardNumberHeader({
+    Key? key,
     required this.child,
     required this.focusNode,
     this.onDone,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +21,8 @@ class KeyboardNumberHeader extends StatelessWidget {
       config: KeyboardActionsConfig(
         keyboardActionsPlatform: KeyboardActionsPlatform.IOS,
         keyboardBarColor: Theme.of(context).brightness == Brightness.dark
-            ? Color.fromRGBO(45, 45, 45, 1.0)
-            : Color.fromRGBO(245, 245, 245, 1.0),
+            ? const Color.fromRGBO(45, 45, 45, 1.0)
+            : const Color.fromRGBO(245, 245, 245, 1.0),
         nextFocus: false,
         actions: [
           KeyboardActionsItem(

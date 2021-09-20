@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 class PlaceholderSceneItem extends StatelessWidget {
   final String text;
 
-  PlaceholderSceneItem({required this.text});
+  const PlaceholderSceneItem({
+    Key? key,
+    required this.text,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

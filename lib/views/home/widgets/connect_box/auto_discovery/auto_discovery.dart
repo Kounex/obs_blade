@@ -15,13 +15,15 @@ import 'result_entry.dart';
 import 'session_tile.dart';
 
 class AutoDiscovery extends StatefulWidget {
+  const AutoDiscovery({Key? key}) : super(key: key);
+
   @override
   _AutoDiscoveryState createState() => _AutoDiscoveryState();
 }
 
 class _AutoDiscoveryState extends State<AutoDiscovery> {
-  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  FocusNode _portFocusNode = FocusNode();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final FocusNode _portFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -36,18 +38,18 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Flexible(
+              const Flexible(
                 child: Text('Port for autodiscovery: '),
               ),
               Container(width: 10.0),
-              QuestionMarkTooltip(
+              const QuestionMarkTooltip(
                   message:
                       'Usually 4444. Can be seen and changed in the WebSocket Plugin settings in OBS\n\n(Tools -> WebSocket Plugin)'),
             ],
           ),
         ),
         Container(
-          padding: EdgeInsets.only(bottom: 24.0),
+          padding: const EdgeInsets.only(bottom: 24.0),
           width: 65.0,
           child: Form(
             key: _formKey,
@@ -70,13 +72,13 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             ),
           ),
         ),
-        LightDivider(),
+        const LightDivider(),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
             future: landingStore.autodiscoverConnections,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData && snapshot.data!.length > 0) {
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                   return Fader(
                     child: Column(
                       children: snapshot.data!
@@ -85,16 +87,16 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                               SessionTile(
                                 connection: availableObsConnection,
                               ),
-                              LightDivider(),
+                              const LightDivider(),
                             ],
                           )
                           .toList()
-                            ..removeLast(),
+                        ..removeLast(),
                     ),
                   );
                 }
                 return ResultEntry(
-                  result: snapshot.hasData && snapshot.data!.length == 0
+                  result: snapshot.hasData && snapshot.data!.isEmpty
                       ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nCheck the FAQ section in the settings tab!'
                       : snapshot.error.toString().contains('NotInWLANException')
                           ? 'Your Device is not connected via WLAN! Autodiscovery only works if you are connected to your local network via WLAN!'
@@ -102,7 +104,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                 );
               }
               return Fader(
-                child: Container(
+                child: SizedBox(
                   height: 150.0,
                   child: BaseProgressIndicator(text: 'Searching...'),
                 ),

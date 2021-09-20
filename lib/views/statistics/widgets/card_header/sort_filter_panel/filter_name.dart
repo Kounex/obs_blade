@@ -5,6 +5,8 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class FilterName extends StatelessWidget {
+  const FilterName({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return CupertinoTextField(

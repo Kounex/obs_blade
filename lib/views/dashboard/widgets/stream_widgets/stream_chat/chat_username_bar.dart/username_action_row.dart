@@ -12,7 +12,8 @@ import 'delete_username_dialog.dart';
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;
 
-  UsernameActionRow({required this.settingsBox});
+  const UsernameActionRow({Key? key, required this.settingsBox})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,16 +27,16 @@ class UsernameActionRow extends StatelessWidget {
     return Row(
       children: [
         ThemedCupertinoButton(
-          padding: EdgeInsets.all(0),
+          padding: const EdgeInsets.all(0),
           text: 'Add',
           onPressed: () => ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: AddEditUsernameDialog(settingsBox: this.settingsBox),
           ),
         ),
-        SizedBox(height: 15.0, child: VerticalDivider()),
+        const SizedBox(height: 15.0, child: VerticalDivider()),
         ThemedCupertinoButton(
-          padding: EdgeInsets.all(0),
+          padding: const EdgeInsets.all(0),
           text: 'Edit',
           onPressed: selectedChatUsername != null
               ? () => ModalHandler.showBaseDialog(
@@ -47,9 +48,9 @@ class UsernameActionRow extends StatelessWidget {
                   )
               : null,
         ),
-        SizedBox(height: 15.0, child: VerticalDivider()),
+        const SizedBox(height: 15.0, child: VerticalDivider()),
         ThemedCupertinoButton(
-          padding: EdgeInsets.all(0),
+          padding: const EdgeInsets.all(0),
           isDestructive: selectedChatUsername != null,
           text: 'Delete',
           onPressed: selectedChatUsername != null

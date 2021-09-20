@@ -14,6 +14,7 @@ class BaseResponse implements Message {
   /// so we check them correctly
   static String failedAuthentication = 'Authentication Failed.';
 
+  @override
   Map<String, dynamic> json;
 
   BaseResponse(this.json);

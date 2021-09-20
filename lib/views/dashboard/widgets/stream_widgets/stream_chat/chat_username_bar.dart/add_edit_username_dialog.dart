@@ -11,10 +11,11 @@ class AddEditUsernameDialog extends StatefulWidget {
   final Box settingsBox;
   final String? username;
 
-  AddEditUsernameDialog({
+  const AddEditUsernameDialog({
+    Key? key,
     required this.settingsBox,
     this.username,
-  });
+  }) : super(key: key);
 
   @override
   _AddEditUsernameDialogState createState() => _AddEditUsernameDialogState();
@@ -51,10 +52,12 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
   }
 
   String? _usernameValidation(ChatType chatType, String? username) {
-    if (username == null || username.isEmpty)
+    if (username == null || username.isEmpty) {
       return 'Please provide a username!';
-    if (this.widget.username != null && username == this.widget.username)
+    }
+    if (this.widget.username != null && username == this.widget.username) {
       return null;
+    }
     if (chatType == ChatType.Twitch) {
       return this.widget.settingsBox.get(SettingsKeys.TwitchUsernames.name,
               defaultValue: <String>[]).contains(username)
@@ -91,16 +94,16 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
           Text(
             'Add the name of a ${_chatType.text} user to be able to view this user\'s chat',
           ),
-          SizedBox(height: 12.0),
+          const SizedBox(height: 12.0),
           ValidationCupertinoTextfield(
             controller: _usernameController,
             placeholder: '${_chatType.text} username',
           ),
           if (_chatType == ChatType.YouTube) ...[
-            SizedBox(height: 8.0),
-            Text(
+            const SizedBox(height: 8.0),
+            const Text(
                 'For Youtube you also need to provide the Channel ID of the livestream - Usually at the end of the livestream link, for example:\n\nm-i_0DcfF1s'),
-            SizedBox(height: 12.0),
+            const SizedBox(height: 12.0),
             ValidationCupertinoTextfield(
               controller: _youtubeLinkController,
               placeholder: 'Youtube livestream link',

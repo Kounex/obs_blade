@@ -9,7 +9,9 @@ class DeleteUsernameDialog extends StatelessWidget {
   final Box settingsBox;
   final String username;
 
-  DeleteUsernameDialog({required this.settingsBox, required this.username});
+  const DeleteUsernameDialog(
+      {Key? key, required this.settingsBox, required this.username})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,7 @@ class DeleteUsernameDialog extends StatelessWidget {
               .settingsBox
               .put(SettingsKeys.TwitchUsernames.name, twitchUsernames);
           this.settingsBox.put(SettingsKeys.SelectedTwitchUsername.name,
-              twitchUsernames.length > 0 ? twitchUsernames.last : null);
+              twitchUsernames.isNotEmpty ? twitchUsernames.last : null);
         } else if (chatType == ChatType.YouTube) {
           Map<String, String> youtubeUsernames = Map<String, String>.from((this
               .settingsBox
@@ -44,7 +46,7 @@ class DeleteUsernameDialog extends StatelessWidget {
               .put(SettingsKeys.YoutubeUsernames.name, youtubeUsernames);
           this.settingsBox.put(
               SettingsKeys.SelectedYoutubeUsername.name,
-              youtubeUsernames.length > 0
+              youtubeUsernames.isNotEmpty
                   ? youtubeUsernames[youtubeUsernames.keys.last]
                   : null);
         }

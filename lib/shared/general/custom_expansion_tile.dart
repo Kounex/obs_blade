@@ -11,7 +11,8 @@ class CustomExpansionTile extends StatefulWidget {
   final VoidCallback? onExpand;
   final void Function(VoidCallback, bool)? manualExpand;
 
-  CustomExpansionTile({
+  const CustomExpansionTile({
+    Key? key,
     this.leadingIcon,
     this.headerText,
     this.customHeader,
@@ -20,7 +21,8 @@ class CustomExpansionTile extends StatefulWidget {
     required this.expandedBody,
     this.onExpand,
     this.manualExpand,
-  }) : assert(headerText != null || customHeader != null);
+  })  : assert(headerText != null || customHeader != null),
+        super(key: key);
 
   @override
   _CustomExpansionTileState createState() => _CustomExpansionTileState();
@@ -28,7 +30,7 @@ class CustomExpansionTile extends StatefulWidget {
 
 class _CustomExpansionTileState extends State<CustomExpansionTile>
     with SingleTickerProviderStateMixin {
-  ExpandableController _expandController = ExpandableController();
+  final ExpandableController _expandController = ExpandableController();
 
   late AnimationController _animController;
 
@@ -39,8 +41,8 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
 
   @override
   void initState() {
-    _animController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+    _animController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 200));
 
     _startExpandAnimation = () {
       _expandController.toggle();
@@ -59,7 +61,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
         CurvedAnimation(parent: _animController, curve: Curves.easeIn));
     _color = ColorTween(
       begin: Theme.of(context).iconTheme.color,
-      end: Theme.of(context).accentColor,
+      end: Theme.of(context).colorScheme.secondary,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
     super.didChangeDependencies();
   }
@@ -77,7 +79,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
       color: Theme.of(context).cardColor,
       child: ExpandablePanel(
         controller: _expandController,
-        theme: ExpandableThemeData(
+        theme: const ExpandableThemeData(
           inkWellBorderRadius: BorderRadius.zero,
           headerAlignment: ExpandablePanelHeaderAlignment.center,
           bodyAlignment: ExpandablePanelBodyAlignment.center,
@@ -111,7 +113,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                       color: _color.value,
                     ),
                   ),
-                  SizedBox(width: 24.0),
+                  const SizedBox(width: 24.0),
                 ],
                 Expanded(
                   child: this.widget.customHeader ??

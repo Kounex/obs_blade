@@ -15,6 +15,8 @@ import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
 
 class CustomThemeView extends StatelessWidget {
+  const CustomThemeView({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return ThemedCupertinoScaffold(
@@ -27,7 +29,7 @@ class CustomThemeView extends StatelessWidget {
       /// since I assumed this part would get rebuilded as well
       body: HiveBuilder<dynamic>(
         hiveKey: HiveKeys.Settings,
-        rebuildKeys: [
+        rebuildKeys: const [
           SettingsKeys.ActiveCustomThemeUUID,
           SettingsKeys.CustomTheme
         ],
@@ -52,7 +54,7 @@ class CustomThemeView extends StatelessWidget {
                 ),
               ),
             ),
-            BaseCard(
+            const BaseCard(
               title: 'Predefined Themes',
               bottomPadding: 12.0,
               paddingChild: EdgeInsets.all(0),
@@ -76,8 +78,8 @@ class CustomThemeView extends StatelessWidget {
                 text: 'Add Theme',
               ),
               bottomPadding: 12.0,
-              paddingChild: EdgeInsets.all(0),
-              child: CustomThemeList(),
+              paddingChild: const EdgeInsets.all(0),
+              child: const CustomThemeList(),
             ),
           ],
         ),

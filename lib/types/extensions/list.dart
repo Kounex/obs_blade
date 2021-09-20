@@ -3,7 +3,7 @@
 /// use this new method. Another examples would be static functions doing stuff you would
 /// do on several places, so summarize them in a util class!
 extension ListStuff<E> on Iterable<E> {
-  Iterable<T> mapIndexed<T>(T f(E element, int index)) sync* {
+  Iterable<T> mapIndexed<T>(T Function(E element, int index) f) sync* {
     var index = 0;
 
     for (final item in this) {

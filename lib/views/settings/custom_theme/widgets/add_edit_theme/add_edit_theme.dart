@@ -17,7 +17,8 @@ class AddEditTheme extends StatefulWidget {
   final CustomTheme? customTheme;
   final ScrollController? scrollController;
 
-  AddEditTheme({this.customTheme, this.scrollController});
+  const AddEditTheme({Key? key, this.customTheme, this.scrollController})
+      : super(key: key);
 
   @override
   _AddEditThemeState createState() => _AddEditThemeState();
@@ -45,7 +46,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
   }
 
   String? _nameValidation(String name) {
-    if (name.trim().length == 0) {
+    if (name.trim().isEmpty) {
       return 'Please provide a theme name!';
     }
     if (Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
@@ -64,10 +65,10 @@ class _AddEditThemeState extends State<AddEditTheme> {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.only(right: 4.0),
+          padding: const EdgeInsets.only(right: 4.0),
           alignment: Alignment.centerRight,
           child: IconButton(
-            icon: Icon(CupertinoIcons.clear_circled_solid),
+            icon: const Icon(CupertinoIcons.clear_circled_solid),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -85,7 +86,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       style: Theme.of(context).textTheme.headline5,
                     ),
                     ThemedCupertinoButton(
-                      padding: EdgeInsets.only(left: 24.0),
+                      padding: const EdgeInsets.only(left: 24.0),
                       text: 'Save',
                       onPressed: () {
                         _name.submit();
@@ -110,7 +111,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       },
                     ),
                     ThemedCupertinoButton(
-                        padding: EdgeInsets.only(left: 24.0),
+                        padding: const EdgeInsets.only(left: 24.0),
                         isDestructive: this.widget.customTheme != null,
                         text: 'Delete',
                         onPressed: this.widget.customTheme != null
@@ -142,7 +143,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             : null),
                   ],
                 ),
-                LightDivider(),
+                const LightDivider(),
                 Expanded(
                   child: SingleChildScrollView(
                     controller: this.widget.scrollController,

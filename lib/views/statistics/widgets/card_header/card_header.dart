@@ -10,12 +10,13 @@ class CardHeader extends StatelessWidget {
 
   final List<Widget> additionalCardWidgets;
 
-  CardHeader({
+  const CardHeader({
+    Key? key,
     required this.title,
     this.description = '',
     this.headerDecorationIcon,
     this.additionalCardWidgets = const [],
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class CardHeader extends StatelessWidget {
           children: [
             Expanded(
               child: Padding(
-                padding: EdgeInsets.only(top: 8.0, left: 14.0),
+                padding: const EdgeInsets.only(top: 8.0, left: 14.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,7 +37,7 @@ class CardHeader extends StatelessWidget {
                       this.title,
                       style: Theme.of(context).textTheme.headline5,
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 108.0,
                       child: Divider(height: 8.0),
                     ),

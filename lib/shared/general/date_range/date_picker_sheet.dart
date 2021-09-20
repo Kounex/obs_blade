@@ -9,12 +9,13 @@ class DatePickerSheet extends StatefulWidget {
   final DateTime? selectedDate;
   final void Function(DateTime?)? updateDateTime;
 
-  DatePickerSheet({
+  const DatePickerSheet({
+    Key? key,
     this.selectedDate,
     this.updateDateTime,
     this.minimumDate,
     this.maximumDate,
-  });
+  }) : super(key: key);
 
   @override
   _DatePickerSheetState createState() => _DatePickerSheetState();
@@ -52,7 +53,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             CupertinoButton(
-              child: Text(
+              child: const Text(
                 'Clear',
                 style: TextStyle(
                   color: CupertinoColors.destructiveRed,
@@ -67,13 +68,13 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 CupertinoButton(
-                  child: Text('Cancel'),
+                  child: const Text('Cancel'),
                   onPressed: () {
                     Navigator.of(context, rootNavigator: true).pop();
                   },
                 ),
                 CupertinoButton(
-                  child: Text('Save'),
+                  child: const Text('Save'),
                   onPressed: () {
                     this.widget.updateDateTime?.call(_date);
                     Navigator.of(context, rootNavigator: true).pop();
@@ -83,7 +84,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
             ),
           ],
         ),
-        LightDivider(),
+        const LightDivider(),
         Flexible(
           child: SizedBox(
             height: 250.0,

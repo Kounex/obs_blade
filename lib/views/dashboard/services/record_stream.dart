@@ -15,21 +15,22 @@ class RecordStreamService {
     bool checkedDontShowRecordStart,
     bool checkedDontShowRecordStop,
   ) {
-    VoidCallback onRecordStartStop = () => NetworkHelper.makeRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestType.StartStopRecording,
-        );
-
     (isRecording && !checkedDontShowRecordStop) ||
             (!isRecording && !checkedDontShowRecordStart)
         ? ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: StartStopRecordingDialog(
               isRecording: isRecording,
-              onRecordStartStop: onRecordStartStop,
+              onRecordStartStop: () => NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.StartStopRecording,
+              ),
             ),
           )
-        : onRecordStartStop();
+        : NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
+            RequestType.StartStopRecording,
+          );
   }
 
   static void triggerStreamStartStop(
@@ -38,20 +39,21 @@ class RecordStreamService {
     bool checkedDontShowStreamStart,
     bool checkedDontShowStreamStop,
   ) {
-    VoidCallback onStreamStartStop = () => NetworkHelper.makeRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestType.StartStopStreaming,
-        );
-
     (isLive && !checkedDontShowStreamStop) ||
             (!isLive && !checkedDontShowStreamStart)
         ? ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: StartStopStreamingDialog(
               isLive: isLive,
-              onStreamStartStop: onStreamStartStop,
+              onStreamStartStop: () => NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.StartStopStreaming,
+              ),
             ),
           )
-        : onStreamStartStop();
+        : NetworkHelper.makeRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
+            RequestType.StartStopStreaming,
+          );
   }
 }

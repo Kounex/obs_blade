@@ -6,11 +6,12 @@ class ThemedCupertinoSwitch extends StatelessWidget {
   final bool value;
   final Function(bool) onChanged;
 
-  ThemedCupertinoSwitch({
+  const ThemedCupertinoSwitch({
+    Key? key,
     this.activeColor,
     required this.value,
     required this.onChanged,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

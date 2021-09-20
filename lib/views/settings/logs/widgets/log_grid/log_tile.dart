@@ -11,7 +11,8 @@ class LogTile extends StatelessWidget {
   final int dateMS;
   final List<AppLog> logs;
 
-  LogTile({required this.dateMS, required this.logs});
+  const LogTile({Key? key, required this.dateMS, required this.logs})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +44,7 @@ class LogTile extends StatelessWidget {
             '${this.logs.length} entries',
             style: Theme.of(context).textTheme.caption,
           ),
-          Icon(
+          const Icon(
             Icons.chevron_right,
             color: Colors.grey,
           ),

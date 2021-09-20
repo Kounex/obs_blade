@@ -5,7 +5,8 @@ class ColorBubble extends StatelessWidget {
   final Color color;
   final double size;
 
-  ColorBubble({required this.color, this.size = 24.0});
+  const ColorBubble({Key? key, required this.color, this.size = 24.0})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

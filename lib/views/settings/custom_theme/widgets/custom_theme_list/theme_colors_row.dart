@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/custom_theme.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
+
 import '../../../../../types/extensions/string.dart';
 
 class ThemeColorsRow extends StatelessWidget {
   final CustomTheme customTheme;
 
-  ThemeColorsRow({required this.customTheme});
+  const ThemeColorsRow({Key? key, required this.customTheme}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

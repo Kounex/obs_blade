@@ -12,13 +12,14 @@ class EnumerationBlock extends StatelessWidget {
 
   final double entrySpacing;
 
-  EnumerationBlock({
+  const EnumerationBlock({
+    Key? key,
     this.title,
     this.ordered = false,
     this.entries,
     this.customEntries,
     this.entrySpacing = 4.0,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class EnumerationBlock extends StatelessWidget {
       children: [
         if (this.title != null) ...[
           Text(this.title!),
-          SizedBox(height: 6.0),
+          const SizedBox(height: 6.0),
         ],
         ...usedEntries,
         // if (usedEntries.isNotEmpty) SizedBox(height: 6.0),

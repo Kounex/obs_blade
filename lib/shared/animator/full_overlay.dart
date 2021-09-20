@@ -7,11 +7,12 @@ class FullOverlay extends StatefulWidget {
   final Duration animationDuration;
   final Duration showDuration;
 
-  FullOverlay({
+  const FullOverlay({
+    Key? key,
     required this.content,
     required this.animationDuration,
     required this.showDuration,
-  });
+  }) : super(key: key);
 
   @override
   _FullOverlayState createState() => _FullOverlayState();
@@ -47,7 +48,7 @@ class _FullOverlayState extends State<FullOverlay>
         () => this.mounted ? _controller.reverse() : null);
     return Stack(
       children: [
-        SizedBox.expand(
+        const SizedBox.expand(
           child: AbsorbPointer(),
         ),
         Positioned(
@@ -58,7 +59,7 @@ class _FullOverlayState extends State<FullOverlay>
             child: AnimatedBuilder(
                 animation: _controller,
                 child: Padding(
-                  padding: EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(12.0),
                   child: this.widget.content,
                 ),
                 builder: (context, child) {
@@ -70,7 +71,7 @@ class _FullOverlayState extends State<FullOverlay>
                       child: Container(
                         height: 150.0,
                         width: 150.0,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.black87,
                           borderRadius: BorderRadius.all(
                             Radius.circular(12.0),

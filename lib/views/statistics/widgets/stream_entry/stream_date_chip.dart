@@ -4,10 +4,11 @@ class StreamDateChip extends StatelessWidget {
   final String label;
   final String content;
 
-  StreamDateChip({
+  const StreamDateChip({
+    Key? key,
     required this.label,
     required this.content,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

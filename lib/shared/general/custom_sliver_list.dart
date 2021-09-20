@@ -6,10 +6,12 @@ class CustomSliverList extends StatelessWidget {
   final double? customTopPadding;
   final double? customBottomPadding;
 
-  CustomSliverList(
-      {required this.children,
-      this.customTopPadding,
-      this.customBottomPadding});
+  const CustomSliverList({
+    Key? key,
+    required this.children,
+    this.customTopPadding,
+    this.customBottomPadding,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

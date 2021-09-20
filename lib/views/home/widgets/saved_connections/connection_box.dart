@@ -14,8 +14,12 @@ class ConnectionBox extends StatelessWidget {
   final double height;
   final double width;
 
-  ConnectionBox(
-      {required this.connection, this.height = 200.0, this.width = 250.0});
+  const ConnectionBox(
+      {Key? key,
+      required this.connection,
+      this.height = 200.0,
+      this.width = 250.0})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +32,7 @@ class ConnectionBox extends StatelessWidget {
         rightPadding: 0.0,
         bottomPadding: 0.0,
         leftPadding: 0.0,
-        paddingChild: EdgeInsets.all(0),
+        paddingChild: const EdgeInsets.all(0),
         child: SizedBox(
           height: this.height,
           child: Column(
@@ -74,7 +78,7 @@ class ConnectionBox extends StatelessWidget {
                     },
                   ),
                   IconButton(
-                    icon: Icon(Icons.edit),
+                    icon: const Icon(Icons.edit),
                     onPressed: () => showCupertinoDialog(
                       context: context,
                       builder: (context) =>

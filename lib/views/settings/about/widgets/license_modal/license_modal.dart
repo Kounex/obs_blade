@@ -9,7 +9,7 @@ import '../license_modal/license_entries.dart';
 class LicenseModal extends StatelessWidget {
   final ScrollController? scrollController;
 
-  LicenseModal({this.scrollController});
+  const LicenseModal({Key? key, this.scrollController}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,29 +24,29 @@ class LicenseModal extends StatelessWidget {
         children: [
           Align(
             child: Transform.translate(
-              offset: Offset(0, -24),
-              child: Container(
+              offset: const Offset(0, -24),
+              child: SizedBox(
                 width: 256.0,
                 child: Image.asset('assets/images/base_logo.png'),
               ),
             ),
           ),
-          LightDivider(),
+          const LightDivider(),
           Padding(
-            padding: EdgeInsets.only(top: 12.0, bottom: 12.0),
+            padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: EdgeInsets.only(right: 8.0),
+                  padding: const EdgeInsets.only(right: 8.0),
                   height: 32.0,
                   child: Image.asset('assets/images/flutter_logo_render.png'),
                 ),
-                Text('Powered by Flutter'),
+                const Text('Powered by Flutter'),
               ],
             ),
           ),
-          LightDivider(),
+          const LightDivider(),
           Expanded(
             child: LicenseEntries(
               scrollController: scrollController,

@@ -8,7 +8,9 @@ class PlaceholderConnection extends StatelessWidget {
   final double height;
   final double width;
 
-  PlaceholderConnection({required this.height, required this.width});
+  const PlaceholderConnection(
+      {Key? key, required this.height, required this.width})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -20,12 +22,12 @@ class PlaceholderConnection extends StatelessWidget {
           rightPadding: 0.0,
           bottomPadding: 0.0,
           leftPadding: 0.0,
-          paddingChild: EdgeInsets.all(0),
+          paddingChild: const EdgeInsets.all(0),
           child: Padding(
             padding: const EdgeInsets.only(left: 24.0, right: 24.0),
             child: SizedBox(
               height: this.height,
-              child: BaseResult(
+              child: const BaseResult(
                 icon: BaseResultIcon.Missing,
                 iconSize: 42.0,
                 text:

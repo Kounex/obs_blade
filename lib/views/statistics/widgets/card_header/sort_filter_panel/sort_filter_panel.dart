@@ -13,11 +13,13 @@ import 'statistics_date_range.dart';
 const double _kControlsPadding = 14.0;
 
 class SortFilterPanel extends StatelessWidget {
+  const SortFilterPanel({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        LightDivider(),
+        const LightDivider(),
         CustomExpansionTile(
           headerText: 'Expand to sort and filter your statistics!',
           headerPadding: const EdgeInsets.all(14.0),
@@ -26,7 +28,7 @@ class SortFilterPanel extends StatelessWidget {
             width: double.infinity,
             child: Column(
               children: [
-                LightDivider(),
+                const LightDivider(),
                 Padding(
                   padding: const EdgeInsets.only(
                     left: 14.0,
@@ -35,7 +37,7 @@ class SortFilterPanel extends StatelessWidget {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    children: const [
                       SizedBox(height: _kControlsPadding + 8.0),
                       OrderRow(),
                       SizedBox(height: _kControlsPadding),

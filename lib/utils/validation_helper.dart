@@ -16,7 +16,7 @@ class ValidationHelper {
     if (ip != null &&
         ip.length == 4 &&
         ip.every((part) =>
-            part.length > 0 &&
+            part.isNotEmpty &&
             part.length < 4 &&
             int.tryParse(part) != null &&
             int.parse(part) <= 255)) {

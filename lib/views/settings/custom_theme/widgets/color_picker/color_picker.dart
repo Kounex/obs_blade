@@ -30,14 +30,15 @@ class ColorPicker extends StatefulWidget {
   final bool useAlpha;
   final void Function(String)? onSave;
 
-  ColorPicker({
+  const ColorPicker({
+    Key? key,
     required this.title,
     required this.description,
     this.color,
     this.editableColorValues = false,
     this.useAlpha = false,
     this.onSave,
-  });
+  }) : super(key: key);
 
   @override
   _ColorPickerState createState() => _ColorPickerState();
@@ -48,39 +49,39 @@ class _ColorPickerState extends State<ColorPicker> {
 
   late CustomValidationTextEditingController _hexController;
   late String _latestValidHexValue;
-  FocusNode _hexFocusNode = FocusNode();
+  final FocusNode _hexFocusNode = FocusNode();
 
-  CustomValidationTextEditingController _rController =
+  final CustomValidationTextEditingController _rController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.R));
 
-  CustomValidationTextEditingController _gController =
+  final CustomValidationTextEditingController _gController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.G));
 
-  CustomValidationTextEditingController _bController =
+  final CustomValidationTextEditingController _bController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.B));
 
-  CustomValidationTextEditingController _hController =
+  final CustomValidationTextEditingController _hController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.H));
 
-  CustomValidationTextEditingController _sController =
+  final CustomValidationTextEditingController _sController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.S));
 
-  CustomValidationTextEditingController _lController =
+  final CustomValidationTextEditingController _lController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.L));
 
-  CustomValidationTextEditingController _aController =
+  final CustomValidationTextEditingController _aController =
       CustomValidationTextEditingController(
           check: (value) =>
               ValidationHelper.colorTypeValidator(value, ColorType.A));
@@ -192,7 +193,7 @@ class _ColorPickerState extends State<ColorPicker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 12.0, right: 4.0),
+          padding: const EdgeInsets.only(left: 12.0, right: 4.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -241,7 +242,7 @@ class _ColorPickerState extends State<ColorPicker> {
             style: Theme.of(context).textTheme.caption,
           ),
         ),
-        LightDivider(),
+        const LightDivider(),
         Flexible(
           child: SingleChildScrollView(
             child: Column(
@@ -272,7 +273,7 @@ class _ColorPickerState extends State<ColorPicker> {
                     },
                   ),
                 ),
-                LightDivider(),
+                const LightDivider(),
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Row(
@@ -281,7 +282,7 @@ class _ColorPickerState extends State<ColorPicker> {
                       Row(
                         children: [
                           Padding(
-                            padding: EdgeInsets.only(right: 24.0),
+                            padding: const EdgeInsets.only(right: 24.0),
                             child: Text(
                               'Hex:',
                               style: Theme.of(context).textTheme.headline6,
@@ -346,7 +347,7 @@ class _ColorPickerState extends State<ColorPicker> {
                     ],
                   ),
                 ),
-                LightDivider(),
+                const LightDivider(),
                 Padding(
                   padding:
                       const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),

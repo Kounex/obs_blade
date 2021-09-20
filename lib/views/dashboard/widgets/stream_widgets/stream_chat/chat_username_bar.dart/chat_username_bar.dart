@@ -9,11 +9,13 @@ import 'username_action_row.dart';
 import 'username_dropdown.dart';
 
 class ChatUsernameBar extends StatelessWidget {
+  const ChatUsernameBar({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [
+      rebuildKeys: const [
         SettingsKeys.SelectedChatType,
         SettingsKeys.TwitchUsernames,
         SettingsKeys.SelectedTwitchUsername,
@@ -31,7 +33,7 @@ class ChatUsernameBar extends StatelessWidget {
                 UsernameDropdown(
                   settingsBox: settingsBox,
                 ),
-                SizedBox(width: 32.0),
+                const SizedBox(width: 32.0),
                 UsernameActionRow(
                   settingsBox: settingsBox,
                 ),

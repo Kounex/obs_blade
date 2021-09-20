@@ -12,10 +12,12 @@ class SwitcherCard extends StatelessWidget {
 
   final EdgeInsetsGeometry paddingChild;
 
-  SwitcherCard(
-      {required this.title,
-      required this.child,
-      this.paddingChild = const EdgeInsets.all(0)});
+  const SwitcherCard({
+    Key? key,
+    required this.title,
+    required this.child,
+    this.paddingChild = const EdgeInsets.all(0),
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class SwitcherCard extends StatelessWidget {
     return BaseCard(
       paddingChild: this.paddingChild,
       titleWidget: AnimatedSwitcher(
-        duration: Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         child: Align(
           key: Key(this.title),
           alignment: Alignment.centerLeft,
@@ -34,7 +36,7 @@ class SwitcherCard extends StatelessWidget {
           ),
         ),
       ),
-      trailingTitleWidget: Container(
+      trailingTitleWidget: SizedBox(
         width: 60.0,
         child: ThemedCupertinoButton(
           padding: const EdgeInsets.all(0),
@@ -43,7 +45,7 @@ class SwitcherCard extends StatelessWidget {
         ),
       ),
       child: AnimatedSwitcher(
-        duration: Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 200),
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
           child: SizeTransition(

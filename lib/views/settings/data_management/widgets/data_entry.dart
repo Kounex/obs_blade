@@ -14,13 +14,14 @@ class DataEntry extends StatelessWidget {
   final String? additionalConfirmationText;
   final VoidCallback? onClear;
 
-  DataEntry({
+  const DataEntry({
+    Key? key,
     required this.title,
     required this.description,
     this.customConfirmationText,
     this.additionalConfirmationText,
     this.onClear,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

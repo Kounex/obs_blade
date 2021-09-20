@@ -14,13 +14,15 @@ import '../../../../../utils/network_helper.dart';
 import '../../../services/record_stream.dart';
 
 class RecordingControls extends StatelessWidget {
+  const RecordingControls({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: [
+      rebuildKeys: const [
         SettingsKeys.DontShowRecordStartMessage,
         SettingsKeys.DontShowRecordStopMessage,
       ],
@@ -50,7 +52,7 @@ class RecordingControls extends StatelessWidget {
                 text: dashboardStore.isRecording ? 'Stop' : 'Start',
               ),
             ),
-            SizedBox(width: 12.0),
+            const SizedBox(width: 12.0),
             SizedBox(
               width: 128.0,
               child: BaseButton(

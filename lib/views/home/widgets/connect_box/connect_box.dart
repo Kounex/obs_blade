@@ -9,6 +9,8 @@ import 'connect_form.dart';
 import 'switcher_card.dart';
 
 class ConnectBox extends StatelessWidget {
+  const ConnectBox({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     HomeStore landingStore = GetIt.instance<HomeStore>();
@@ -26,7 +28,7 @@ class ConnectBox extends StatelessWidget {
                     saveCredentials: true,
                   ),
                 )
-              : AutoDiscovery(),
+              : const AutoDiscovery(),
         ),
       ),
     );

@@ -6,11 +6,12 @@ class EntryMetaChip extends StatelessWidget {
 
   final double? width;
 
-  EntryMetaChip({
+  const EntryMetaChip({
+    Key? key,
     required this.title,
     required this.content,
     this.width,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

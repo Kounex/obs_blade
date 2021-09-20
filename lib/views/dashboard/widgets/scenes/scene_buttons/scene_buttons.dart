@@ -13,6 +13,8 @@ import '../scenes.dart';
 import 'scene_button.dart';
 
 class SceneButtons extends StatelessWidget {
+  const SceneButtons({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
@@ -31,7 +33,7 @@ class SceneButtons extends StatelessWidget {
           Iterable<Scene>? visibleScenes = dashboardStore.scenes;
           List<HiddenScene> hiddenScenes = [];
 
-          if (networkStore.activeSession != null)
+          if (networkStore.activeSession != null) {
             visibleScenes?.forEach(
               (scene) => hiddenScenes.addAll(
                 hiddenScenesBox.values.where((hiddenSceneInBox) {
@@ -54,6 +56,7 @@ class SceneButtons extends StatelessWidget {
                 }),
               ),
             );
+          }
 
           if (!dashboardStore.editSceneVisibility) {
             visibleScenes = visibleScenes?.where((scene) => hiddenScenes
@@ -63,7 +66,7 @@ class SceneButtons extends StatelessWidget {
           return Wrap(
             runSpacing: kSceneButtonSpace,
             spacing: kSceneButtonSpace,
-            children: visibleScenes != null && visibleScenes.length > 0
+            children: visibleScenes != null && visibleScenes.isNotEmpty
                 ? visibleScenes.map((scene) {
                     HiddenScene? hiddenScene;
                     try {
@@ -92,7 +95,7 @@ class SceneButtons extends StatelessWidget {
                       },
                     );
                   }).toList()
-                : [Text('No Scenes available')],
+                : [const Text('No Scenes available')],
           );
         }),
       );

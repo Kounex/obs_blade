@@ -4,6 +4,8 @@ import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stream_chat/str
 import 'stats/stats.dart';
 
 class StreamWidgetsMobile extends StatelessWidget {
+  const StreamWidgetsMobile({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -18,7 +20,7 @@ class StreamWidgetsMobile extends StatelessWidget {
                 color: Theme.of(context)
                     .cupertinoOverrideTheme!
                     .barBackgroundColor,
-                child: TabBar(
+                child: const TabBar(
                   tabs: [
                     Tab(
                       child: Text('Chat'),
@@ -29,18 +31,18 @@ class StreamWidgetsMobile extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(
+              const SizedBox(
                 height: 575.0,
                 child: TabBarView(
                   physics: NeverScrollableScrollPhysics(),
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(
-                          top: 12.0, left: 8.0, right: 8.0),
+                      padding:
+                          EdgeInsets.only(top: 12.0, left: 8.0, right: 8.0),
                       child: StreamChat(),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
+                      padding: EdgeInsets.only(top: 12.0),
                       child: Stats(
                         pageIndicatorPadding: EdgeInsets.only(
                           top: 12.0,

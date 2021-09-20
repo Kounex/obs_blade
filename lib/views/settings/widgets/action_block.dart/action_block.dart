@@ -13,12 +13,14 @@ class ActionBlock extends StatelessWidget {
   final double iconSize = 32.0;
   final double entryHeight = 42.0;
 
-  ActionBlock({this.title, required this.blockEntries, this.dense = false});
+  const ActionBlock(
+      {Key? key, this.title, required this.blockEntries, this.dense = false})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     List<Widget> entriesWithDivider = [];
-    this.blockEntries.forEach((entry) {
+    for (var entry in this.blockEntries) {
       entriesWithDivider.add(entry);
       entriesWithDivider.add(
         Padding(
@@ -26,10 +28,10 @@ class ActionBlock extends StatelessWidget {
               left: entry.leading != null
                   ? 2 * this.generalizedPadding + this.iconSize
                   : this.generalizedPadding),
-          child: LightDivider(),
+          child: const LightDivider(),
         ),
       );
-    });
+    }
 
     /// Remove last so we can use the full width divider
     /// as the last one
@@ -40,7 +42,7 @@ class ActionBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (this.title != null && this.title!.length > 0)
+          if (this.title != null && this.title!.isNotEmpty)
             Padding(
               padding:
                   EdgeInsets.only(left: this.generalizedPadding, bottom: 7.0),
@@ -53,9 +55,9 @@ class ActionBlock extends StatelessWidget {
             color: Theme.of(context).cardColor,
             child: Column(
               children: [
-                LightDivider(),
+                const LightDivider(),
                 ...entriesWithDivider,
-                LightDivider(),
+                const LightDivider(),
               ],
             ),
           ),

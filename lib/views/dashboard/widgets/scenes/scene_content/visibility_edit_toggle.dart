@@ -17,23 +17,27 @@ class VisibilityEditToggle extends StatelessWidget {
   final SceneItemType sceneItemType;
   final bool tabletMode;
 
-  VisibilityEditToggle({
+  const VisibilityEditToggle({
+    Key? key,
     this.child,
     required this.sceneItemType,
     this.tabletMode = false,
-  }) : assert(!tabletMode && child != null || tabletMode);
+  })  : assert(!tabletMode && child != null || tabletMode),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
+    // ignore: prefer_function_declarations_over_variables
     VoidCallback onEdit = () {
       if (this.sceneItemType == SceneItemType.Source) {
         dashboardStore.setEditSceneItemVisibility(
             !dashboardStore.editSceneItemVisibility);
-      } else if (this.sceneItemType == SceneItemType.Audio)
+      } else if (this.sceneItemType == SceneItemType.Audio) {
         dashboardStore
             .setEditAudioVisibility(!dashboardStore.editAudioVisibility);
+      }
     };
 
     Widget editButton = Observer(
@@ -59,10 +63,11 @@ class VisibilityEditToggle extends StatelessWidget {
                   noText: 'Cancel',
                   okText: 'Ok',
                   onOk: (checked) {
-                    if (checked)
+                    if (checked) {
                       Hive.box(HiveKeys.Settings.name).put(
                           SettingsKeys.DontShowHidingSceneItemsWarning.name,
                           checked);
+                    }
                     onEdit();
                   },
                 ),
@@ -79,7 +84,7 @@ class VisibilityEditToggle extends StatelessWidget {
                 alignment: Alignment.center,
                 child: editButton,
               ),
-              LightDivider(),
+              const LightDivider(),
               Expanded(
                 child: this.child!,
               ),

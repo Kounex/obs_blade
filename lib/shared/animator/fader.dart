@@ -5,11 +5,12 @@ class Fader extends StatefulWidget {
   final Duration duration;
   final Duration? showDuration;
 
-  Fader({
+  const Fader({
+    Key? key,
     required this.child,
     this.duration = const Duration(milliseconds: 200),
     this.showDuration,
-  });
+  }) : super(key: key);
 
   @override
   _FaderState createState() => _FaderState();

@@ -10,6 +10,8 @@ import '../../../shared/overlay/base_result.dart';
 import '../../../stores/views/dashboard.dart';
 
 class ReconnectToast extends StatefulWidget {
+  const ReconnectToast({Key? key}) : super(key: key);
+
   @override
   _ReconnectToastState createState() => _ReconnectToastState();
 }
@@ -24,31 +26,32 @@ class _ReconnectToastState extends State<ReconnectToast>
   late Animation<double> _opacityConnected;
   late Animation<Offset> _offsetConnected;
 
-  List<ReactionDisposer> _disposers = [];
+  final List<ReactionDisposer> _disposers = [];
 
   @override
   void initState() {
-    _controllerReconnecting =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+    _controllerReconnecting = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
 
     _opacityReconnecting = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
             parent: _controllerReconnecting, curve: Curves.easeOut));
 
     _offsetReconnecting =
-        Tween<Offset>(begin: Offset(0, -0.1), end: Offset(0, 0)).animate(
-            CurvedAnimation(
+        Tween<Offset>(begin: const Offset(0, -0.1), end: const Offset(0, 0))
+            .animate(CurvedAnimation(
                 parent: _controllerReconnecting, curve: Curves.easeOut));
 
-    _controllerConnected =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+    _controllerConnected = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
 
     _opacityConnected = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _controllerConnected, curve: Curves.easeOut));
 
-    _offsetConnected = Tween<Offset>(begin: Offset(0, -0.1), end: Offset(0, 0))
-        .animate(CurvedAnimation(
-            parent: _controllerConnected, curve: Curves.easeOut));
+    _offsetConnected =
+        Tween<Offset>(begin: const Offset(0, -0.1), end: const Offset(0, 0))
+            .animate(CurvedAnimation(
+                parent: _controllerConnected, curve: Curves.easeOut));
 
     _disposers.add(
       reaction(
@@ -61,8 +64,8 @@ class _ReconnectToastState extends State<ReconnectToast>
             _controllerReconnecting.reverse();
             if (_controllerConnected.isDismissed) {
               _controllerConnected.forward();
-              Future.delayed(
-                  Duration(seconds: 3), () => _controllerConnected.reverse());
+              Future.delayed(const Duration(seconds: 3),
+                  () => _controllerConnected.reverse());
             }
           }
         },
@@ -74,7 +77,9 @@ class _ReconnectToastState extends State<ReconnectToast>
 
   @override
   void dispose() {
-    _disposers.forEach((d) => d());
+    for (var d in _disposers) {
+      d();
+    }
     _controllerReconnecting.dispose();
     _controllerConnected.dispose();
     super.dispose();
@@ -109,7 +114,7 @@ class _ReconnectToastState extends State<ReconnectToast>
             child: BaseCard(
               paintBorder: true,
               borderColor: CupertinoColors.activeGreen.color,
-              child: BaseResult(
+              child: const BaseResult(
                 text: 'Reconnected!',
               ),
             ),

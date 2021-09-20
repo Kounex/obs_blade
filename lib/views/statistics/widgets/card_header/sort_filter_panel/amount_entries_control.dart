@@ -6,6 +6,8 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class AmountEntriesControl extends StatelessWidget {
+  const AmountEntriesControl({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
@@ -15,7 +17,7 @@ class AmountEntriesControl extends StatelessWidget {
         width: double.infinity,
         child: CupertinoSlidingSegmentedControl<AmountStatisticEntries>(
           groupValue: statisticsStore.amountStatisticEntries,
-          padding: EdgeInsets.all(0),
+          padding: const EdgeInsets.all(0),
           // selectedColor: Theme.of(context).toggleableActiveColor,
           // borderColor: Theme.of(context).toggleableActiveColor,
           // unselectedColor: Theme.of(context).cardColor,

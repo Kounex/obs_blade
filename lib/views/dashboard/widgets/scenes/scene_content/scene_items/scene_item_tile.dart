@@ -14,7 +14,10 @@ import '../../../../../../utils/network_helper.dart';
 class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
 
-  SceneItemTile({required this.sceneItem});
+  const SceneItemTile({
+    Key? key,
+    required this.sceneItem,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class SceneItemTile extends StatelessWidget {
       ),
       trailing: HiveBuilder<dynamic>(
         hiveKey: HiveKeys.Settings,
-        rebuildKeys: [SettingsKeys.ExposeStudioControls],
+        rebuildKeys: const [SettingsKeys.ExposeStudioControls],
         builder: (context, settingsBox, child) => IconButton(
           icon: Icon(
             this.sceneItem.render! ? Icons.visibility : Icons.visibility_off,

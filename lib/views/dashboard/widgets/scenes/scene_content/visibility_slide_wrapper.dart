@@ -18,11 +18,12 @@ class VisibilitySlideWrapper extends StatefulWidget {
   final SceneItemType sceneItemType;
   final Widget child;
 
-  VisibilitySlideWrapper({
+  const VisibilitySlideWrapper({
+    Key? key,
     required this.child,
     required this.sceneItem,
     required this.sceneItemType,
-  });
+  }) : super(key: key);
 
   @override
   _VisibilitySlideWrapperState createState() => _VisibilitySlideWrapperState();
@@ -31,11 +32,13 @@ class VisibilitySlideWrapper extends StatefulWidget {
 class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
   // SlidableController _controller = SlidableController();
 
-  List<ReactionDisposer> _disposers = [];
+  final List<ReactionDisposer> _disposers = [];
 
   @override
   void dispose() {
-    _disposers.forEach((d) => d());
+    for (var d in _disposers) {
+      d();
+    }
     super.dispose();
   }
 
@@ -48,7 +51,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
             : (_) => dashboardStore.editAudioVisibility,
         (bool editVisibility) {
           Future.delayed(
-              Duration(milliseconds: 50),
+              const Duration(milliseconds: 50),
               () => editVisibility
                   ? slidableController.openStartActionPane()
                   : slidableController.close());
@@ -137,7 +140,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                             size: 18.0,
                           ),
                         ),
-                        SizedBox(height: 2.0),
+                        const SizedBox(height: 2.0),
                         Flexible(
                           child: Text(
                             hiddenSceneItem != null ? 'Hidden' : 'Visible',

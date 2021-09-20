@@ -15,15 +15,16 @@ class AppBarCupertinoActions extends StatelessWidget {
   final String? actionSheetTitle;
   final List<AppBarCupertinoActionEntry> actions;
 
-  AppBarCupertinoActions({
+  const AppBarCupertinoActions({
+    Key? key,
     this.actionSheetTitle,
     required this.actions,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(
+      icon: const Icon(
         CupertinoIcons.ellipsis,
       ),
       onPressed: () => showCupertinoModalPopup(
@@ -58,7 +59,7 @@ class AppBarCupertinoActions extends StatelessWidget {
                 .toList(),
             cancelButton: CupertinoActionSheetAction(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           );
         },

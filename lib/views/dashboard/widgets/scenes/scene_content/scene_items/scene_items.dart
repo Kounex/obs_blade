@@ -12,13 +12,15 @@ import '../visibility_slide_wrapper.dart';
 import 'scene_item_tile.dart';
 
 class SceneItems extends StatefulWidget {
+  const SceneItems({Key? key}) : super(key: key);
+
   @override
   _SceneItemsState createState() => _SceneItemsState();
 }
 
 class _SceneItemsState extends State<SceneItems>
     with AutomaticKeepAliveClientMixin {
-  ScrollController _controller = ScrollController();
+  final ScrollController _controller = ScrollController();
 
   @override
   bool get wantKeepAlive => true;
@@ -37,11 +39,11 @@ class _SceneItemsState extends State<SceneItems>
           isAlwaysShown: true,
           child: ListView(
             controller: _controller,
-            physics: ClampingScrollPhysics(),
-            padding: EdgeInsets.all(0.0),
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.all(0.0),
             children: [
               ...dashboardStore.currentSceneItems != null &&
-                      dashboardStore.currentSceneItems!.length > 0
+                      dashboardStore.currentSceneItems!.isNotEmpty
                   ? dashboardStore.currentSceneItems!
                       .where(
                         (sceneItem) =>
@@ -62,7 +64,10 @@ class _SceneItemsState extends State<SceneItems>
                           ),
                         ),
                       )
-                  : [PlaceholderSceneItem(text: 'No Scene Items available...')]
+                  : [
+                      const PlaceholderSceneItem(
+                          text: 'No Scene Items available...')
+                    ]
             ],
           ),
         ),

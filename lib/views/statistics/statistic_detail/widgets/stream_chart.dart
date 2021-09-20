@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
+
 import '../../../../types/extensions/list.dart';
 
 /// In order to display the graphs in the middle of the coordinate system
@@ -33,7 +34,8 @@ class StreamChart extends StatelessWidget {
   final int streamEndedMS;
   final int totalStreamTime;
 
-  StreamChart({
+  const StreamChart({
+    Key? key,
     required this.data,
     required this.dataTimesMS,
     this.amountFixedTooltipValue = 0,
@@ -45,7 +47,7 @@ class StreamChart extends StatelessWidget {
     this.chartColor = Colors.white,
     required this.streamEndedMS,
     required this.totalStreamTime,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +90,7 @@ class StreamChart extends StatelessWidget {
           ),
         ),
         ConstrainedBox(
-          constraints: BoxConstraints(
+          constraints: const BoxConstraints(
             maxHeight: 250.0,
           ),
           child: LineChart(
@@ -127,10 +129,10 @@ class StreamChart extends StatelessWidget {
                     color: StylingHelper.light_divider_color.withOpacity(0.2),
                     width: 1,
                   ),
-                  right: BorderSide(
+                  right: const BorderSide(
                     color: Colors.transparent,
                   ),
-                  top: BorderSide(
+                  top: const BorderSide(
                     color: Colors.transparent,
                   ),
                 ),

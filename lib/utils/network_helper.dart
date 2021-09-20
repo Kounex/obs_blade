@@ -24,7 +24,7 @@ class NetworkHelper {
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
         Uri.parse('ws://${connection.ip}:${connection.port.toString()}'),
-        pingInterval: Duration(seconds: 3),
+        pingInterval: const Duration(seconds: 3),
       );
 
   /// Returns a list of network addresses which are candidates for the assigned
@@ -81,7 +81,7 @@ class NetworkHelper {
         'sendPort': receivePort.sendPort,
         'baseIPs': baseIPs,
         'port': port,
-        'timeout': Duration(milliseconds: 3000),
+        'timeout': const Duration(milliseconds: 3000),
       });
 
       receivePort.listen((availableConnections) {
@@ -138,10 +138,11 @@ class NetworkHelper {
       /// case very likely OBS WebSocket) and we will add it to the list
       socket = await Socket.connect(address, port, timeout: timeout);
       return Connection(address, port);
-    } catch (e) {} finally {
+    } catch (e) {
+      // An exception means timeout which is okay
+    } finally {
       socket?.destroy();
     }
-    return null;
   }
 
   /// This is the content of the auth field which is needed to correctly
@@ -149,11 +150,11 @@ class NetworkHelper {
   static String getAuthRequestContent(Connection connection) {
     String secretString = '${connection.pw}${connection.salt}';
     Digest secretHash = sha256.convert(utf8.encode(secretString));
-    String secret = Base64Codec().encode(secretHash.bytes);
+    String secret = const Base64Codec().encode(secretHash.bytes);
 
     String authResponseString = '$secret${connection.challenge}';
     Digest authResponseHash = sha256.convert(utf8.encode(authResponseString));
-    String authResponse = Base64Codec().encode(authResponseHash.bytes);
+    String authResponse = const Base64Codec().encode(authResponseHash.bytes);
 
     return authResponse;
   }

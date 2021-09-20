@@ -52,15 +52,7 @@ class TransculentSliverAppBar extends StatefulWidget {
     this.toolbarTextStyle,
     this.titleTextStyle,
     this.systemOverlayStyle,
-  })  : assert(automaticallyImplyLeading != null),
-        assert(forceElevated != null),
-        assert(primary != null),
-        assert(floating != null),
-        assert(pinned != null),
-        assert(snap != null),
-        assert(stretch != null),
-        assert(toolbarHeight != null),
-        assert(floating || !snap,
+  })  : assert(floating || !snap,
             'The "snap" argument only makes sense for floating app bars.'),
         assert(stretchTriggerOffset > 0.0),
         assert(collapsedHeight == null || collapsedHeight >= toolbarHeight,
@@ -369,8 +361,10 @@ class _TransculentSliverAppBarState extends State<TransculentSliverAppBar>
   @override
   void didUpdateWidget(TransculentSliverAppBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.snap != oldWidget.snap || widget.floating != oldWidget.floating)
+    if (widget.snap != oldWidget.snap ||
+        widget.floating != oldWidget.floating) {
       _updateSnapConfiguration();
+    }
     if (widget.stretch != oldWidget.stretch) _updateStretchConfiguration();
   }
 
@@ -440,8 +434,7 @@ class _TransculentSliverAppBarState extends State<TransculentSliverAppBar>
 // parent to constrain the title's actual height.
 class _AppBarTitleBox extends SingleChildRenderObjectWidget {
   const _AppBarTitleBox({Key? key, required Widget child})
-      : assert(child != null),
-        super(key: key, child: child);
+      : super(key: key, child: child);
 
   @override
   _RenderAppBarTitleBox createRenderObject(BuildContext context) {
@@ -501,17 +494,20 @@ class _FloatingAppBarState extends State<_FloatingAppBar> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_position != null)
+    if (_position != null) {
       _position!.isScrollingNotifier.removeListener(_isScrollingListener);
+    }
     _position = Scrollable.of(context)?.position;
-    if (_position != null)
+    if (_position != null) {
       _position!.isScrollingNotifier.addListener(_isScrollingListener);
+    }
   }
 
   @override
   void dispose() {
-    if (_position != null)
+    if (_position != null) {
       _position!.isScrollingNotifier.removeListener(_isScrollingListener);
+    }
     super.dispose();
   }
 
@@ -526,10 +522,11 @@ class _FloatingAppBarState extends State<_FloatingAppBar> {
     // When a scroll stops, then maybe snap the appbar into view.
     // Similarly, when a scroll starts, then maybe stop the snap animation.
     final RenderSliverFloatingPersistentHeader? header = _headerRenderer();
-    if (_position!.isScrollingNotifier.value)
+    if (_position!.isScrollingNotifier.value) {
       header?.maybeStopSnapAnimation(_position!.userScrollDirection);
-    else
+    } else {
       header?.maybeStartSnapAnimation(_position!.userScrollDirection);
+    }
   }
 
   @override
@@ -573,12 +570,10 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     required this.toolbarTextStyle,
     required this.titleTextStyle,
     required this.systemOverlayStyle,
-  })   : assert(primary || topPadding == 0.0),
+  })  : assert(primary || topPadding == 0.0),
         assert(
           !floating ||
-              (snapConfiguration == null &&
-                  showOnScreenConfiguration == null) ||
-              vsync != null,
+              (snapConfiguration == null && showOnScreenConfiguration == null),
           'vsync cannot be null when snapConfiguration or showOnScreenConfiguration is not null, and floating is true',
         ),
         _bottomHeight = bottom?.preferredSize.height ?? 0.0;

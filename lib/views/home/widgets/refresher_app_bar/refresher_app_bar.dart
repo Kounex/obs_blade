@@ -13,10 +13,11 @@ class RefresherAppBar extends StatelessWidget {
   final double? expandedHeight;
   final String imagePath;
 
-  RefresherAppBar({
+  const RefresherAppBar({
+    Key? key,
     this.expandedHeight,
     required this.imagePath,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,7 @@ class RefresherAppBar extends StatelessWidget {
                       kRefresherAppBarHeight
                   ? Fader(
                       child: Transform.translate(
-                        offset: Offset(0, 4.0),
+                        offset: const Offset(0, 4.0),
                         child: Text(
                           'OBS Blade',
                           style: CupertinoTheme.of(context)
@@ -64,7 +65,10 @@ class RefresherAppBar extends StatelessWidget {
           ],
         ),
         collapseMode: CollapseMode.parallax,
-        stretchModes: [StretchMode.blurBackground, StretchMode.zoomBackground],
+        stretchModes: const [
+          StretchMode.blurBackground,
+          StretchMode.zoomBackground
+        ],
       ),
     );
   }

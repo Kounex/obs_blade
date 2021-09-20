@@ -17,6 +17,8 @@ import 'widgets/stream_entry/stream_entry.dart';
 import 'widgets/stream_entry_placeholder.dart';
 
 class StatisticsView extends StatefulWidget {
+  const StatisticsView({Key? key}) : super(key: key);
+
   @override
   _StatisticsViewState createState() => _StatisticsViewState();
 }
@@ -178,31 +180,31 @@ class _StatisticsViewState extends State<StatisticsView> {
             builder: (context, pastStreamDataBox, child) {
               List<PastStreamData> pastStreamData = pastStreamDataBox.values
                   .toList()
-                    ..sort((a, b) =>
-                        a.listEntryDateMS.last - b.listEntryDateMS.last);
+                ..sort(
+                    (a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
               return Column(
                 children: [
                   BaseCard(
                     bottomPadding: 12.0,
-                    titlePadding: EdgeInsets.all(0),
-                    titleWidget: CardHeader(
+                    titlePadding: const EdgeInsets.all(0),
+                    titleWidget: const CardHeader(
                       headerDecorationIcon: CupertinoIcons.time_solid,
                       title: 'Latest\nStream.',
                       description:
                           'The most freshest statistic of your latest stream session',
                     ),
-                    paddingChild: EdgeInsets.all(0),
+                    paddingChild: const EdgeInsets.all(0),
                     child: pastStreamData.isNotEmpty
                         ? StreamEntry(
                             pastStreamData: pastStreamData.reversed.first)
-                        : StreamEntryPlaceholder(
+                        : const StreamEntryPlaceholder(
                             text:
                                 'You haven\'t streamed using this app or deleted all statistic entries?! Whatever it is, you should start streaming!',
                           ),
                   ),
                   BaseCard(
-                    titlePadding: EdgeInsets.all(0),
-                    titleWidget: CardHeader(
+                    titlePadding: const EdgeInsets.all(0),
+                    titleWidget: const CardHeader(
                       title: 'Previous\nStreams.',
                       description:
                           'All the statistics of your smexy stream sessions',
@@ -210,7 +212,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                         SortFilterPanel(),
                       ],
                     ),
-                    paddingChild: EdgeInsets.all(0),
+                    paddingChild: const EdgeInsets.all(0),
                     child: Observer(
                       builder: (_) {
                         /// Only purpose of this line is to omit the debug message of
@@ -225,7 +227,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                           statisticsStore,
                           pastStreamData.reversed.skip(1),
                         );
-                        return sortedFilteredStreamData.length > 0
+                        return sortedFilteredStreamData.isNotEmpty
                             ? PaginatedStatistics(
                                 filteredAndSortedStreamData:
                                     sortedFilteredStreamData,

@@ -40,7 +40,8 @@ class HeaderDecoration extends StatelessWidget {
   final double iconYCut;
   final double iconCornerRadius;
 
-  HeaderDecoration({
+  const HeaderDecoration({
+    Key? key,
     this.icon = CupertinoIcons.chart_pie_fill,
     this.iconSize = 128.0,
     this.iconXOffset = 28.0,
@@ -48,7 +49,7 @@ class HeaderDecoration extends StatelessWidget {
     this.iconXCut = 28.0,
     this.iconYCut = 42.0,
     this.iconCornerRadius = kBaseCardBorderRadius,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

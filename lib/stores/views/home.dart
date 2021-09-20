@@ -38,5 +38,5 @@ abstract class _HomeStore with Store {
 
   @action
   void toggleManualMode([bool? manualMode]) =>
-      this.manualMode = manualMode != null ? manualMode : !this.manualMode;
+      this.manualMode = manualMode ?? !this.manualMode;
 }

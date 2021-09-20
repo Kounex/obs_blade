@@ -32,7 +32,7 @@ class BaseCard extends StatelessWidget {
 
   final double? elevation;
 
-  BaseCard({
+  const BaseCard({
     Key? key,
     required this.child,
     this.centerChild = true,
@@ -82,7 +82,7 @@ class BaseCard extends StatelessWidget {
         ),
         color: this.backgroundColor ?? Theme.of(context).cardColor,
         elevation: this.elevation,
-        margin: EdgeInsets.all(0),
+        margin: const EdgeInsets.all(0),
         child: Column(
           mainAxisAlignment: this.centerChild
               ? MainAxisAlignment.center
@@ -108,7 +108,8 @@ class BaseCard extends StatelessWidget {
                   ],
                 ),
               ),
-            if (this.titleWidget != null || this.title != null) LightDivider(),
+            if (this.titleWidget != null || this.title != null)
+              const LightDivider(),
             Padding(
               padding: this.paddingChild,
               child: this.child,

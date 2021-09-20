@@ -100,7 +100,7 @@ class PastStreamData extends HiveObject {
   /// list of stats (see above). As soon as we reach [kAmountStreamStatsForAverage]
   /// amount of elements, the lists will get filled and [cacheStreamStats] gets
   /// cleared
-  List<StreamStats> _cacheStreamStats = [];
+  final List<StreamStats> _cacheStreamStats = [];
 
   void addStreamStats(StreamStats streamStats) {
     if (_cacheStreamStats.length >= kAmountStreamStatsForAverage) {

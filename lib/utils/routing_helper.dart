@@ -136,28 +136,30 @@ extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
 /// Used to summarize routing tasks and information at one point
 class RoutingHelper {
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
-    HomeTabRoutingKeys.Landing.route: (_) => HomeView(),
-    HomeTabRoutingKeys.Dashboard.route: (_) => DashboardView(),
+    HomeTabRoutingKeys.Landing.route: (_) => const HomeView(),
+    HomeTabRoutingKeys.Dashboard.route: (_) => const DashboardView(),
   };
 
   static Map<String, Widget Function(BuildContext)> statisticsTabRoutes = {
-    StaticticsTabRoutingKeys.Landing.route: (_) => StatisticsView(),
-    StaticticsTabRoutingKeys.Detail.route: (_) => StatisticDetailView(),
+    StaticticsTabRoutingKeys.Landing.route: (_) => const StatisticsView(),
+    StaticticsTabRoutingKeys.Detail.route: (_) => const StatisticDetailView(),
   };
 
   static Map<String, Widget Function(BuildContext)> settingsTabRoutes = {
-    SettingsTabRoutingKeys.Landing.route: (_) => SettingsView(),
-    SettingsTabRoutingKeys.PrivacyPolicy.route: (_) => PrivacyPolicyView(),
-    SettingsTabRoutingKeys.About.route: (_) => AboutView(),
-    SettingsTabRoutingKeys.CustomTheme.route: (_) => CustomThemeView(),
-    SettingsTabRoutingKeys.FAQ.route: (_) => FAQView(),
-    SettingsTabRoutingKeys.DataManagement.route: (_) => DataManagementView(),
-    SettingsTabRoutingKeys.Logs.route: (_) => LogsView(),
-    SettingsTabRoutingKeys.LogDetail.route: (_) => LogDetailView(),
+    SettingsTabRoutingKeys.Landing.route: (_) => const SettingsView(),
+    SettingsTabRoutingKeys.PrivacyPolicy.route: (_) =>
+        const PrivacyPolicyView(),
+    SettingsTabRoutingKeys.About.route: (_) => const AboutView(),
+    SettingsTabRoutingKeys.CustomTheme.route: (_) => const CustomThemeView(),
+    SettingsTabRoutingKeys.FAQ.route: (_) => const FAQView(),
+    SettingsTabRoutingKeys.DataManagement.route: (_) =>
+        const DataManagementView(),
+    SettingsTabRoutingKeys.Logs.route: (_) => const LogsView(),
+    SettingsTabRoutingKeys.LogDetail.route: (_) => const LogDetailView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {
-    AppRoutingKeys.Intro.route: (_) => IntroView(),
-    AppRoutingKeys.Tabs.route: (_) => TabBase(),
+    AppRoutingKeys.Intro.route: (_) => const IntroView(),
+    AppRoutingKeys.Tabs.route: (_) => const TabBase(),
   };
 }
