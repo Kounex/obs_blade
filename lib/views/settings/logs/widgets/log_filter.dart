@@ -17,7 +17,6 @@ class LogFilter extends StatelessWidget {
     LogsStore logsStore = GetIt.instance<LogsStore>();
 
     return BaseCard(
-      topPadding: 12.0,
       bottomPadding: 12.0,
       child: Observer(
         builder: (_) {

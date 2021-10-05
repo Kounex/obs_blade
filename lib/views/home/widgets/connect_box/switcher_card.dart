@@ -25,6 +25,7 @@ class SwitcherCard extends StatelessWidget {
 
     return BaseCard(
       paddingChild: this.paddingChild,
+      topPadding: 32.0,
       titleWidget: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: Align(

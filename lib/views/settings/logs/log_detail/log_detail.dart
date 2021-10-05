@@ -4,22 +4,22 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/shared/general/base/base_card.dart';
-import 'package:obs_blade/shared/overlay/base_result.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:share/share.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
+import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../shared/general/base/base_card.dart';
 import '../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../../shared/overlay/base_result.dart';
 import '../../../../stores/views/logs.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/extensions/int.dart';
 import '../../../../utils/general_helper.dart';
+import '../../../../utils/modal_handler.dart';
 import 'widgets/log_entry.dart';
 
 class LogDetailView extends StatelessWidget {

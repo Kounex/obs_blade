@@ -21,7 +21,6 @@ class LogList extends StatelessWidget {
     LogsStore logsStore = GetIt.instance<LogsStore>();
 
     return BaseCard(
-      topPadding: 12.0,
       paddingChild: const EdgeInsets.all(0),
       child: HiveBuilder<AppLog>(
           hiveKey: HiveKeys.AppLog,

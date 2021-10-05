@@ -15,21 +15,19 @@ class ConnectBox extends StatelessWidget {
   Widget build(BuildContext context) {
     HomeStore landingStore = GetIt.instance<HomeStore>();
 
-    return Align(
-      child: Observer(
-        builder: (_) => SwitcherCard(
-          title: landingStore.manualMode ? 'Connection' : 'Autodiscover',
-          child: landingStore.manualMode
-              ? Padding(
-                  padding: const EdgeInsets.only(
-                      left: 24.0, right: 24.0, bottom: 12.0),
-                  child: ConnectForm(
-                    connection: landingStore.typedInConnection,
-                    saveCredentials: true,
-                  ),
-                )
-              : const AutoDiscovery(),
-        ),
+    return Observer(
+      builder: (_) => SwitcherCard(
+        title: landingStore.manualMode ? 'Connection' : 'Autodiscover',
+        child: landingStore.manualMode
+            ? Padding(
+                padding: const EdgeInsets.only(
+                    left: 24.0, right: 24.0, bottom: 12.0),
+                child: ConnectForm(
+                  connection: landingStore.typedInConnection,
+                  saveCredentials: true,
+                ),
+              )
+            : const AutoDiscovery(),
       ),
     );
   }

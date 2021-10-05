@@ -7,26 +7,26 @@ import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:obs_blade/models/app_log.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/models/hidden_scene.dart';
-import 'package:obs_blade/stores/shared/network.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
-import 'package:obs_blade/stores/views/home.dart';
-import 'package:obs_blade/stores/views/intro.dart';
-import 'package:obs_blade/stores/views/logs.dart';
-import 'package:obs_blade/stores/views/statistics.dart';
-import 'package:obs_blade/utils/general_helper.dart';
 
 import 'app.dart';
+import 'models/app_log.dart';
 import 'models/connection.dart';
 import 'models/custom_theme.dart';
 import 'models/enums/chat_type.dart';
+import 'models/enums/log_level.dart';
 import 'models/enums/scene_item_type.dart';
+import 'models/hidden_scene.dart';
 import 'models/hidden_scene_item.dart';
 import 'models/past_stream_data.dart';
+import 'stores/shared/network.dart';
+import 'stores/shared/tabs.dart';
+import 'stores/views/dashboard.dart';
+import 'stores/views/home.dart';
+import 'stores/views/intro.dart';
+import 'stores/views/logs.dart';
+import 'stores/views/statistics.dart';
 import 'types/enums/hive_keys.dart';
+import 'utils/general_helper.dart';
 
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;

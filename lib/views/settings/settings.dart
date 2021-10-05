@@ -39,7 +39,7 @@ class SettingsView extends StatelessWidget {
                   title: 'General',
                   blockEntries: [
                     BlockEntry(
-                      // leading: CupertinoIcons.device_phone_portrait,
+                      leading: CupertinoIcons.device_phone_portrait,
                       title: 'Wake Lock',
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',

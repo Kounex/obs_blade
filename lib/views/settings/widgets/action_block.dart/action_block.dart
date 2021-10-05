@@ -46,13 +46,13 @@ class ActionBlock extends StatelessWidget {
     entriesWithDivider.removeLast();
 
     return Padding(
-      padding: EdgeInsets.only(top: !this.dense ? 32.0 : 0.0),
+      padding: EdgeInsets.only(top: !this.dense ? 24.0 : 0.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (this.title != null && this.title!.isNotEmpty)
             Padding(
-              padding: EdgeInsets.only(left: this.generalizedPadding + 18),
+              padding: EdgeInsets.only(left: this.generalizedPadding + 16),
               child: Text(
                 this.title!.toUpperCase(),
                 style: Theme.of(context).textTheme.caption,
@@ -60,7 +60,7 @@ class ActionBlock extends StatelessWidget {
             ),
           BaseCard(
             topPadding: 8.0,
-            bottomPadding: 8.0,
+            bottomPadding: 12.0,
             paddingChild: const EdgeInsets.all(0),
             child: Container(
               color: Theme.of(context).cardColor,
@@ -72,7 +72,7 @@ class ActionBlock extends StatelessWidget {
           if (this.descriptionWidget != null ||
               (this.description != null && this.title!.isNotEmpty))
             Padding(
-              padding: EdgeInsets.only(left: this.generalizedPadding + 18),
+              padding: EdgeInsets.only(left: this.generalizedPadding + 16),
               child: this.descriptionWidget ??
                   Text(
                     this.description!.toUpperCase(),
