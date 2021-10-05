@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../models/past_stream_data.dart';
 import '../../../shared/dialogs/confirmation.dart';
@@ -147,19 +148,24 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(
-                      left: 18.0,
-                      right: 18.0,
-                      bottom: 24.0,
+                      top: 12,
+                      left: 16.0,
+                      right: 16.0,
+                      bottom: 30.0,
                     ),
                     child: Wrap(
                       alignment: WrapAlignment.center,
-                      runSpacing: 24.0,
-                      spacing: 18.0,
+                      runSpacing: 30.0,
+                      spacing: 30.0,
                       children: streamCharts
                           .map(
                             (streamChart) => ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 350.0,
+                              constraints: BoxConstraints(
+                                maxWidth: StylingHelper.max_width_mobile /
+                                    (MediaQuery.of(context).size.width <
+                                            StylingHelper.max_width_mobile
+                                        ? 1
+                                        : 2),
                               ),
                               child: BaseCard(
                                 topPadding: 0,

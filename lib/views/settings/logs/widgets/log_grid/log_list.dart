@@ -68,7 +68,7 @@ class LogList extends StatelessWidget {
               }
 
               return ColumnSeparated(
-                paddingSeparator: const EdgeInsets.all(0),
+                paddingSeparator: const EdgeInsets.symmetric(horizontal: 16.0),
                 children: [
                   if (datesMSWithLogs.isEmpty)
                     const Padding(
