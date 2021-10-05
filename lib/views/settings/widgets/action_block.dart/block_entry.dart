@@ -4,7 +4,7 @@ import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
 
 const double kblockEntryPadding = 14.0;
 const double kblockEntryIconSize = 32.0;
-const double kblockEntryHeight = 42.0;
+const double kblockEntryHeight = 44.0;
 
 /// Translucent, light gray that is painted on top of the blurred backdrop as
 /// the background color of a pressed button.

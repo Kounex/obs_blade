@@ -147,14 +147,14 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(
-                      left: 24.0,
-                      right: 24.0,
+                      left: 18.0,
+                      right: 18.0,
                       bottom: 24.0,
                     ),
                     child: Wrap(
                       alignment: WrapAlignment.center,
                       runSpacing: 24.0,
-                      spacing: 24.0,
+                      spacing: 18.0,
                       children: streamCharts
                           .map(
                             (streamChart) => ConstrainedBox(
@@ -170,7 +170,10 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0) +
                                       const EdgeInsets.only(
-                                          top: 4.0, left: 20.0, right: 24.0),
+                                        top: 4.0,
+                                        left: 20.0,
+                                        right: 24.0,
+                                      ),
                                   child: streamChart,
                                 ),
                               ),

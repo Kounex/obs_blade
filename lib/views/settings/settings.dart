@@ -39,7 +39,7 @@ class SettingsView extends StatelessWidget {
                   title: 'General',
                   blockEntries: [
                     BlockEntry(
-                      leading: CupertinoIcons.device_phone_portrait,
+                      // leading: CupertinoIcons.device_phone_portrait,
                       title: 'Wake Lock',
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',
@@ -203,12 +203,29 @@ class SettingsView extends StatelessWidget {
                 ),
                 ActionBlock(
                   title: 'Misc.',
+                  descriptionWidget: FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      return Row(
+                        children: [
+                          Text(
+                            'Version ',
+                            style: Theme.of(context).textTheme.caption,
+                          ),
+                          if (snapshot.hasData)
+                            Text(
+                              snapshot.data!.version,
+                              style: Theme.of(context).textTheme.caption,
+                            ),
+                        ],
+                      );
+                    },
+                  ),
                   blockEntries: [
                     BlockEntry(
-                      leading: CupertinoIcons.book_fill,
-                      title: 'Intro Slides',
-                      navigateTo: AppRoutingKeys.Intro.route,
-                      rootNavigation: true,
+                      leading: CupertinoIcons.info_circle_fill,
+                      title: 'About',
+                      navigateTo: SettingsTabRoutingKeys.About.route,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.chat_bubble_text_fill,
@@ -216,9 +233,10 @@ class SettingsView extends StatelessWidget {
                       navigateTo: SettingsTabRoutingKeys.FAQ.route,
                     ),
                     BlockEntry(
-                      leading: CupertinoIcons.info_circle_fill,
-                      title: 'About',
-                      navigateTo: SettingsTabRoutingKeys.About.route,
+                      leading: CupertinoIcons.book_fill,
+                      title: 'Intro Slides',
+                      navigateTo: AppRoutingKeys.Intro.route,
+                      rootNavigation: true,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.doc_person_fill,
@@ -258,27 +276,6 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 7.0, left: 14.0),
-                  child: FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) {
-                      return Row(
-                        children: [
-                          Text(
-                            'Version ',
-                            style: Theme.of(context).textTheme.caption,
-                          ),
-                          if (snapshot.hasData)
-                            Text(
-                              snapshot.data!.version,
-                              style: Theme.of(context).textTheme.caption,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
                 ),
               ],
             ),

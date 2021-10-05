@@ -45,13 +45,13 @@ class BaseCard extends StatelessWidget {
     this.trailingTitleWidget,
     this.paddingChild = const EdgeInsets.all(18.0),
     this.topPadding = 24.0,
-    this.rightPadding = 24.0,
+    this.rightPadding = 18.0,
     this.bottomPadding = 24.0,
-    this.leftPadding = 24.0,
+    this.leftPadding = 18.0,
     this.titlePadding =
         const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
     this.titleCrossAlignment = CrossAxisAlignment.center,
-    this.elevation,
+    this.elevation = 0,
   }) : super(key: key);
 
   @override
