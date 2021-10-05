@@ -29,30 +29,28 @@ class RefresherAppBar extends StatelessWidget {
       expandedHeight: this.expandedHeight,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
-        title: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) => constraints.maxHeight -
-                          (MediaQuery.of(context).padding.top - 16) <=
-                      kRefresherAppBarHeight
-                  ? Fader(
-                      child: Transform.translate(
-                        offset: const Offset(0, 4.0),
-                        child: Text(
-                          'OBS Blade',
-                          style: CupertinoTheme.of(context)
-                              .textTheme
-                              .navTitleTextStyle,
-                        ),
-                      ),
-                    )
-                  : Container(),
-            ),
-            ScrollRefreshIcon(
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            if ((constraints.maxHeight -
+                        (MediaQuery.of(context).viewPadding.top - 16))
+                    .toInt() <=
+                kRefresherAppBarHeight.toInt()) {
+              return Fader(
+                child: Transform.translate(
+                  offset: const Offset(0, 4.0),
+                  child: Text(
+                    'OBS Blade',
+                    style:
+                        CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+                  ),
+                ),
+              );
+            }
+            return ScrollRefreshIcon(
               expandedBarHeight: this.expandedHeight,
-            ),
-          ],
+              currentBarHeight: constraints.maxHeight,
+            );
+          },
         ),
         background: Stack(
           alignment: Alignment.center,

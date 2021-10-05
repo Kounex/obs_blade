@@ -59,6 +59,9 @@ dependencies:
   # Get various path related directories on host OS
   path_provider: ^2.0.1
 
+  # Enable and manage in-app purchases
+  in_app_purchase: ^1.0.9
+
   # Fancy done layout shit
   modal_bottom_sheet: ^2.0.0
   fl_chart: ^0.35.0

@@ -1,4 +1,4 @@
-package com.example.obs_blade
+package com.kounex.obsBlade
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -123,9 +123,11 @@ class _TabBaseState extends State<TabBase> {
                 tabsStore.navigatorKeys[tappedTab]!.currentState!.pop();
               } else if (_tabScrollController[tappedTab]!.hasClients &&
                   _tabScrollController[tappedTab]!.offset > 0) {
-                _tabScrollController[tappedTab]!.animateTo(0.0,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeIn);
+                _tabScrollController[tappedTab]!.animateTo(
+                  0.0,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeIn,
+                );
               }
             } else {
               tabsStore.setActiveTab(Tabs.values[index]);

@@ -3,14 +3,19 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/views/home/widgets/refresher_app_bar/refresher_app_bar.dart';
 
 import '../../../../stores/views/home.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
+  final double currentBarHeight;
 
-  const ScrollRefreshIcon({Key? key, required expandedBarHeight})
-      : expandedBarHeight = expandedBarHeight + 28.0,
+  const ScrollRefreshIcon({
+    Key? key,
+    required expandedBarHeight,
+    required this.currentBarHeight,
+  })  : expandedBarHeight = expandedBarHeight + kRefresherAppBarHeight,
         super(key: key);
 
   @override
@@ -34,6 +39,11 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     );
   }
 
+  @override
+  void didUpdateWidget(ScrollRefreshIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
+
   double _getRefreshOpacity(double barStretchOffset, double currentBarHeight) {
     double opacity = pow(
             1.4,
@@ -51,51 +61,48 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
   Widget build(BuildContext context) {
     HomeStore landingStore = GetIt.instance<HomeStore>();
     double barStretchOffset = MediaQuery.of(context).size.height / 15;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxHeight - this.widget.expandedBarHeight >=
-                barStretchOffset &&
-            !_animController.isAnimating &&
-            !landingStore.refreshable) {
-          HapticFeedback.lightImpact();
-          landingStore.setRefreshable(true);
-          _animController.forward().then((_) => _animController.animateTo(0.5));
-        }
-        if (constraints.maxHeight - this.widget.expandedBarHeight <
-                barStretchOffset &&
-            landingStore.refreshable) {
-          landingStore.setRefreshable(false);
-          _animController.animateTo(0.0);
-        }
-        return Padding(
-          padding: EdgeInsets.only(top: this.widget.expandedBarHeight / 2),
-          child: Align(
-            child: Opacity(
-              opacity:
-                  _getRefreshOpacity(barStretchOffset, constraints.maxHeight),
-              child: Container(
-                width: 32.0,
-                height: 32.0,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: AnimatedBuilder(
-                  animation: _animController,
-                  builder: (context, child) => ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: child,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_downward,
-                    color: Colors.black,
-                  ),
-                ),
+
+    if (this.widget.currentBarHeight - this.widget.expandedBarHeight >=
+            barStretchOffset &&
+        !_animController.isAnimating &&
+        !landingStore.refreshable) {
+      HapticFeedback.lightImpact();
+      landingStore.setRefreshable(true);
+      _animController.forward().then((_) => _animController.animateTo(0.5));
+    }
+    if (this.widget.currentBarHeight - this.widget.expandedBarHeight <
+            barStretchOffset &&
+        landingStore.refreshable) {
+      landingStore.setRefreshable(false);
+      _animController.animateTo(0.0);
+    }
+    return Padding(
+      padding: EdgeInsets.only(top: this.widget.expandedBarHeight / 2),
+      child: Align(
+        child: Opacity(
+          opacity: _getRefreshOpacity(
+              barStretchOffset, this.widget.currentBarHeight),
+          child: Container(
+            width: 32.0,
+            height: 32.0,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) => ScaleTransition(
+                scale: _scaleAnimation,
+                child: child,
+              ),
+              child: const Icon(
+                Icons.arrow_downward,
+                color: Colors.black,
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
