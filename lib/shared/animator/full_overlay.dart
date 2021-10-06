@@ -48,8 +48,18 @@ class _FullOverlayState extends State<FullOverlay>
         () => this.mounted ? _controller.reverse() : null);
     return Stack(
       children: [
-        const SizedBox.expand(
-          child: AbsorbPointer(),
+        SizedBox.expand(
+          child: AnimatedBuilder(
+            animation: _controller,
+            child: const AbsorbPointer(),
+            builder: (context, child) => FadeTransition(
+              opacity: _opacity,
+              child: Container(
+                child: child,
+                color: Colors.black26,
+              ),
+            ),
+          ),
         ),
         Positioned(
           top: (MediaQuery.of(context).size.height / 2) - 75.0,
@@ -71,9 +81,11 @@ class _FullOverlayState extends State<FullOverlay>
                       child: Container(
                         height: 150.0,
                         width: 150.0,
-                        decoration: const BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.all(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black87
+                              : Colors.white70,
+                          borderRadius: const BorderRadius.all(
                             Radius.circular(12.0),
                           ),
                         ),

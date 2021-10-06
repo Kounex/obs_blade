@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../../../utils/styling_helper.dart';
 import '../../../widgets/action_block.dart/light_divider.dart';
 import '../license_modal/license_entries.dart';
 
@@ -27,7 +28,8 @@ class LicenseModal extends StatelessWidget {
               offset: const Offset(0, -24),
               child: SizedBox(
                 width: 256.0,
-                child: Image.asset('assets/images/base_logo.png'),
+                child:
+                    Image.asset(StylingHelper.brightnessAwareOBSLogo(context)),
               ),
             ),
           ),

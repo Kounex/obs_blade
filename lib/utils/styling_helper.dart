@@ -25,9 +25,8 @@ class StylingHelper {
   /// Taken from [CupertinoNavigationBar]
   static const double sigma_blurry = 10.0;
 
-  /// Bouncng scroll for all cases
-  static ScrollPhysics get platformAwareScrollPhysics => Platform.isIOS ||
-          Platform.isMacOS
+  /// Bouncing scroll for all cases
+  static ScrollPhysics get platformAwareScrollPhysics => Platform.isIOS
       ? const AlwaysScrollableScrollPhysics()
       : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 
@@ -40,4 +39,7 @@ class StylingHelper {
         ? Colors.white
         : Colors.black;
   }
+
+  static String brightnessAwareOBSLogo(BuildContext context) =>
+      'assets/images/${Theme.of(context).brightness == Brightness.dark ? 'base_logo.png' : 'base_logo_dark.png'}';
 }

@@ -184,13 +184,11 @@ class _HomeViewState extends State<HomeView> {
           /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
           /// for the first group and [BouncingScrollPhysics] for the second
           physics: StylingHelper.platformAwareScrollPhysics,
-          slivers: [
+          slivers: const [
             RefresherAppBar(
               expandedHeight: 200.0,
-              imagePath:
-                  'assets/images/${Theme.of(context).brightness == Brightness.dark ? 'base_logo.png' : 'base_logo_dark.png'}',
             ),
-            const CustomSliverList(
+            CustomSliverList(
               children: [
                 ConnectBox(),
                 SavedConnections(),

@@ -5,9 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/general/social_block.dart';
 
+import '../../shared/general/social_block.dart';
 import '../../stores/views/intro.dart';
+import '../../utils/styling_helper.dart';
 import 'widgets/intro_slide.dart';
 import 'widgets/slide_controls.dart';
 
@@ -63,9 +64,9 @@ class _IntroViewState extends State<IntroView> {
     GetIt.instance.resetLazySingleton<IntroStore>();
 
     _pageChildren = [
-      const IntroSlide(
-        imagePath: 'assets/images/base_logo.png',
-        slideTextSpans: [
+      IntroSlide(
+        imagePath: StylingHelper.brightnessAwareOBSLogo(context),
+        slideTextSpans: const [
           TextSpan(
             text:
                 'Control your OBS instance and easily manage your stream - live!',

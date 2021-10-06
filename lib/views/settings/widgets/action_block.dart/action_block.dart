@@ -47,39 +47,36 @@ class ActionBlock extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(top: !this.dense ? 24.0 : 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (this.title != null && this.title!.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(left: this.generalizedPadding + 16),
-              child: Text(
-                this.title!.toUpperCase(),
-                style: Theme.of(context).textTheme.caption,
-              ),
-            ),
-          BaseCard(
-            topPadding: 8.0,
-            bottomPadding: 12.0,
-            paddingChild: const EdgeInsets.all(0),
-            child: Container(
-              color: Theme.of(context).cardColor,
-              child: Column(
-                children: entriesWithDivider,
-              ),
-            ),
+      child: BaseCard(
+        above: this.title != null && this.title!.isNotEmpty
+            ? Padding(
+                padding: EdgeInsets.only(left: this.generalizedPadding + 16),
+                child: Text(
+                  this.title!.toUpperCase(),
+                  style: Theme.of(context).textTheme.caption,
+                ),
+              )
+            : null,
+        below: this.descriptionWidget != null ||
+                (this.description != null && this.title!.isNotEmpty)
+            ? Padding(
+                padding: EdgeInsets.only(left: this.generalizedPadding + 16),
+                child: this.descriptionWidget ??
+                    Text(
+                      this.description!.toUpperCase(),
+                      style: Theme.of(context).textTheme.caption,
+                    ),
+              )
+            : null,
+        topPadding: 8.0,
+        bottomPadding: 12.0,
+        paddingChild: const EdgeInsets.all(0),
+        child: Container(
+          color: Theme.of(context).cardColor,
+          child: Column(
+            children: entriesWithDivider,
           ),
-          if (this.descriptionWidget != null ||
-              (this.description != null && this.title!.isNotEmpty))
-            Padding(
-              padding: EdgeInsets.only(left: this.generalizedPadding + 16),
-              child: this.descriptionWidget ??
-                  Text(
-                    this.description!.toUpperCase(),
-                    style: Theme.of(context).textTheme.caption,
-                  ),
-            ),
-        ],
+        ),
       ),
     );
   }

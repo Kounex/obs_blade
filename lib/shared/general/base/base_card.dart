@@ -9,6 +9,9 @@ class BaseCard extends StatelessWidget {
   final Widget child;
   final bool centerChild;
 
+  final Widget? above;
+  final Widget? below;
+
   final bool constrained;
 
   final Color? backgroundColor;
@@ -35,6 +38,8 @@ class BaseCard extends StatelessWidget {
   const BaseCard({
     Key? key,
     required this.child,
+    this.above,
+    this.below,
     this.centerChild = true,
     this.constrained = true,
     this.backgroundColor,
@@ -124,7 +129,14 @@ class BaseCard extends StatelessWidget {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
-        child: card,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            this.above ?? Container(),
+            card,
+            this.below ?? Container(),
+          ],
+        ),
       ),
     );
   }
