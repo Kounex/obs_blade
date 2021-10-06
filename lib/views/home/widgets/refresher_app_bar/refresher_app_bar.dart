@@ -1,11 +1,18 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:obs_blade/models/custom_theme.dart';
 import 'package:obs_blade/shared/general/flutter_modified/translucent_sliver_app_bar.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../shared/animator/fader.dart';
+import '../../../../types/extensions/string.dart';
 import 'scroll_refresh_icon.dart';
 
 const double kRefresherAppBarHeight = 44.0;
@@ -65,17 +72,43 @@ class RefresherAppBar extends StatelessWidget {
               );
             },
           ),
-          background: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                /// TODO: Will be managed later for pro subscribers when choosing their own logo
-                color: Colors.transparent,
-              ),
-              Image.asset(
-                StylingHelper.brightnessAwareOBSLogo(context),
-              ),
+          background: HiveBuilder<dynamic>(
+            hiveKey: HiveKeys.Settings,
+            rebuildKeys: const [
+              SettingsKeys.CustomTheme,
+              SettingsKeys.ActiveCustomThemeUUID
             ],
+            builder: (context, settingsBox, child) {
+              CustomTheme? customTheme;
+
+              if (settingsBox.get(SettingsKeys.CustomTheme.name,
+                  defaultValue: false)) {
+                try {
+                  customTheme = Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
+                      .values
+                      .firstWhere(
+                        (customTheme) =>
+                            customTheme.uuid ==
+                            settingsBox
+                                .get(SettingsKeys.ActiveCustomThemeUUID.name),
+                      );
+                } catch (_) {}
+              }
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    color: customTheme?.logoAppBarColorHex?.hexToColor() ??
+                        Colors.transparent,
+                  ),
+                  customTheme?.customLogo != null
+                      ? Image.memory(base64Decode(customTheme!.customLogo!))
+                      : Image.asset(
+                          StylingHelper.brightnessAwareOBSLogo(context),
+                        ),
+                ],
+              );
+            },
           ),
           collapseMode: CollapseMode.parallax,
           stretchModes: const [

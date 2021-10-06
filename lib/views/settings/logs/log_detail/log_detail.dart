@@ -159,7 +159,7 @@ class LogDetailView extends StatelessWidget {
                     constraints:
                         const BoxConstraints(maxWidth: kBaseCardMaxWidth),
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 24.0),
+                      padding: const EdgeInsets.only(left: 16.0),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: SizedBox(

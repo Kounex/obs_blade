@@ -20,7 +20,7 @@ PODS:
   - path_provider (0.0.1):
     - Flutter
   - Reachability (3.2)
-  - share (0.0.1):
+  - share_plus (0.0.1):
     - Flutter
   - url_launcher (0.0.1):
     - Flutter
@@ -35,7 +35,7 @@ DEPENDENCIES:
   - in_app_purchase_ios (from `.symlinks/plugins/in_app_purchase_ios/ios`)
   - package_info (from `.symlinks/plugins/package_info/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
-  - share (from `.symlinks/plugins/share/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
   - wakelock (from `.symlinks/plugins/wakelock/ios`)
 
@@ -59,8 +59,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/package_info/ios"
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
-  share:
-    :path: ".symlinks/plugins/share/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
   url_launcher:
     :path: ".symlinks/plugins/url_launcher/ios"
   wakelock:
@@ -76,7 +76,7 @@ SPEC CHECKSUMS:
   package_info: 873975fc26034f0b863a300ad47e7f1ac6c7ec62
   path_provider: d1e9807085df1f9cc9318206cd649dc0b76be3de
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
-  share: 0b2c3e82132f5888bccca3351c504d0003b3b410
+  share_plus: 056a1e8ac890df3e33cb503afffaf1e9b4fbae68
   url_launcher: b6e016d912f04be9f5bf6e8e82dc599b7ba59649
   wakelock: d0fc7c864128eac40eba1617cb5264d9c940b46f
 

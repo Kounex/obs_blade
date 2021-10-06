@@ -50,6 +50,12 @@ class CustomTheme extends HiveObject {
   @HiveField(13)
   int? dateUpdatedMS;
 
+  @HiveField(14)
+  String? customLogo;
+
+  @HiveField(15)
+  String? logoAppBarColorHex;
+
   CustomTheme(
     this.name,
     this.description,
@@ -95,5 +101,7 @@ class CustomTheme extends HiveObject {
     toTheme.highlightColorHex = fromTheme.highlightColorHex;
     toTheme.backgroundColorHex = fromTheme.backgroundColorHex;
     toTheme.useLightBrightness = fromTheme.useLightBrightness;
+    toTheme.customLogo = fromTheme.customLogo;
+    toTheme.logoAppBarColorHex = fromTheme.logoAppBarColorHex;
   }
 }

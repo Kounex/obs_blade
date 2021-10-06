@@ -30,13 +30,16 @@ class CustomThemeAdapter extends TypeAdapter<CustomTheme> {
       fields[11] as bool,
       fields[0] as String?,
       fields[12] as int?,
-    )..dateUpdatedMS = fields[13] as int?;
+    )
+      ..dateUpdatedMS = fields[13] as int?
+      ..customLogo = fields[14] as String?
+      ..logoAppBarColorHex = fields[15] as String?;
   }
 
   @override
   void write(BinaryWriter writer, CustomTheme obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.uuid)
       ..writeByte(1)
@@ -64,7 +67,11 @@ class CustomThemeAdapter extends TypeAdapter<CustomTheme> {
       ..writeByte(12)
       ..write(obj.dateCreatedMS)
       ..writeByte(13)
-      ..write(obj.dateUpdatedMS);
+      ..write(obj.dateUpdatedMS)
+      ..writeByte(14)
+      ..write(obj.customLogo)
+      ..writeByte(15)
+      ..write(obj.logoAppBarColorHex);
   }
 
   @override

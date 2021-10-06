@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>In order to find running OBS instances automatically.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>In order to select your custom logo.</string>
 </dict>
 </plist>

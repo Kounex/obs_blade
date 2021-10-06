@@ -22,6 +22,10 @@ class ThemeRow extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onButtonPressed;
 
+  final String? resetButtonText;
+  final VoidCallback? onResetButtonPressed;
+
+  final VoidCallback? onReset;
   final void Function(String)? onSave;
 
   const ThemeRow({
@@ -35,6 +39,9 @@ class ThemeRow extends StatelessWidget {
     this.onActiveChanged,
     this.buttonText,
     this.onButtonPressed,
+    this.resetButtonText,
+    this.onResetButtonPressed,
+    this.onReset,
     this.onSave,
   }) : super(key: key);
 
@@ -51,7 +58,7 @@ class ThemeRow extends StatelessWidget {
                   color: this.colorHex,
                   onSave: (colorHex) => this.onSave?.call(colorHex),
                 ),
-              )
+              ).then((reset) => reset ? this.onReset?.call() : null)
           : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -84,23 +91,45 @@ class ThemeRow extends StatelessWidget {
                     value: this.active!,
                     onChanged: this.onActiveChanged!,
                   )
-                : this.onButtonPressed != null
-                    ? BaseButton(
-                        text: this.buttonText ?? 'Button',
-                        onPressed: this.onButtonPressed,
-                      )
-                    : Column(
-                        children: [
-                          ColorBubble(
-                            color: this.colorHex!.hexToColor(),
-                            size: 32.0,
+                : Column(
+                    children: [
+                      if (this.onButtonPressed != null) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: BaseButton(
+                            text: this.buttonText ?? 'Button',
+                            onPressed: this.onButtonPressed,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
-                            child: Text('#${this.colorHex}'),
+                        ),
+                        if (this.onResetButtonPressed != null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: BaseButton(
+                              text: this.resetButtonText ?? 'Button',
+                              isDestructive: true,
+                              onPressed: this.onResetButtonPressed,
+                            ),
                           ),
-                        ],
-                      ),
+                      ],
+                      if (this.onButtonPressed == null) ...[
+                        ColorBubble(
+                          color:
+                              this.colorHex?.hexToColor() ?? Colors.transparent,
+                          size: 32.0,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: FittedBox(
+                            child: Text(
+                              this.colorHex != null
+                                  ? '#${this.colorHex}'
+                                  : 'Transparent',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
           )
         ],
       ),

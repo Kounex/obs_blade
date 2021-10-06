@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obs_blade/shared/dialogs/confirmation.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../../shared/general/validation_cupertino_textfield.dart';
@@ -192,8 +194,59 @@ class _ColorPickerState extends State<ColorPicker> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ThemedCupertinoButton(
+                  padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  text: 'Reset',
+                  isDestructive: true,
+                  onPressed: () => ModalHandler.showBaseDialog(
+                    context: context,
+                    dialogWidget: ConfirmationDialog(
+                      title: 'Reset Color',
+                      body:
+                          'Are you sure you want to reset this color? It will be set to it\'s initial value!',
+                      isYesDestructive: true,
+                      onOk: (_) => Navigator.of(context).pop(true),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            ThemedCupertinoButton(
+              padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              text: 'Cancel',
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            ThemedCupertinoButton(
+              padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              text: 'Save',
+              onPressed: () {
+                if (_hexController.isValid &&
+                    (this.widget.editableColorValues
+                        ? (_pickerType == PickerType.RGB
+                                ? (_rController.isValid &&
+                                    _gController.isValid &&
+                                    _bController.isValid)
+                                : (_hController.isValid &&
+                                    _sController.isValid &&
+                                    _lController.isValid)) &&
+                            (this.widget.useAlpha ? _aController.isValid : true)
+                        : true)) {
+                  this.widget.onSave?.call(_hexController.text);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        ),
+        const LightDivider(),
         Padding(
-          padding: const EdgeInsets.only(left: 12.0, right: 4.0),
+          padding: const EdgeInsets.only(top: 12.0, left: 12.0, bottom: 4.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -203,40 +256,11 @@ class _ColorPickerState extends State<ColorPicker> {
                   style: Theme.of(context).textTheme.headline5,
                 ),
               ),
-              Row(
-                children: [
-                  ThemedCupertinoButton(
-                    text: 'Cancel',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  ThemedCupertinoButton(
-                    text: 'Save',
-                    onPressed: () {
-                      if (_hexController.isValid &&
-                          (this.widget.editableColorValues
-                              ? (_pickerType == PickerType.RGB
-                                      ? (_rController.isValid &&
-                                          _gController.isValid &&
-                                          _bController.isValid)
-                                      : (_hController.isValid &&
-                                          _sController.isValid &&
-                                          _lController.isValid)) &&
-                                  (this.widget.useAlpha
-                                      ? _aController.isValid
-                                      : true)
-                              : true)) {
-                        this.widget.onSave?.call(_hexController.text);
-                        Navigator.of(context).pop();
-                      }
-                    },
-                  ),
-                ],
-              ),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 12.0, bottom: 12.0),
+          padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 12.0),
           child: Text(
             this.widget.description,
             style: Theme.of(context).textTheme.caption,
@@ -275,7 +299,7 @@ class _ColorPickerState extends State<ColorPicker> {
                 ),
                 const LightDivider(),
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

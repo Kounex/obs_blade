@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/custom_logo_row.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/theme_loader.dart';
 
 import '../../../../../models/custom_theme.dart';
@@ -25,6 +28,7 @@ class AddEditTheme extends StatefulWidget {
 }
 
 class _AddEditThemeState extends State<AddEditTheme> {
+  late CustomTheme _initialTheme;
   late CustomTheme _customTheme;
 
   late CustomValidationTextEditingController _name;
@@ -33,8 +37,10 @@ class _AddEditThemeState extends State<AddEditTheme> {
   @override
   void initState() {
     _customTheme = CustomTheme.basic();
+    _initialTheme = CustomTheme.basic();
     if (this.widget.customTheme != null) {
       CustomTheme.copyFrom(this.widget.customTheme!, _customTheme, full: true);
+      CustomTheme.copyFrom(this.widget.customTheme!, _initialTheme, full: true);
     }
     _name = CustomValidationTextEditingController(
       text: _customTheme.name,
@@ -167,6 +173,27 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 CustomTheme.copyFrom(theme, _customTheme)),
                           ),
                           const SizedBox(height: 32.0),
+                          CustomLogoRow(
+                            customTheme: _customTheme,
+                            onReset: () =>
+                                setState(() => _customTheme.customLogo = null),
+                            onSelectLogo: (imageBytes) => setState(
+                              () => _customTheme.customLogo =
+                                  base64Encode(imageBytes),
+                            ),
+                          ),
+                          const SizedBox(height: 32.0),
+                          ThemeRow(
+                            title: 'Logo Background',
+                            description:
+                                'If you want to have a specific background color for your logo instead of the app bar color, you can cusotmise it here',
+                            colorHex: _customTheme.logoAppBarColorHex,
+                            onReset: () => setState(
+                                () => _customTheme.logoAppBarColorHex = null),
+                            onSave: (colorHex) => setState(() =>
+                                _customTheme.logoAppBarColorHex = colorHex),
+                          ),
+                          const SizedBox(height: 32.0),
                           ThemeRow(
                             title: 'Is this a light theme?',
                             description:
@@ -181,6 +208,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             description:
                                 'Most UI elements are inside Cards so this is kinda the primary color of the app',
                             colorHex: _customTheme.cardColorHex,
+                            onReset: () => setState(() => _customTheme
+                                .cardColorHex = _initialTheme.cardColorHex),
                             onSave: (colorHex) => setState(
                                 () => _customTheme.cardColorHex = colorHex),
                           ),
@@ -190,6 +219,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             description:
                                 'The top UI element which contains the title of the current view, back navigation etc.',
                             colorHex: _customTheme.appBarColorHex,
+                            onReset: () => setState(() => _customTheme
+                                .appBarColorHex = _initialTheme.appBarColorHex),
                             onSave: (colorHex) => setState(
                                 () => _customTheme.appBarColorHex = colorHex),
                           ),
@@ -199,6 +230,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             description:
                                 'The bottom navigation bar containing the tabs for this app',
                             colorHex: _customTheme.tabBarColorHex,
+                            onReset: () => setState(() => _customTheme
+                                .tabBarColorHex = _initialTheme.tabBarColorHex),
                             onSave: (colorHex) => setState(
                                 () => _customTheme.tabBarColorHex = colorHex),
                           ),
@@ -208,6 +241,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             description:
                                 'Is being used by action / toggle elements like Switch, Button, etc.',
                             colorHex: _customTheme.accentColorHex,
+                            onReset: () => setState(() => _customTheme
+                                .accentColorHex = _initialTheme.accentColorHex),
                             onSave: (colorHex) => setState(
                                 () => _customTheme.accentColorHex = colorHex),
                           ),
@@ -217,6 +252,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             description:
                                 'Active state is being displayed with this color like active scene, active tab, some buttons, etc.',
                             colorHex: _customTheme.highlightColorHex,
+                            onReset: () => setState(() =>
+                                _customTheme.highlightColorHex =
+                                    _initialTheme.highlightColorHex),
                             onSave: (colorHex) => setState(() =>
                                 _customTheme.highlightColorHex = colorHex),
                           ),
@@ -226,6 +264,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             description:
                                 'Color for the typical background which behind all the UI elements',
                             colorHex: _customTheme.backgroundColorHex,
+                            onReset: () => setState(() =>
+                                _customTheme.backgroundColorHex =
+                                    _initialTheme.backgroundColorHex),
                             onSave: (colorHex) => setState(() =>
                                 _customTheme.backgroundColorHex = colorHex),
                           ),
