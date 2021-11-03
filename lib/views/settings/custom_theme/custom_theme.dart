@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/built_in_themes.dart';
 
 import '../../../shared/general/base/base_card.dart';
 import '../../../shared/general/clean_list_tile.dart';
@@ -47,10 +48,21 @@ class CustomThemeView extends StatelessWidget {
                 trailing: ThemedCupertinoSwitch(
                   value: settingsBox.get(SettingsKeys.CustomTheme.name,
                       defaultValue: false),
-                  onChanged: (customTheme) => settingsBox.put(
-                    SettingsKeys.CustomTheme.name,
-                    customTheme,
-                  ),
+                  onChanged: (customTheme) {
+                    settingsBox.put(
+                      SettingsKeys.CustomTheme.name,
+                      customTheme,
+                    );
+                    if ((settingsBox.get(
+                            SettingsKeys.ActiveCustomThemeUUID.name,
+                            defaultValue: '') as String)
+                        .isEmpty) {
+                      settingsBox.put(
+                        SettingsKeys.ActiveCustomThemeUUID.name,
+                        BuiltInThemes.themes.first.uuid,
+                      );
+                    }
+                  },
                 ),
               ),
             ),

@@ -39,7 +39,7 @@ class SettingsView extends StatelessWidget {
                   title: 'General',
                   blockEntries: [
                     BlockEntry(
-                      leading: CupertinoIcons.device_phone_portrait,
+                      // leading: CupertinoIcons.device_phone_portrait,
                       title: 'Wake Lock',
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',
@@ -82,12 +82,14 @@ class SettingsView extends StatelessWidget {
                           'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeStreamingControls.name,
-                            defaultValue: false),
+                          SettingsKeys.ExposeStreamingControls.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (exposeStreamingControls) {
                           settingsBox.put(
-                              SettingsKeys.ExposeStreamingControls.name,
-                              exposeStreamingControls);
+                            SettingsKeys.ExposeStreamingControls.name,
+                            exposeStreamingControls,
+                          );
                         },
                       ),
                     ),
@@ -99,12 +101,14 @@ class SettingsView extends StatelessWidget {
                           'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeRecordingControls.name,
-                            defaultValue: false),
+                          SettingsKeys.ExposeRecordingControls.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (exposeRecordingControls) {
                           settingsBox.put(
-                              SettingsKeys.ExposeRecordingControls.name,
-                              exposeRecordingControls);
+                            SettingsKeys.ExposeRecordingControls.name,
+                            exposeRecordingControls,
+                          );
                         },
                       ),
                     ),
@@ -116,12 +120,14 @@ class SettingsView extends StatelessWidget {
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard!',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeStudioControls.name,
-                            defaultValue: false),
+                          SettingsKeys.ExposeStudioControls.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (exposeStudioControls) {
                           settingsBox.put(
-                              SettingsKeys.ExposeStudioControls.name,
-                              exposeStudioControls);
+                            SettingsKeys.ExposeStudioControls.name,
+                            exposeStudioControls,
+                          );
                         },
                       ),
                     ),
@@ -134,8 +140,10 @@ class SettingsView extends StatelessWidget {
                             SettingsKeys.ExposeScenePreview.name,
                             defaultValue: true),
                         onChanged: (exposeScenePreview) {
-                          settingsBox.put(SettingsKeys.ExposeScenePreview.name,
-                              exposeScenePreview);
+                          settingsBox.put(
+                            SettingsKeys.ExposeScenePreview.name,
+                            exposeScenePreview,
+                          );
                         },
                       ),
                     ),
@@ -150,8 +158,10 @@ class SettingsView extends StatelessWidget {
                             SettingsKeys.EnforceTabletMode.name,
                             defaultValue: false),
                         onChanged: (enforceTabletMode) {
-                          settingsBox.put(SettingsKeys.EnforceTabletMode.name,
-                              enforceTabletMode);
+                          settingsBox.put(
+                            SettingsKeys.EnforceTabletMode.name,
+                            enforceTabletMode,
+                          );
                         },
                       ),
                     ),
@@ -175,10 +185,21 @@ class SettingsView extends StatelessWidget {
                       leadingSize: 30.0,
                       title: 'True Dark Mode',
                       trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(SettingsKeys.TrueDark.name,
-                            defaultValue: false),
+                        value: settingsBox.get(
+                          SettingsKeys.TrueDark.name,
+                          defaultValue: false,
+                        ),
+                        enabled: !settingsBox.get(
+                          SettingsKeys.CustomTheme.name,
+                          defaultValue: false,
+                        ),
+                        disabledChangeInfo:
+                            'This setting has no effect and can\'t be changed while Custom Theme is active',
                         onChanged: (trueDark) {
-                          settingsBox.put(SettingsKeys.TrueDark.name, trueDark);
+                          settingsBox.put(
+                            SettingsKeys.TrueDark.name,
+                            trueDark,
+                          );
                         },
                       ),
                     ),
@@ -191,11 +212,20 @@ class SettingsView extends StatelessWidget {
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery!',
                         trailing: ThemedCupertinoSwitch(
                           value: settingsBox.get(
-                              SettingsKeys.ReduceSmearing.name,
-                              defaultValue: false),
+                            SettingsKeys.ReduceSmearing.name,
+                            defaultValue: false,
+                          ),
+                          enabled: !settingsBox.get(
+                            SettingsKeys.CustomTheme.name,
+                            defaultValue: false,
+                          ),
+                          disabledChangeInfo:
+                              'This setting has no effect and can\'t be changed while Custom Theme is active',
                           onChanged: (reduceSmearing) {
-                            settingsBox.put(SettingsKeys.ReduceSmearing.name,
-                                reduceSmearing);
+                            settingsBox.put(
+                              SettingsKeys.ReduceSmearing.name,
+                              reduceSmearing,
+                            );
                           },
                         ),
                       ),
