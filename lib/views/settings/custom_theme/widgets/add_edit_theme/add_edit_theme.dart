@@ -153,6 +153,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: this.widget.scrollController,
+                    physics: const ClampingScrollPhysics(),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 24.0),
                       child: Column(
