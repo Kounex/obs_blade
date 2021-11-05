@@ -10,7 +10,7 @@ import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_cupertino_actions.dart';
-import '../../../../shared/general/base/base_card.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';

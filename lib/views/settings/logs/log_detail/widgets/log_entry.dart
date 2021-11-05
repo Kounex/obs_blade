@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../models/app_log.dart';
 import '../../../../../models/enums/log_level.dart';
 import '../../../../../shared/animator/status_dot.dart';
-import '../../../../../shared/general/base/base_card.dart';
+import '../../../../../shared/general/base/card.dart';
 import '../../../../../shared/general/column_separated.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../types/extensions/list.dart';

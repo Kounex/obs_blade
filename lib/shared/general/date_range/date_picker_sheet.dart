@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
+import '../base/divider.dart';
 
 class DatePickerSheet extends StatefulWidget {
   final DateTime? minimumDate;
@@ -84,7 +84,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
             ),
           ],
         ),
-        const LightDivider(),
+        const BaseDivider(),
         Flexible(
           child: SizedBox(
             height: 250.0,

@@ -1,12 +1,76 @@
-import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/shared/general/base/button.dart';
+import 'package:obs_blade/stores/shared/purchases.dart';
+import 'package:obs_blade/stores/shared/tabs.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 
-import '../../../../shared/general/social_block.dart';
+import '../../../../shared/general/flutter_modified/non_scrollable_cupertino_dialog.dart';
+import '../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../types/extensions/list.dart';
+import 'donate_button.dart';
+import 'support_header.dart';
 
-class SupportDialog extends StatelessWidget {
-  const SupportDialog({Key? key}) : super(key: key);
+enum SupportType {
+  Blacksmith,
+  Tips,
+}
+
+class SupportDialog extends StatefulWidget {
+  final String title;
+
+  final IconData icon;
+
+  final String? body;
+  final Widget? bodyWidget;
+  final SupportType type;
+
+  const SupportDialog({
+    Key? key,
+    required this.title,
+    this.icon = CupertinoIcons.heart_solid,
+    this.body,
+    this.bodyWidget,
+    required this.type,
+  }) : super(key: key);
+
+  @override
+  State<SupportDialog> createState() => _SupportDialogState();
+}
+
+class _SupportDialogState extends State<SupportDialog> {
+  Future<List<ProductDetails>>? _tips;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _tips = _getAvailableTips();
+  }
+
+  Future<List<ProductDetails>> _getAvailableTips() async {
+    _error = null;
+    final bool available = await InAppPurchase.instance.isAvailable();
+    if (!available) {
+      _error =
+          'Connection to the App Store is not possible. Make sure you have a working internet connection.\n\nFeel free to let me know if this problem persists!';
+    }
+    Set<String> tipIDs = {};
+    switch (this.widget.type) {
+      case SupportType.Blacksmith:
+        tipIDs = {'blacksmith'};
+        break;
+      case SupportType.Tips:
+        tipIDs = {'tip_1', 'tip_2', 'tip_3'};
+        break;
+    }
+    return (await InAppPurchase.instance.queryProductDetails(tipIDs))
+        .productDetails;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,95 +81,119 @@ class SupportDialog extends StatelessWidget {
       dismissThresholds: const {DismissDirection.vertical: 0.2},
       child: Material(
         type: MaterialType.transparency,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            CupertinoAlertDialog(
-              content: SizedBox(
-                height: 184.0,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    if (!Platform.isAndroid) const SizedBox(height: 12.0),
-                    Text(
-                      'Support',
-                      style: Theme.of(context).textTheme.headline6,
-                    ),
-                    if (Platform.isAndroid) ...[
-                      const Text(
-                        'Due to Google Play Payment policies I\'m not allowed to leave donation options here. There are ways to support me available online.',
-                      ),
-                      const Text(
-                        'If you really want to, you will find them - you can also contact me directly!',
-                      ),
-                    ],
-                    if (!Platform.isAndroid) ...[
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          'You sure? Tapped accidentaly? Or just curious? I mean, I always appreciate the love! Motivates me to keep this app updated - but it\'s completly optional :)',
-                        ),
-                      ),
-                      SocialBlock(
-                        socialInfos: [
-                          SocialEntry(
-                            link: 'https://obs-blade.kounex.com/',
-                            linkText: 'Read more here!',
+        child: NonScrollableCupertinoAlertDialog(
+          content: Stack(
+            children: [
+              SupportHeader(
+                title: this.widget.title,
+                icon: this.widget.icon,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 52.0),
+                child: FutureBuilder<List<ProductDetails>>(
+                  future: _tips,
+                  builder: (context, tipsSnapshot) {
+                    if (tipsSnapshot.connectionState == ConnectionState.done) {
+                      if (tipsSnapshot.hasData &&
+                          tipsSnapshot.data!.isNotEmpty) {
+                        return SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              if (this.widget.bodyWidget != null ||
+                                  this.widget.body != null) ...[
+                                this.widget.body != null
+                                    ? Text(
+                                        this.widget.body!,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyText2,
+                                      )
+                                    : this.widget.bodyWidget!,
+                                const SizedBox(
+                                  height: 12.0,
+                                ),
+                              ],
+                              if (this.widget.type == SupportType.Tips)
+                                ...tipsSnapshot.data!
+                                    .mapIndexed(
+                                      (tip, index) => DonateButton(
+                                        text: tip.title.isNotEmpty
+                                            ? tip.title
+                                            : '${(tip.rawPrice * 7).toInt()}g of GFuel',
+                                        price: tip.price,
+                                        purchaseParam:
+                                            PurchaseParam(productDetails: tip),
+                                      ),
+                                    )
+                                    .toList(),
+                              if (this.widget.type == SupportType.Blacksmith)
+                                Observer(
+                                  builder: (_) {
+                                    if (!GetIt.instance<PurchasesStore>()
+                                        .purchases
+                                        .any((purchase) =>
+                                            purchase.productID ==
+                                            'blacksmith')) {
+                                      return DonateButton(
+                                        price: tipsSnapshot.data![0].price,
+                                        purchaseParam: PurchaseParam(
+                                            productDetails:
+                                                tipsSnapshot.data![0]),
+                                      );
+                                    }
+                                    return BaseButton(
+                                      text: 'Forge Theme',
+                                      secondary: true,
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true);
+
+                                        if (GetIt.instance<TabsStore>()
+                                                    .activeRoutePerNavigator[
+                                                Tabs.Settings] !=
+                                            SettingsTabRoutingKeys
+                                                .CustomTheme.route) {
+                                          Future.delayed(
+                                            const Duration(milliseconds: 500),
+                                            () => GetIt.instance<TabsStore>()
+                                                .navigatorKeys[Tabs.Settings]
+                                                ?.currentState
+                                                ?.pushNamed(
+                                              SettingsTabRoutingKeys
+                                                  .CustomTheme.route,
+                                              arguments: {'blacksmith': true},
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                ),
+                            ],
                           ),
-                        ],
+                        );
+                      }
+                      return Text(_error ??
+                          'There was an error retrieving available options! It seems like there are no options available currently.\n\nFeel free to let me know if this problem persists!');
+                    }
+                    return Center(
+                      child: BaseProgressIndicator(
+                        text: 'Fetching...',
                       ),
-                    ],
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    //   children: [
-                    //     DonateButton(text: 'Nice', value: 0.99),
-                    //     DonateButton(text: 'Yoo', value: 2.99),
-                    //     DonateButton(text: 'WTF?', value: 5.99),
-                    //   ],
-                    // ),
-                  ],
+                    );
+                  },
                 ),
               ),
-            ),
-            Transform(
-              transform: Matrix4.identity()..translate(0.0, -110.0),
-              child: Container(
-                height: 60.0,
-                width: 60.0,
-                decoration: BoxDecoration(
-                  // color: CupertinoDynamicColor.resolve(kDialogColor, context)
-                  //     .withOpacity(1.0),
-                  color: Theme.of(context).toggleableActiveColor,
-                  shape: BoxShape.circle,
-                ),
-                child: const Hero(
-                  tag: 'Support Me',
-                  child: Icon(
-                    CupertinoIcons.heart_solid,
-                    size: 38.0,
-                  ),
-                ),
-              ),
-            ),
-            Transform(
-              transform: Matrix4.identity()..translate(105.0, -80.0),
-              child: IconButton(
-                icon: const Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 24.0,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            // Transform(
-            //   transform: Matrix4.identity()..translate(110.0, 110.0),
-            //   child: CupertinoButton(
-            //     child: Text('...'),
-            //     onPressed: () => Navigator.of(context).pop(),
-            //   ),
-            // ),
-          ],
+            ],
+          ),
         ),
+
+        // Transform(
+        //   transform: Matrix4.identity()..translate(110.0, 110.0),
+        //   child: CupertinoButton(
+        //     child: Text('...'),
+        //     onPressed: () => Navigator.of(context).pop(),
+        //   ),
+        // ),
       ),
     );
   }

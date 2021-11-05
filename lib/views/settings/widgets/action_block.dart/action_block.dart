@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/base_card.dart';
+import 'package:obs_blade/shared/general/base/card.dart';
 
+import '../../../../shared/general/base/divider.dart';
 import 'block_entry.dart';
-import 'light_divider.dart';
 
 class ActionBlock extends StatelessWidget {
   final String? title;
@@ -36,7 +36,7 @@ class ActionBlock extends StatelessWidget {
                 ? 2 * this.generalizedPadding + this.iconSize
                 : this.generalizedPadding,
           ),
-          child: const LightDivider(),
+          child: const BaseDivider(),
         ),
       );
     }

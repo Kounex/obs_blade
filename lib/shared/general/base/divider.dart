@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
-class LightDivider extends StatelessWidget {
+class BaseDivider extends StatelessWidget {
   final double? height;
 
-  const LightDivider({Key? key, this.height}) : super(key: key);
+  const BaseDivider({Key? key, this.height}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -4,7 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 
-import '../../../shared/general/base/base_card.dart';
+import '../../../shared/general/base/card.dart';
 import '../../../shared/overlay/base_progress_indicator.dart';
 import '../../../shared/overlay/base_result.dart';
 import '../../../stores/views/dashboard.dart';

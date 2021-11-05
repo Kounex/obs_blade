@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/social_block.dart';
-import 'package:obs_blade/shared/general/themed/themed_rich_text.dart';
+import 'package:obs_blade/shared/general/themed/rich_text.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 
-import '../../../shared/general/base/base_card.dart';
+import '../../../shared/general/base/card.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class PrivacyPolicyView extends StatelessWidget {

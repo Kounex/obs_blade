@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
-import '../../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import 'add_edit_username_dialog.dart';

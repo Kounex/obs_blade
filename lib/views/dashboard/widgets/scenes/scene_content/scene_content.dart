@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../models/enums/scene_item_type.dart';
-import '../../../../../shared/general/base/base_card.dart';
+import '../../../../../shared/general/base/card.dart';
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
 import 'visibility_edit_toggle.dart';

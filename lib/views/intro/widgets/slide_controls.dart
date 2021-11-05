@@ -5,7 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-import '../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../shared/general/themed/cupertino_button.dart';
 import '../../../stores/views/intro.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';

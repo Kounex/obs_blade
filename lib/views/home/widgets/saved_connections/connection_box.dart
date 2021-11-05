@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/general/base/base_button.dart';
+import 'package:obs_blade/shared/general/base/button.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
-import '../../../../shared/general/base/base_card.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../stores/shared/network.dart';
 import 'edit_dialog.dart';
 

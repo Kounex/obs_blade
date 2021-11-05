@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
-import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/validation_cupertino_textfield.dart';
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/validation_helper.dart';
-import '../../../widgets/action_block.dart/light_divider.dart';
 import 'color_bubble.dart';
 import 'color_slider.dart';
 
@@ -244,7 +244,7 @@ class _ColorPickerState extends State<ColorPicker> {
             ),
           ],
         ),
-        const LightDivider(),
+        const BaseDivider(),
         Padding(
           padding: const EdgeInsets.only(top: 12.0, left: 12.0, bottom: 4.0),
           child: Row(
@@ -266,7 +266,7 @@ class _ColorPickerState extends State<ColorPicker> {
             style: Theme.of(context).textTheme.caption,
           ),
         ),
-        const LightDivider(),
+        const BaseDivider(),
         Flexible(
           child: SingleChildScrollView(
             child: Column(
@@ -297,7 +297,7 @@ class _ColorPickerState extends State<ColorPicker> {
                     },
                   ),
                 ),
-                const LightDivider(),
+                const BaseDivider(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   child: Row(
@@ -371,7 +371,7 @@ class _ColorPickerState extends State<ColorPicker> {
                     ],
                   ),
                 ),
-                const LightDivider(),
+                const BaseDivider(),
                 Padding(
                   padding:
                       const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),

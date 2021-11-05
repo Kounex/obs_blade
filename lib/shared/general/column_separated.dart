@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
 
 class ColumnSeparated extends StatelessWidget {
   final Iterable<Widget> children;
@@ -35,7 +35,7 @@ class ColumnSeparated extends StatelessWidget {
       itemCount: this.children.length,
       separatorBuilder: (context, index) => Padding(
         padding: this.paddingSeparator + this.additionalPaddingSeparator,
-        child: this.lightDivider ? const LightDivider() : const LightDivider(),
+        child: this.lightDivider ? const BaseDivider() : const BaseDivider(),
       ),
       itemBuilder: (context, index) => this.children.elementAt(index),
     );

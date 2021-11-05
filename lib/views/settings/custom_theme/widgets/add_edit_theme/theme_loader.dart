@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../utils/built_in_themes.dart';
-import '../../../widgets/action_block.dart/light_divider.dart';
 import 'theme_row.dart';
 
 class ThemeLoader extends StatefulWidget {
@@ -47,7 +47,7 @@ class _ThemeLoaderState extends State<ThemeLoader> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const LightDivider(),
+        const BaseDivider(),
         const SizedBox(height: 12.0),
         ThemeRow(
           useDivider: false,
@@ -80,7 +80,7 @@ class _ThemeLoaderState extends State<ThemeLoader> {
           onButtonPressed: () => this.widget.onLoadTheme?.call(_selectedTheme),
         ),
         const SizedBox(height: 12.0),
-        const LightDivider(),
+        const BaseDivider(),
       ],
     );
   }

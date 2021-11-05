@@ -6,7 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/stores/shared/purchases.dart';
 
 import 'app.dart';
 import 'models/app_log.dart';
@@ -18,6 +20,7 @@ import 'models/enums/scene_item_type.dart';
 import 'models/hidden_scene.dart';
 import 'models/hidden_scene_item.dart';
 import 'models/past_stream_data.dart';
+import 'purchase_base.dart';
 import 'stores/shared/network.dart';
 import 'stores/shared/tabs.dart';
 import 'stores/views/dashboard.dart';
@@ -63,10 +66,17 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   Widget build(BuildContext context) => this.widget.app;
 }
 
+void _initializePurchases() {
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    InAppPurchaseAndroidPlatformAddition.enablePendingPurchases();
+  }
+}
+
 void _initializeStores() {
   /// Shared stores used app-wide
   GetIt.instance.registerLazySingleton<NetworkStore>(() => NetworkStore());
   GetIt.instance.registerLazySingleton<TabsStore>(() => TabsStore());
+  GetIt.instance.registerLazySingleton<PurchasesStore>(() => PurchasesStore());
 
   /// View stores designated for specific views
   GetIt.instance.registerLazySingleton<IntroStore>(() => IntroStore());
@@ -80,7 +90,7 @@ void _initializeStores() {
 Future<void> _initializeHive() async {
   await Hive.initFlutter();
 
-  /// Classes which represent models which teherfore get persisted
+  /// Classes which represent models which therefore get persisted
   Hive.registerAdapter(ConnectionAdapter());
   Hive.registerAdapter(PastStreamDataAdapter());
   Hive.registerAdapter(CustomThemeAdapter());
@@ -181,6 +191,9 @@ void main() async {
   /// Initialize Date Formatting - using European style
   await initializeDateFormatting('de_DE');
 
+  /// Initialize Purchases
+  _initializePurchases();
+
   /// Create all store objects and make them available in the app (DI)
   _initializeStores();
 
@@ -195,7 +208,9 @@ void main() async {
       };
       runApp(
         const LifecycleWatcher(
-          app: App(),
+          app: PurchaseBase(
+            child: App(),
+          ),
         ),
       );
     },

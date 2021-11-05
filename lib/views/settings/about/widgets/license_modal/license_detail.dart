@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/general/base/base_card.dart';
+import '../../../../../shared/general/base/card.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class LicenseDetail extends StatelessWidget {

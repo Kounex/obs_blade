@@ -5,12 +5,12 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/animator/fader.dart';
+import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/question_mark_tooltip.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../../stores/views/home.dart';
 import '../../../../../utils/validation_helper.dart';
-import '../../../../settings/widgets/action_block.dart/light_divider.dart';
 import 'result_entry.dart';
 import 'session_tile.dart';
 
@@ -72,7 +72,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             ),
           ),
         ),
-        const LightDivider(),
+        const BaseDivider(),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
             future: landingStore.autodiscoverConnections,
@@ -87,7 +87,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                               SessionTile(
                                 connection: availableObsConnection,
                               ),
-                              const LightDivider(),
+                              const BaseDivider(),
                             ],
                           )
                           .toList()

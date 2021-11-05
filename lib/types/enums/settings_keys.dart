@@ -103,6 +103,10 @@ enum SettingsKeys {
   /// [bool]: If the user saw the message regarding stop recording and doesn't want
   /// to see this warning again
   DontShowRecordStopMessage,
+
+  /// [bool]: If the user attempts to leave a tip without having purchased Blacksmith
+  /// and doesn't want to see this warning again
+  DontShowConsiderBlacksmithBeforeTip,
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
@@ -136,5 +140,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.DontShowRecordStartMessage:
             'dont-show-record-start-message',
         SettingsKeys.DontShowRecordStopMessage: 'dont-show-record-stop-message',
+        SettingsKeys.DontShowConsiderBlacksmithBeforeTip:
+            'dont-show-consider-blacksmith-before-tip',
       }[this]!;
 }

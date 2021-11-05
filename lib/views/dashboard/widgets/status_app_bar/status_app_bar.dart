@@ -6,7 +6,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
-import '../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../utils/modal_handler.dart';

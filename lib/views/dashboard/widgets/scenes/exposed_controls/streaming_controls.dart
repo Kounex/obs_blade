@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/general/base/base_button.dart';
+import 'package:obs_blade/shared/general/base/button.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';

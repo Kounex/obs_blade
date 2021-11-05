@@ -1,0 +1,78 @@
+{
+  "identifier" : "2B387A91",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "5",
+      "familyShareable" : true,
+      "internalID" : "3B8FF2BA",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "blacksmith",
+      "referenceName" : "Blacksmith",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "1",
+      "familyShareable" : false,
+      "internalID" : "DEAB8CA6",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "tip_1",
+      "referenceName" : "Tip 1",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "3",
+      "familyShareable" : false,
+      "internalID" : "32208D98",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "tip_2",
+      "referenceName" : "Tip 2",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "5",
+      "familyShareable" : false,
+      "internalID" : "CE9F35A7",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "tip_3",
+      "referenceName" : "Tip 3",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 1,
+    "minor" : 1
+  }
+}
