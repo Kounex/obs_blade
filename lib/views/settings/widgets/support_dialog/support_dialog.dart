@@ -90,7 +90,8 @@ class _SupportDialogState extends State<SupportDialog> {
       child: Material(
         type: MaterialType.transparency,
         child: NonScrollableCupertinoAlertDialog(
-          content: Stack(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               SupportHeader(
                 title: this.widget.title,
@@ -101,7 +102,6 @@ class _SupportDialogState extends State<SupportDialog> {
                 textAlign: TextAlign.center,
                 child: Padding(
                   padding: const EdgeInsets.only(
-                    top: 64.0,
                     left: _kDialogEdgePadding,
                     right: _kDialogEdgePadding,
                     bottom: _kDialogEdgePadding,

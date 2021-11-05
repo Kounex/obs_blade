@@ -42,7 +42,11 @@ class _CustomThemeViewState extends State<CustomThemeView> {
             context: context,
             dialogWidget: const BlacksmithDialog(),
           ).then(
-            (value) => _openAddTheme(context),
+            (clickedOnForgeTheme) {
+              if (clickedOnForgeTheme) {
+                _openAddTheme(context);
+              }
+            },
           );
   }
 
