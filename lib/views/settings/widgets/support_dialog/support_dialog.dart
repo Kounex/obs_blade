@@ -14,6 +14,8 @@ import '../../../../types/extensions/list.dart';
 import 'donate_button.dart';
 import 'support_header.dart';
 
+const double _kDialogEdgePadding = 20.0;
+
 enum SupportType {
   Blacksmith,
   Tips,
@@ -25,7 +27,7 @@ class SupportDialog extends StatefulWidget {
   final IconData icon;
 
   final String? body;
-  final Widget? bodyWidget;
+  final Widget Function(BuildContext)? bodyWidget;
   final SupportType type;
 
   const SupportDialog({
@@ -72,8 +74,14 @@ class _SupportDialogState extends State<SupportDialog> {
         .productDetails;
   }
 
+  String _sumTipped(
+          Iterable<PurchaseDetails> tips, List<ProductDetails> products) =>
+      '${tips.fold<int>(0, (sum, tip) => sum += products.firstWhere((tipData) => tipData.id == tip.productID).rawPrice.toInt())}${products.first.currencySymbol}';
+
   @override
   Widget build(BuildContext context) {
+    PurchasesStore purchasesStore = GetIt.instance<PurchasesStore>();
+
     return Dismissible(
       key: const Key('support'),
       direction: DismissDirection.vertical,
@@ -88,99 +96,131 @@ class _SupportDialogState extends State<SupportDialog> {
                 title: this.widget.title,
                 icon: this.widget.icon,
               ),
-              Padding(
-                padding: const EdgeInsets.only(top: 52.0),
-                child: FutureBuilder<List<ProductDetails>>(
-                  future: _tips,
-                  builder: (context, tipsSnapshot) {
-                    if (tipsSnapshot.connectionState == ConnectionState.done) {
-                      if (tipsSnapshot.hasData &&
-                          tipsSnapshot.data!.isNotEmpty) {
-                        return SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              if (this.widget.bodyWidget != null ||
-                                  this.widget.body != null) ...[
-                                this.widget.body != null
-                                    ? Text(
-                                        this.widget.body!,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyText2,
+              DefaultTextStyle(
+                style: Theme.of(context).textTheme.bodyText1!,
+                textAlign: TextAlign.center,
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    top: 64.0,
+                    left: _kDialogEdgePadding,
+                    right: _kDialogEdgePadding,
+                    bottom: _kDialogEdgePadding,
+                  ),
+                  child: FutureBuilder<List<ProductDetails>>(
+                    future: _tips,
+                    builder: (context, tipsSnapshot) {
+                      if (tipsSnapshot.connectionState ==
+                          ConnectionState.done) {
+                        if (tipsSnapshot.hasData &&
+                            tipsSnapshot.data!.isNotEmpty) {
+                          return SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                if (this.widget.bodyWidget != null ||
+                                    this.widget.body != null) ...[
+                                  this.widget.body != null
+                                      ? Text(this.widget.body!)
+                                      : this.widget.bodyWidget!(context),
+                                  const SizedBox(
+                                    height: 12.0,
+                                  ),
+                                ],
+                                if (this.widget.type == SupportType.Tips) ...[
+                                  ...tipsSnapshot.data!
+                                      .mapIndexed(
+                                        (tip, index) => DonateButton(
+                                          text: tip.title.isNotEmpty
+                                              ? tip.title
+                                              : '${(tip.rawPrice).toInt()} Energy Drink${((tip.rawPrice).toInt() > 1 ? "s" : "")}',
+                                          price: tip.price,
+                                          purchaseParam: PurchaseParam(
+                                              productDetails: tip),
+                                        ),
                                       )
-                                    : this.widget.bodyWidget!,
-                                const SizedBox(
-                                  height: 12.0,
-                                ),
-                              ],
-                              if (this.widget.type == SupportType.Tips)
-                                ...tipsSnapshot.data!
-                                    .mapIndexed(
-                                      (tip, index) => DonateButton(
-                                        text: tip.title.isNotEmpty
-                                            ? tip.title
-                                            : '${(tip.rawPrice * 7).toInt()}g of GFuel',
-                                        price: tip.price,
-                                        purchaseParam:
-                                            PurchaseParam(productDetails: tip),
-                                      ),
-                                    )
-                                    .toList(),
-                              if (this.widget.type == SupportType.Blacksmith)
-                                Observer(
-                                  builder: (_) {
-                                    if (!GetIt.instance<PurchasesStore>()
-                                        .purchases
-                                        .any((purchase) =>
-                                            purchase.productID ==
-                                            'blacksmith')) {
-                                      return DonateButton(
-                                        price: tipsSnapshot.data![0].price,
-                                        purchaseParam: PurchaseParam(
-                                            productDetails:
-                                                tipsSnapshot.data![0]),
+                                      .toList(),
+                                  Observer(builder: (_) {
+                                    Iterable<PurchaseDetails> tips =
+                                        purchasesStore.purchases.where(
+                                            (purchase) =>
+                                                purchase.productID !=
+                                                'blacksmith');
+                                    if (tips.isNotEmpty) {
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 12.0),
+                                        child: Text(
+                                            'You tipped ${_sumTipped(tips, tipsSnapshot.data!)} so far\nYou are awesome :)'),
                                       );
                                     }
-                                    return BaseButton(
-                                      text: 'Forge Theme',
-                                      secondary: true,
-                                      onPressed: () {
-                                        Navigator.of(context).pop(true);
+                                    return Container();
+                                  }),
+                                ],
+                                if (this.widget.type == SupportType.Blacksmith)
+                                  Observer(
+                                    builder: (_) {
+                                      if (!purchasesStore.purchases.any(
+                                          (purchase) =>
+                                              purchase.productID ==
+                                              'blacksmith')) {
+                                        return DonateButton(
+                                          price: tipsSnapshot.data![0].price,
+                                          purchaseParam: PurchaseParam(
+                                              productDetails:
+                                                  tipsSnapshot.data![0]),
+                                        );
+                                      }
+                                      return Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          BaseButton(
+                                            text: 'Forge Theme',
+                                            secondary: true,
+                                            onPressed: () {
+                                              Navigator.of(context).pop(true);
+                                              TabsStore tabsStore =
+                                                  GetIt.instance<TabsStore>();
 
-                                        if (GetIt.instance<TabsStore>()
-                                                    .activeRoutePerNavigator[
-                                                Tabs.Settings] !=
-                                            SettingsTabRoutingKeys
-                                                .CustomTheme.route) {
-                                          Future.delayed(
-                                            const Duration(milliseconds: 500),
-                                            () => GetIt.instance<TabsStore>()
-                                                .navigatorKeys[Tabs.Settings]
-                                                ?.currentState
-                                                ?.pushNamed(
-                                              SettingsTabRoutingKeys
-                                                  .CustomTheme.route,
-                                              arguments: {'blacksmith': true},
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
-                            ],
-                          ),
-                        );
+                                              if (tabsStore
+                                                          .activeRoutePerNavigator[
+                                                      Tabs.Settings] !=
+                                                  SettingsTabRoutingKeys
+                                                      .CustomTheme.route) {
+                                                Future.delayed(
+                                                  const Duration(
+                                                      milliseconds: 500),
+                                                  () => tabsStore
+                                                      .navigatorKeys[
+                                                          Tabs.Settings]
+                                                      ?.currentState
+                                                      ?.pushNamed(
+                                                    SettingsTabRoutingKeys
+                                                        .CustomTheme.route,
+                                                    arguments: {
+                                                      'blacksmith': true
+                                                    },
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        }
+                        return Text(_error ??
+                            'There was an error retrieving available options! It seems like there are no options available currently.\n\nFeel free to let me know if this problem persists!');
                       }
-                      return Text(_error ??
-                          'There was an error retrieving available options! It seems like there are no options available currently.\n\nFeel free to let me know if this problem persists!');
-                    }
-                    return Center(
-                      child: BaseProgressIndicator(
-                        text: 'Fetching...',
-                      ),
-                    );
-                  },
+                      return Center(
+                        child: BaseProgressIndicator(
+                          text: 'Fetching...',
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],

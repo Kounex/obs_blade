@@ -65,7 +65,6 @@ class DonateButton extends StatelessWidget {
       children: [
         Text(
           this.text!,
-          style: Theme.of(context).textTheme.bodyText2,
         ),
         purchaseButton,
       ],

@@ -17,7 +17,7 @@ class ThemedRichText extends StatelessWidget {
     return RichText(
       textAlign: this.textAlign ?? TextAlign.start,
       text: TextSpan(
-        style: this.textStyle ?? Theme.of(context).textTheme.bodyText2,
+        style: this.textStyle ?? DefaultTextStyle.of(context).style,
         children: this.textSpans,
       ),
     );

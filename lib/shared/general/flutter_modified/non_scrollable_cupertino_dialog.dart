@@ -298,11 +298,11 @@ class NonScrollableCupertinoAlertDialog extends StatelessWidget {
               top: _kDialogEdgePadding * textScaleFactor,
             ),
             messagePadding: EdgeInsets.only(
-              left: _kDialogEdgePadding,
-              right: _kDialogEdgePadding,
-              bottom: _kDialogEdgePadding * textScaleFactor,
-              top: title == null ? _kDialogEdgePadding : 1.0,
-            ),
+                // left: _kDialogEdgePadding,
+                // right: _kDialogEdgePadding,
+                // bottom: _kDialogEdgePadding * textScaleFactor,
+                // top: title == null ? _kDialogEdgePadding : 1.0,
+                ),
             titleTextStyle: _kCupertinoDialogTitleStyle.copyWith(
               color:
                   CupertinoDynamicColor.resolve(CupertinoColors.label, context),

@@ -14,7 +14,7 @@ class SupportHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform(
-      transform: Matrix4.identity()..translate(0.0, -28.0),
+      transform: Matrix4.identity()..translate(0.0, -10.0),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -22,7 +22,7 @@ class SupportHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Transform(
-                transform: Matrix4.identity()..translate(-28.0),
+                transform: Matrix4.identity()..translate(-10.0),
                 child: Container(
                   height: 64.0,
                   width: 64.0,
@@ -41,15 +41,12 @@ class SupportHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              Transform(
-                transform: Matrix4.identity()..translate(18.0),
-                child: IconButton(
-                  icon: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 24.0,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
+              IconButton(
+                icon: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 24.0,
                 ),
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),

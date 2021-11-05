@@ -14,14 +14,13 @@ class BlacksmithDialog extends StatelessWidget {
       title: 'Blacksmith',
       icon: CupertinoIcons.hammer_fill,
       type: SupportType.Blacksmith,
-      bodyWidget: ThemedRichText(
+      bodyWidget: (context) => ThemedRichText(
         textAlign: TextAlign.center,
         textSpans: [
           TextSpan(
             text: 'Become a blacksmith and forge your OBS Blade',
-            style: Theme.of(context)
-                .textTheme
-                .bodyText1!
+            style: DefaultTextStyle.of(context)
+                .style
                 .copyWith(fontStyle: FontStyle.italic),
           ),
           const WidgetSpan(
@@ -30,10 +29,9 @@ class BlacksmithDialog extends StatelessWidget {
               child: BaseDivider(),
             ),
           ),
-          TextSpan(
+          const TextSpan(
             text:
                 'Blacksmith offers you visual customisation options for this app to make it more personalised! Create your own theme to change the overall look and feel of this app to make it yours!',
-            style: Theme.of(context).textTheme.bodyText1,
           ),
         ],
       ),
