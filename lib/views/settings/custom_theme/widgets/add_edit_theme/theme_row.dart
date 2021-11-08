@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/base_button.dart';
-import 'package:obs_blade/shared/general/themed/themed_cupertino_switch.dart';
+import 'package:obs_blade/shared/general/base/button.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/shared/general/themed/cupertino_switch.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
 
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';
@@ -74,7 +74,7 @@ class ThemeRow extends StatelessWidget {
                     ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: this.useDivider ? const LightDivider() : Container(),
+                  child: this.useDivider ? const BaseDivider() : Container(),
                 ),
                 Text(
                   this.description ?? 'Title',

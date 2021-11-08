@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../shared/general/base/base_card.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/overlay/base_result.dart';
 
 class PlaceholderConnection extends StatelessWidget {

@@ -91,6 +91,7 @@ class _LicenseEntriesState extends State<LicenseEntries> {
             child: ListView.builder(
               shrinkWrap: true,
               controller: this.widget.scrollController,
+              physics: const ClampingScrollPhysics(),
               padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).padding.bottom),
               itemCount: snapshot.data!.packages.length,

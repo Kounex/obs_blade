@@ -4,7 +4,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/animator/order_button.dart';
-import '../../../../shared/general/base/base_card.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../shared/general/date_range/date_range.dart';
 import '../../../../stores/views/logs.dart';

@@ -5,12 +5,12 @@ import 'package:hive/hive.dart';
 
 import '../../../../../models/enums/scene_item_type.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
-import '../../../../settings/widgets/action_block.dart/light_divider.dart';
 
 class VisibilityEditToggle extends StatelessWidget {
   final Widget? child;
@@ -84,7 +84,7 @@ class VisibilityEditToggle extends StatelessWidget {
                 alignment: Alignment.center,
                 child: editButton,
               ),
-              const LightDivider(),
+              const BaseDivider(),
               Expanded(
                 child: this.child!,
               ),

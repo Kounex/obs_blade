@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
-import '../../../../settings/widgets/action_block.dart/light_divider.dart';
 import 'amount_entries_control.dart';
 import 'exclude_unnamed_checkbox.dart';
 import 'favorite_control.dart';
@@ -19,7 +19,7 @@ class SortFilterPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const LightDivider(),
+        const BaseDivider(),
         CustomExpansionTile(
           headerText: 'Expand to sort and filter your statistics!',
           headerPadding: const EdgeInsets.all(14.0),
@@ -28,7 +28,7 @@ class SortFilterPanel extends StatelessWidget {
             width: double.infinity,
             child: Column(
               children: [
-                const LightDivider(),
+                const BaseDivider(),
                 Padding(
                   padding: const EdgeInsets.only(
                     left: 14.0,

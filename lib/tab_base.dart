@@ -6,6 +6,32 @@ import 'package:get_it/get_it.dart';
 import 'stores/shared/tabs.dart';
 import 'utils/routing_helper.dart';
 
+class ActiveRouteObserver extends NavigatorObserver {
+  final Tabs tab;
+
+  ActiveRouteObserver({required this.tab});
+
+  /// The [Navigator] pushed `route`.
+  ///
+  /// The route immediately below that one, and thus the previously active
+  /// route, is `previousRoute`.
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    GetIt.instance<TabsStore>().activeRoutePerNavigator[tab] =
+        route.settings.name!;
+  }
+
+  /// The [Navigator] popped `route`.
+  ///
+  /// The route immediately below that one, and thus the newly active
+  /// route, is `previousRoute`.
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    GetIt.instance<TabsStore>().activeRoutePerNavigator[tab] =
+        previousRoute!.settings.name!;
+  }
+}
+
 class TabBase extends StatefulWidget {
   const TabBase({Key? key}) : super(key: key);
 
@@ -50,13 +76,12 @@ class _TabBaseState extends State<TabBase> {
           ];
         },
         onGenerateRoute: (routeSettings) {
-          tabsStore.activeRoutePerNavigator[tab] = routeSettings.name!;
           return CupertinoPageRoute(
             builder: tab.routes[routeSettings.name]!,
             settings: routeSettings,
           );
         },
-        observers: [_heroControllers[tab]!],
+        observers: [_heroControllers[tab]!, ActiveRouteObserver(tab: tab)],
       );
     }
   }

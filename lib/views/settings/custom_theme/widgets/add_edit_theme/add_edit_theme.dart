@@ -9,13 +9,13 @@ import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/the
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/validation_cupertino_textfield.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../types/extensions/color.dart';
 import '../../../../../utils/modal_handler.dart';
-import '../../../widgets/action_block.dart/light_divider.dart';
 import 'theme_row.dart';
 
 class AddEditTheme extends StatefulWidget {
@@ -151,10 +151,11 @@ class _AddEditThemeState extends State<AddEditTheme> {
                             : null),
                   ],
                 ),
-                const LightDivider(),
+                const BaseDivider(),
                 Expanded(
                   child: SingleChildScrollView(
                     controller: this.widget.scrollController,
+                    physics: const ClampingScrollPhysics(),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 24.0),
                       child: Column(

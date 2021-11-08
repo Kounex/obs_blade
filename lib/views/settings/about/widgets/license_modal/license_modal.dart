@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/general/themed/themed_cupertino_button.dart';
+import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../../../utils/styling_helper.dart';
-import '../../../widgets/action_block.dart/light_divider.dart';
 import '../license_modal/license_entries.dart';
 
 class LicenseModal extends StatelessWidget {
@@ -33,7 +33,7 @@ class LicenseModal extends StatelessWidget {
               ),
             ),
           ),
-          const LightDivider(),
+          const BaseDivider(),
           Padding(
             padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
             child: Row(
@@ -48,7 +48,7 @@ class LicenseModal extends StatelessWidget {
               ],
             ),
           ),
-          const LightDivider(),
+          const BaseDivider(),
           Expanded(
             child: LicenseEntries(
               scrollController: scrollController,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/settings/widgets/action_block.dart/light_divider.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:package_info/package_info.dart';
 
 class AboutHeader extends StatelessWidget {
@@ -31,7 +31,7 @@ class AboutHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.only(bottom: 8.0),
               width: 180.0,
-              child: const LightDivider(),
+              child: const BaseDivider(),
             ),
             Text(
               'by Kounex (René Schramowski)',

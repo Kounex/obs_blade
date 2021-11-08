@@ -8,6 +8,7 @@ import 'package:mobx/mobx.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/dialogs/confirmation.dart';
+import '../../shared/general/base/divider.dart';
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/responsive_widget_wrapper.dart';
 import '../../stores/shared/network.dart';
@@ -16,7 +17,6 @@ import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
-import '../settings/widgets/action_block.dart/light_divider.dart';
 import 'widgets/reconnect_toast.dart';
 import 'widgets/save_edit_connection_dialog.dart';
 import 'widgets/scenes/scenes.dart';
@@ -147,7 +147,7 @@ class _DashboardViewState extends State<DashboardView> {
                             ),
                             const Padding(
                               padding: EdgeInsets.only(top: 8.0),
-                              child: LightDivider(),
+                              child: BaseDivider(),
                             ),
                             const ResponsiveWidgetWrapper(
                               mobileWidget: StreamWidgetsMobile(),

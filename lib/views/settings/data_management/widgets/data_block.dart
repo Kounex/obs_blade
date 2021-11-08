@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../shared/general/base/base_card.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/column_separated.dart';
 import 'data_entry.dart';
 

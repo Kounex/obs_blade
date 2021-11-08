@@ -1,13 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/stores/shared/purchases.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
+import 'package:obs_blade/views/settings/widgets/blacksmith_dialog.dart';
 import 'package:package_info/package_info.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/hive_builder.dart';
-import '../../shared/general/themed/themed_cupertino_sliver_navigation_bar.dart';
-import '../../shared/general/themed/themed_cupertino_switch.dart';
+import '../../shared/general/themed/cupertino_sliver_navigation_bar.dart';
+import '../../shared/general/themed/cupertino_switch.dart';
 import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
@@ -82,12 +86,14 @@ class SettingsView extends StatelessWidget {
                           'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeStreamingControls.name,
-                            defaultValue: false),
+                          SettingsKeys.ExposeStreamingControls.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (exposeStreamingControls) {
                           settingsBox.put(
-                              SettingsKeys.ExposeStreamingControls.name,
-                              exposeStreamingControls);
+                            SettingsKeys.ExposeStreamingControls.name,
+                            exposeStreamingControls,
+                          );
                         },
                       ),
                     ),
@@ -99,12 +105,14 @@ class SettingsView extends StatelessWidget {
                           'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeRecordingControls.name,
-                            defaultValue: false),
+                          SettingsKeys.ExposeRecordingControls.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (exposeRecordingControls) {
                           settingsBox.put(
-                              SettingsKeys.ExposeRecordingControls.name,
-                              exposeRecordingControls);
+                            SettingsKeys.ExposeRecordingControls.name,
+                            exposeRecordingControls,
+                          );
                         },
                       ),
                     ),
@@ -116,12 +124,14 @@ class SettingsView extends StatelessWidget {
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard!',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeStudioControls.name,
-                            defaultValue: false),
+                          SettingsKeys.ExposeStudioControls.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (exposeStudioControls) {
                           settingsBox.put(
-                              SettingsKeys.ExposeStudioControls.name,
-                              exposeStudioControls);
+                            SettingsKeys.ExposeStudioControls.name,
+                            exposeStudioControls,
+                          );
                         },
                       ),
                     ),
@@ -134,8 +144,10 @@ class SettingsView extends StatelessWidget {
                             SettingsKeys.ExposeScenePreview.name,
                             defaultValue: true),
                         onChanged: (exposeScenePreview) {
-                          settingsBox.put(SettingsKeys.ExposeScenePreview.name,
-                              exposeScenePreview);
+                          settingsBox.put(
+                            SettingsKeys.ExposeScenePreview.name,
+                            exposeScenePreview,
+                          );
                         },
                       ),
                     ),
@@ -150,8 +162,10 @@ class SettingsView extends StatelessWidget {
                             SettingsKeys.EnforceTabletMode.name,
                             defaultValue: false),
                         onChanged: (enforceTabletMode) {
-                          settingsBox.put(SettingsKeys.EnforceTabletMode.name,
-                              enforceTabletMode);
+                          settingsBox.put(
+                            SettingsKeys.EnforceTabletMode.name,
+                            enforceTabletMode,
+                          );
                         },
                       ),
                     ),
@@ -161,24 +175,35 @@ class SettingsView extends StatelessWidget {
                   title: 'Theme',
                   blockEntries: [
                     BlockEntry(
-                      leading: CupertinoIcons.lab_flask_solid,
-                      title: 'Custom Theme',
-                      navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
-                      navigateToResult: settingsBox.get(
-                              SettingsKeys.CustomTheme.name,
-                              defaultValue: false)
-                          ? 'Active'
-                          : 'Inactive',
-                    ),
+                        leading: CupertinoIcons.lab_flask_solid,
+                        title: 'Custom Theme',
+                        navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
+                        navigateToResult: Text(
+                          settingsBox.get(SettingsKeys.CustomTheme.name,
+                                  defaultValue: false)
+                              ? 'Active'
+                              : 'Inactive',
+                        )),
                     BlockEntry(
                       leading: CupertinoIcons.moon_circle_fill,
                       leadingSize: 30.0,
                       title: 'True Dark Mode',
                       trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(SettingsKeys.TrueDark.name,
-                            defaultValue: false),
+                        value: settingsBox.get(
+                          SettingsKeys.TrueDark.name,
+                          defaultValue: false,
+                        ),
+                        enabled: !settingsBox.get(
+                          SettingsKeys.CustomTheme.name,
+                          defaultValue: false,
+                        ),
+                        disabledChangeInfo:
+                            'This setting has no effect and can\'t be changed while Custom Theme is active',
                         onChanged: (trueDark) {
-                          settingsBox.put(SettingsKeys.TrueDark.name, trueDark);
+                          settingsBox.put(
+                            SettingsKeys.TrueDark.name,
+                            trueDark,
+                          );
                         },
                       ),
                     ),
@@ -191,11 +216,20 @@ class SettingsView extends StatelessWidget {
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery!',
                         trailing: ThemedCupertinoSwitch(
                           value: settingsBox.get(
-                              SettingsKeys.ReduceSmearing.name,
-                              defaultValue: false),
+                            SettingsKeys.ReduceSmearing.name,
+                            defaultValue: false,
+                          ),
+                          enabled: !settingsBox.get(
+                            SettingsKeys.CustomTheme.name,
+                            defaultValue: false,
+                          ),
+                          disabledChangeInfo:
+                              'This setting has no effect and can\'t be changed while Custom Theme is active',
                           onChanged: (reduceSmearing) {
-                            settingsBox.put(SettingsKeys.ReduceSmearing.name,
-                                reduceSmearing);
+                            settingsBox.put(
+                              SettingsKeys.ReduceSmearing.name,
+                              reduceSmearing,
+                            );
                           },
                         ),
                       ),
@@ -203,24 +237,6 @@ class SettingsView extends StatelessWidget {
                 ),
                 ActionBlock(
                   title: 'Misc.',
-                  descriptionWidget: FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) {
-                      return Row(
-                        children: [
-                          Text(
-                            'Version ',
-                            style: Theme.of(context).textTheme.caption,
-                          ),
-                          if (snapshot.hasData)
-                            Text(
-                              snapshot.data!.version,
-                              style: Theme.of(context).textTheme.caption,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
                   blockEntries: [
                     BlockEntry(
                       leading: CupertinoIcons.info_circle_fill,
@@ -248,30 +264,79 @@ class SettingsView extends StatelessWidget {
                       title: 'Logs',
                       navigateTo: SettingsTabRoutingKeys.Logs.route,
                     ),
-                    BlockEntry(
-                      leading: CupertinoIcons.heart_solid,
-                      title: 'Support Me',
-                      heroPlaceholder: CupertinoIcons.heart,
-                      onTap: () =>
-                          Navigator.of(context, rootNavigator: true).push(
-                        PageRouteBuilder(
-                          opaque: false,
-                          barrierDismissible: true,
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) =>
-                                  DecoratedBoxTransition(
-                            decoration: DecorationTween(
-                              begin: const BoxDecoration(
-                                  color: Colors.transparent),
-                              end: const BoxDecoration(color: Colors.black54),
-                            ).animate(animation),
-                            child: FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            ),
+                  ],
+                ),
+                ActionBlock(
+                  title: 'Support',
+                  descriptionWidget: FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      return Row(
+                        children: [
+                          Text(
+                            'Version ',
+                            style: Theme.of(context).textTheme.caption,
                           ),
-                          pageBuilder: (BuildContext context, _, __) =>
-                              const SupportDialog(),
+                          if (snapshot.hasData)
+                            Text(
+                              snapshot.data!.version,
+                              style: Theme.of(context).textTheme.caption,
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  blockEntries: [
+                    BlockEntry(
+                      leading: CupertinoIcons.hammer_fill,
+                      title: 'Blacksmith',
+                      navigateToResult: Observer(
+                        builder: (_) => Text(
+                          GetIt.instance<PurchasesStore>().purchases.any(
+                                  (purchase) =>
+                                      purchase.productID == 'blacksmith')
+                              ? 'Active'
+                              : 'Inactive',
+                        ),
+                      ),
+                      onTap: () =>
+                          //   Navigator.of(context, rootNavigator: true).push(
+                          // PageRouteBuilder(
+                          //   opaque: false,
+                          //   barrierDismissible: true,
+                          //   transitionsBuilder:
+                          //       (context, animation, secondaryAnimation, child) =>
+                          //           DecoratedBoxTransition(
+                          //     decoration: DecorationTween(
+                          //       begin: const BoxDecoration(
+                          //           color: Colors.transparent),
+                          //       end: const BoxDecoration(color: Colors.black54),
+                          //     ).animate(animation),
+                          //     child: FadeTransition(
+                          //       opacity: animation,
+                          //       child: child,
+                          //     ),
+                          //   ),
+                          //   pageBuilder: (BuildContext context, _, __) =>
+                          //       const BlacksmithDialog(),
+                          // ),
+                          // ),
+                          ModalHandler.showBaseDialog(
+                        context: context,
+                        dialogWidget: const BlacksmithDialog(),
+                      ),
+                    ),
+                    BlockEntry(
+                      leading: CupertinoIcons.gift_fill,
+                      title: 'Tip Jar',
+                      onTap: () => ModalHandler.showBaseDialog(
+                        context: context,
+                        dialogWidget: const SupportDialog(
+                          title: 'Tips',
+                          icon: CupertinoIcons.gift_fill,
+                          type: SupportType.Tips,
+                          body:
+                              'If you want to support me and provide me with fuel to continue working on this app, feel free to use these available options!',
                         ),
                       ),
                     ),

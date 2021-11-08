@@ -5,7 +5,7 @@ import '../../../models/past_stream_data.dart';
 import '../../../shared/dialogs/confirmation.dart';
 import '../../../shared/dialogs/input.dart';
 import '../../../shared/general/app_bar_cupertino_actions.dart';
-import '../../../shared/general/base/base_card.dart';
+import '../../../shared/general/base/card.dart';
 import '../../../shared/general/formatted_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../types/extensions/int.dart';

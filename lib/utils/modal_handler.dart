@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:obs_blade/shared/general/base/base_card.dart';
+import 'package:obs_blade/shared/general/base/card.dart';
 
 import 'styling_helper.dart';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/themed/themed_rich_text.dart';
+import 'package:obs_blade/shared/general/themed/rich_text.dart';
 
 import '../../../shared/animator/fader.dart';
-import '../../../shared/general/base/base_card.dart';
+import '../../../shared/general/base/card.dart';
 import '../intro.dart';
 
 class IntroSlide extends StatelessWidget {

@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../shared/general/base/base_card.dart';
+import '../../../shared/general/base/card.dart';
+import '../../../shared/general/base/divider.dart';
 import '../../../shared/general/enumeration_block/enumeration_block.dart';
 import '../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../widgets/action_block.dart/light_divider.dart';
 import 'widgets/faq_block.dart';
 
 const kFAQSpaceHeight = 24.0;
@@ -54,7 +54,7 @@ class FAQView extends StatelessWidget {
                 Text(
                     'Since I received several questions and problems regarding using OBS Blade, I tried to compile some information here which might help others as well if they encounter problems or are not sure about some functions / possibilities.'),
                 SizedBox(height: 12.0),
-                LightDivider(),
+                BaseDivider(),
                 SizedBox(height: 12.0),
                 FAQBlock(
                   heading: 'Autodiscover does not find my OBS instance, why?',

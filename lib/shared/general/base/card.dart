@@ -3,7 +3,7 @@ import 'package:obs_blade/models/custom_theme.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../types/extensions/string.dart';
-import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
+import 'divider.dart';
 
 const double kBaseCardMaxWidth = 772.0;
 const double kBaseCardBorderRadius = 12.0;
@@ -125,7 +125,7 @@ class BaseCard extends StatelessWidget {
                 ),
               ),
             if (this.titleWidget != null || this.title != null)
-              const LightDivider(),
+              const BaseDivider(),
             Padding(
               padding: this.paddingChild,
               child: this.child,

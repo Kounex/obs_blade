@@ -190,6 +190,8 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.DontShowStreamStartMessage.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.DontShowStreamStopMessage.name);
+                  Hive.box(HiveKeys.Settings.name).delete(
+                      SettingsKeys.DontShowConsiderBlacksmithBeforeTip.name);
 
                   Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
                     DateTime.now().millisecondsSinceEpoch,

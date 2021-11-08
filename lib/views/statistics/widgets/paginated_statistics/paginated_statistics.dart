@@ -6,8 +6,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../models/past_stream_data.dart';
+import '../../../../shared/general/base/divider.dart';
 import '../../../../stores/views/statistics.dart';
-import '../../../settings/widgets/action_block.dart/light_divider.dart';
 import '../stream_entry/stream_entry.dart';
 import 'pagination_control.dart';
 
@@ -51,14 +51,14 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
                       ((_page - 1) *
                               statisticsStore.amountStatisticEntries.number) +
                           index]),
-              separatorBuilder: (context, index) => const LightDivider(),
+              separatorBuilder: (context, index) => const BaseDivider(),
               itemCount: min(
                   this.widget.filteredAndSortedStreamData.length -
                       ((_page - 1) *
                           statisticsStore.amountStatisticEntries.number),
                   statisticsStore.amountStatisticEntries.number),
             ),
-            const LightDivider(),
+            const BaseDivider(),
             PaginationControl(
               currentPage: _page,
               amountPages: amountPages,

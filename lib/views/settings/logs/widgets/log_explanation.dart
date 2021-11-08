@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
 
-import '../../../../shared/general/base/base_card.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../shared/general/enumeration_block/enumeration_block.dart';
 import '../../../../shared/general/enumeration_block/enumeration_entry.dart';
-import '../../../../shared/general/themed/themed_rich_text.dart';
+import '../../../../shared/general/themed/rich_text.dart';
 
 class LogExplanation extends StatelessWidget {
   const LogExplanation({Key? key}) : super(key: key);

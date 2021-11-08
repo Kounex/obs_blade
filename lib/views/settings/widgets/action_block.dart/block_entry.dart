@@ -26,7 +26,7 @@ class BlockEntry extends StatefulWidget {
   final Function? onTap;
   final String? navigateTo;
   final bool rootNavigation;
-  final String? navigateToResult;
+  final Widget? navigateToResult;
 
   const BlockEntry({
     Key? key,
@@ -121,12 +121,12 @@ class _BlockEntryState extends State<BlockEntry> {
                   ? Row(
                       children: [
                         if (this.widget.navigateToResult != null)
-                          Text(
-                            this.widget.navigateToResult!,
+                          DefaultTextStyle(
                             style: Theme.of(context)
                                 .textTheme
                                 .caption!
                                 .copyWith(fontSize: 14.0),
+                            child: this.widget.navigateToResult!,
                           ),
                         const Icon(
                           Icons.chevron_right,
