@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/custom_logo_row.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/theme_loader.dart';
 
@@ -12,6 +13,7 @@ import '../../../../../shared/general/themed/themed_cupertino_button.dart';
 import '../../../../../shared/general/validation_cupertino_textfield.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../types/extensions/color.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../widgets/action_block.dart/light_divider.dart';
 import 'theme_row.dart';
@@ -212,6 +214,30 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 .cardColorHex = _initialTheme.cardColorHex),
                             onSave: (colorHex) => setState(
                                 () => _customTheme.cardColorHex = colorHex),
+                          ),
+                          const SizedBox(height: 32.0),
+                          ThemeRow(
+                            title: 'Card Border Color',
+                            description:
+                                'You can set an outline color for the card elements used throughout the app to give them an extra touch',
+                            colorHex: _customTheme.cardBorderColorHex,
+                            onReset: () => setState(
+                                () => _customTheme.cardBorderColorHex = null),
+                            onSave: (colorHex) => setState(() =>
+                                _customTheme.cardBorderColorHex = colorHex),
+                          ),
+                          const SizedBox(height: 32.0),
+                          ThemeRow(
+                            title: 'Divider Color',
+                            description:
+                                'To seperate elements, I mainly used so called Dividers which are basically thin lines. You can even change the color of those',
+                            colorHex: _customTheme.dividerColorHex ??
+                                Theme.of(context).dividerColor.toHex(),
+                            onReset: () => setState(() =>
+                                _customTheme.dividerColorHex =
+                                    StylingHelper.light_divider_color.toHex()),
+                            onSave: (colorHex) => setState(
+                                () => _customTheme.dividerColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
                           ThemeRow(

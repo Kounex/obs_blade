@@ -30,6 +30,7 @@ class App extends StatelessWidget {
     Color? tabBarColor;
     Color? cursorColor;
     Color? cupertinoPrimaryColor;
+    Color? dividerColor;
 
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
       CustomTheme? activeCustomTheme;
@@ -62,6 +63,7 @@ class App extends StatelessWidget {
         cursorColor = activeCustomTheme.accentColorHex.hexToColor();
         cupertinoPrimaryColor =
             activeCustomTheme.highlightColorHex.hexToColor();
+        dividerColor = activeCustomTheme.dividerColorHex?.hexToColor();
       }
     }
 
@@ -83,7 +85,7 @@ class App extends StatelessWidget {
       cardColor: cardColor ?? StylingHelper.primary_color,
       // cursorColor: cursorColor ?? StylingHelper.highlight_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
-      dividerColor: Colors.grey[500],
+      dividerColor: dividerColor ?? StylingHelper.light_divider_color,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       textSelectionTheme: TextSelectionThemeData(

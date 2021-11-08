@@ -56,6 +56,12 @@ class CustomTheme extends HiveObject {
   @HiveField(15)
   String? logoAppBarColorHex;
 
+  @HiveField(16)
+  String? dividerColorHex;
+
+  @HiveField(17)
+  String? cardBorderColorHex;
+
   CustomTheme(
     this.name,
     this.description,
@@ -103,5 +109,7 @@ class CustomTheme extends HiveObject {
     toTheme.useLightBrightness = fromTheme.useLightBrightness;
     toTheme.customLogo = fromTheme.customLogo;
     toTheme.logoAppBarColorHex = fromTheme.logoAppBarColorHex;
+    toTheme.dividerColorHex = fromTheme.dividerColorHex;
+    toTheme.cardBorderColorHex = fromTheme.cardBorderColorHex;
   }
 }

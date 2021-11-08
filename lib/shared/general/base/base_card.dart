@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/models/custom_theme.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
+import '../../../types/extensions/string.dart';
 import '../../../views/settings/widgets/action_block.dart/light_divider.dart';
 
 const double kBaseCardMaxWidth = 772.0;
@@ -61,6 +64,8 @@ class BaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    CustomTheme? customTheme = StylingHelper.currentCustomTheme();
+
     Widget card = Padding(
       padding: EdgeInsets.only(
         top: this.topPadding,
@@ -83,7 +88,13 @@ class BaseCard extends StatelessWidget {
                           ? Colors.white
                           : Colors.black),
                 )
-              : BorderSide.none,
+              : customTheme?.cardBorderColorHex != null
+                  ? BorderSide(
+                      color: customTheme!.cardBorderColorHex!
+                          .hexToColor()
+                          .withOpacity(0.6),
+                    )
+                  : BorderSide.none,
         ),
         color: this.backgroundColor ?? Theme.of(context).cardColor,
         elevation: this.elevation,

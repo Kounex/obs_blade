@@ -2,6 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+
+import '../models/custom_theme.dart';
+import '../types/enums/hive_keys.dart';
+import '../types/enums/settings_keys.dart';
 
 /// Will hold some general styling stuff like "custom" icons or some
 /// app wide layout constraints (if applicable)
@@ -18,7 +23,7 @@ class StylingHelper {
   static const Color background_reduced_smearing_color =
       Color.fromRGBO(5, 5, 5, 1.0);
 
-  static const Color light_divider_color = Color.fromRGBO(111, 111, 111, 0.6);
+  static const Color light_divider_color = Color.fromRGBO(111, 111, 111, 1.0);
 
   static const double opacity_blurry = 0.75;
 
@@ -42,4 +47,23 @@ class StylingHelper {
 
   static String brightnessAwareOBSLogo(BuildContext context) =>
       'assets/images/${Theme.of(context).brightness == Brightness.dark ? 'base_logo.png' : 'base_logo_dark.png'}';
+
+  static CustomTheme? currentCustomTheme([Box<dynamic>? settingsBox]) {
+    settingsBox = settingsBox ?? Hive.box(HiveKeys.Settings.name);
+
+    CustomTheme? customTheme;
+
+    if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
+      try {
+        customTheme =
+            Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values.firstWhere(
+                  (customTheme) =>
+                      customTheme.uuid ==
+                      settingsBox!.get(SettingsKeys.ActiveCustomThemeUUID.name),
+                );
+      } catch (_) {}
+    }
+
+    return customTheme;
+  }
 }

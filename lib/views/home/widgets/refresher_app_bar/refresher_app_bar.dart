@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:obs_blade/models/custom_theme.dart';
 import 'package:obs_blade/shared/general/flutter_modified/translucent_sliver_app_bar.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
@@ -79,21 +78,9 @@ class RefresherAppBar extends StatelessWidget {
               SettingsKeys.ActiveCustomThemeUUID
             ],
             builder: (context, settingsBox, child) {
-              CustomTheme? customTheme;
+              CustomTheme? customTheme =
+                  StylingHelper.currentCustomTheme(settingsBox);
 
-              if (settingsBox.get(SettingsKeys.CustomTheme.name,
-                  defaultValue: false)) {
-                try {
-                  customTheme = Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-                      .values
-                      .firstWhere(
-                        (customTheme) =>
-                            customTheme.uuid ==
-                            settingsBox
-                                .get(SettingsKeys.ActiveCustomThemeUUID.name),
-                      );
-                } catch (_) {}
-              }
               return Stack(
                 alignment: Alignment.center,
                 children: [

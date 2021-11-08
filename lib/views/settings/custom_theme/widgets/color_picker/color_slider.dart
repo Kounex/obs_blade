@@ -157,8 +157,16 @@ class _ColorSliderState extends State<ColorSlider> {
                           (index) => HSLColor.fromAHSL(
                             1.0,
                             this.widget.hue ?? index.toDouble(),
-                            (this.widget.saturation ?? index.toDouble()) / 100,
-                            (this.widget.lightness ?? index.toDouble()) / 100,
+                            (this.widget.colorType == ColorType.H
+                                    ? 100
+                                    : this.widget.saturation ??
+                                        index.toDouble()) /
+                                100,
+                            (this.widget.colorType == ColorType.H
+                                    ? 50
+                                    : this.widget.lightness ??
+                                        index.toDouble()) /
+                                100,
                           ).toColor(),
                         ),
                       ),
