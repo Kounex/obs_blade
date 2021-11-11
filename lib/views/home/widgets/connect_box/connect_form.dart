@@ -33,7 +33,7 @@ class _ConnectFormState extends State<ConnectForm> {
 
   final FocusNode _portFocusNode = FocusNode();
 
-  bool _obscurePWText = true;
+  bool _obscurePW = true;
 
   final StreamController<BaseResponse> _connectResponse = StreamController();
 
@@ -106,7 +106,7 @@ class _ConnectFormState extends State<ConnectForm> {
                 onChanged: (pw) => this.widget.saveCredentials
                     ? landingStore.typedInConnection.pw = pw
                     : null,
-                obscureText: _obscurePWText,
+                obscureText: _obscurePW,
                 decoration: InputDecoration(
                   errorText: snapshot.hasData &&
                           snapshot.data!.error ==
@@ -115,11 +115,10 @@ class _ConnectFormState extends State<ConnectForm> {
                       : null,
                   labelText: 'Password',
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePWText
-                        ? Icons.visibility
-                        : Icons.visibility_off),
-                    onPressed: () =>
-                        innerState(() => _obscurePWText = !_obscurePWText),
+                    icon: Icon(
+                      _obscurePW ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () => innerState(() => _obscurePW = !_obscurePW),
                   ),
                 ),
               ),
