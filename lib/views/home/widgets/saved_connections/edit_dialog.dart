@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 
@@ -29,6 +30,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
   late TextEditingController _pw;
 
   final FocusNode _portFocusNode = FocusNode();
+
+  bool _obscurePW = true;
 
   @override
   void initState() {
@@ -132,10 +135,29 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               ),
             ],
           ),
-          CupertinoTextField(
-            controller: _pw,
-            placeholder: 'Password',
-            autocorrect: false,
+          Stack(
+            alignment: Alignment.centerRight,
+            children: [
+              CupertinoTextField(
+                controller: _pw,
+                placeholder: 'Password',
+                autocorrect: false,
+                obscureText: _obscurePW,
+              ),
+              Positioned(
+                right: 8.0,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: GestureDetector(
+                    child: Icon(
+                      _obscurePW ? Icons.visibility_off : Icons.visibility,
+                      size: 20.0,
+                    ),
+                    onTap: () => setState(() => _obscurePW = !_obscurePW),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
