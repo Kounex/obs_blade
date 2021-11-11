@@ -124,9 +124,11 @@ class SocialBlock extends StatelessWidget {
                 child: Text(
                   social.linkText ?? social.link,
                   softWrap: true,
-                  style: (social.textStyle ?? const TextStyle()).copyWith(
+                  style: (social.textStyle ??
+                          Theme.of(context).textTheme.bodyText1!)
+                      .copyWith(
                     color: Theme.of(context).colorScheme.secondary,
-                    decoration: TextDecoration.underline,
+                    // decoration: TextDecoration.underline,
                   ),
                 ),
               ),
