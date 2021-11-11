@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obs_blade/types/enums/order.dart';
 
 class OrderButton extends StatefulWidget {
@@ -55,6 +56,7 @@ class _OrderButtonState extends State<OrderButton>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         if (!_controllerDown.isAnimating && !_controllerUp.isAnimating) {
           this.widget.toggle?.call();
           if (_controllerUp.isDismissed) {

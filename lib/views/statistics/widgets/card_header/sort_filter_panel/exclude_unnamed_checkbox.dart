@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/checkbox.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
 
 class ExcludeUnnamedCheckbox extends StatelessWidget {
@@ -15,12 +17,14 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
       child: Row(
         children: [
           Observer(
-            builder: (_) => Checkbox(
-              // materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            builder: (_) => BaseCheckbox(
               value: statisticsStore.excludeUnnamedStreams,
               tristate: true,
-              onChanged: (excludeUnnamedStreams) => statisticsStore
-                  .setExcludeUnnamedStreams(excludeUnnamedStreams),
+              onChanged: (excludeUnnamedStreams) {
+                HapticFeedback.lightImpact();
+
+                statisticsStore.setExcludeUnnamedStreams(excludeUnnamedStreams);
+              },
             ),
           ),
           Text(

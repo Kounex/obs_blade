@@ -17,8 +17,10 @@ class ActiveRouteObserver extends NavigatorObserver {
   /// route, is `previousRoute`.
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    GetIt.instance<TabsStore>().activeRoutePerNavigator[tab] =
-        route.settings.name!;
+    if (route.settings.name != null) {
+      GetIt.instance<TabsStore>().activeRoutePerNavigator[tab] =
+          route.settings.name!;
+    }
   }
 
   /// The [Navigator] popped `route`.
@@ -27,8 +29,10 @@ class ActiveRouteObserver extends NavigatorObserver {
   /// route, is `previousRoute`.
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    GetIt.instance<TabsStore>().activeRoutePerNavigator[tab] =
-        previousRoute!.settings.name!;
+    if (previousRoute != null && previousRoute.settings.name != null) {
+      GetIt.instance<TabsStore>().activeRoutePerNavigator[tab] =
+          previousRoute.settings.name!;
+    }
   }
 }
 

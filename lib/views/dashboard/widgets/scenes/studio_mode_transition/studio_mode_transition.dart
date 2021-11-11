@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
+import 'package:obs_blade/shared/general/base/checkbox.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -58,7 +59,7 @@ class StudioModeTransition extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Checkbox(
+                              BaseCheckbox(
                                 value: dashboardStore.studioMode,
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,

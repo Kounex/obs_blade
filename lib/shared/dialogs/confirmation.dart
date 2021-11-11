@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base/checkbox.dart';
 
 class ConfirmationDialog extends StatefulWidget {
   final String title;
@@ -55,7 +56,7 @@ class _ConfirmationDialogState extends State<ConfirmationDialog> {
                   children: [
                     Material(
                       type: MaterialType.transparency,
-                      child: Checkbox(
+                      child: BaseCheckbox(
                         value: _dontShowChecked,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         onChanged: (checked) =>
