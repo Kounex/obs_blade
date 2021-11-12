@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/models/purchased_tip.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/shared/purchases.dart';
 import 'package:obs_blade/stores/shared/tabs.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
 
 import '../../../../shared/general/flutter_modified/non_scrollable_cupertino_dialog.dart';
@@ -74,9 +77,33 @@ class _SupportDialogState extends State<SupportDialog> {
         .productDetails;
   }
 
-  String _sumTipped(
-          Iterable<PurchaseDetails> tips, List<ProductDetails> products) =>
-      '${tips.fold<int>(0, (sum, tip) => sum += products.firstWhere((tipData) => tipData.id == tip.productID).rawPrice.toInt())}${products.first.currencySymbol}';
+  String _sumTipped(Iterable<PurchasedTip> tips) {
+    if (tips.isNotEmpty) {
+      bool startsWithCurrencySymbol =
+          tips.first.price.startsWith(tips.first.currencySymbol);
+      double sumTips = double.parse(tips
+          .fold<double>(
+              0.0,
+              (sum, tip) => sum += double.parse(
+                  tip.price.replaceAll(tip.currencySymbol, '').trim()))
+          .toStringAsFixed(2));
+
+      String sumTipsFormatted =
+          (sumTips.toInt().toDouble() == sumTips ? sumTips.toInt() : sumTips)
+              .toString();
+
+      String possibleGap = tips.first.price.contains(' ') ? ' ' : '';
+
+      return (startsWithCurrencySymbol
+              ? tips.first.currencySymbol
+              : sumTipsFormatted) +
+          possibleGap +
+          (startsWithCurrencySymbol
+              ? sumTipsFormatted
+              : tips.first.currencySymbol);
+    }
+    return '-';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,22 +165,20 @@ class _SupportDialogState extends State<SupportDialog> {
                                         ),
                                       )
                                       .toList(),
-                                  Observer(builder: (_) {
-                                    Iterable<PurchaseDetails> tips =
-                                        purchasesStore.purchases.where(
-                                            (purchase) =>
-                                                purchase.productID !=
-                                                'blacksmith');
-                                    if (tips.isNotEmpty) {
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 12.0),
-                                        child: Text(
-                                            'You tipped ${_sumTipped(tips, tipsSnapshot.data!)} so far\nYou are awesome :)'),
-                                      );
-                                    }
-                                    return Container();
-                                  }),
+                                  HiveBuilder<PurchasedTip>(
+                                    hiveKey: HiveKeys.PurchasedTip,
+                                    builder: (context, purchasedTipBox, child) {
+                                      if (purchasedTipBox.values.isNotEmpty) {
+                                        return Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 12.0),
+                                          child: Text(
+                                              'You tipped ${_sumTipped(purchasedTipBox.values)} so far\nYou are awesome :)'),
+                                        );
+                                      }
+                                      return Container();
+                                    },
+                                  ),
                                 ],
                                 if (this.widget.type == SupportType.Blacksmith)
                                   Observer(

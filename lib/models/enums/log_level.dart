@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 
 part 'log_level.g.dart';
 
-@HiveType(typeId: 8)
+@HiveType(typeId: TypeIDs.LogLevel)
 enum LogLevel {
   @HiveField(0)
   Info,

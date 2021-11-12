@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 
 part 'hidden_scene.g.dart';
 
-@HiveType(typeId: 6)
+@HiveType(typeId: TypeIDs.HiddenScene)
 class HiddenScene extends HiveObject {
   /// Name of the scene (unfortunately OBS WebSocket does not expose something
   /// like an ID for scene, just the name) which should be hidden

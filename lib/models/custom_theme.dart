@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 import 'package:uuid/uuid.dart';
 
 import '../types/extensions/color.dart';
@@ -6,7 +7,7 @@ import '../utils/styling_helper.dart';
 
 part 'custom_theme.g.dart';
 
-@HiveType(typeId: 2)
+@HiveType(typeId: TypeIDs.CustomTheme)
 class CustomTheme extends HiveObject {
   @HiveField(0)
   String uuid;

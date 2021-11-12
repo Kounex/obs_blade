@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 
 part 'purchased_tip.g.dart';
 
-@HiveType(typeId: 9)
+@HiveType(typeId: TypeIDs.PurchasedTip)
 class PurchasedTip extends HiveObject {
   @HiveField(0)
   int timestampMS;
@@ -16,5 +17,9 @@ class PurchasedTip extends HiveObject {
   @HiveField(3)
   String price;
 
-  PurchasedTip(this.timestampMS, this.id, this.name, this.price);
+  @HiveField(4)
+  String currencySymbol;
+
+  PurchasedTip(
+      this.timestampMS, this.id, this.name, this.price, this.currencySymbol);
 }

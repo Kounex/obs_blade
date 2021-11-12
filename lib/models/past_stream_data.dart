@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 
 import '../types/classes/api/stream_stats.dart';
 
@@ -16,7 +17,7 @@ part 'past_stream_data.g.dart';
 /// view on the data
 const int kAmountStreamStatsForAverage = 10;
 
-@HiveType(typeId: 1)
+@HiveType(typeId: TypeIDs.PastStreamData)
 class PastStreamData extends HiveObject {
   /// Single values for the duration of the stream - won't consist
   /// of every value from the StreamStats event (too many) but will

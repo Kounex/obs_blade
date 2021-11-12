@@ -1,10 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 
 part 'chat_type.g.dart';
 
-@HiveType(typeId: 4)
+@HiveType(typeId: TypeIDs.ChatType)
 enum ChatType {
   @HiveField(0)
   Twitch,

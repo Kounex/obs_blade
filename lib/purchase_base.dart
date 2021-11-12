@@ -2,9 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/stores/shared/purchases.dart';
 import 'package:obs_blade/utils/general_helper.dart';
+
+import 'models/purchased_tip.dart';
+import 'types/enums/hive_keys.dart';
 
 class PurchaseBase extends StatefulWidget {
   final Widget child;
@@ -61,7 +66,9 @@ class _PurchaseBaseState extends State<PurchaseBase> {
         } else if (purchaseDetails.status == PurchaseStatus.purchased) {
           /// If a purchase contains tip in its productID, it is a consumable
           /// and therefore not persistent. The App Stores will only persist
-          /// non-consumables (one time "upgrades")
+          /// non-consumables (one time "upgrades"). Thats why it will be persisted
+          /// manually in Hive so it's at least possible to retrieve them
+          /// from an app installation
 
           if (purchaseDetails.productID.contains('tip')) {
             try {
@@ -70,20 +77,19 @@ class _PurchaseBaseState extends State<PurchaseBase> {
                   .productDetails
                   .first;
 
-              GeneralHelper.advLog(purchaseDetails.transactionDate);
-              GeneralHelper.advLog(purchaseDetails.productID);
-              GeneralHelper.advLog(tipDetails.title);
-              GeneralHelper.advLog(tipDetails.price);
-
-              // Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).add(
-              //   PurchasedTip(
-              //     int.parse(purchaseDetails.transactionDate!),
-              //     purchaseDetails.productID,
-              //     tipDetails.title,
-              //     tipDetails.price,
-              //   ),
-              // );
-            } catch (e) {}
+              Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).add(
+                PurchasedTip(
+                  int.parse(purchaseDetails.transactionDate!),
+                  purchaseDetails.productID,
+                  tipDetails.title,
+                  tipDetails.price,
+                  tipDetails.currencySymbol,
+                ),
+              );
+            } catch (e) {
+              GeneralHelper.advLog(e.toString(),
+                  includeInLogs: true, level: LogLevel.Error);
+            }
           } else {
             GetIt.instance<PurchasesStore>().addPurchase(purchaseDetails);
           }

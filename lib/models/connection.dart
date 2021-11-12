@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 
 part 'connection.g.dart';
 
-@HiveType(typeId: 0)
+@HiveType(typeId: TypeIDs.Connection)
 class Connection extends HiveObject {
   @HiveField(0)
   String? name;

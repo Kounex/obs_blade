@@ -21,13 +21,14 @@ class PurchasedTipAdapter extends TypeAdapter<PurchasedTip> {
       fields[1] as String,
       fields[2] as String,
       fields[3] as String,
+      fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, PurchasedTip obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.timestampMS)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class PurchasedTipAdapter extends TypeAdapter<PurchasedTip> {
       ..writeByte(2)
       ..write(obj.name)
       ..writeByte(3)
-      ..write(obj.price);
+      ..write(obj.price)
+      ..writeByte(4)
+      ..write(obj.currencySymbol);
   }
 
   @override

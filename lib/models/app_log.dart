@@ -1,10 +1,11 @@
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/type_ids.dart';
 
 import 'enums/log_level.dart';
 
 part 'app_log.g.dart';
 
-@HiveType(typeId: 7)
+@HiveType(typeId: TypeIDs.AppLog)
 class AppLog extends HiveObject {
   @HiveField(0)
   int timestampMS;
