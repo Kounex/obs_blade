@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/purchased_tip.dart';
 import 'package:obs_blade/stores/shared/purchases.dart';
 
 import 'app.dart';
@@ -97,6 +98,7 @@ Future<void> _initializeHive() async {
   Hive.registerAdapter(HiddenSceneItemAdapter());
   Hive.registerAdapter(HiddenSceneAdapter());
   Hive.registerAdapter(AppLogAdapter());
+  Hive.registerAdapter(PurchasedTipAdapter());
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
@@ -126,6 +128,10 @@ Future<void> _initializeHive() async {
   );
   await Hive.openBox<AppLog>(
     HiveKeys.AppLog.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<PurchasedTip>(
+    HiveKeys.PurchasedTip.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 

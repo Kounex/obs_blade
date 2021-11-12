@@ -22,7 +22,7 @@
     {
       "displayPrice" : "1",
       "familyShareable" : false,
-      "internalID" : "DEAB8CA6",
+      "internalID" : "FE597D58",
       "localizations" : [
         {
           "description" : "",
@@ -32,12 +32,12 @@
       ],
       "productID" : "tip_1",
       "referenceName" : "Tip 1",
-      "type" : "NonConsumable"
+      "type" : "Consumable"
     },
     {
       "displayPrice" : "3",
       "familyShareable" : false,
-      "internalID" : "32208D98",
+      "internalID" : "27FF5DCA",
       "localizations" : [
         {
           "description" : "",
@@ -47,12 +47,12 @@
       ],
       "productID" : "tip_2",
       "referenceName" : "Tip 2",
-      "type" : "NonConsumable"
+      "type" : "Consumable"
     },
     {
       "displayPrice" : "5",
       "familyShareable" : false,
-      "internalID" : "CE9F35A7",
+      "internalID" : "8EF85490",
       "localizations" : [
         {
           "description" : "",
@@ -62,7 +62,7 @@
       ],
       "productID" : "tip_3",
       "referenceName" : "Tip 3",
-      "type" : "NonConsumable"
+      "type" : "Consumable"
     }
   ],
   "settings" : {

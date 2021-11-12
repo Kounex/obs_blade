@@ -20,6 +20,9 @@ enum HiveKeys {
 
   /// Returns a List of [AppLog]
   AppLog,
+
+  /// Returns a List of [PurchasedTip]
+  PurchasedTip,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -31,5 +34,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.HiddenSceneItem: 'hidden-scene-item',
         HiveKeys.HiddenScene: 'hidden-scene',
         HiveKeys.AppLog: 'app-log',
+        HiveKeys.PurchasedTip: 'purchased-tip',
       }[this]!;
 }

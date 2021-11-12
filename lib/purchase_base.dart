@@ -59,8 +59,34 @@ class _PurchaseBaseState extends State<PurchaseBase> {
         if (purchaseDetails.status == PurchaseStatus.error) {
           // _handleError(purchaseDetails.error!);
         } else if (purchaseDetails.status == PurchaseStatus.purchased) {
-          // _deliverProduct(purchaseDetails);
-          GetIt.instance<PurchasesStore>().addPurchase(purchaseDetails);
+          /// If a purchase contains tip in its productID, it is a consumable
+          /// and therefore not persistent. The App Stores will only persist
+          /// non-consumables (one time "upgrades")
+
+          if (purchaseDetails.productID.contains('tip')) {
+            try {
+              ProductDetails tipDetails = (await InAppPurchase.instance
+                      .queryProductDetails({purchaseDetails.productID}))
+                  .productDetails
+                  .first;
+
+              GeneralHelper.advLog(purchaseDetails.transactionDate);
+              GeneralHelper.advLog(purchaseDetails.productID);
+              GeneralHelper.advLog(tipDetails.title);
+              GeneralHelper.advLog(tipDetails.price);
+
+              // Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).add(
+              //   PurchasedTip(
+              //     int.parse(purchaseDetails.transactionDate!),
+              //     purchaseDetails.productID,
+              //     tipDetails.title,
+              //     tipDetails.price,
+              //   ),
+              // );
+            } catch (e) {}
+          } else {
+            GetIt.instance<PurchasesStore>().addPurchase(purchaseDetails);
+          }
         } else if (purchaseDetails.status == PurchaseStatus.restored) {
           GetIt.instance<PurchasesStore>().addPurchase(purchaseDetails);
         }

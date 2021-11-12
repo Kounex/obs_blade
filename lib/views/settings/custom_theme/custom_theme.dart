@@ -58,8 +58,9 @@ class _CustomThemeViewState extends State<CustomThemeView> {
       /// [ValueListenableBuilder] wrapping [MaterialApp] which also listenes
       /// to [SettingsKeys.ActiveCustomThemeUUID]) so changing and updating
       /// the current theme works but this subtree doesn't get rebuilded
-      /// in this process - need to investigate the precise reason for that
-      /// since I assumed this part would get rebuilded as well
+      /// in this process since it's a [StatefulWidget] and the state itself
+      /// is not being rebuild (would have to trigger this specifically with keys
+      /// or overriding updateWidget or similar)
       body: HiveBuilder<dynamic>(
         hiveKey: HiveKeys.Settings,
         rebuildKeys: const [
