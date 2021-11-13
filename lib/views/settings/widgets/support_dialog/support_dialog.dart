@@ -1,20 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/models/purchased_tip.dart';
-import 'package:obs_blade/shared/general/base/button.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/stores/shared/purchases.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
+import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content.dart';
+import 'package:obs_blade/views/settings/widgets/support_dialog/tips_content.dart';
 
 import '../../../../shared/general/flutter_modified/non_scrollable_cupertino_dialog.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
-import '../../../../types/extensions/list.dart';
-import 'donate_button.dart';
 import 'support_header.dart';
 
 const double _kDialogEdgePadding = 20.0;
@@ -47,17 +38,17 @@ class SupportDialog extends StatefulWidget {
 }
 
 class _SupportDialogState extends State<SupportDialog> {
-  Future<List<ProductDetails>>? _tips;
+  Future<List<ProductDetails>>? _inAppPurchases;
   String? _error;
 
   @override
   void initState() {
     super.initState();
 
-    _tips = _getAvailableTips();
+    _inAppPurchases = _getAvailableInAppPurchases();
   }
 
-  Future<List<ProductDetails>> _getAvailableTips() async {
+  Future<List<ProductDetails>> _getAvailableInAppPurchases() async {
     _error = null;
     final bool available = await InAppPurchase.instance.isAvailable();
     if (!available) {
@@ -77,38 +68,8 @@ class _SupportDialogState extends State<SupportDialog> {
         .productDetails;
   }
 
-  String _sumTipped(Iterable<PurchasedTip> tips) {
-    if (tips.isNotEmpty) {
-      bool startsWithCurrencySymbol =
-          tips.first.price.startsWith(tips.first.currencySymbol);
-      double sumTips = double.parse(tips
-          .fold<double>(
-              0.0,
-              (sum, tip) => sum += double.parse(
-                  tip.price.replaceAll(tip.currencySymbol, '').trim()))
-          .toStringAsFixed(2));
-
-      String sumTipsFormatted =
-          (sumTips.toInt().toDouble() == sumTips ? sumTips.toInt() : sumTips)
-              .toString();
-
-      String possibleGap = tips.first.price.contains(' ') ? ' ' : '';
-
-      return (startsWithCurrencySymbol
-              ? tips.first.currencySymbol
-              : sumTipsFormatted) +
-          possibleGap +
-          (startsWithCurrencySymbol
-              ? sumTipsFormatted
-              : tips.first.currencySymbol);
-    }
-    return '-';
-  }
-
   @override
   Widget build(BuildContext context) {
-    PurchasesStore purchasesStore = GetIt.instance<PurchasesStore>();
-
     return Material(
       type: MaterialType.transparency,
       child: NonScrollableCupertinoAlertDialog(
@@ -130,12 +91,14 @@ class _SupportDialogState extends State<SupportDialog> {
                     bottom: _kDialogEdgePadding,
                   ),
                   child: FutureBuilder<List<ProductDetails>>(
-                    future: _tips,
-                    builder: (context, tipsSnapshot) {
-                      if (tipsSnapshot.connectionState ==
+                    future: _inAppPurchases,
+                    builder: (context, inAppPurchasesSnapshot) {
+                      if (inAppPurchasesSnapshot.connectionState ==
                           ConnectionState.done) {
-                        if (tipsSnapshot.hasData &&
-                            tipsSnapshot.data!.isNotEmpty) {
+                        if (inAppPurchasesSnapshot.hasData &&
+                            inAppPurchasesSnapshot.data!.isNotEmpty) {
+                          List<ProductDetails> inAppPurchasesSnapshotDetails =
+                              inAppPurchasesSnapshot.data!;
                           return SingleChildScrollView(
                             child: Column(
                               children: [
@@ -148,86 +111,14 @@ class _SupportDialogState extends State<SupportDialog> {
                                     height: 12.0,
                                   ),
                                 ],
-                                if (this.widget.type == SupportType.Tips) ...[
-                                  ...tipsSnapshot.data!
-                                      .mapIndexed(
-                                        (tip, index) => DonateButton(
-                                          text: tip.title.isNotEmpty
-                                              ? tip.title
-                                              : '${(tip.rawPrice).toInt()} Energy Drink${((tip.rawPrice).toInt() > 1 ? "s" : "")}',
-                                          price: tip.price,
-                                          purchaseParam: PurchaseParam(
-                                              productDetails: tip),
-                                        ),
-                                      )
-                                      .toList(),
-                                  HiveBuilder<PurchasedTip>(
-                                    hiveKey: HiveKeys.PurchasedTip,
-                                    builder: (context, purchasedTipBox, child) {
-                                      if (purchasedTipBox.values.isNotEmpty) {
-                                        return Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 12.0),
-                                          child: Text(
-                                              'You tipped ${_sumTipped(purchasedTipBox.values)} so far\nYou are awesome :)'),
-                                        );
-                                      }
-                                      return Container();
-                                    },
-                                  ),
-                                ],
+                                if (this.widget.type == SupportType.Tips)
+                                  TipsContent(
+                                      tipsDetails:
+                                          inAppPurchasesSnapshotDetails),
                                 if (this.widget.type == SupportType.Blacksmith)
-                                  Observer(
-                                    builder: (_) {
-                                      if (!purchasesStore.purchases.any(
-                                          (purchase) =>
-                                              purchase.productID ==
-                                              'blacksmith')) {
-                                        return DonateButton(
-                                          price: tipsSnapshot.data![0].price,
-                                          purchaseParam: PurchaseParam(
-                                              productDetails:
-                                                  tipsSnapshot.data![0]),
-                                        );
-                                      }
-                                      return Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          BaseButton(
-                                            text: 'Forge Theme',
-                                            secondary: true,
-                                            onPressed: () {
-                                              Navigator.of(context).pop(true);
-                                              TabsStore tabsStore =
-                                                  GetIt.instance<TabsStore>();
-
-                                              if (tabsStore
-                                                          .activeRoutePerNavigator[
-                                                      Tabs.Settings] !=
-                                                  SettingsTabRoutingKeys
-                                                      .CustomTheme.route) {
-                                                Future.delayed(
-                                                  const Duration(
-                                                      milliseconds: 500),
-                                                  () => tabsStore
-                                                      .navigatorKeys[
-                                                          Tabs.Settings]
-                                                      ?.currentState
-                                                      ?.pushNamed(
-                                                    SettingsTabRoutingKeys
-                                                        .CustomTheme.route,
-                                                    arguments: {
-                                                      'blacksmith': true
-                                                    },
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  ),
+                                  BlacksmithContent(
+                                      blacksmithDetails:
+                                          inAppPurchasesSnapshotDetails),
                               ],
                             ),
                           );
