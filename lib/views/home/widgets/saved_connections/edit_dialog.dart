@@ -135,29 +135,30 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               ),
             ],
           ),
-          Stack(
-            alignment: Alignment.centerRight,
-            children: [
-              CupertinoTextField(
-                controller: _pw,
-                placeholder: 'Password',
-                autocorrect: false,
-                obscureText: _obscurePW,
-              ),
-              Positioned(
-                right: 8.0,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: GestureDetector(
-                    child: Icon(
-                      _obscurePW ? Icons.visibility_off : Icons.visibility,
-                      size: 20.0,
-                    ),
-                    onTap: () => setState(() => _obscurePW = !_obscurePW),
-                  ),
+          CupertinoTextField(
+            controller: _pw,
+            placeholder: 'Password',
+            autocorrect: false,
+            obscureText: _obscurePW,
+            suffix: Material(
+              color: Colors.grey[
+                  Theme.of(context).brightness == Brightness.light ? 300 : 900],
+              borderRadius:
+                  const BorderRadius.horizontal(right: Radius.circular(5.0)),
+              child: IconButton(
+                padding: const EdgeInsets.all(6),
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(
+                  maxHeight: 32.0,
+                  maxWidth: 32.0,
+                ),
+                onPressed: () => setState(() => _obscurePW = !_obscurePW),
+                iconSize: 20.0,
+                icon: Icon(
+                  _obscurePW ? Icons.visibility_off : Icons.visibility,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
