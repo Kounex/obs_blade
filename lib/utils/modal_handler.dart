@@ -24,7 +24,7 @@ class ModalHandler {
     required Widget dialogWidget,
     bool barrierDismissible = false,
   }) async =>
-      showDialog<T>(
+      showCupertinoDialog<T>(
         context: context,
         barrierDismissible: barrierDismissible,
         builder: (context) => dialogWidget,

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
@@ -79,10 +80,11 @@ class ConnectionBox extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit),
-                    onPressed: () => showCupertinoDialog(
+                    onPressed: () => ModalHandler.showBaseDialog(
                       context: context,
-                      builder: (context) =>
-                          EditConnectionDialog(connection: this.connection),
+                      dialogWidget: EditConnectionDialog(
+                        connection: this.connection,
+                      ),
                     ),
                   ),
                 ],
