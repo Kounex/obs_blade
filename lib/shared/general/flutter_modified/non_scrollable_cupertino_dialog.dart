@@ -1130,7 +1130,6 @@ class _CupertinoAlertContentSection extends StatelessWidget {
         ),
       if (message != null)
         Flexible(
-          fit: FlexFit.loose,
           child: Padding(
             padding: messagePadding!,
             child: DefaultTextStyle(

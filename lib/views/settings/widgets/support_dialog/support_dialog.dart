@@ -109,22 +109,18 @@ class _SupportDialogState extends State<SupportDialog> {
   Widget build(BuildContext context) {
     PurchasesStore purchasesStore = GetIt.instance<PurchasesStore>();
 
-    return Dismissible(
-      key: const Key('support'),
-      direction: DismissDirection.vertical,
-      onDismissed: (_) => Navigator.of(context).pop(),
-      dismissThresholds: const {DismissDirection.vertical: 0.2},
-      child: Material(
-        type: MaterialType.transparency,
-        child: NonScrollableCupertinoAlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SupportHeader(
-                title: this.widget.title,
-                icon: this.widget.icon,
-              ),
-              DefaultTextStyle(
+    return Material(
+      type: MaterialType.transparency,
+      child: NonScrollableCupertinoAlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SupportHeader(
+              title: this.widget.title,
+              icon: this.widget.icon,
+            ),
+            Flexible(
+              child: DefaultTextStyle(
                 style: Theme.of(context).textTheme.bodyText1!,
                 textAlign: TextAlign.center,
                 child: Padding(
@@ -248,18 +244,18 @@ class _SupportDialogState extends State<SupportDialog> {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-
-        // Transform(
-        //   transform: Matrix4.identity()..translate(110.0, 110.0),
-        //   child: CupertinoButton(
-        //     child: Text('...'),
-        //     onPressed: () => Navigator.of(context).pop(),
-        //   ),
-        // ),
       ),
+
+      // Transform(
+      //   transform: Matrix4.identity()..translate(110.0, 110.0),
+      //   child: CupertinoButton(
+      //     child: Text('...'),
+      //     onPressed: () => Navigator.of(context).pop(),
+      //   ),
+      // ),
     );
   }
 }
