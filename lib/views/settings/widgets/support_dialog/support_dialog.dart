@@ -55,16 +55,16 @@ class _SupportDialogState extends State<SupportDialog> {
       _error =
           'Connection to the App Store is not possible. Make sure you have a working internet connection.\n\nFeel free to let me know if this problem persists!';
     }
-    Set<String> tipIDs = {};
+    Set<String> inAppPurchasesIDs = {};
     switch (this.widget.type) {
       case SupportType.Blacksmith:
-        tipIDs = {'blacksmith'};
+        inAppPurchasesIDs = {'blacksmith'};
         break;
       case SupportType.Tips:
-        tipIDs = {'tip_1', 'tip_2', 'tip_3'};
+        inAppPurchasesIDs = {'tip_1', 'tip_2', 'tip_3'};
         break;
     }
-    return (await InAppPurchase.instance.queryProductDetails(tipIDs))
+    return (await InAppPurchase.instance.queryProductDetails(inAppPurchasesIDs))
         .productDetails;
   }
 
@@ -102,23 +102,21 @@ class _SupportDialogState extends State<SupportDialog> {
                           return SingleChildScrollView(
                             child: Column(
                               children: [
-                                if (this.widget.bodyWidget != null ||
-                                    this.widget.body != null) ...[
-                                  this.widget.body != null
-                                      ? Text(this.widget.body!)
-                                      : this.widget.bodyWidget!(context),
-                                  const SizedBox(
-                                    height: 12.0,
-                                  ),
-                                ],
+                                this.widget.bodyWidget != null
+                                    ? this.widget.bodyWidget!(context)
+                                    : Text(this.widget.body ?? ''),
+                                const SizedBox(
+                                  height: 12.0,
+                                ),
                                 if (this.widget.type == SupportType.Tips)
                                   TipsContent(
-                                      tipsDetails:
-                                          inAppPurchasesSnapshotDetails),
+                                    tipsDetails: inAppPurchasesSnapshotDetails,
+                                  ),
                                 if (this.widget.type == SupportType.Blacksmith)
                                   BlacksmithContent(
-                                      blacksmithDetails:
-                                          inAppPurchasesSnapshotDetails),
+                                    blacksmithDetails:
+                                        inAppPurchasesSnapshotDetails,
+                                  ),
                               ],
                             ),
                           );
@@ -139,14 +137,6 @@ class _SupportDialogState extends State<SupportDialog> {
           ],
         ),
       ),
-
-      // Transform(
-      //   transform: Matrix4.identity()..translate(110.0, 110.0),
-      //   child: CupertinoButton(
-      //     child: Text('...'),
-      //     onPressed: () => Navigator.of(context).pop(),
-      //   ),
-      // ),
     );
   }
 }
