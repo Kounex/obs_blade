@@ -31,30 +31,25 @@ class BlacksmithContent extends StatelessWidget {
                 PurchaseParam(productDetails: this.blacksmithDetails[0]),
           );
         }
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            BaseButton(
-              text: 'Forge Theme',
-              secondary: true,
-              onPressed: () {
-                Navigator.of(context).pop(true);
-                TabsStore tabsStore = GetIt.instance<TabsStore>();
+        return BaseButton(
+          text: 'Forge Theme',
+          secondary: true,
+          onPressed: () {
+            Navigator.of(context).pop(true);
+            TabsStore tabsStore = GetIt.instance<TabsStore>();
 
-                if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
-                    SettingsTabRoutingKeys.CustomTheme.route) {
-                  Future.delayed(
-                    const Duration(milliseconds: 500),
-                    () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
-                        ?.pushNamed(
-                      SettingsTabRoutingKeys.CustomTheme.route,
-                      arguments: {'blacksmith': true},
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
+            if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
+                SettingsTabRoutingKeys.CustomTheme.route) {
+              Future.delayed(
+                const Duration(milliseconds: 500),
+                () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
+                    ?.pushNamed(
+                  SettingsTabRoutingKeys.CustomTheme.route,
+                  arguments: {'blacksmith': true},
+                ),
+              );
+            }
+          },
         );
       },
     );

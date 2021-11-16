@@ -73,6 +73,8 @@ class _SupportDialogState extends State<SupportDialog> {
     return Material(
       type: MaterialType.transparency,
       child: NonScrollableCupertinoAlertDialog(
+        contentPadding: const EdgeInsets.all(0),
+        dialogWidth: 420.0,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

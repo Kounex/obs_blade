@@ -79,12 +79,7 @@ const double _kDialogMinButtonHeight = 45.0;
 const double _kDialogMinButtonFontSize = 10.0;
 
 // ActionSheet specific constants.
-const double _kActionSheetEdgeHorizontalPadding = 8.0;
-const double _kActionSheetCancelButtonPadding = 8.0;
 const double _kActionSheetEdgeVerticalPadding = 10.0;
-const double _kActionSheetContentHorizontalPadding = 40.0;
-const double _kActionSheetContentVerticalPadding = 14.0;
-const double _kActionSheetButtonHeight = 56.0;
 
 // A translucent color that is painted on top of the blurred backdrop as the
 // dialog's background color
@@ -236,6 +231,8 @@ class NonScrollableCupertinoAlertDialog extends StatelessWidget {
     Key? key,
     this.title,
     this.content,
+    this.contentPadding,
+    this.dialogWidth,
     this.actions = const <Widget>[],
     this.actionScrollController,
     this.insetAnimationDuration = const Duration(milliseconds: 100),
@@ -254,6 +251,10 @@ class NonScrollableCupertinoAlertDialog extends StatelessWidget {
   ///
   /// Typically a [Text] widget.
   final Widget? content;
+
+  final EdgeInsets? contentPadding;
+
+  final double? dialogWidth;
 
   /// The (optional) set of actions that are displayed at the bottom of the
   /// dialog.
@@ -297,11 +298,12 @@ class NonScrollableCupertinoAlertDialog extends StatelessWidget {
               bottom: content == null ? _kDialogEdgePadding : 1.0,
               top: _kDialogEdgePadding * textScaleFactor,
             ),
-            messagePadding: EdgeInsets.only(
-                // left: _kDialogEdgePadding,
-                // right: _kDialogEdgePadding,
-                // bottom: _kDialogEdgePadding * textScaleFactor,
-                // top: title == null ? _kDialogEdgePadding : 1.0,
+            messagePadding: this.contentPadding ??
+                EdgeInsets.only(
+                  left: _kDialogEdgePadding,
+                  right: _kDialogEdgePadding,
+                  bottom: _kDialogEdgePadding * textScaleFactor,
+                  top: title == null ? _kDialogEdgePadding : 1.0,
                 ),
             titleTextStyle: _kCupertinoDialogTitleStyle.copyWith(
               color:
@@ -374,9 +376,10 @@ class NonScrollableCupertinoAlertDialog extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.symmetric(
                           vertical: _kDialogEdgePadding),
-                      width: isInAccessibilityMode
-                          ? _kAccessibilityCupertinoDialogWidth
-                          : _kCupertinoDialogWidth,
+                      width: this.dialogWidth ??
+                          (isInAccessibilityMode
+                              ? _kAccessibilityCupertinoDialogWidth
+                              : _kCupertinoDialogWidth),
                       child: CupertinoPopupSurface(
                         isSurfacePainted: false,
                         child: Semantics(

@@ -72,7 +72,7 @@ class FAQView extends StatelessWidget {
                       ),
                       EnumerationEntry(
                         text:
-                            'The port where OBS is running is not opened. Your firewall might block this port or your router might not allow communicating with this port (port forwarding)',
+                            'The port where OBS is running is not opened. Your firewall might block this port or your router might not allow communicating with this port',
                       ),
                       EnumerationEntry(
                         text:
@@ -101,15 +101,9 @@ class FAQView extends StatelessWidget {
                   customBody: EnumerationBlock(
                     title:
                         'In most cases you should be able to connect to OBS if it\'s listed in autodiscover. If you try to connect to OBS manually because it\'s not listed in autodiscover, there is usually an underlying problem (check the list above). Additionally check that:',
-                    customEntries: [
-                      EnumerationEntry(
-                        text:
-                            'The correct password is used (if set in the OBS WebSocket settings)',
-                      ),
-                      EnumerationEntry(
-                        text:
-                            'The host (device running OBS) is reachable with the given IP address. The internal IP address can only be used when both devices are in the same network and the previous points are covered',
-                      ),
+                    entries: [
+                      'The correct password is used (if set in the OBS WebSocket settings)',
+                      'The host (device running OBS) is reachable with the given IP address. The internal IP address can only be used when both devices are in the same network and the previous points are covered',
                     ],
                   ),
                 ),
