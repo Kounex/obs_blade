@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/divider.dart';
+import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/general/themed/rich_text.dart';
 import '../../../../stores/shared/tabs.dart';
+import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/settings_keys.dart';
+import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import 'donate_button.dart';
 
@@ -76,7 +77,7 @@ class BlacksmithContent extends StatelessWidget {
                 if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
                     SettingsTabRoutingKeys.CustomTheme.route) {
                   Future.delayed(
-                    const Duration(milliseconds: 500),
+                    ModalHandler.transitionDelayDuration,
                     () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
                         ?.pushNamed(
                       SettingsTabRoutingKeys.CustomTheme.route,

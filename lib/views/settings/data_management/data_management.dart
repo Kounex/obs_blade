@@ -33,11 +33,16 @@ class DataManagementView extends StatelessWidget {
     /// and re-setting it. Worst case here (without doing it) would lead to reset the Blacksmith
     /// status - it would have been re-set though on a restart since I'm also checking
     /// the information from the App Store on startup
-    bool boughtBlacksmith = Hive.box(HiveKeys.Settings.name)
-        .get(SettingsKeys.BoughtBlacksmith.name, defaultValue: false);
+    bool boughtBlacksmith = Hive.box(HiveKeys.Settings.name).get(
+      SettingsKeys.BoughtBlacksmith.name,
+      defaultValue: false,
+    );
     await Hive.box(HiveKeys.Settings.name).clear();
-    Hive.box(HiveKeys.Settings.name)
-        .put(SettingsKeys.BoughtBlacksmith.name, boughtBlacksmith);
+
+    Hive.box(HiveKeys.Settings.name).put(
+      SettingsKeys.BoughtBlacksmith.name,
+      boughtBlacksmith,
+    );
 
     GetIt.instance<TabsStore>().setActiveTab(Tabs.Home);
 
@@ -75,13 +80,15 @@ class DataManagementView extends StatelessWidget {
                 onClear: () {
                   Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All saved connections have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All saved connections have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(
@@ -99,13 +106,15 @@ class DataManagementView extends StatelessWidget {
                   Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
                       .clear();
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All statistics have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All statistics have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(
@@ -115,13 +124,15 @@ class DataManagementView extends StatelessWidget {
                 onClear: () {
                   Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All hidden scenes have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All hidden scenes have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(
@@ -132,13 +143,15 @@ class DataManagementView extends StatelessWidget {
                   Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
                       .clear();
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All hidden scene items have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All hidden scene items have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(
@@ -151,13 +164,15 @@ class DataManagementView extends StatelessWidget {
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.TwitchUsernames.name);
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All twitch chats have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All twitch chats have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(
@@ -170,13 +185,15 @@ class DataManagementView extends StatelessWidget {
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.YoutubeUsernames.name);
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All youtube chats have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All youtube chats have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(
@@ -189,13 +206,15 @@ class DataManagementView extends StatelessWidget {
                     Hive.box(HiveKeys.Settings.name).delete(key.name);
                   }
 
-                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
-                    DateTime.now().millisecondsSinceEpoch,
-                    LogLevel.Warning,
-                    'All don\'t ask me again checks have been deleted by the user.',
-                    null,
-                    true,
-                  ));
+                  Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                    AppLog(
+                      DateTime.now().millisecondsSinceEpoch,
+                      LogLevel.Warning,
+                      'All don\'t ask me again checks have been deleted by the user.',
+                      null,
+                      true,
+                    ),
+                  );
                 },
               ),
               DataEntry(

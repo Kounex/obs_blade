@@ -71,19 +71,21 @@ class _DashboardViewState extends State<DashboardView> {
     }
 
     when(
-        (_) =>
-            GetIt.instance<NetworkStore>().activeSession!.connection.name ==
-            null,
-        () => SchedulerBinding.instance!
-            .addPostFrameCallback((_) => _saveConnectionDialog(context)));
+      (_) =>
+          GetIt.instance<NetworkStore>().activeSession!.connection.name == null,
+      () => SchedulerBinding.instance!.addPostFrameCallback(
+        (_) => _saveConnectionDialog(context),
+      ),
+    );
 
     when(
-        (_) => GetIt.instance<NetworkStore>().obsTerminated,
-        () => SchedulerBinding.instance!.addPostFrameCallback(
-              (_) => Navigator.of(context).pushReplacementNamed(
-                  HomeTabRoutingKeys.Landing.route,
-                  arguments: ModalRoute.of(context)!.settings.arguments),
-            ));
+      (_) => GetIt.instance<NetworkStore>().obsTerminated,
+      () => SchedulerBinding.instance!.addPostFrameCallback(
+        (_) => Navigator.of(context).pushReplacementNamed(
+            HomeTabRoutingKeys.Landing.route,
+            arguments: ModalRoute.of(context)!.settings.arguments),
+      ),
+    );
   }
 
   @override
@@ -103,7 +105,7 @@ class _DashboardViewState extends State<DashboardView> {
             'Do you want to save this connection? You can do it later as well!\n\n(Click on the icon on the top right of the screen and select "Save / Edit Connection"',
         onOk: (_) {
           Future.delayed(
-            const Duration(milliseconds: 500),
+            ModalHandler.transitionDelayDuration,
             () => ModalHandler.showBaseDialog(
               context: context,
               dialogWidget: const SaveEditConnectionDialog(),

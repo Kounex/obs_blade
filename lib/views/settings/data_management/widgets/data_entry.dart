@@ -40,7 +40,7 @@ class DataEntry extends StatelessWidget {
                 'Are you sure you want to delete all ${this.title}? This action can\'t be undone!',
             onOk: (_) => this.additionalConfirmationText != null
                 ? Future.delayed(
-                    const Duration(milliseconds: 500),
+                    ModalHandler.transitionDelayDuration,
                     () => ModalHandler.showBaseDialog(
                       context: context,
                       dialogWidget: ConfirmationDialog(

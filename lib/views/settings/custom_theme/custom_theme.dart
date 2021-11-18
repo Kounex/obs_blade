@@ -76,8 +76,10 @@ class _CustomThemeViewState extends State<CustomThemeView> {
               as Map?)?['blacksmith'];
           if (openAddTheme != null && openAddTheme && !_fromBlacksmithDialog) {
             _fromBlacksmithDialog = true;
-            Future.delayed(const Duration(milliseconds: 500),
-                () => _openAddTheme(context));
+            Future.delayed(
+              ModalHandler.transitionDelayDuration,
+              () => _openAddTheme(context),
+            );
           }
 
           return TransculentCupertinoNavBarWrapper(

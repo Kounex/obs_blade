@@ -19,6 +19,8 @@ const Color kDialogColor = CupertinoDynamicColor.withBrightness(
 const double kDialogBlurAmount = 20.0;
 
 class ModalHandler {
+  static Duration transitionDelayDuration = const Duration(milliseconds: 350);
+
   static Future<T?> showBaseDialog<T>({
     required BuildContext context,
     required Widget dialogWidget,
