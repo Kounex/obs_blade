@@ -1,9 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-import 'package:obs_blade/stores/shared/purchases.dart';
-import 'package:obs_blade/utils/built_in_themes.dart';
-import 'package:obs_blade/views/settings/widgets/blacksmith_dialog.dart';
+import 'package:hive/hive.dart';
 
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/clean_list_tile.dart';
@@ -14,7 +11,9 @@ import '../../../shared/general/themed/cupertino_switch.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
+import '../../../utils/built_in_themes.dart';
 import '../../../utils/modal_handler.dart';
+import '../widgets/support_dialog/support_dialog.dart';
 import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
 
@@ -29,9 +28,10 @@ class _CustomThemeViewState extends State<CustomThemeView> {
   bool _fromBlacksmithDialog = false;
 
   void _openAddTheme(BuildContext context) {
-    GetIt.instance<PurchasesStore>()
-            .purchases
-            .any((purchase) => purchase.productID == 'blacksmith')
+    Hive.box(HiveKeys.Settings.name).get(
+      SettingsKeys.BoughtBlacksmith.name,
+      defaultValue: false,
+    )
         ? ModalHandler.showBaseCupertinoBottomSheet(
             context: context,
             modalWidgetBuilder: (context, scrollController) => AddEditTheme(
@@ -40,7 +40,11 @@ class _CustomThemeViewState extends State<CustomThemeView> {
           )
         : ModalHandler.showBaseDialog(
             context: context,
-            dialogWidget: const BlacksmithDialog(),
+            dialogWidget: const SupportDialog(
+              title: 'Blacksmith',
+              icon: CupertinoIcons.hammer_fill,
+              type: SupportType.Blacksmith,
+            ),
           ).then(
             (clickedOnForgeTheme) {
               if (clickedOnForgeTheme) {

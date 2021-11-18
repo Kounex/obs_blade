@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/shared/general/base/button.dart';
-import 'package:obs_blade/stores/shared/purchases.dart';
-import 'package:obs_blade/stores/shared/tabs.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 
+import '../../../../shared/general/base/button.dart';
+import '../../../../shared/general/base/divider.dart';
+import '../../../../shared/general/themed/rich_text.dart';
+import '../../../../stores/shared/tabs.dart';
+import '../../../../utils/routing_helper.dart';
 import 'donate_button.dart';
 
 class BlacksmithContent extends StatelessWidget {
@@ -19,39 +22,73 @@ class BlacksmithContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    PurchasesStore purchasesStore = GetIt.instance<PurchasesStore>();
-
-    return Observer(
-      builder: (_) {
-        if (!purchasesStore.purchases
-            .any((purchase) => purchase.productID == 'blacksmith')) {
-          return DonateButton(
-            price: this.blacksmithDetails[0].price,
-            purchaseParam:
-                PurchaseParam(productDetails: this.blacksmithDetails[0]),
-          );
-        }
-        return BaseButton(
-          text: 'Forge Theme',
-          secondary: true,
-          onPressed: () {
-            Navigator.of(context).pop(true);
-            TabsStore tabsStore = GetIt.instance<TabsStore>();
-
-            if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
-                SettingsTabRoutingKeys.CustomTheme.route) {
-              Future.delayed(
-                const Duration(milliseconds: 500),
-                () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
-                    ?.pushNamed(
-                  SettingsTabRoutingKeys.CustomTheme.route,
-                  arguments: {'blacksmith': true},
-                ),
+    return Column(
+      children: [
+        ThemedRichText(
+          textAlign: TextAlign.center,
+          textSpans: [
+            TextSpan(
+              text: 'Become a blacksmith and forge your OBS Blade',
+              style: DefaultTextStyle.of(context)
+                  .style
+                  .copyWith(fontStyle: FontStyle.italic),
+            ),
+            const WidgetSpan(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.0),
+                child: BaseDivider(),
+              ),
+            ),
+            const TextSpan(
+              text:
+                  'Blacksmith offers you visual customisation options for this app to make it more personalised! Create your own theme to change the overall look and feel of this app to make it yours!',
+            ),
+          ],
+        ),
+        const SizedBox(height: 12.0),
+        HiveBuilder<dynamic>(
+          hiveKey: HiveKeys.Settings,
+          rebuildKeys: const [SettingsKeys.BoughtBlacksmith],
+          builder: (_, settingsBox, child) {
+            if (!settingsBox.get(
+              SettingsKeys.BoughtBlacksmith.name,
+              defaultValue: false,
+            )) {
+              if (this.blacksmithDetails.isNotEmpty) {
+                return DonateButton(
+                  price: this.blacksmithDetails[0].price,
+                  purchaseParam:
+                      PurchaseParam(productDetails: this.blacksmithDetails[0]),
+                );
+              }
+              return const DonateButton(
+                errorText:
+                    'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
               );
             }
+            return BaseButton(
+              text: 'Forge Theme',
+              secondary: true,
+              onPressed: () {
+                Navigator.of(context).pop(true);
+                TabsStore tabsStore = GetIt.instance<TabsStore>();
+
+                if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
+                    SettingsTabRoutingKeys.CustomTheme.route) {
+                  Future.delayed(
+                    const Duration(milliseconds: 500),
+                    () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
+                        ?.pushNamed(
+                      SettingsTabRoutingKeys.CustomTheme.route,
+                      arguments: {'blacksmith': true},
+                    ),
+                  );
+                }
+              },
+            );
           },
-        );
-      },
+        ),
+      ],
     );
   }
 }

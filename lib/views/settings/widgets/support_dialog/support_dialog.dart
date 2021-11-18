@@ -1,14 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/shared/general/custom_cupertino_dialog.dart';
 import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content.dart';
 import 'package:obs_blade/views/settings/widgets/support_dialog/tips_content.dart';
 
-import '../../../../shared/general/flutter_modified/non_scrollable_cupertino_dialog.dart';
+// import '../../../../shared/general/flutter_modified/non_scrollable_cupertino_dialog.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
 import 'support_header.dart';
-
-const double _kDialogEdgePadding = 20.0;
 
 enum SupportType {
   Blacksmith,
@@ -17,19 +16,14 @@ enum SupportType {
 
 class SupportDialog extends StatefulWidget {
   final String title;
-
   final IconData icon;
 
-  final String? body;
-  final Widget Function(BuildContext)? bodyWidget;
   final SupportType type;
 
   const SupportDialog({
     Key? key,
     required this.title,
     this.icon = CupertinoIcons.heart_solid,
-    this.body,
-    this.bodyWidget,
     required this.type,
   }) : super(key: key);
 
@@ -70,74 +64,40 @@ class _SupportDialogState extends State<SupportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      type: MaterialType.transparency,
-      child: NonScrollableCupertinoAlertDialog(
-        contentPadding: const EdgeInsets.all(0),
-        dialogWidth: 420.0,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SupportHeader(
-              title: this.widget.title,
-              icon: this.widget.icon,
+    return CustomCupertinoDialog(
+      paddingTop: 10.0,
+      title: SupportHeader(
+        title: this.widget.title,
+        icon: this.widget.icon,
+      ),
+      content: FutureBuilder<List<ProductDetails>>(
+        future: _inAppPurchases,
+        builder: (context, inAppPurchasesSnapshot) {
+          if (inAppPurchasesSnapshot.connectionState == ConnectionState.done) {
+            List<ProductDetails> inAppPurchasesDetails =
+                inAppPurchasesSnapshot.data ?? [];
+            return SingleChildScrollView(
+              child: () {
+                if (this.widget.type == SupportType.Tips) {
+                  return TipsContent(
+                    tipsDetails: inAppPurchasesDetails,
+                  );
+                } else {
+                  return BlacksmithContent(
+                    blacksmithDetails: inAppPurchasesDetails,
+                  );
+                }
+              }(),
+            );
+          }
+          return Container(
+            height: 172.0,
+            alignment: Alignment.center,
+            child: BaseProgressIndicator(
+              text: 'Fetching...',
             ),
-            Flexible(
-              child: DefaultTextStyle(
-                style: Theme.of(context).textTheme.bodyText1!,
-                textAlign: TextAlign.center,
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: _kDialogEdgePadding,
-                    right: _kDialogEdgePadding,
-                    bottom: _kDialogEdgePadding,
-                  ),
-                  child: FutureBuilder<List<ProductDetails>>(
-                    future: _inAppPurchases,
-                    builder: (context, inAppPurchasesSnapshot) {
-                      if (inAppPurchasesSnapshot.connectionState ==
-                          ConnectionState.done) {
-                        if (inAppPurchasesSnapshot.hasData &&
-                            inAppPurchasesSnapshot.data!.isNotEmpty) {
-                          List<ProductDetails> inAppPurchasesSnapshotDetails =
-                              inAppPurchasesSnapshot.data!;
-                          return SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                this.widget.bodyWidget != null
-                                    ? this.widget.bodyWidget!(context)
-                                    : Text(this.widget.body ?? ''),
-                                const SizedBox(
-                                  height: 12.0,
-                                ),
-                                if (this.widget.type == SupportType.Tips)
-                                  TipsContent(
-                                    tipsDetails: inAppPurchasesSnapshotDetails,
-                                  ),
-                                if (this.widget.type == SupportType.Blacksmith)
-                                  BlacksmithContent(
-                                    blacksmithDetails:
-                                        inAppPurchasesSnapshotDetails,
-                                  ),
-                              ],
-                            ),
-                          );
-                        }
-                        return Text(_error ??
-                            'There was an error retrieving available options! It seems like there are no options available currently.\n\nFeel free to let me know if this problem persists!');
-                      }
-                      return Center(
-                        child: BaseProgressIndicator(
-                          text: 'Fetching...',
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

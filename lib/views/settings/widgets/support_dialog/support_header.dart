@@ -61,7 +61,9 @@ class SupportHeader extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyText1!.copyWith(
                     fontFamily: '.SF UI Display',
                     inherit: false,
-                    fontSize: 17.0,
+
+                    /// Changed from 17.0
+                    fontSize: 20.0,
                     fontWeight: FontWeight.w600,
                     height: 1.3,
                     letterSpacing: -0.5,

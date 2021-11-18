@@ -9,7 +9,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obs_blade/models/purchased_tip.dart';
-import 'package:obs_blade/stores/shared/purchases.dart';
 
 import 'app.dart';
 import 'models/app_log.dart';
@@ -77,7 +76,6 @@ void _initializeStores() {
   /// Shared stores used app-wide
   GetIt.instance.registerLazySingleton<NetworkStore>(() => NetworkStore());
   GetIt.instance.registerLazySingleton<TabsStore>(() => TabsStore());
-  GetIt.instance.registerLazySingleton<PurchasesStore>(() => PurchasesStore());
 
   /// View stores designated for specific views
   GetIt.instance.registerLazySingleton<IntroStore>(() => IntroStore());

@@ -45,18 +45,28 @@ class TipsContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ...this
-            .tipsDetails
-            .map(
-              (tip) => DonateButton(
-                text: tip.title.isNotEmpty
-                    ? tip.title
-                    : '${(tip.rawPrice).toInt()} Energy Drink${((tip.rawPrice).toInt() > 1 ? "s" : "")}',
-                price: tip.price,
-                purchaseParam: PurchaseParam(productDetails: tip),
-              ),
-            )
-            .toList(),
+        const Text(
+            'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!'),
+        const SizedBox(height: 12.0),
+        if (this.tipsDetails.isEmpty)
+          const DonateButton(
+            text: 'Energy Drink',
+            errorText:
+                'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
+          ),
+        if (this.tipsDetails.isNotEmpty)
+          ...this
+              .tipsDetails
+              .map(
+                (tip) => DonateButton(
+                  text: tip.title.isNotEmpty
+                      ? tip.title
+                      : '${(tip.rawPrice).toInt()} Energy Drink${((tip.rawPrice).toInt() > 1 ? "s" : "")}',
+                  price: tip.price,
+                  purchaseParam: PurchaseParam(productDetails: tip),
+                ),
+              )
+              .toList(),
         HiveBuilder<PurchasedTip>(
           hiveKey: HiveKeys.PurchasedTip,
           builder: (context, purchasedTipBox, child) {

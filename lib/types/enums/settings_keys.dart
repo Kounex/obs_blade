@@ -63,6 +63,11 @@ enum SettingsKeys {
   /// but if someone wants to minimise their view, they can even remove that
   ExposeScenePreview,
 
+  /// [bool]: If the user has bought Blacksmith. Will be checked in [PurchaseBase] on the fly
+  /// (checked from the App Store) but the user might have no internet connection so it's persisted
+  /// here additionally
+  BoughtBlacksmith,
+
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
   /// ******************************************************************************
@@ -127,6 +132,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
         SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
         SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
+        SettingsKeys.BoughtBlacksmith: 'bought-blacksmith',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:
             'dont-show-hiding-scene-items-warning',

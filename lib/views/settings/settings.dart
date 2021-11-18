@@ -1,10 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/stores/shared/purchases.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/views/settings/widgets/blacksmith_dialog.dart';
 import 'package:package_info/package_info.dart';
 import 'package:wakelock/wakelock.dart';
 
@@ -290,40 +287,19 @@ class SettingsView extends StatelessWidget {
                     BlockEntry(
                       leading: CupertinoIcons.hammer_fill,
                       title: 'Blacksmith',
-                      navigateToResult: Observer(
-                        builder: (_) => Text(
-                          GetIt.instance<PurchasesStore>().purchases.any(
-                                  (purchase) =>
-                                      purchase.productID == 'blacksmith')
-                              ? 'Active'
-                              : 'Inactive',
-                        ),
+                      navigateToResult: Text(
+                        (settingsBox.get(SettingsKeys.BoughtBlacksmith.name,
+                                defaultValue: false) as bool)
+                            ? 'Active'
+                            : 'Inactive',
                       ),
-                      onTap: () =>
-                          //   Navigator.of(context, rootNavigator: true).push(
-                          // PageRouteBuilder(
-                          //   opaque: false,
-                          //   barrierDismissible: true,
-                          //   transitionsBuilder:
-                          //       (context, animation, secondaryAnimation, child) =>
-                          //           DecoratedBoxTransition(
-                          //     decoration: DecorationTween(
-                          //       begin: const BoxDecoration(
-                          //           color: Colors.transparent),
-                          //       end: const BoxDecoration(color: Colors.black54),
-                          //     ).animate(animation),
-                          //     child: FadeTransition(
-                          //       opacity: animation,
-                          //       child: child,
-                          //     ),
-                          //   ),
-                          //   pageBuilder: (BuildContext context, _, __) =>
-                          //       const BlacksmithDialog(),
-                          // ),
-                          // ),
-                          ModalHandler.showBaseDialog(
+                      onTap: () => ModalHandler.showBaseDialog(
                         context: context,
-                        dialogWidget: const BlacksmithDialog(),
+                        dialogWidget: const SupportDialog(
+                          title: 'Blacksmith',
+                          icon: CupertinoIcons.hammer_fill,
+                          type: SupportType.Blacksmith,
+                        ),
                       ),
                     ),
                     BlockEntry(
@@ -335,8 +311,6 @@ class SettingsView extends StatelessWidget {
                           title: 'Tips',
                           icon: CupertinoIcons.gift_fill,
                           type: SupportType.Tips,
-                          body:
-                              'If you want to support me and provide me with fuel to continue working on this app, feel free to use these available options!',
                         ),
                       ),
                     ),
