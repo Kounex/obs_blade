@@ -70,6 +70,7 @@ enum SettingsKeys {
 
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
+  /// IMPORTANT: Name should always start with 'DontShow'/'dont-show'
   /// ******************************************************************************
 
   /// [bool]: If the user saw the warning regarding displaying the live preview of

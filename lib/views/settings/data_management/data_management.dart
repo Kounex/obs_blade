@@ -27,7 +27,17 @@ class DataManagementView extends StatelessWidget {
     await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
     await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
     await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
+
+    /// Since the Hive-SettingsBox also contains the information whether the user
+    /// purchased Blacksmith or not, we save the current value before clearing the whole box
+    /// and re-setting it. Worst case here (without doing it) would lead to reset the Blacksmith
+    /// status - it would have been re-set though on a restart since I'm also checking
+    /// the information from the App Store on startup
+    bool boughtBlacksmith = Hive.box(HiveKeys.Settings.name)
+        .get(SettingsKeys.BoughtBlacksmith.name, defaultValue: false);
     await Hive.box(HiveKeys.Settings.name).clear();
+    Hive.box(HiveKeys.Settings.name)
+        .put(SettingsKeys.BoughtBlacksmith.name, boughtBlacksmith);
 
     GetIt.instance<TabsStore>().setActiveTab(Tabs.Home);
 
@@ -174,24 +184,10 @@ class DataManagementView extends StatelessWidget {
                 description:
                     'All checks set in the dialogs popped up to explain something very important but could get annoying very fast and aren\'t showing up anymore. If you want to see them again - here you go!',
                 onClear: () {
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowHidingScenesWarning.name);
-                  Hive.box(HiveKeys.Settings.name).delete(
-                      SettingsKeys.DontShowHidingSceneItemsWarning.name);
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowPreviewWarning.name);
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowYouTubeChatBetaWarning.name);
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowRecordStartMessage.name);
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowRecordStopMessage.name);
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowStreamStartMessage.name);
-                  Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.DontShowStreamStopMessage.name);
-                  Hive.box(HiveKeys.Settings.name).delete(
-                      SettingsKeys.DontShowConsiderBlacksmithBeforeTip.name);
+                  for (SettingsKeys key in SettingsKeys.values
+                      .where((key) => key.name.startsWith('dont-show'))) {
+                    Hive.box(HiveKeys.Settings.name).delete(key.name);
+                  }
 
                   Hive.box<AppLog>(HiveKeys.AppLog.name).add(AppLog(
                     DateTime.now().millisecondsSinceEpoch,
