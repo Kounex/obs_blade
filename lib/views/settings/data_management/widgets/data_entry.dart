@@ -39,13 +39,16 @@ class DataEntry extends StatelessWidget {
             body: this.customConfirmationText ??
                 'Are you sure you want to delete all ${this.title}? This action can\'t be undone!',
             onOk: (_) => this.additionalConfirmationText != null
-                ? ModalHandler.showBaseDialog(
-                    context: context,
-                    dialogWidget: ConfirmationDialog(
-                      title: 'Delete ${this.title}',
-                      isYesDestructive: true,
-                      body: this.additionalConfirmationText,
-                      onOk: (_) => this.onClear?.call(),
+                ? Future.delayed(
+                    const Duration(milliseconds: 500),
+                    () => ModalHandler.showBaseDialog(
+                      context: context,
+                      dialogWidget: ConfirmationDialog(
+                        title: 'Delete ${this.title}',
+                        isYesDestructive: true,
+                        body: this.additionalConfirmationText,
+                        onOk: (_) => this.onClear?.call(),
+                      ),
                     ),
                   )
                 : this.onClear?.call(),

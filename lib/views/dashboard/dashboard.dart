@@ -102,9 +102,12 @@ class _DashboardViewState extends State<DashboardView> {
         body:
             'Do you want to save this connection? You can do it later as well!\n\n(Click on the icon on the top right of the screen and select "Save / Edit Connection"',
         onOk: (_) {
-          ModalHandler.showBaseDialog(
-            context: context,
-            dialogWidget: const SaveEditConnectionDialog(),
+          Future.delayed(
+            const Duration(milliseconds: 500),
+            () => ModalHandler.showBaseDialog(
+              context: context,
+              dialogWidget: const SaveEditConnectionDialog(),
+            ),
           );
         },
       ),
