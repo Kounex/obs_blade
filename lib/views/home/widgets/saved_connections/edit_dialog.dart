@@ -69,7 +69,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         children: [
           const Text('Edit Connection'),
           CupertinoButton(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: const Text(
               'Delete',
               style: TextStyle(color: CupertinoColors.destructiveRed),
