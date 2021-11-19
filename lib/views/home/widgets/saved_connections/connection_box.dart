@@ -69,24 +69,38 @@ class ConnectionBox extends StatelessWidget {
                 ),
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  BaseButton(
-                    text: 'Connect',
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                      networkStore.setOBSWebSocket(this.connection);
-                    },
+                  const SizedBox(width: 24.0),
+                  Expanded(
+                    child: BaseButton(
+                      text: 'Connect',
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        networkStore.setOBSWebSocket(this.connection);
+                      },
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => ModalHandler.showBaseDialog(
-                      context: context,
-                      dialogWidget: EditConnectionDialog(
-                        connection: this.connection,
+                  const SizedBox(width: 24.0),
+                  Expanded(
+                    child: BaseButton(
+                      // shrinkWidth: true,
+                      // padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      // child: const Icon(
+                      //   Icons.edit,
+                      //   size: 20.0,
+                      // ),
+                      text: 'Edit',
+                      secondary: true,
+                      onPressed: () => ModalHandler.showBaseDialog(
+                        context: context,
+                        dialogWidget: EditConnectionDialog(
+                          connection: this.connection,
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 24.0),
                 ],
               ),
             ],

@@ -64,44 +64,41 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
   @override
   Widget build(BuildContext context) {
     return CupertinoAlertDialog(
-      title: SizedBox(
-        height: 48.0,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            const Text('Edit Connection'),
-            Positioned(
-              top: -18.0,
-              right: -12.0,
-              child: CupertinoButton(
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: CupertinoColors.destructiveRed),
-                ),
-                onPressed: () {
-                  ModalHandler.showBaseDialog(
-                    context: context,
-                    dialogWidget: ConfirmationDialog(
-                      title: 'Delete Connection',
-                      body:
-                          'Are you sure you want to delete this connection? This action can\'t be undone!',
-                      isYesDestructive: true,
-                      onOk: (_) {
-                        Navigator.of(context).pop();
-                        this.widget.connection.delete();
-                      },
-                    ),
-                  );
-                },
-              ),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Edit Connection'),
+          CupertinoButton(
+            padding: const EdgeInsets.all(4),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: CupertinoColors.destructiveRed),
             ),
-          ],
-        ),
+            onPressed: () {
+              ModalHandler.showBaseDialog(
+                context: context,
+                dialogWidget: ConfirmationDialog(
+                  title: 'Delete Connection',
+                  body:
+                      'Are you sure you want to delete this connection? This action can\'t be undone!',
+                  isYesDestructive: true,
+                  onOk: (_) {
+                    Navigator.of(context).pop();
+                    this.widget.connection.delete();
+                  },
+                ),
+              );
+            },
+          ),
+        ],
       ),
       content: Column(
         children: [
           const Text(
-              'Change the following information to change your saved connection'),
+            'Change the following information to change your saved connection',
+            textAlign: TextAlign.left,
+          ),
+          const SizedBox(height: 4.0),
           Padding(
             padding: const EdgeInsets.only(top: 12.0),
             child: ValidationCupertinoTextfield(
@@ -160,6 +157,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               ),
             ),
           ),
+          const SizedBox(height: 8.0),
         ],
       ),
       actions: [

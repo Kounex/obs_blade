@@ -56,12 +56,18 @@ class BaseButton extends StatelessWidget {
         ? ElevatedButton.icon(
             style: style,
             icon: this.icon!,
-            label: this.child ?? Text(this.text!),
+            label: this.child ??
+                FittedBox(
+                  child: Text(this.text!),
+                ),
             onPressed: onPressed,
           )
         : ElevatedButton(
             style: style,
-            child: this.child ?? Text(this.text!),
+            child: this.child ??
+                FittedBox(
+                  child: Text(this.text!),
+                ),
             onPressed: this.onPressed,
           );
   }
