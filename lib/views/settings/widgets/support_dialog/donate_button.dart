@@ -26,7 +26,8 @@ class DonateButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget purchaseButton = BaseButton(
-      padding: const EdgeInsets.all(0.0),
+      shrinkWidth: true,
+      padding: const EdgeInsets.symmetric(horizontal: 14.0),
       onPressed: this.purchaseParam != null
           ? () => this.purchaseParam!.productDetails.id.contains('tip') &&
                   !Hive.box(HiveKeys.Settings.name).get(
@@ -74,8 +75,11 @@ class DonateButton extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          this.text!,
+        Expanded(
+          child: Text(
+            this.text!,
+            textAlign: TextAlign.left,
+          ),
         ),
         purchaseButton,
       ],

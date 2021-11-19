@@ -11,6 +11,10 @@ class BaseButton extends StatelessWidget {
 
   final Color? color;
 
+  /// Used to override the [minimumSize] (will be 0 "extra" width) so the
+  /// width of the button can be more granulary set with the [padding] property
+  final bool shrinkWidth;
+
   final VoidCallback? onPressed;
   final bool isDestructive;
 
@@ -23,6 +27,7 @@ class BaseButton extends StatelessWidget {
     this.icon,
     this.secondary = false,
     this.color,
+    this.shrinkWidth = false,
     this.onPressed,
     this.isDestructive = false,
     this.padding,
@@ -33,6 +38,7 @@ class BaseButton extends StatelessWidget {
   Widget build(BuildContext context) {
     ButtonStyle style = ElevatedButton.styleFrom(
       padding: this.padding,
+      minimumSize: this.shrinkWidth ? const Size(0, 36) : null,
       primary: this.isDestructive
           ? CupertinoColors.destructiveRed
           : this.secondary

@@ -34,7 +34,7 @@ class CustomCupertinoDialog extends StatelessWidget {
       type: MaterialType.transparency,
       child: Center(
         child: Container(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32.0),
           width: this.dialogWidth,
           child: CupertinoPopupSurface(
             child: Column(

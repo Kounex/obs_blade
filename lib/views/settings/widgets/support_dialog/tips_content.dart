@@ -4,7 +4,16 @@ import 'package:obs_blade/models/purchased_tip.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 
+import '../../../../types/extensions/list.dart';
 import 'donate_button.dart';
+
+List<String> kTipAwesomeness = [
+  'Nice',
+  'Awesome',
+  'Incredible',
+  'Unbelieveable',
+  'You-Gotta-Be-Kidding-Me'
+];
 
 class TipsContent extends StatelessWidget {
   final List<ProductDetails> tipsDetails;
@@ -48,25 +57,33 @@ class TipsContent extends StatelessWidget {
         const Text(
             'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!'),
         const SizedBox(height: 12.0),
-        if (this.tipsDetails.isEmpty)
-          const DonateButton(
-            text: 'Energy Drink',
-            errorText:
-                'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
-          ),
-        if (this.tipsDetails.isNotEmpty)
-          ...this
-              .tipsDetails
-              .map(
-                (tip) => DonateButton(
-                  text: tip.title.isNotEmpty
-                      ? tip.title
-                      : '${(tip.rawPrice).toInt()} Energy Drink${((tip.rawPrice).toInt() > 1 ? "s" : "")}',
-                  price: tip.price,
-                  purchaseParam: PurchaseParam(productDetails: tip),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Column(
+            children: [
+              if (this.tipsDetails.isEmpty)
+                const DonateButton(
+                  text: 'Tip',
+                  errorText:
+                      'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
                 ),
-              )
-              .toList(),
+              if (this.tipsDetails.isNotEmpty)
+                ...this
+                    .tipsDetails
+                    .take(kTipAwesomeness.length)
+                    .mapIndexed(
+                      (tip, index) => DonateButton(
+                        text: tip.title.isNotEmpty
+                            ? tip.title
+                            : '${kTipAwesomeness[index]} Tip',
+                        price: tip.price,
+                        purchaseParam: PurchaseParam(productDetails: tip),
+                      ),
+                    )
+                    .toList(),
+            ],
+          ),
+        ),
         HiveBuilder<PurchasedTip>(
           hiveKey: HiveKeys.PurchasedTip,
           builder: (context, purchasedTipBox, child) {
