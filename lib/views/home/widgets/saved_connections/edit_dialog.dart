@@ -69,7 +69,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         children: [
           const Text('Edit Connection'),
           CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            padding: const EdgeInsets.only(right: 4.0),
+            minSize: 0,
             child: const Text(
               'Delete',
               style: TextStyle(color: CupertinoColors.destructiveRed),
@@ -94,6 +95,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       ),
       content: Column(
         children: [
+          const SizedBox(height: 12.0),
           const Text(
             'Change the following information to change your saved connection',
             textAlign: TextAlign.left,

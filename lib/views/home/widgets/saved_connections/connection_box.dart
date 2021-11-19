@@ -60,6 +60,7 @@ class ConnectionBox extends StatelessWidget {
               ),
               Center(
                 child: StatusDot(
+                  size: 10.0,
                   color: this.connection.reachable!
                       ? Colors.green
                       : CupertinoColors.destructiveRed,
