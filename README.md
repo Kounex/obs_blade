@@ -1,6 +1,6 @@
 # OBS Blade
 
-![alt text](https://assets.kounex.com/images/obs-blade/store_banner.png 'OBS Blade Store Banner')
+![alt text](https://assets.kounex.com/images/obs-blade/store_banner_3.png 'OBS Blade Store Banner')
 
 Control and manage your stream while using OBS by making use of the WebSocket Plugin for OBS. This project is build with the Flutter framework and could therefore be compiled and deployed for various platforms. This release is optimized for iOS and Android (Phone as well as Tablet).
 
