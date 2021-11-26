@@ -20,12 +20,12 @@ Once this plugin is installed and active (usually restarting OBS right after) th
 
 <div align="center">
   <div style="display: flex; align-items: flex-start;">
-    <img src="https://assets.kounex.com/images/obs-blade/i_1.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/i_2.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/i_3.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/i_4.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/i_5.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/i_6.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/i_new_1.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/i_new_2.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/i_new_3.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/i_new_4.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/i_new_5.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/i_new_6.png" width="110">
   </div>
 </div>
 
