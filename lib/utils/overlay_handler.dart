@@ -11,9 +11,9 @@ const Duration kAnimationDuration = Duration(milliseconds: 250);
 /// cover the full screen and make the app unusable while the overlay is active so
 /// the focus lies on the overlay and the process which is running in the background
 class OverlayHandler {
-  static OverlayEntry? currentOverlayEntry;
-  static Timer? currentOverlayTimer;
-  static Timer? delayTimer;
+  static OverlayEntry? _currentOverlayEntry;
+  static Timer? _currentOverlayTimer;
+  static Timer? _delayTimer;
 
   static final GlobalKey<FullOverlayState> _fullOverlayKey = GlobalKey();
 
@@ -29,7 +29,7 @@ class OverlayHandler {
     /// If a overlay is currently shown and [replaceIfActive] is false, we skip
     /// this function since we don't want to stack overlays and we didn't set
     /// [replaceIfActive]
-    if (OverlayHandler.currentOverlayEntry == null || replaceIfActive) {
+    if (_currentOverlayEntry == null || replaceIfActive) {
       if (replaceIfActive) {
         await OverlayHandler.closeAnyOverlay(immediately: false);
       }
@@ -42,18 +42,17 @@ class OverlayHandler {
       /// the user and actually does not look to good - a user will not really see / feel
       /// this delay but this gives us enough time to react to this overlay wanting to be
       /// shown
-      OverlayHandler.delayTimer = Timer(delayDuration, () {
-        OverlayHandler.currentOverlayEntry = OverlayHandler.getStatusOverlay(
+      _delayTimer = Timer(delayDuration, () {
+        _currentOverlayEntry = OverlayHandler.getStatusOverlay(
             content: content, showDuration: showDuration);
-        Overlay.of(context, rootOverlay: true)!
-            .insert(OverlayHandler.currentOverlayEntry!);
+        Overlay.of(context, rootOverlay: true)!.insert(_currentOverlayEntry!);
       });
 
       /// Calculating the maximum amount of time an overlay will be shown with all
       /// animations and the delay to remove it (if it hasn't already been removed
       /// manually from anywhere with the [closeAnyOverlay] function where all timers
       /// are canceled as well)
-      OverlayHandler.currentOverlayTimer = Timer(
+      _currentOverlayTimer = Timer(
           Duration(
               milliseconds: delayDuration.inMilliseconds +
                   showDuration.inMilliseconds +
@@ -64,14 +63,14 @@ class OverlayHandler {
 
   /// Manually close any overlay (if exists)
   static Future<void> closeAnyOverlay({bool immediately = true}) async {
-    OverlayHandler.currentOverlayTimer?.cancel();
-    OverlayHandler.delayTimer?.cancel();
+    _currentOverlayTimer?.cancel();
+    _delayTimer?.cancel();
     if (!immediately) {
       await _fullOverlayKey.currentState?.closeOverlay();
     }
     try {
-      OverlayHandler.currentOverlayEntry?.remove();
-      OverlayHandler.currentOverlayEntry = null;
+      _currentOverlayEntry?.remove();
+      _currentOverlayEntry = null;
     } catch (e) {
       throw Exception(
           'Could not handle "closeAnyOverlay" (utils/overlay_handler.dart) | $e');
