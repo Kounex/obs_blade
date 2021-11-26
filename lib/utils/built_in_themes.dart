@@ -1,5 +1,6 @@
 import 'package:obs_blade/models/custom_theme.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
+
 import '../types/extensions/color.dart';
 
 class BuiltInThemes {
@@ -41,8 +42,8 @@ class BuiltInThemes {
           '212121',
           '212121',
           '212121',
-          'cc0000',
           StylingHelper.highlight_color.toHex(),
+          'cc0000',
           '181818',
           'ffffff',
           false,

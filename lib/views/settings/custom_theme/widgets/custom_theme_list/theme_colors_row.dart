@@ -24,8 +24,8 @@ class ThemeColorsRow extends StatelessWidget {
             color: customTheme.dividerColorHex?.hexToColor() ??
                 StylingHelper.light_divider_color),
         ColorBubble(color: customTheme.tabBarColorHex.hexToColor()),
-        ColorBubble(color: customTheme.accentColorHex.hexToColor()),
         ColorBubble(color: customTheme.highlightColorHex.hexToColor()),
+        ColorBubble(color: customTheme.accentColorHex.hexToColor()),
         ColorBubble(color: customTheme.backgroundColorHex.hexToColor()),
         // ColorBubble(color: customTheme.textColorHex.hexToColor()),
       ],
