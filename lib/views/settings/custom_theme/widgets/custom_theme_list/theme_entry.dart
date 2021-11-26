@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
@@ -34,25 +35,29 @@ class ThemeEntry extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 64.0,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: animation,
-                        child: child,
+                  child: HiveBuilder<dynamic>(
+                    hiveKey: HiveKeys.Settings,
+                    rebuildKeys: const [SettingsKeys.ActiveCustomThemeUUID],
+                    builder: (context, settingsBox, child) => AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: animation,
+                          child: child,
+                        ),
                       ),
+                      child: settingsBox.get(
+                                  SettingsKeys.ActiveCustomThemeUUID.name,
+                                  defaultValue: '') ==
+                              this.customTheme.uuid
+                          ? Icon(
+                              CupertinoIcons.checkmark_alt,
+                              size: 32.0,
+                              color: Theme.of(context).colorScheme.secondary,
+                            )
+                          : Container(),
                     ),
-                    child: Hive.box(HiveKeys.Settings.name).get(
-                                SettingsKeys.ActiveCustomThemeUUID.name,
-                                defaultValue: '') ==
-                            this.customTheme.uuid
-                        ? Icon(
-                            CupertinoIcons.checkmark_alt,
-                            size: 32.0,
-                            color: Theme.of(context).colorScheme.secondary,
-                          )
-                        : Container(),
                   ),
                 ),
                 Expanded(
