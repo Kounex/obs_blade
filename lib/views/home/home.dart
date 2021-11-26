@@ -106,11 +106,12 @@ class _HomeViewState extends State<HomeView> {
 
       if (connectionInProgress) {
         OverlayHandler.showStatusOverlay(
-            context: context,
-            showDuration: const Duration(seconds: 5),
-            content: BaseProgressIndicator(
-              text: 'Connecting...',
-            ));
+          context: context,
+          showDuration: const Duration(seconds: 5),
+          content: BaseProgressIndicator(
+            text: 'Connecting...',
+          ),
+        );
       } else if (!connectionInProgress) {
         if (networkStore.connectionResponse!.status == BaseResponse.ok) {
           OverlayHandler.closeAnyOverlay();

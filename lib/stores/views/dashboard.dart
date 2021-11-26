@@ -11,6 +11,7 @@ import 'package:obs_blade/types/classes/stream/events/scene_collection_changed.d
 import 'package:obs_blade/types/classes/stream/events/scene_collection_list_changed.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_current_scene_collection.dart';
 import 'package:obs_blade/types/classes/stream/responses/list_scene_collections.dart';
+import 'package:obs_blade/utils/overlay_handler.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
@@ -470,6 +471,7 @@ abstract class _DashboardStore with Store {
         await this.streamData!.save();
         break;
       case EventType.SceneCollectionChanged:
+        OverlayHandler.closeAnyOverlay(immediately: false);
         SceneCollectionChangedEvent sceneCollectionChangedEvent =
             SceneCollectionChangedEvent(event.json);
 
@@ -482,6 +484,9 @@ abstract class _DashboardStore with Store {
 
         this.sceneCollections =
             ObservableList.of(sceneCollectionListChangedEvent.sceneCollections);
+
+        GeneralHelper.advLog(this.sceneCollections);
+
         break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(

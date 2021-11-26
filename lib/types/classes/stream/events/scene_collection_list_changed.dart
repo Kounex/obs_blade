@@ -9,6 +9,7 @@ class SceneCollectionListChangedEvent extends BaseEvent {
   /// Scene collections list.
   List<SceneCollection> get sceneCollections =>
       (this.json['sceneCollections'] as List<dynamic>)
-          .map((sceneCollection) => SceneCollection.fromJSON(sceneCollection))
+          .map((sceneCollection) =>
+              SceneCollection.fromJSON({'sc-name': sceneCollection['name']}))
           .toList();
 }
