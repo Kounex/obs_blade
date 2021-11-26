@@ -26,7 +26,6 @@ Once this plugin is installed and active (usually restarting OBS right after) th
     <img src="https://assets.kounex.com/images/obs-blade/i_4.png" width="110">
     <img src="https://assets.kounex.com/images/obs-blade/i_5.png" width="110">
     <img src="https://assets.kounex.com/images/obs-blade/i_6.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/i_7.png" width="110">
   </div>
 </div>
 
@@ -34,23 +33,23 @@ OBS Blade is designed to be your stream companion and help you to manage your li
 
 Currently OBS Blade supports:
 
-- Start / stop the stream
-- Changing the active scene
-- Toggle visibility of scene items (like desktop capture etc.)
-- Change the volume of your current audio sources (or mute them)
-- View any Twitch chat and write messages
-- See live statistics of your stream performance (FPS, CPU usage, kbit/s etc.)
+-   Start / stop the stream
+-   Changing the active scene
+-   Toggle visibility of scene items (like desktop capture etc.)
+-   Change the volume of your current audio sources (or mute them)
+-   View any Twitch chat and write messages
+-   See live statistics of your stream performance (FPS, CPU usage, kbit/s etc.)
 
 OBS Blade also saves statistics of your previous streams so you can track the overall performance and some nice to know facts!
 
 This app is still in its early stages and will get updated with new features over time - for now the main features which I want to add are:
 
-- More engagement with OBS (renaming, sorting, scripted switching etc.)
-- Export / merge statistics
-- Enable Youtube chat
-- Soundboard
-- Incoming feature requests
-- (Maybe) Streamlabs client connection
+-   More engagement with OBS (renaming, sorting, scripted switching etc.)
+-   Export / merge statistics
+-   Enable Youtube chat
+-   Soundboard
+-   Incoming feature requests
+-   (Maybe) Streamlabs client connection
 
 I hope you have a good time using this app. If you encounter any bugs, have feature requests or anything similar, feel free to get in touch with me!
 
@@ -60,8 +59,8 @@ contact@kounex.com
 
 This App is available in the iOS App Store and the Google Play Store:
 
-- [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
-- [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obs_blade)
+-   [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
+-   [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obs_blade)
 
 ## Support me!
 
