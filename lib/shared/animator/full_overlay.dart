@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -15,14 +16,16 @@ class FullOverlay extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _FullOverlayState createState() => _FullOverlayState();
+  FullOverlayState createState() => FullOverlayState();
 }
 
-class _FullOverlayState extends State<FullOverlay>
+class FullOverlayState extends State<FullOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _blur;
   late Animation<double> _opacity;
+
+  late Timer _closeTimer;
 
   @override
   void initState() {
@@ -33,6 +36,16 @@ class _FullOverlayState extends State<FullOverlay>
         .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
     _opacity = Tween<double>(begin: 0.0, end: 1.0)
         .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+
+    _controller.forward();
+    _closeTimer = Timer(this.widget.showDuration, () => this.closeOverlay());
+  }
+
+  Future<void> closeOverlay() async {
+    _closeTimer.cancel();
+    if (this.mounted) {
+      await _controller.reverse();
+    }
   }
 
   @override
@@ -43,9 +56,6 @@ class _FullOverlayState extends State<FullOverlay>
 
   @override
   Widget build(BuildContext context) {
-    _controller.forward();
-    Future.delayed(this.widget.showDuration,
-        () => this.mounted ? _controller.reverse() : null);
     return Stack(
       children: [
         SizedBox.expand(

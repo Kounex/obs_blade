@@ -15,10 +15,12 @@ class OverlayHandler {
   static Timer? currentOverlayTimer;
   static Timer? delayTimer;
 
+  static final GlobalKey<FullOverlayState> _fullOverlayKey = GlobalKey();
+
   /// Any [content] can be displayed, just needs to be a [Widget]. [replaceIfActive], if true,
   /// will close any other overlay which may be active right now and display the new one then, otherwise
   /// the new overlay will be inserted on top
-  static void showStatusOverlay(
+  static Future<void> showStatusOverlay(
       {required BuildContext context,
       required Widget content,
       Duration showDuration = kShowDuration,
@@ -29,7 +31,7 @@ class OverlayHandler {
     /// [replaceIfActive]
     if (OverlayHandler.currentOverlayEntry == null || replaceIfActive) {
       if (replaceIfActive) {
-        OverlayHandler.closeAnyOverlay();
+        await OverlayHandler.closeAnyOverlay(immediately: false);
       }
 
       /// I have set an [Timer] as a delay after which we actually show the overlay.
@@ -61,10 +63,13 @@ class OverlayHandler {
   }
 
   /// Manually close any overlay (if exists)
-  static void closeAnyOverlay() {
+  static Future<void> closeAnyOverlay({bool immediately = true}) async {
+    OverlayHandler.currentOverlayTimer?.cancel();
+    OverlayHandler.delayTimer?.cancel();
+    if (!immediately) {
+      await _fullOverlayKey.currentState?.closeOverlay();
+    }
     try {
-      OverlayHandler.currentOverlayTimer?.cancel();
-      OverlayHandler.delayTimer?.cancel();
       OverlayHandler.currentOverlayEntry?.remove();
       OverlayHandler.currentOverlayEntry = null;
     } catch (e) {
@@ -82,6 +87,7 @@ class OverlayHandler {
   }) =>
       OverlayEntry(
         builder: (context) => FullOverlay(
+          key: _fullOverlayKey,
           content: content,
           showDuration: showDuration,
           animationDuration: kAnimationDuration,

@@ -62,11 +62,13 @@ class TipsContent extends StatelessWidget {
           child: Column(
             children: [
               if (this.tipsDetails.isEmpty)
-                const DonateButton(
-                  text: 'Tip',
-                  errorText:
-                      'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
-                ),
+                ...kTipAwesomeness.take(3).map(
+                      (tipAwesomeness) => DonateButton(
+                        text: '$tipAwesomeness Tip',
+                        errorText:
+                            'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
+                      ),
+                    ),
               if (this.tipsDetails.isNotEmpty)
                 ...this
                     .tipsDetails
