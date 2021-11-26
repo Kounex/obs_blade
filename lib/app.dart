@@ -18,6 +18,7 @@ class App extends StatelessWidget {
     Brightness? brightness;
     Color? scaffoldBackgroundColor;
     Color? accentColor;
+    Color? hightlightColor;
     Color? backgroundColor;
     Color? canvasColor;
     Color? cardColor;
@@ -26,10 +27,7 @@ class App extends StatelessWidget {
     Color? sliderColor;
     Color? appBarColor;
     Color? buttonColor;
-    Color? extraButtonColor;
     Color? tabBarColor;
-    Color? cursorColor;
-    Color? cupertinoPrimaryColor;
     Color? dividerColor;
 
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
@@ -50,19 +48,16 @@ class App extends StatelessWidget {
         scaffoldBackgroundColor =
             activeCustomTheme.backgroundColorHex.hexToColor();
         accentColor = activeCustomTheme.accentColorHex.hexToColor();
+        hightlightColor = activeCustomTheme.highlightColorHex.hexToColor();
         backgroundColor = activeCustomTheme.cardColorHex.hexToColor();
         canvasColor = activeCustomTheme.cardColorHex.hexToColor();
         cardColor = activeCustomTheme.cardColorHex.hexToColor();
-        indicatorColor = activeCustomTheme.accentColorHex.hexToColor();
+        indicatorColor = activeCustomTheme.highlightColorHex.hexToColor();
         toggleableActiveColor = activeCustomTheme.accentColorHex.hexToColor();
         sliderColor = Colors.transparent;
         appBarColor = activeCustomTheme.appBarColorHex.hexToColor();
         buttonColor = activeCustomTheme.accentColorHex.hexToColor();
-        extraButtonColor = activeCustomTheme.highlightColorHex.hexToColor();
         tabBarColor = activeCustomTheme.tabBarColorHex.hexToColor();
-        cursorColor = activeCustomTheme.accentColorHex.hexToColor();
-        cupertinoPrimaryColor =
-            activeCustomTheme.highlightColorHex.hexToColor();
         dividerColor = activeCustomTheme.dividerColorHex?.hexToColor();
       }
     }
@@ -83,7 +78,6 @@ class App extends StatelessWidget {
       backgroundColor: backgroundColor ?? StylingHelper.primary_color,
       canvasColor: canvasColor ?? StylingHelper.primary_color,
       cardColor: cardColor ?? StylingHelper.primary_color,
-      // cursorColor: cursorColor ?? StylingHelper.highlight_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
       dividerColor: dividerColor ?? StylingHelper.light_divider_color,
       splashColor: Colors.transparent,
@@ -121,16 +115,6 @@ class App extends StatelessWidget {
             .transparent, //(sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
       ),
 
-      // useTextSelectionTheme: true,
-
-      // textSelectionTheme: TextSelectionThemeData(
-      //   cursorColor: cursorColor ?? StylingHelper.highlight_color,
-      //   selectionColor: cursorColor ?? StylingHelper.highlight_color,
-      //   selectionHandleColor: cursorColor ?? StylingHelper.highlight_color,
-      // ),
-
-      // textSelectionHandleColor: cursorColor ?? StylingHelper.highlight_color,
-
       tabBarTheme: TabBarTheme(
         labelColor: brightness != null && brightness == Brightness.light
             ? Colors.black
@@ -143,7 +127,9 @@ class App extends StatelessWidget {
       ),
 
       buttonTheme: ButtonThemeData(
-        buttonColor: buttonColor ?? StylingHelper.accent_color,
+        colorScheme: ColorScheme.fromSwatch(
+            accentColor: buttonColor ?? StylingHelper.accent_color),
+        // buttonColor: buttonColor ?? StylingHelper.accent_color,
         splashColor: Colors.transparent,
       ),
 
@@ -156,13 +142,13 @@ class App extends StatelessWidget {
                     : StylingHelper.background_color
                 : Colors.grey[900]),
         textTheme: CupertinoTextThemeData(
-          primaryColor: accentColor ?? StylingHelper.highlight_color,
+          primaryColor: hightlightColor ?? StylingHelper.highlight_color,
         ),
         barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),
       colorScheme: ColorScheme.fromSwatch(
-        accentColor: accentColor ?? StylingHelper.highlight_color,
+        accentColor: hightlightColor ?? StylingHelper.highlight_color,
         brightness: brightness ?? Brightness.dark,
       ),
     );

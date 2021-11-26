@@ -73,7 +73,7 @@ class _OrderButtonState extends State<OrderButton>
         padding: const EdgeInsets.all(4.0),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Theme.of(context).colorScheme.secondary,
+          color: Theme.of(context).buttonTheme.colorScheme!.secondary,
         ),
         child: AnimatedBuilder(
           animation: _controllerUp,

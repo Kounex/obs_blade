@@ -264,6 +264,18 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           ),
                           const SizedBox(height: 32.0),
                           ThemeRow(
+                            title: 'Highlight Color',
+                            description:
+                                'Active state is being displayed with this color like active scene, active tab, etc.',
+                            colorHex: _customTheme.highlightColorHex,
+                            onReset: () => setState(() =>
+                                _customTheme.highlightColorHex =
+                                    _initialTheme.highlightColorHex),
+                            onSave: (colorHex) => setState(() =>
+                                _customTheme.highlightColorHex = colorHex),
+                          ),
+                          const SizedBox(height: 32.0),
+                          ThemeRow(
                             title: 'Accent Color',
                             description:
                                 'Is being used by action / toggle elements like Switch, Button, etc.',
@@ -272,18 +284,6 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 .accentColorHex = _initialTheme.accentColorHex),
                             onSave: (colorHex) => setState(
                                 () => _customTheme.accentColorHex = colorHex),
-                          ),
-                          const SizedBox(height: 32.0),
-                          ThemeRow(
-                            title: 'Highlight Color',
-                            description:
-                                'Active state is being displayed with this color like active scene, active tab, some buttons, etc.',
-                            colorHex: _customTheme.highlightColorHex,
-                            onReset: () => setState(() =>
-                                _customTheme.highlightColorHex =
-                                    _initialTheme.highlightColorHex),
-                            onSave: (colorHex) => setState(() =>
-                                _customTheme.highlightColorHex = colorHex),
                           ),
                           const SizedBox(height: 32.0),
                           ThemeRow(

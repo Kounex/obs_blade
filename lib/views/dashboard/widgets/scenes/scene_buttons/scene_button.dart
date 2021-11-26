@@ -71,7 +71,7 @@ class SceneButton extends StatelessWidget {
                 width: this.width,
                 decoration: BoxDecoration(
                   color: dashboardStore.activeSceneName == scene.name
-                      ? Theme.of(context).colorScheme.secondary
+                      ? Theme.of(context).buttonTheme.colorScheme!.secondary
                       : Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12.0),
                 ),
@@ -96,7 +96,7 @@ class SceneButton extends StatelessWidget {
                             ? dashboardStore.studioModePreviewSceneName ==
                                 scene.name
                             : dashboardStore.activeSceneName == scene.name)
-                        ? Theme.of(context).colorScheme.secondary
+                        ? Theme.of(context).buttonTheme.colorScheme!.secondary
                         : Theme.of(context).cardColor,
                   ),
                   borderRadius: BorderRadius.circular(12.0),
@@ -120,7 +120,7 @@ class SceneButton extends StatelessWidget {
                       !this.visible ? Icons.visibility_off : Icons.visibility,
                       color: !this.visible
                           ? CupertinoColors.destructiveRed
-                          : Theme.of(context).buttonColor,
+                          : Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ),
