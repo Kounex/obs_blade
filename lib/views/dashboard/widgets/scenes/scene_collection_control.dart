@@ -30,6 +30,7 @@ class SceneCollectionControl extends StatelessWidget {
                 text: 'Switching...',
               ),
             );
+            dashboardStore.handleRequestsEvents = false;
             NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.SetCurrentSceneCollection,

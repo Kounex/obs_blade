@@ -197,7 +197,7 @@ class LogDetailView extends StatelessWidget {
                     child: BaseResult(
                       icon: BaseResultIcon.Missing,
                       text:
-                          'No logs found for type: ${logsStore.logLevel!.name}',
+                          'No logs found for type: ${logsStore.logLevel?.name}',
                     ),
                   ),
               ],

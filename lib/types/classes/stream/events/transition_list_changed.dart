@@ -5,6 +5,6 @@ class TransitionListChangedEvent extends BaseEvent {
   TransitionListChangedEvent(Map<String, dynamic> json) : super(json);
 
   /// Transitions list
-  List<String> get transitions =>
-      this.json['transitions'].map((transition) => transition.name).toList();
+  List<String> get transitions => List.from(
+      this.json['transitions'].map((transition) => transition['name']));
 }

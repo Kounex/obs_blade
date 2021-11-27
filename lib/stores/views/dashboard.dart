@@ -180,6 +180,17 @@ abstract class _DashboardStore with Store {
 
   String previewFileFormat = 'jpeg';
 
+  /// Will be used internally while switching scene collections.
+  /// Since this operation takes time and "random" events are coming
+  /// in while we dont even have all the new information from the
+  /// new scene collection, we need to stop handling those events /requests
+  /// while waiting until we actually changed the scene collection
+  /// (getting the response from [SetCurrentSceneCollection]) and then
+  /// call [sceneCollectionRequests]
+  bool handleRequestsEvents = true;
+
+  /// Set of initial requests to call in order to get all the basic
+  /// information / configuration for the OBS session
   void initialRequests() {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -193,6 +204,27 @@ abstract class _DashboardStore with Store {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetCurrentSceneCollection,
     );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetStudioModeStatus,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetRecordingStatus,
+    );
+
+    sceneCollectionRequests();
+    // NetworkHelper.makeRequest(
+    //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
+    // NetworkHelper.makeRequest(
+    //     this.networkStore.activeSession.socket, RequestType.ListOutputs);
+  }
+
+  /// Requests dedicated to get all the information from the current
+  /// scene collection (can be called independently after switching the
+  /// scene collection or if we want to refresh the information for the
+  /// current scene collection)
+  void sceneCollectionRequests() {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneList,
@@ -209,26 +241,18 @@ abstract class _DashboardStore with Store {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetCurrentTransition,
     );
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetStudioModeStatus,
-    );
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetRecordingStatus,
-    );
-    // NetworkHelper.makeRequest(
-    //     this.networkStore.activeSession.socket, RequestType.GetSourcesList);
-    // NetworkHelper.makeRequest(
-    //     this.networkStore.activeSession.socket, RequestType.ListOutputs);
   }
 
   void handleStream() {
     GetIt.instance<NetworkStore>().watchOBSStream().listen((message) {
-      if (message is BaseEvent) {
-        _handleEvent(message);
-      } else {
-        _handleResponse(message as BaseResponse);
+      if (handleRequestsEvents ||
+          (message is BaseEvent &&
+              message.eventType == EventType.SceneCollectionChanged)) {
+        if (message is BaseEvent) {
+          _handleEvent(message);
+        } else {
+          _handleResponse(message as BaseResponse);
+        }
       }
     });
   }
@@ -477,6 +501,9 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneCollectionName =
             sceneCollectionChangedEvent.sceneCollection;
+
+        this.handleRequestsEvents = true;
+        this.sceneCollectionRequests();
         break;
       case EventType.SceneCollectionListChanged:
         SceneCollectionListChangedEvent sceneCollectionListChangedEvent =
@@ -484,8 +511,6 @@ abstract class _DashboardStore with Store {
 
         this.sceneCollections =
             ObservableList.of(sceneCollectionListChangedEvent.sceneCollections);
-
-        GeneralHelper.advLog(this.sceneCollections);
 
         break;
       case EventType.ScenesChanged:
@@ -520,6 +545,8 @@ abstract class _DashboardStore with Store {
       case EventType.TransitionListChanged:
         TransitionListChangedEvent transitionListChangedEvent =
             TransitionListChangedEvent(event.json);
+        GeneralHelper.advLog(
+            'CHANGED:' + transitionListChangedEvent.json.toString());
         this.availableTransitionsNames = transitionListChangedEvent.transitions;
         break;
       case EventType.TransitionDurationChanged:
@@ -590,12 +617,14 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.SourceRenamed:
         SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(event.json);
-        this
-            .currentSceneItems!
-            .firstWhere((sceneItem) =>
-                sceneItem.name == sourceRenamedEvent.previousName)
-            .name = sourceRenamedEvent.newName;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+        try {
+          this
+              .currentSceneItems!
+              .firstWhere((sceneItem) =>
+                  sceneItem.name == sourceRenamedEvent.previousName)
+              .name = sourceRenamedEvent.newName;
+          this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+        } catch (e) {}
         break;
       case EventType.SourceOrderChanged:
         // SourceOrderChangedEvent sourceOrderChangedEvent =
@@ -607,35 +636,41 @@ abstract class _DashboardStore with Store {
       case EventType.SourceVolumeChanged:
         SourceVolumeChangedEvent sourceVolumeChangedEvent =
             SourceVolumeChangedEvent(event.json);
-        [...this.currentSceneItems!, ...this.globalAudioSceneItems]
-            .firstWhere((audioSceneItem) =>
-                audioSceneItem.name == sourceVolumeChangedEvent.sourceName)
-            .volume = sourceVolumeChangedEvent.volume;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
-        this.globalAudioSceneItems =
-            ObservableList.of(this.globalAudioSceneItems);
+        try {
+          [...this.currentSceneItems!, ...this.globalAudioSceneItems]
+              .firstWhere((audioSceneItem) =>
+                  audioSceneItem.name == sourceVolumeChangedEvent.sourceName)
+              .volume = sourceVolumeChangedEvent.volume;
+          this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+          this.globalAudioSceneItems =
+              ObservableList.of(this.globalAudioSceneItems);
+        } catch (e) {}
         break;
       case EventType.SourceMuteStateChanged:
         SourceMuteStateChangedEvent sourceMuteStateChangedEvent =
             SourceMuteStateChangedEvent(event.json);
-        [...this.currentSceneItems!, ...this.globalAudioSceneItems]
-            .firstWhere((audioSceneItem) =>
-                audioSceneItem.name == sourceMuteStateChangedEvent.sourceName)
-            .muted = sourceMuteStateChangedEvent.muted;
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
-        this.globalAudioSceneItems =
-            ObservableList.of(this.globalAudioSceneItems);
+        try {
+          [...this.currentSceneItems!, ...this.globalAudioSceneItems]
+              .firstWhere((audioSceneItem) =>
+                  audioSceneItem.name == sourceMuteStateChangedEvent.sourceName)
+              .muted = sourceMuteStateChangedEvent.muted;
+          this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+          this.globalAudioSceneItems =
+              ObservableList.of(this.globalAudioSceneItems);
+        } catch (e) {}
         break;
       case EventType.SceneItemVisibilityChanged:
         SceneItemVisibilityChangedEvent sceneItemVisibilityChangedEvent =
             SceneItemVisibilityChangedEvent(event.json);
-        this
-            .currentSceneItems!
-            .firstWhere((sceneItem) =>
-                sceneItem.name == sceneItemVisibilityChangedEvent.itemName)
-            .render = sceneItemVisibilityChangedEvent.itemVisible;
+        try {
+          this
+              .currentSceneItems!
+              .firstWhere((sceneItem) =>
+                  sceneItem.name == sceneItemVisibilityChangedEvent.itemName)
+              .render = sceneItemVisibilityChangedEvent.itemVisible;
 
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+          this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+        } catch (e) {}
         break;
       case EventType.Exiting:
         await this.finishPastStreamData();
@@ -760,6 +795,7 @@ abstract class _DashboardStore with Store {
         }
         break;
       case RequestType.GetSpecialSources:
+        this.globalAudioSceneItems = ObservableList.of([]);
         GetSpecialSourcesResponse getSpecialSourcesResponse =
             GetSpecialSourcesResponse(response.json);
         if (getSpecialSourcesResponse.desktop1 != null) {
@@ -834,8 +870,8 @@ abstract class _DashboardStore with Store {
               .currentSceneItems!
               .firstWhere((sceneItem) => sceneItem.name == getMuteResponse.name)
               .muted = getMuteResponse.muted;
+          this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         } catch (e) {}
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
         break;
       case RequestType.GetSourceSettings:
         // GetSourceSettingsResponse getSourceSettingsResponse =
