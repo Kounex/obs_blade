@@ -2,12 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../../shared/general/base/card.dart';
 import '../../../shared/overlay/base_progress_indicator.dart';
 import '../../../shared/overlay/base_result.dart';
 import '../../../stores/views/dashboard.dart';
+import '../../../utils/general_helper.dart';
 
 class ReconnectToast extends StatefulWidget {
   const ReconnectToast({Key? key}) : super(key: key);
@@ -64,8 +64,10 @@ class _ReconnectToastState extends State<ReconnectToast>
             _controllerReconnecting.reverse();
             if (_controllerConnected.isDismissed) {
               _controllerConnected.forward();
-              Future.delayed(const Duration(seconds: 3),
-                  () => _controllerConnected.reverse());
+              Future.delayed(
+                const Duration(seconds: 3),
+                () => _controllerConnected.reverse(),
+              );
             }
           }
         },
@@ -96,6 +98,7 @@ class _ReconnectToastState extends State<ReconnectToast>
             animation: _controllerReconnecting,
             child: BaseCard(
               paintBorder: true,
+              constrained: false,
               borderColor: CupertinoColors.destructiveRed,
               child: BaseProgressIndicator(
                 text: 'OBS connection lost\nReconnecting...',
@@ -113,6 +116,7 @@ class _ReconnectToastState extends State<ReconnectToast>
             animation: _controllerConnected,
             child: BaseCard(
               paintBorder: true,
+              constrained: false,
               borderColor: CupertinoColors.activeGreen.color,
               child: const BaseResult(
                 text: 'Reconnected!',

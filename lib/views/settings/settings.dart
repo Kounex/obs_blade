@@ -76,6 +76,22 @@ class SettingsView extends StatelessWidget {
                   title: 'Dashboard',
                   blockEntries: [
                     BlockEntry(
+                      leading: CupertinoIcons.collections_solid,
+                      leadingSize: 26.0,
+                      title: 'Scene Collections',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.ExposeSceneCollection.name,
+                            defaultValue: true),
+                        onChanged: (exposeSceneCollection) {
+                          settingsBox.put(
+                            SettingsKeys.ExposeSceneCollection.name,
+                            exposeSceneCollection,
+                          );
+                        },
+                      ),
+                    ),
+                    BlockEntry(
                       leading: Icons.live_tv_rounded,
                       leadingSize: 28.0,
                       title: 'Streaming Controls',

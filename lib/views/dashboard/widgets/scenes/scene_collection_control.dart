@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/shared/network.dart';
@@ -16,38 +19,48 @@ class SceneCollectionControl extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Observer(
-        builder: (_) => DropdownButton<String>(
-          value: dashboardStore.currentSceneCollectionName,
-          isDense: true,
-          onChanged: (sceneCollectionName) {
-            OverlayHandler.showStatusOverlay(
-              showDuration: const Duration(seconds: 10),
-              context: context,
-              content: BaseProgressIndicator(
-                text: 'Switching...',
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.ExposeSceneCollection],
+      builder: (context, settingsBox, child) => settingsBox
+              .get(SettingsKeys.ExposeSceneCollection.name, defaultValue: true)
+          ? Align(
+              alignment: Alignment.centerRight,
+              child: Observer(
+                builder: (_) => DropdownButton<String>(
+                  value: dashboardStore.currentSceneCollectionName,
+                  isDense: true,
+                  onChanged: (sceneCollectionName) {
+                    if (sceneCollectionName !=
+                        dashboardStore.currentSceneCollectionName) {
+                      OverlayHandler.showStatusOverlay(
+                        showDuration: const Duration(seconds: 10),
+                        context: context,
+                        content: BaseProgressIndicator(
+                          text: 'Switching...',
+                        ),
+                      );
+                      dashboardStore.handleRequestsEvents = false;
+                      NetworkHelper.makeRequest(
+                        GetIt.instance<NetworkStore>().activeSession!.socket,
+                        RequestType.SetCurrentSceneCollection,
+                        {'sc-name': sceneCollectionName},
+                      );
+                    }
+                  },
+                  items: dashboardStore.sceneCollections
+                          ?.map(
+                            (sceneCollection) => DropdownMenuItem(
+                              value: sceneCollection.scName,
+                              child: Text(sceneCollection.scName),
+                            ),
+                          )
+                          .toList() ??
+                      [],
+                ),
               ),
-            );
-            dashboardStore.handleRequestsEvents = false;
-            NetworkHelper.makeRequest(
-              GetIt.instance<NetworkStore>().activeSession!.socket,
-              RequestType.SetCurrentSceneCollection,
-              {'sc-name': sceneCollectionName},
-            );
-          },
-          items: dashboardStore.sceneCollections
-                  ?.map(
-                    (sceneCollection) => DropdownMenuItem(
-                      value: sceneCollection.scName,
-                      child: Text(sceneCollection.scName),
-                    ),
-                  )
-                  .toList() ??
-              [],
-        ),
-      ),
+            )
+          : Container(),
     );
   }
 }

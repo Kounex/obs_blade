@@ -7,6 +7,11 @@ enum SettingsKeys {
   /// of Home Tab and will prevent the user from seeing the intro slides again
   HasUserSeenIntro,
 
+  /// [bool]: If the user has bought Blacksmith. Will be checked in [PurchaseBase] on the fly
+  /// (checked from the App Store) but the user might have no internet connection so it's persisted
+  /// here additionally
+  BoughtBlacksmith,
+
   /// ******************************************************************************
   /// Actively set by user via settings page or using the app
   /// ******************************************************************************
@@ -63,10 +68,9 @@ enum SettingsKeys {
   /// but if someone wants to minimise their view, they can even remove that
   ExposeScenePreview,
 
-  /// [bool]: If the user has bought Blacksmith. Will be checked in [PurchaseBase] on the fly
-  /// (checked from the App Store) but the user might have no internet connection so it's persisted
-  /// here additionally
-  BoughtBlacksmith,
+  /// [bool]: If the scene collection dropdown to see the current scene collection and
+  /// change it should be shown in the dashboard
+  ExposeSceneCollection,
 
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
@@ -118,6 +122,7 @@ enum SettingsKeys {
 extension SettingsKeysFunctions on SettingsKeys {
   String get name => const {
         SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
+        SettingsKeys.BoughtBlacksmith: 'bought-blacksmith',
         SettingsKeys.TrueDark: 'true-dark',
         SettingsKeys.ReduceSmearing: 'reduce-smearing',
         SettingsKeys.EnforceTabletMode: 'enforce-tablet-mode',
@@ -133,7 +138,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
         SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
         SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
-        SettingsKeys.BoughtBlacksmith: 'bought-blacksmith',
+        SettingsKeys.ExposeSceneCollection: 'expose-scene-collection',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:
             'dont-show-hiding-scene-items-warning',
