@@ -86,7 +86,7 @@ class _IntroViewState extends State<IntroView> {
           bottomPadding: 0,
           socialInfos: [
             SocialEntry(
-              link: 'https://github.com/Palakis/obs-websocket',
+              link: 'https://github.com/obsproject/obs-websocket',
               textStyle: Theme.of(context)
                   .textTheme
                   .headline6!
@@ -100,7 +100,7 @@ class _IntroViewState extends State<IntroView> {
         slideTextSpans: [
           TextSpan(
             text:
-                'Click on \'Releases\' to get to the download area and select the correct installer (for your operating system)',
+                'Click on \'Releases\' to get to the download area and select the correct installer (for your operating system)\n\nIMPORTANT: Download version 4.9.1!',
           ),
         ],
       ),
@@ -109,7 +109,7 @@ class _IntroViewState extends State<IntroView> {
         slideTextSpans: [
           TextSpan(
             text:
-                'After installing the correct version, make sure to restart OBS and look if Tools -> WebSocket Server Settings is available - then you are good to go!',
+                'After installing the plugin and restarting OBS, look if Tools -> WebSocket Server Settings is available and use the recommended settings (above) - Enjoy!',
           ),
         ],
       ),
