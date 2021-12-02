@@ -29,8 +29,10 @@ class TipsContent extends StatelessWidget {
       double sumTips = double.parse(tips
           .fold<double>(
               0.0,
-              (sum, tip) => sum += double.parse(
-                  tip.price.replaceAll(tip.currencySymbol, '').trim()))
+              (sum, tip) => sum += double.parse(tip.price
+                  .replaceAll(tip.currencySymbol, '')
+                  .replaceAll(',', '.')
+                  .trim()))
           .toStringAsFixed(2));
 
       String sumTipsFormatted =

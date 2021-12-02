@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.kounex.obsBlade">
+    <uses-permission android:name="android.permission.INTERNET"/>
    <application
         android:label="obs_blade"
         android:icon="@mipmap/ic_launcher">
