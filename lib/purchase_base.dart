@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import 'app.dart';
 import 'models/enums/log_level.dart';
 import 'models/purchased_tip.dart';
 import 'shared/dialogs/info.dart';
@@ -73,26 +74,34 @@ class _PurchaseBaseState extends State<PurchaseBase> {
       /// If a purchase is explicily blacksmith, set the flag in the settings box
       /// to true to be able to check that offline as well later on
       if (purchaseDetails.productID.contains('blacksmith')) {
-        /// If we get the restored status from the purchase stream, it means
-        /// that the user clicked on restore and therefore called the restorePurchases
-        /// function and it worked - therefore we show an info dialog to inform
-        /// the user that it worked!
-        Future.delayed(
-          const Duration(seconds: 1),
-          () {
-            Hive.box<dynamic>(HiveKeys.Settings.name).put(
-              SettingsKeys.BoughtBlacksmith.name,
-              true,
-            );
-            OverlayHandler.closeAnyOverlay(immediately: false);
-            ModalHandler.showBaseDialog(
-              context: context,
-              dialogWidget: const InfoDialog(
-                body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
-              ),
-            );
-          },
-        );
+        if (purchaseDetails.status == PurchaseStatus.restored) {
+          /// If we get the restored status from the purchase stream, it means
+          /// that the user clicked on restore and therefore called the restorePurchases
+          /// function and it worked - therefore we show an info dialog to inform
+          /// the user that it worked!
+          Future.delayed(
+            const Duration(seconds: 1),
+            () {
+              OverlayHandler.closeAnyOverlay(immediately: false);
+              ModalHandler.showBaseDialog(
+                context: rootNavKey.currentState!.context,
+                dialogWidget: InfoDialog(
+                  body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
+                  onPressed: () =>
+                      Hive.box<dynamic>(HiveKeys.Settings.name).put(
+                    SettingsKeys.BoughtBlacksmith.name,
+                    true,
+                  ),
+                ),
+              );
+            },
+          );
+        } else {
+          Hive.box<dynamic>(HiveKeys.Settings.name).put(
+            SettingsKeys.BoughtBlacksmith.name,
+            true,
+          );
+        }
       }
     }
   }

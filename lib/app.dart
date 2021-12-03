@@ -11,6 +11,8 @@ import 'utils/built_in_themes.dart';
 import 'utils/routing_helper.dart';
 import 'utils/styling_helper.dart';
 
+GlobalKey<NavigatorState> rootNavKey = GlobalKey();
+
 class App extends StatelessWidget {
   const App({Key? key}) : super(key: key);
 
@@ -168,6 +170,7 @@ class App extends StatelessWidget {
         hiveKey: HiveKeys.CustomTheme,
         builder: (context, customThemeBox, child) {
           return MaterialApp(
+            navigatorKey: rootNavKey,
             debugShowCheckedModeBanner: false,
             theme: _getCurrentTheme(settingsBox),
             initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
