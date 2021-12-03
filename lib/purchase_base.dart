@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/general_helper.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/overlay_handler.dart';
 
+import 'models/enums/log_level.dart';
 import 'models/purchased_tip.dart';
+import 'shared/dialogs/info.dart';
 import 'types/enums/hive_keys.dart';
+import 'types/enums/settings_keys.dart';
+import 'utils/general_helper.dart';
+import 'utils/modal_handler.dart';
+import 'utils/overlay_handler.dart';
 
 class PurchaseBase extends StatefulWidget {
   final Widget child;
@@ -73,9 +73,28 @@ class _PurchaseBaseState extends State<PurchaseBase> {
       /// If a purchase is explicily blacksmith, set the flag in the settings box
       /// to true to be able to check that offline as well later on
       if (purchaseDetails.productID.contains('blacksmith')) {
-        Hive.box(HiveKeys.Settings.name).put(
-          SettingsKeys.BoughtBlacksmith.name,
-          true,
+        /// If we get the restored status from the purchase stream, it means
+        /// that the user clicked on restore and therefore called the restorePurchases
+        /// function and it worked - therefore we show an info dialog to inform
+        /// the user that it worked!
+        Future.delayed(
+          const Duration(seconds: 1),
+          () {
+            if (!Hive.box(HiveKeys.Settings.name)
+                .get(SettingsKeys.BoughtBlacksmith.name, defaultValue: false)) {
+              OverlayHandler.closeAnyOverlay(immediately: false);
+              ModalHandler.showBaseDialog(
+                context: context,
+                dialogWidget: InfoDialog(
+                  body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
+                  onPressed: () => Hive.box(HiveKeys.Settings.name).put(
+                    SettingsKeys.BoughtBlacksmith.name,
+                    true,
+                  ),
+                ),
+              );
+            }
+          },
         );
       }
     }
@@ -100,28 +119,6 @@ class _PurchaseBaseState extends State<PurchaseBase> {
           } else if (purchaseDetails.status == PurchaseStatus.purchased) {
             _handlePurchase(purchaseDetails, inAppDetails);
           } else if (purchaseDetails.status == PurchaseStatus.restored) {
-            /// If we get the restored status from the purchase stream, it means
-            /// that the user clicked on restore and therefore called the restorePurchases
-            /// function and it worked - therefore we show an info dialog to inform
-            /// the user that it worked!
-            if (inAppDetails.id == 'blacksmith' &&
-                !Hive.box(HiveKeys.Settings.name).get(
-                    SettingsKeys.BoughtBlacksmith.name,
-                    defaultValue: false)) {
-              Future.delayed(
-                const Duration(seconds: 1),
-                () {
-                  OverlayHandler.closeAnyOverlay(immediately: false);
-                  ModalHandler.showBaseDialog(
-                    context: context,
-                    dialogWidget: const InfoDialog(
-                      body:
-                          'Your Blacksmith purchase has been restored!\n\nEnjoy!',
-                    ),
-                  );
-                },
-              );
-            }
             _handlePurchase(purchaseDetails, inAppDetails);
           }
           if (purchaseDetails.pendingCompletePurchase) {

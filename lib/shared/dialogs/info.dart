@@ -5,10 +5,13 @@ class InfoDialog extends StatelessWidget {
   final String? title;
   final String body;
 
+  final VoidCallback? onPressed;
+
   const InfoDialog({
     Key? key,
     required this.body,
     this.title,
+    this.onPressed,
   }) : super(key: key);
 
   @override
@@ -28,7 +31,10 @@ class InfoDialog extends StatelessWidget {
         CupertinoDialogAction(
           child: const Text('OK'),
           isDefaultAction: false,
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            this.onPressed?.call();
+            Navigator.of(context).pop();
+          },
         ),
       ],
     );
