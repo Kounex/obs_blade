@@ -80,20 +80,17 @@ class _PurchaseBaseState extends State<PurchaseBase> {
         Future.delayed(
           const Duration(seconds: 1),
           () {
-            if (!Hive.box(HiveKeys.Settings.name)
-                .get(SettingsKeys.BoughtBlacksmith.name, defaultValue: false)) {
-              OverlayHandler.closeAnyOverlay(immediately: false);
-              ModalHandler.showBaseDialog(
-                context: context,
-                dialogWidget: InfoDialog(
-                  body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
-                  onPressed: () => Hive.box(HiveKeys.Settings.name).put(
-                    SettingsKeys.BoughtBlacksmith.name,
-                    true,
-                  ),
-                ),
-              );
-            }
+            Hive.box<dynamic>(HiveKeys.Settings.name).put(
+              SettingsKeys.BoughtBlacksmith.name,
+              true,
+            );
+            OverlayHandler.closeAnyOverlay(immediately: false);
+            ModalHandler.showBaseDialog(
+              context: context,
+              dialogWidget: const InfoDialog(
+                body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
+              ),
+            );
           },
         );
       }
