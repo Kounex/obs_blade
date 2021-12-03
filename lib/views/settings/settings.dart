@@ -311,6 +311,7 @@ class SettingsView extends StatelessWidget {
                       ),
                       onTap: () => ModalHandler.showBaseDialog(
                         context: context,
+                        barrierDismissible: true,
                         dialogWidget: const SupportDialog(
                           title: 'Blacksmith',
                           icon: CupertinoIcons.hammer_fill,
@@ -323,6 +324,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Tip Jar',
                       onTap: () => ModalHandler.showBaseDialog(
                         context: context,
+                        barrierDismissible: true,
                         dialogWidget: const SupportDialog(
                           title: 'Tips',
                           icon: CupertinoIcons.gift_fill,

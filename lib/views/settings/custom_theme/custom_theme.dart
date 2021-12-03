@@ -40,6 +40,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
           )
         : ModalHandler.showBaseDialog(
             context: context,
+            barrierDismissible: true,
             dialogWidget: const SupportDialog(
               title: 'Blacksmith',
               icon: CupertinoIcons.hammer_fill,

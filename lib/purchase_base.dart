@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
+import 'package:obs_blade/shared/dialogs/info.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
+import 'package:obs_blade/utils/overlay_handler.dart';
 
 import 'models/purchased_tip.dart';
 import 'types/enums/hive_keys.dart';
@@ -39,9 +42,6 @@ class _PurchaseBaseState extends State<PurchaseBase> {
     }, onError: (error) {
       // handle error here.
     });
-
-    /// Trigger stream to see made purchases
-    InAppPurchase.instance.restorePurchases();
     super.initState();
   }
 
@@ -100,6 +100,28 @@ class _PurchaseBaseState extends State<PurchaseBase> {
           } else if (purchaseDetails.status == PurchaseStatus.purchased) {
             _handlePurchase(purchaseDetails, inAppDetails);
           } else if (purchaseDetails.status == PurchaseStatus.restored) {
+            /// If we get the restored status from the purchase stream, it means
+            /// that the user clicked on restore and therefore called the restorePurchases
+            /// function and it worked - therefore we show an info dialog to inform
+            /// the user that it worked!
+            if (inAppDetails.id == 'blacksmith' &&
+                !Hive.box(HiveKeys.Settings.name).get(
+                    SettingsKeys.BoughtBlacksmith.name,
+                    defaultValue: false)) {
+              Future.delayed(
+                const Duration(seconds: 1),
+                () {
+                  OverlayHandler.closeAnyOverlay(immediately: false);
+                  ModalHandler.showBaseDialog(
+                    context: context,
+                    dialogWidget: const InfoDialog(
+                      body:
+                          'Your Blacksmith purchase has been restored!\n\nEnjoy!',
+                    ),
+                  );
+                },
+              );
+            }
             _handlePurchase(purchaseDetails, inAppDetails);
           }
           if (purchaseDetails.pendingCompletePurchase) {

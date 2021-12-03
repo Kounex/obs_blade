@@ -77,9 +77,7 @@ class TipsContent extends StatelessWidget {
                     .take(kTipAwesomeness.length)
                     .mapIndexed(
                       (tip, index) => DonateButton(
-                        text: tip.title.isNotEmpty
-                            ? tip.title
-                            : '${kTipAwesomeness[index]} Tip',
+                        text: '${kTipAwesomeness[index]} Tip',
                         price: tip.price,
                         purchaseParam: PurchaseParam(productDetails: tip),
                       ),

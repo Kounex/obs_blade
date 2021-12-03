@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/shared/general/custom_cupertino_dialog.dart';
-import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content.dart';
+import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content/blacksmith_content.dart';
 import 'package:obs_blade/views/settings/widgets/support_dialog/tips_content.dart';
 
 // import '../../../../shared/general/flutter_modified/non_scrollable_cupertino_dialog.dart';
