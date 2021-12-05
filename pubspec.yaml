@@ -1,7 +1,7 @@
 name: obs_blade
 description: Control your OBS instance and manage your stream - live!
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
-version: 2.0.1+2021120304
+version: 2.0.1+2021120501
 
 publish_to: 'none'
 
@@ -60,7 +60,7 @@ dependencies:
     path_provider: ^2.0.1
 
     # Enable and manage in-app purchases
-    in_app_purchase: ^1.0.9
+    in_app_purchase: ^2.0.0
 
     # Fancy done layout shit
     modal_bottom_sheet: ^2.0.0

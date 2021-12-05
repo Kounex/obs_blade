@@ -12,7 +12,7 @@ PODS:
     - OrderedSet (~> 5.0)
   - image_picker (0.0.1):
     - Flutter
-  - in_app_purchase_ios (0.0.1):
+  - in_app_purchase_storekit (0.0.1):
     - Flutter
   - OrderedSet (5.0.0)
   - package_info (0.0.1):
@@ -32,7 +32,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_inappwebview (from `.symlinks/plugins/flutter_inappwebview/ios`)
   - image_picker (from `.symlinks/plugins/image_picker/ios`)
-  - in_app_purchase_ios (from `.symlinks/plugins/in_app_purchase_ios/ios`)
+  - in_app_purchase_storekit (from `.symlinks/plugins/in_app_purchase_storekit/ios`)
   - package_info (from `.symlinks/plugins/package_info/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
@@ -53,8 +53,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_inappwebview/ios"
   image_picker:
     :path: ".symlinks/plugins/image_picker/ios"
-  in_app_purchase_ios:
-    :path: ".symlinks/plugins/in_app_purchase_ios/ios"
+  in_app_purchase_storekit:
+    :path: ".symlinks/plugins/in_app_purchase_storekit/ios"
   package_info:
     :path: ".symlinks/plugins/package_info/ios"
   path_provider:
@@ -71,7 +71,7 @@ SPEC CHECKSUMS:
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   flutter_inappwebview: bfd58618f49dc62f2676de690fc6dcda1d6c3721
   image_picker: 9aa50e1d8cdacdbed739e925b7eea16d014367e6
-  in_app_purchase_ios: 04ed55fdd1012db54095d6801335b5f5de0a475f
+  in_app_purchase_storekit: 6dec89fe3b9698847ed4aaf65fde6c17491620ad
   OrderedSet: aaeb196f7fef5a9edf55d89760da9176ad40b93c
   package_info: 873975fc26034f0b863a300ad47e7f1ac6c7ec62
   path_provider: d1e9807085df1f9cc9318206cd649dc0b76be3de
