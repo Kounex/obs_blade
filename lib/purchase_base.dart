@@ -82,16 +82,15 @@ class _PurchaseBaseState extends State<PurchaseBase> {
           Future.delayed(
             const Duration(seconds: 1),
             () {
+              Hive.box<dynamic>(HiveKeys.Settings.name).put(
+                SettingsKeys.BoughtBlacksmith.name,
+                true,
+              );
               OverlayHandler.closeAnyOverlay(immediately: false);
               ModalHandler.showBaseDialog(
                 context: rootNavKey.currentState!.context,
-                dialogWidget: InfoDialog(
+                dialogWidget: const InfoDialog(
                   body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
-                  onPressed: () =>
-                      Hive.box<dynamic>(HiveKeys.Settings.name).put(
-                    SettingsKeys.BoughtBlacksmith.name,
-                    true,
-                  ),
                 ),
               );
             },
