@@ -12,7 +12,7 @@ Feel free to either create issues if something does not work or pull this repo a
 
 In order to be able to connect to OBS with OBS Blade, you need to install the OBS WebSocket plugin:
 
-https://github.com/Palakis/obs-websocket
+https://github.com/obsproject/obs-websocket/
 
 Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version 4.9.1 (important to use this one currently!) for your operating system (found under 'Assets').
 
