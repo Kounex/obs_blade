@@ -2,6 +2,8 @@
 
 ![alt text](https://assets.kounex.com/images/obs-blade/store_banner_3.png 'OBS Blade Store Banner')
 
+DISCLAIMER: This app is not in any way affiliated with [OBS](https://github.com/obsproject/obs-studio) (Open Broadcaster Software).
+
 Control and manage your stream while using OBS by making use of the WebSocket Plugin for OBS. This project is build with the Flutter framework and could therefore be compiled and deployed for various platforms. This release is optimized for iOS and Android (Phone as well as Tablet).
 
 Feel free to either create issues if something does not work or pull this repo and make changes and build it on your own!
@@ -12,7 +14,7 @@ In order to be able to connect to OBS with OBS Blade, you need to install the OB
 
 https://github.com/Palakis/obs-websocket
 
-Go to the [Release](https://github.com/Palakis/obs-websocket/releases) section of this GitHub page and download the newest version for your operating system (found under 'Assets').
+Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version 4.9.1 (important to use this one currently!) for your operating system (found under 'Assets').
 
 Once this plugin is installed and active (usually restarting OBS right after) the device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address))
 
@@ -60,7 +62,7 @@ contact@kounex.com
 This App is available in the iOS App Store and the Google Play Store:
 
 -   [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
--   [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obs_blade)
+-   [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obsBlade)
 
 ## Support me!
 
