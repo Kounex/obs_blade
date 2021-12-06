@@ -16,7 +16,7 @@ https://github.com/obsproject/obs-websocket/
 
 Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version 4.9.1 (important to use this one currently!) for your operating system (found under 'Assets').
 
-Once this plugin is installed and active (usually restarting OBS right after) the device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address))
+Once this plugin is installed and active (usually by restarting OBS right after) the device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address))
 
 ## Features
 
