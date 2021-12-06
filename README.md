@@ -22,12 +22,12 @@ Once this plugin is installed and active (usually restarting OBS right after) th
 
 <div align="center">
   <div style="display: flex; align-items: flex-start;">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_1.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_2.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_3.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_4.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_5.png" width="110">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_6.png" width="110">
+    <img src="https://assets.kounex.com/images/obs-blade/iphone_1.png" width="134">
+    <img src="https://assets.kounex.com/images/obs-blade/iphone_2.png" width="134">
+    <img src="https://assets.kounex.com/images/obs-blade/iphone_3.png" width="134">
+    <img src="https://assets.kounex.com/images/obs-blade/iphone_4.png" width="134">
+    <img src="https://assets.kounex.com/images/obs-blade/iphone_5.png" width="134">
+    <img src="https://assets.kounex.com/images/obs-blade/iphone_6.png" width="134">
   </div>
 </div>
 
