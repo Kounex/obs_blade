@@ -72,14 +72,14 @@ class _DashboardViewState extends State<DashboardView> {
     when(
       (_) =>
           GetIt.instance<NetworkStore>().activeSession!.connection.name == null,
-      () => SchedulerBinding.instance!.addPostFrameCallback(
+      () => SchedulerBinding.instance.addPostFrameCallback(
         (_) => _saveConnectionDialog(context),
       ),
     );
 
     when(
       (_) => GetIt.instance<NetworkStore>().obsTerminated,
-      () => SchedulerBinding.instance!.addPostFrameCallback(
+      () => SchedulerBinding.instance.addPostFrameCallback(
         (_) => Navigator.of(context).pushReplacementNamed(
             HomeTabRoutingKeys.Landing.route,
             arguments: ModalRoute.of(context)!.settings.arguments),
