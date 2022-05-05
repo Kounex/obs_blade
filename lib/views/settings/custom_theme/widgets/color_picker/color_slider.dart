@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_label.dart';
+import 'color_label.dart';
 
 import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/validation_cupertino_textfield.dart';

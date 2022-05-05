@@ -5,7 +5,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../stores/views/home.dart';
 import 'auto_discovery/auto_discovery.dart';
-import 'connect_form.dart';
+import 'connect_form/connect_form.dart';
 import 'switcher_card.dart';
 
 class ConnectBox extends StatelessWidget {
@@ -24,7 +24,7 @@ class ConnectBox extends StatelessWidget {
                     left: 24.0, right: 24.0, bottom: 12.0),
                 child: ConnectForm(
                   connection: landingStore.typedInConnection,
-                  saveCredentials: true,
+                  manual: true,
                 ),
               )
             : const AutoDiscovery(),

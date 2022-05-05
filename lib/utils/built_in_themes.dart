@@ -1,5 +1,5 @@
-import 'package:obs_blade/models/custom_theme.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+import '../models/custom_theme.dart';
+import 'styling_helper.dart';
 
 import '../types/extensions/color.dart';
 

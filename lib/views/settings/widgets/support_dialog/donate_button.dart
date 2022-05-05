@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/shared/general/base/button.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
+import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/dialogs/info.dart';
+import '../../../../shared/general/base/button.dart';
+import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/settings_keys.dart';
+import '../../../../utils/modal_handler.dart';
 
 class DonateButton extends StatelessWidget {
   final String? text;

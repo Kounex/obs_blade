@@ -55,7 +55,7 @@ class SavedConnections extends StatelessWidget {
                         for (var connection in savedConnections) {
                           connection.reachable = snapshot.hasData &&
                               snapshot.data!.any((discoverConnection) =>
-                                  discoverConnection.ip == connection.ip &&
+                                  discoverConnection.host == connection.host &&
                                   discoverConnection.port == connection.port);
                         }
                         savedConnections

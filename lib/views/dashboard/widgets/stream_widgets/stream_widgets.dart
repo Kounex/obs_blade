@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/dashboard/widgets/stream_widgets/stream_chat/stream_chat.dart';
+import 'stream_chat/stream_chat.dart';
 
 import '../../../../shared/general/base/card.dart';
 import 'stats/stats.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/general/base/button.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
+import '../../../../shared/general/base/button.dart';
+import '../../../../utils/modal_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
@@ -53,7 +53,7 @@ class ConnectionBox extends StatelessWidget {
                   //   style: Theme.of(context).textTheme.caption,
                   // ),
                   Text(
-                    '(${this.connection.ip})',
+                    '(${this.connection.host})',
                     style: Theme.of(context).textTheme.caption,
                   ),
                 ],

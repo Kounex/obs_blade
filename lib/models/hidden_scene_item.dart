@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/type_ids.dart';
-import 'package:obs_blade/types/classes/api/scene_item.dart';
+import 'type_ids.dart';
+import '../types/classes/api/scene_item.dart';
 
 import 'enums/scene_item_type.dart';
 
@@ -33,19 +33,44 @@ class HiddenSceneItem extends HiveObject {
 
   /// Indicates what kind of item this is. Primarly used (currently) to find out
   /// if this hidden item is a group container, meaning children should be hidden
-  /// as well (will be checked by mathing this name and the scene items parentName
+  /// as well (will be checked by matching this name and the scene items parentName
   /// property while also checking whether this item is from type 'group')
-  /// [IMPORTANT]: Is new since production, might be null!
   @HiveField(4)
   String? sourceType;
 
-  HiddenSceneItem(
-      this.sceneName, this.type, this.id, this.name, this.sourceType);
+  /// Since the scene name itself is not a good enough indicator (different OBS
+  /// instances could share the same scene name like "Main"), a good indicator
+  /// (if present since it's not mandatory) would be the connection name because
+  /// it has to be unique
+  @HiveField(5)
+  String? connectionName;
 
-  bool isSceneItem(String sceneName, SceneItemType type, SceneItem sceneItem) =>
+  /// Used as a backup if no connection name is present because it's better than
+  /// only using the name but might cause false behaviour when the host
+  /// changes for whatever reasons
+  @HiveField(6)
+  String? host;
+
+  HiddenSceneItem(
+    this.sceneName,
+    this.type,
+    this.id,
+    this.name,
+    this.sourceType,
+    this.connectionName,
+    this.host,
+  );
+
+  bool isSceneItem(String sceneName, SceneItemType type, SceneItem sceneItem,
+          String? connectionName, String? host) =>
       this.sceneName == sceneName &&
       this.type == type &&
       this.id == sceneItem.id &&
       this.name == sceneItem.name &&
-      this.sourceType == sceneItem.type;
+      this.sourceType == sceneItem.type &&
+      ((this.connectionName == null && this.host == null) ||
+          (this.connectionName == connectionName) ||
+          (this.connectionName == null &&
+              connectionName == null &&
+              this.host == host));
 }

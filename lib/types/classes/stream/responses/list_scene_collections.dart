@@ -1,5 +1,5 @@
-import 'package:obs_blade/types/classes/api/scene_collection.dart';
-import 'package:obs_blade/types/classes/stream/responses/base.dart';
+import '../../api/scene_collection.dart';
+import 'base.dart';
 
 class ListSceneCollectionsResponse extends BaseResponse {
   ListSceneCollectionsResponse(Map<String, dynamic> json) : super(json);

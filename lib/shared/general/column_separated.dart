@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/divider.dart';
+import 'base/divider.dart';
 
 class ColumnSeparated extends StatelessWidget {
   final Iterable<Widget> children;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/statistics/widgets/stream_entry/stream_date_chip.dart';
+import 'stream_date_chip.dart';
 
 import '../../../../models/past_stream_data.dart';
 import '../../../../types/extensions/int.dart';

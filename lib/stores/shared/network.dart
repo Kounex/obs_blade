@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/utils/general_helper.dart';
+import '../../utils/general_helper.dart';
 
 import '../../models/connection.dart';
 import '../../types/classes/session.dart';

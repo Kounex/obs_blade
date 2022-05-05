@@ -1,4 +1,4 @@
-import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_slider.dart';
+import '../views/settings/custom_theme/widgets/color_picker/color_slider.dart';
 
 /// Helper class to summarize common validation which are used
 /// in several places

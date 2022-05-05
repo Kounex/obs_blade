@@ -5,8 +5,8 @@ import 'dart:isolate';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
-import 'package:obs_blade/types/exceptions/network.dart';
-import 'package:obs_blade/utils/general_helper.dart';
+import '../types/exceptions/network.dart';
+import 'general_helper.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
@@ -23,7 +23,8 @@ class NetworkHelper {
   /// [HomeView] otherwise
   static IOWebSocketChannel establishWebSocket(Connection connection) =>
       IOWebSocketChannel.connect(
-        Uri.parse('ws://${connection.ip}:${connection.port.toString()}'),
+        Uri.parse(
+            '${connection.isDomain == null || !connection.isDomain! ? "ws://" : ""}${connection.host}:${connection.port.toString()}'),
         pingInterval: const Duration(seconds: 3),
       );
 

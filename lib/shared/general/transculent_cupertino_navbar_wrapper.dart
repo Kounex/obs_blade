@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/custom_sliver_list.dart';
+import 'custom_sliver_list.dart';
 
 import '../../utils/styling_helper.dart';
 

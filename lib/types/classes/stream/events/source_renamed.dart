@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/events/base.dart';
+import 'base.dart';
 
 /// A source has been renamed
 class SourceRenamedEvent extends BaseEvent {

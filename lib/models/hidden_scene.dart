@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/type_ids.dart';
+import 'type_ids.dart';
 
 part 'hidden_scene.g.dart';
 
@@ -18,10 +18,17 @@ class HiddenScene extends HiveObject {
   String? connectionName;
 
   /// Used as a backup if no connection name is present because it's better than
-  /// only using the name but might cause false behaviour when the ip address
+  /// only using the name but might cause false behaviour when the host
   /// changes for whatever reasons
   @HiveField(2)
-  String ipAddress;
+  String host;
 
-  HiddenScene(this.sceneName, this.connectionName, this.ipAddress);
+  HiddenScene(this.sceneName, this.connectionName, this.host);
+
+  bool isScene(String sceneName, String? connectionName, String? host) =>
+      this.sceneName == sceneName &&
+      (this.connectionName == connectionName ||
+          (this.connectionName == null &&
+              connectionName == null &&
+              this.host == host));
 }

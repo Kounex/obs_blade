@@ -3,10 +3,10 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:obs_blade/models/custom_theme.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../utils/modal_handler.dart';
+import '../../../../../utils/styling_helper.dart';
 
 import 'theme_row.dart';
 

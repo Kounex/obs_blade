@@ -36,24 +36,30 @@ class SceneButtons extends StatelessWidget {
           if (networkStore.activeSession != null) {
             visibleScenes?.forEach(
               (scene) => hiddenScenes.addAll(
-                hiddenScenesBox.values.where((hiddenSceneInBox) {
-                  bool isHiddenScene = hiddenSceneInBox.sceneName == scene.name;
+                hiddenScenesBox.values.where((hiddenSceneInBox) =>
+                        hiddenSceneInBox.isScene(
+                            scene.name,
+                            networkStore.activeSession?.connection.name,
+                            networkStore.activeSession?.connection.host)
+                    // {
+                    //   bool isHiddenScene = hiddenSceneInBox.sceneName == scene.name;
 
-                  if (isHiddenScene) {
-                    if (networkStore.activeSession!.connection.name != null &&
-                        hiddenSceneInBox.connectionName != null) {
-                      isHiddenScene =
-                          networkStore.activeSession!.connection.name ==
-                              hiddenSceneInBox.connectionName;
-                    } else {
-                      isHiddenScene =
-                          networkStore.activeSession!.connection.ip ==
-                              hiddenSceneInBox.ipAddress;
-                    }
-                  }
+                    //   if (isHiddenScene) {
+                    //     if (networkStore.activeSession!.connection.name != null &&
+                    //         hiddenSceneInBox.connectionName != null) {
+                    //       isHiddenScene =
+                    //           networkStore.activeSession!.connection.name ==
+                    //               hiddenSceneInBox.connectionName;
+                    //     } else {
+                    //       isHiddenScene =
+                    //           networkStore.activeSession!.connection.host ==
+                    //               hiddenSceneInBox.host;
+                    //     }
+                    //   }
 
-                  return isHiddenScene;
-                }),
+                    //   return isHiddenScene;
+                    // }
+                    ),
               ),
             );
           }
@@ -86,7 +92,7 @@ class SceneButtons extends StatelessWidget {
                           hiddenScene = HiddenScene(
                             scene.name,
                             networkStore.activeSession!.connection.name,
-                            networkStore.activeSession!.connection.ip,
+                            networkStore.activeSession!.connection.host,
                           );
 
                           Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)

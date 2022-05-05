@@ -20,6 +20,7 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
       fields[1] as String,
       fields[3] as int,
       fields[4] as String?,
+      fields[5] as bool?,
     )
       ..name = fields[0] as String?
       ..ssid = fields[2] as String?;
@@ -28,17 +29,19 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
   @override
   void write(BinaryWriter writer, Connection obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
-      ..write(obj.ip)
+      ..write(obj.host)
       ..writeByte(2)
       ..write(obj.ssid)
       ..writeByte(3)
       ..write(obj.port)
       ..writeByte(4)
-      ..write(obj.pw);
+      ..write(obj.pw)
+      ..writeByte(5)
+      ..write(obj.isDomain);
   }
 
   @override

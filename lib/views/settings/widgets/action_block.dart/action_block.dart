@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/card.dart';
+import '../../../../shared/general/base/card.dart';
 
 import '../../../../shared/general/base/divider.dart';
 import 'block_entry.dart';

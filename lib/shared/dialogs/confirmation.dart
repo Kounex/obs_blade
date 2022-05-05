@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/checkbox.dart';
+import '../general/base/checkbox.dart';
 
 class ConfirmationDialog extends StatefulWidget {
   final String title;

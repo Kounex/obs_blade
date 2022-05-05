@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
+import '../../../../models/hidden_scene_item.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
 import '../../../../shared/general/validation_cupertino_textfield.dart';
@@ -24,10 +25,12 @@ class EditConnectionDialog extends StatefulWidget {
 
 class _EditConnectionDialogState extends State<EditConnectionDialog> {
   late CustomValidationTextEditingController _name;
-  late CustomValidationTextEditingController _ip;
+  late CustomValidationTextEditingController _host;
   late CustomValidationTextEditingController _port;
 
   late TextEditingController _pw;
+
+  late bool _isDomain;
 
   final FocusNode _portFocusNode = FocusNode();
 
@@ -40,9 +43,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       text: this.widget.connection.name,
       check: _nameValidator,
     );
-    _ip = CustomValidationTextEditingController(
-      text: this.widget.connection.ip,
-      check: ValidationHelper.ipValidation,
+    _host = CustomValidationTextEditingController(
+      text: this.widget.connection.host,
+      check: this.widget.connection.isDomain == null ||
+              !this.widget.connection.isDomain!
+          ? ValidationHelper.ipValidation
+          : (_) => null,
     );
     _port = CustomValidationTextEditingController(
       text: this.widget.connection.port.toString(),
@@ -50,6 +56,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
     );
 
     _pw = TextEditingController(text: this.widget.connection.pw);
+
+    _isDomain = this.widget.connection.isDomain ?? false;
   }
 
   String? _nameValidator(String name) => name.trim().isEmpty
@@ -109,12 +117,35 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             ),
           ),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Flexible(
                 flex: 2,
                 child: ValidationCupertinoTextfield(
-                  controller: _ip,
-                  placeholder: 'IP',
+                  controller: _host,
+                  placeholder: 'Host',
+                  bottomWidget: SizedBox(
+                    width: double.infinity,
+                    child: CupertinoSlidingSegmentedControl<bool>(
+                      groupValue: _isDomain,
+                      children: const {
+                        false: Text('IP'),
+                        true: Text('Domain'),
+                      },
+                      onValueChanged: (domainMode) {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        setState(() {
+                          _isDomain = domainMode ?? false;
+                          _host = CustomValidationTextEditingController(
+                            text: '',
+                            check: !_isDomain
+                                ? ValidationHelper.ipValidation
+                                : (_) => null,
+                          );
+                        });
+                      },
+                    ),
+                  ),
                 ),
               ),
               Flexible(
@@ -172,31 +203,51 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           child: const Text('Save'),
           onPressed: () {
             _name.submit();
-            _ip.submit();
+            _host.submit();
             _port.submit();
 
-            if (_name.isValid && _ip.isValid && _port.isValid) {
+            if (_name.isValid && _host.isValid && _port.isValid) {
               String newName = _name.text.trim();
+              String newHost = _host.text.trim();
 
-              /// Since [HiddenScene] elements are based on the connection name and
-              /// ip address, once the user updates the connection, we need to update
-              /// these elements as well to preserve the status
-              if (newName != this.widget.connection.name) {
+              /// Since [HiddenScene] and [HiddenSceneItem] elements are based on the
+              /// connection name and host, once the user updates the connection, we need
+              /// to update these elements as well to preserve the status
+              if (newName != this.widget.connection.name ||
+                  newHost != this.widget.connection.host) {
                 Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
                     .values
                     .forEach((hiddenScene) {
                   if (hiddenScene.connectionName ==
-                      this.widget.connection.name) {
+                          this.widget.connection.name ||
+                      (hiddenScene.connectionName == null &&
+                          hiddenScene.host == this.widget.connection.host)) {
                     hiddenScene.connectionName = newName;
+                    hiddenScene.host = newHost;
                     hiddenScene.save();
+                  }
+                });
+
+                Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
+                    .values
+                    .forEach((hiddenSceneItem) {
+                  if (hiddenSceneItem.connectionName ==
+                          this.widget.connection.name ||
+                      (hiddenSceneItem.connectionName == null &&
+                          hiddenSceneItem.host ==
+                              this.widget.connection.host)) {
+                    hiddenSceneItem.connectionName = newName;
+                    hiddenSceneItem.host = newHost;
+                    hiddenSceneItem.save();
                   }
                 });
               }
 
               this.widget.connection.name = newName;
-              this.widget.connection.ip = _ip.text;
+              this.widget.connection.host = newHost;
               this.widget.connection.port = int.parse(_port.text);
-              this.widget.connection.pw = _pw.text;
+              this.widget.connection.pw = _pw.text.trim();
+              this.widget.connection.isDomain = _isDomain;
               this.widget.connection.save();
               Navigator.of(context).pop();
             }

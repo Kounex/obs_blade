@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content/restore_button.dart';
+import 'restore_button.dart';
 
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';

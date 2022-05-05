@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/animator/fader.dart';
-import 'package:obs_blade/shared/general/themed/rich_text.dart';
+import '../../../../../shared/animator/fader.dart';
+import '../../../../../shared/general/themed/rich_text.dart';
 
 class ResultEntry extends StatelessWidget {
   final String result;

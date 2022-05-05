@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import '../../utils/modal_handler.dart';
 import '../dialogs/info.dart';

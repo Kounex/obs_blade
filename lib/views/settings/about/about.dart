@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import '../../../shared/general/base/button.dart';
 import '../../../shared/general/base/card.dart';

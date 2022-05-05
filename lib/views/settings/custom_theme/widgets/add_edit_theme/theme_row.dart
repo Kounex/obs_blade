@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/button.dart';
-import 'package:obs_blade/shared/general/base/divider.dart';
-import 'package:obs_blade/shared/general/themed/cupertino_switch.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
+import '../../../../../shared/general/base/button.dart';
+import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/themed/cupertino_switch.dart';
+import '../color_picker/color_bubble.dart';
 
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';

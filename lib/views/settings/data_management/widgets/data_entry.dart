@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/button.dart';
-import 'package:obs_blade/shared/general/clean_list_tile.dart';
+import '../../../../shared/general/base/button.dart';
+import '../../../../shared/general/clean_list_tile.dart';
 
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../utils/modal_handler.dart';

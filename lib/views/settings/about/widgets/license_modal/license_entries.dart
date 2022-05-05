@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:obs_blade/views/settings/about/widgets/license_modal/license_detail.dart';
+import 'license_detail.dart';
 
 import '../../../../../shared/overlay/base_progress_indicator.dart';
 

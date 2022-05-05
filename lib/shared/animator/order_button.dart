@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/types/enums/order.dart';
+import '../../types/enums/order.dart';
 
 class OrderButton extends StatefulWidget {
   final Order order;

@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/enums/request_type.dart';
+import '../../../enums/request_type.dart';
 
 import '../../../interfaces/message.dart';
 

@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/responses/base.dart';
+import 'base.dart';
 
 /// Get the mute status of a specified source
 class GetMuteResponse extends BaseResponse {

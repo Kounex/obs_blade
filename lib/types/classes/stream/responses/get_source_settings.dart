@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/responses/base.dart';
+import 'base.dart';
 
 /// Get settings of the specified source
 class GetSourceSettingsResponse extends BaseResponse {

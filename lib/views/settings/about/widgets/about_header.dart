@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/divider.dart';
+import '../../../../shared/general/base/divider.dart';
 import 'package:package_info/package_info.dart';
 
 class AboutHeader extends StatelessWidget {

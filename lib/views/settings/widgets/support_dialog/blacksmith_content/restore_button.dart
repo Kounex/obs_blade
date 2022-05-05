@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
-import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/overlay_handler.dart';
+import '../../../../../shared/dialogs/info.dart';
+import '../../../../../shared/general/hive_builder.dart';
+import '../../../../../shared/general/themed/cupertino_button.dart';
+import '../../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/modal_handler.dart';
+import '../../../../../utils/overlay_handler.dart';
 
 class RestoreButton extends StatelessWidget {
   const RestoreButton({Key? key}) : super(key: key);

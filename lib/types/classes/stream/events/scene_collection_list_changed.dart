@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/api/scene_collection.dart';
+import '../../api/scene_collection.dart';
 
 import 'base.dart';
 

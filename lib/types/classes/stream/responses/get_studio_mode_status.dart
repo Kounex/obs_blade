@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/responses/base.dart';
+import 'base.dart';
 
 /// Indicates if Studio Mode is currently enabled
 class GetStudioModeStatusResponse extends BaseResponse {

@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/responses/base.dart';
+import 'base.dart';
 
 /// List of all transitions available in the frontend's dropdown menu
 class GetTransitionListResponse extends BaseResponse {

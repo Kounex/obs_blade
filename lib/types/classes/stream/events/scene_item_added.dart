@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/events/base.dart';
+import 'base.dart';
 
 /// A scene item has been added to a scene
 class SceneItemAddedEvent extends BaseEvent {

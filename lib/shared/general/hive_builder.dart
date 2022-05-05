@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
+import '../../types/enums/hive_keys.dart';
+import '../../types/enums/settings_keys.dart';
 
 class HiveBuilder<T> extends StatelessWidget {
   final HiveKeys hiveKey;

@@ -18,6 +18,8 @@ abstract class _HomeStore with Store {
   bool refreshable = false;
   @observable
   bool manualMode = false;
+  @observable
+  bool domainMode = false;
 
   Connection typedInConnection = Connection('', 4444, '');
 
@@ -35,6 +37,9 @@ abstract class _HomeStore with Store {
 
   @action
   void setRefreshable(bool refreshable) => this.refreshable = refreshable;
+
+  @action
+  void setDomainMode(bool domainMode) => this.domainMode = domainMode;
 
   @action
   void toggleManualMode([bool? manualMode]) =>

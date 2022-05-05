@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/models/app_log.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/shared/animator/status_dot.dart';
+import '../../../../../models/app_log.dart';
+import '../../../../../models/enums/log_level.dart';
+import '../../../../../shared/animator/status_dot.dart';
 
 import '../../../../../types/extensions/int.dart';
 import '../../../../../utils/routing_helper.dart';

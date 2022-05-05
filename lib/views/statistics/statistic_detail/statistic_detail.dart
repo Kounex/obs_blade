@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+import '../../../utils/styling_helper.dart';
 
 import '../../../models/past_stream_data.dart';
 import '../../../shared/dialogs/confirmation.dart';

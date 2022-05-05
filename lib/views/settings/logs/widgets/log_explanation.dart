@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/models/enums/log_level.dart';
+import '../../../../models/enums/log_level.dart';
 
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/custom_expansion_tile.dart';

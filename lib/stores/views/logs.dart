@@ -1,5 +1,5 @@
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/types/enums/order.dart';
+import '../../types/enums/order.dart';
 
 import '../../models/enums/log_level.dart';
 

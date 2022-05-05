@@ -1,10 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart' as mob_x;
-import 'package:obs_blade/models/enums/log_level.dart';
-import 'package:obs_blade/utils/general_helper.dart';
+import '../../models/enums/log_level.dart';
+import '../../utils/general_helper.dart';
 
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';

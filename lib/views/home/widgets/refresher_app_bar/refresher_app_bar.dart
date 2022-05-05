@@ -3,12 +3,12 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/models/custom_theme.dart';
-import 'package:obs_blade/shared/general/flutter_modified/translucent_sliver_app_bar.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+import '../../../../models/custom_theme.dart';
+import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
+import '../../../../shared/general/hive_builder.dart';
+import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/settings_keys.dart';
+import '../../../../utils/styling_helper.dart';
 
 import '../../../../shared/animator/fader.dart';
 import '../../../../types/extensions/string.dart';

@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/type_ids.dart';
+import 'type_ids.dart';
 
 import '../types/classes/api/stream_stats.dart';
 

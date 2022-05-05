@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:obs_blade/models/purchased_tip.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
+import '../../../../models/purchased_tip.dart';
+import '../../../../shared/general/hive_builder.dart';
+import '../../../../types/enums/hive_keys.dart';
 
 import '../../../../types/extensions/list.dart';
 import 'donate_button.dart';

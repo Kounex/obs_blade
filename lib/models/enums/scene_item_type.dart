@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/type_ids.dart';
+import '../type_ids.dart';
 
 part 'scene_item_type.g.dart';
 

@@ -33,6 +33,8 @@ class ValidationCupertinoTextfield extends StatefulWidget {
   final int minLines;
   final int? maxLines;
 
+  final Widget? bottomWidget;
+
   const ValidationCupertinoTextfield({
     Key? key,
     required this.controller,
@@ -40,9 +42,10 @@ class ValidationCupertinoTextfield extends StatefulWidget {
     this.focusNode,
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
-    this.bottomPadding = 4.0,
+    this.bottomPadding = 6.0,
     this.minLines = 1,
     this.maxLines,
+    this.bottomWidget,
   }) : super(key: key);
 
   @override
@@ -90,7 +93,7 @@ class ValidationCupertinoTextfieldState
         CupertinoTextField(
           focusNode: this.widget.focusNode,
           controller: this.widget.controller,
-          cursorColor: Theme.of(context).cursorColor,
+          cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
           placeholder: this.widget.placeholder,
           keyboardType: this.widget.keyboardType,
           inputFormatters: this.widget.inputFormatters ?? [],
@@ -98,11 +101,15 @@ class ValidationCupertinoTextfieldState
           minLines: this.widget.minLines,
           maxLines: this.widget.maxLines ?? this.widget.minLines,
         ),
+        this.widget.bottomWidget ?? Container(),
         Align(
           alignment: Alignment.centerLeft,
           child: Padding(
             padding: EdgeInsets.only(
-                top: 4.0, left: 4.0, bottom: this.widget.bottomPadding),
+              top: 2.0,
+              left: 4.0,
+              bottom: this.widget.bottomPadding,
+            ),
             child: AnimatedOpacity(
               opacity: _validationText != null ? 1 : 0,
               duration: const Duration(milliseconds: 200),

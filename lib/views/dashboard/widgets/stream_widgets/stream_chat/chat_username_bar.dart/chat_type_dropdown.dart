@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
+import '../../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../../types/enums/hive_keys.dart';
+import '../../../../../../utils/modal_handler.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../types/enums/settings_keys.dart';

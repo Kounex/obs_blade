@@ -71,6 +71,21 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
+  final _$domainModeAtom = Atom(name: '_HomeStore.domainMode');
+
+  @override
+  bool get domainMode {
+    _$domainModeAtom.reportRead();
+    return super.domainMode;
+  }
+
+  @override
+  set domainMode(bool value) {
+    _$domainModeAtom.reportWrite(value, super.domainMode, () {
+      super.domainMode = value;
+    });
+  }
+
   final _$_HomeStoreActionController = ActionController(name: '_HomeStore');
 
   @override
@@ -107,6 +122,17 @@ mixin _$HomeStore on _HomeStore, Store {
   }
 
   @override
+  void setDomainMode(bool domainMode) {
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.setDomainMode');
+    try {
+      return super.setDomainMode(domainMode);
+    } finally {
+      _$_HomeStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void toggleManualMode([bool? manualMode]) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
         name: '_HomeStore.toggleManualMode');
@@ -123,7 +149,8 @@ mixin _$HomeStore on _HomeStore, Store {
 autodiscoverConnections: ${autodiscoverConnections},
 autodiscoverPort: ${autodiscoverPort},
 refreshable: ${refreshable},
-manualMode: ${manualMode}
+manualMode: ${manualMode},
+domainMode: ${domainMode}
     ''';
   }
 }

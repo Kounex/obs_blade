@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
 
 class PreviewWarningDialog extends StatelessWidget {
   final void Function(bool) onOk;

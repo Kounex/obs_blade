@@ -4,11 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:obs_blade/models/purchased_tip.dart';
+import 'models/purchased_tip.dart';
 
 import 'app.dart';
 import 'models/app_log.dart';

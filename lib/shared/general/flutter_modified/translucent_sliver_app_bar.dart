@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
+import '../../../utils/styling_helper.dart';
 
 /// Copied [SliverAppBar] implementation to override the
 /// internal [_SliverAppBarDelegate] so it is wrapped

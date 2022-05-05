@@ -1,6 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/themed/rich_text.dart';
+import '../../../shared/general/themed/rich_text.dart';
 
 import '../../../shared/animator/fader.dart';
 import '../../../shared/general/base/card.dart';

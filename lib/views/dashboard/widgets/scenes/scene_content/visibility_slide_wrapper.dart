@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/stores/shared/network.dart';
 
 import '../../../../../models/enums/scene_item_type.dart';
 import '../../../../../models/hidden_scene_item.dart';
@@ -92,6 +93,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
     return HiveBuilder<HiddenSceneItem>(
       hiveKey: HiveKeys.HiddenSceneItem,
@@ -100,9 +102,12 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
         try {
           hiddenSceneItem = hiddenSceneItemsBox.values.toList().firstWhere(
                 (hiddenSceneItem) => hiddenSceneItem.isSceneItem(
-                    dashboardStore.activeSceneName!,
-                    this.widget.sceneItemType,
-                    this.widget.sceneItem),
+                  dashboardStore.activeSceneName!,
+                  this.widget.sceneItemType,
+                  this.widget.sceneItem,
+                  networkStore.activeSession?.connection.name,
+                  networkStore.activeSession?.connection.host,
+                ),
               );
         } catch (e) {
           hiddenSceneItem = null;
@@ -163,6 +168,8 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                           this.widget.sceneItem.id,
                           this.widget.sceneItem.name,
                           this.widget.sceneItem.type,
+                          networkStore.activeSession?.connection.name,
+                          networkStore.activeSession?.connection.host,
                         );
 
                         hiddenSceneItemsBox.add(hiddenSceneItem!);

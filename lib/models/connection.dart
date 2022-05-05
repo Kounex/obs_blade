@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:obs_blade/models/type_ids.dart';
+import 'type_ids.dart';
 
 part 'connection.g.dart';
 
@@ -9,7 +9,7 @@ class Connection extends HiveObject {
   String? name;
 
   @HiveField(1)
-  String ip;
+  String host;
 
   @HiveField(2)
   String? ssid;
@@ -20,9 +20,12 @@ class Connection extends HiveObject {
   @HiveField(4)
   String? pw;
 
+  @HiveField(5)
+  bool? isDomain;
+
   String? challenge;
   String? salt;
   bool? reachable;
 
-  Connection(this.ip, this.port, [this.pw]);
+  Connection(this.host, this.port, [this.pw, this.isDomain]);
 }

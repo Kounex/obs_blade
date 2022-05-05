@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
+import '../../dialogs/info.dart';
+import '../../../utils/modal_handler.dart';
 
 class ThemedCupertinoSwitch extends StatelessWidget {
   final bool value;

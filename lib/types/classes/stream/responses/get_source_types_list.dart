@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/api/source_type.dart';
+import '../../api/source_type.dart';
 
 import 'base.dart';
 

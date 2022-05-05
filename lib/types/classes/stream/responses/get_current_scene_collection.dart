@@ -1,4 +1,4 @@
-import 'package:obs_blade/types/classes/stream/responses/base.dart';
+import 'base.dart';
 
 class GetCurrentSceneCollectionResponse extends BaseResponse {
   GetCurrentSceneCollectionResponse(Map<String, dynamic> json) : super(json);

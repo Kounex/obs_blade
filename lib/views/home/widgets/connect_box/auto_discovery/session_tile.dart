@@ -1,10 +1,9 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
-import '../connect_form.dart';
+import '../connect_form/connect_form.dart';
 
 class SessionTile extends StatelessWidget {
   final Connection connection;
@@ -15,7 +14,7 @@ class SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomExpansionTile(
       leadingIcon: CupertinoIcons.desktopcomputer,
-      headerText: this.connection.ip,
+      headerText: this.connection.host,
       headerPadding: const EdgeInsets.symmetric(
         horizontal: 24.0,
         vertical: 18.0,

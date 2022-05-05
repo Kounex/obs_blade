@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/shared/general/hive_builder.dart';
+import '../../../../../shared/general/hive_builder.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';

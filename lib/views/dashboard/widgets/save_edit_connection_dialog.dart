@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/models/hidden_scene_item.dart';
 
 import '../../../models/connection.dart';
 import '../../../models/hidden_scene.dart';
@@ -42,9 +43,9 @@ class SaveEditConnectionDialog extends StatelessWidget {
       onSave: (name) {
         name = name?.trim();
 
-        /// Since [HiddenScene] elements are based on the connection name and
-        /// ip address, once the user updates the connection, we need to update
-        /// these elements as well to preserve the status
+        /// Since [HiddenScene] and [HiddenSceneItem] elements are based on the
+        /// connection name and host, once the user updates the connection, we need
+        /// to update these elements as well to preserve the status
         if (name != networkStore.activeSession!.connection.name) {
           Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
               .values
@@ -52,10 +53,23 @@ class SaveEditConnectionDialog extends StatelessWidget {
             if (hiddenScene.connectionName ==
                     networkStore.activeSession!.connection.name ||
                 (hiddenScene.connectionName == null &&
-                    hiddenScene.ipAddress ==
-                        networkStore.activeSession!.connection.ip)) {
+                    hiddenScene.host ==
+                        networkStore.activeSession!.connection.host)) {
               hiddenScene.connectionName = name;
               hiddenScene.save();
+            }
+          });
+
+          Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
+              .values
+              .forEach((hiddenSceneItem) {
+            if (hiddenSceneItem.connectionName ==
+                    networkStore.activeSession!.connection.name ||
+                (hiddenSceneItem.connectionName == null &&
+                    hiddenSceneItem.host ==
+                        networkStore.activeSession!.connection.host)) {
+              hiddenSceneItem.connectionName = name;
+              hiddenSceneItem.save();
             }
           });
         }

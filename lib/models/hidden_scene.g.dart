@@ -32,7 +32,7 @@ class HiddenSceneAdapter extends TypeAdapter<HiddenScene> {
       ..writeByte(1)
       ..write(obj.connectionName)
       ..writeByte(2)
-      ..write(obj.ipAddress);
+      ..write(obj.host);
   }
 
   @override

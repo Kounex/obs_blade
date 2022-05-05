@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/custom_logo_row.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/theme_loader.dart';
+import '../../../../../utils/styling_helper.dart';
+import 'custom_logo_row.dart';
+import 'theme_loader.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/dialogs/confirmation.dart';

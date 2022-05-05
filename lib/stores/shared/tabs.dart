@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
+import '../../utils/routing_helper.dart';
 
 part 'tabs.g.dart';
 

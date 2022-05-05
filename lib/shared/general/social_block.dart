@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/dialogs/info.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
+import '../dialogs/info.dart';
+import '../../utils/modal_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const double kSocialEntryDefaultIconSize = 28.0;

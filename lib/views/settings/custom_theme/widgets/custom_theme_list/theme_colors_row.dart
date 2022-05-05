@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/models/custom_theme.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
-import 'package:obs_blade/views/settings/custom_theme/widgets/color_picker/color_bubble.dart';
+import '../../../../../models/custom_theme.dart';
+import '../../../../../utils/styling_helper.dart';
+import '../color_picker/color_bubble.dart';
 
 import '../../../../../types/extensions/string.dart';
 
