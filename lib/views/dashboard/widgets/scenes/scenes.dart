@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'scene_collection_control.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import 'exposed_controls/exposed_controls.dart';
 import 'scene_buttons/scene_buttons.dart';
+import 'scene_collection_control.dart';
 import 'scene_content/scene_content.dart';
 import 'scene_content/scene_content_mobile.dart';
 import 'scene_preview/scene_preview.dart';

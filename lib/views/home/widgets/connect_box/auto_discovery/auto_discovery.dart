@@ -38,8 +38,8 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Flexible(
-                child: Text('Port for autodiscovery: '),
+              Flexible(
+                child: const Text('Port for autodiscovery: '),
               ),
               Container(width: 10.0),
               const QuestionMarkTooltip(

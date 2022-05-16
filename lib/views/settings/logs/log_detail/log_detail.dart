@@ -41,6 +41,7 @@ class LogDetailView extends StatelessWidget {
         includeInLogs: true,
       );
     }
+    return null;
   }
 
   Map<String, String> _addLogMetaData(String date, AppLog log) {
@@ -167,9 +168,9 @@ class LogDetailView extends StatelessWidget {
                           child: CupertinoDropdown<LogLevel>(
                             value: logsStore.logLevel,
                             items: [
-                              const DropdownMenuItem(
+                              DropdownMenuItem(
                                 value: null,
-                                child: Text('All'),
+                                child: const Text('All'),
                               ),
                               ...LogLevel.values.map(
                                 (logLevel) => DropdownMenuItem(

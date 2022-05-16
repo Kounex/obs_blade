@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/checkbox.dart';
-
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
@@ -76,8 +76,8 @@ class StudioModeTransition extends StatelessWidget {
                           ),
                         )
                       : Container(),
-                  const Flexible(
-                    child: Transition(),
+                  Flexible(
+                    child: const Transition(),
                   ),
                 ],
               ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'stream_chat/stream_chat.dart';
 
 import '../../../../shared/general/base/card.dart';
 import 'stats/stats.dart';
+import 'stream_chat/stream_chat.dart';
 
 class StreamWidgets extends StatelessWidget {
   const StreamWidgets({Key? key}) : super(key: key);
@@ -11,9 +11,9 @@ class StreamWidgets extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: const [
+      children: [
         Flexible(
-          child: BaseCard(
+          child: const BaseCard(
             title: 'Chat',
             rightPadding: 12.0,
             paddingChild: EdgeInsets.all(0),
@@ -26,7 +26,7 @@ class StreamWidgets extends StatelessWidget {
           ),
         ),
         Flexible(
-          child: BaseCard(
+          child: const BaseCard(
             title: 'Stats',
             leftPadding: 12.0,
             paddingChild: EdgeInsets.all(0),

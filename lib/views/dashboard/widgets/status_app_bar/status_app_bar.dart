@@ -12,6 +12,7 @@ import '../../../../stores/views/dashboard.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import 'general_actions.dart';
+import 'stream_rec_timers.dart';
 
 class StatusAppBar extends StatelessWidget {
   const StatusAppBar({Key? key}) : super(key: key);
@@ -22,6 +23,18 @@ class StatusAppBar extends StatelessWidget {
 
     return TransculentSliverAppBar(
       pinned: true,
+      bottom: PreferredSize(
+        child: Column(
+          children: const [
+            Divider(),
+            Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: StreamRecTimers(),
+            ),
+          ],
+        ),
+        preferredSize: const Size.fromHeight(24.0),
+      ),
       title: Stack(
         alignment: Alignment.center,
         children: <Widget>[

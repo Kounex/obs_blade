@@ -28,8 +28,8 @@ class FAQView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Flexible(
-                  child: Icon(
+                Flexible(
+                  child: const Icon(
                     CupertinoIcons.chat_bubble_text_fill,
                     size: 92.0,
                   ),

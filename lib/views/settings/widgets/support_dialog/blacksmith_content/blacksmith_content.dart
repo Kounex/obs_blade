@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'restore_button.dart';
 
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';
@@ -13,6 +12,7 @@ import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/routing_helper.dart';
 import '../donate_button.dart';
+import 'restore_button.dart';
 
 class BlacksmithContent extends StatelessWidget {
   final List<ProductDetails> blacksmithDetails;
@@ -36,6 +36,7 @@ class BlacksmithContent extends StatelessWidget {
                   .copyWith(fontStyle: FontStyle.italic),
             ),
             const WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 12.0),
                 child: BaseDivider(),

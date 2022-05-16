@@ -4,8 +4,8 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import '../shared/general/base/card.dart';
 
+import '../shared/general/base/card.dart';
 import 'styling_helper.dart';
 
 // A translucent color that is painted on top of the blurred backdrop as the
@@ -68,7 +68,11 @@ class ModalHandler {
         context: context,
         backgroundColor: Colors.transparent,
         barrierColor: Colors.black54,
-        shadow: const BoxShadow(color: Colors.transparent),
+        shadow: const BoxShadow(
+          color: Colors.transparent,
+          blurRadius: 0,
+          offset: Offset(0, 0),
+        ),
         useRootNavigator: useRootNavigator,
         builder: (context) => _bottomSheetWrapper(
           context: context,

@@ -5,21 +5,18 @@ import 'dart:typed_data';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
-import '../../models/enums/log_level.dart';
-import '../../types/classes/api/scene_collection.dart';
-import '../../types/classes/stream/events/scene_collection_changed.dart';
-import '../../types/classes/stream/events/scene_collection_list_changed.dart';
-import '../../types/classes/stream/responses/get_current_scene_collection.dart';
-import '../../types/classes/stream/responses/list_scene_collections.dart';
-import '../../utils/overlay_handler.dart';
 
+import '../../models/enums/log_level.dart';
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/scene.dart';
+import '../../types/classes/api/scene_collection.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/source_type.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/events/preview_scene_changed.dart';
+import '../../types/classes/stream/events/scene_collection_changed.dart';
+import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_removed.dart';
 import '../../types/classes/stream/events/scene_item_visibility_changed.dart';
 import '../../types/classes/stream/events/source_mute_state_changed.dart';
@@ -33,6 +30,7 @@ import '../../types/classes/stream/events/transition_duration_changed.dart';
 import '../../types/classes/stream/events/transition_list_changed.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene.dart';
+import '../../types/classes/stream/responses/get_current_scene_collection.dart';
 import '../../types/classes/stream/responses/get_current_transition.dart';
 import '../../types/classes/stream/responses/get_mute.dart';
 import '../../types/classes/stream/responses/get_preview_scene.dart';
@@ -44,6 +42,7 @@ import '../../types/classes/stream/responses/get_studio_mode_status.dart';
 import '../../types/classes/stream/responses/get_transition_list.dart';
 import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/classes/stream/responses/get_volume.dart';
+import '../../types/classes/stream/responses/list_scene_collections.dart';
 import '../../types/classes/stream/responses/take_source_screenshot.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/hive_keys.dart';
@@ -51,6 +50,7 @@ import '../../types/enums/request_type.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
+import '../../utils/overlay_handler.dart';
 import '../shared/network.dart';
 
 part 'dashboard.g.dart';
@@ -65,9 +65,9 @@ abstract class _DashboardStore with Store {
   @observable
   bool isRecordingPaused = false;
   @observable
-  int? goneLiveMS;
+  int? latestStreamTimeDurationMS;
   @observable
-  int? startedRecordingMS;
+  int? latestRecordTimeDurationMS;
   @observable
   PastStreamData? streamData;
   @observable
@@ -333,6 +333,19 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  int? _timecodeToMS(String? timecode) {
+    if (timecode != null) {
+      List<String> recTimeFragments = timecode.split(':');
+
+      return Duration(
+        hours: int.parse(recTimeFragments[0]),
+        minutes: int.parse(recTimeFragments[1]),
+        seconds: int.parse(recTimeFragments[2].split('.')[0]),
+      ).inMilliseconds;
+    }
+    return null;
+  }
+
   @action
   void init() {
     this.handleStream();
@@ -451,22 +464,25 @@ abstract class _DashboardStore with Store {
         'Event Incoming: ${event.eventType}',
       );
     }
+    this.latestRecordTimeDurationMS = _timecodeToMS(event.recTimecode);
+    this.latestStreamTimeDurationMS = _timecodeToMS(event.streamTimecode);
     switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
-        this.goneLiveMS = DateTime.now().millisecondsSinceEpoch;
         break;
       case EventType.StreamStopping:
         this.isLive = false;
+        this.latestStreamTimeDurationMS = null;
         this.finishPastStreamData();
         break;
       case EventType.RecordingStarted:
         this.isRecording = true;
-        this.startedRecordingMS = DateTime.now().millisecondsSinceEpoch;
+        GeneralHelper.advLog(event.recTimecode);
         break;
       case EventType.RecordingStopping:
         this.isRecording = false;
         this.isRecordingPaused = false;
+        this.latestRecordTimeDurationMS = null;
         break;
       case EventType.RecordingPaused:
         this.isRecordingPaused = true;
@@ -478,15 +494,14 @@ abstract class _DashboardStore with Store {
         this.latestStreamStats = StreamStats.fromJSON(event.json);
 
         /// This case happens if we connect to an OBS session which already streams
-        if (this.goneLiveMS == null) {
+        if (!this.isLive) {
           this.isLive = true;
-          this.goneLiveMS = DateTime.now().millisecondsSinceEpoch -
-              (this.latestStreamStats!.totalStreamTime * 1000);
         }
         if (this.latestStreamStats!.recording && !this.isRecording) {
           NetworkHelper.makeRequest(
-              GetIt.instance<NetworkStore>().activeSession!.socket,
-              RequestType.GetRecordingStatus);
+            GetIt.instance<NetworkStore>().activeSession!.socket,
+            RequestType.GetRecordingStatus,
+          );
         }
         if (this.streamData == null) {
           _manageStreamDataInit();
@@ -781,17 +796,8 @@ abstract class _DashboardStore with Store {
         this.isRecordingPaused = getRecordingStatusResponse.isRecordingPaused;
 
         if (this.isRecording) {
-          List<String> recTimeFragments =
-              getRecordingStatusResponse.recordTimecode!.split(':');
-          DateTime startedRecTime = DateTime.now();
-
-          startedRecTime = startedRecTime.subtract(Duration(
-            hours: int.parse(recTimeFragments[0]),
-            minutes: int.parse(recTimeFragments[1]),
-            seconds: int.parse(recTimeFragments[2].split('.')[0]),
-          ));
-
-          this.startedRecordingMS = startedRecTime.millisecondsSinceEpoch;
+          this.latestRecordTimeDurationMS =
+              _timecodeToMS(getRecordingStatusResponse.recordTimecode);
         }
         break;
       case RequestType.GetSpecialSources:

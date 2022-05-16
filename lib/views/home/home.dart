@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart' as mob_x;
-import '../../models/enums/log_level.dart';
-import '../../utils/general_helper.dart';
 
+import '../../models/enums/log_level.dart';
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/overlay/base_progress_indicator.dart';
@@ -12,6 +11,7 @@ import '../../shared/overlay/base_result.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/home.dart';
 import '../../types/classes/stream/responses/base.dart';
+import '../../utils/general_helper.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/routing_helper.dart';
@@ -76,7 +76,7 @@ class _HomeViewState extends State<HomeView> {
     /// have to write 'MobX.Listener', otherwise it's the Material one. Since I'm using Material
     /// stuff here most of the time i named the MobX import instead ob the Material one
     mob_x.when((_) => GetIt.instance<NetworkStore>().obsTerminated, () {
-      SchedulerBinding.instance!.addPostFrameCallback((_) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
         GeneralHelper.advLog(
           'Your connection to OBS has been lost and the app was not able to reconnect!',
           level: LogLevel.Warning,

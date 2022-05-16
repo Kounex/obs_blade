@@ -13,9 +13,9 @@ class SceneContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: const [
+      children: [
         Flexible(
-          child: BaseCard(
+          child: const BaseCard(
             title: 'Scene Items',
             trailingTitleWidget: VisibilityEditToggle(
               sceneItemType: SceneItemType.Source,
@@ -30,7 +30,7 @@ class SceneContent extends StatelessWidget {
           ),
         ),
         Flexible(
-          child: BaseCard(
+          child: const BaseCard(
             title: 'Audio',
             trailingTitleWidget: VisibilityEditToggle(
               sceneItemType: SceneItemType.Audio,

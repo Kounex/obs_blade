@@ -61,11 +61,12 @@ class SceneButton extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: Duration(
-                    milliseconds:
-                        dashboardStore.sceneTransitionDurationMS != null &&
-                                dashboardStore.sceneTransitionDurationMS! >= 0
-                            ? dashboardStore.sceneTransitionDurationMS!
-                            : 0),
+                  milliseconds:
+                      dashboardStore.sceneTransitionDurationMS != null &&
+                              dashboardStore.sceneTransitionDurationMS! >= 0
+                          ? dashboardStore.sceneTransitionDurationMS!
+                          : 0,
+                ),
                 alignment: Alignment.center,
                 height: this.height,
                 width: this.width,

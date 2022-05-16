@@ -73,34 +73,37 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$goneLiveMSAtom = Atom(name: '_DashboardStore.goneLiveMS');
+  final _$latestStreamTimeDurationMSAtom =
+      Atom(name: '_DashboardStore.latestStreamTimeDurationMS');
 
   @override
-  int? get goneLiveMS {
-    _$goneLiveMSAtom.reportRead();
-    return super.goneLiveMS;
+  int? get latestStreamTimeDurationMS {
+    _$latestStreamTimeDurationMSAtom.reportRead();
+    return super.latestStreamTimeDurationMS;
   }
 
   @override
-  set goneLiveMS(int? value) {
-    _$goneLiveMSAtom.reportWrite(value, super.goneLiveMS, () {
-      super.goneLiveMS = value;
+  set latestStreamTimeDurationMS(int? value) {
+    _$latestStreamTimeDurationMSAtom
+        .reportWrite(value, super.latestStreamTimeDurationMS, () {
+      super.latestStreamTimeDurationMS = value;
     });
   }
 
-  final _$startedRecordingMSAtom =
-      Atom(name: '_DashboardStore.startedRecordingMS');
+  final _$latestRecordTimeDurationMSAtom =
+      Atom(name: '_DashboardStore.latestRecordTimeDurationMS');
 
   @override
-  int? get startedRecordingMS {
-    _$startedRecordingMSAtom.reportRead();
-    return super.startedRecordingMS;
+  int? get latestRecordTimeDurationMS {
+    _$latestRecordTimeDurationMSAtom.reportRead();
+    return super.latestRecordTimeDurationMS;
   }
 
   @override
-  set startedRecordingMS(int? value) {
-    _$startedRecordingMSAtom.reportWrite(value, super.startedRecordingMS, () {
-      super.startedRecordingMS = value;
+  set latestRecordTimeDurationMS(int? value) {
+    _$latestRecordTimeDurationMSAtom
+        .reportWrite(value, super.latestRecordTimeDurationMS, () {
+      super.latestRecordTimeDurationMS = value;
     });
   }
 
@@ -539,8 +542,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
 isLive: ${isLive},
 isRecording: ${isRecording},
 isRecordingPaused: ${isRecordingPaused},
-goneLiveMS: ${goneLiveMS},
-startedRecordingMS: ${startedRecordingMS},
+latestStreamTimeDurationMS: ${latestStreamTimeDurationMS},
+latestRecordTimeDurationMS: ${latestRecordTimeDurationMS},
 streamData: ${streamData},
 latestStreamStats: ${latestStreamStats},
 currentSceneCollectionName: ${currentSceneCollectionName},
