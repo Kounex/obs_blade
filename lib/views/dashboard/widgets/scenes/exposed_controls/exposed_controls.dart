@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/replay_buffer_controls.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -16,6 +17,7 @@ class ExposedControls extends StatelessWidget {
       rebuildKeys: const [
         SettingsKeys.ExposeRecordingControls,
         SettingsKeys.ExposeStreamingControls,
+        SettingsKeys.ExposeReplayBufferControls,
       ],
       builder: (context, settingsBox, child) {
         List<Widget> exposedControls = [];
@@ -28,6 +30,11 @@ class ExposedControls extends StatelessWidget {
         if (settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
             defaultValue: false)) {
           exposedControls.add(const RecordingControls());
+        }
+
+        if (settingsBox.get(SettingsKeys.ExposeReplayBufferControls.name,
+            defaultValue: false)) {
+          exposedControls.add(const ReplayBufferControls());
         }
 
         exposedControls = List.from(exposedControls

@@ -5,12 +5,12 @@ import 'dart:isolate';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:crypto/crypto.dart';
-import '../types/exceptions/network.dart';
-import 'general_helper.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
 import '../types/enums/request_type.dart';
+import '../types/exceptions/network.dart';
+import 'general_helper.dart';
 
 class NetworkHelper {
   /// Establish and return an instance of [IOWebSocketChannel] based on the
@@ -144,6 +144,7 @@ class NetworkHelper {
     } finally {
       socket?.destroy();
     }
+    return null;
   }
 
   /// This is the content of the auth field which is needed to correctly

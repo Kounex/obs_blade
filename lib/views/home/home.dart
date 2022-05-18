@@ -78,7 +78,7 @@ class _HomeViewState extends State<HomeView> {
     mob_x.when((_) => GetIt.instance<NetworkStore>().obsTerminated, () {
       SchedulerBinding.instance.addPostFrameCallback((_) {
         GeneralHelper.advLog(
-          'Your connection to OBS has been lost and the app was not able to reconnect!',
+          'Your connection to OBS has been lost and the app was not able to reconnect.',
           level: LogLevel.Warning,
           includeInLogs: true,
         );
@@ -87,7 +87,7 @@ class _HomeViewState extends State<HomeView> {
             context: context,
             dialogWidget: const InfoDialog(
                 body:
-                    'Your connection to OBS has been lost and the app was not able to reconnect!'),
+                    'Your connection to OBS has been lost and the app was not able to reconnect.'),
           ).then(
             (_) => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
           );
@@ -134,7 +134,7 @@ class _HomeViewState extends State<HomeView> {
               alignment: Alignment.center,
               child: BaseResult(
                 icon: BaseResultIcon.Negative,
-                text: 'Couldn\'t connect to a WebSocket!',
+                text: 'Couldn\'t connect to a WebSocket.',
               ),
             ),
           );

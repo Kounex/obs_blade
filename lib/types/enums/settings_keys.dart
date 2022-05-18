@@ -72,6 +72,14 @@ enum SettingsKeys {
   /// change it should be shown in the dashboard
   ExposeSceneCollection,
 
+  /// [bool]: If the replay buffer functions (start/stop/save) should be shown in the
+  /// dashboard instead of in the menu action list of the app bar
+  ExposeReplayBufferControls,
+
+  /// [bool]: If true OBS Blade will try to reconnect to an OBS instance on connection
+  /// lost indefinetily instead of an amount of retries before aborting
+  UnlimitedReconnects,
+
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
   /// IMPORTANT: Name should always start with 'DontShow'/'dont-show'
@@ -139,6 +147,9 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
         SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
         SettingsKeys.ExposeSceneCollection: 'expose-scene-collection',
+        SettingsKeys.ExposeReplayBufferControls:
+            'expose-replay-buffer-collection',
+        SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:
             'dont-show-hiding-scene-items-warning',

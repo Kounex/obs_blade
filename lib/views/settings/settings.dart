@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import '../../utils/modal_handler.dart';
 import 'package:package_info/package_info.dart';
 import 'package:wakelock/wakelock.dart';
 
@@ -12,6 +11,7 @@ import '../../shared/general/themed/cupertino_switch.dart';
 import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
+import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';
 import 'widgets/action_block.dart/action_block.dart';
@@ -43,7 +43,7 @@ class SettingsView extends StatelessWidget {
                       leading: CupertinoIcons.device_phone_portrait,
                       title: 'Wake Lock',
                       help:
-                          'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual!',
+                          'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual.',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(SettingsKeys.WakeLock.name,
                             defaultValue: true),
@@ -62,6 +62,21 @@ class SettingsView extends StatelessWidget {
                           } else {
                             Wakelock.disable();
                           }
+                        },
+                      ),
+                    ),
+                    BlockEntry(
+                      leading: CupertinoIcons.loop,
+                      title: 'Unlimited Retries',
+                      help:
+                          'When active, OBS Blade will try to reconnect to a lost OBS connection indefinitely instead of aborting when reaching a fixed amount of attempts.',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                            SettingsKeys.UnlimitedReconnects.name,
+                            defaultValue: false),
+                        onChanged: (unlimitedReconnects) {
+                          settingsBox.put(SettingsKeys.UnlimitedReconnects.name,
+                              unlimitedReconnects);
                         },
                       ),
                     ),
@@ -96,7 +111,7 @@ class SettingsView extends StatelessWidget {
                       leadingSize: 28.0,
                       title: 'Streaming Controls',
                       help:
-                          'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
+                          'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeStreamingControls.name,
@@ -115,7 +130,7 @@ class SettingsView extends StatelessWidget {
                       leadingSize: 30.0,
                       title: 'Recording Controls',
                       help:
-                          'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible!',
+                          'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeRecordingControls.name,
@@ -130,11 +145,30 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     BlockEntry(
+                      leading: CupertinoIcons.reply_thick_solid,
+                      leadingSize: 28.0,
+                      title: 'Replay Controls',
+                      help:
+                          'If active, the replay buffer actions (start/stop/save) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                          SettingsKeys.ExposeReplayBufferControls.name,
+                          defaultValue: false,
+                        ),
+                        onChanged: (exposeReplayBufferControls) {
+                          settingsBox.put(
+                            SettingsKeys.ExposeReplayBufferControls.name,
+                            exposeReplayBufferControls,
+                          );
+                        },
+                      ),
+                    ),
+                    BlockEntry(
                       leading: CupertinoIcons.film,
                       leadingSize: 26.0,
                       title: 'Studio Mode',
                       help:
-                          'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard!',
+                          'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard.',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeStudioControls.name,
@@ -169,7 +203,7 @@ class SettingsView extends StatelessWidget {
                       leadingSize: 30.0,
                       title: 'Force Tablet Mode',
                       help:
-                          'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen!',
+                          'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen.',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
                             SettingsKeys.EnforceTabletMode.name,
@@ -226,7 +260,7 @@ class SettingsView extends StatelessWidget {
                         leading: CupertinoIcons.drop_fill,
                         title: 'Reduce Smearing',
                         help:
-                            'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery!',
+                            'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery.',
                         trailing: ThemedCupertinoSwitch(
                           value: settingsBox.get(
                             SettingsKeys.ReduceSmearing.name,

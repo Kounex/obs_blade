@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../shared/general/question_mark_tooltip.dart';
 
 const double kblockEntryPadding = 14.0;
@@ -105,13 +106,20 @@ class _BlockEntryState extends State<BlockEntry> {
               Expanded(
                 child: Row(
                   children: [
-                    Text(this.widget.title!,
-                        style: Theme.of(context).textTheme.subtitle1
-                        // .copyWith(fontSize: 15.0),
-                        ),
+                    Flexible(
+                      child: Text(this.widget.title!,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: Theme.of(context).textTheme.subtitle1
+                          // .copyWith(fontSize: 15.0),
+                          ),
+                    ),
                     if (this.widget.help != null)
                       Padding(
-                        padding: const EdgeInsets.only(left: 12.0),
+                        padding: const EdgeInsets.only(
+                          left: 12.0,
+                          right: 12.0,
+                        ),
                         child: QuestionMarkTooltip(message: this.widget.help!),
                       )
                   ],

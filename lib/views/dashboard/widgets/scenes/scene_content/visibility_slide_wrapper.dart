@@ -52,10 +52,11 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
             : (_) => dashboardStore.editAudioVisibility,
         (bool editVisibility) {
           Future.delayed(
-              const Duration(milliseconds: 50),
-              () => editVisibility
-                  ? slidableController.openStartActionPane()
-                  : slidableController.close());
+            const Duration(milliseconds: 50),
+            () => editVisibility
+                ? slidableController.openStartActionPane()
+                : slidableController.close(),
+          );
         },
       ),
     );

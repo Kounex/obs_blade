@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import '../../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../../types/enums/hive_keys.dart';
-import '../../../../../../utils/modal_handler.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
+import '../../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
+import '../../../../../../utils/modal_handler.dart';
 
 class ChatTypeDropdown extends StatelessWidget {
   final Box settingsBox;
@@ -55,7 +55,7 @@ class ChatTypeDropdown extends StatelessWidget {
                 dialogWidget: ConfirmationDialog(
                   title: 'YoutTube Chat Beta',
                   body:
-                      'YouTube chat support is still in beta because YouTube is giving me a hard time to integrate it.\n\nUse it with that in mind and contact me if you experience strange behaviour!',
+                      'YouTube chat support is still in beta because YouTube is giving me a hard time to integrate it.\n\nUse it with that in mind and contact me if you experience strange behaviour.',
                   enableDontShowAgainOption: true,
                   noText: 'Cancel',
                   okText: 'Ok',

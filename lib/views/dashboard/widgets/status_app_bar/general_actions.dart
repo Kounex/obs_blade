@@ -2,11 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/utils/overlay_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_cupertino_actions.dart';
 import '../../../../shared/general/hive_builder.dart';
+import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
@@ -91,23 +93,68 @@ class GeneralActions extends StatelessWidget {
                         : null,
                   ),
                 ],
+                if (!settingsBox.get(
+                    SettingsKeys.ExposeReplayBufferControls.name,
+                    defaultValue: false)) ...[
+                  AppBarCupertinoActionEntry(
+                    title: (dashboardStore.isReplayBufferActive
+                            ? 'Stop'
+                            : 'Start') +
+                        ' Replay Buffer',
+                    onAction: () {
+                      if (dashboardStore.isReplayBufferActive) {
+                        OverlayHandler.showStatusOverlay(
+                          showDuration: const Duration(seconds: 10),
+                          context: context,
+                          content: BaseProgressIndicator(
+                            text: 'Stopping Replay Buffer...',
+                          ),
+                        );
+                      }
+                      NetworkHelper.makeRequest(
+                        networkStore.activeSession!.socket,
+                        RequestType.StartStopReplayBuffer,
+                      );
+                    },
+                  ),
+                  AppBarCupertinoActionEntry(
+                    title: 'Save Replay Buffer',
+                    onAction: dashboardStore.isReplayBufferActive
+                        ? () => NetworkHelper.makeRequest(
+                              networkStore.activeSession!.socket,
+                              RequestType.SaveReplayBuffer,
+                            )
+                        : null,
+                  ),
+                ],
                 AppBarCupertinoActionEntry(
                   title:
                       (dashboardStore.editSceneVisibility ? 'Finish' : 'Edit') +
                           ' Scene Visibility',
                   onAction: dashboardStore.editSceneVisibility
-                      ? () => dashboardStore.setEditSceneVisibility(false)
+                      ? () {
+                          dashboardStore.setEditSceneVisibility(false);
+                          dashboardStore.setEditSceneItemVisibility(false);
+                          dashboardStore.setEditAudioVisibility(false);
+                        }
                       : settingsBox.get(
                               SettingsKeys.DontShowHidingScenesWarning.name,
                               defaultValue: false)
-                          ? () => dashboardStore.setEditSceneVisibility(true)
+                          ? () {
+                              dashboardStore.setEditSceneVisibility(true);
+                              dashboardStore.setEditSceneItemVisibility(true);
+                              dashboardStore.setEditAudioVisibility(true);
+                            }
                           : () {
                               ModalHandler.showBaseDialog(
                                 context: context,
                                 dialogWidget: ConfirmationDialog(
-                                  title: 'Warning on hiding scenes',
+                                  // title: 'Warning on hiding scenes',
+                                  // body:
+                                  //     'Unfortunately OBS WebSocket only transmits the scene name, nothing else. Therefore I can\'t distinguish between a scene from one specific OBS instance.\n\nUsing a saved connection is advised because then I can bound the scene name to the saved connection - otherwise trying with the ip address which might cause trouble but is still better than nothing!',
+                                  title: 'Warning on hiding scene elements',
                                   body:
-                                      'Unfortunately OBS WebSocket only transmits the scene name, nothing else. Therefore I can\'t distinguish between a scene from one specific OBS instance.\n\nUsing a saved connection is advised because then I can bound the scene name to the saved connection - otherwise trying with the ip address which might cause trouble but is still better than nothing!',
+                                      'Unfortunately OBS WebSocket only gives limit information about scenes and their elements for me to reliably match them with different connections etc.\n\nTo ensure maximum compatibility, please save your connections so I can bound hidden elements to a saved connection.',
                                   enableDontShowAgainOption: true,
                                   noText: 'Cancel',
                                   okText: 'Ok',
@@ -117,6 +164,9 @@ class GeneralActions extends StatelessWidget {
                                             .DontShowHidingScenesWarning.name,
                                         checked);
                                     dashboardStore.setEditSceneVisibility(true);
+                                    dashboardStore
+                                        .setEditSceneItemVisibility(true);
+                                    dashboardStore.setEditAudioVisibility(true);
                                   },
                                 ),
                               );

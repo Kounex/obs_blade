@@ -58,7 +58,7 @@ class VisibilityEditToggle extends StatelessWidget {
                 dialogWidget: ConfirmationDialog(
                   title: 'Warning on hiding items',
                   body:
-                      'OBS WebSocket does expose limited information about items in a scene. Therefore items will get visible again automatically if the scene the item is in gets renamed, the item itself gets renamed or the item gets removed and inserted back into the scene.\n\nSorry for the inconvenience - just hide it again if this happens!',
+                      'OBS WebSocket does expose limited information about items in a scene. Therefore items will get visible again automatically if the scene the item is in gets renamed, the item itself gets renamed or the item gets removed and inserted back into the scene.\n\nSorry for the inconvenience - just hide it again if this happens.',
                   enableDontShowAgainOption: true,
                   noText: 'Cancel',
                   okText: 'Ok',

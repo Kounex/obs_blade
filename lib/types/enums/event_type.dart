@@ -3,13 +3,13 @@ enum EventType {
   StreamStarted,
 
   /// A request to stop streaming has been issued
-  StreamStopping,
+  StreamStopped,
 
   /// Recording started successfully
   RecordingStarted,
 
   /// A request to stop recording has been issued
-  RecordingStopping,
+  RecordingStopped,
 
   /// Current recording paused
   RecordingPaused,
@@ -73,4 +73,10 @@ enum EventType {
 
   /// OBS is exiting
   Exiting,
+
+  /// A request to start the replay buffer has been issued
+  ReplayStarted,
+
+  /// A request to stop the replay buffer has been issued
+  ReplayStopped,
 }

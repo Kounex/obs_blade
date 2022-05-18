@@ -128,7 +128,7 @@ class _StreamChatState extends State<StreamChat>
                           child: BaseResult(
                             icon: BaseResultIcon.Negative,
                             text:
-                                'No ${chatType.text} username selected, so no ones chat can be displayed!',
+                                'No ${chatType.text} username selected, so no ones chat can be displayed.',
                           ),
                         ),
                       ),

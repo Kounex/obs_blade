@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../models/enums/scene_item_type.dart';
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
-import 'visibility_edit_toggle.dart';
 
 class SceneContentMobile extends StatelessWidget {
   const SceneContentMobile({Key? key}) : super(key: key);
@@ -30,17 +28,21 @@ class SceneContentMobile extends StatelessWidget {
           ),
           const SizedBox(
             height: 300,
-            child:
-                TabBarView(physics: NeverScrollableScrollPhysics(), children: [
-              VisibilityEditToggle(
-                sceneItemType: SceneItemType.Source,
-                child: SceneItems(),
-              ),
-              VisibilityEditToggle(
-                sceneItemType: SceneItemType.Audio,
-                child: AudioInputs(),
-              ),
-            ]),
+            child: TabBarView(
+              physics: NeverScrollableScrollPhysics(),
+              children: [
+                SceneItems(),
+                AudioInputs(),
+                // VisibilityEditToggle(
+                //   sceneItemType: SceneItemType.Source,
+                //   child: SceneItems(),
+                // ),
+                // VisibilityEditToggle(
+                //   sceneItemType: SceneItemType.Audio,
+                //   child: AudioInputs(),
+                // ),
+              ],
+            ),
           )
         ],
       ),

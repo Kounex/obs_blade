@@ -22,7 +22,7 @@ class ValidationHelper {
             int.parse(part) <= 255)) {
       return null;
     }
-    return 'Not an IP address';
+    return 'Not an IP address!';
   }
 
   static String? colorHexValidator(String? text, {bool useAlpha = false}) {
@@ -31,7 +31,7 @@ class ValidationHelper {
         (RegExp(r'^[a-fA-F0-9]+$').allMatches(text).isNotEmpty)) {
       return null;
     }
-    return 'Not a valid color hex code';
+    return 'Not a valid color hex code!';
   }
 
   static String? colorTypeValidator(String? text, ColorType type) {

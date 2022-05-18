@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../models/enums/scene_item_type.dart';
 import '../../../../../shared/general/base/card.dart';
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
-import 'visibility_edit_toggle.dart';
 
 class SceneContent extends StatelessWidget {
   const SceneContent({Key? key}) : super(key: key);
@@ -13,14 +11,14 @@ class SceneContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
+      children: const [
         Flexible(
-          child: const BaseCard(
+          child: BaseCard(
             title: 'Scene Items',
-            trailingTitleWidget: VisibilityEditToggle(
-              sceneItemType: SceneItemType.Source,
-              tabletMode: true,
-            ),
+            // trailingTitleWidget: VisibilityEditToggle(
+            //   sceneItemType: SceneItemType.Source,
+            //   tabletMode: true,
+            // ),
             rightPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
@@ -30,12 +28,12 @@ class SceneContent extends StatelessWidget {
           ),
         ),
         Flexible(
-          child: const BaseCard(
+          child: BaseCard(
             title: 'Audio',
-            trailingTitleWidget: VisibilityEditToggle(
-              sceneItemType: SceneItemType.Audio,
-              tabletMode: true,
-            ),
+            // trailingTitleWidget: VisibilityEditToggle(
+            //   sceneItemType: SceneItemType.Audio,
+            //   tabletMode: true,
+            // ),
             leftPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(

@@ -20,7 +20,7 @@ class SortFilterPanel extends StatelessWidget {
       children: [
         const BaseDivider(),
         CustomExpansionTile(
-          headerText: 'Expand to sort and filter your statistics!',
+          headerText: 'Expand to sort and filter your statistics',
           headerPadding: const EdgeInsets.all(14.0),
           headerTextStyle: Theme.of(context).textTheme.bodyText2,
           expandedBody: SizedBox(

@@ -73,6 +73,23 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  final _$isReplayBufferActiveAtom =
+      Atom(name: '_DashboardStore.isReplayBufferActive');
+
+  @override
+  bool get isReplayBufferActive {
+    _$isReplayBufferActiveAtom.reportRead();
+    return super.isReplayBufferActive;
+  }
+
+  @override
+  set isReplayBufferActive(bool value) {
+    _$isReplayBufferActiveAtom.reportWrite(value, super.isReplayBufferActive,
+        () {
+      super.isReplayBufferActive = value;
+    });
+  }
+
   final _$latestStreamTimeDurationMSAtom =
       Atom(name: '_DashboardStore.latestStreamTimeDurationMS');
 
@@ -542,6 +559,7 @@ mixin _$DashboardStore on _DashboardStore, Store {
 isLive: ${isLive},
 isRecording: ${isRecording},
 isRecordingPaused: ${isRecordingPaused},
+isReplayBufferActive: ${isReplayBufferActive},
 latestStreamTimeDurationMS: ${latestStreamTimeDurationMS},
 latestRecordTimeDurationMS: ${latestRecordTimeDurationMS},
 streamData: ${streamData},

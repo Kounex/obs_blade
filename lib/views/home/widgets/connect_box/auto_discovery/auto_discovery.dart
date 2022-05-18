@@ -38,8 +38,8 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Flexible(
-                child: const Text('Port for autodiscovery: '),
+              const Flexible(
+                child: Text('Port for autodiscovery: '),
               ),
               Container(width: 10.0),
               const QuestionMarkTooltip(
@@ -97,10 +97,10 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                 }
                 return ResultEntry(
                   result: snapshot.hasData && snapshot.data!.isEmpty
-                      ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nCheck the FAQ section in the settings tab!'
+                      ? 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nCheck the FAQ section in the settings tab.'
                       : snapshot.error.toString().contains('NotInWLANException')
-                          ? 'Your Device is not connected via WLAN! Autodiscovery only works if you are connected to your local network via WLAN!'
-                          : 'Error occured! Either something is wrong with your WLAN connection or the app could not make use of autodiscovery.\n\nCheck the FAQ section in the settings tab!',
+                          ? 'Your Device is not connected via WLAN! Autodiscovery only works if you are connected to your local network via WLAN.'
+                          : 'Error occured! Either something is wrong with your WLAN connection or the app could not make use of autodiscovery.\n\nCheck the FAQ section in the settings tab.',
                 );
               }
               return Fader(

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 
 import '../../models/enums/log_level.dart';
 import '../../models/past_stream_data.dart';
@@ -64,6 +65,8 @@ abstract class _DashboardStore with Store {
   bool isRecording = false;
   @observable
   bool isRecordingPaused = false;
+  @observable
+  bool isReplayBufferActive = false;
   @observable
   int? latestStreamTimeDurationMS;
   @observable
@@ -211,6 +214,10 @@ abstract class _DashboardStore with Store {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetRecordingStatus,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetReplayBufferStatus,
     );
 
     sceneCollectionRequests();
@@ -384,7 +391,11 @@ abstract class _DashboardStore with Store {
         includeInLogs: true,
       );
 
-      while (tries < 5 && response?.status != BaseResponse.ok) {
+      while ((Hive.box(HiveKeys.Settings.name).get(
+                  SettingsKeys.UnlimitedReconnects.name,
+                  defaultValue: false) ||
+              tries < 5) &&
+          response?.status != BaseResponse.ok) {
         response = await GetIt.instance<NetworkStore>().setOBSWebSocket(
           GetIt.instance<NetworkStore>().activeSession!.connection,
           reconnect: true,
@@ -470,7 +481,7 @@ abstract class _DashboardStore with Store {
       case EventType.StreamStarted:
         this.isLive = true;
         break;
-      case EventType.StreamStopping:
+      case EventType.StreamStopped:
         this.isLive = false;
         this.latestStreamTimeDurationMS = null;
         this.finishPastStreamData();
@@ -479,7 +490,7 @@ abstract class _DashboardStore with Store {
         this.isRecording = true;
         GeneralHelper.advLog(event.recTimecode);
         break;
-      case EventType.RecordingStopping:
+      case EventType.RecordingStopped:
         this.isRecording = false;
         this.isRecordingPaused = false;
         this.latestRecordTimeDurationMS = null;
@@ -489,6 +500,13 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.RecordingResumed:
         this.isRecordingPaused = false;
+        break;
+      case EventType.ReplayStarted:
+        this.isReplayBufferActive = true;
+        break;
+      case EventType.ReplayStopped:
+        this.isReplayBufferActive = false;
+        OverlayHandler.closeAnyOverlay(immediately: false);
         break;
       case EventType.StreamStatus:
         this.latestStreamStats = StreamStats.fromJSON(event.json);
@@ -799,6 +817,14 @@ abstract class _DashboardStore with Store {
           this.latestRecordTimeDurationMS =
               _timecodeToMS(getRecordingStatusResponse.recordTimecode);
         }
+        break;
+      case RequestType.GetReplayBufferStatus:
+        GetReplayBufferStatusResponse getReplayBufferStatusResponse =
+            GetReplayBufferStatusResponse(response.json);
+
+        this.isReplayBufferActive =
+            getReplayBufferStatusResponse.isReplayBufferActive;
+
         break;
       case RequestType.GetSpecialSources:
         this.globalAudioSceneItems = ObservableList.of([]);

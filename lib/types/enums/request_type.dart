@@ -102,6 +102,11 @@ enum RequestType {
   /// No specified parameters
   GetCurrentSceneCollection,
 
+  /// Get the status of the OBS replay buffer
+  ///
+  /// No specified parameters
+  GetReplayBufferStatus,
+
   /// List available scene collections
   ///
   /// No specified parameters
@@ -203,4 +208,15 @@ enum RequestType {
   ///
   /// {'sc-name': String } - Name of the desired scene collection
   SetCurrentSceneCollection,
+
+  /// Toggle the Replay Buffer on/off (depending on the current state of the replay buffer)
+  ///
+  /// No specified parameters
+  StartStopReplayBuffer,
+
+  /// Flush and save the contents of the Replay Buffer to disk. This is basically the same as triggering the
+  /// "Save Replay Buffer" hotkey. Will return an error if the Replay Buffer is not active
+  ///
+  /// No specified parameters
+  SaveReplayBuffer,
 }

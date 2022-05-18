@@ -25,6 +25,7 @@ class ConnectTargetInput extends StatelessWidget {
         children: [
           TextFormField(
             controller: this.host,
+            autocorrect: false,
             readOnly: !this.manual,
             enabled: this.manual,
             onChanged: (host) =>
@@ -35,25 +36,31 @@ class ConnectTargetInput extends StatelessWidget {
                   : 'Hostname',
               hintText: !landingStore.domainMode
                   ? 'e.g. 192.168.178.10'
-                  : 'e.g. obs-stream.com',
+                  : 'e.g. wss://obs-stream.com',
             ),
-            validator: (text) => ValidationHelper.ipValidation(text),
+            validator: (text) => !landingStore.domainMode
+                ? ValidationHelper.ipValidation(text)
+                : null,
           ),
           // const SizedBox(height: 6.0),
           this.manual
               ? SizedBox(
                   width: double.infinity,
-                  child: CupertinoSlidingSegmentedControl<bool>(
-                    groupValue: landingStore.domainMode,
-                    children: const {
-                      false: Text('IP'),
-                      true: Text('Domain'),
-                    },
-                    onValueChanged: (domainMode) {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      this.host.text = '';
-                      landingStore.setDomainMode(domainMode ?? true);
-                    },
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: CupertinoSlidingSegmentedControl<bool>(
+                      groupValue: landingStore.domainMode,
+                      children: const {
+                        false: Text('IP'),
+                        true: Text('Domain'),
+                      },
+                      onValueChanged: (domainMode) {
+                        this.host.clear();
+                        Form.of(context)?.reset();
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        landingStore.setDomainMode(domainMode ?? true);
+                      },
+                    ),
                   ),
                 )
               : Container(),
