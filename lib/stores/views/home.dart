@@ -17,9 +17,13 @@ abstract class _HomeStore with Store {
   @observable
   bool refreshable = false;
   @observable
+  bool doRefresh = false;
+  @observable
   bool manualMode = false;
   @observable
   bool domainMode = false;
+  @observable
+  String protocolScheme = 'wss://';
 
   Connection typedInConnection = Connection('', 4444, '');
 
@@ -40,6 +44,19 @@ abstract class _HomeStore with Store {
 
   @action
   void setDomainMode(bool domainMode) => this.domainMode = domainMode;
+
+  /// Basically just sets the [doRefresh] value to [true] for a short
+  /// period just so listeners can act on that - used to know when the
+  /// user initiated a refresh
+  @action
+  void initiateRefresh() {
+    this.doRefresh = true;
+    Future.microtask(() => this.doRefresh = false);
+  }
+
+  @action
+  void setProtocolScheme(String protocolScheme) =>
+      this.protocolScheme = protocolScheme;
 
   @action
   void toggleManualMode([bool? manualMode]) =>

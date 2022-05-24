@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+
 import 'type_ids.dart';
 
 part 'connection.g.dart';
@@ -15,7 +16,7 @@ class Connection extends HiveObject {
   String? ssid;
 
   @HiveField(3)
-  int port;
+  int? port;
 
   @HiveField(4)
   String? pw;

@@ -18,7 +18,7 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
     };
     return Connection(
       fields[1] as String,
-      fields[3] as int,
+      fields[3] as int?,
       fields[4] as String?,
       fields[5] as bool?,
     )

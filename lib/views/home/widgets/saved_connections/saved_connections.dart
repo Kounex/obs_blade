@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:get_it/get_it.dart';
+import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/general/hive_builder.dart';
-import '../../../../stores/views/home.dart';
 import '../../../../types/enums/hive_keys.dart';
 import 'connection_box.dart';
 import 'placeholder_connection.dart';
@@ -44,28 +42,9 @@ class SavedConnections extends StatelessWidget {
                     width: width,
                   );
                 } else {
-                  return Observer(
-                    builder: (_) => FutureBuilder<List<Connection>>(
-                      future:
-                          GetIt.instance<HomeStore>().autodiscoverConnections,
-                      builder: (context, snapshot) {
-                        List<Connection> savedConnections =
-                            savedConnectionsBox.values.toList();
-
-                        for (var connection in savedConnections) {
-                          connection.reachable = snapshot.hasData &&
-                              snapshot.data!.any((discoverConnection) =>
-                                  discoverConnection.host == connection.host &&
-                                  discoverConnection.port == connection.port);
-                        }
-                        savedConnections
-                            .sort((c1, c2) => c1.reachable != c2.reachable
-                                ? c1.reachable!
-                                    ? 0
-                                    : 1
-                                : c1.name!.compareTo(c2.name!));
-
-                        return MediaQuery.of(context).size.width < width * 2.5
+                  return ReachableBuilder(
+                    savedConnectionsBuilder: ((savedConnections) =>
+                        MediaQuery.of(context).size.width < width * 2.5
                             ? SizedBox(
                                 height: height,
                                 child: PageView.builder(
@@ -97,10 +76,65 @@ class SavedConnections extends StatelessWidget {
                                       )
                                       .toList(),
                                 ),
-                              );
-                      },
-                    ),
+                              )),
                   );
+                  // return Observer(
+                  //   builder: (_) => FutureBuilder<List<Connection>>(
+                  //     future:
+                  //         GetIt.instance<HomeStore>().autodiscoverConnections,
+                  //     builder: (context, snapshot) {
+                  //       List<Connection> savedConnections =
+                  //           savedConnectionsBox.values.toList();
+
+                  //       for (var connection in savedConnections) {
+                  //         connection.reachable = snapshot.hasData &&
+                  //             snapshot.data!.any((discoverConnection) =>
+                  //                 discoverConnection.host == connection.host &&
+                  //                 discoverConnection.port == connection.port);
+                  //       }
+                  //       savedConnections
+                  //           .sort((c1, c2) => c1.reachable != c2.reachable
+                  //               ? c1.reachable!
+                  //                   ? 0
+                  //                   : 1
+                  //               : c1.name!.compareTo(c2.name!));
+
+                  //       return MediaQuery.of(context).size.width < width * 2.5
+                  //           ? SizedBox(
+                  //               height: height,
+                  //               child: PageView.builder(
+                  //                 controller:
+                  //                     PageController(viewportFraction: 0.75),
+                  //                 itemCount: savedConnectionsBox.values.length,
+                  //                 itemBuilder: (context, index) => Padding(
+                  //                   padding: const EdgeInsets.only(
+                  //                       left: 18.0, right: 18.0),
+                  //                   child: ConnectionBox(
+                  //                     connection: savedConnections[index],
+                  //                     width: width,
+                  //                     height: height,
+                  //                   ),
+                  //                 ),
+                  //               ),
+                  //             )
+                  //           : Center(
+                  //               child: Wrap(
+                  //                 spacing: 32.0,
+                  //                 runSpacing: 32.0,
+                  //                 children: savedConnectionsBox.values
+                  //                     .map(
+                  //                       (savedConnection) => ConnectionBox(
+                  //                         connection: savedConnection,
+                  //                         width: width,
+                  //                         height: height,
+                  //                       ),
+                  //                     )
+                  //                     .toList(),
+                  //               ),
+                  //             );
+                  //     },
+                  //   ),
+                  // );
                 }
               },
             ),

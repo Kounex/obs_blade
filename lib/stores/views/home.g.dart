@@ -56,6 +56,21 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
+  final _$doRefreshAtom = Atom(name: '_HomeStore.doRefresh');
+
+  @override
+  bool get doRefresh {
+    _$doRefreshAtom.reportRead();
+    return super.doRefresh;
+  }
+
+  @override
+  set doRefresh(bool value) {
+    _$doRefreshAtom.reportWrite(value, super.doRefresh, () {
+      super.doRefresh = value;
+    });
+  }
+
   final _$manualModeAtom = Atom(name: '_HomeStore.manualMode');
 
   @override
@@ -83,6 +98,21 @@ mixin _$HomeStore on _HomeStore, Store {
   set domainMode(bool value) {
     _$domainModeAtom.reportWrite(value, super.domainMode, () {
       super.domainMode = value;
+    });
+  }
+
+  final _$protocolSchemeAtom = Atom(name: '_HomeStore.protocolScheme');
+
+  @override
+  String get protocolScheme {
+    _$protocolSchemeAtom.reportRead();
+    return super.protocolScheme;
+  }
+
+  @override
+  set protocolScheme(String value) {
+    _$protocolSchemeAtom.reportWrite(value, super.protocolScheme, () {
+      super.protocolScheme = value;
     });
   }
 
@@ -133,6 +163,28 @@ mixin _$HomeStore on _HomeStore, Store {
   }
 
   @override
+  void initiateRefresh() {
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.initiateRefresh');
+    try {
+      return super.initiateRefresh();
+    } finally {
+      _$_HomeStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setProtocolScheme(String protocolScheme) {
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+        name: '_HomeStore.setProtocolScheme');
+    try {
+      return super.setProtocolScheme(protocolScheme);
+    } finally {
+      _$_HomeStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void toggleManualMode([bool? manualMode]) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
         name: '_HomeStore.toggleManualMode');
@@ -149,8 +201,10 @@ mixin _$HomeStore on _HomeStore, Store {
 autodiscoverConnections: ${autodiscoverConnections},
 autodiscoverPort: ${autodiscoverPort},
 refreshable: ${refreshable},
+doRefresh: ${doRefresh},
 manualMode: ${manualMode},
-domainMode: ${domainMode}
+domainMode: ${domainMode},
+protocolScheme: ${protocolScheme}
     ''';
   }
 }

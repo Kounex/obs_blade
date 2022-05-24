@@ -167,6 +167,10 @@ class _HomeViewState extends State<HomeView> {
       body: Listener(
         onPointerUp: (_) {
           if (landingStore.refreshable) {
+            /// Used to globally (at least where [HomeStore] is listened to) to act on the
+            /// refresh action which has now been triggered
+            landingStore.initiateRefresh();
+
             /// Switch back to autodiscover mode (of our [SwitcherCard]) if we refresh so the
             /// user can actually see the part thats refreshing
             if (landingStore.manualMode) landingStore.toggleManualMode();

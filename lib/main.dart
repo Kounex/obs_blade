@@ -7,7 +7,6 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'models/purchased_tip.dart';
 
 import 'app.dart';
 import 'models/app_log.dart';
@@ -19,6 +18,7 @@ import 'models/enums/scene_item_type.dart';
 import 'models/hidden_scene.dart';
 import 'models/hidden_scene_item.dart';
 import 'models/past_stream_data.dart';
+import 'models/purchased_tip.dart';
 import 'purchase_base.dart';
 import 'stores/shared/network.dart';
 import 'stores/shared/tabs.dart';
@@ -170,9 +170,14 @@ void _logging(String line) {
 
     if (line.contains('[STACK]')) {
       List<String> temp = line.split('[STACK]');
+      String stack = temp[1].trim();
+
+      if (stack.length > 1024) {
+        stack = stack.substring(0, 1024) + '...';
+      }
 
       line = temp[0].trim();
-      stack = temp[1].trim();
+      stack = stack;
     }
   }
 

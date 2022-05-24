@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import '../../../../shared/general/base/button.dart';
-import '../../../../utils/modal_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
+import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../stores/shared/network.dart';
+import '../../../../utils/modal_handler.dart';
 import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
@@ -53,7 +53,7 @@ class ConnectionBox extends StatelessWidget {
                   //   style: Theme.of(context).textTheme.caption,
                   // ),
                   Text(
-                    '(${this.connection.host})',
+                    '${this.connection.host}${this.connection.port != null ? (":" + this.connection.port.toString()) : ""}',
                     style: Theme.of(context).textTheme.caption,
                   ),
                 ],
@@ -61,12 +61,16 @@ class ConnectionBox extends StatelessWidget {
               Center(
                 child: StatusDot(
                   size: 10.0,
-                  color: this.connection.reachable!
-                      ? Colors.green
-                      : CupertinoColors.destructiveRed,
-                  text: this.connection.reachable!
-                      ? 'Reachable'
-                      : 'Not reachable',
+                  color: this.connection.reachable == null
+                      ? Colors.grey
+                      : this.connection.reachable!
+                          ? Colors.green
+                          : CupertinoColors.destructiveRed,
+                  text: this.connection.reachable == null
+                      ? 'Checking...'
+                      : this.connection.reachable!
+                          ? 'Reachable'
+                          : 'Not reachable',
                 ),
               ),
               Row(

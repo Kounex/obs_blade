@@ -51,8 +51,9 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           : (_) => null,
     );
     _port = CustomValidationTextEditingController(
-      text: this.widget.connection.port.toString(),
-      check: ValidationHelper.portValidation,
+      text: this.widget.connection.port?.toString() ?? '',
+      check: (text) =>
+          text.isNotEmpty ? ValidationHelper.portValidation(text) : null,
     );
 
     _pw = TextEditingController(text: this.widget.connection.pw);
@@ -245,7 +246,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
 
               this.widget.connection.name = newName;
               this.widget.connection.host = newHost;
-              this.widget.connection.port = int.parse(_port.text);
+              this.widget.connection.port = int.tryParse(_port.text);
               this.widget.connection.pw = _pw.text.trim();
               this.widget.connection.isDomain = _isDomain;
               this.widget.connection.save();

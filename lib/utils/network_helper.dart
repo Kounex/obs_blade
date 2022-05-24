@@ -21,12 +21,17 @@ class NetworkHelper {
   /// alive or not. Mainly used in [DashboardStore] where a [Timer] is periodically
   /// checking this to be able to reconnect if possible or navigate back to
   /// [HomeView] otherwise
-  static IOWebSocketChannel establishWebSocket(Connection connection) =>
-      IOWebSocketChannel.connect(
-        Uri.parse(
-            '${connection.isDomain == null || !connection.isDomain! ? "ws://" : ""}${connection.host}:${connection.port.toString()}'),
-        pingInterval: const Duration(seconds: 3),
-      );
+  static IOWebSocketChannel establishWebSocket(Connection connection,
+      [Duration pingInterval = const Duration(seconds: 3)]) {
+    String protocol =
+        connection.isDomain == null || !connection.isDomain! ? 'ws://' : '';
+
+    return IOWebSocketChannel.connect(
+      Uri.parse(
+          '$protocol${connection.host}${connection.port != null ? (":" + connection.port.toString()) : ""}'),
+      pingInterval: pingInterval,
+    );
+  }
 
   /// Returns a list of network addresses which are candidates for the assigned
   /// local wifi address
@@ -78,7 +83,7 @@ class NetworkHelper {
 
       /// "Spawning" the [Isolate] (thread) to deal with multiple [Socket]
       /// connection tries.
-      Isolate.spawn<Map<String, dynamic>>(_isolateFullScan, {
+      Isolate.spawn<Map<String, dynamic>>(_isolateFullScanIPs, {
         'sendPort': receivePort.sendPort,
         'baseIPs': baseIPs,
         'port': port,
@@ -96,7 +101,30 @@ class NetworkHelper {
     throw NotInWLANException();
   }
 
-  static void _isolateFullScan(Map<String, dynamic> arguments) async {
+  static Future<List<Connection>> checkConnectionAvailabilities(
+      List<Connection> connections) async {
+    Completer<List<Connection?>> completer = Completer();
+    ReceivePort receivePort = ReceivePort();
+
+    Isolate.spawn<Map<String, dynamic>>(_isolateFullScanConnections, {
+      'sendPort': receivePort.sendPort,
+      'hosts': connections.map((connection) => connection.host).toList(),
+      'ports': connections.map((connection) => connection.port).toList(),
+      'isDomains':
+          connections.map((connection) => connection.isDomain).toList(),
+      'timeout': const Duration(milliseconds: 3000),
+    });
+
+    receivePort.listen((availableConnections) {
+      receivePort.close();
+      completer.complete(availableConnections);
+    });
+
+    return List.from(
+        (await completer.future).where((connection) => connection != null));
+  }
+
+  static void _isolateFullScanIPs(Map<String, dynamic> arguments) async {
     SendPort sendPort = arguments['sendPort'];
     List<String> baseIPs = List.from(arguments['baseIPs']);
     int port = arguments['port'];
@@ -110,7 +138,11 @@ class NetworkHelper {
 
       for (int k = 0; k < 256; k++) {
         address = '$baseIP.${k.toString()}';
-        availableConnections.add(_singleScan(address, port, timeout));
+        availableConnections.add(_singleScan({
+          'address': address,
+          'port': port,
+          'timeout': timeout,
+        }));
       }
     }
 
@@ -127,23 +159,77 @@ class NetworkHelper {
     sendPort.send(await Future.wait(availableConnections));
   }
 
-  static Future<Connection?> _singleScan(
-      String address, int port, Duration timeout) async {
-    Socket? socket;
-    try {
-      /// We try to establish a [Socket] connection for every IP of
-      /// available IP ranges for the device. If an attempt hits the timeout,
-      /// an exception is thrown and the IP address tested is not added
-      /// to the list. If no timeout and therefore exception occurs, it means
-      /// that there is a device listeneing on the IP:port combination (in this
-      /// case very likely OBS WebSocket) and we will add it to the list
-      socket = await Socket.connect(address, port, timeout: timeout);
-      return Connection(address, port);
-    } catch (e) {
-      // An exception means timeout which is okay
-    } finally {
-      socket?.destroy();
+  static void _isolateFullScanConnections(
+      Map<String, dynamic> arguments) async {
+    SendPort sendPort = arguments['sendPort'];
+    List<String> hosts = List.from(arguments['hosts']);
+    List<int?> ports = List.from(arguments['ports']);
+    List<bool?> isDomains = List.from(arguments['isDomains']);
+    Duration timeout = arguments['timeout'];
+
+    List<Future<Connection?>> availableConnections = [];
+
+    for (int i = 0; i < hosts.length; i++) {
+      availableConnections.add(_singleScan({
+        'address': hosts[i],
+        'port': ports[i],
+        'isDomain': isDomains[i],
+        'timeout': timeout,
+      }));
     }
+
+    sendPort.send(await Future.wait(availableConnections));
+  }
+
+  static Future<Connection?> _singleScan(Map<String, dynamic> arguments) async {
+    String address = arguments['address'];
+    int? port = arguments['port'];
+    bool? isDomain = arguments['isDomain'];
+    Connection connection = Connection(
+      address,
+      port,
+      null,
+      isDomain,
+    );
+    Duration timeout = arguments['timeout'];
+    SendPort? sendPort = arguments['sendPort'];
+
+    if (isDomain == null || !isDomain) {
+      Socket? socket;
+      try {
+        /// We try to establish a [Socket] connection for every IP of
+        /// available IP ranges for the device. If an attempt hits the timeout,
+        /// an exception is thrown and the IP address tested is not added
+        /// to the list. If no timeout and therefore exception occurs, it means
+        /// that there is a device listeneing on the IP:port combination (in this
+        /// case very likely OBS WebSocket) and we will add it to the list
+        socket = await Socket.connect(address, port ?? 4444, timeout: timeout);
+        sendPort?.send(connection);
+        return connection;
+      } catch (e) {
+        // An exception means timeout which is okay
+      } finally {
+        socket?.destroy();
+      }
+      sendPort?.send(null);
+      return null;
+    }
+
+    IOWebSocketChannel channel = NetworkHelper.establishWebSocket(
+      connection,
+      const Duration(milliseconds: 500),
+    );
+
+    int? res = await Future.delayed(timeout, () => channel.closeCode);
+
+    channel.sink.close();
+
+    if (res != null) {
+      sendPort?.send(connection);
+      return connection;
+    }
+
+    sendPort?.send(null);
     return null;
   }
 

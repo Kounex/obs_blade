@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/views/home/widgets/connect_box/connect_form/connect_target_input.dart';
+import 'package:obs_blade/views/home/widgets/connect_box/connect_form/connect_host_input.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/general/base/button.dart';
@@ -43,7 +43,7 @@ class _ConnectFormState extends State<ConnectForm> {
     super.initState();
     _host = TextEditingController(text: this.widget.connection?.host);
     _port = TextEditingController(
-        text: this.widget.connection?.port.toString() ?? '4444');
+        text: this.widget.connection?.port?.toString() ?? '');
     _pw = TextEditingController(text: this.widget.connection?.pw);
   }
 
@@ -61,7 +61,7 @@ class _ConnectFormState extends State<ConnectForm> {
             children: <Widget>[
               Flexible(
                 flex: 7,
-                child: ConnectTargetInput(
+                child: ConnectHostInput(
                   host: _host,
                   manual: this.widget.manual,
                 ),
@@ -74,17 +74,18 @@ class _ConnectFormState extends State<ConnectForm> {
                   child: TextFormField(
                     controller: _port,
                     focusNode: _portFocusNode,
-                    readOnly: !widget.manual,
+                    readOnly: !this.widget.manual,
                     enabled: this.widget.manual,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (port) => this.widget.manual
-                        ? landingStore.typedInConnection.port = int.parse(port)
-                        : null,
+                    onChanged: (port) => landingStore.typedInConnection.port =
+                        int.tryParse(port),
                     decoration: const InputDecoration(
                         labelText: 'Port', errorMaxLines: 2),
-                    validator: (text) => ValidationHelper.portValidation(text),
+                    validator: (text) => text != null && text.isNotEmpty
+                        ? ValidationHelper.portValidation(text)
+                        : null,
                   ),
                 ),
               ),
@@ -129,8 +130,11 @@ class _ConnectFormState extends State<ConnectForm> {
                       networkStore
                           .setOBSWebSocket(
                             Connection(
-                              _host.text,
-                              int.parse(_port.text),
+                              (this.widget.manual
+                                      ? landingStore.protocolScheme
+                                      : '') +
+                                  _host.text,
+                              int.tryParse(_port.text),
                               _pw.text,
                               this.widget.manual
                                   ? landingStore.domainMode
