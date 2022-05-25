@@ -41,6 +41,7 @@ class _ConnectFormState extends State<ConnectForm> {
   @override
   void initState() {
     super.initState();
+
     _host = TextEditingController(text: this.widget.connection?.host);
     _port = TextEditingController(
         text: this.widget.connection?.port?.toString() ?? '');
@@ -79,12 +80,13 @@ class _ConnectFormState extends State<ConnectForm> {
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (port) => landingStore.typedInConnection.port =
-                        int.tryParse(port),
+                    onChanged: (port) {
+                      landingStore.typedInConnection.port = int.tryParse(port);
+                    },
                     decoration: const InputDecoration(
                         labelText: 'Port', errorMaxLines: 2),
                     validator: (text) => text != null && text.isNotEmpty
-                        ? ValidationHelper.portValidation(text)
+                        ? ValidationHelper.portValidator(text)
                         : null,
                   ),
                 ),

@@ -3,7 +3,14 @@ import '../views/settings/custom_theme/widgets/color_picker/color_slider.dart';
 /// Helper class to summarize common validation which are used
 /// in several places
 class ValidationHelper {
-  static String? portValidation(String? text) {
+  static String? minLengthValidator(String? text, [int minLength = 1]) =>
+      text == null || text.length < minLength
+          ? (minLength == 1
+              ? 'Input may not be empty!'
+              : 'Input needs at least $minLength characters!')
+          : null;
+
+  static String? portValidator(String? text) {
     int? port = int.tryParse(text ?? '');
     if (port != null && port > 0 && port <= 65535) {
       return null;
@@ -11,7 +18,7 @@ class ValidationHelper {
     return 'Invalid port';
   }
 
-  static String? ipValidation(String? text) {
+  static String? ipValidator(String? text) {
     List<String>? ip = text?.split('.');
     if (ip != null &&
         ip.length == 4 &&

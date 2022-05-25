@@ -22,8 +22,12 @@ class ConnectHostInput extends StatefulWidget {
 }
 
 class _ConnectHostInputState extends State<ConnectHostInput> {
+  final GlobalKey<FormFieldState> _hostFormFieldKey =
+      GlobalKey<FormFieldState>();
+
   final FocusNode _inputFocusNode = FocusNode();
-  final FocusNode _dropdownFocusNode = FocusNode();
+
+  bool _dropdownTapped = false;
 
   @override
   void initState() {
@@ -31,8 +35,11 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
     _inputFocusNode.addListener(() {
       if (_inputFocusNode.hasFocus) {
         setState(() {});
-      } else if (!_inputFocusNode.hasFocus && !_dropdownFocusNode.hasFocus) {
-        setState(() {});
+      } else {
+        if (!_dropdownTapped) {
+          setState(() {});
+        }
+        _dropdownTapped = false;
       }
     });
   }
@@ -45,6 +52,7 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
       return Column(
         children: [
           TextFormField(
+            key: _hostFormFieldKey,
             controller: this.widget.host,
             focusNode: _inputFocusNode,
             autocorrect: false,
@@ -58,7 +66,6 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                   ? SizedBox(
                       height: 18.0,
                       child: DropdownButton<String>(
-                        focusNode: _dropdownFocusNode,
                         value: landingStore.protocolScheme,
                         isDense: true,
                         underline: Container(),
@@ -77,6 +84,7 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                             child: Text('-'),
                           ),
                         ],
+                        onTap: () => _dropdownTapped = true,
                         onChanged: (scheme) {
                           landingStore.setProtocolScheme(scheme ?? 'wss://');
                           _inputFocusNode.requestFocus();
@@ -92,9 +100,11 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                   ? '192.168.178.10'
                   : 'obs-stream.com',
             ),
-            validator: (text) => !landingStore.domainMode
-                ? ValidationHelper.ipValidation(text)
-                : null,
+            validator: (text) =>
+                ValidationHelper.minLengthValidator(text) ??
+                (!landingStore.domainMode
+                    ? ValidationHelper.ipValidator(text)
+                    : null),
             onChanged: (host) => landingStore.typedInConnection.host = host,
           ),
 
@@ -112,17 +122,17 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                             true: Text('Domain'),
                           },
                           onValueChanged: (domainMode) {
-                            this.widget.host.clear();
-                            Form.of(context)?.reset();
                             FocusManager.instance.primaryFocus?.unfocus();
                             landingStore.setDomainMode(domainMode ?? true);
+                            _hostFormFieldKey.currentState?.reset();
+                            this.widget.host.clear();
                           },
                         ),
                       ),
                       const SizedBox(width: 12.0),
                       const QuestionMarkTooltip(
                         message:
-                            'IP mode expects an IP address and is using "ws://" as the protocol scheme, while Domain mode does not have any input validation and you can select the protocol scheme yourself.\n\n"-" means I provide no protocol scheme and you have to add it yourself.',
+                            'IP mode expects an IP address and is using "ws://" as the protocol scheme (standard way to connect to a local OBS instance), while Domain mode does not have any input validation and you can select the protocol scheme yourself.\n\n"-" means I provide no protocol scheme and you have to add it yourself. I highly suggest making use of "ws://" or "wss://" though since it\'s usually what WebSockets use.',
                       ),
                       // const SizedBox(width: 12.0),
                     ],

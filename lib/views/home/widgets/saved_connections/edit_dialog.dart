@@ -47,13 +47,13 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       text: this.widget.connection.host,
       check: this.widget.connection.isDomain == null ||
               !this.widget.connection.isDomain!
-          ? ValidationHelper.ipValidation
+          ? ValidationHelper.ipValidator
           : (_) => null,
     );
     _port = CustomValidationTextEditingController(
       text: this.widget.connection.port?.toString() ?? '',
       check: (text) =>
-          text.isNotEmpty ? ValidationHelper.portValidation(text) : null,
+          text.isNotEmpty ? ValidationHelper.portValidator(text) : null,
     );
 
     _pw = TextEditingController(text: this.widget.connection.pw);
@@ -140,7 +140,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                           _host = CustomValidationTextEditingController(
                             text: '',
                             check: !_isDomain
-                                ? ValidationHelper.ipValidation
+                                ? ValidationHelper.ipValidator
                                 : (_) => null,
                           );
                         });

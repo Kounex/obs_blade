@@ -125,8 +125,9 @@ class _HomeViewState extends State<HomeView> {
         /// it is due to providing a wrong password (or none at all) and we don't want to
         /// display an overlay for that - we trigger the validation of the password field
         /// in our [ConnectForm]
-        else if (!networkStore.connectionResponse!.error!
-            .contains(BaseResponse.failedAuthentication)) {
+        else if (networkStore.connectionResponse?.error != null &&
+            !networkStore.connectionResponse!.error!
+                .contains(BaseResponse.failedAuthentication)) {
           OverlayHandler.showStatusOverlay(
             context: context,
             replaceIfActive: true,

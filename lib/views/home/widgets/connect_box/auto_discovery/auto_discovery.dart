@@ -67,7 +67,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   landingStore.setAutodiscoverPort(text);
                   _formKey.currentState!.validate();
                 },
-                validator: (text) => ValidationHelper.portValidation(text),
+                validator: (text) => ValidationHelper.portValidator(text),
               ),
             ),
           ),

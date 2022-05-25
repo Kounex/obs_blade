@@ -33,7 +33,7 @@ abstract class _HomeStore with Store {
 
   @action
   void updateAutodiscoverConnections() {
-    if (ValidationHelper.portValidation(this.autodiscoverPort) == null) {
+    if (ValidationHelper.portValidator(this.autodiscoverPort) == null) {
       this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
           int.tryParse(this.autodiscoverPort) ?? 4444);
     }

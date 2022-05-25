@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import '../../utils/general_helper.dart';
 
 import '../../models/connection.dart';
 import '../../types/classes/session.dart';
@@ -12,6 +11,7 @@ import '../../types/classes/stream/responses/get_auth_required.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
 import '../../types/interfaces/message.dart';
+import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
 
 part 'network.g.dart';
@@ -41,34 +41,43 @@ abstract class _NetworkStore with Store {
     }
     this.connectionResponse = null;
     this.connectionInProgress = true;
-    this.activeSession =
-        Session(NetworkHelper.establishWebSocket(connection), connection);
-    Completer<BaseResponse> authCompleter = Completer();
 
-    this.activeSession!.socketStream =
-        this.activeSession!.socket.stream.asBroadcastStream();
+    try {
+      Completer<BaseResponse> authCompleter = Completer();
 
-    StreamSubscription subscription =
-        _handleInitialWebSocket(connection, authCompleter);
+      this.activeSession =
+          Session(NetworkHelper.establishWebSocket(connection), connection);
+      this.activeSession!.socketStream =
+          this.activeSession!.socket.stream.asBroadcastStream();
 
-    NetworkHelper.makeRequest(
-        this.activeSession!.socket, RequestType.GetAuthRequired);
-    this.connectionResponse = await Future.any([
-      authCompleter.future,
-      Future.delayed(
-          timeout, () => BaseResponse({'status': 'error', 'error': 'timeout'}))
-    ]);
+      StreamSubscription subscription =
+          _handleInitialWebSocket(connection, authCompleter);
 
-    subscription.cancel();
-    if (!reconnect) {
-      if (this.connectionResponse!.status != BaseResponse.ok) {
-        this.activeSession!.socket.sink.close();
-        this.activeSession = null;
-      } else {
-        // this.activeSession.connection.ssid = await Connectivity().getWifiName();
-        this.handleStream();
+      NetworkHelper.makeRequest(
+          this.activeSession!.socket, RequestType.GetAuthRequired);
+
+      this.connectionResponse = await Future.any([
+        authCompleter.future,
+        Future.delayed(timeout,
+            () => BaseResponse({'status': 'error', 'error': 'timeout'}))
+      ]);
+
+      subscription.cancel();
+
+      if (!reconnect) {
+        if (this.connectionResponse!.status != BaseResponse.ok) {
+          this.activeSession!.socket.sink.close();
+          this.activeSession = null;
+        } else {
+          // this.activeSession.connection.ssid = await Connectivity().getWifiName();
+          this.handleStream();
+        }
       }
+    } catch (e) {
+      this.connectionResponse = await Future.delayed(
+          timeout, () => BaseResponse({'status': 'error', 'error': 'timeout'}));
     }
+
     this.connectionInProgress = false;
     return this.connectionResponse!;
   }
