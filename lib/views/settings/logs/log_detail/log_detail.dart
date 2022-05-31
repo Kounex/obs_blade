@@ -168,9 +168,9 @@ class LogDetailView extends StatelessWidget {
                           child: CupertinoDropdown<LogLevel>(
                             value: logsStore.logLevel,
                             items: [
-                              DropdownMenuItem(
+                              const DropdownMenuItem(
                                 value: null,
-                                child: const Text('All'),
+                                child: Text('All'),
                               ),
                               ...LogLevel.values.map(
                                 (logLevel) => DropdownMenuItem(

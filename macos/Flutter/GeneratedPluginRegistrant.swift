@@ -5,7 +5,7 @@
 import FlutterMacOS
 import Foundation
 
-import connectivity_macos
+import connectivity_plus_macos
 import package_info
 import path_provider_macos
 import share_plus_macos

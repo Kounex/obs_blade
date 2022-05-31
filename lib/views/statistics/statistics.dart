@@ -58,7 +58,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   //     outputSkippedFrames: _random.nextInt(70000),
   //     averageFrameTime: _random.nextDouble() * 60,
   //     cpuUsage: _random.nextDouble() * 100,
-  //     memoryUsage: _random.nextDouble() * 1000000,
+  //     memoryUsage: _random.nextDouble() * 1000,
   //     freeDiskSpace: _random.nextDouble() * 1000000);
 
   // @override

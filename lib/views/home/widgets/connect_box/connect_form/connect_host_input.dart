@@ -124,6 +124,7 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                           onValueChanged: (domainMode) {
                             FocusManager.instance.primaryFocus?.unfocus();
                             landingStore.setDomainMode(domainMode ?? true);
+                            landingStore.typedInConnection.host = '';
                             _hostFormFieldKey.currentState?.reset();
                             this.widget.host.clear();
                           },
@@ -132,7 +133,7 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                       const SizedBox(width: 12.0),
                       const QuestionMarkTooltip(
                         message:
-                            'IP mode expects an IP address and is using "ws://" as the protocol scheme (standard way to connect to a local OBS instance), while Domain mode does not have any input validation and you can select the protocol scheme yourself.\n\n"-" means I provide no protocol scheme and you have to add it yourself. I highly suggest making use of "ws://" or "wss://" though since it\'s usually what WebSockets use.',
+                            'IP mode expects an IP address and is using "ws://" as the protocol scheme (standard way to connect to a local OBS instance), while Domain mode does not have any input validation and you can select the protocol scheme yourself.\n\n"-" means I provide no protocol scheme and you have to add it yourself. I highly recommend making use of "ws://" or "wss://" though since it\'s usually what WebSockets use.',
                       ),
                       // const SizedBox(width: 12.0),
                     ],

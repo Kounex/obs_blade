@@ -60,20 +60,6 @@ class DataManagementView extends StatelessWidget {
           DataBlock(
             dataEntries: [
               DataEntry(
-                title: 'All Data',
-                description:
-                    'All the data the app persisted so far including settings set like custom theme, wakelock etc. or any saved connections and so on.',
-                customConfirmationText:
-                    'Are you sure? Like I mean all kind of things set like settings or entries added like connections or statistics will be deleted. There is no turning back!',
-                additionalConfirmationText:
-                    'It seems you are sure about this, right? Well, go ahead... just want to make sure it\'s actually intended! :)',
-                onClear: () => _deleteAll(context),
-              ),
-            ],
-          ),
-          DataBlock(
-            dataEntries: [
-              DataEntry(
                 title: 'Saved Connections',
                 description:
                     'All saved connections which are listed beneath the autodiscover / connect box in the home tab (at least once you saved any connections).',
@@ -222,6 +208,20 @@ class DataManagementView extends StatelessWidget {
                 description:
                     'All log entries found under "Logs" in the settings tab. You can delete them selectively in the logs view!',
                 onClear: () => Hive.box<AppLog>(HiveKeys.AppLog.name).clear(),
+              ),
+            ],
+          ),
+          DataBlock(
+            dataEntries: [
+              DataEntry(
+                title: 'All Data',
+                description:
+                    'All the data the app persisted so far including settings set like custom theme, wakelock etc. or any saved connections and so on.',
+                customConfirmationText:
+                    'Are you sure? Like I mean all kind of things set like settings or entries added like connections or statistics will be deleted. There is no turning back!',
+                additionalConfirmationText:
+                    'It seems you are sure about this, right? Well, go ahead... just want to make sure it\'s actually intended! :)',
+                onClear: () => _deleteAll(context),
               ),
             ],
           ),

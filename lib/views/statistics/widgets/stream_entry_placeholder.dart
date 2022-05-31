@@ -13,7 +13,7 @@ class StreamEntryPlaceholder extends StatelessWidget {
         padding: const EdgeInsets.all(24.0),
         child: Text(
           this.text,
-          textAlign: TextAlign.justify,
+          textAlign: TextAlign.center,
         ),
       ),
     );

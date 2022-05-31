@@ -3,9 +3,9 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../utils/styling_helper.dart';
 
 import '../../../../types/extensions/list.dart';
+import '../../../../utils/styling_helper.dart';
 
 /// In order to display the graphs in the middle of the coordinate system
 /// (if no fix max value is provided), we use this value which
@@ -86,7 +86,7 @@ class StreamChart extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 24.0),
           child: Text(
             this.dataName,
-            style: Theme.of(context).textTheme.headline6,
+            style: axisTitleTextStyle,
           ),
         ),
         ConstrainedBox(
@@ -101,22 +101,22 @@ class StreamChart extends StatelessWidget {
                       yInterval,
               minX: streamStart.toDouble(),
               maxX: this.streamEndedMS.toDouble(),
-              axisTitleData: FlAxisTitleData(
-                leftTitle: AxisTitle(
-                  showTitle: true,
-                  // titleText: this.dataName,
-                  textStyle: axisTitleTextStyle,
-                  reservedSize: 2.0,
-                  margin: 0.0,
-                ),
-                bottomTitle: AxisTitle(
-                  showTitle: false,
-                  titleText: 'Time',
-                  textStyle: axisTitleTextStyle,
-                  reservedSize: 20.0,
-                  margin: 20.0,
-                ),
-              ),
+              // axisTitleData: FlAxisTitleData(
+              //   leftTitle: AxisTitle(
+              //     showTitle: true,
+              //     // titleText: this.dataName,
+              //     textStyle: axisTitleTextStyle,
+              //     reservedSize: 2.0,
+              //     margin: 0.0,
+              //   ),
+              //   bottomTitle: AxisTitle(
+              //     showTitle: false,
+              //     titleText: 'Time',
+              //     textStyle: axisTitleTextStyle,
+              //     reservedSize: 20.0,
+              //     margin: 20.0,
+              //   ),
+              // ),
               gridData: FlGridData(show: false),
               borderData: FlBorderData(
                 show: true,
@@ -143,33 +143,80 @@ class StreamChart extends StatelessWidget {
                   getTooltipItems: (touchedSpots) => touchedSpots
                       .map(
                         (touchSpot) => LineTooltipItem(
-                            '${touchSpot.y.toStringAsFixed(this.amountFixedTooltipValue)}${this.dataUnit}\n${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(touchSpot.x.round()))}',
-                            tooltipTextStyle),
+                          '${touchSpot.y.toStringAsFixed(this.amountFixedTooltipValue)}${this.dataUnit}\n${DateFormat.Hms('de_DE').format(DateTime.fromMillisecondsSinceEpoch(touchSpot.x.round()))}',
+                          tooltipTextStyle,
+                        ),
                       )
                       .toList(),
                 ),
               ),
               titlesData: FlTitlesData(
-                leftTitles: SideTitles(
-                  showTitles: true,
-                  margin: 15.0,
-                  getTextStyles: (_) => axisStepsTextStyle,
-                  interval: yInterval,
-                  getTitles: (interval) =>
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: yInterval,
+                    reservedSize: 48.0,
+                    getTitlesWidget: (interval, titleMeta) => Text(
                       interval.toStringAsFixed(this.amountFixedYAxis) +
-                      this.dataUnit,
-                ),
-                bottomTitles: SideTitles(
-                  showTitles: true,
-                  margin: 15.0,
-                  getTextStyles: (_) => axisStepsTextStyle,
-                  interval: (this.totalStreamTime * 1000) / 5,
-                  getTitles: (interval) => DateFormat.Hm('de_DE').format(
-                    DateTime.fromMillisecondsSinceEpoch(
-                      interval.round(),
+                          this.dataUnit,
+                      style: axisStepsTextStyle,
                     ),
                   ),
                 ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: (this.totalStreamTime * 1000) / 4.5,
+                    reservedSize: 32.0,
+                    getTitlesWidget: (interval, titleMeta) {
+                      if (interval == titleMeta.min ||
+                          interval == titleMeta.max) {
+                        return Container();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          DateFormat.Hm('de_DE').format(
+                            DateTime.fromMillisecondsSinceEpoch(
+                              interval.round(),
+                            ),
+                          ),
+                          style: axisStepsTextStyle,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: false,
+                  ),
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: false,
+                  ),
+                ),
+                // leftTitles: SideTitles(
+                //   showTitles: true,
+                //   margin: 15.0,
+                //   getTextStyles: (_) => axisStepsTextStyle,
+                //   interval: yInterval,
+                //   getTitles: (interval) =>
+                //       interval.toStringAsFixed(this.amountFixedYAxis) +
+                //       this.dataUnit,
+                // ),
+                // bottomTitles: SideTitles(
+                //   showTitles: true,
+                //   margin: 15.0,
+                //   getTextStyles: (_) => axisStepsTextStyle,
+                //   interval: (this.totalStreamTime * 1000) / 5,
+                //   getTitles: (interval) => DateFormat.Hm('de_DE').format(
+                //     DateTime.fromMillisecondsSinceEpoch(
+                //       interval.round(),
+                //     ),
+                //   ),
+                // ),
               ),
               lineBarsData: [
                 LineChartBarData(
@@ -184,9 +231,10 @@ class StreamChart extends StatelessWidget {
                             data.toDouble()),
                       )
                       .toList(),
-                  colors: [
-                    this.chartColor,
-                  ],
+                  color: this.chartColor,
+                  // colors: [
+                  //   this.chartColor,
+                  // ],
                   barWidth: 2,
                   isStrokeCapRound: false,
                   dotData: FlDotData(

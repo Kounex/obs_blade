@@ -27,6 +27,7 @@ class LogEntry extends StatelessWidget {
         temp.sort((log1, log2) => log1.timestampMS.compareTo(log2.timestampMS));
         groupedLogs.add([...temp]);
         temp.clear();
+        temp.add(log);
       }
     }
     if (temp.isNotEmpty) {
