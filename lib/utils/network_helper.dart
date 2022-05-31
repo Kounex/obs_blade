@@ -8,9 +8,20 @@ import 'package:crypto/crypto.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
+import '../models/enums/log_level.dart';
 import '../types/enums/request_type.dart';
 import '../types/exceptions/network.dart';
 import 'general_helper.dart';
+
+/// Class which represents the result of a connection scan. Scans will create
+/// [Connection] objects which will be wrapped with this class to also include
+/// an optional error to handle after receiving the results
+class ConnectionScan {
+  Connection connection;
+  Object? error;
+
+  ConnectionScan(this.connection, [this.error]);
+}
 
 class NetworkHelper {
   /// Establish and return an instance of [IOWebSocketChannel] based on the
@@ -78,7 +89,7 @@ class NetworkHelper {
       /// Completer used to manully deal with Future. [Completer] enables us to
       /// call the [complete] funciton which will finalise the Future of
       /// [Completer.future] so we can await this
-      Completer<List<Connection?>> completer = Completer();
+      Completer<List<ConnectionScan?>> completer = Completer();
       ReceivePort receivePort = ReceivePort();
 
       /// "Spawning" the [Isolate] (thread) to deal with multiple [Socket]
@@ -95,15 +106,17 @@ class NetworkHelper {
         completer.complete(availableConnections);
       });
 
-      return List.from(
-          (await completer.future).where((connection) => connection != null));
+      return List.from((await completer.future)
+          .where((connectionScan) =>
+              connectionScan != null && connectionScan.error == null)
+          .map((connectionScan) => connectionScan!.connection));
     }
     throw NotInWLANException();
   }
 
   static Future<List<Connection>> checkConnectionAvailabilities(
       List<Connection> connections) async {
-    Completer<List<Connection?>> completer = Completer();
+    Completer<List<ConnectionScan?>> completer = Completer();
     ReceivePort receivePort = ReceivePort();
 
     Isolate.spawn<Map<String, dynamic>>(_isolateFullScanConnections, {
@@ -120,8 +133,22 @@ class NetworkHelper {
       completer.complete(availableConnections);
     });
 
-    return List.from(
-        (await completer.future).where((connection) => connection != null));
+    List<ConnectionScan> connectionScans = List.from((await completer.future)
+        .where((connectionScan) => connectionScan != null));
+
+    connectionScans
+        .where((connectionScan) => connectionScan.error != null)
+        .forEach(
+          (connectionScan) => GeneralHelper.advLog(
+            'Connection check failed for ${connectionScan.connection.host}${connectionScan.connection.port != null ? (":" + connectionScan.connection.port.toString()) : ""}: ${connectionScan.error}',
+            level: LogLevel.Error,
+            includeInLogs: true,
+          ),
+        );
+
+    return List.from(connectionScans
+        .where((connectionScan) => connectionScan.error == null)
+        .map((connectionScan) => connectionScan.connection));
   }
 
   static void _isolateFullScanIPs(Map<String, dynamic> arguments) async {
@@ -130,7 +157,7 @@ class NetworkHelper {
     int port = arguments['port'];
     Duration timeout = arguments['timeout'];
 
-    List<Future<Connection?>> availableConnections = [];
+    List<Future<ConnectionScan?>> availableConnections = [];
     String? address;
 
     for (int i = 0; i < baseIPs.length; i++) {
@@ -167,7 +194,7 @@ class NetworkHelper {
     List<bool?> isDomains = List.from(arguments['isDomains']);
     Duration timeout = arguments['timeout'];
 
-    List<Future<Connection?>> availableConnections = [];
+    List<Future<ConnectionScan?>> availableConnections = [];
 
     for (int i = 0; i < hosts.length; i++) {
       availableConnections.add(_singleScan({
@@ -181,15 +208,18 @@ class NetworkHelper {
     sendPort.send(await Future.wait(availableConnections));
   }
 
-  static Future<Connection?> _singleScan(Map<String, dynamic> arguments) async {
+  static Future<ConnectionScan?> _singleScan(
+      Map<String, dynamic> arguments) async {
     String address = arguments['address'];
     int? port = arguments['port'];
     bool? isDomain = arguments['isDomain'];
-    Connection connection = Connection(
-      address,
-      port,
-      null,
-      isDomain,
+    ConnectionScan connectionScan = ConnectionScan(
+      Connection(
+        address,
+        port,
+        null,
+        isDomain,
+      ),
     );
     Duration timeout = arguments['timeout'];
     SendPort? sendPort = arguments['sendPort'];
@@ -204,8 +234,8 @@ class NetworkHelper {
         /// that there is a device listeneing on the IP:port combination (in this
         /// case very likely OBS WebSocket) and we will add it to the list
         socket = await Socket.connect(address, port ?? 4444, timeout: timeout);
-        sendPort?.send(connection);
-        return connection;
+        sendPort?.send(connectionScan);
+        return connectionScan;
       } catch (e) {
         // An exception means timeout which is okay
       } finally {
@@ -217,7 +247,7 @@ class NetworkHelper {
 
     try {
       IOWebSocketChannel channel = NetworkHelper.establishWebSocket(
-        connection,
+        connectionScan.connection,
         const Duration(milliseconds: 500),
       );
 
@@ -226,10 +256,15 @@ class NetworkHelper {
       channel.sink.close();
 
       if (res != null) {
-        sendPort?.send(connection);
-        return connection;
+        sendPort?.send(connectionScan);
+        return connectionScan;
       }
-    } catch (e) {}
+    } catch (e) {
+      connectionScan.error = e;
+
+      sendPort?.send(connectionScan);
+      return connectionScan;
+    }
 
     sendPort?.send(null);
     return null;

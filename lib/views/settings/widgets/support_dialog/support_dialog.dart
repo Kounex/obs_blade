@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
+import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../../../shared/general/custom_cupertino_dialog.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
@@ -46,6 +48,7 @@ class _SupportDialogState extends State<SupportDialog> {
     if (!available) {
       _error =
           'Connection to the App Store is not possible. Make sure you have a working internet connection.\n\nFeel free to let me know if this problem persists!';
+      GeneralHelper.advLog(_error, includeInLogs: true, level: LogLevel.Error);
     }
     Set<String> inAppPurchasesIDs = {};
     switch (this.widget.type) {
