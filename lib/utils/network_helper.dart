@@ -140,7 +140,7 @@ class NetworkHelper {
         .where((connectionScan) => connectionScan.error != null)
         .forEach(
           (connectionScan) => GeneralHelper.advLog(
-            'Connection check failed for ${connectionScan.connection.host}${connectionScan.connection.port != null ? (":" + connectionScan.connection.port.toString()) : ""}: ${connectionScan.error}',
+            'Reachable check for your saved connection ${connectionScan.connection.host}${connectionScan.connection.port != null ? (":" + connectionScan.connection.port.toString()) : ""} failed: ${connectionScan.error}',
             level: LogLevel.Error,
             includeInLogs: true,
           ),
