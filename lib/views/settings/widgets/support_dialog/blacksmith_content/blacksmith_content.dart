@@ -15,7 +15,7 @@ import '../donate_button.dart';
 import 'restore_button.dart';
 
 class BlacksmithContent extends StatelessWidget {
-  final List<ProductDetails> blacksmithDetails;
+  final List<ProductDetails>? blacksmithDetails;
 
   const BlacksmithContent({
     Key? key,
@@ -57,22 +57,25 @@ class BlacksmithContent extends StatelessWidget {
               SettingsKeys.BoughtBlacksmith.name,
               defaultValue: false,
             )) {
-              if (this.blacksmithDetails.isNotEmpty) {
+              if (this.blacksmithDetails != null &&
+                  this.blacksmithDetails!.isNotEmpty) {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     const RestoreButton(),
                     DonateButton(
-                      price: this.blacksmithDetails[0].price,
+                      price: this.blacksmithDetails![0].price,
                       purchaseParam: PurchaseParam(
-                          productDetails: this.blacksmithDetails[0]),
+                          productDetails: this.blacksmithDetails![0]),
                     ),
                   ],
                 );
               }
-              return const DonateButton(
-                errorText:
-                    'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
+              return DonateButton(
+                errorText: this.blacksmithDetails != null &&
+                        this.blacksmithDetails!.isEmpty
+                    ? 'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!'
+                    : null,
               );
             }
             return BaseButton(

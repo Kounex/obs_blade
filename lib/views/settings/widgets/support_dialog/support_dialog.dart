@@ -74,30 +74,32 @@ class _SupportDialogState extends State<SupportDialog> {
       content: FutureBuilder<List<ProductDetails>>(
         future: _inAppPurchases,
         builder: (context, inAppPurchasesSnapshot) {
-          if (inAppPurchasesSnapshot.connectionState == ConnectionState.done) {
-            List<ProductDetails> inAppPurchasesDetails =
-                inAppPurchasesSnapshot.data ?? [];
-            return SingleChildScrollView(
-              child: () {
-                if (this.widget.type == SupportType.Tips) {
-                  return TipsContent(
-                    tipsDetails: inAppPurchasesDetails,
-                  );
-                } else {
-                  return BlacksmithContent(
-                    blacksmithDetails: inAppPurchasesDetails,
-                  );
-                }
-              }(),
-            );
-          }
-          return Container(
-            height: 172.0,
-            alignment: Alignment.center,
-            child: BaseProgressIndicator(
-              text: 'Fetching...',
-            ),
+          // if (inAppPurchasesSnapshot.connectionState == ConnectionState.done) {
+          List<ProductDetails>? inAppPurchasesDetails =
+              inAppPurchasesSnapshot.connectionState == ConnectionState.done
+                  ? (inAppPurchasesSnapshot.data ?? [])
+                  : inAppPurchasesSnapshot.data;
+          return SingleChildScrollView(
+            child: () {
+              if (this.widget.type == SupportType.Tips) {
+                return TipsContent(
+                  tipsDetails: inAppPurchasesDetails,
+                );
+              } else {
+                return BlacksmithContent(
+                  blacksmithDetails: inAppPurchasesDetails,
+                );
+              }
+            }(),
           );
+          // }
+          // return Container(
+          //   height: 172.0,
+          //   alignment: Alignment.center,
+          //   child: BaseProgressIndicator(
+          //     text: 'Fetching...',
+          //   ),
+          // );
         },
       ),
     );

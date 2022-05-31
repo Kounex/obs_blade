@@ -16,10 +16,17 @@ List<String> kTipAwesomeness = [
 ];
 
 class TipsContent extends StatelessWidget {
-  final List<ProductDetails> tipsDetails;
+  final List<ProductDetails>? tipsDetails;
+
+  /// Since tips are going to be pre-rendered while the actual
+  /// tip data is being fetched from the store, this is the amount
+  /// of tips I assume are going to be available and render those
+  final int amountTips;
+
   const TipsContent({
     Key? key,
     required this.tipsDetails,
+    this.amountTips = 3,
   }) : super(key: key);
 
   String _sumTipped(Iterable<PurchasedTip> tips) {
@@ -63,17 +70,18 @@ class TipsContent extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
           child: Column(
             children: [
-              if (this.tipsDetails.isEmpty)
-                ...kTipAwesomeness.take(3).map(
+              if (this.tipsDetails == null || this.tipsDetails!.isEmpty)
+                ...kTipAwesomeness.take(this.amountTips).map(
                       (tipAwesomeness) => DonateButton(
                         text: '$tipAwesomeness Tip',
-                        errorText:
-                            'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
+                        errorText: this.tipsDetails != null
+                            ? 'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!'
+                            : null,
                       ),
                     ),
-              if (this.tipsDetails.isNotEmpty)
+              if (this.tipsDetails != null && this.tipsDetails!.isNotEmpty)
                 ...this
-                    .tipsDetails
+                    .tipsDetails!
                     .take(kTipAwesomeness.length)
                     .mapIndexed(
                       (tip, index) => DonateButton(
