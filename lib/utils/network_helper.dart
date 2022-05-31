@@ -215,19 +215,21 @@ class NetworkHelper {
       return null;
     }
 
-    IOWebSocketChannel channel = NetworkHelper.establishWebSocket(
-      connection,
-      const Duration(milliseconds: 500),
-    );
+    try {
+      IOWebSocketChannel channel = NetworkHelper.establishWebSocket(
+        connection,
+        const Duration(milliseconds: 500),
+      );
 
-    int? res = await Future.delayed(timeout, () => channel.closeCode);
+      int? res = await Future.delayed(timeout, () => channel.closeCode);
 
-    channel.sink.close();
+      channel.sink.close();
 
-    if (res != null) {
-      sendPort?.send(connection);
-      return connection;
-    }
+      if (res != null) {
+        sendPort?.send(connection);
+        return connection;
+      }
+    } catch (e) {}
 
     sendPort?.send(null);
     return null;
