@@ -85,14 +85,16 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
         ),
         const BaseDivider(),
         Flexible(
-          child: SizedBox(
-            height: 250.0,
-            child: CupertinoDatePicker(
-              mode: CupertinoDatePickerMode.date,
-              initialDateTime: _date,
-              minimumDate: this.widget.minimumDate,
-              maximumDate: this.widget.maximumDate ?? _initialDateTime(),
-              onDateTimeChanged: (dateTime) => _date = dateTime,
+          child: SafeArea(
+            child: SizedBox(
+              height: 250.0,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: _date,
+                minimumDate: this.widget.minimumDate,
+                maximumDate: this.widget.maximumDate ?? _initialDateTime(),
+                onDateTimeChanged: (dateTime) => _date = dateTime,
+              ),
             ),
           ),
         ),

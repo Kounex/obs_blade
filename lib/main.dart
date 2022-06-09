@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'app.dart';
@@ -63,12 +61,6 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
 
   @override
   Widget build(BuildContext context) => this.widget.app;
-}
-
-void _initializePurchases() {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    InAppPurchaseAndroidPlatformAddition.enablePendingPurchases();
-  }
 }
 
 void _initializeStores() {
@@ -198,9 +190,6 @@ void _logging(String line) {
 void main() async {
   /// Initialize Date Formatting - using European style
   await initializeDateFormatting('de_DE');
-
-  /// Initialize Purchases
-  _initializePurchases();
 
   /// Create all store objects and make them available in the app (DI)
   _initializeStores();
