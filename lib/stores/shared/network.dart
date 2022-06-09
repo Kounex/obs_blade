@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:mobx/mobx.dart';
 
 import '../../models/connection.dart';
+import '../../models/enums/log_level.dart';
 import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/responses/base.dart';
@@ -74,6 +75,12 @@ abstract class _NetworkStore with Store {
         }
       }
     } catch (e) {
+      GeneralHelper.advLog(
+        'Not possible to connect to ${connection.host}${connection.port != null ? (":" + connection.port.toString()) : ""}: $e',
+        level: LogLevel.Error,
+        includeInLogs: true,
+      );
+
       this.connectionResponse = await Future.delayed(
           timeout, () => BaseResponse({'status': 'error', 'error': 'timeout'}));
     }
