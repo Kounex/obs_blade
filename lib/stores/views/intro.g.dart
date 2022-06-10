@@ -24,6 +24,21 @@ mixin _$IntroStore on _IntroStore, Store {
     });
   }
 
+  final _$lockedOnSlideAtom = Atom(name: '_IntroStore.lockedOnSlide');
+
+  @override
+  bool get lockedOnSlide {
+    _$lockedOnSlideAtom.reportRead();
+    return super.lockedOnSlide;
+  }
+
+  @override
+  set lockedOnSlide(bool value) {
+    _$lockedOnSlideAtom.reportWrite(value, super.lockedOnSlide, () {
+      super.lockedOnSlide = value;
+    });
+  }
+
   final _$_IntroStoreActionController = ActionController(name: '_IntroStore');
 
   @override
@@ -38,9 +53,21 @@ mixin _$IntroStore on _IntroStore, Store {
   }
 
   @override
+  void setLockedOnSlide(bool lockedOnSlide) {
+    final _$actionInfo = _$_IntroStoreActionController.startAction(
+        name: '_IntroStore.setLockedOnSlide');
+    try {
+      return super.setLockedOnSlide(lockedOnSlide);
+    } finally {
+      _$_IntroStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
-currentPage: ${currentPage}
+currentPage: ${currentPage},
+lockedOnSlide: ${lockedOnSlide}
     ''';
   }
 }

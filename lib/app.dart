@@ -175,7 +175,8 @@ class App extends StatelessWidget {
             theme: _getCurrentTheme(settingsBox),
             initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
                     defaultValue: false)
-                ? AppRoutingKeys.Tabs.route
+                // ? AppRoutingKeys.Tabs.route
+                ? AppRoutingKeys.Intro.route
                 : AppRoutingKeys.Intro.route,
             onGenerateInitialRoutes: (initialRoute) => [
               MaterialPageRoute(
