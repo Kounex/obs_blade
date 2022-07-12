@@ -75,11 +75,10 @@ class _IntroViewState extends State<IntroView> {
 
           _timerToContinue =
               Timer.periodic(const Duration(seconds: 1), (timer) {
-            _slideLockSecondsLeft--;
-            if (_slideLockSecondsLeft <= 0) {
+            introStore.slideLockSecondsLeft--;
+            if (introStore.slideLockSecondsLeft <= 0) {
               _timerToContinue!.cancel();
               introStore.setLockedOnSlide(false);
-              _slideLockSecondsLeft = kSecondsToLockSlide;
             }
           });
         }

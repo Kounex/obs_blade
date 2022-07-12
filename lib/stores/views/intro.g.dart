@@ -39,6 +39,23 @@ mixin _$IntroStore on _IntroStore, Store {
     });
   }
 
+  final _$slideLockSecondsLeftAtom =
+      Atom(name: '_IntroStore.slideLockSecondsLeft');
+
+  @override
+  int get slideLockSecondsLeft {
+    _$slideLockSecondsLeftAtom.reportRead();
+    return super.slideLockSecondsLeft;
+  }
+
+  @override
+  set slideLockSecondsLeft(int value) {
+    _$slideLockSecondsLeftAtom.reportWrite(value, super.slideLockSecondsLeft,
+        () {
+      super.slideLockSecondsLeft = value;
+    });
+  }
+
   final _$_IntroStoreActionController = ActionController(name: '_IntroStore');
 
   @override
@@ -53,11 +70,11 @@ mixin _$IntroStore on _IntroStore, Store {
   }
 
   @override
-  void setLockedOnSlide(bool lockedOnSlide) {
+  void setLockedOnSlide(bool lockedOnSlide, [int? secondsToLockSlide]) {
     final _$actionInfo = _$_IntroStoreActionController.startAction(
         name: '_IntroStore.setLockedOnSlide');
     try {
-      return super.setLockedOnSlide(lockedOnSlide);
+      return super.setLockedOnSlide(lockedOnSlide, secondsToLockSlide);
     } finally {
       _$_IntroStoreActionController.endAction(_$actionInfo);
     }
@@ -67,7 +84,8 @@ mixin _$IntroStore on _IntroStore, Store {
   String toString() {
     return '''
 currentPage: ${currentPage},
-lockedOnSlide: ${lockedOnSlide}
+lockedOnSlide: ${lockedOnSlide},
+slideLockSecondsLeft: ${slideLockSecondsLeft}
     ''';
   }
 }
