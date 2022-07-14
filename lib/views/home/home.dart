@@ -112,7 +112,9 @@ class _HomeViewState extends State<HomeView> {
           ),
         );
       } else if (!connectionInProgress) {
-        if (networkStore.connectionResponse!.status == BaseResponse.ok) {
+        if (networkStore.newProtocol
+            ? (networkStore.connectionResponse!.statusNew.result)
+            : (networkStore.connectionResponse!.statusOld == BaseResponse.ok)) {
           OverlayHandler.closeAnyOverlay();
           Navigator.pushReplacementNamed(
             context,

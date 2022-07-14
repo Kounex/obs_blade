@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Get the volume of the specified source
 class GetVolumeResponse extends BaseResponse {
-  GetVolumeResponse(Map<String, dynamic> json) : super(json);
+  GetVolumeResponse(super.json, super.newProtocol);
 
   /// Source name
   String get name => this.json['name'];

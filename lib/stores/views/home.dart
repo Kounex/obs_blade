@@ -12,7 +12,7 @@ abstract class _HomeStore with Store {
   @observable
   Future<List<Connection>>? autodiscoverConnections;
   @observable
-  String autodiscoverPort = '4444';
+  String autodiscoverPort = '4455';
 
   @observable
   bool refreshable = false;
@@ -25,7 +25,7 @@ abstract class _HomeStore with Store {
   @observable
   String protocolScheme = 'wss://';
 
-  Connection typedInConnection = Connection('', 4444, '');
+  Connection typedInConnection = Connection('', 4455, '');
 
   @action
   void setAutodiscoverPort(String autodiscoverPort) =>
@@ -35,7 +35,7 @@ abstract class _HomeStore with Store {
   void updateAutodiscoverConnections() {
     if (ValidationHelper.portValidator(this.autodiscoverPort) == null) {
       this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
-          int.tryParse(this.autodiscoverPort) ?? 4444);
+          int.tryParse(this.autodiscoverPort) ?? 4455);
     }
   }
 

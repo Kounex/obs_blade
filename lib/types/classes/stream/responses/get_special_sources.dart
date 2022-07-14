@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Get configured special sources like Desktop Audio and Mic/Aux sources
 class GetSpecialSourcesResponse extends BaseResponse {
-  GetSpecialSourcesResponse(Map<String, dynamic> json) : super(json);
+  GetSpecialSourcesResponse(super.json, super.newProtocol);
 
   /// Name of the first Desktop Audio capture source
   String? get desktop1 => this.json['desktop-1'];

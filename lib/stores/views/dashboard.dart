@@ -392,10 +392,12 @@ abstract class _DashboardStore with Store {
       );
 
       while ((Hive.box(HiveKeys.Settings.name).get(
-                  SettingsKeys.UnlimitedReconnects.name,
-                  defaultValue: false) ||
-              tries < 5) &&
-          response?.status != BaseResponse.ok) {
+                      SettingsKeys.UnlimitedReconnects.name,
+                      defaultValue: false) ||
+                  tries < 5) &&
+              GetIt.instance<NetworkStore>().newProtocol
+          ? (!(response?.statusNew.result ?? false))
+          : (response?.statusOld != BaseResponse.ok)) {
         response = await GetIt.instance<NetworkStore>().setOBSWebSocket(
           GetIt.instance<NetworkStore>().activeSession!.connection,
           reconnect: true,
@@ -407,7 +409,9 @@ abstract class _DashboardStore with Store {
           includeInLogs: true,
         );
       }
-      if (response?.status != BaseResponse.ok) {
+      if (GetIt.instance<NetworkStore>().newProtocol
+          ? (!(response?.statusNew.result ?? false))
+          : (response?.statusOld != BaseResponse.ok)) {
         GeneralHelper.advLog(
           'Not able to reconnect to OBS, initiating termination process!',
           level: LogLevel.Warning,
@@ -475,8 +479,8 @@ abstract class _DashboardStore with Store {
         'Event Incoming: ${event.eventType}',
       );
     }
-    this.latestRecordTimeDurationMS = _timecodeToMS(event.recTimecode);
-    this.latestStreamTimeDurationMS = _timecodeToMS(event.streamTimecode);
+    this.latestRecordTimeDurationMS = _timecodeToMS(event.recTimecodeOld);
+    this.latestStreamTimeDurationMS = _timecodeToMS(event.streamTimecodeOld);
     switch (event.eventType) {
       case EventType.StreamStarted:
         this.isLive = true;
@@ -488,7 +492,7 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.RecordingStarted:
         this.isRecording = true;
-        GeneralHelper.advLog(event.recTimecode);
+        GeneralHelper.advLog(event.recTimecodeOld);
         break;
       case EventType.RecordingStopped:
         this.isRecording = false;
@@ -530,7 +534,8 @@ abstract class _DashboardStore with Store {
       case EventType.SceneCollectionChanged:
         OverlayHandler.closeAnyOverlay(immediately: false);
         SceneCollectionChangedEvent sceneCollectionChangedEvent =
-            SceneCollectionChangedEvent(event.json);
+            SceneCollectionChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.currentSceneCollectionName =
             sceneCollectionChangedEvent.sceneCollection;
@@ -540,7 +545,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.SceneCollectionListChanged:
         SceneCollectionListChangedEvent sceneCollectionListChangedEvent =
-            SceneCollectionListChangedEvent(event.json);
+            SceneCollectionListChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.sceneCollections =
             ObservableList.of(sceneCollectionListChangedEvent.sceneCollections);
@@ -552,7 +558,8 @@ abstract class _DashboardStore with Store {
             RequestType.GetSceneList);
         break;
       case EventType.SwitchScenes:
-        SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(event.json);
+        SwitchScenesEvent switchSceneEvent = SwitchScenesEvent(
+            event.json, GetIt.instance<NetworkStore>().newProtocol);
         if (!Hive.box(HiveKeys.Settings.name).get(
                 SettingsKeys.ExposeStudioControls.name,
                 defaultValue: false) ||
@@ -568,8 +575,8 @@ abstract class _DashboardStore with Store {
         }
         break;
       case EventType.TransitionBegin:
-        TransitionBeginEvent transitionBeginEvent =
-            TransitionBeginEvent(event.json);
+        TransitionBeginEvent transitionBeginEvent = TransitionBeginEvent(
+            event.json, GetIt.instance<NetworkStore>().newProtocol);
         this.sceneTransitionDurationMS = transitionBeginEvent.duration >= 0
             ? transitionBeginEvent.duration
             : 0;
@@ -577,21 +584,24 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.TransitionListChanged:
         TransitionListChangedEvent transitionListChangedEvent =
-            TransitionListChangedEvent(event.json);
+            TransitionListChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
         GeneralHelper.advLog(
             'CHANGED:' + transitionListChangedEvent.json.toString());
         this.availableTransitionsNames = transitionListChangedEvent.transitions;
         break;
       case EventType.TransitionDurationChanged:
         TransitionDurationChangedEvent transitionDurationChangedEvent =
-            TransitionDurationChangedEvent(event.json);
+            TransitionDurationChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.sceneTransitionDurationMS =
             transitionDurationChangedEvent.newDuration;
         break;
       case EventType.SwitchTransition:
         SwitchTransitionEvent switchTransitionEventEvent =
-            SwitchTransitionEvent(event.json);
+            SwitchTransitionEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
         this.currentTransitionName = switchTransitionEventEvent.transitionName;
         NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -602,7 +612,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.StudioModeSwitched:
         StudioModeSwitchedEvent studioModeSwitchedEvent =
-            StudioModeSwitchedEvent(event.json);
+            StudioModeSwitchedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.studioMode = studioModeSwitchedEvent.newState;
 
@@ -618,7 +629,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.PreviewSceneChanged:
         PreviewSceneChangedEvent previewSceneChangedEvent =
-            PreviewSceneChangedEvent(event.json);
+            PreviewSceneChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
 
         if (Hive.box(HiveKeys.Settings.name).get(
                 SettingsKeys.ExposeStudioControls.name,
@@ -643,13 +655,14 @@ abstract class _DashboardStore with Store {
             RequestType.GetCurrentScene);
         break;
       case EventType.SceneItemRemoved:
-        SceneItemRemovedEvent sceneItemRemovedEvent =
-            SceneItemRemovedEvent(event.json);
+        SceneItemRemovedEvent sceneItemRemovedEvent = SceneItemRemovedEvent(
+            event.json, GetIt.instance<NetworkStore>().newProtocol);
         this.currentSceneItems!.removeWhere(
             (sceneItem) => sceneItem.id == sceneItemRemovedEvent.itemID);
         break;
       case EventType.SourceRenamed:
-        SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(event.json);
+        SourceRenamedEvent sourceRenamedEvent = SourceRenamedEvent(
+            event.json, GetIt.instance<NetworkStore>().newProtocol);
         try {
           this
               .currentSceneItems!
@@ -668,7 +681,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.SourceVolumeChanged:
         SourceVolumeChangedEvent sourceVolumeChangedEvent =
-            SourceVolumeChangedEvent(event.json);
+            SourceVolumeChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
         try {
           [...this.currentSceneItems!, ...this.globalAudioSceneItems]
               .firstWhere((audioSceneItem) =>
@@ -681,7 +695,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.SourceMuteStateChanged:
         SourceMuteStateChangedEvent sourceMuteStateChangedEvent =
-            SourceMuteStateChangedEvent(event.json);
+            SourceMuteStateChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
         try {
           [...this.currentSceneItems!, ...this.globalAudioSceneItems]
               .firstWhere((audioSceneItem) =>
@@ -694,7 +709,8 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.SceneItemVisibilityChanged:
         SceneItemVisibilityChangedEvent sceneItemVisibilityChangedEvent =
-            SceneItemVisibilityChangedEvent(event.json);
+            SceneItemVisibilityChangedEvent(
+                event.json, GetIt.instance<NetworkStore>().newProtocol);
         try {
           this
               .currentSceneItems!
@@ -717,12 +733,12 @@ abstract class _DashboardStore with Store {
   @action
   void _handleResponse(BaseResponse response) {
     GeneralHelper.advLog(
-      'Response Incoming: ${response.requestType}',
+      'Response Incoming: ${(response.requestType)}',
     );
     switch (response.requestType) {
       case RequestType.GetVersion:
-        GetVersionResponse getVersionResponse =
-            GetVersionResponse(response.json);
+        GetVersionResponse getVersionResponse = GetVersionResponse(
+            response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         if (!getVersionResponse.supportedImageExportFormats.contains('jpg') &&
             !getVersionResponse.supportedImageExportFormats.contains('jpeg')) {
@@ -730,29 +746,32 @@ abstract class _DashboardStore with Store {
         }
         break;
       case RequestType.GetSceneList:
-        GetSceneListResponse getSceneListResponse =
-            GetSceneListResponse(response.json);
+        GetSceneListResponse getSceneListResponse = GetSceneListResponse(
+            response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.activeSceneName = getSceneListResponse.currentScene;
         this.scenes = ObservableList.of(getSceneListResponse.scenes);
         break;
       case RequestType.ListSceneCollections:
         ListSceneCollectionsResponse listSceneCollectionsResponse =
-            ListSceneCollectionsResponse(response.json);
+            ListSceneCollectionsResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.sceneCollections =
             ObservableList.of(listSceneCollectionsResponse.sceneCollections);
         break;
       case RequestType.GetCurrentSceneCollection:
         GetCurrentSceneCollectionResponse getCurrentSceneCollectionResponse =
-            GetCurrentSceneCollectionResponse(response.json);
+            GetCurrentSceneCollectionResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.currentSceneCollectionName =
             getCurrentSceneCollectionResponse.scName;
         break;
       case RequestType.GetCurrentScene:
         GetCurrentSceneResponse getCurrentSceneResponse =
-            GetCurrentSceneResponse(response.json);
+            GetCurrentSceneResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.currentSceneItems = ObservableList.of(
             _flattenSceneItems(getCurrentSceneResponse.sources));
@@ -765,7 +784,8 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.GetPreviewScene:
         GetPreviewSceneResponse getPreviewSceneResponse =
-            GetPreviewSceneResponse(response.json);
+            GetPreviewSceneResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.studioModePreviewSceneName = getPreviewSceneResponse.name;
         this.currentSceneItems = ObservableList.of(
@@ -779,20 +799,23 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.GetTransitionList:
         GetTransitionListResponse getTransitionListResponse =
-            GetTransitionListResponse(response.json);
+            GetTransitionListResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.availableTransitionsNames = getTransitionListResponse.transitions;
         break;
       case RequestType.GetCurrentTransition:
         GetCurrentTransitionResponse getCurrentTransitionResponse =
-            GetCurrentTransitionResponse(response.json);
+            GetCurrentTransitionResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.currentTransitionName = getCurrentTransitionResponse.name;
         this.sceneTransitionDurationMS = getCurrentTransitionResponse.duration;
         break;
       case RequestType.GetStudioModeStatus:
         GetStudioModeStatusResponse getStudioModeStatusResponse =
-            GetStudioModeStatusResponse(response.json);
+            GetStudioModeStatusResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.studioMode = getStudioModeStatusResponse.studioMode;
 
@@ -808,7 +831,8 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.GetRecordingStatus:
         GetRecordingStatusResponse getRecordingStatusResponse =
-            GetRecordingStatusResponse(response.json);
+            GetRecordingStatusResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.isRecording = getRecordingStatusResponse.isRecording;
         this.isRecordingPaused = getRecordingStatusResponse.isRecordingPaused;
@@ -820,7 +844,8 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.GetReplayBufferStatus:
         GetReplayBufferStatusResponse getReplayBufferStatusResponse =
-            GetReplayBufferStatusResponse(response.json);
+            GetReplayBufferStatusResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.isReplayBufferActive =
             getReplayBufferStatusResponse.isReplayBufferActive;
@@ -829,7 +854,8 @@ abstract class _DashboardStore with Store {
       case RequestType.GetSpecialSources:
         this.globalAudioSceneItems = ObservableList.of([]);
         GetSpecialSourcesResponse getSpecialSourcesResponse =
-            GetSpecialSourcesResponse(response.json);
+            GetSpecialSourcesResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
         if (getSpecialSourcesResponse.desktop1 != null) {
           NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -872,8 +898,8 @@ abstract class _DashboardStore with Store {
         // });
         break;
       case RequestType.GetSourceTypesList:
-        GetSourceTypesList getSourceTypesList =
-            GetSourceTypesList(response.json);
+        GetSourceTypesList getSourceTypesList = GetSourceTypesList(
+            response.json, GetIt.instance<NetworkStore>().newProtocol);
         this.sourceTypes = getSourceTypesList.types;
         // (response.json['types'] as List<dynamic>)
         //     .forEach((type) => print(type['typeId']));
@@ -885,7 +911,8 @@ abstract class _DashboardStore with Store {
             RequestType.GetSpecialSources);
         break;
       case RequestType.GetVolume:
-        GetVolumeResponse getVolumeResponse = GetVolumeResponse(response.json);
+        GetVolumeResponse getVolumeResponse = GetVolumeResponse(
+            response.json, GetIt.instance<NetworkStore>().newProtocol);
         if (this.globalAudioSceneItems.every((globalAudioItem) =>
             globalAudioItem.name != getVolumeResponse.name)) {
           this.globalAudioSceneItems.add(SceneItem.audio(
@@ -896,7 +923,8 @@ abstract class _DashboardStore with Store {
         }
         break;
       case RequestType.GetMute:
-        GetMuteResponse getMuteResponse = GetMuteResponse(response.json);
+        GetMuteResponse getMuteResponse = GetMuteResponse(
+            response.json, GetIt.instance<NetworkStore>().newProtocol);
         try {
           this
               .currentSceneItems!
@@ -919,7 +947,8 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.TakeSourceScreenshot:
         TakeSourceScreenshotResponse takeSourceScreenshotResponse =
-            TakeSourceScreenshotResponse(response.json);
+            TakeSourceScreenshotResponse(
+                response.json, GetIt.instance<NetworkStore>().newProtocol);
 
         this.scenePreviewImageBytes =
             base64Decode(takeSourceScreenshotResponse.img.split(',')[1]);

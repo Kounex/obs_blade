@@ -2,7 +2,7 @@ import '../../api/scene_collection.dart';
 import 'base.dart';
 
 class ListSceneCollectionsResponse extends BaseResponse {
-  ListSceneCollectionsResponse(Map<String, dynamic> json) : super(json);
+  ListSceneCollectionsResponse(super.json, super.newProtocol);
 
   /// Name of the currently active scene collection
   List<SceneCollection> get sceneCollections =>

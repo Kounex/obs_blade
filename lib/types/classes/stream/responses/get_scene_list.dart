@@ -3,7 +3,7 @@ import 'base.dart';
 
 /// Get a list of scenes in the currently active profile
 class GetSceneListResponse extends BaseResponse {
-  GetSceneListResponse(Map<String, dynamic> json) : super(json);
+  GetSceneListResponse(super.json, super.newProtocol);
 
   /// Name of the currently active scene
   String get currentScene => this.json['current-scene'];

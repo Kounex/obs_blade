@@ -1,10 +1,9 @@
 import '../../api/scene_item.dart';
-
 import 'base.dart';
 
 /// The selected preview scene has changed (only available in Studio Mode)
 class PreviewSceneChangedEvent extends BaseEvent {
-  PreviewSceneChangedEvent(Map<String, dynamic> json) : super(json);
+  PreviewSceneChangedEvent(super.json, super.newProtocol);
 
   /// Name of the scene being previewed
   String get sceneName => this.json['scene-name'];

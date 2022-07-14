@@ -3,7 +3,7 @@ import 'base.dart';
 
 /// Get the current scene's name and source items
 class GetCurrentSceneResponse extends BaseResponse {
-  GetCurrentSceneResponse(Map<String, dynamic> json) : super(json);
+  GetCurrentSceneResponse(super.json, super.newProtocol);
 
   /// Name of the currently active scene
   String get name => this.json['name'];

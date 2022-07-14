@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// A transition (other than "cut") has begun
 class TransitionBeginEvent extends BaseEvent {
-  TransitionBeginEvent(Map<String, dynamic> json) : super(json);
+  TransitionBeginEvent(super.json, super.newProtocol);
 
   /// Transition name
   String get name => this.json['name'];

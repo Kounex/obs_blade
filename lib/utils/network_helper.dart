@@ -5,6 +5,10 @@ import 'dart:isolate';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crypto/crypto.dart';
+import 'package:get_it/get_it.dart';
+import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_op_code.dart';
+import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
@@ -233,7 +237,7 @@ class NetworkHelper {
         /// to the list. If no timeout and therefore exception occurs, it means
         /// that there is a device listeneing on the IP:port combination (in this
         /// case very likely OBS WebSocket) and we will add it to the list
-        socket = await Socket.connect(address, port ?? 4444, timeout: timeout);
+        socket = await Socket.connect(address, port ?? 4455, timeout: timeout);
         sendPort?.send(connectionScan);
         return connectionScan;
       } catch (e) {
@@ -286,15 +290,39 @@ class NetworkHelper {
 
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
-  static void makeRequest(IOWebSocketChannel channel, RequestType request,
-      [Map<String, dynamic>? fields]) {
+  static void makeRequest(
+    IOWebSocketChannel channel,
+    RequestType request, [
+    Map<String, dynamic>? fields,
+    bool customContent = false,
+  ]) {
     GeneralHelper.advLog(
       'Outgoing: $request',
     );
-    channel.sink.add(json.encode({
-      'message-id': request.index.toString(),
-      'request-type': request.toString().split('.')[1],
-      if (fields != null) ...fields
-    }));
+    late Map<String, dynamic> requestObject;
+
+    /// Check wheter using the old or new protocol and
+    /// build request object as specified by the protocol
+    if (GetIt.instance<NetworkStore>().newProtocol) {
+      requestObject = {
+        'op': WebSocketOpCode.Request.identifier,
+        'd': customContent
+            ? fields
+            : {
+                'requestType': request.name,
+                'requestId': const Uuid().v4(),
+                'requestData': {
+                  if (fields != null) ...fields,
+                },
+              },
+      };
+    } else {
+      requestObject = {
+        'message-id': request.index.toString(),
+        'request-type': request.name,
+        if (fields != null) ...fields
+      };
+    }
+    channel.sink.add(json.encode(requestObject));
   }
 }

@@ -22,7 +22,7 @@ dependencies:
   package_info: ^2.0.0
 
   # Webview
-  flutter_inappwebview: ^5.4.3+7
+  # flutter_inappwebview: ^5.4.3+7
 
   # State Management and DI
   get_it: ^7.2.0

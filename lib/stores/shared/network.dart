@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_op_code.dart';
 
 import '../../models/connection.dart';
 import '../../models/enums/log_level.dart';
@@ -31,6 +34,29 @@ abstract class _NetworkStore with Store {
   @observable
   bool obsTerminated = false;
 
+  /// Flag to detemine whether to use the old WebSocket
+  /// protocol (< 5.X) or the new one
+  bool newProtocol = true;
+
+  BaseResponse get timeoutResponse => this.newProtocol
+      ? BaseResponse(
+          {
+            'op': WebSocketOpCode.RequestResponse.identifier,
+            'd': {
+              'requestStatus': RequestStatusObject(
+                false,
+                RequestStatus.Timeout.identifier,
+                RequestStatus.Timeout.message,
+              ),
+            },
+          },
+          this.newProtocol,
+        )
+      : BaseResponse(
+          {'status': 'error', 'error': 'timeout'},
+          this.newProtocol,
+        );
+
   @action
   Future<BaseResponse> setOBSWebSocket(
     Connection connection, {
@@ -46,27 +72,47 @@ abstract class _NetworkStore with Store {
     try {
       Completer<BaseResponse> authCompleter = Completer();
 
+      /// Create a WebSocket connection
       this.activeSession =
           Session(NetworkHelper.establishWebSocket(connection), connection);
+
+      /// Set the stream as boradcast so it can be listened to
+      /// multiple times
       this.activeSession!.socketStream =
           this.activeSession!.socket.stream.asBroadcastStream();
 
+      /// Subscription which will handle the auth part
       StreamSubscription subscription =
           _handleInitialWebSocket(connection, authCompleter);
 
-      NetworkHelper.makeRequest(
-          this.activeSession!.socket, RequestType.GetAuthRequired);
+      /// Fire the first auth request which will be handled by the
+      /// subscription above - only necessary with the olf protocol.
+      /// The new protocol will already answer once we connect and
+      /// we go from there (in [_handleInitialWebSocket])
+      if (!this.newProtocol) {
+        NetworkHelper.makeRequest(
+          this.activeSession!.socket,
+          RequestType.GetAuthRequired,
+        );
+      }
 
+      /// We wait for the [Completer] (which should complete
+      /// once we are done with the auth part - either positive
+      /// or negative) ot return a timeout response to handle
       this.connectionResponse = await Future.any([
         authCompleter.future,
-        Future.delayed(timeout,
-            () => BaseResponse({'status': 'error', 'error': 'timeout'}))
+        Future.delayed(
+          timeout,
+          () => this.timeoutResponse,
+        )
       ]);
 
       subscription.cancel();
 
       if (!reconnect) {
-        if (this.connectionResponse!.status != BaseResponse.ok) {
+        if (this.newProtocol
+            ? (!this.connectionResponse!.statusNew.result)
+            : (this.connectionResponse!.statusOld != BaseResponse.ok)) {
           this.activeSession!.socket.sink.close();
           this.activeSession = null;
         } else {
@@ -81,8 +127,8 @@ abstract class _NetworkStore with Store {
         includeInLogs: true,
       );
 
-      this.connectionResponse = await Future.delayed(
-          timeout, () => BaseResponse({'status': 'error', 'error': 'timeout'}));
+      this.connectionResponse =
+          await Future.delayed(timeout, () => this.timeoutResponse);
     }
 
     this.connectionInProgress = false;
@@ -115,47 +161,131 @@ abstract class _NetworkStore with Store {
       this.activeSession!.socketStream!.listen(
         (event) {
           Map<String, dynamic> jsonObject = json.decode(event);
-          BaseResponse response = BaseResponse(jsonObject);
-          switch (response.requestType) {
-            case RequestType.GetAuthRequired:
-              GetAuthRequiredResponse getAuthResponse =
-                  GetAuthRequiredResponse(jsonObject);
-              this.activeSession!.connection.challenge =
-                  getAuthResponse.challenge;
-              this.activeSession!.connection.salt = getAuthResponse.salt;
-              if (getAuthResponse.authRequired) {
-                NetworkHelper.makeRequest(
-                    this.activeSession!.socket,
-                    RequestType.Authenticate,
-                    {'auth': NetworkHelper.getAuthRequestContent(connection)});
-              } else {
-                authCompleter.complete(response);
-              }
-              break;
-            case RequestType.Authenticate:
-              authCompleter.complete(response);
-              break;
-            default:
-              break;
+
+          /// While hadling the initial messages of the WebSocket,
+          /// we check whether 'op' is included (which is always
+          /// present when using the new protocol) and set our
+          /// internal flag accordignly
+          this.newProtocol = jsonObject['op'] != null;
+
+          if (this.newProtocol) {
+            _handleNewProtocol(connection, authCompleter, jsonObject);
+          } else {
+            BaseResponse response = BaseResponse(jsonObject, this.newProtocol);
+            _handleOldProtocol(connection, authCompleter, response);
           }
         },
-        onDone: () => GeneralHelper.advLog(
-          'Initial WebSocket connection done',
-        ),
+        onDone: () {
+          GeneralHelper.advLog(
+            'Initial WebSocket connection done, close code: ${this.activeSession!.socket.closeCode}',
+          );
+          authCompleter.complete(BaseResponse(
+            {
+              'op': WebSocketOpCode.RequestResponse.identifier,
+              'd': {
+                'requestStatus': RequestStatusObject(
+                  false,
+                  this.activeSession!.socket.closeCode!,
+                  WebSocketCloseCode.values
+                      .firstWhere(
+                          (closeCode) =>
+                              closeCode.identifier ==
+                              this.activeSession!.socket.closeCode,
+                          orElse: () => WebSocketCloseCode.UnknownReason)
+                      .message,
+                ),
+              },
+            },
+            this.newProtocol,
+          ));
+        },
         onError: (error) => GeneralHelper.advLog(
           'Error initial WebSocket connection (stores/shared/network.dart) | $error',
           includeInLogs: true,
         ),
       );
 
+  void _handleNewProtocol(
+    Connection connection,
+    Completer authCompleter,
+    Map<String, dynamic> json,
+  ) {
+    if (json['op'] == WebSocketOpCode.Hello.identifier) {
+      String? authentication;
+      if (json['d']['authentication'] != null) {
+        connection.challenge = json['d']['authentication']['challenge'];
+        connection.salt = json['d']['authentication']['salt'];
+
+        authentication = NetworkHelper.getAuthRequestContent(connection);
+      }
+      this.activeSession!.socket.sink.add(
+            jsonEncode(
+              {
+                'op': WebSocketOpCode.Identify.identifier,
+                'd': {
+                  'rpcVersion': 1,
+                  'authentication': authentication,
+                  'eventSubscriptions': 1048575
+                }
+              },
+            ),
+          );
+    } else if (json['op'] == WebSocketOpCode.Identified.identifier) {
+      authCompleter.complete(BaseResponse(
+        {
+          'op': WebSocketOpCode.RequestResponse.identifier,
+          'd': {
+            'requestStatus': RequestStatusObject(
+              true,
+              RequestStatus.Success.identifier,
+              RequestStatus.Success.message,
+            ),
+          },
+        },
+        true,
+      ));
+    }
+  }
+
+  void _handleOldProtocol(
+    Connection connection,
+    Completer authCompleter,
+    BaseResponse response,
+  ) {
+    switch (response.requestType) {
+      case RequestType.GetAuthRequired:
+        GetAuthRequiredResponse getAuthResponse =
+            GetAuthRequiredResponse(response.json, false);
+        connection.challenge = getAuthResponse.challenge;
+        connection.salt = getAuthResponse.salt;
+        if (getAuthResponse.authRequired) {
+          NetworkHelper.makeRequest(
+            this.activeSession!.socket,
+            RequestType.Authenticate,
+            {'auth': NetworkHelper.getAuthRequestContent(connection)},
+          );
+        } else {
+          authCompleter.complete(response);
+        }
+        break;
+      case RequestType.Authenticate:
+        authCompleter.complete(response);
+        break;
+      default:
+        break;
+    }
+  }
+
   Stream<Message> watchOBSStream() async* {
     try {
       await for (final event in this.activeSession!.socketStream!) {
         Map<String, dynamic> fullJSON = json.decode(event);
-        if (fullJSON['update-type'] != null) {
-          yield BaseEvent(fullJSON);
+        if (this.newProtocol
+            ? (fullJSON['op'] == WebSocketOpCode.Event.identifier)
+            : (fullJSON['update-type'] != null)) {
+          yield BaseEvent(fullJSON, this.newProtocol);
         } else {
-          yield BaseResponse(fullJSON);
+          yield BaseResponse(fullJSON, this.newProtocol);
         }
       }
     } finally {

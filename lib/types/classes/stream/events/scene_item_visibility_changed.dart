@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// A transition (other than "cut") has begun
 class SceneItemVisibilityChangedEvent extends BaseEvent {
-  SceneItemVisibilityChangedEvent(Map<String, dynamic> json) : super(json);
+  SceneItemVisibilityChangedEvent(super.json, super.newProtocol);
 
   /// Name of the scene
   String get sceneName => this.json['scene-name'];

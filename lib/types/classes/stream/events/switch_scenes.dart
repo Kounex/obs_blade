@@ -3,7 +3,7 @@ import 'base.dart';
 
 /// Indicates a scene change
 class SwitchScenesEvent extends BaseEvent {
-  SwitchScenesEvent(Map<String, dynamic> json) : super(json);
+  SwitchScenesEvent(super.json, super.newProtocol);
 
   /// The new scene
   String get sceneName => this.json['scene-name'];

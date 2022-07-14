@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Get settings of the specified source
 class GetSourceSettingsResponse extends BaseResponse {
-  GetSourceSettingsResponse(Map<String, dynamic> json) : super(json);
+  GetSourceSettingsResponse(super.json, super.newProtocol);
 
   /// Source name
   String get sourceName => this.json['sourceName'];
