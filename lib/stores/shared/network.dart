@@ -2,18 +2,17 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mobx/mobx.dart';
-import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_op_code.dart';
+import 'package:obs_blade/utils/authentication_helper.dart';
 
 import '../../models/connection.dart';
 import '../../models/enums/log_level.dart';
 import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/responses/base.dart';
-import '../../types/classes/stream/responses/get_auth_required.dart';
 import '../../types/enums/event_type.dart';
-import '../../types/enums/request_type.dart';
 import '../../types/interfaces/message.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
@@ -25,40 +24,16 @@ class NetworkStore = _NetworkStore with _$NetworkStore;
 abstract class _NetworkStore with Store {
   @observable
   Session? activeSession;
-
   @observable
   bool connectionInProgress = false;
   @observable
-  BaseResponse? connectionResponse;
+  WebSocketCloseCode? connectionClodeCode;
 
   @observable
   bool obsTerminated = false;
 
-  /// Flag to detemine whether to use the old WebSocket
-  /// protocol (< 5.X) or the new one
-  bool newProtocol = true;
-
-  BaseResponse get timeoutResponse => this.newProtocol
-      ? BaseResponse(
-          {
-            'op': WebSocketOpCode.RequestResponse.identifier,
-            'd': {
-              'requestStatus': RequestStatusObject(
-                false,
-                RequestStatus.Timeout.identifier,
-                RequestStatus.Timeout.message,
-              ),
-            },
-          },
-          this.newProtocol,
-        )
-      : BaseResponse(
-          {'status': 'error', 'error': 'timeout'},
-          this.newProtocol,
-        );
-
   @action
-  Future<BaseResponse> setOBSWebSocket(
+  Future<WebSocketCloseCode> setOBSWebSocket(
     Connection connection, {
     bool reconnect = false,
     Duration timeout = const Duration(seconds: 3),
@@ -66,11 +41,11 @@ abstract class _NetworkStore with Store {
     if (!reconnect) {
       this.closeSession();
     }
-    this.connectionResponse = null;
+    this.connectionClodeCode = null;
     this.connectionInProgress = true;
 
     try {
-      Completer<BaseResponse> authCompleter = Completer();
+      Completer<WebSocketCloseCode> authCompleter = Completer();
 
       /// Create a WebSocket connection
       this.activeSession =
@@ -85,38 +60,24 @@ abstract class _NetworkStore with Store {
       StreamSubscription subscription =
           _handleInitialWebSocket(connection, authCompleter);
 
-      /// Fire the first auth request which will be handled by the
-      /// subscription above - only necessary with the olf protocol.
-      /// The new protocol will already answer once we connect and
-      /// we go from there (in [_handleInitialWebSocket])
-      if (!this.newProtocol) {
-        NetworkHelper.makeRequest(
-          this.activeSession!.socket,
-          RequestType.GetAuthRequired,
-        );
-      }
-
       /// We wait for the [Completer] (which should complete
       /// once we are done with the auth part - either positive
       /// or negative) ot return a timeout response to handle
-      this.connectionResponse = await Future.any([
+      this.connectionClodeCode = await Future.any([
         authCompleter.future,
         Future.delayed(
           timeout,
-          () => this.timeoutResponse,
+          () => WebSocketCloseCode.UnknownReason,
         )
       ]);
 
       subscription.cancel();
 
       if (!reconnect) {
-        if (this.newProtocol
-            ? (!this.connectionResponse!.statusNew.result)
-            : (this.connectionResponse!.statusOld != BaseResponse.ok)) {
+        if (this.connectionClodeCode != WebSocketCloseCode.DontClose) {
           this.activeSession!.socket.sink.close();
           this.activeSession = null;
         } else {
-          // this.activeSession.connection.ssid = await Connectivity().getWifiName();
           this.handleStream();
         }
       }
@@ -127,12 +88,12 @@ abstract class _NetworkStore with Store {
         includeInLogs: true,
       );
 
-      this.connectionResponse =
-          await Future.delayed(timeout, () => this.timeoutResponse);
+      this.connectionClodeCode =
+          await Future.delayed(timeout, () => WebSocketCloseCode.UnknownReason);
     }
 
     this.connectionInProgress = false;
-    return this.connectionResponse!;
+    return this.connectionClodeCode!;
   }
 
   @action
@@ -141,14 +102,14 @@ abstract class _NetworkStore with Store {
     if (this.activeSession != null) {
       this.activeSession!.socket.sink.close();
       this.activeSession = null;
-      this.connectionResponse = null;
+      this.connectionClodeCode = null;
     }
   }
 
   @action
   void _handleEvent(BaseEvent event) {
     switch (event.eventType) {
-      case EventType.Exiting:
+      case EventType.ExitStarted:
         this.closeSession(manually: false);
         break;
       default:
@@ -162,42 +123,19 @@ abstract class _NetworkStore with Store {
         (event) {
           Map<String, dynamic> jsonObject = json.decode(event);
 
-          /// While hadling the initial messages of the WebSocket,
-          /// we check whether 'op' is included (which is always
-          /// present when using the new protocol) and set our
-          /// internal flag accordignly
-          this.newProtocol = jsonObject['op'] != null;
-
-          if (this.newProtocol) {
-            _handleNewProtocol(connection, authCompleter, jsonObject);
-          } else {
-            BaseResponse response = BaseResponse(jsonObject, this.newProtocol);
-            _handleOldProtocol(connection, authCompleter, response);
-          }
+          _handleNewProtocol(connection, authCompleter, jsonObject);
         },
         onDone: () {
           GeneralHelper.advLog(
             'Initial WebSocket connection done, close code: ${this.activeSession!.socket.closeCode}',
           );
-          authCompleter.complete(BaseResponse(
-            {
-              'op': WebSocketOpCode.RequestResponse.identifier,
-              'd': {
-                'requestStatus': RequestStatusObject(
-                  false,
-                  this.activeSession!.socket.closeCode!,
-                  WebSocketCloseCode.values
-                      .firstWhere(
-                          (closeCode) =>
-                              closeCode.identifier ==
-                              this.activeSession!.socket.closeCode,
-                          orElse: () => WebSocketCloseCode.UnknownReason)
-                      .message,
-                ),
-              },
-            },
-            this.newProtocol,
-          ));
+          authCompleter.complete(
+            WebSocketCloseCode.values.firstWhere(
+                (closeCode) =>
+                    closeCode.identifier ==
+                    this.activeSession!.socket.closeCode,
+                orElse: () => WebSocketCloseCode.UnknownReason),
+          );
         },
         onError: (error) => GeneralHelper.advLog(
           'Error initial WebSocket connection (stores/shared/network.dart) | $error',
@@ -210,69 +148,26 @@ abstract class _NetworkStore with Store {
     Completer authCompleter,
     Map<String, dynamic> json,
   ) {
+    /// OBS WebSocket answered with OP Hello - happens after initially connecting
+    /// with the WebSocket
     if (json['op'] == WebSocketOpCode.Hello.identifier) {
-      String? authentication;
+      /// If authentication key is present, the WebSocket is password protected. We
+      /// will set the challenge and salt value in the [Connection] object inside
+      /// our [activeSession] which will be used in the [AuthenticationHelper.identify]
+      /// function
       if (json['d']['authentication'] != null) {
         connection.challenge = json['d']['authentication']['challenge'];
         connection.salt = json['d']['authentication']['salt'];
-
-        authentication = NetworkHelper.getAuthRequestContent(connection);
       }
-      this.activeSession!.socket.sink.add(
-            jsonEncode(
-              {
-                'op': WebSocketOpCode.Identify.identifier,
-                'd': {
-                  'rpcVersion': 1,
-                  'authentication': authentication,
-                  'eventSubscriptions': 1048575
-                }
-              },
-            ),
-          );
-    } else if (json['op'] == WebSocketOpCode.Identified.identifier) {
-      authCompleter.complete(BaseResponse(
-        {
-          'op': WebSocketOpCode.RequestResponse.identifier,
-          'd': {
-            'requestStatus': RequestStatusObject(
-              true,
-              RequestStatus.Success.identifier,
-              RequestStatus.Success.message,
-            ),
-          },
-        },
-        true,
-      ));
-    }
-  }
 
-  void _handleOldProtocol(
-    Connection connection,
-    Completer authCompleter,
-    BaseResponse response,
-  ) {
-    switch (response.requestType) {
-      case RequestType.GetAuthRequired:
-        GetAuthRequiredResponse getAuthResponse =
-            GetAuthRequiredResponse(response.json, false);
-        connection.challenge = getAuthResponse.challenge;
-        connection.salt = getAuthResponse.salt;
-        if (getAuthResponse.authRequired) {
-          NetworkHelper.makeRequest(
-            this.activeSession!.socket,
-            RequestType.Authenticate,
-            {'auth': NetworkHelper.getAuthRequestContent(connection)},
-          );
-        } else {
-          authCompleter.complete(response);
-        }
-        break;
-      case RequestType.Authenticate:
-        authCompleter.complete(response);
-        break;
-      default:
-        break;
+      /// Send out the Identify OP
+      AuthenticationHelper.identify(activeSession!);
+
+      /// OBS Websocket answered with OP Identified - means we were able to
+      /// correctly identify against the plugin, conneciton was successfull and
+      /// we can exchange messages now
+    } else if (json['op'] == WebSocketOpCode.Identified.identifier) {
+      authCompleter.complete(WebSocketCloseCode.DontClose);
     }
   }
 
@@ -280,12 +175,14 @@ abstract class _NetworkStore with Store {
     try {
       await for (final event in this.activeSession!.socketStream!) {
         Map<String, dynamic> fullJSON = json.decode(event);
-        if (this.newProtocol
-            ? (fullJSON['op'] == WebSocketOpCode.Event.identifier)
-            : (fullJSON['update-type'] != null)) {
-          yield BaseEvent(fullJSON, this.newProtocol);
-        } else {
-          yield BaseResponse(fullJSON, this.newProtocol);
+        if (fullJSON['op'] == WebSocketOpCode.Event.identifier) {
+          yield BaseEvent(fullJSON);
+        } else if (fullJSON['op'] ==
+            WebSocketOpCode.RequestResponse.identifier) {
+          yield BaseResponse(fullJSON);
+        } else if (fullJSON['op'] ==
+            WebSocketOpCode.RequestBatchResponse.identifier) {
+          yield BaseBatchResponse(fullJSON);
         }
       }
     } finally {

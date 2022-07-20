@@ -29,7 +29,7 @@ enum WebSocketOpCode implements BaseWebSocketCode {
   RequestBatchResponse;
 
   @override
-  int get identifier => {
+  int get identifier => const {
         WebSocketOpCode.Hello: 0,
         WebSocketOpCode.Identify: 1,
         WebSocketOpCode.Identified: 2,
@@ -42,7 +42,7 @@ enum WebSocketOpCode implements BaseWebSocketCode {
       }[this]!;
 
   @override
-  String get message => {
+  String get message => const {
         WebSocketOpCode.Hello:
             'The initial message sent by obs-websocket to newly connected clients.',
         WebSocketOpCode.Identify:

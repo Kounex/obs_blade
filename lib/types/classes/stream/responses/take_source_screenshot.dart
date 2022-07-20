@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Get the volume of the specified source
 class TakeSourceScreenshotResponse extends BaseResponse {
-  TakeSourceScreenshotResponse(super.json, super.newProtocol);
+  TakeSourceScreenshotResponse(super.json);
 
   /// Source name
   String get sourceName => this.json['sourceName'];

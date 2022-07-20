@@ -51,5 +51,7 @@
 	<string>In order to find running OBS instances automatically.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>In order to select your custom logo.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
 </dict>
 </plist>

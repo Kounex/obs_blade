@@ -4,22 +4,24 @@ import '../../../interfaces/message.dart';
 /// Initial Wrapper object for an event which is received from the OBS WebSocket
 class BaseEvent implements Message {
   @override
-  bool newProtocol;
-
-  @override
   Map<String, dynamic> jsonRAW;
 
   @override
   Map<String, dynamic> json;
 
-  BaseEvent(Map<String, dynamic> json, this.newProtocol)
+  BaseEvent(Map<String, dynamic> json)
       : jsonRAW = json,
-        json = newProtocol ? json['d']['eventData'] : json;
+        json = json['d']['eventData'] ?? {};
 
-  /// The type of the event
-  String get updateType => this.newProtocol
-      ? this.jsonRAW['d']['eventType']
-      : this.json['update-type'];
+  EventType? get eventType {
+    try {
+      return EventType.values.firstWhere(
+        (eventType) => eventType.name == this.jsonRAW['d']['eventType'],
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 
   /// (Optional): time elapsed between now and stream start (only present if OBS Studio is streaming)
   ///
@@ -30,14 +32,4 @@ class BaseEvent implements Message {
   ///
   /// OLD, < 4.X
   String? get recTimecodeOld => this.json['rec-timecode'];
-
-  EventType? get eventType {
-    try {
-      return EventType.values.firstWhere(
-        (eventType) => eventType.name == this.updateType,
-      );
-    } catch (e) {
-      return null;
-    }
-  }
 }

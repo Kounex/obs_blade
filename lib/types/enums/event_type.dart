@@ -1,21 +1,12 @@
 enum EventType {
-  /// Streaming started successfully
-  StreamStarted,
+  /// The state of the stream output has changed.
+  StreamStateChanged,
 
-  /// A request to stop streaming has been issued
-  StreamStopped,
+  /// The state of the record output has changed.
+  RecordStateChanged,
 
-  /// Recording started successfully
-  RecordingStarted,
-
-  /// A request to stop recording has been issued
-  RecordingStopped,
-
-  /// Current recording paused
-  RecordingPaused,
-
-  /// Current recording resumed
-  RecordingResumed,
+  /// The state of the replay buffer output has changed.
+  ReplayBufferStateChanged,
 
   /// Emitted every 2 seconds when stream is active
   StreamStatus,
@@ -32,17 +23,27 @@ enum EventType {
   /// Indicates a scene change
   SwitchScenes,
 
-  /// A transition (other than "cut") has begun
-  TransitionBegin,
+  /// A scene transition has started.
+  SceneTransitionStarted,
 
-  /// The list of available transitions has been modified. Transitions have been added, removed, or renamed
-  TransitionListChanged,
+  /// The current scene transition has changed.
+  CurrentSceneTransitionChanged,
 
-  /// The active transition duration has been changed
-  TransitionDurationChanged,
+  /// The current scene transition duration has changed.
+  CurrentSceneTransitionDurationChanged,
 
-  /// The active transition has been changed
-  SwitchTransition,
+  /// The current scene collection has begun changing.
+  ///
+  /// Note: We recommend using this event to trigger a pause of all polling requests,
+  /// as performing any requests during a scene collection change is considered undefined
+  /// behavior and can cause crashes!
+  CurrentSceneCollectionChanging,
+
+  /// The current scene collection has changed.
+  ///
+  /// Note: If polling has been paused during CurrentSceneCollectionChanging,
+  /// this is the que to restart polling.
+  CurrentSceneCollectionChanged,
 
   /// A scene item has been added to a scene
   SceneItemAdded,
@@ -53,30 +54,27 @@ enum EventType {
   /// A source has been renamed
   SourceRenamed,
 
-  /// The volume of a source has changed
-  SourceVolumeChanged,
+  /// An input's volume level has changed.
+  InputVolumeChanged,
 
-  /// A source has been muted or unmuted
-  SourceMuteStateChanged,
+  /// An input's mute state has changed.
+  InputMuteStateChanged,
 
   /// Scene items within a scene have been reordered
   SourceOrderChanged,
 
-  /// A scene item's visibility has been toggled
-  SceneItemVisibilityChanged,
+  /// A scene item's enable state has changed.
+  SceneItemEnableStateChanged,
 
   /// Studio Mode has been enabled or disabled
   StudioModeSwitched,
 
-  /// The selected preview scene has changed (only available in Studio Mode)
-  PreviewSceneChanged,
+  /// The current program scene has changed.
+  CurrentProgramSceneChanged,
 
-  /// OBS is exiting
-  Exiting,
+  /// The current preview scene has changed.
+  CurrentPreviewSceneChanged,
 
-  /// A request to start the replay buffer has been issued
-  ReplayStarted,
-
-  /// A request to stop the replay buffer has been issued
-  ReplayStopped,
+  /// OBS has begun the shutdown process.
+  ExitStarted,
 }

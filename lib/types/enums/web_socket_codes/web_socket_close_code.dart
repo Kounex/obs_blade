@@ -45,7 +45,7 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
   UnsupportedFeature;
 
   @override
-  int get identifier => {
+  int get identifier => const {
         WebSocketCloseCode.DontClose: 0,
         WebSocketCloseCode.UnknownReason: 4000,
         WebSocketCloseCode.MessageDecodeError: 4002,
@@ -62,7 +62,7 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
       }[this]!;
 
   @override
-  String get message => {
+  String get message => const {
         WebSocketCloseCode.DontClose:
             'For internal use only to tell the request handler not to perform any close action.',
         WebSocketCloseCode.UnknownReason:

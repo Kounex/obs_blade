@@ -12,69 +12,45 @@ enum RequestType {
   /// No specified parameters
   GetVersion,
 
-  /// Tells the client if authentication is required. If so, returns authentication parameters challenge and salt (see "Authentication" for more information)
-  ///
-  /// No specified parameters
-  GetAuthRequired,
-
   /// Get a list of scenes in the currently active profile
   ///
   /// No specified parameters
   GetSceneList,
 
-  /// Get the current scene's name and source items
+  /// Gets an array of all inputs in OBS.
   ///
-  /// No specified parameters
-  GetCurrentScene,
+  /// (Optional) {'inputKind': String } - Restrict the array to only inputs of the specified kind
+  GetInputList,
 
-  /// No specified parameters
-  GetSourcesList,
-
-  /// List all sources available in the running OBS instance
+  /// Gets an array of all available input kinds in OBS.
   ///
-  /// No specified parameters
-  GetSourceTypesList,
+  /// (Optional) {'unversioned': bool } - True == Return all kinds as unversioned, False == Return with version suffixes (if available)
+  GetInputKindList,
 
-  /// Get the volume of the specified source. Default response uses mul format, NOT SLIDER PERCENTAGE
+  /// Gets the current volume setting of an input.
   ///
-  /// {'source': String } - Source name
-  GetVolume,
+  /// {'inputName': String } - Name of the input to get the volume of
+  GetInputVolume,
 
-  /// Get the mute status of a specified source
+  /// Gets the audio mute state of an input.
   ///
-  /// {'source': String } - Source name
-  GetMute,
-
-  /// Get settings of the specified source
-  ///
-  /// { 'sourceName': String } - Source name
-  /// (Optional) { 'sourceType':	String } - Type of the specified source.Useful for type-checking if you expect a specific settings schema
-  GetSourceSettings,
-
-  /// List existing outputs
-  ///
-  /// No specified parameters
-  ListOutputs,
+  /// {'inputName': String } - Name of input to get the mute state of
+  GetInputMute,
 
   /// Get configured special sources like Desktop Audio and Mic/Aux sources
   ///
   /// No specified parameters
-  GetSpecialSources,
+  GetSpecialInputs,
 
   /// Get configured special sources like Desktop Audio and Mic/Aux sources
   ///
   /// No specified parameters
-  GetTransitionList,
+  GetSceneTransitionList,
 
-  /// Get the name of the currently selected transition in the frontend's dropdown menu
+  /// Gets information about the current scene transition.
   ///
   /// No specified parameters
-  GetCurrentTransition,
-
-  /// Indicates if Studio Mode is currently enabled
-  ///
-  /// No specified parameters
-  GetStudioModeStatus,
+  GetCurrentSceneTransition,
 
   /// At least embedPictureFormat or saveToFilePath must be specified. Clients can specify width and height parameters to receive scaled pictures. Aspect ratio is preserved if only one of these two parameters is specified.
   ///
@@ -87,30 +63,40 @@ enum RequestType {
   /// (Optional) { 'height': int } - Screenshot height. Defaults to the source's base width
   TakeSourceScreenshot,
 
-  /// Get current recording status
+  /// Gets the status of the record output.
   ///
   /// No specified parameters
-  GetRecordingStatus,
+  GetRecordStatus,
 
-  /// Get the name of the currently previewed scene and its list of sources. Will return an error if Studio Mode is not enabled
+  /// Gets whether studio is enabled.
   ///
   /// No specified parameters
-  GetPreviewScene,
+  GetStudioModeEnabled,
 
-  /// Get the name of the current scene collection
+  /// Gets an array of all scene collections
   ///
   /// No specified parameters
-  GetCurrentSceneCollection,
+  GetSceneCollectionList,
 
   /// Get the status of the OBS replay buffer
   ///
   /// No specified parameters
   GetReplayBufferStatus,
 
-  /// List available scene collections
+  /// Gets a list of all scene items in a scene.
+  ///
+  /// { 'sceneName': String } - Name of the scene to get the items of
+  GetSceneItemList,
+
+  /// Gets the default settings for an input kind.
+  ///
+  /// { 'inputKind': String } - Input kind to get the default settings for
+  GetInputDefaultSettings,
+
+  /// Gets statistics about OBS, obs-websocket, and the current session.
   ///
   /// No specified parameters
-  ListSceneCollections,
+  GetStats,
 
   /**
    * -----------------------------------------------------------------------
@@ -121,40 +107,42 @@ enum RequestType {
    * -----------------------------------------------------------------------
    */
 
-  /// Attempt to authenticate the client to the server
+  /// Sets the current program scene.
   ///
-  /// {'auth': String } - Response to the auth challenge (see "Authentication" for more information)
-  Authenticate,
+  /// {'sceneName': String } - Scene to set as the current program scene
+  SetCurrentProgramScene,
 
-  /// Switch to the specified scene
+  /// Gets the current preview scene.
   ///
-  /// {'scene-name': String } - Name of the scene to switch to
-  SetCurrentScene,
+  /// Only available when studio mode is enabled.
+  ///
+  /// {'sceneName': String } - Scene to set as the current preview scene
+  SetCurrentPreviewScene,
 
-  /// Set the volume of the specified source. Default request format uses mul, NOT SLIDER PERCENTAGE
+  /// Sets the volume setting of an input.
   ///
-  /// {'source': String } - Source name
-  /// {'volume': double } - Desired volume. Must be between 0.0 and 1.0 for mul, and under 0.0 for dB. Note: OBS will interpret dB values under -100.0 as Inf
-  /// {'useDecibel': bool } - Interperet volume data as decibels instead of amplitude/mul
-  SetVolume,
+  /// {'inputName': String } - Name of the input to set the volume of
+  /// {'inputVolumeMul': double } - Volume setting in mul - >= 0, <= 20 - inputVolumeDb should be specified
+  /// {'inputVolumeDb': double } - Volume setting in dB - >= -100, <= 26 - inputVolumeMul should be specified
+  SetInputVolume,
 
   /// Sets the mute status of a specified source
   ///
-  /// {'source': String } - Source name
-  /// {'mute': bool } - Desired mute status
-  SetMute,
+  /// {'inputName': String } - Name of the input to set the mute state of
+  /// {'inputMuted': bool } - Whether to mute the input or not
+  SetInputMute,
 
   /// Sets the scene specific properties of a source. Unspecified properties will remain unchanged. Coordinates are relative to the item's parent (the scene or group it belongs to)
   ///
-  /// (Optional) {'scene-name': String } - Name of the scene the source item belongs to. Defaults to the current scene.
-  /// {'item': String } - Scene Item name (currently)
-  /// (Optional) {'visible': bool} - The new visibility of the source. 'true' shows source, 'false' hides source
-  SetSceneItemProperties,
+  /// {'sceneName': String } - Name of the scene the item is in
+  /// {'sceneItemId': int } - Numeric ID of the scene item
+  /// {'sceneItemEnabled': bool} - New enable state of the scene item
+  SetSceneItemEnabled,
 
-  /// Toggle streaming on or off (depending on the current stream state)
+  /// Toggles the status of the stream output.
   ///
   /// No specified parameters
-  StartStopStreaming,
+  ToggleStream,
 
   /// Pause or play a media source. Supports ffmpeg and vlc media sources (as of OBS v25.0.8)
   ///
@@ -162,40 +150,37 @@ enum RequestType {
   /// {'playPause': bool } - Whether to pause or play the source. false for play, true for pause
   PlayPauseMedia,
 
-  /// Toggle recording on or off (depending on the current recording state)
+  /// Toggles the status of the record output.
   ///
   /// No specified parameters
-  StartStopRecording,
+  ToggleRecord,
 
-  /// Pause the current recording. Returns an error if recording is not active or already paused
+  /// Pauses the record output.
   ///
   /// No specified parameters
-  PauseRecording,
+  PauseRecord,
 
-  /// Resume/unpause the current recording (if paused). Returns an error if recording is not active or not paused
+  /// Resumes the record output.
   ///
   /// No specified parameters
-  ResumeRecording,
+  ResumeRecord,
 
-  /// Set the duration of the currently selected transition if supported
+  /// Sets the duration of the current scene transition, if it is not fixed.
   ///
-  /// {'duration': int } - Desired duration of the transition (in milliseconds)
-  SetTransitionDuration,
+  /// {'transitionDuration': int } - Duration in milliseconds
+  SetCurrentSceneTransitionDuration,
 
-  /// Set the active transition
+  /// Sets the current scene transition.
   ///
-  /// {'transition-name': String } - The name of the transition
-  SetCurrentTransition,
+  /// Small note: While the namespace of scene transitions is generally unique, that uniqueness is not a guarantee as it is with other resources like inputs.
+  ///
+  /// {'transitionName': String } - Name of the transition to make active
+  SetCurrentSceneTransition,
 
   /// Toggles Studio Mode (depending on the current state of studio mode)
   ///
   /// No specified parameters
   ToggleStudioMode,
-
-  /// Set the active preview scene. Will return an error if Studio Mode is not enabled
-  ///
-  /// {'scene-name': String } - The name of the scene to preview
-  SetPreviewScene,
 
   /// Transitions the currently previewed scene to the main output. Will return an error if Studio Mode is not enabled
   ///
@@ -204,9 +189,11 @@ enum RequestType {
   /// (Optional) {'with-transition.duration': int } - Transition duration (in milliseconds)
   TransitionToProgram,
 
-  /// Change the active scene collection
+  /// Switches to a scene collection.
   ///
-  /// {'sc-name': String } - Name of the desired scene collection
+  /// Note: This will block until the collection has finished changing.
+  ///
+  /// {'sceneCollectionName': String } - Name of the scene collection to switch to
   SetCurrentSceneCollection,
 
   /// Toggle the Replay Buffer on/off (depending on the current state of the replay buffer)

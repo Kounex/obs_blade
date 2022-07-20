@@ -2,20 +2,17 @@ import 'scene_item.dart';
 
 class Scene {
   /// Name of the currently active scene
-  String name;
+  String sceneName;
 
   /// Ordered list of the current scene's source items
   List<SceneItem> sources;
 
   Scene({
-    required this.name,
-    required this.sources,
+    required this.sceneName,
+    this.sources = const [],
   });
 
   static Scene fromJSON(Map<String, dynamic> json) => Scene(
-        name: json['name'],
-        sources: (json['sources'] as List<dynamic>)
-            .map((source) => SceneItem.fromJSON(source))
-            .toList(),
+        sceneName: json['sceneName'],
       );
 }

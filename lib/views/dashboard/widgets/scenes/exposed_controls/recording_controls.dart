@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import '../../../../../shared/general/base/button.dart';
 
+import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
@@ -60,8 +60,8 @@ class RecordingControls extends StatelessWidget {
                     ? () => NetworkHelper.makeRequest(
                           GetIt.instance<NetworkStore>().activeSession!.socket,
                           GetIt.instance<DashboardStore>().isRecordingPaused
-                              ? RequestType.ResumeRecording
-                              : RequestType.PauseRecording,
+                              ? RequestType.ResumeRecord
+                              : RequestType.PauseRecord,
                         )
                     : null,
                 icon: Icon(

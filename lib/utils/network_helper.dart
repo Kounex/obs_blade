@@ -4,9 +4,8 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:crypto/crypto.dart';
-import 'package:get_it/get_it.dart';
-import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/types/enums/request_batch_type.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/request_batch_execution_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_op_code.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
@@ -27,7 +26,18 @@ class ConnectionScan {
   ConnectionScan(this.connection, [this.error]);
 }
 
+class RequestBatchObject {
+  String uuid;
+  RequestType type;
+  Map<String, dynamic>? body;
+
+  RequestBatchObject(this.type, [this.body]) : uuid = const Uuid().v4();
+}
+
 class NetworkHelper {
+  static Map<String, Map<String, dynamic>?> requestBodyByUUID = {};
+  static Map<String, Iterable<RequestBatchObject>> requestBatchByUUID = {};
+
   /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port). Currently using a
   /// [pingInterval] of 3 seconds which will check if the WebSocket connection
@@ -40,6 +50,9 @@ class NetworkHelper {
       [Duration pingInterval = const Duration(seconds: 3)]) {
     String protocol =
         connection.isDomain == null || !connection.isDomain! ? 'ws://' : '';
+
+    /// Clear the map for a new connection
+    NetworkHelper.requestBodyByUUID = {};
 
     return IOWebSocketChannel.connect(
       Uri.parse(
@@ -274,20 +287,6 @@ class NetworkHelper {
     return null;
   }
 
-  /// This is the content of the auth field which is needed to correctly
-  /// authenticate with the OBS WebSocket if a password has been set
-  static String getAuthRequestContent(Connection connection) {
-    String secretString = '${connection.pw}${connection.salt}';
-    Digest secretHash = sha256.convert(utf8.encode(secretString));
-    String secret = const Base64Codec().encode(secretHash.bytes);
-
-    String authResponseString = '$secret${connection.challenge}';
-    Digest authResponseHash = sha256.convert(utf8.encode(authResponseString));
-    String authResponse = const Base64Codec().encode(authResponseHash.bytes);
-
-    return authResponse;
-  }
-
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
   static void makeRequest(
@@ -299,30 +298,89 @@ class NetworkHelper {
     GeneralHelper.advLog(
       'Outgoing: $request',
     );
-    late Map<String, dynamic> requestObject;
 
-    /// Check wheter using the old or new protocol and
-    /// build request object as specified by the protocol
-    if (GetIt.instance<NetworkStore>().newProtocol) {
-      requestObject = {
-        'op': WebSocketOpCode.Request.identifier,
-        'd': customContent
-            ? fields
-            : {
-                'requestType': request.name,
-                'requestId': const Uuid().v4(),
-                'requestData': {
-                  if (fields != null) ...fields,
-                },
-              },
-      };
-    } else {
-      requestObject = {
-        'message-id': request.index.toString(),
-        'request-type': request.name,
-        if (fields != null) ...fields
-      };
+    String requestUUID = const Uuid().v4();
+
+    /// If we send a request which has fields, we want to
+    /// be able to know, once we receive the response, what
+    /// information we sent initially (like input name etc.) since
+    /// in the new protocol (>= 5.X) we don't get this information
+    /// in the response anymore
+    if (fields != null && request.name.startsWith('Get')) {
+      NetworkHelper.requestBodyByUUID[requestUUID] = fields;
     }
-    channel.sink.add(json.encode(requestObject));
+
+    channel.sink.add(
+      json.encode(
+        NetworkHelper.requestObject(
+          customContent
+              ? fields!
+              : {
+                  'requestType': request.name,
+                  'requestId': requestUUID,
+                  'requestData': {
+                    if (fields != null) ...fields,
+                  },
+                },
+        ),
+      ),
+    );
   }
+
+  /// Making use of the batch request capability to request information
+  /// bundled together - useful since now the API divided information
+  /// in several entities so we can choose what exactly we need
+  static void makeBatchRequest(
+    IOWebSocketChannel channel,
+    RequestBatchType batchRequest,
+    Iterable<RequestBatchObject> batch,
+  ) {
+    GeneralHelper.advLog(
+      'Outgoing: $batchRequest',
+    );
+
+    String requestUUID = const Uuid().v4();
+
+    NetworkHelper.requestBatchByUUID[requestUUID] = batch;
+
+    channel.sink.add(
+      json.encode(
+        NetworkHelper.requestBatchObject(requestUUID, batch),
+      ),
+    );
+  }
+
+  static Map<String, dynamic> requestObject(Map<String, dynamic> body,
+          [WebSocketOpCode op = WebSocketOpCode.Request]) =>
+      {
+        'op': op.identifier,
+        'd': body,
+      };
+
+  static Map<String, dynamic> requestBatchObject(
+    String uuid,
+    Iterable<RequestBatchObject> batch, [
+    bool haltOnFailure = false,
+    RequestBatchExecutionType executionType =
+        RequestBatchExecutionType.SerialRealtime,
+  ]) =>
+      {
+        'op': WebSocketOpCode.RequestBatch.identifier,
+        'd': {
+          'requestId': uuid,
+          'haltOnFailure': haltOnFailure,
+          'executionType': executionType.identifier,
+          'requests': batch
+              .map(
+                (batchEntry) => NetworkHelper.requestObject(
+                  {
+                    'requestType': batchEntry.type.name,
+                    'requestId': batchEntry.uuid,
+                    'requestData': batchEntry.body,
+                  },
+                )['d'],
+              )
+              .toList(),
+        },
+      };
 }

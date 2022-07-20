@@ -118,7 +118,7 @@ enum RequestStatus implements BaseWebSocketCode {
   Timeout;
 
   @override
-  int get identifier => {
+  int get identifier => const {
         RequestStatus.Unknown: 0,
         RequestStatus.NoError: 10,
         RequestStatus.Success: 100,
@@ -156,7 +156,7 @@ enum RequestStatus implements BaseWebSocketCode {
       }[this]!;
 
   @override
-  String get message => {
+  String get message => const {
         RequestStatus.Unknown: 'Unknown status, should never be used.',
         RequestStatus.NoError:
             'For internal use to signify a successful field check.',

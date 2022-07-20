@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart' as mob_x;
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 
 import '../../models/enums/log_level.dart';
 import '../../shared/dialogs/info.dart';
@@ -10,7 +11,6 @@ import '../../shared/overlay/base_progress_indicator.dart';
 import '../../shared/overlay/base_result.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/home.dart';
-import '../../types/classes/stream/responses/base.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/overlay_handler.dart';
@@ -112,9 +112,9 @@ class _HomeViewState extends State<HomeView> {
           ),
         );
       } else if (!connectionInProgress) {
-        if (networkStore.newProtocol
-            ? (networkStore.connectionResponse!.statusNew.result)
-            : (networkStore.connectionResponse!.statusOld == BaseResponse.ok)) {
+        if ((networkStore.connectionClodeCode ??
+                WebSocketCloseCode.UnknownReason) ==
+            WebSocketCloseCode.DontClose) {
           OverlayHandler.closeAnyOverlay();
           Navigator.pushReplacementNamed(
             context,
@@ -127,9 +127,10 @@ class _HomeViewState extends State<HomeView> {
         /// it is due to providing a wrong password (or none at all) and we don't want to
         /// display an overlay for that - we trigger the validation of the password field
         /// in our [ConnectForm]
-        else if (networkStore.connectionResponse?.error != null &&
-            !networkStore.connectionResponse!.error!
-                .contains(BaseResponse.failedAuthentication)) {
+        else if ([
+          WebSocketCloseCode.DontClose,
+          WebSocketCloseCode.AuthenticationFailed
+        ].every((closeCode) => closeCode != networkStore.connectionClodeCode)) {
           OverlayHandler.showStatusOverlay(
             context: context,
             replaceIfActive: true,

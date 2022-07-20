@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// The list of available transitions has been modified. Transitions have been added, removed, or renamed
 class TransitionListChangedEvent extends BaseEvent {
-  TransitionListChangedEvent(super.json, super.newProtocol);
+  TransitionListChangedEvent(super.json);
 
   /// Transitions list
   List<String> get transitions => List.from(

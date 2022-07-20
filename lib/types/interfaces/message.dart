@@ -4,16 +4,10 @@
 /// abstraction since it allows me to name this instance instead of
 /// writing duplicate code (right now for Response and Event)
 abstract class Message {
-  /// Whether the new WebSocket protocol is being used, determines
-  /// how to access the different jsons depending on the used
-  /// protocol internally
-  late bool newProtocol;
-
   /// The RAW JSON object received through the WebSocket
   late Map<String, dynamic> jsonRAW;
 
-  /// Will be the RAW JSON object for the old protocol, but the
-  /// new protocol will hold the actual data here to make property
-  /// accessing unified between the b oth protocols
+  /// Will hold the 'responseData' / 'eventData' map directly
+  /// from the [jsonRAW] - will make it easier to access later
   late Map<String, dynamic> json;
 }

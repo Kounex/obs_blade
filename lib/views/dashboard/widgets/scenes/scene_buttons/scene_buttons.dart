@@ -38,7 +38,7 @@ class SceneButtons extends StatelessWidget {
               (scene) => hiddenScenes.addAll(
                 hiddenScenesBox.values.where((hiddenSceneInBox) =>
                         hiddenSceneInBox.isScene(
-                            scene.name,
+                            scene.sceneName,
                             networkStore.activeSession?.connection.name,
                             networkStore.activeSession?.connection.host)
                     // {
@@ -65,8 +65,8 @@ class SceneButtons extends StatelessWidget {
           }
 
           if (!dashboardStore.editSceneVisibility) {
-            visibleScenes = visibleScenes?.where((scene) => hiddenScenes
-                .every((hiddenScene) => scene.name != hiddenScene.sceneName));
+            visibleScenes = visibleScenes?.where((scene) => hiddenScenes.every(
+                (hiddenScene) => scene.sceneName != hiddenScene.sceneName));
           }
 
           return Wrap(
@@ -77,7 +77,7 @@ class SceneButtons extends StatelessWidget {
                     HiddenScene? hiddenScene;
                     try {
                       hiddenScene = hiddenScenes.firstWhere(
-                          (element) => element.sceneName == scene.name);
+                          (element) => element.sceneName == scene.sceneName);
                     } catch (e) {}
 
                     return SceneButton(
@@ -90,7 +90,7 @@ class SceneButtons extends StatelessWidget {
                           hiddenScene!.delete();
                         } else {
                           hiddenScene = HiddenScene(
-                            scene.name,
+                            scene.sceneName,
                             networkStore.activeSession!.connection.name,
                             networkStore.activeSession!.connection.host,
                           );

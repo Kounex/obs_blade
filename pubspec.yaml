@@ -91,9 +91,6 @@ dev_dependencies:
   hive_generator: ^1.1.1
   mobx_codegen: ^2.0.1+2
 
-  # Mock for testing
-  mockito: ^5.0.3
-
   # App icons
   flutter_launcher_icons: ^0.9.1
 

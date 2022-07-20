@@ -1,30 +1,79 @@
+class SceneItemTransform {
+  int? alignment;
+  int? boundsAlignment;
+  double? boundsHeight;
+  String? boundsType;
+  double? boundsWidth;
+  int? cropBottom;
+  int? cropLeft;
+  int? cropRight;
+  int? cropTop;
+  double? height;
+  double? positionX;
+  double? positionY;
+  double? rotation;
+  double? scaleX;
+  double? scaleY;
+  double? sourceHeight;
+  double? sourceWidth;
+  double? width;
+
+  SceneItemTransform({
+    required this.alignment,
+    required this.boundsAlignment,
+    required this.boundsHeight,
+    required this.boundsType,
+    required this.boundsWidth,
+    required this.cropBottom,
+    required this.cropLeft,
+    required this.cropRight,
+    required this.cropTop,
+    required this.height,
+    required this.positionX,
+    required this.positionY,
+    required this.rotation,
+    required this.scaleX,
+    required this.scaleY,
+    required this.sourceHeight,
+    required this.sourceWidth,
+    required this.width,
+  });
+
+  static SceneItemTransform fromJSON(Map<String, dynamic> json) {
+    return SceneItemTransform(
+      alignment: json['alignment'],
+      boundsAlignment: json['boundsAlignment'],
+      boundsHeight: json['boundsHeight'],
+      boundsType: json['boundsType'],
+      boundsWidth: json['boundsWidth'],
+      cropBottom: json['cropBottom'],
+      cropLeft: json['cropLeft'],
+      cropRight: json['cropRight'],
+      cropTop: json['cropTop'],
+      height: json['height'],
+      positionX: json['positionX'],
+      positionY: json['positionY'],
+      rotation: json['rotation'],
+      scaleX: json['scaleX'],
+      scaleY: json['scaleY'],
+      sourceHeight: json['sourceHeight'],
+      sourceWidth: json['sourceWidth'],
+      width: json['width'],
+    );
+  }
+}
+
 class SceneItem {
-  num? cy;
-  num? cx;
-
-  /// The point on the source that the item is manipulated from. The sum of 1=Left or 2=Right, and 4=Top or 8=Bottom, or omit to center on that axis.
-  num? alignment;
-  String name;
-
-  /// Scene item ID
-  int? id;
-
-  /// Whether or not this Scene Item is set to "visible"
-  bool? render;
-
-  /// Whether or not this Scene Item is muted.
-  bool muted;
-
-  /// Whether or not this Scene Item is locked and can't be moved around
-  bool? locked;
-  num? sourceCy;
-  num? sourceCx;
-
-  /// Source type. Value is one of the following: "input", "filter", "transition", "scene" or "unknown"
-  String? type;
-  num volume;
-  num? x;
-  num? y;
+  String? inputKind;
+  bool? isGroup;
+  String? sceneItemBlendMode;
+  bool? sceneItemEnabled;
+  int? sceneItemId;
+  int? sceneItemIndex;
+  bool? sceneItemLocked;
+  SceneItemTransform? sceneItemTransform;
+  String? sourceName;
+  String? sourceType;
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
   String? parentGroupName;
@@ -39,49 +88,32 @@ class SceneItem {
   bool displayGroup = false;
 
   SceneItem({
-    required this.cy,
-    required this.cx,
-    required this.alignment,
-    required this.name,
-    required this.id,
-    required this.render,
-    required this.muted,
-    required this.locked,
-    required this.sourceCy,
-    required this.sourceCx,
-    required this.type,
-    required this.volume,
-    required this.x,
-    required this.y,
-    this.parentGroupName,
-    this.groupChildren,
-  });
-
-  SceneItem.audio({
-    required this.name,
-    required this.volume,
-    required this.muted,
+    required this.inputKind,
+    required this.isGroup,
+    required this.sceneItemBlendMode,
+    required this.sceneItemEnabled,
+    required this.sceneItemId,
+    required this.sceneItemIndex,
+    required this.sceneItemLocked,
+    required this.sceneItemTransform,
+    required this.sourceName,
+    required this.sourceType,
   });
 
   static SceneItem fromJSON(Map<String, dynamic> json) {
     return SceneItem(
-        cy: json['cy'],
-        cx: json['cx'],
-        alignment: json['alignment'],
-        name: json['name'],
-        id: json['id'],
-        render: json['render'],
-        muted: json['muted'] ?? false,
-        locked: json['locked'],
-        sourceCy: json['source_cy'],
-        sourceCx: json['source_cx'],
-        type: json['type'],
-        volume: json['volume'],
-        x: json['x'],
-        y: json['y'],
-        parentGroupName: json['parentGroupName'],
-        groupChildren: (json['groupChildren'] as List<dynamic>?)
-            ?.map((rawSceneItem) => SceneItem.fromJSON(rawSceneItem))
-            .toList());
+      inputKind: json['inputKind'],
+      isGroup: json['isGroup'],
+      sceneItemBlendMode: json['sceneItemBlendMode'],
+      sceneItemEnabled: json['sceneItemEnabled'],
+      sceneItemId: json['sceneItemId'],
+      sceneItemIndex: json['sceneItemIndex'],
+      sceneItemLocked: json['sceneItemLocked'],
+      sceneItemTransform: json['sceneItemTransform'] != null
+          ? SceneItemTransform.fromJSON(json['sceneItemTransform'])
+          : null,
+      sourceName: json['sourceName'],
+      sourceType: json['sourceType'],
+    );
   }
 }

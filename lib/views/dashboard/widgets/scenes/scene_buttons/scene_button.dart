@@ -45,15 +45,19 @@ class SceneButton extends StatelessWidget {
               if (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
                       defaultValue: false) &&
                   dashboardStore.studioMode) {
+                dashboardStore.setStudioModePreviewSceneName(scene.sceneName);
                 NetworkHelper.makeRequest(
-                    GetIt.instance<NetworkStore>().activeSession!.socket,
-                    RequestType.SetPreviewScene,
-                    {'scene-name': scene.name});
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
+                  RequestType.SetCurrentPreviewScene,
+                  {'sceneName': scene.sceneName},
+                );
               } else {
+                dashboardStore.setActiveSceneName(scene.sceneName);
                 NetworkHelper.makeRequest(
-                    GetIt.instance<NetworkStore>().activeSession!.socket,
-                    RequestType.SetCurrentScene,
-                    {'scene-name': scene.name});
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
+                  RequestType.SetCurrentProgramScene,
+                  {'sceneName': scene.sceneName},
+                );
               }
             }
           },
@@ -61,17 +65,20 @@ class SceneButton extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: Duration(
-                  milliseconds:
-                      dashboardStore.sceneTransitionDurationMS != null &&
-                              dashboardStore.sceneTransitionDurationMS! >= 0
-                          ? dashboardStore.sceneTransitionDurationMS!
-                          : 0,
+                  milliseconds: dashboardStore
+                                  .currentTransition?.transitionDuration !=
+                              null &&
+                          dashboardStore
+                                  .currentTransition!.transitionDuration! >=
+                              0
+                      ? dashboardStore.currentTransition!.transitionDuration!
+                      : 0,
                 ),
                 alignment: Alignment.center,
                 height: this.height,
                 width: this.width,
                 decoration: BoxDecoration(
-                  color: dashboardStore.activeSceneName == scene.name
+                  color: dashboardStore.activeSceneName == scene.sceneName
                       ? Theme.of(context).buttonTheme.colorScheme!.secondary
                       : Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12.0),
@@ -79,7 +86,7 @@ class SceneButton extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    scene.name,
+                    scene.sceneName,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -95,8 +102,8 @@ class SceneButton extends StatelessWidget {
                                     defaultValue: false) &&
                                 dashboardStore.studioMode
                             ? dashboardStore.studioModePreviewSceneName ==
-                                scene.name
-                            : dashboardStore.activeSceneName == scene.name)
+                                scene.sceneName
+                            : dashboardStore.activeSceneName == scene.sceneName)
                         ? Theme.of(context).buttonTheme.colorScheme!.secondary
                         : Theme.of(context).cardColor,
                   ),

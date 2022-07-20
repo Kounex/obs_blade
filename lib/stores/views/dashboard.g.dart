@@ -9,23 +9,20 @@ part of 'dashboard.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
 
 mixin _$DashboardStore on _DashboardStore, Store {
-  Computed<ObservableList<SceneItem>>? _$currentSoundboardSceneItemsComputed;
+  Computed<ObservableList<Input>>? _$currentInputsComputed;
 
   @override
-  ObservableList<SceneItem> get currentSoundboardSceneItems =>
-      (_$currentSoundboardSceneItemsComputed ??=
-              Computed<ObservableList<SceneItem>>(
-                  () => super.currentSoundboardSceneItems,
-                  name: '_DashboardStore.currentSoundboardSceneItems'))
-          .value;
-  Computed<ObservableList<SceneItem>>? _$currentAudioSceneItemsComputed;
+  ObservableList<Input> get currentInputs => (_$currentInputsComputed ??=
+          Computed<ObservableList<Input>>(() => super.currentInputs,
+              name: '_DashboardStore.currentInputs'))
+      .value;
+  Computed<ObservableList<Input>>? _$globalInputsComputed;
 
   @override
-  ObservableList<SceneItem> get currentAudioSceneItems =>
-      (_$currentAudioSceneItemsComputed ??= Computed<ObservableList<SceneItem>>(
-              () => super.currentAudioSceneItems,
-              name: '_DashboardStore.currentAudioSceneItems'))
-          .value;
+  ObservableList<Input> get globalInputs => (_$globalInputsComputed ??=
+          Computed<ObservableList<Input>>(() => super.globalInputs,
+              name: '_DashboardStore.globalInputs'))
+      .value;
 
   final _$isLiveAtom = Atom(name: '_DashboardStore.isLive');
 
@@ -175,13 +172,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
   final _$sceneCollectionsAtom = Atom(name: '_DashboardStore.sceneCollections');
 
   @override
-  ObservableList<SceneCollection>? get sceneCollections {
+  ObservableList<String>? get sceneCollections {
     _$sceneCollectionsAtom.reportRead();
     return super.sceneCollections;
   }
 
   @override
-  set sceneCollections(ObservableList<SceneCollection>? value) {
+  set sceneCollections(ObservableList<String>? value) {
     _$sceneCollectionsAtom.reportWrite(value, super.sceneCollections, () {
       super.sceneCollections = value;
     });
@@ -233,71 +230,66 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$globalAudioSceneItemsAtom =
-      Atom(name: '_DashboardStore.globalAudioSceneItems');
+  final _$allInputsAtom = Atom(name: '_DashboardStore.allInputs');
 
   @override
-  ObservableList<SceneItem> get globalAudioSceneItems {
-    _$globalAudioSceneItemsAtom.reportRead();
-    return super.globalAudioSceneItems;
+  ObservableList<Input> get allInputs {
+    _$allInputsAtom.reportRead();
+    return super.allInputs;
   }
 
   @override
-  set globalAudioSceneItems(ObservableList<SceneItem> value) {
-    _$globalAudioSceneItemsAtom.reportWrite(value, super.globalAudioSceneItems,
+  set allInputs(ObservableList<Input> value) {
+    _$allInputsAtom.reportWrite(value, super.allInputs, () {
+      super.allInputs = value;
+    });
+  }
+
+  final _$globalInputNamesAtom = Atom(name: '_DashboardStore.globalInputNames');
+
+  @override
+  ObservableList<String> get globalInputNames {
+    _$globalInputNamesAtom.reportRead();
+    return super.globalInputNames;
+  }
+
+  @override
+  set globalInputNames(ObservableList<String> value) {
+    _$globalInputNamesAtom.reportWrite(value, super.globalInputNames, () {
+      super.globalInputNames = value;
+    });
+  }
+
+  final _$currentTransitionAtom =
+      Atom(name: '_DashboardStore.currentTransition');
+
+  @override
+  Transition? get currentTransition {
+    _$currentTransitionAtom.reportRead();
+    return super.currentTransition;
+  }
+
+  @override
+  set currentTransition(Transition? value) {
+    _$currentTransitionAtom.reportWrite(value, super.currentTransition, () {
+      super.currentTransition = value;
+    });
+  }
+
+  final _$availableTransitionsAtom =
+      Atom(name: '_DashboardStore.availableTransitions');
+
+  @override
+  List<Transition>? get availableTransitions {
+    _$availableTransitionsAtom.reportRead();
+    return super.availableTransitions;
+  }
+
+  @override
+  set availableTransitions(List<Transition>? value) {
+    _$availableTransitionsAtom.reportWrite(value, super.availableTransitions,
         () {
-      super.globalAudioSceneItems = value;
-    });
-  }
-
-  final _$currentTransitionNameAtom =
-      Atom(name: '_DashboardStore.currentTransitionName');
-
-  @override
-  String? get currentTransitionName {
-    _$currentTransitionNameAtom.reportRead();
-    return super.currentTransitionName;
-  }
-
-  @override
-  set currentTransitionName(String? value) {
-    _$currentTransitionNameAtom.reportWrite(value, super.currentTransitionName,
-        () {
-      super.currentTransitionName = value;
-    });
-  }
-
-  final _$sceneTransitionDurationMSAtom =
-      Atom(name: '_DashboardStore.sceneTransitionDurationMS');
-
-  @override
-  int? get sceneTransitionDurationMS {
-    _$sceneTransitionDurationMSAtom.reportRead();
-    return super.sceneTransitionDurationMS;
-  }
-
-  @override
-  set sceneTransitionDurationMS(int? value) {
-    _$sceneTransitionDurationMSAtom
-        .reportWrite(value, super.sceneTransitionDurationMS, () {
-      super.sceneTransitionDurationMS = value;
-    });
-  }
-
-  final _$availableTransitionsNamesAtom =
-      Atom(name: '_DashboardStore.availableTransitionsNames');
-
-  @override
-  List<String>? get availableTransitionsNames {
-    _$availableTransitionsNamesAtom.reportRead();
-    return super.availableTransitionsNames;
-  }
-
-  @override
-  set availableTransitionsNames(List<String>? value) {
-    _$availableTransitionsNamesAtom
-        .reportWrite(value, super.availableTransitionsNames, () {
-      super.availableTransitionsNames = value;
+      super.availableTransitions = value;
     });
   }
 
@@ -462,6 +454,15 @@ mixin _$DashboardStore on _DashboardStore, Store {
     return _$_handleEventAsyncAction.run(() => super._handleEvent(event));
   }
 
+  final _$_handleBatchResponseAsyncAction =
+      AsyncAction('_DashboardStore._handleBatchResponse');
+
+  @override
+  Future<void> _handleBatchResponse(BaseBatchResponse batchResponse) {
+    return _$_handleBatchResponseAsyncAction
+        .run(() => super._handleBatchResponse(batchResponse));
+  }
+
   final _$_DashboardStoreActionController =
       ActionController(name: '_DashboardStore');
 
@@ -543,6 +544,28 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
+  void setActiveSceneName(String activeSceneName) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setActiveSceneName');
+    try {
+      return super.setActiveSceneName(activeSceneName);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setStudioModePreviewSceneName(String studioModePreviewSceneName) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+        name: '_DashboardStore.setStudioModePreviewSceneName');
+    try {
+      return super.setStudioModePreviewSceneName(studioModePreviewSceneName);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _handleResponse(BaseResponse response) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
         name: '_DashboardStore._handleResponse');
@@ -569,10 +592,10 @@ sceneCollections: ${sceneCollections},
 activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},
-globalAudioSceneItems: ${globalAudioSceneItems},
-currentTransitionName: ${currentTransitionName},
-sceneTransitionDurationMS: ${sceneTransitionDurationMS},
-availableTransitionsNames: ${availableTransitionsNames},
+allInputs: ${allInputs},
+globalInputNames: ${globalInputNames},
+currentTransition: ${currentTransition},
+availableTransitions: ${availableTransitions},
 shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
 isPointerOnChat: ${isPointerOnChat},
@@ -582,8 +605,8 @@ editAudioVisibility: ${editAudioVisibility},
 studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
-currentSoundboardSceneItems: ${currentSoundboardSceneItems},
-currentAudioSceneItems: ${currentAudioSceneItems}
+currentInputs: ${currentInputs},
+globalInputs: ${globalInputs}
     ''';
   }
 }

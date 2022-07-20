@@ -1,14 +1,9 @@
-import '../../api/scene_collection.dart';
 import 'base.dart';
 
-/// Triggered when a scene collection is created, added, renamed, or removed
+/// The scene collection list has changed.
 class SceneCollectionListChangedEvent extends BaseEvent {
-  SceneCollectionListChangedEvent(super.json, super.newProtocol);
+  SceneCollectionListChangedEvent(super.json);
 
-  /// Scene collections list.
-  List<SceneCollection> get sceneCollections =>
-      (this.json['sceneCollections'] as List<dynamic>)
-          .map((sceneCollection) =>
-              SceneCollection.fromJSON({'sc-name': sceneCollection['name']}))
-          .toList();
+  /// Updated list of scene collections
+  List<String> get sceneCollections => List.from(this.json['sceneCollections']);
 }

@@ -41,19 +41,19 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$connectionResponseAtom =
-      Atom(name: '_NetworkStore.connectionResponse');
+  final _$connectionClodeCodeAtom =
+      Atom(name: '_NetworkStore.connectionClodeCode');
 
   @override
-  BaseResponse? get connectionResponse {
-    _$connectionResponseAtom.reportRead();
-    return super.connectionResponse;
+  WebSocketCloseCode? get connectionClodeCode {
+    _$connectionClodeCodeAtom.reportRead();
+    return super.connectionClodeCode;
   }
 
   @override
-  set connectionResponse(BaseResponse? value) {
-    _$connectionResponseAtom.reportWrite(value, super.connectionResponse, () {
-      super.connectionResponse = value;
+  set connectionClodeCode(WebSocketCloseCode? value) {
+    _$connectionClodeCodeAtom.reportWrite(value, super.connectionClodeCode, () {
+      super.connectionClodeCode = value;
     });
   }
 
@@ -76,7 +76,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
       AsyncAction('_NetworkStore.setOBSWebSocket');
 
   @override
-  Future<BaseResponse> setOBSWebSocket(Connection connection,
+  Future<WebSocketCloseCode> setOBSWebSocket(Connection connection,
       {bool reconnect = false, Duration timeout = const Duration(seconds: 3)}) {
     return _$setOBSWebSocketAsyncAction.run(() => super
         .setOBSWebSocket(connection, reconnect: reconnect, timeout: timeout));
@@ -112,7 +112,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
     return '''
 activeSession: ${activeSession},
 connectionInProgress: ${connectionInProgress},
-connectionResponse: ${connectionResponse},
+connectionClodeCode: ${connectionClodeCode},
 obsTerminated: ${obsTerminated}
     ''';
   }

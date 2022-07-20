@@ -34,7 +34,7 @@ class _SceneItemsState extends State<SceneItems>
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         child: Scrollbar(
           controller: _controller,
-          isAlwaysShown: true,
+          thumbVisibility: true,
           child: ListView(
             controller: _controller,
             physics: const ClampingScrollPhysics(),
@@ -49,7 +49,7 @@ class _SceneItemsState extends State<SceneItems>
                             (sceneItem.parentGroupName != null &&
                                 dashboardStore.currentSceneItems!
                                     .firstWhere((parentSceneItem) =>
-                                        parentSceneItem.name ==
+                                        parentSceneItem.sourceName ==
                                         sceneItem.parentGroupName)
                                     .displayGroup),
                       )
@@ -63,6 +63,7 @@ class _SceneItemsState extends State<SceneItems>
                         ),
                       )
                   : [
+                      const SizedBox(height: 12.0),
                       const PlaceholderSceneItem(
                           text: 'No Scene Items available...')
                     ]

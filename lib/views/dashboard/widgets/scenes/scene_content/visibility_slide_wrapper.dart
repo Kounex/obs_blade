@@ -166,9 +166,9 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                         hiddenSceneItem = HiddenSceneItem(
                           dashboardStore.activeSceneName!,
                           this.widget.sceneItemType,
-                          this.widget.sceneItem.id,
-                          this.widget.sceneItem.name,
-                          this.widget.sceneItem.type,
+                          this.widget.sceneItem.sceneItemId,
+                          this.widget.sceneItem.sourceName!,
+                          this.widget.sceneItem.sourceType,
                           networkStore.activeSession?.connection.name,
                           networkStore.activeSession?.connection.host,
                         );

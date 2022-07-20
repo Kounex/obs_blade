@@ -23,13 +23,13 @@ class RecordStreamService {
               isRecording: isRecording,
               onRecordStartStop: () => NetworkHelper.makeRequest(
                 GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.StartStopRecording,
+                RequestType.ToggleRecord,
               ),
             ),
           )
         : NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
-            RequestType.StartStopRecording,
+            RequestType.ToggleRecord,
           );
   }
 
@@ -47,13 +47,13 @@ class RecordStreamService {
               isLive: isLive,
               onStreamStartStop: () => NetworkHelper.makeRequest(
                 GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.StartStopStreaming,
+                RequestType.ToggleStream,
               ),
             ),
           )
         : NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
-            RequestType.StartStopStreaming,
+            RequestType.ToggleStream,
           );
   }
 }

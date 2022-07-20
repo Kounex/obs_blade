@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Get the volume of the specified source
 class GetVersionResponse extends BaseResponse {
-  GetVersionResponse(super.json, super.newProtocol);
+  GetVersionResponse(super.json);
 
   /// OBSRemote compatible API version. Fixed to 1.1 for retrocompatibility
   num get version => this.json['version'];

@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// Scene items within a scene have been reordered
 class SourceOrderChangedEvent extends BaseEvent {
-  SourceOrderChangedEvent(super.json, super.newProtocol);
+  SourceOrderChangedEvent(super.json);
 
   /// Name of the scene where items have been reordered
   String get sceneName => this.json['scene-name'];

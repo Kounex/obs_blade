@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/views/home/widgets/connect_box/connect_form/connect_host_input.dart';
 
 import '../../../../../models/connection.dart';
@@ -11,7 +12,6 @@ import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/question_mark_tooltip.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/home.dart';
-import '../../../../../types/classes/stream/responses/base.dart';
 import '../../../../../utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
@@ -36,7 +36,7 @@ class _ConnectFormState extends State<ConnectForm> {
 
   bool _obscurePW = true;
 
-  final StreamController<BaseResponse> _connectResponse = StreamController();
+  final StreamController<WebSocketCloseCode> _clodeCode = StreamController();
 
   @override
   void initState() {
@@ -93,8 +93,8 @@ class _ConnectFormState extends State<ConnectForm> {
               ),
             ],
           ),
-          StreamBuilder<BaseResponse>(
-            stream: _connectResponse.stream,
+          StreamBuilder<WebSocketCloseCode>(
+            stream: _clodeCode.stream,
             builder: (context, snapshot) => StatefulBuilder(
               builder: (context, innerState) => TextFormField(
                 controller: _pw,
@@ -104,8 +104,8 @@ class _ConnectFormState extends State<ConnectForm> {
                 obscureText: _obscurePW,
                 decoration: InputDecoration(
                   errorText: snapshot.hasData &&
-                          snapshot.data!.error ==
-                              BaseResponse.failedAuthentication
+                          snapshot.data! ==
+                              WebSocketCloseCode.AuthenticationFailed
                       ? 'Wrong password'
                       : null,
                   labelText: 'Password',
@@ -143,7 +143,7 @@ class _ConnectFormState extends State<ConnectForm> {
                                   : false,
                             ),
                           )
-                          .then((response) => _connectResponse.add(response));
+                          .then((clodeCode) => _clodeCode.add(clodeCode));
                     }
                   },
                 ),

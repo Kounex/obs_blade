@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// A scene item has been removed from a scene
 class SceneItemRemovedEvent extends BaseEvent {
-  SceneItemRemovedEvent(super.json, super.newProtocol);
+  SceneItemRemovedEvent(super.json);
 
   /// Name of the scene
   String get sceneName => this.json['scene-name'];

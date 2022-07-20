@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// A source has been renamed
 class SourceRenamedEvent extends BaseEvent {
-  SourceRenamedEvent(super.json, super.newProtocol);
+  SourceRenamedEvent(super.json);
 
   /// Previous source name
   String get previousName => this.json['previousName'];

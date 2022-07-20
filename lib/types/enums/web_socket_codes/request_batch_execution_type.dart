@@ -20,7 +20,7 @@ enum RequestBatchExecutionType implements BaseWebSocketCode {
   Parallel;
 
   @override
-  int get identifier => {
+  int get identifier => const {
         RequestBatchExecutionType.None: -1,
         RequestBatchExecutionType.SerialRealtime: 0,
         RequestBatchExecutionType.SerialFrame: 1,
@@ -28,7 +28,7 @@ enum RequestBatchExecutionType implements BaseWebSocketCode {
       }[this]!;
 
   @override
-  String get message => {
+  String get message => const {
         RequestBatchExecutionType.None: 'Not a request batch.',
         RequestBatchExecutionType.SerialRealtime:
             'A request batch which processes all requests serially, as fast as possible.\n\nNote: To introduce artificial delay, use the Sleep request and the sleepMillis request field.',

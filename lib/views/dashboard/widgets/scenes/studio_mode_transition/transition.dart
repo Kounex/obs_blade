@@ -20,7 +20,9 @@ class Transition extends StatelessWidget {
 
     return Observer(builder: (_) {
       TextEditingController controller = TextEditingController(
-          text: dashboardStore.sceneTransitionDurationMS?.toString() ?? '-');
+          text: dashboardStore.currentTransition?.transitionDuration
+                  ?.toString() ??
+              '-');
 
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -31,19 +33,19 @@ class Transition extends StatelessWidget {
           /// hard code maxWidth from LayoutBuilder - 24
           Flexible(
             child: LayoutBuilder(
-              builder: (context, constraints) => DropdownButton<String>(
-                value: dashboardStore.currentTransitionName,
+              builder: (context, constraints) => DropdownButton<String?>(
+                value: dashboardStore.currentTransition?.transitionName,
                 disabledHint: const Text('Empty...'),
                 isDense: true,
-                items: dashboardStore.availableTransitionsNames
+                items: dashboardStore.availableTransitions
                     ?.map(
                       (transition) => DropdownMenuItem<String>(
-                        value: transition,
+                        value: transition.transitionName,
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                               maxWidth: constraints.maxWidth - 24),
                           child: Text(
-                            transition,
+                            transition.transitionName,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -52,8 +54,8 @@ class Transition extends StatelessWidget {
                     .toList(),
                 onChanged: (selectedTransition) => NetworkHelper.makeRequest(
                   GetIt.instance<NetworkStore>().activeSession!.socket,
-                  RequestType.SetCurrentTransition,
-                  {'transition-name': selectedTransition},
+                  RequestType.SetCurrentSceneTransition,
+                  {'transitionName': selectedTransition},
                 ),
               ),
             ),
@@ -73,13 +75,14 @@ class Transition extends StatelessWidget {
                 }
                 NetworkHelper.makeRequest(
                   GetIt.instance<NetworkStore>().activeSession!.socket,
-                  RequestType.SetTransitionDuration,
-                  {'duration': int.tryParse(controller.text) ?? 0},
+                  RequestType.SetCurrentSceneTransitionDuration,
+                  {'transitionDuration': int.tryParse(controller.text) ?? 0},
                 );
               },
               child: CupertinoTextField(
                 focusNode: focusNode,
-                enabled: dashboardStore.sceneTransitionDurationMS != null,
+                enabled: dashboardStore.currentTransition?.transitionDuration !=
+                    null,
                 controller: controller,
                 textAlign: TextAlign.center,
                 maxLength: 5,

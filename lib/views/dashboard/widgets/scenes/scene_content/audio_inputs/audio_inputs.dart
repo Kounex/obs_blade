@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../../../../models/enums/scene_item_type.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../placeholder_scene_item.dart';
-import '../visibility_slide_wrapper.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatefulWidget {
@@ -34,7 +32,7 @@ class _AudioInputsState extends State<AudioInputs>
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         child: Scrollbar(
           controller: _controller,
-          isAlwaysShown: true,
+          thumbVisibility: true,
           child: ListView(
             controller: _controller,
             physics: const ClampingScrollPhysics(),
@@ -53,14 +51,15 @@ class _AudioInputsState extends State<AudioInputs>
                 ),
               ),
               Column(
-                children: dashboardStore.globalAudioSceneItems.isNotEmpty
-                    ? dashboardStore.globalAudioSceneItems
+                children: dashboardStore.globalInputs.isNotEmpty
+                    ? dashboardStore.globalInputs
                         .map(
-                          (globalAudioItem) => VisibilitySlideWrapper(
-                            sceneItem: globalAudioItem,
-                            sceneItemType: SceneItemType.Audio,
-                            child: AudioSlider(audioSceneItem: globalAudioItem),
-                          ),
+                          (globalInput) => AudioSlider(input: globalInput),
+                          // (globalInput) => VisibilitySlideWrapper(
+                          //   sceneItem: globalAudioItem,
+                          //   sceneItemType: SceneItemType.Audio,
+                          //   child: AudioSlider(audioSceneItem: globalAudioItem),
+                          // ),
                         )
                         .toList()
                     : [
@@ -82,15 +81,17 @@ class _AudioInputsState extends State<AudioInputs>
                 ),
               ),
               Column(
-                children: dashboardStore.currentAudioSceneItems.isNotEmpty
-                    ? dashboardStore.currentAudioSceneItems
+                children: dashboardStore.currentInputs.isNotEmpty
+                    ? dashboardStore.currentInputs
                         .map(
-                          (currentAudioSceneItem) => VisibilitySlideWrapper(
-                            sceneItem: currentAudioSceneItem,
-                            sceneItemType: SceneItemType.Audio,
-                            child: AudioSlider(
-                                audioSceneItem: currentAudioSceneItem),
-                          ),
+                          (input) => AudioSlider(input: input),
+
+                          // (currentAudioSceneItem) => VisibilitySlideWrapper(
+                          //   sceneItem: currentAudioSceneItem,
+                          //   sceneItemType: SceneItemType.Audio,
+                          //   child: AudioSlider(
+                          //       audioSceneItem: currentAudioSceneItem),
+                          // ),
                         )
                         .toList()
                     : [

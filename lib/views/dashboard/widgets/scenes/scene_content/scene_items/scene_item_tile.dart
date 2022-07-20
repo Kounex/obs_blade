@@ -35,7 +35,7 @@ class SceneItemTile extends StatelessWidget {
                   .toggleSceneItemGroupVisibility(this.sceneItem)
               : null,
           child: Icon(
-            this.sceneItem.type == 'group'
+            this.sceneItem.sourceType == 'group'
                 ? this.sceneItem.displayGroup
                     ? CupertinoIcons.folder
                     : CupertinoIcons.folder_solid
@@ -44,7 +44,7 @@ class SceneItemTile extends StatelessWidget {
         ),
       ),
       title: Text(
-        this.sceneItem.name,
+        this.sceneItem.sourceName!,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -53,22 +53,23 @@ class SceneItemTile extends StatelessWidget {
         rebuildKeys: const [SettingsKeys.ExposeStudioControls],
         builder: (context, settingsBox, child) => IconButton(
           icon: Icon(
-            this.sceneItem.render! ? Icons.visibility : Icons.visibility_off,
-            color: this.sceneItem.render!
+            this.sceneItem.sceneItemEnabled!
+                ? Icons.visibility
+                : Icons.visibility_off,
+            color: this.sceneItem.sceneItemEnabled!
                 ? Theme.of(context).buttonColor
                 : CupertinoColors.destructiveRed,
           ),
           onPressed: () => NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
-              RequestType.SetSceneItemProperties, {
-            'scene-name': settingsBox.get(
-                        SettingsKeys.ExposeStudioControls.name,
+              RequestType.SetSceneItemEnabled, {
+            'sceneName': settingsBox.get(SettingsKeys.ExposeStudioControls.name,
                         defaultValue: false) &&
                     dashboardStore.studioMode
                 ? dashboardStore.studioModePreviewSceneName
                 : dashboardStore.activeSceneName,
-            'item': this.sceneItem.name,
-            'visible': !this.sceneItem.render!,
+            'sceneItemId': this.sceneItem.sceneItemId,
+            'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
           }),
         ),
       ),

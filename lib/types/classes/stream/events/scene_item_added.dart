@@ -2,7 +2,7 @@ import 'base.dart';
 
 /// A scene item has been added to a scene
 class SceneItemAddedEvent extends BaseEvent {
-  SceneItemAddedEvent(super.json, super.newProtocol);
+  SceneItemAddedEvent(super.json);
 
   /// Name of the scene
   String get sceneName => this.json['scene-name'];
