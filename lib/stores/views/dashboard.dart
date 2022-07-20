@@ -522,19 +522,24 @@ abstract class _DashboardStore with Store {
       case EventType.RecordStateChanged:
         RecordStateChangedEvent recordStateChangedEvent =
             RecordStateChangedEvent(event.jsonRAW);
-        this.isRecording = recordStateChangedEvent.outputActive;
 
-        if (!this.isRecording) {
-          this.isRecordingPaused = false;
-          this.latestRecordTimeDurationMS = null;
+        switch (recordStateChangedEvent.outputState) {
+          case 'OBS_WEBSOCKET_OUTPUT_STARTING':
+            this.isRecording = true;
+            break;
+          case 'OBS_WEBSOCKET_OUTPUT_STOPPED':
+            this.isRecording = false;
+            this.isRecordingPaused = false;
+            this.latestRecordTimeDurationMS = null;
+            break;
+          case 'OBS_WEBSOCKET_OUTPUT_PAUSED':
+            this.isRecordingPaused = true;
+            break;
+          case 'OBS_WEBSOCKET_OUTPUT_RESUMED':
+            this.isRecordingPaused = false;
+            break;
         }
         break;
-      // case EventType.RecordingPaused:
-      //   this.isRecordingPaused = true;
-      //   break;
-      // case EventType.RecordingResumed:
-      //   this.isRecordingPaused = false;
-      //   break;
       case EventType.ReplayBufferStateChanged:
         ReplayBufferStateChangedEvent replayBufferStateChangedEvent =
             ReplayBufferStateChangedEvent(event.jsonRAW);
