@@ -66,8 +66,8 @@ enum EventType {
   /// A scene item's enable state has changed.
   SceneItemEnableStateChanged,
 
-  /// Studio Mode has been enabled or disabled
-  StudioModeSwitched,
+  /// Studio mode has been enabled or disabled.
+  StudioModeStateChanged,
 
   /// The current program scene has changed.
   CurrentProgramSceneChanged,

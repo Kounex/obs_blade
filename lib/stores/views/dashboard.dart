@@ -33,7 +33,6 @@ import '../../types/classes/stream/events/input_volume_changed.dart';
 import '../../types/classes/stream/events/record_state_changed.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
-import '../../types/classes/stream/events/scene_item_removed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene_transition.dart';
@@ -45,9 +44,9 @@ import '../../types/classes/stream/responses/get_record_status.dart';
 import '../../types/classes/stream/responses/get_scene_item_list.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_scene_transition_list.dart';
+import '../../types/classes/stream/responses/get_source_screenshot.dart';
 import '../../types/classes/stream/responses/get_studio_mode_enabled.dart';
 import '../../types/classes/stream/responses/get_version.dart';
-import '../../types/classes/stream/responses/take_source_screenshot.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/request_type.dart';
@@ -286,7 +285,7 @@ abstract class _DashboardStore with Store {
 
   void requestPreviewImage() => NetworkHelper.makeRequest(
         GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.TakeSourceScreenshot,
+        RequestType.GetSourceScreenshot,
         {
           'sourceName': Hive.box(HiveKeys.Settings.name).get(
                       SettingsKeys.ExposeStudioControls.name,
@@ -294,7 +293,7 @@ abstract class _DashboardStore with Store {
                   this.studioMode
               ? this.studioModePreviewSceneName
               : this.activeSceneName,
-          'embedPictureFormat': this.previewFileFormat,
+          'imageFormat': this.previewFileFormat,
           'compressionQuality': -1,
         },
       );
@@ -416,6 +415,9 @@ abstract class _DashboardStore with Store {
                   defaultValue: false) ||
               tries < 5) &&
           (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
+        await Future.delayed(
+          const Duration(seconds: 3),
+        );
         closeCode = await GetIt.instance<NetworkStore>().setOBSWebSocket(
           GetIt.instance<NetworkStore>().activeSession!.connection,
           reconnect: true,
@@ -604,15 +606,13 @@ abstract class _DashboardStore with Store {
 
         this.currentTransition = this.currentTransition;
         break;
-      case EventType.StudioModeSwitched:
-        if (Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeStudioControls.name,
-                defaultValue: false) &&
-            this.studioMode) {
-          StudioModeSwitchedEvent studioModeSwitchedEvent =
-              StudioModeSwitchedEvent(event.jsonRAW);
+      case EventType.StudioModeStateChanged:
+        if (Hive.box(HiveKeys.Settings.name)
+            .get(SettingsKeys.ExposeStudioControls.name, defaultValue: false)) {
+          StudioModeStateChangedEvent studioModeStateChangedEvent =
+              StudioModeStateChangedEvent(event.jsonRAW);
 
-          this.studioMode = studioModeSwitchedEvent.newState;
+          this.studioMode = studioModeStateChangedEvent.studioModeEnabled;
 
           NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -631,27 +631,21 @@ abstract class _DashboardStore with Store {
         CurrentPreviewSceneChangedEvent currentPreviewSceneChangedEvent =
             CurrentPreviewSceneChangedEvent(event.jsonRAW);
 
+        this.studioModePreviewSceneName =
+            currentPreviewSceneChangedEvent.sceneName;
+
         if (Hive.box(HiveKeys.Settings.name).get(
                 SettingsKeys.ExposeStudioControls.name,
                 defaultValue: false) &&
             this.studioMode) {
-          this.studioModePreviewSceneName =
-              currentPreviewSceneChangedEvent.sceneName;
           this.sceneCollectionRequests();
         }
         break;
       case EventType.SceneItemAdded:
-        NetworkHelper.makeRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestType.GetSceneItemList,
-          {'sceneName': this.activeSceneName},
-        );
+        this.sceneCollectionRequests();
         break;
       case EventType.SceneItemRemoved:
-        SceneItemRemovedEvent sceneItemRemovedEvent =
-            SceneItemRemovedEvent(event.jsonRAW);
-        this.currentSceneItems!.removeWhere((sceneItem) =>
-            sceneItem.sceneItemId == sceneItemRemovedEvent.itemID);
+        this.sceneCollectionRequests();
         break;
       // case EventType.SourceRenamed:
       //   SourceRenamedEvent sourceRenamedEvent =
@@ -732,8 +726,8 @@ abstract class _DashboardStore with Store {
         GetVersionResponse getVersionResponse =
             GetVersionResponse(response.jsonRAW);
 
-        if (!getVersionResponse.supportedImageExportFormats.contains('jpg') &&
-            !getVersionResponse.supportedImageExportFormats.contains('jpeg')) {
+        if (!getVersionResponse.supportedImageFormats.contains('jpg') &&
+            !getVersionResponse.supportedImageFormats.contains('jpeg')) {
           this.previewFileFormat = 'png';
         }
         break;
@@ -749,7 +743,14 @@ abstract class _DashboardStore with Store {
         NetworkHelper.makeRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.GetSceneItemList,
-          {'sceneName': this.activeSceneName},
+          {
+            'sceneName': Hive.box(HiveKeys.Settings.name).get(
+                        SettingsKeys.ExposeStudioControls.name,
+                        defaultValue: false) &&
+                    this.studioMode
+                ? this.studioModePreviewSceneName
+                : this.activeSceneName,
+          },
         );
         break;
       case RequestType.GetSceneCollectionList:
@@ -907,12 +908,12 @@ abstract class _DashboardStore with Store {
 
         this.allInputs = ObservableList.of(this.allInputs);
         break;
-      case RequestType.TakeSourceScreenshot:
-        TakeSourceScreenshotResponse takeSourceScreenshotResponse =
-            TakeSourceScreenshotResponse(response.jsonRAW);
+      case RequestType.GetSourceScreenshot:
+        GetSourceScreenshotResponse getSourceScreenshotResponse =
+            GetSourceScreenshotResponse(response.jsonRAW);
 
         this.scenePreviewImageBytes =
-            base64Decode(takeSourceScreenshotResponse.img.split(',')[1]);
+            base64Decode(getSourceScreenshotResponse.imageData.split(',')[1]);
 
         if (this.shouldRequestPreviewImage) this.requestPreviewImage();
         break;

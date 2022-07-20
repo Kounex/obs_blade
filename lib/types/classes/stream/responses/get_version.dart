@@ -1,22 +1,30 @@
 import 'base.dart';
 
-/// Get the volume of the specified source
+/// Gets data about the current plugin and RPC version.
 class GetVersionResponse extends BaseResponse {
   GetVersionResponse(super.json);
 
-  /// OBSRemote compatible API version. Fixed to 1.1 for retrocompatibility
-  num get version => this.json['version'];
+  /// Current OBS Studio version
+  String get obsVersion => this.json['obsVersion'];
 
-  /// obs-websocket plugin version
-  String get obsWebsocketVersion => this.json['obs-websocket-version'];
+  /// Current obs-websocket version
+  String get obsWebSocketVersion => this.json['obsWebSocketVersion'];
 
-  /// OBS Studio program version
-  String get obsStudioVersion => this.json['obs-studio-version'];
+  /// Current latest obs-websocket RPC version
+  int get rpcVersion => this.json['rpcVersion'];
 
-  /// List of available request types, formatted as a comma-separated list string (e.g. : "Method1,Method2,Method3")
-  String get availableRequests => this.json['available-requests'];
+  /// Array of available RPC requests for the currently negotiated RPC version
+  List<dynamic> get availableRequests =>
+      List.from(this.json['availableRequests']);
 
-  /// List of supported formats for features that use image export (like the TakeSourceScreenshot request type) formatted as a comma-separated list string
-  String get supportedImageExportFormats =>
-      this.json['supported-image-export-formats'];
+  /// Image formats available in GetSourceScreenshot and SaveSourceScreenshot requests.
+  List<String> get supportedImageFormats =>
+      List.from(this.json['supportedImageFormats']);
+
+  /// Name of the platform. Usually windows, macos, or ubuntu (linux flavor).
+  /// Not guaranteed to be any of those
+  String get platform => this.json['platform'];
+
+  /// Description of the platform, like Windows 10 (10.0)
+  String get platformDescription => this.json['platformDescription'];
 }

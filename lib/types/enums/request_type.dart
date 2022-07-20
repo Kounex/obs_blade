@@ -52,16 +52,17 @@ enum RequestType {
   /// No specified parameters
   GetCurrentSceneTransition,
 
-  /// At least embedPictureFormat or saveToFilePath must be specified. Clients can specify width and height parameters to receive scaled pictures. Aspect ratio is preserved if only one of these two parameters is specified.
+  /// Gets a Base64-encoded screenshot of a source.
   ///
-  /// (Optional) { 'sourceName':	String } - Source name. Note that, since scenes are also sources, you can also provide a scene name. If not provided, the currently active scene is used
-  /// (Optional) { 'embedPictureFormat': String } - Format of the Data URI encoded picture. Can be "png", "jpg", "jpeg" or "bmp" (or any other value supported by Qt's Image module)
-  /// (Optional) { 'saveToFilePath': String } - Full file path (file extension included) where the captured image is to be saved. Can be in a format different from pictureFormat. Can be a relative path
-  /// (Optional) { 'fileFormat': String } - Format to save the image file as (one of the values provided in the supported-image-export-formats response field of GetVersion). If not specified, tries to guess based on file extension
-  /// (Optional) { 'compressionQuality': int } - Compression ratio between -1 and 100 to write the image with. -1 is automatic, 1 is smallest file/most compression, 100 is largest file/least compression. Varies with image type
-  /// (Optional) { 'width': int } - Screenshot width. Defaults to the source's base width
-  /// (Optional) { 'height': int } - Screenshot height. Defaults to the source's base width
-  TakeSourceScreenshot,
+  /// The imageWidth and imageHeight parameters are treated as "scale to inner", meaning the smallest ratio
+  /// will be used and the aspect ratio of the original resolution is kept. If imageWidth and imageHeight
+  /// are not specified, the compressed image will use the full resolution of the source.
+  ///
+  /// { 'sourceName':	String } - Name of the source to take a screenshot of
+  /// { 'imageFormat': String } - Image compression format to use. Use GetVersion to get compatible image formats
+  /// (Optional) { 'imageHeight': int } - Height to scale the screenshot to - >= 8, <= 4096
+  /// (Optional) { 'imageCompressionQuality': int } - Compression ratio between -1 and 100 to write the image with. -1 is automatic, 1 is smallest file/most compression, 100 is largest file/least compression. Varies with image typeCompression quality to use. 0 for high compression, 100 for uncompressed. -1 to use "default" (whatever that means, idk)
+  GetSourceScreenshot,
 
   /// Gets the status of the record output.
   ///
@@ -177,10 +178,10 @@ enum RequestType {
   /// {'transitionName': String } - Name of the transition to make active
   SetCurrentSceneTransition,
 
-  /// Toggles Studio Mode (depending on the current state of studio mode)
+  /// Enables or disables studio mode
   ///
-  /// No specified parameters
-  ToggleStudioMode,
+  /// {'studioModeEnabled': bool } - True == Enabled, False == Disabled
+  SetStudioModeEnabled,
 
   /// Transitions the currently previewed scene to the main output. Will return an error if Studio Mode is not enabled
   ///

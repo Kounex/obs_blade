@@ -64,7 +64,8 @@ class _AudioInputsState extends State<AudioInputs>
                         .toList()
                     : [
                         const PlaceholderSceneItem(
-                            text: 'No Global Audio source available...')
+                            text: 'No Global Audio source available...'),
+                        const SizedBox(height: 12.0),
                       ],
               ),
               const Divider(),

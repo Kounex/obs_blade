@@ -68,7 +68,8 @@ class StudioModeTransition extends StatelessWidget {
                                   GetIt.instance<NetworkStore>()
                                       .activeSession!
                                       .socket,
-                                  RequestType.ToggleStudioMode,
+                                  RequestType.SetStudioModeEnabled,
+                                  {'studioModeEnabled': studioMode},
                                 ),
                               ),
                               const Text('Studio Mode'),
@@ -76,8 +77,8 @@ class StudioModeTransition extends StatelessWidget {
                           ),
                         )
                       : Container(),
-                  Flexible(
-                    child: const Transition(),
+                  const Flexible(
+                    child: Transition(),
                   ),
                 ],
               ),
