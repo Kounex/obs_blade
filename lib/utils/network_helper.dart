@@ -53,6 +53,7 @@ class NetworkHelper {
 
     /// Clear the map for a new connection
     NetworkHelper.requestBodyByUUID = {};
+    NetworkHelper.requestBatchByUUID = {};
 
     return IOWebSocketChannel.connect(
       Uri.parse(
@@ -287,6 +288,13 @@ class NetworkHelper {
     return null;
   }
 
+  static Map<String, dynamic>? getRequestBodyForUUID(String uuid) =>
+      NetworkHelper.requestBodyByUUID.remove(uuid);
+
+  static Iterable<RequestBatchObject>? getRequestBatchBodyForUUID(
+          String uuid) =>
+      NetworkHelper.requestBatchByUUID.remove(uuid);
+
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
   static void makeRequest(
@@ -341,7 +349,9 @@ class NetworkHelper {
 
     String requestUUID = const Uuid().v4();
 
-    NetworkHelper.requestBatchByUUID[requestUUID] = batch;
+    if (batchRequest.lookup) {
+      NetworkHelper.requestBatchByUUID[requestUUID] = batch;
+    }
 
     channel.sink.add(
       json.encode(

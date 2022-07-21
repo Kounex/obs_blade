@@ -9,6 +9,7 @@ import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
 import 'package:obs_blade/types/classes/stream/events/input_mute_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/replay_buffer_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/stream_state_changed.dart';
@@ -45,6 +46,7 @@ import '../../types/classes/stream/responses/get_scene_item_list.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_scene_transition_list.dart';
 import '../../types/classes/stream/responses/get_source_screenshot.dart';
+import '../../types/classes/stream/responses/get_stream_status.dart';
 import '../../types/classes/stream/responses/get_studio_mode_enabled.dart';
 import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/enums/event_type.dart';
@@ -222,17 +224,23 @@ abstract class _DashboardStore with Store {
     );
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetStreamStatus,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetReplayBufferStatus,
     );
 
-    sceneCollectionRequests();
+    _periodicStatsRequest();
+
+    _sceneCollectionRequests();
   }
 
   /// Requests dedicated to get all the information from the current
   /// scene collection (can be called independently after switching the
   /// scene collection or if we want to refresh the information for the
   /// current scene collection)
-  void sceneCollectionRequests() {
+  void _sceneCollectionRequests() {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneList,
@@ -253,10 +261,6 @@ abstract class _DashboardStore with Store {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneTransitionList,
     );
-    // NetworkHelper.makeRequest(
-    //   GetIt.instance<NetworkStore>().activeSession!.socket,
-    //   RequestType.GetCurrentTransition,
-    // );
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetInputList,
@@ -313,6 +317,21 @@ abstract class _DashboardStore with Store {
       }
       this.streamData = null;
     }
+  }
+
+  void _periodicStatsRequest() {
+    Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => NetworkHelper.makeBatchRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
+        RequestBatchType.Stats,
+        [
+          RequestBatchObject(RequestType.GetStreamStatus),
+          RequestBatchObject(RequestType.GetRecordStatus),
+          RequestBatchObject(RequestType.GetStats),
+        ],
+      ),
+    );
   }
 
   /// SceneItems which type is 'group' can have children which are
@@ -518,6 +537,10 @@ abstract class _DashboardStore with Store {
             StreamStateChangedEvent(event.jsonRAW);
 
         this.isLive = streamStateChangedEvent.outputActive;
+
+        if (!this.isLive) {
+          this.latestStreamTimeDurationMS = null;
+        }
         break;
       case EventType.RecordStateChanged:
         RecordStateChangedEvent recordStateChangedEvent =
@@ -581,7 +604,7 @@ abstract class _DashboardStore with Store {
             currentSceneCollectionChangedEvent.sceneCollectionName;
 
         this.handleRequestsEvents = true;
-        this.sceneCollectionRequests();
+        _sceneCollectionRequests();
         break;
       case EventType.SceneCollectionListChanged:
         SceneCollectionListChangedEvent sceneCollectionListChangedEvent =
@@ -630,7 +653,7 @@ abstract class _DashboardStore with Store {
             CurrentProgramSceneChangedEvent(event.jsonRAW);
 
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
-        this.sceneCollectionRequests();
+        _sceneCollectionRequests();
         break;
       case EventType.CurrentPreviewSceneChanged:
         CurrentPreviewSceneChangedEvent currentPreviewSceneChangedEvent =
@@ -643,14 +666,14 @@ abstract class _DashboardStore with Store {
                 SettingsKeys.ExposeStudioControls.name,
                 defaultValue: false) &&
             this.studioMode) {
-          this.sceneCollectionRequests();
+          _sceneCollectionRequests();
         }
         break;
       case EventType.SceneItemAdded:
-        this.sceneCollectionRequests();
+        _sceneCollectionRequests();
         break;
       case EventType.SceneItemRemoved:
-        this.sceneCollectionRequests();
+        _sceneCollectionRequests();
         break;
       // case EventType.SourceRenamed:
       //   SourceRenamedEvent sourceRenamedEvent =
@@ -837,12 +860,25 @@ abstract class _DashboardStore with Store {
           );
         }
         break;
+      case RequestType.GetStreamStatus:
+        GetStreamStatusResponse getStreamStatusResponse =
+            GetStreamStatusResponse(response.jsonRAW);
+
+        this.isLive = getStreamStatusResponse.outputActive;
+
+        if (this.isLive) {
+          this.latestStreamTimeDurationMS =
+              _timecodeToMS(getStreamStatusResponse.outputTimecode);
+        }
+        break;
       case RequestType.GetRecordStatus:
         GetRecordStatusResponse getRecordStatusResponse =
             GetRecordStatusResponse(response.jsonRAW);
 
-        this.isRecording = getRecordStatusResponse.outputActive;
-        this.isRecordingPaused = getRecordStatusResponse.ouputPaused;
+        this.isRecordingPaused = getRecordStatusResponse.ouputPaused ?? false;
+        this.isRecording = this.isRecordingPaused
+            ? true
+            : getRecordStatusResponse.outputActive;
 
         if (this.isRecording) {
           this.latestRecordTimeDurationMS =
@@ -902,8 +938,7 @@ abstract class _DashboardStore with Store {
         GetInputMuteResponse getInputMuteResponse =
             GetInputMuteResponse(response.jsonRAW);
 
-        final requestData =
-            NetworkHelper.requestBodyByUUID.remove(getInputMuteResponse.uuid)!;
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
 
         Input input = this
             .allInputs
@@ -934,12 +969,21 @@ abstract class _DashboardStore with Store {
     );
 
     switch (batchResponse.batchRequestType) {
+      case RequestBatchType.Stats:
+        StatsBatchResponse statsBatchResponse =
+            StatsBatchResponse(batchResponse.jsonRAW);
+
+        this.latestRecordTimeDurationMS =
+            _timecodeToMS(statsBatchResponse.recordStatus.outputTimecode);
+        this.latestStreamTimeDurationMS =
+            _timecodeToMS(statsBatchResponse.streamStatus.outputTimecode);
+        break;
       case RequestBatchType.Input:
         InputsBatchResponse inputsBatchResponse =
             InputsBatchResponse(batchResponse.jsonRAW);
 
         final requestBatchObjects =
-            NetworkHelper.requestBatchByUUID.remove(inputsBatchResponse.uuid)!;
+            NetworkHelper.getRequestBatchBodyForUUID(inputsBatchResponse.uuid)!;
 
         final validGetInputMuteRespones = inputsBatchResponse.inputsMute.where(
           (getInputMuteRespone) =>

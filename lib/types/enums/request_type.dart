@@ -69,6 +69,11 @@ enum RequestType {
   /// No specified parameters
   GetRecordStatus,
 
+  /// Gets the status of the stream output.
+  ///
+  /// No specified parameters
+  GetStreamStatus,
+
   /// Gets whether studio is enabled.
   ///
   /// No specified parameters

@@ -20,22 +20,22 @@ class GetStatsResponse extends BaseResponse {
   double get averageFrameRenderTime => this.json['averageFrameRenderTime'];
 
   /// Number of frames skipped by OBS in the render thread
-  double get renderSkippedFrames => this.json['renderSkippedFrames'];
+  int get renderSkippedFrames => this.json['renderSkippedFrames'];
 
   /// Total number of frames outputted by the render thread
-  double get renderTotalFrames => this.json['renderTotalFrames'];
+  int get renderTotalFrames => this.json['renderTotalFrames'];
 
   /// Number of frames skipped by OBS in the output thrcead
-  double get outputSkippedFrames => this.json['outputSkippedFrames'];
+  int get outputSkippedFrames => this.json['outputSkippedFrames'];
 
   /// Total number of frames outputted by the output thread
-  double get outputTotalFrames => this.json['outputTotalFrames'];
+  int get outputTotalFrames => this.json['outputTotalFrames'];
 
   /// Total number of messages received by obs-websocket from the client
-  double get webSocketSessionIncomingMessages =>
+  int get webSocketSessionIncomingMessages =>
       this.json['webSocketSessionIncomingMessages'];
 
   /// Total number of messages sent by obs-websocket to the client
-  double get webSocketSessionOutgoingMessages =>
+  int get webSocketSessionOutgoingMessages =>
       this.json['webSocketSessionOutgoingMessages'];
 }

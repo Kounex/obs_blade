@@ -2,6 +2,8 @@ import 'package:obs_blade/types/classes/stream/responses/base.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/interfaces/message.dart';
 
+import '../../../enums/request_type.dart';
+
 class BaseBatchResponse implements Message {
   @override
   Map<String, dynamic> json;
@@ -26,4 +28,11 @@ class BaseBatchResponse implements Message {
               ),
         ),
       );
+
+  T response<T extends BaseResponse>(
+          RequestType requestType, T Function(Map<String, dynamic>) creation) =>
+      creation(this
+          .responses
+          .firstWhere((response) => response.requestType == requestType)
+          .jsonRAW);
 }

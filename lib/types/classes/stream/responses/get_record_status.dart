@@ -8,7 +8,7 @@ class GetRecordStatusResponse extends BaseResponse {
   bool get outputActive => this.json['outputActive'];
 
   /// Whether the output is paused
-  bool get ouputPaused => this.json['ouputPaused'];
+  bool? get ouputPaused => this.json['ouputPaused'];
 
   /// Current formatted timecode string for the output
   String get outputTimecode => this.json['outputTimecode'];
