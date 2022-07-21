@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../../../../models/enums/scene_item_type.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../placeholder_scene_item.dart';
@@ -56,7 +55,6 @@ class _SceneItemsState extends State<SceneItems>
                       .map(
                         (sceneItem) => VisibilitySlideWrapper(
                           sceneItem: sceneItem,
-                          sceneItemType: SceneItemType.Source,
                           child: SceneItemTile(
                             sceneItem: sceneItem,
                           ),

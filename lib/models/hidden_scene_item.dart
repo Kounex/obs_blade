@@ -1,6 +1,5 @@
 import 'package:hive/hive.dart';
 
-import '../types/classes/api/scene_item.dart';
 import 'enums/scene_item_type.dart';
 import 'type_ids.dart';
 
@@ -61,13 +60,12 @@ class HiddenSceneItem extends HiveObject {
     this.host,
   );
 
-  bool isSceneItem(String sceneName, SceneItemType type, SceneItem sceneItem,
-          String? connectionName, String? host) =>
+  bool isSceneItem(String sceneName, SceneItemType type, int? id,
+          String sourceName, String? connectionName, String? host) =>
       this.sceneName == sceneName &&
       this.type == type &&
-      this.id == sceneItem.sceneItemId &&
-      this.name == sceneItem.sourceName &&
-      this.sourceType == sceneItem.sourceType &&
+      this.id == id &&
+      this.name == sourceName &&
       ((this.connectionName == null && this.host == null) ||
           (this.connectionName == connectionName) ||
           (this.connectionName == null &&

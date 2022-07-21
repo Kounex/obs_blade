@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../placeholder_scene_item.dart';
+import '../visibility_slide_wrapper.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatefulWidget {
@@ -54,12 +55,10 @@ class _AudioInputsState extends State<AudioInputs>
                 children: dashboardStore.globalInputs.isNotEmpty
                     ? dashboardStore.globalInputs
                         .map(
-                          (globalInput) => AudioSlider(input: globalInput),
-                          // (globalInput) => VisibilitySlideWrapper(
-                          //   sceneItem: globalAudioItem,
-                          //   sceneItemType: SceneItemType.Audio,
-                          //   child: AudioSlider(audioSceneItem: globalAudioItem),
-                          // ),
+                          (globalInput) => VisibilitySlideWrapper(
+                            input: globalInput,
+                            child: AudioSlider(input: globalInput),
+                          ),
                         )
                         .toList()
                     : [
@@ -85,14 +84,10 @@ class _AudioInputsState extends State<AudioInputs>
                 children: dashboardStore.currentInputs.isNotEmpty
                     ? dashboardStore.currentInputs
                         .map(
-                          (input) => AudioSlider(input: input),
-
-                          // (currentAudioSceneItem) => VisibilitySlideWrapper(
-                          //   sceneItem: currentAudioSceneItem,
-                          //   sceneItemType: SceneItemType.Audio,
-                          //   child: AudioSlider(
-                          //       audioSceneItem: currentAudioSceneItem),
-                          // ),
+                          (input) => VisibilitySlideWrapper(
+                            input: input,
+                            child: AudioSlider(input: input),
+                          ),
                         )
                         .toList()
                     : [

@@ -5,9 +5,10 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/enums/scene_item_type.dart';
 import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/types/classes/api/input.dart';
 
-import '../../../../../models/enums/scene_item_type.dart';
 import '../../../../../models/hidden_scene_item.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
@@ -15,16 +16,14 @@ import '../../../../../types/classes/api/scene_item.dart';
 import '../../../../../types/enums/hive_keys.dart';
 
 class VisibilitySlideWrapper extends StatefulWidget {
-  final SceneItem sceneItem;
-  final SceneItemType sceneItemType;
+  final SceneItem? sceneItem;
+  final Input? input;
   final Widget child;
 
-  const VisibilitySlideWrapper({
-    Key? key,
-    required this.child,
-    required this.sceneItem,
-    required this.sceneItemType,
-  }) : super(key: key);
+  const VisibilitySlideWrapper(
+      {Key? key, required this.child, this.sceneItem, this.input})
+      : assert(sceneItem != null || input != null),
+        super(key: key);
 
   @override
   _VisibilitySlideWrapperState createState() => _VisibilitySlideWrapperState();
@@ -47,7 +46,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
       DashboardStore dashboardStore, SlidableController slidableController) {
     _disposers.add(
       reaction(
-        this.widget.sceneItemType == SceneItemType.Source
+        this.widget.sceneItem != null
             ? (_) => dashboardStore.editSceneItemVisibility
             : (_) => dashboardStore.editAudioVisibility,
         (bool editVisibility) {
@@ -66,7 +65,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
       DashboardStore dashboardStore,
       Box<HiddenSceneItem> hiddenSceneItemsBox,
       HiddenSceneItem? hiddenSceneItem) {
-    bool isEditing = this.widget.sceneItemType == SceneItemType.Source
+    bool isEditing = this.widget.sceneItem != null
         ? dashboardStore.editSceneItemVisibility
         : dashboardStore.editAudioVisibility;
 
@@ -75,14 +74,16 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
     } else {
       if (hiddenSceneItem != null) {
         return true;
-      } else if (this.widget.sceneItem.parentGroupName != null) {
+      } else if (this.widget.sceneItem != null &&
+          this.widget.sceneItem!.parentGroupName != null) {
         bool parentHidden = hiddenSceneItemsBox.values.toList().any(
-            (hiddenSceneItemInBox) =>
-                hiddenSceneItemInBox.name ==
-                    this.widget.sceneItem.parentGroupName &&
-                (hiddenSceneItemInBox.sourceType != null
-                    ? hiddenSceneItemInBox.sourceType == 'group'
-                    : true));
+              (hiddenSceneItemInBox) =>
+                  hiddenSceneItemInBox.name ==
+                      this.widget.sceneItem!.parentGroupName &&
+                  (hiddenSceneItemInBox.sourceType != null
+                      ? hiddenSceneItemInBox.sourceType == 'group'
+                      : true),
+            );
 
         return parentHidden;
       }
@@ -104,8 +105,12 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
           hiddenSceneItem = hiddenSceneItemsBox.values.toList().firstWhere(
                 (hiddenSceneItem) => hiddenSceneItem.isSceneItem(
                   dashboardStore.activeSceneName!,
-                  this.widget.sceneItemType,
-                  this.widget.sceneItem,
+                  this.widget.sceneItem != null
+                      ? SceneItemType.Source
+                      : SceneItemType.Audio,
+                  this.widget.sceneItem?.sceneItemId,
+                  this.widget.sceneItem?.sourceName ??
+                      this.widget.input!.inputName!,
                   networkStore.activeSession?.connection.name,
                   networkStore.activeSession?.connection.host,
                 ),
@@ -165,10 +170,13 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                       } else {
                         hiddenSceneItem = HiddenSceneItem(
                           dashboardStore.activeSceneName!,
-                          this.widget.sceneItemType,
-                          this.widget.sceneItem.sceneItemId,
-                          this.widget.sceneItem.sourceName!,
-                          this.widget.sceneItem.sourceType,
+                          this.widget.sceneItem != null
+                              ? SceneItemType.Source
+                              : SceneItemType.Audio,
+                          this.widget.sceneItem?.sceneItemId,
+                          this.widget.sceneItem?.sourceName ??
+                              this.widget.input!.inputName!,
+                          this.widget.sceneItem?.sourceType,
                           networkStore.activeSession?.connection.name,
                           networkStore.activeSession?.connection.host,
                         );
