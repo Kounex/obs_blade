@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/overlay/base_result.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/utils/overlay_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
@@ -82,7 +85,20 @@ class ConnectionBox extends StatelessWidget {
                       text: 'Connect',
                       onPressed: () {
                         FocusScope.of(context).unfocus();
-                        networkStore.setOBSWebSocket(this.connection);
+                        networkStore
+                            .setOBSWebSocket(this.connection)
+                            .then((closeCode) {
+                          if (closeCode ==
+                              WebSocketCloseCode.AuthenticationFailed) {
+                            OverlayHandler.showStatusOverlay(
+                              context: context,
+                              content: const BaseResult(
+                                icon: BaseResultIcon.Negative,
+                                text: 'Wrong password!',
+                              ),
+                            );
+                          }
+                        });
                       },
                     ),
                   ),

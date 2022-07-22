@@ -12,7 +12,6 @@ import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
 import 'package:obs_blade/types/classes/stream/events/input_mute_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/replay_buffer_state_changed.dart';
-import 'package:obs_blade/types/classes/stream/events/stream_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
@@ -31,7 +30,6 @@ import '../../types/classes/stream/events/current_preview_scene_changed.dart';
 import '../../types/classes/stream/events/current_program_scene_changed.dart';
 import '../../types/classes/stream/events/current_scene_collection_changed.dart';
 import '../../types/classes/stream/events/input_volume_changed.dart';
-import '../../types/classes/stream/events/record_state_changed.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
@@ -41,12 +39,10 @@ import '../../types/classes/stream/responses/get_input_kind_list.dart';
 import '../../types/classes/stream/responses/get_input_list.dart';
 import '../../types/classes/stream/responses/get_input_mute.dart';
 import '../../types/classes/stream/responses/get_input_volume.dart';
-import '../../types/classes/stream/responses/get_record_status.dart';
 import '../../types/classes/stream/responses/get_scene_item_list.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_scene_transition_list.dart';
 import '../../types/classes/stream/responses/get_source_screenshot.dart';
-import '../../types/classes/stream/responses/get_stream_status.dart';
 import '../../types/classes/stream/responses/get_studio_mode_enabled.dart';
 import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/enums/event_type.dart';
@@ -321,7 +317,7 @@ abstract class _DashboardStore with Store {
 
   void _periodicStatsRequest() {
     Timer.periodic(
-      const Duration(seconds: 1),
+      const Duration(milliseconds: 1000),
       (_) => NetworkHelper.makeBatchRequest(
         GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestBatchType.Stats,
@@ -529,40 +525,38 @@ abstract class _DashboardStore with Store {
       );
     }
 
-    this.latestRecordTimeDurationMS = _timecodeToMS(event.recTimecodeOld);
-    this.latestStreamTimeDurationMS = _timecodeToMS(event.streamTimecodeOld);
     switch (event.eventType) {
-      case EventType.StreamStateChanged:
-        StreamStateChangedEvent streamStateChangedEvent =
-            StreamStateChangedEvent(event.jsonRAW);
+      // case EventType.StreamStateChanged:
+      //   StreamStateChangedEvent streamStateChangedEvent =
+      //       StreamStateChangedEvent(event.jsonRAW);
 
-        this.isLive = streamStateChangedEvent.outputActive;
+      //   this.isLive = streamStateChangedEvent.outputActive;
 
-        if (!this.isLive) {
-          this.latestStreamTimeDurationMS = null;
-        }
-        break;
-      case EventType.RecordStateChanged:
-        RecordStateChangedEvent recordStateChangedEvent =
-            RecordStateChangedEvent(event.jsonRAW);
+      //   if (!this.isLive) {
+      //     this.latestStreamTimeDurationMS = null;
+      //   }
+      //   break;
+      // case EventType.RecordStateChanged:
+      //   RecordStateChangedEvent recordStateChangedEvent =
+      //       RecordStateChangedEvent(event.jsonRAW);
 
-        switch (recordStateChangedEvent.outputState) {
-          case 'OBS_WEBSOCKET_OUTPUT_STARTING':
-            this.isRecording = true;
-            break;
-          case 'OBS_WEBSOCKET_OUTPUT_STOPPED':
-            this.isRecording = false;
-            this.isRecordingPaused = false;
-            this.latestRecordTimeDurationMS = null;
-            break;
-          case 'OBS_WEBSOCKET_OUTPUT_PAUSED':
-            this.isRecordingPaused = true;
-            break;
-          case 'OBS_WEBSOCKET_OUTPUT_RESUMED':
-            this.isRecordingPaused = false;
-            break;
-        }
-        break;
+      //   switch (recordStateChangedEvent.outputState) {
+      //     case 'OBS_WEBSOCKET_OUTPUT_STARTING':
+      //       this.isRecording = true;
+      //       break;
+      //     case 'OBS_WEBSOCKET_OUTPUT_STOPPED':
+      //       this.isRecording = false;
+      //       this.isRecordingPaused = false;
+      //       this.latestRecordTimeDurationMS = null;
+      //       break;
+      //     case 'OBS_WEBSOCKET_OUTPUT_PAUSED':
+      //       this.isRecordingPaused = true;
+      //       break;
+      //     case 'OBS_WEBSOCKET_OUTPUT_RESUMED':
+      //       this.isRecordingPaused = false;
+      //       break;
+      //   }
+      //   break;
       case EventType.ReplayBufferStateChanged:
         ReplayBufferStateChangedEvent replayBufferStateChangedEvent =
             ReplayBufferStateChangedEvent(event.jsonRAW);
@@ -796,7 +790,9 @@ abstract class _DashboardStore with Store {
             GetSceneItemListResponse(response.jsonRAW);
 
         this.currentSceneItems = ObservableList.of(
-            _flattenSceneItems(getSceneItemListResponse.sceneItems));
+            _flattenSceneItems(getSceneItemListResponse.sceneItems)
+              ..sort((sc1, sc2) =>
+                  (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0)));
 
         break;
       case RequestType.GetInputList:
@@ -860,31 +856,31 @@ abstract class _DashboardStore with Store {
           );
         }
         break;
-      case RequestType.GetStreamStatus:
-        GetStreamStatusResponse getStreamStatusResponse =
-            GetStreamStatusResponse(response.jsonRAW);
+      // case RequestType.GetStreamStatus:
+      //   GetStreamStatusResponse getStreamStatusResponse =
+      //       GetStreamStatusResponse(response.jsonRAW);
 
-        this.isLive = getStreamStatusResponse.outputActive;
+      //   this.isLive = getStreamStatusResponse.outputActive;
 
-        if (this.isLive) {
-          this.latestStreamTimeDurationMS =
-              _timecodeToMS(getStreamStatusResponse.outputTimecode);
-        }
-        break;
-      case RequestType.GetRecordStatus:
-        GetRecordStatusResponse getRecordStatusResponse =
-            GetRecordStatusResponse(response.jsonRAW);
+      //   if (this.isLive) {
+      //     this.latestStreamTimeDurationMS =
+      //         _timecodeToMS(getStreamStatusResponse.outputTimecode);
+      //   }
+      //   break;
+      // case RequestType.GetRecordStatus:
+      //   GetRecordStatusResponse getRecordStatusResponse =
+      //       GetRecordStatusResponse(response.jsonRAW);
 
-        this.isRecordingPaused = getRecordStatusResponse.ouputPaused ?? false;
-        this.isRecording = this.isRecordingPaused
-            ? true
-            : getRecordStatusResponse.outputActive;
+      //   this.isRecordingPaused = getRecordStatusResponse.ouputPaused ?? false;
+      //   this.isRecording = this.isRecordingPaused
+      //       ? true
+      //       : getRecordStatusResponse.outputActive;
 
-        if (this.isRecording) {
-          this.latestRecordTimeDurationMS =
-              _timecodeToMS(getRecordStatusResponse.outputTimecode);
-        }
-        break;
+      //   if (this.isRecording) {
+      //     this.latestRecordTimeDurationMS =
+      //         _timecodeToMS(getRecordStatusResponse.outputTimecode);
+      //   }
+      //   break;
       case RequestType.GetReplayBufferStatus:
         GetReplayBufferStatusResponse getReplayBufferStatusResponse =
             GetReplayBufferStatusResponse(response.jsonRAW);
@@ -977,6 +973,15 @@ abstract class _DashboardStore with Store {
             _timecodeToMS(statsBatchResponse.recordStatus.outputTimecode);
         this.latestStreamTimeDurationMS =
             _timecodeToMS(statsBatchResponse.streamStatus.outputTimecode);
+
+        this.isRecordingPaused =
+            statsBatchResponse.recordStatus.ouputPaused ?? false;
+
+        this.isRecording = this.isRecordingPaused
+            ? true
+            : statsBatchResponse.recordStatus.outputActive;
+
+        this.isLive = statsBatchResponse.streamStatus.outputActive;
         break;
       case RequestBatchType.Input:
         InputsBatchResponse inputsBatchResponse =
