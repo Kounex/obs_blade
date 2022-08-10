@@ -6,7 +6,7 @@ part of 'dashboard.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$DashboardStore on _DashboardStore, Store {
   Computed<ObservableList<Input>>? _$currentInputsComputed;
@@ -24,7 +24,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
               name: '_DashboardStore.globalInputs'))
       .value;
 
-  final _$isLiveAtom = Atom(name: '_DashboardStore.isLive');
+  late final _$isLiveAtom =
+      Atom(name: '_DashboardStore.isLive', context: context);
 
   @override
   bool get isLive {
@@ -39,7 +40,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$isRecordingAtom = Atom(name: '_DashboardStore.isRecording');
+  late final _$isRecordingAtom =
+      Atom(name: '_DashboardStore.isRecording', context: context);
 
   @override
   bool get isRecording {
@@ -54,8 +56,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$isRecordingPausedAtom =
-      Atom(name: '_DashboardStore.isRecordingPaused');
+  late final _$isRecordingPausedAtom =
+      Atom(name: '_DashboardStore.isRecordingPaused', context: context);
 
   @override
   bool get isRecordingPaused {
@@ -70,8 +72,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$isReplayBufferActiveAtom =
-      Atom(name: '_DashboardStore.isReplayBufferActive');
+  late final _$isReplayBufferActiveAtom =
+      Atom(name: '_DashboardStore.isReplayBufferActive', context: context);
 
   @override
   bool get isReplayBufferActive {
@@ -87,8 +89,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$latestStreamTimeDurationMSAtom =
-      Atom(name: '_DashboardStore.latestStreamTimeDurationMS');
+  late final _$latestStreamTimeDurationMSAtom = Atom(
+      name: '_DashboardStore.latestStreamTimeDurationMS', context: context);
 
   @override
   int? get latestStreamTimeDurationMS {
@@ -104,8 +106,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$latestRecordTimeDurationMSAtom =
-      Atom(name: '_DashboardStore.latestRecordTimeDurationMS');
+  late final _$latestRecordTimeDurationMSAtom = Atom(
+      name: '_DashboardStore.latestRecordTimeDurationMS', context: context);
 
   @override
   int? get latestRecordTimeDurationMS {
@@ -121,7 +123,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$streamDataAtom = Atom(name: '_DashboardStore.streamData');
+  late final _$streamDataAtom =
+      Atom(name: '_DashboardStore.streamData', context: context);
 
   @override
   PastStreamData? get streamData {
@@ -136,8 +139,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$latestStreamStatsAtom =
-      Atom(name: '_DashboardStore.latestStreamStats');
+  late final _$latestStreamStatsAtom =
+      Atom(name: '_DashboardStore.latestStreamStats', context: context);
 
   @override
   StreamStats? get latestStreamStats {
@@ -152,8 +155,40 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$currentSceneCollectionNameAtom =
-      Atom(name: '_DashboardStore.currentSceneCollectionName');
+  late final _$recordDataAtom =
+      Atom(name: '_DashboardStore.recordData', context: context);
+
+  @override
+  PastRecordData? get recordData {
+    _$recordDataAtom.reportRead();
+    return super.recordData;
+  }
+
+  @override
+  set recordData(PastRecordData? value) {
+    _$recordDataAtom.reportWrite(value, super.recordData, () {
+      super.recordData = value;
+    });
+  }
+
+  late final _$latestRecordStatsAtom =
+      Atom(name: '_DashboardStore.latestRecordStats', context: context);
+
+  @override
+  RecordStats? get latestRecordStats {
+    _$latestRecordStatsAtom.reportRead();
+    return super.latestRecordStats;
+  }
+
+  @override
+  set latestRecordStats(RecordStats? value) {
+    _$latestRecordStatsAtom.reportWrite(value, super.latestRecordStats, () {
+      super.latestRecordStats = value;
+    });
+  }
+
+  late final _$currentSceneCollectionNameAtom = Atom(
+      name: '_DashboardStore.currentSceneCollectionName', context: context);
 
   @override
   String? get currentSceneCollectionName {
@@ -169,7 +204,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$sceneCollectionsAtom = Atom(name: '_DashboardStore.sceneCollections');
+  late final _$sceneCollectionsAtom =
+      Atom(name: '_DashboardStore.sceneCollections', context: context);
 
   @override
   ObservableList<String>? get sceneCollections {
@@ -184,7 +220,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$activeSceneNameAtom = Atom(name: '_DashboardStore.activeSceneName');
+  late final _$activeSceneNameAtom =
+      Atom(name: '_DashboardStore.activeSceneName', context: context);
 
   @override
   String? get activeSceneName {
@@ -199,7 +236,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$scenesAtom = Atom(name: '_DashboardStore.scenes');
+  late final _$scenesAtom =
+      Atom(name: '_DashboardStore.scenes', context: context);
 
   @override
   ObservableList<Scene>? get scenes {
@@ -214,8 +252,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$currentSceneItemsAtom =
-      Atom(name: '_DashboardStore.currentSceneItems');
+  late final _$currentSceneItemsAtom =
+      Atom(name: '_DashboardStore.currentSceneItems', context: context);
 
   @override
   ObservableList<SceneItem>? get currentSceneItems {
@@ -230,7 +268,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$allInputsAtom = Atom(name: '_DashboardStore.allInputs');
+  late final _$allInputsAtom =
+      Atom(name: '_DashboardStore.allInputs', context: context);
 
   @override
   ObservableList<Input> get allInputs {
@@ -245,7 +284,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$globalInputNamesAtom = Atom(name: '_DashboardStore.globalInputNames');
+  late final _$globalInputNamesAtom =
+      Atom(name: '_DashboardStore.globalInputNames', context: context);
 
   @override
   ObservableList<String> get globalInputNames {
@@ -260,8 +300,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$currentTransitionAtom =
-      Atom(name: '_DashboardStore.currentTransition');
+  late final _$currentTransitionAtom =
+      Atom(name: '_DashboardStore.currentTransition', context: context);
 
   @override
   Transition? get currentTransition {
@@ -276,8 +316,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$availableTransitionsAtom =
-      Atom(name: '_DashboardStore.availableTransitions');
+  late final _$availableTransitionsAtom =
+      Atom(name: '_DashboardStore.availableTransitions', context: context);
 
   @override
   List<Transition>? get availableTransitions {
@@ -293,8 +333,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$shouldRequestPreviewImageAtom =
-      Atom(name: '_DashboardStore.shouldRequestPreviewImage');
+  late final _$shouldRequestPreviewImageAtom =
+      Atom(name: '_DashboardStore.shouldRequestPreviewImage', context: context);
 
   @override
   bool get shouldRequestPreviewImage {
@@ -310,8 +350,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$scenePreviewImageBytesAtom =
-      Atom(name: '_DashboardStore.scenePreviewImageBytes');
+  late final _$scenePreviewImageBytesAtom =
+      Atom(name: '_DashboardStore.scenePreviewImageBytes', context: context);
 
   @override
   Uint8List? get scenePreviewImageBytes {
@@ -327,7 +367,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$isPointerOnChatAtom = Atom(name: '_DashboardStore.isPointerOnChat');
+  late final _$isPointerOnChatAtom =
+      Atom(name: '_DashboardStore.isPointerOnChat', context: context);
 
   @override
   bool get isPointerOnChat {
@@ -342,7 +383,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$reconnectingAtom = Atom(name: '_DashboardStore.reconnecting');
+  late final _$reconnectingAtom =
+      Atom(name: '_DashboardStore.reconnecting', context: context);
 
   @override
   bool get reconnecting {
@@ -357,8 +399,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$editSceneItemVisibilityAtom =
-      Atom(name: '_DashboardStore.editSceneItemVisibility');
+  late final _$editSceneItemVisibilityAtom =
+      Atom(name: '_DashboardStore.editSceneItemVisibility', context: context);
 
   @override
   bool get editSceneItemVisibility {
@@ -374,8 +416,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$editAudioVisibilityAtom =
-      Atom(name: '_DashboardStore.editAudioVisibility');
+  late final _$editAudioVisibilityAtom =
+      Atom(name: '_DashboardStore.editAudioVisibility', context: context);
 
   @override
   bool get editAudioVisibility {
@@ -390,7 +432,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$studioModeAtom = Atom(name: '_DashboardStore.studioMode');
+  late final _$studioModeAtom =
+      Atom(name: '_DashboardStore.studioMode', context: context);
 
   @override
   bool get studioMode {
@@ -405,8 +448,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$studioModePreviewSceneNameAtom =
-      Atom(name: '_DashboardStore.studioModePreviewSceneName');
+  late final _$studioModePreviewSceneNameAtom = Atom(
+      name: '_DashboardStore.studioModePreviewSceneName', context: context);
 
   @override
   String? get studioModePreviewSceneName {
@@ -422,8 +465,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$editSceneVisibilityAtom =
-      Atom(name: '_DashboardStore.editSceneVisibility');
+  late final _$editSceneVisibilityAtom =
+      Atom(name: '_DashboardStore.editSceneVisibility', context: context);
 
   @override
   bool get editSceneVisibility {
@@ -438,8 +481,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
-  final _$_checkOBSConnectionAsyncAction =
-      AsyncAction('_DashboardStore._checkOBSConnection');
+  late final _$_checkOBSConnectionAsyncAction =
+      AsyncAction('_DashboardStore._checkOBSConnection', context: context);
 
   @override
   Future<void> _checkOBSConnection() {
@@ -447,15 +490,16 @@ mixin _$DashboardStore on _DashboardStore, Store {
         .run(() => super._checkOBSConnection());
   }
 
-  final _$_handleEventAsyncAction = AsyncAction('_DashboardStore._handleEvent');
+  late final _$_handleEventAsyncAction =
+      AsyncAction('_DashboardStore._handleEvent', context: context);
 
   @override
   Future<void> _handleEvent(BaseEvent event) {
     return _$_handleEventAsyncAction.run(() => super._handleEvent(event));
   }
 
-  final _$_handleBatchResponseAsyncAction =
-      AsyncAction('_DashboardStore._handleBatchResponse');
+  late final _$_handleBatchResponseAsyncAction =
+      AsyncAction('_DashboardStore._handleBatchResponse', context: context);
 
   @override
   Future<void> _handleBatchResponse(BaseBatchResponse batchResponse) {
@@ -463,8 +507,8 @@ mixin _$DashboardStore on _DashboardStore, Store {
         .run(() => super._handleBatchResponse(batchResponse));
   }
 
-  final _$_DashboardStoreActionController =
-      ActionController(name: '_DashboardStore');
+  late final _$_DashboardStoreActionController =
+      ActionController(name: '_DashboardStore', context: context);
 
   @override
   void init() {
@@ -587,6 +631,8 @@ latestStreamTimeDurationMS: ${latestStreamTimeDurationMS},
 latestRecordTimeDurationMS: ${latestRecordTimeDurationMS},
 streamData: ${streamData},
 latestStreamStats: ${latestStreamStats},
+recordData: ${recordData},
+latestRecordStats: ${latestRecordStats},
 currentSceneCollectionName: ${currentSceneCollectionName},
 sceneCollections: ${sceneCollections},
 activeSceneName: ${activeSceneName},

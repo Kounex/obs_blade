@@ -9,4 +9,5 @@ class TypeIDs {
   static const int AppLog = 7;
   static const int LogLevel = 8;
   static const int PurchasedTip = 9;
+  static const int PastRecordData = 10;
 }

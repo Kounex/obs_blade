@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get_it/get_it.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/general/base/card.dart';
@@ -23,7 +23,7 @@ class StreamChat extends StatefulWidget {
 
 class _StreamChatState extends State<StreamChat>
     with AutomaticKeepAliveClientMixin {
-  // late InAppWebViewController _webController;
+  late WebViewController _webController;
 
   @override
   bool get wantKeepAlive => true;
@@ -70,11 +70,43 @@ class _StreamChatState extends State<StreamChat>
                     onPointerDown: (onPointerDown) =>
                         dashboardStore.setPointerOnChat(
                             onPointerDown.localPosition.dy > 125.0 &&
-                                onPointerDown.localPosition.dy < 350.0),
+                                onPointerDown.localPosition.dy < 450.0),
                     onPointerUp: (_) => dashboardStore.setPointerOnChat(false),
                     onPointerCancel: (_) =>
                         dashboardStore.setPointerOnChat(false),
-                    // child: InAppWebView(
+                    child: WebView(
+                      key: Key(
+                        chatType.toString() +
+                            settingsBox
+                                .get(SettingsKeys.SelectedTwitchUsername.name)
+                                .toString() +
+                            settingsBox
+                                .get(SettingsKeys.SelectedYoutubeUsername.name)
+                                .toString(),
+                      ),
+                      initialUrl: Uri.parse(chatType == ChatType.Twitch &&
+                                  settingsBox.get(SettingsKeys
+                                          .SelectedTwitchUsername.name) !=
+                                      null
+                              ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
+                              : chatType == ChatType.YouTube &&
+                                      settingsBox.get(SettingsKeys
+                                              .SelectedYoutubeUsername.name) !=
+                                          null
+                                  ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
+                                  : 'about:blank')
+                          .toString(),
+                      allowsInlineMediaPlayback: true,
+                      zoomEnabled: false,
+                      userAgent:
+                          'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1',
+                      backgroundColor: Colors.transparent,
+                      javascriptMode: JavascriptMode.unrestricted,
+                      onWebViewCreated: (webController) {
+                        _webController = webController;
+                      },
+                    ),
+                    // InAppWebView(
                     //   key: Key(
                     //     chatType.toString() +
                     //         settingsBox
@@ -120,7 +152,7 @@ class _StreamChatState extends State<StreamChat>
                                   SettingsKeys.SelectedYoutubeUsername.name) ==
                               null)
                     Positioned(
-                      top: 24.0,
+                      top: 48.0,
                       child: SizedBox(
                         height: 185,
                         width: 225,

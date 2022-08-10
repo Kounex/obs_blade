@@ -6,11 +6,11 @@ part of 'home.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$HomeStore on _HomeStore, Store {
-  final _$autodiscoverConnectionsAtom =
-      Atom(name: '_HomeStore.autodiscoverConnections');
+  late final _$autodiscoverConnectionsAtom =
+      Atom(name: '_HomeStore.autodiscoverConnections', context: context);
 
   @override
   Future<List<Connection>>? get autodiscoverConnections {
@@ -26,7 +26,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$autodiscoverPortAtom = Atom(name: '_HomeStore.autodiscoverPort');
+  late final _$autodiscoverPortAtom =
+      Atom(name: '_HomeStore.autodiscoverPort', context: context);
 
   @override
   String get autodiscoverPort {
@@ -41,7 +42,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$refreshableAtom = Atom(name: '_HomeStore.refreshable');
+  late final _$refreshableAtom =
+      Atom(name: '_HomeStore.refreshable', context: context);
 
   @override
   bool get refreshable {
@@ -56,7 +58,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$doRefreshAtom = Atom(name: '_HomeStore.doRefresh');
+  late final _$doRefreshAtom =
+      Atom(name: '_HomeStore.doRefresh', context: context);
 
   @override
   bool get doRefresh {
@@ -71,7 +74,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$manualModeAtom = Atom(name: '_HomeStore.manualMode');
+  late final _$manualModeAtom =
+      Atom(name: '_HomeStore.manualMode', context: context);
 
   @override
   bool get manualMode {
@@ -86,7 +90,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$domainModeAtom = Atom(name: '_HomeStore.domainMode');
+  late final _$domainModeAtom =
+      Atom(name: '_HomeStore.domainMode', context: context);
 
   @override
   bool get domainMode {
@@ -101,7 +106,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$protocolSchemeAtom = Atom(name: '_HomeStore.protocolScheme');
+  late final _$protocolSchemeAtom =
+      Atom(name: '_HomeStore.protocolScheme', context: context);
 
   @override
   String get protocolScheme {
@@ -116,7 +122,8 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  final _$_HomeStoreActionController = ActionController(name: '_HomeStore');
+  late final _$_HomeStoreActionController =
+      ActionController(name: '_HomeStore', context: context);
 
   @override
   void setAutodiscoverPort(String autodiscoverPort) {

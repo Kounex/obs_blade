@@ -25,7 +25,7 @@ class GetStatsResponse extends BaseResponse {
   /// Total number of frames outputted by the render thread
   int get renderTotalFrames => this.json['renderTotalFrames'];
 
-  /// Number of frames skipped by OBS in the output thrcead
+  /// Number of frames skipped by OBS in the output thread
   int get outputSkippedFrames => this.json['outputSkippedFrames'];
 
   /// Total number of frames outputted by the output thread

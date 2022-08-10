@@ -6,10 +6,11 @@ part of 'tabs.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$TabsStore on _TabsStore, Store {
-  final _$activeTabAtom = Atom(name: '_TabsStore.activeTab');
+  late final _$activeTabAtom =
+      Atom(name: '_TabsStore.activeTab', context: context);
 
   @override
   Tabs get activeTab {
@@ -24,8 +25,8 @@ mixin _$TabsStore on _TabsStore, Store {
     });
   }
 
-  final _$performTabClickActionAtom =
-      Atom(name: '_TabsStore.performTabClickAction');
+  late final _$performTabClickActionAtom =
+      Atom(name: '_TabsStore.performTabClickAction', context: context);
 
   @override
   bool get performTabClickAction {
@@ -41,7 +42,8 @@ mixin _$TabsStore on _TabsStore, Store {
     });
   }
 
-  final _$_TabsStoreActionController = ActionController(name: '_TabsStore');
+  late final _$_TabsStoreActionController =
+      ActionController(name: '_TabsStore', context: context);
 
   @override
   void setActiveTab(Tabs activeTab) {

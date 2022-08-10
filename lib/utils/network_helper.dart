@@ -343,9 +343,11 @@ class NetworkHelper {
     RequestBatchType batchRequest,
     Iterable<RequestBatchObject> batch,
   ) {
-    GeneralHelper.advLog(
-      'Outgoing: $batchRequest',
-    );
+    if (batchRequest != RequestBatchType.Stats) {
+      GeneralHelper.advLog(
+        'Outgoing Batch: $batchRequest',
+      );
+    }
 
     String requestUUID = const Uuid().v4();
 

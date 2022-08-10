@@ -6,10 +6,11 @@ part of 'logs.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$LogsStore on _LogsStore, Store {
-  final _$logLevelAtom = Atom(name: '_LogsStore.logLevel');
+  late final _$logLevelAtom =
+      Atom(name: '_LogsStore.logLevel', context: context);
 
   @override
   LogLevel? get logLevel {
@@ -24,7 +25,8 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  final _$fromDateAtom = Atom(name: '_LogsStore.fromDate');
+  late final _$fromDateAtom =
+      Atom(name: '_LogsStore.fromDate', context: context);
 
   @override
   DateTime? get fromDate {
@@ -39,7 +41,7 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  final _$toDateAtom = Atom(name: '_LogsStore.toDate');
+  late final _$toDateAtom = Atom(name: '_LogsStore.toDate', context: context);
 
   @override
   DateTime? get toDate {
@@ -54,7 +56,8 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  final _$amountLogEntriesAtom = Atom(name: '_LogsStore.amountLogEntries');
+  late final _$amountLogEntriesAtom =
+      Atom(name: '_LogsStore.amountLogEntries', context: context);
 
   @override
   AmountLogEntries? get amountLogEntries {
@@ -69,7 +72,8 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  final _$filterOrderAtom = Atom(name: '_LogsStore.filterOrder');
+  late final _$filterOrderAtom =
+      Atom(name: '_LogsStore.filterOrder', context: context);
 
   @override
   Order get filterOrder {
@@ -84,7 +88,8 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  final _$_LogsStoreActionController = ActionController(name: '_LogsStore');
+  late final _$_LogsStoreActionController =
+      ActionController(name: '_LogsStore', context: context);
 
   @override
   void setLogLevel(LogLevel? logLevel) {

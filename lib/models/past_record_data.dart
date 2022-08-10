@@ -1,11 +1,11 @@
 import 'dart:math';
 
 import 'package:hive/hive.dart';
+import 'package:obs_blade/types/classes/api/record_stats.dart';
 
-import '../types/classes/api/stream_stats.dart';
 import 'type_ids.dart';
 
-part 'past_stream_data.g.dart';
+part 'past_record_data.g.dart';
 
 /// We are polling the status for streaming and recording periodically
 /// (by the time of writing this, every second). If we persist every status,
@@ -15,15 +15,15 @@ part 'past_stream_data.g.dart';
 ///   Streaming for 4 hours = 240 minutes = 14400 seconds: amount of entries
 ///
 /// Doing this multiple times would lead to way too many entries. What we
-/// do for now is collect a fixed amount, [kAmountStreamStatsForAverage], of
+/// do for now is collect a fixed amount, [kAmountRecordStatsForAverage], of
 /// stats before creating an actual entry which will be persisted. After
 /// collecting this amount of stats, we calculate the averages (or min / max)
 /// of those and persist it into an actual entry. This will ensure that we
 /// get a mix of reliable data and a less amount of entries
-const int kAmountStreamStatsForAverage = 10;
+const int kAmountRecordStatsForAverage = 10;
 
-@HiveType(typeId: TypeIDs.PastStreamData)
-class PastStreamData extends HiveObject {
+@HiveType(typeId: TypeIDs.PastRecordData)
+class PastRecordData extends HiveObject {
   /// Single values for the duration of the stream - won't consist
   /// of every value from the StreamStats event (too many) but will
   /// consist of a realistic subset (see explanation above)
@@ -35,123 +35,98 @@ class PastStreamData extends HiveObject {
   List<double> cpuUsageList = [];
 
   /// RAM usage (in megabytes)
-  @HiveField(17)
+  @HiveField(3)
   List<double> memoryUsageList = [];
 
   /// For every entry we make in our lists (which will be used for charts)
   /// we will save the DateTime in milliseconds so we know when this entry
-  /// has been done. Since the user could connect to OBS while already streaming
+  /// has been done. Since the user could connect to OBS while already recording
   /// or disconnect / connect multiple times, the charts would be wrong
   /// since we could not represent the "holes"
   ///
-  /// Also used to calculate when the stream started together with
-  /// [totalStreamTime]
-  @HiveField(18)
+  /// Also used to calculate when the record started together with
+  /// [totalRecordTime]
+  @HiveField(4)
   List<int> listEntryDateMS = [];
 
-  /// Percentage of dropped frames
-  @Deprecated('Not used in protocol > 5.X')
-  @HiveField(3)
-  double? strain;
-
   /// Total time (in seconds) since the stream started
-  @HiveField(4)
-  int? totalStreamTime;
-
-  /// Total number of frames transmitted since the stream started
-  @Deprecated('Not used in protocol > 5.X')
   @HiveField(5)
-  int? numTotalFrames;
-
-  /// Number of frames dropped by the encoder since the stream started
-  @Deprecated('Not used in protocol > 5.X')
-  @HiveField(6)
-  int? numDroppedFrames;
+  int? totalRecordTime;
 
   /// Number of frames rendered
-  @HiveField(7)
+  @HiveField(6)
   int? renderTotalFrames;
 
   /// Number of frames missed due to rendering lag
-  @HiveField(8)
+  @HiveField(7)
   int? renderMissedFrames;
 
-  /// Number of frames outputted
-  @HiveField(9)
-  int? outputTotalFrames;
-
-  /// Number of frames skipped due to encoding lag
-  @HiveField(10)
-  int? outputSkippedFrames;
-
   /// Average frame time (in milliseconds)
-  @HiveField(11)
+  @HiveField(8)
   double? averageFrameTime;
 
   /// Custom properties which will not be set / transmitted by OBS but set
   /// by the user or internally for checks
 
   /// Name of this [PastStreamData] to find it later / filtering etc.
-  @HiveField(13)
+  @HiveField(9)
   String? name;
 
   /// If this [PastStreamData] has been starred by the user (like favourite).
   /// Also suitable for filtering etc.
-  @HiveField(14)
+  @HiveField(10)
   bool? starred;
 
   /// Notes a user can write down for this [PastStreamData] for additional
   /// information on the stream or whatever
-  @HiveField(15)
+  @HiveField(11)
   String? notes;
 
-  /// List of current [StreamStats] which will be used to fill the
+  /// List of current [RecordStats] which will be used to fill the
   /// list of stats (see above). As soon as we reach [kAmountStreamStatsForAverage]
   /// amount of elements, the lists will get filled and [cacheStreamStats] gets
   /// cleared
-  final List<StreamStats> _cacheStreamStats = [];
+  final List<RecordStats> _cacheRecordStats = [];
 
-  void addStreamStats(StreamStats streamStats) {
-    if (_cacheStreamStats.length >= kAmountStreamStatsForAverage) {
-      _setListsFromStreamStats();
-      _cacheStreamStats.clear();
+  void addRecordStats(RecordStats recordStats) {
+    if (_cacheRecordStats.length >= kAmountRecordStatsForAverage) {
+      _setListsFromRecordStats();
+      _cacheRecordStats.clear();
     }
-    _cacheStreamStats.add(streamStats);
+    _cacheRecordStats.add(recordStats);
 
     /// If one of our lists (could be any) is empty, we want to
     /// fill in the first values directly from our first [StreamStats]
     /// so we have initial values at the beginning of our statistic
     if (this.fpsList.isEmpty) {
-      _setListsFromStreamStats();
+      _setListsFromRecordStats();
     }
     _updateAbsoluteStats();
   }
 
   /// Update all our statistics values (which are absolute). Will be
-  /// called every time we get a new [StreamStats] instance through
-  /// [addStreamStats]
+  /// called every time we get a new [RecordStats] instance through
+  /// [addRecordStats]
   void _updateAbsoluteStats() {
-    this.totalStreamTime = _cacheStreamStats.last.totalStreamTime;
-    this.renderTotalFrames = _cacheStreamStats.last.renderTotalFrames;
-    this.renderMissedFrames = _cacheStreamStats.last.renderMissedFrames;
-    this.outputTotalFrames = _cacheStreamStats.last.outputTotalFrames;
-    this.outputSkippedFrames = _cacheStreamStats.last.outputSkippedFrames;
-    this.averageFrameTime = _cacheStreamStats.last.averageFrameTime;
+    this.totalRecordTime = _cacheRecordStats.last.totalRecordTime;
+    this.renderTotalFrames = _cacheRecordStats.last.renderTotalFrames;
+    this.renderMissedFrames = _cacheRecordStats.last.renderMissedFrames;
+    this.averageFrameTime = _cacheRecordStats.last.averageFrameTime;
   }
 
   /// Update our lists (to see the changes of those values over time)
   /// according to our interval set by [kAmountStreamStatsForAverage]
-  void _setListsFromStreamStats() {
-    StreamStats relevantStreamStats =
-        _cacheStreamStats.reduce((master, current) => master
+  void _setListsFromRecordStats() {
+    RecordStats relevantRecordStats =
+        _cacheRecordStats.reduce((master, current) => master
           ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
           ..fps = min(master.fps, current.fps)
           ..cpuUsage = max(master.cpuUsage, current.cpuUsage)
           ..memoryUsage = max(master.memoryUsage, current.memoryUsage));
-    this.kbitsPerSecList.add(relevantStreamStats.kbitsPerSec);
-    this.fpsList.add(relevantStreamStats.fps);
-    this.cpuUsageList.add(relevantStreamStats.cpuUsage);
-    this.memoryUsageList.add(relevantStreamStats.memoryUsage);
+    this.kbitsPerSecList.add(relevantRecordStats.kbitsPerSec);
+    this.fpsList.add(relevantRecordStats.fps);
+    this.cpuUsageList.add(relevantRecordStats.cpuUsage);
+    this.memoryUsageList.add(relevantRecordStats.memoryUsage);
     this.listEntryDateMS.add(DateTime.now().millisecondsSinceEpoch);
   }
 }

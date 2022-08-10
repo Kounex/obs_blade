@@ -6,10 +6,11 @@ part of 'statistics.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$StatisticsStore on _StatisticsStore, Store {
-  final _$filterTypeAtom = Atom(name: '_StatisticsStore.filterType');
+  late final _$filterTypeAtom =
+      Atom(name: '_StatisticsStore.filterType', context: context);
 
   @override
   FilterType get filterType {
@@ -24,7 +25,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$filterOrderAtom = Atom(name: '_StatisticsStore.filterOrder');
+  late final _$filterOrderAtom =
+      Atom(name: '_StatisticsStore.filterOrder', context: context);
 
   @override
   Order get filterOrder {
@@ -39,8 +41,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$amountStatisticEntriesAtom =
-      Atom(name: '_StatisticsStore.amountStatisticEntries');
+  late final _$amountStatisticEntriesAtom =
+      Atom(name: '_StatisticsStore.amountStatisticEntries', context: context);
 
   @override
   AmountStatisticEntries get amountStatisticEntries {
@@ -56,7 +58,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$filterNameAtom = Atom(name: '_StatisticsStore.filterName');
+  late final _$filterNameAtom =
+      Atom(name: '_StatisticsStore.filterName', context: context);
 
   @override
   String get filterName {
@@ -71,8 +74,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$showOnlyFavoritesAtom =
-      Atom(name: '_StatisticsStore.showOnlyFavorites');
+  late final _$showOnlyFavoritesAtom =
+      Atom(name: '_StatisticsStore.showOnlyFavorites', context: context);
 
   @override
   bool? get showOnlyFavorites {
@@ -87,7 +90,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$fromDateAtom = Atom(name: '_StatisticsStore.fromDate');
+  late final _$fromDateAtom =
+      Atom(name: '_StatisticsStore.fromDate', context: context);
 
   @override
   DateTime? get fromDate {
@@ -102,7 +106,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$toDateAtom = Atom(name: '_StatisticsStore.toDate');
+  late final _$toDateAtom =
+      Atom(name: '_StatisticsStore.toDate', context: context);
 
   @override
   DateTime? get toDate {
@@ -117,8 +122,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$excludeUnnamedStreamsAtom =
-      Atom(name: '_StatisticsStore.excludeUnnamedStreams');
+  late final _$excludeUnnamedStreamsAtom =
+      Atom(name: '_StatisticsStore.excludeUnnamedStreams', context: context);
 
   @override
   bool? get excludeUnnamedStreams {
@@ -134,8 +139,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  final _$_StatisticsStoreActionController =
-      ActionController(name: '_StatisticsStore');
+  late final _$_StatisticsStoreActionController =
+      ActionController(name: '_StatisticsStore', context: context);
 
   @override
   void setFilterType(FilterType filterType) {

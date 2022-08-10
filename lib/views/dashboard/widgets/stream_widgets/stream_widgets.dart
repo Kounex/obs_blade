@@ -11,14 +11,14 @@ class StreamWidgets extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
+      children: const [
         Flexible(
-          child: const BaseCard(
+          child: BaseCard(
             title: 'Chat',
             rightPadding: 12.0,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 550.0,
+              height: 650.0,
               child: StreamChat(
                 usernameRowPadding: true,
               ),
@@ -26,12 +26,12 @@ class StreamWidgets extends StatelessWidget {
           ),
         ),
         Flexible(
-          child: const BaseCard(
+          child: BaseCard(
             title: 'Stats',
             leftPadding: 12.0,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 550.0,
+              height: 650.0,
               child: Stats(),
             ),
           ),

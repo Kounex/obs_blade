@@ -21,7 +21,9 @@ import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 
 import '../../models/enums/log_level.dart';
+import '../../models/past_record_data.dart';
 import '../../models/past_stream_data.dart';
+import '../../types/classes/api/record_stats.dart';
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/stream_stats.dart';
@@ -75,6 +77,10 @@ abstract class _DashboardStore with Store {
   PastStreamData? streamData;
   @observable
   StreamStats? latestStreamStats;
+  @observable
+  PastRecordData? recordData;
+  @observable
+  RecordStats? latestRecordStats;
 
   @observable
   String? currentSceneCollectionName;
@@ -197,7 +203,13 @@ abstract class _DashboardStore with Store {
   /// call [sceneCollectionRequests]
   bool handleRequestsEvents = true;
 
-  // List<Input> _tempInputs = [];
+  /// Bytes output of the stream - emitted by GetStreamStatus and will
+  /// be used as the previous temp value to calculate kbit/s
+  int _streamBytes = 0;
+
+  /// Bytes output of the record - emitted by GetRecordStatus and will
+  /// be used as the previous temp value to calculate kbit/s
+  int _recordBytes = 0;
 
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
@@ -298,23 +310,10 @@ abstract class _DashboardStore with Store {
         },
       );
 
-  /// Check if we have ongoing statistics (!= null) and set it
-  /// to null to indicate that we are done with this one and can start
-  /// a new one
-  Future<void> finishPastStreamData() async {
-    if (this.streamData != null) {
-      /// Check if [streamData] is even "legit" - if [totalStreamTime]
-      /// is not greater than 0, it's not worth the statistic entry and
-      /// will probably cause problems anyway. We will delete it therefore
-      if (this.streamData!.isInBox &&
-          (this.streamData!.totalStreamTime == null ||
-              this.streamData!.totalStreamTime! <= 0)) {
-        await this.streamData!.delete();
-      }
-      this.streamData = null;
-    }
-  }
-
+  /// Periodically polls the OBS, stream and record stats by making use
+  /// of the batch request capabilities every second since we don't receive
+  /// a status event every 2 seconds (as it was prior OBS WebSocket 4.9.1 and
+  /// below)
   void _periodicStatsRequest() {
     Timer.periodic(
       const Duration(milliseconds: 1000),
@@ -348,7 +347,7 @@ abstract class _DashboardStore with Store {
     return tmpSceneItems;
   }
 
-  /// If we get a [StreamStatus] event and we have no [PastStreamData]
+  /// If we are live and have no [PastStreamData]
   /// instance (null) we need to check if we create a completely new
   /// instance (indicating new stream) or we use the last one since it
   /// seems as this is the same stream we already were connected to
@@ -361,7 +360,7 @@ abstract class _DashboardStore with Store {
     tmp.sort((a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
 
     /// Check if the latest stream has its last entry (based on [listEntryDateMS]
-    ///  set later than current time - [totalStreamTime] which means that we
+    /// set later than current time - [totalStreamTime] which means that we
     /// connected to an OBS session we already were connected to
     if (tmp.isNotEmpty &&
         DateTime.now().millisecondsSinceEpoch -
@@ -371,6 +370,66 @@ abstract class _DashboardStore with Store {
     } else {
       this.streamData = PastStreamData();
       await pastStreamDataBox.add(this.streamData!);
+    }
+  }
+
+  /// If we are recording and have no [PastRecordData]
+  /// instance (null) we need to check if we create a completely new
+  /// instance (indicating new stream) or we use the last one since it
+  /// seems as this is the same stream we already were connected to
+  Future<void> _manageRecordDataInit() async {
+    Box<PastRecordData> pastRecordDataBox =
+        Hive.box<PastRecordData>(HiveKeys.PastRecordData.name);
+    List<PastRecordData> tmp = pastRecordDataBox.values.toList();
+
+    /// Sort ascending so the last entry is the latest stream
+    tmp.sort((a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
+
+    /// Check if the latest stream has its last entry (based on [listEntryDateMS]
+    /// set later than current time - [totalStreamTime] which means that we
+    /// connected to an OBS session we already were connected to
+    if (tmp.isNotEmpty &&
+        DateTime.now().millisecondsSinceEpoch -
+                this.latestRecordStats!.totalRecordTime * 1000 <=
+            tmp.last.listEntryDateMS.last) {
+      this.recordData = tmp.last;
+    } else {
+      this.recordData = PastRecordData();
+      await pastRecordDataBox.add(this.recordData!);
+    }
+  }
+
+  /// Check if we have ongoing statistics (!= null) and set it
+  /// to null to indicate that we are done with this one and can start
+  /// a new one
+  Future<void> _finishPastStreamData() async {
+    if (this.streamData != null) {
+      /// Check if [streamData] is even "legit" - if [totalStreamTime]
+      /// is not greater than 3, it's not worth the statistic entry and
+      /// will probably cause problems anyway. We will delete it therefore
+      if (this.streamData!.isInBox &&
+          (this.streamData!.totalStreamTime == null ||
+              this.streamData!.totalStreamTime! <= 3)) {
+        await this.streamData!.delete();
+      }
+      this.streamData = null;
+    }
+  }
+
+  /// Check if we have ongoing statistics (!= null) and set it
+  /// to null to indicate that we are done with this one and can start
+  /// a new one
+  Future<void> _finishPastRecordData() async {
+    if (this.recordData != null) {
+      /// Check if [recordData] is even "legit" - if [totalRecordTime]
+      /// is not greater than 3, it's not worth the statistic entry and
+      /// will probably cause problems anyway. We will delete it therefore
+      if (this.recordData!.isInBox &&
+          (this.recordData!.totalRecordTime == null ||
+              this.recordData!.totalRecordTime! <= 3)) {
+        await this.recordData!.delete();
+      }
+      this.recordData = null;
     }
   }
 
@@ -566,25 +625,7 @@ abstract class _DashboardStore with Store {
           OverlayHandler.closeAnyOverlay(immediately: false);
         }
         break;
-      case EventType.StreamStatus:
-        this.latestStreamStats = StreamStats.fromJSON(event.jsonRAW);
 
-        /// This case happens if we connect to an OBS session which already streams
-        if (!this.isLive) {
-          this.isLive = true;
-        }
-        if (this.latestStreamStats!.recording && !this.isRecording) {
-          NetworkHelper.makeRequest(
-            GetIt.instance<NetworkStore>().activeSession!.socket,
-            RequestType.GetRecordStatus,
-          );
-        }
-        if (this.streamData == null) {
-          _manageStreamDataInit();
-        }
-        this.streamData!.addStreamStats(this.latestStreamStats!);
-        await this.streamData!.save();
-        break;
       case EventType.CurrentSceneCollectionChanging:
         this.handleRequestsEvents = false;
         break;
@@ -729,7 +770,7 @@ abstract class _DashboardStore with Store {
 
         break;
       case EventType.ExitStarted:
-        await this.finishPastStreamData();
+        await _finishPastStreamData();
         GetIt.instance<NetworkStore>().obsTerminated = true;
         break;
       default:
@@ -960,15 +1001,19 @@ abstract class _DashboardStore with Store {
 
   @action
   Future<void> _handleBatchResponse(BaseBatchResponse batchResponse) async {
-    GeneralHelper.advLog(
-      'Batch Response Incoming: ${batchResponse.batchRequestType}',
-    );
+    if (batchResponse.batchRequestType != RequestBatchType.Stats) {
+      GeneralHelper.advLog(
+        'Batch Response Incoming: ${batchResponse.batchRequestType}',
+      );
+    }
 
     switch (batchResponse.batchRequestType) {
       case RequestBatchType.Stats:
         StatsBatchResponse statsBatchResponse =
             StatsBatchResponse(batchResponse.jsonRAW);
 
+        /// Set the timestamps or recording and streaming according
+        /// to the current status received by the batch
         this.latestRecordTimeDurationMS =
             _timecodeToMS(statsBatchResponse.recordStatus.outputTimecode);
         this.latestStreamTimeDurationMS =
@@ -981,7 +1026,94 @@ abstract class _DashboardStore with Store {
             ? true
             : statsBatchResponse.recordStatus.outputActive;
 
+        bool previouslyLive = this.isLive;
         this.isLive = statsBatchResponse.streamStatus.outputActive;
+
+        /// We were live and this batch request now indicates we are
+        /// not live anymore - we can finish our stream statistic
+        if (previouslyLive && !this.isLive) {
+          _finishPastStreamData();
+        }
+
+        if (this.isLive) {
+          if (this.streamData == null) {
+            _manageStreamDataInit();
+          }
+
+          /// Make sure our temp value is lower than the actual bytes emitted
+          /// (might not be the case when starting and stopping the stream
+          /// multiple times in a session and the value of the response gets
+          /// resetted)
+          if (_streamBytes > statsBatchResponse.streamStatus.outputBytes) {
+            _streamBytes = statsBatchResponse.streamStatus.outputBytes;
+          }
+
+          this.latestStreamStats = StreamStats(
+            kbitsPerSec:
+                (statsBatchResponse.streamStatus.outputBytes - _streamBytes) ~/
+                    125,
+            totalStreamTime: (_timecodeToMS(
+                        statsBatchResponse.streamStatus.outputTimecode) ??
+                    0) ~/
+                1000,
+            fps: statsBatchResponse.stats.activeFps,
+            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames,
+            renderMissedFrames: statsBatchResponse.stats.renderSkippedFrames,
+            outputTotalFrames:
+                statsBatchResponse.streamStatus.outputTotalFrames,
+            outputSkippedFrames:
+                statsBatchResponse.streamStatus.outputSkippedFrames,
+            averageFrameTime: statsBatchResponse.stats.averageFrameRenderTime,
+            cpuUsage: statsBatchResponse.stats.cpuUsage,
+            memoryUsage: statsBatchResponse.stats.memoryUsage,
+            freeDiskSpace: statsBatchResponse.stats.availableDiskSpace,
+          );
+
+          /// Set temp bytes to current for next iteration to correctly caluclate
+          /// kbits
+          _streamBytes = statsBatchResponse.streamStatus.outputBytes;
+
+          this.streamData!.addStreamStats(this.latestStreamStats!);
+          await this.streamData!.save();
+        }
+
+        if (this.isRecording && !this.isRecordingPaused) {
+          if (this.recordData == null) {
+            _manageRecordDataInit();
+          }
+
+          /// Make sure our temp value is lower than the actual bytes emitted
+          /// (might not be the case when starting and stopping the stream
+          /// multiple times in a session and the value of the response gets
+          /// resetted)
+          if (_recordBytes > statsBatchResponse.recordStatus.outputBytes) {
+            _recordBytes = statsBatchResponse.recordStatus.outputBytes;
+          }
+
+          this.latestRecordStats = RecordStats(
+            kbitsPerSec:
+                (statsBatchResponse.recordStatus.outputBytes - _streamBytes) ~/
+                    125,
+            totalRecordTime: (_timecodeToMS(
+                        statsBatchResponse.recordStatus.outputTimecode) ??
+                    0) ~/
+                1000,
+            fps: statsBatchResponse.stats.activeFps,
+            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames,
+            renderMissedFrames: statsBatchResponse.stats.renderSkippedFrames,
+            averageFrameTime: statsBatchResponse.stats.averageFrameRenderTime,
+            cpuUsage: statsBatchResponse.stats.cpuUsage,
+            memoryUsage: statsBatchResponse.stats.memoryUsage,
+            freeDiskSpace: statsBatchResponse.stats.availableDiskSpace,
+          );
+
+          /// Set temp bytes to current for next iteration to correctly caluclate
+          /// kbits
+          _recordBytes = statsBatchResponse.recordStatus.outputBytes;
+
+          this.recordData!.addRecordStats(this.latestRecordStats!);
+          await this.recordData!.save();
+        }
         break;
       case RequestBatchType.Input:
         InputsBatchResponse inputsBatchResponse =

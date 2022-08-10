@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../general/base/checkbox.dart';
 
 class ConfirmationDialog extends StatefulWidget {

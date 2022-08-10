@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
+
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/dialogs/info.dart';
 import '../../../../shared/general/base/button.dart';
@@ -69,7 +72,14 @@ class DonateButton extends StatelessWidget {
                   dialogWidget: InfoDialog(body: this.errorText!))
               : null,
       child: this.price != null || this.errorText != null
-          ? Text(this.price ?? '-')
+          ? Text(
+              this.price ?? '-',
+              style: const TextStyle(
+                fontFeatures: [
+                  FontFeature.tabularFigures(),
+                ],
+              ),
+            )
           : BaseProgressIndicator(size: 18.0),
     );
 

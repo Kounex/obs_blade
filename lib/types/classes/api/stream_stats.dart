@@ -1,30 +1,38 @@
 class StreamStats {
   /// Current streaming state
-  bool streaming;
+  @Deprecated('Not used in protocol > 5.X')
+  bool? streaming;
 
   /// Current recording state
-  bool recording;
+  @Deprecated('Not used in protocol > 5.X')
+  bool? recording;
 
   /// Replay Buffer status
-  bool replayBufferActive;
+  @Deprecated('Not used in protocol > 5.X')
+  bool? replayBufferActive;
 
   /// Amount of data per second (in bytes) transmitted by the stream encoder
-  int bytesPerSec;
+  @Deprecated('Not used in protocol > 5.X')
+  int? bytesPerSec;
 
   /// Amount of data per second (in kilobits) transmitted by the stream encoder
   int kbitsPerSec;
 
   /// Percentage of dropped frames
-  double strain;
+  ///
+  @Deprecated('Not used in protocol > 5.X')
+  double? strain;
 
   /// Total time (in seconds) since the stream started
   int totalStreamTime;
 
   /// Total number of frames transmitted since the stream started
-  int numTotalFrames;
+  @Deprecated('Not used in protocol > 5.X')
+  int? numTotalFrames;
 
   /// Number of frames dropped by the encoder since the stream started
-  int numDroppedFrames;
+  @Deprecated('Not used in protocol > 5.X')
+  int? numDroppedFrames;
 
   /// Current framerate
   double fps;
@@ -53,46 +61,24 @@ class StreamStats {
   /// Free recording disk space (in megabytes)
   double freeDiskSpace;
 
-  StreamStats(
-      {required this.streaming,
-      required this.recording,
-      required this.replayBufferActive,
-      required this.bytesPerSec,
-      required this.kbitsPerSec,
-      required this.strain,
-      required this.totalStreamTime,
-      required this.numTotalFrames,
-      required this.numDroppedFrames,
-      required this.fps,
-      required this.renderTotalFrames,
-      required this.renderMissedFrames,
-      required this.outputTotalFrames,
-      required this.outputSkippedFrames,
-      required this.averageFrameTime,
-      required this.cpuUsage,
-      required this.memoryUsage,
-      required this.freeDiskSpace});
-
-  static StreamStats fromJSON(Map<String, dynamic> json) {
-    return StreamStats(
-      averageFrameTime: json['average-frame-time'],
-      bytesPerSec: json['bytes-per-sec'],
-      cpuUsage: json['cpu-usage'],
-      fps: json['fps'],
-      freeDiskSpace: json['free-disk-space'],
-      kbitsPerSec: json['kbits-per-sec'],
-      memoryUsage: json['memory-usage'],
-      numDroppedFrames: json['num-dropped-frames'],
-      numTotalFrames: json['num-total-frames'],
-      outputSkippedFrames: json['output-skipped-frames'],
-      outputTotalFrames: json['output-total-frames'],
-      recording: json['recording'],
-      renderMissedFrames: json['render-missed-frames'],
-      renderTotalFrames: json['render-total-frames'],
-      replayBufferActive: json['replay-buffer-active'],
-      strain: json['strain'],
-      streaming: json['streaming'],
-      totalStreamTime: json['total-stream-time'],
-    );
-  }
+  StreamStats({
+    this.streaming,
+    this.recording,
+    this.replayBufferActive,
+    this.bytesPerSec,
+    required this.kbitsPerSec,
+    this.strain,
+    required this.totalStreamTime,
+    this.numTotalFrames,
+    this.numDroppedFrames,
+    required this.fps,
+    required this.renderTotalFrames,
+    required this.renderMissedFrames,
+    required this.outputTotalFrames,
+    required this.outputSkippedFrames,
+    required this.averageFrameTime,
+    required this.cpuUsage,
+    required this.memoryUsage,
+    required this.freeDiskSpace,
+  });
 }

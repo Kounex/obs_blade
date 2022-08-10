@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'stream_chat/stream_chat.dart';
 
 import 'stats/stats.dart';
+import 'stream_chat/stream_chat.dart';
 
 class StreamWidgetsMobile extends StatelessWidget {
   const StreamWidgetsMobile({Key? key}) : super(key: key);
@@ -32,7 +32,7 @@ class StreamWidgetsMobile extends StatelessWidget {
                 ),
               ),
               const SizedBox(
-                height: 575.0,
+                height: 650.0,
                 child: TabBarView(
                   physics: NeverScrollableScrollPhysics(),
                   children: [

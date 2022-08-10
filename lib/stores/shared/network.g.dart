@@ -6,10 +6,11 @@ part of 'network.dart';
 // StoreGenerator
 // **************************************************************************
 
-// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$NetworkStore on _NetworkStore, Store {
-  final _$activeSessionAtom = Atom(name: '_NetworkStore.activeSession');
+  late final _$activeSessionAtom =
+      Atom(name: '_NetworkStore.activeSession', context: context);
 
   @override
   Session? get activeSession {
@@ -24,8 +25,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$connectionInProgressAtom =
-      Atom(name: '_NetworkStore.connectionInProgress');
+  late final _$connectionInProgressAtom =
+      Atom(name: '_NetworkStore.connectionInProgress', context: context);
 
   @override
   bool get connectionInProgress {
@@ -41,8 +42,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$connectionClodeCodeAtom =
-      Atom(name: '_NetworkStore.connectionClodeCode');
+  late final _$connectionClodeCodeAtom =
+      Atom(name: '_NetworkStore.connectionClodeCode', context: context);
 
   @override
   WebSocketCloseCode? get connectionClodeCode {
@@ -57,7 +58,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$obsTerminatedAtom = Atom(name: '_NetworkStore.obsTerminated');
+  late final _$obsTerminatedAtom =
+      Atom(name: '_NetworkStore.obsTerminated', context: context);
 
   @override
   bool get obsTerminated {
@@ -72,8 +74,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  final _$setOBSWebSocketAsyncAction =
-      AsyncAction('_NetworkStore.setOBSWebSocket');
+  late final _$setOBSWebSocketAsyncAction =
+      AsyncAction('_NetworkStore.setOBSWebSocket', context: context);
 
   @override
   Future<WebSocketCloseCode> setOBSWebSocket(Connection connection,
@@ -82,8 +84,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
         .setOBSWebSocket(connection, reconnect: reconnect, timeout: timeout));
   }
 
-  final _$_NetworkStoreActionController =
-      ActionController(name: '_NetworkStore');
+  late final _$_NetworkStoreActionController =
+      ActionController(name: '_NetworkStore', context: context);
 
   @override
   void closeSession({bool manually = true}) {
