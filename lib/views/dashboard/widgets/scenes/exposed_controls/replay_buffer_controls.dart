@@ -46,7 +46,7 @@ class ReplayBufferControls extends StatelessWidget {
                   }
                   NetworkHelper.makeRequest(
                     GetIt.instance<NetworkStore>().activeSession!.socket,
-                    RequestType.StartStopReplayBuffer,
+                    RequestType.ToggleReplayBuffer,
                   );
                 },
                 icon: Icon(

@@ -94,6 +94,13 @@ enum RequestType {
   /// { 'sceneName': String } - Name of the scene to get the items of
   GetSceneItemList,
 
+  /// Basically GetSceneItemList, but for groups.
+  ///
+  /// Using groups at all in OBS is discouraged, as they are very broken under the hood.
+  ///
+  /// { 'sceneName': String } - Name of the group to get the items of
+  GetGroupSceneItemList,
+
   /// Gets the default settings for an input kind.
   ///
   /// { 'inputKind': String } - Input kind to get the default settings for
@@ -202,13 +209,12 @@ enum RequestType {
   /// {'sceneCollectionName': String } - Name of the scene collection to switch to
   SetCurrentSceneCollection,
 
-  /// Toggle the Replay Buffer on/off (depending on the current state of the replay buffer)
+  /// Toggles the state of the replay buffer output.
   ///
   /// No specified parameters
-  StartStopReplayBuffer,
+  ToggleReplayBuffer,
 
-  /// Flush and save the contents of the Replay Buffer to disk. This is basically the same as triggering the
-  /// "Save Replay Buffer" hotkey. Will return an error if the Replay Buffer is not active
+  /// Saves the contents of the replay buffer output.
   ///
   /// No specified parameters
   SaveReplayBuffer,

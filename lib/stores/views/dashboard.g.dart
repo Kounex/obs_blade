@@ -187,6 +187,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$latestOBSStatsAtom =
+      Atom(name: '_DashboardStore.latestOBSStats', context: context);
+
+  @override
+  GetStatsResponse? get latestOBSStats {
+    _$latestOBSStatsAtom.reportRead();
+    return super.latestOBSStats;
+  }
+
+  @override
+  set latestOBSStats(GetStatsResponse? value) {
+    _$latestOBSStatsAtom.reportWrite(value, super.latestOBSStats, () {
+      super.latestOBSStats = value;
+    });
+  }
+
   late final _$currentSceneCollectionNameAtom = Atom(
       name: '_DashboardStore.currentSceneCollectionName', context: context);
 
@@ -633,6 +649,7 @@ streamData: ${streamData},
 latestStreamStats: ${latestStreamStats},
 recordData: ${recordData},
 latestRecordStats: ${latestRecordStats},
+latestOBSStats: ${latestOBSStats},
 currentSceneCollectionName: ${currentSceneCollectionName},
 sceneCollections: ${sceneCollections},
 activeSceneName: ${activeSceneName},

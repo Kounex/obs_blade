@@ -22,7 +22,7 @@ class SceneContent extends StatelessWidget {
             rightPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 350.0,
+              height: 400.0,
               child: SceneItems(),
             ),
           ),
@@ -37,7 +37,7 @@ class SceneContent extends StatelessWidget {
             leftPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 350.0,
+              height: 400.0,
               child: AudioInputs(),
             ),
           ),

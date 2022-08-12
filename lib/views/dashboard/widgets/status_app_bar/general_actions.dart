@@ -113,7 +113,7 @@ class GeneralActions extends StatelessWidget {
                       }
                       NetworkHelper.makeRequest(
                         networkStore.activeSession!.socket,
-                        RequestType.StartStopReplayBuffer,
+                        RequestType.ToggleReplayBuffer,
                       );
                     },
                   ),

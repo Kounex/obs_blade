@@ -5,7 +5,6 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../../../../shared/general/formatted_text.dart';
 import '../../../../../stores/views/dashboard.dart';
-import '../../../../../types/extensions/int.dart';
 import 'stats_container.dart';
 
 class Stats extends StatefulWidget {
@@ -24,26 +23,26 @@ class _StatsState extends State<Stats> {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Observer(builder: (_) {
-      return Column(
-        children: [
-          Padding(
-            padding: this.widget.pageIndicatorPadding ??
-                const EdgeInsets.only(
-                  top: 12.0,
-                ),
-            child: SmoothPageIndicator(
-              controller: _pageController,
-              count: 2,
-              effect: ScrollingDotsEffect(
-                activeDotColor: Theme.of(context).toggleableActiveColor,
-                dotHeight: 10.0,
-                dotWidth: 10.0,
+    return Column(
+      children: [
+        Padding(
+          padding: this.widget.pageIndicatorPadding ??
+              const EdgeInsets.only(
+                top: 12.0,
               ),
+          child: SmoothPageIndicator(
+            controller: _pageController,
+            count: 2,
+            effect: ScrollingDotsEffect(
+              activeDotColor: Theme.of(context).toggleableActiveColor,
+              dotHeight: 10.0,
+              dotWidth: 10.0,
             ),
           ),
-          Expanded(
-            child: PageView(
+        ),
+        Expanded(
+          child: Observer(builder: (_) {
+            return PageView(
               controller: _pageController,
               children: <Widget>[
                 SizedBox(
@@ -53,36 +52,25 @@ class _StatsState extends State<Stats> {
                     title: 'Performance',
                     children: [
                       FormattedText(
-                        label: 'Total stream time',
-                        text: dashboardStore.latestStreamStats?.totalStreamTime
-                            .secondsToFormattedDurationString(),
-                        width: 100.0,
-                      ),
-                      FormattedText(
                         label: 'FPS',
-                        text: dashboardStore.latestStreamStats?.fps
+                        text: dashboardStore.latestOBSStats?.activeFps
                             .round()
                             .toString(),
                       ),
                       FormattedText(
-                        label: 'kbit/s',
-                        text: dashboardStore.latestStreamStats?.kbitsPerSec
-                            .toString(),
-                        width: 75.0,
-                      ),
-                      FormattedText(
-                        label: 'CPU Usage',
+                        label: 'CPU',
                         unit: '%',
-                        text: dashboardStore.latestStreamStats?.cpuUsage
-                            .toStringAsFixed(2),
-                        width: 70.0,
+                        text: dashboardStore.latestOBSStats?.cpuUsage != null
+                            ? (dashboardStore.latestOBSStats!.cpuUsage)
+                                .toStringAsFixed(2)
+                            : null,
+                        width: 75.0,
                       ),
                       FormattedText(
                         label: 'Memory Usage',
                         unit: ' GB',
-                        text: dashboardStore.latestStreamStats?.memoryUsage !=
-                                null
-                            ? (dashboardStore.latestStreamStats!.memoryUsage /
+                        text: dashboardStore.latestOBSStats?.memoryUsage != null
+                            ? (dashboardStore.latestOBSStats!.memoryUsage /
                                     1000)
                                 .toStringAsFixed(2)
                             : null,
@@ -148,10 +136,10 @@ class _StatsState extends State<Stats> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      );
-    });
+            );
+          }),
+        ),
+      ],
+    );
   }
 }

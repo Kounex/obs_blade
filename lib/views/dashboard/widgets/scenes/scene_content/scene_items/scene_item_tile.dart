@@ -25,23 +25,30 @@ class SceneItemTile extends StatelessWidget {
 
     return ListTile(
       dense: true,
-      leading: Padding(
-        padding: EdgeInsets.only(
-            left: this.sceneItem.parentGroupName != null ? 42.0 : 0.0),
-        child: GestureDetector(
-          onTap: () => (!GetIt.instance<DashboardStore>().editAudioVisibility &&
-                  !GetIt.instance<DashboardStore>().editSceneItemVisibility)
-              ? GetIt.instance<DashboardStore>()
-                  .toggleSceneItemGroupVisibility(this.sceneItem)
-              : null,
-          child: Icon(
-            this.sceneItem.sourceType == 'group'
-                ? this.sceneItem.displayGroup
-                    ? CupertinoIcons.folder
-                    : CupertinoIcons.folder_solid
-                : CupertinoIcons.photo_on_rectangle,
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (this.sceneItem.parentGroupName != null) ...[
+            const SizedBox(width: 4.0),
+            const Icon(Icons.subdirectory_arrow_right_sharp),
+            const SizedBox(width: 16.0),
+          ],
+          GestureDetector(
+            onTap: () => (!GetIt.instance<DashboardStore>()
+                        .editAudioVisibility &&
+                    !GetIt.instance<DashboardStore>().editSceneItemVisibility)
+                ? GetIt.instance<DashboardStore>()
+                    .toggleSceneItemGroupVisibility(this.sceneItem)
+                : null,
+            child: Icon(
+              (this.sceneItem.isGroup ?? false)
+                  ? this.sceneItem.displayGroup
+                      ? CupertinoIcons.folder
+                      : CupertinoIcons.folder_solid
+                  : CupertinoIcons.photo_on_rectangle,
+            ),
           ),
-        ),
+        ],
       ),
       title: Text(
         this.sceneItem.sourceName!,
@@ -63,11 +70,16 @@ class SceneItemTile extends StatelessWidget {
           onPressed: () => NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.SetSceneItemEnabled, {
-            'sceneName': settingsBox.get(SettingsKeys.ExposeStudioControls.name,
-                        defaultValue: false) &&
-                    dashboardStore.studioMode
-                ? dashboardStore.studioModePreviewSceneName
-                : dashboardStore.activeSceneName,
+            /// Groups in WebSocket 5.X and higher is weird, therefore
+            /// we need to use the parents scene item name as the
+            /// 'sceneName' property if we are toggling a child of a
+            /// group...
+            'sceneName': this.sceneItem.parentGroupName ??
+                (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
+                            defaultValue: false) &&
+                        dashboardStore.studioMode
+                    ? dashboardStore.studioModePreviewSceneName
+                    : dashboardStore.activeSceneName),
             'sceneItemId': this.sceneItem.sceneItemId,
             'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
           }),

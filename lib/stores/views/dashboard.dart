@@ -37,6 +37,7 @@ import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene_transition.dart';
+import '../../types/classes/stream/responses/get_group_scene_item_list.dart';
 import '../../types/classes/stream/responses/get_input_kind_list.dart';
 import '../../types/classes/stream/responses/get_input_list.dart';
 import '../../types/classes/stream/responses/get_input_mute.dart';
@@ -45,6 +46,7 @@ import '../../types/classes/stream/responses/get_scene_item_list.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_scene_transition_list.dart';
 import '../../types/classes/stream/responses/get_source_screenshot.dart';
+import '../../types/classes/stream/responses/get_stats.dart';
 import '../../types/classes/stream/responses/get_studio_mode_enabled.dart';
 import '../../types/classes/stream/responses/get_version.dart';
 import '../../types/enums/event_type.dart';
@@ -81,6 +83,8 @@ abstract class _DashboardStore with Store {
   PastRecordData? recordData;
   @observable
   RecordStats? latestRecordStats;
+  @observable
+  GetStatsResponse? latestOBSStats;
 
   @observable
   String? currentSceneCollectionName;
@@ -295,7 +299,7 @@ abstract class _DashboardStore with Store {
     });
   }
 
-  void requestPreviewImage() => NetworkHelper.makeRequest(
+  void _requestPreviewImage() => NetworkHelper.makeRequest(
         GetIt.instance<NetworkStore>().activeSession!.socket,
         RequestType.GetSourceScreenshot,
         {
@@ -538,7 +542,7 @@ abstract class _DashboardStore with Store {
     this.shouldRequestPreviewImage = shouldRequestPreviewImage;
     if (shouldRequestPreviewImage) {
       this.scenePreviewImageBytes = null;
-      this.requestPreviewImage();
+      _requestPreviewImage();
     }
   }
 
@@ -704,32 +708,22 @@ abstract class _DashboardStore with Store {
           _sceneCollectionRequests();
         }
         break;
-      case EventType.SceneItemAdded:
+
+      /// I could handle the following events smarter in the future - instead
+      /// of making the full request I could handle the change. Currently
+      /// not worth the hassle since we have to deal with cross synergies
+      /// like scene items being tied to inputs, having groups etc.
+      case EventType.SceneItemCreated:
         _sceneCollectionRequests();
         break;
       case EventType.SceneItemRemoved:
         _sceneCollectionRequests();
         break;
-      // case EventType.SourceRenamed:
-      //   SourceRenamedEvent sourceRenamedEvent =
-      //       SourceRenamedEvent(event.jsonRAW);
-      //
-      //     this
-      //         .currentSceneItems!
-      //         .firstWhere((sceneItem) =>
-      //             sceneItem.name == sourceRenamedEvent.previousName)
-      //         .name = sourceRenamedEvent.newName;
-      //     this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
-      //
-      //   break;
-      case EventType.SourceOrderChanged:
-        // SourceOrderChangedEvent sourceOrderChangedEvent =
-        //     SourceOrderChangedEvent(event.jsonRAW);
-        NetworkHelper.makeRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestType.GetSceneItemList,
-          {'sceneName': this.activeSceneName},
-        );
+      case EventType.InputNameChanged:
+        _sceneCollectionRequests();
+        break;
+      case EventType.SceneItemListReindexed:
+        _sceneCollectionRequests();
         break;
       case EventType.InputVolumeChanged:
         InputVolumeChangedEvent inputVolumeChangedEvent =
@@ -830,10 +824,51 @@ abstract class _DashboardStore with Store {
         GetSceneItemListResponse getSceneItemListResponse =
             GetSceneItemListResponse(response.jsonRAW);
 
-        this.currentSceneItems = ObservableList.of(
-            _flattenSceneItems(getSceneItemListResponse.sceneItems)
+        this.currentSceneItems =
+            ObservableList.of(getSceneItemListResponse.sceneItems)
               ..sort((sc1, sc2) =>
-                  (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0)));
+                  (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0));
+
+        for (final sceneItem in this.currentSceneItems!) {
+          if (sceneItem.isGroup ?? false) {
+            NetworkHelper.makeRequest(
+              GetIt.instance<NetworkStore>().activeSession!.socket,
+              RequestType.GetGroupSceneItemList,
+              {
+                'sceneName': sceneItem.sourceName,
+              },
+            );
+          }
+        }
+
+        break;
+      case RequestType.GetGroupSceneItemList:
+        GetGroupSceneItemListResponse getGroupSceneItemListResponse =
+            GetGroupSceneItemListResponse(response.jsonRAW);
+
+        final parentSceneItemName = NetworkHelper.getRequestBodyForUUID(
+            getGroupSceneItemListResponse.uuid)!['sceneName'];
+
+        List<SceneItem> childrenSceneItems =
+            getGroupSceneItemListResponse.sceneItems;
+
+        for (var sceneItem in childrenSceneItems) {
+          sceneItem.parentGroupName = parentSceneItemName;
+        }
+
+        this.currentSceneItems = ObservableList.of([
+          ...this.currentSceneItems!
+            ..insertAll(
+                this.currentSceneItems!.indexOf(
+                          this.currentSceneItems!.firstWhere((sceneItem) =>
+                              (sceneItem.isGroup ?? false) &&
+                              sceneItem.sourceName == parentSceneItemName),
+                        ) +
+                    1,
+                childrenSceneItems
+                  ..sort((sc1, sc2) =>
+                      (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0))),
+        ]);
 
         break;
       case RequestType.GetInputList:
@@ -992,7 +1027,7 @@ abstract class _DashboardStore with Store {
         this.scenePreviewImageBytes =
             base64Decode(getSourceScreenshotResponse.imageData.split(',')[1]);
 
-        if (this.shouldRequestPreviewImage) this.requestPreviewImage();
+        if (this.shouldRequestPreviewImage) _requestPreviewImage();
         break;
       default:
         break;
@@ -1011,6 +1046,8 @@ abstract class _DashboardStore with Store {
       case RequestBatchType.Stats:
         StatsBatchResponse statsBatchResponse =
             StatsBatchResponse(batchResponse.jsonRAW);
+
+        this.latestOBSStats = statsBatchResponse.stats;
 
         /// Set the timestamps or recording and streaming according
         /// to the current status received by the batch

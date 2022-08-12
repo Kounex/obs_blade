@@ -1,12 +1,10 @@
 import 'base.dart';
 
-/// A scene item has been removed.
-///
-/// This event is not emitted when the scene the item is in is removed.
-class SceneItemRemovedEvent extends BaseEvent {
-  SceneItemRemovedEvent(super.json);
+/// A scene item has been created.
+class SceneItemAddedEvent extends BaseEvent {
+  SceneItemAddedEvent(super.json);
 
-  /// Name of the scene the item was removed from
+  /// Name of the scene the item was added to
   String get sceneName => this.json['sceneName'];
 
   /// Name of the underlying source (input/scene)
@@ -14,4 +12,7 @@ class SceneItemRemovedEvent extends BaseEvent {
 
   /// Numeric ID of the scene item
   int get sceneItemId => this.json['sceneItemId'];
+
+  /// Index position of the item
+  int get sceneItemIndex => this.json['sceneItemIndex'];
 }

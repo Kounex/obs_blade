@@ -45,14 +45,16 @@ enum EventType {
   /// this is the que to restart polling.
   CurrentSceneCollectionChanged,
 
-  /// A scene item has been added to a scene
-  SceneItemAdded,
+  /// A scene item has been created.
+  SceneItemCreated,
 
-  /// A scene item has been removed from a scene
+  /// A scene item has been removed.
+  ///
+  /// This event is not emitted when the scene the item is in is removed.
   SceneItemRemoved,
 
-  /// A source has been renamed
-  SourceRenamed,
+  /// The name of an input has changed.
+  InputNameChanged,
 
   /// An input's volume level has changed.
   InputVolumeChanged,
@@ -60,8 +62,8 @@ enum EventType {
   /// An input's mute state has changed.
   InputMuteStateChanged,
 
-  /// Scene items within a scene have been reordered
-  SourceOrderChanged,
+  /// A scene's item list has been reindexed.
+  SceneItemListReindexed,
 
   /// A scene item's enable state has changed.
   SceneItemEnableStateChanged,
