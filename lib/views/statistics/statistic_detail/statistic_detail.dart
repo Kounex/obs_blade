@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../utils/styling_helper.dart';
 
 import '../../../models/past_stream_data.dart';
 import '../../../shared/dialogs/confirmation.dart';
@@ -10,6 +9,7 @@ import '../../../shared/general/formatted_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../types/extensions/int.dart';
 import '../../../utils/modal_handler.dart';
+import '../../../utils/styling_helper.dart';
 import '../../dashboard/widgets/stream_widgets/stats/stats_container.dart';
 import '../widgets/stream_entry/stream_entry.dart';
 import 'widgets/stream_chart.dart';
@@ -34,7 +34,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         dataName: 'FPS',
         chartColor: Colors.greenAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime!,
+        totalTime: pastStreamData.totalTime!,
       ),
       StreamChart(
         data: pastStreamData.cpuUsageList,
@@ -45,7 +45,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         yMax: 100,
         chartColor: Colors.blueAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime!,
+        totalTime: pastStreamData.totalTime!,
       ),
       StreamChart(
         data: pastStreamData.kbitsPerSecList
@@ -56,7 +56,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         minYInterval: 250,
         chartColor: Colors.orangeAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime!,
+        totalTime: pastStreamData.totalTime!,
       ),
       StreamChart(
         data: pastStreamData.memoryUsageList
@@ -70,7 +70,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         minYInterval: 0.1,
         chartColor: Colors.redAccent,
         streamEndedMS: pastStreamData.listEntryDateMS.last,
-        totalStreamTime: pastStreamData.totalStreamTime!,
+        totalTime: pastStreamData.totalTime!,
       ),
     ];
 
@@ -193,7 +193,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     children: [
                       FormattedText(
                         label: 'Total stream time',
-                        text: pastStreamData.totalStreamTime!
+                        text: pastStreamData.totalTime!
                             .secondsToFormattedDurationString(),
                         width: 100.0,
                       ),

@@ -22,7 +22,7 @@ class PastRecordDataAdapter extends TypeAdapter<PastRecordData> {
       ..cpuUsageList = (fields[2] as List).cast<double>()
       ..memoryUsageList = (fields[3] as List).cast<double>()
       ..listEntryDateMS = (fields[4] as List).cast<int>()
-      ..totalRecordTime = fields[5] as int?
+      ..totalTime = fields[5] as int?
       ..renderTotalFrames = fields[6] as int?
       ..renderMissedFrames = fields[7] as int?
       ..averageFrameTime = fields[8] as double?
@@ -46,7 +46,7 @@ class PastRecordDataAdapter extends TypeAdapter<PastRecordData> {
       ..writeByte(4)
       ..write(obj.listEntryDateMS)
       ..writeByte(5)
-      ..write(obj.totalRecordTime)
+      ..write(obj.totalTime)
       ..writeByte(6)
       ..write(obj.renderTotalFrames)
       ..writeByte(7)

@@ -48,7 +48,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   //     bytesPerSec: _random.nextInt(70000),
   //     kbitsPerSec: 6000 - _random.nextInt(500),
   //     strain: _random.nextDouble() * 100,
-  //     totalStreamTime: _random.nextInt(64000),
+  //     totalTime: _random.nextInt(64000),
   //     numTotalFrames: _random.nextInt(70000),
   //     numDroppedFrames: _random.nextInt(100),
   //     fps: 60 - (_random.nextDouble() * 20),
@@ -104,8 +104,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                   dataOrder2.listEntryDateMS.last;
               break;
             case FilterType.TotalTime:
-              sortResult =
-                  dataOrder1.totalStreamTime! - dataOrder2.totalStreamTime!;
+              sortResult = dataOrder1.totalTime! - dataOrder2.totalTime!;
               break;
             case FilterType.Name:
               sortResult = (dataOrder1.name ?? 'Unnamed stream')

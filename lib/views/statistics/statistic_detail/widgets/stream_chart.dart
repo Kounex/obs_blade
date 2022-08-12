@@ -32,7 +32,7 @@ class StreamChart extends StatelessWidget {
   final Color chartColor;
 
   final int streamEndedMS;
-  final int totalStreamTime;
+  final int totalTime;
 
   const StreamChart({
     Key? key,
@@ -46,12 +46,12 @@ class StreamChart extends StatelessWidget {
     this.dataUnit = '',
     this.chartColor = Colors.white,
     required this.streamEndedMS,
-    required this.totalStreamTime,
+    required this.totalTime,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    int streamStart = this.streamEndedMS - this.totalStreamTime * 1000;
+    int streamStart = this.streamEndedMS - this.totalTime * 1000;
     double maxData = this.data.reduce(
           (value, element) => max(value, element),
         );
@@ -166,7 +166,7 @@ class StreamChart extends StatelessWidget {
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    interval: (this.totalStreamTime * 1000) / 4.5,
+                    interval: (this.totalTime * 1000) / 4.5,
                     reservedSize: 32.0,
                     getTitlesWidget: (interval, titleMeta) {
                       if (interval == titleMeta.min ||
@@ -210,7 +210,7 @@ class StreamChart extends StatelessWidget {
                 //   showTitles: true,
                 //   margin: 15.0,
                 //   getTextStyles: (_) => axisStepsTextStyle,
-                //   interval: (this.totalStreamTime * 1000) / 5,
+                //   interval: (this.totalTime * 1000) / 5,
                 //   getTitles: (interval) => DateFormat.Hm('de_DE').format(
                 //     DateTime.fromMillisecondsSinceEpoch(
                 //       interval.round(),
@@ -225,8 +225,7 @@ class StreamChart extends StatelessWidget {
                       .mapIndexed(
                         (data, index) => FlSpot(
                             streamStart +
-                                ((this.totalStreamTime * 1000) /
-                                        this.data.length) *
+                                ((this.totalTime * 1000) / this.data.length) *
                                     index,
                             data.toDouble()),
                       )

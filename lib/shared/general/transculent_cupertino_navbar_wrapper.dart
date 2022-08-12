@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'custom_sliver_list.dart';
 
 import '../../utils/styling_helper.dart';
+import 'custom_sliver_list.dart';
 
 /// Uses a [CupertinoNavigationBar] which would usually be set for the
 /// appBar property of [Scaffold] but uses it here inside a [Stack] because

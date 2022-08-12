@@ -12,7 +12,7 @@ class ThemedCupertinoSliverNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoSliverNavigationBar(
-      backgroundColor: Theme.of(context).appBarTheme.color,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       largeTitle: this.largeTitle,
     );
   }

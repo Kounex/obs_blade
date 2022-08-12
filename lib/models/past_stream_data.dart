@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:hive/hive.dart';
 
 import '../types/classes/api/stream_stats.dart';
+import '../types/interfaces/stats_data.dart';
 import 'type_ids.dart';
 
 part 'past_stream_data.g.dart';
@@ -23,19 +24,23 @@ part 'past_stream_data.g.dart';
 const int kAmountStreamStatsForAverage = 10;
 
 @HiveType(typeId: TypeIDs.PastStreamData)
-class PastStreamData extends HiveObject {
+class PastStreamData extends HiveObject implements StatsData {
   /// Single values for the duration of the stream - won't consist
   /// of every value from the StreamStats event (too many) but will
   /// consist of a realistic subset (see explanation above)
   @HiveField(0)
+  @override
   List<int> kbitsPerSecList = [];
   @HiveField(1)
+  @override
   List<double> fpsList = [];
   @HiveField(2)
+  @override
   List<double> cpuUsageList = [];
 
   /// RAM usage (in megabytes)
   @HiveField(17)
+  @override
   List<double> memoryUsageList = [];
 
   /// For every entry we make in our lists (which will be used for charts)
@@ -45,8 +50,9 @@ class PastStreamData extends HiveObject {
   /// since we could not represent the "holes"
   ///
   /// Also used to calculate when the stream started together with
-  /// [totalStreamTime]
+  /// [totalTime]
   @HiveField(18)
+  @override
   List<int> listEntryDateMS = [];
 
   /// Percentage of dropped frames
@@ -56,7 +62,8 @@ class PastStreamData extends HiveObject {
 
   /// Total time (in seconds) since the stream started
   @HiveField(4)
-  int? totalStreamTime;
+  @override
+  int? totalTime;
 
   /// Total number of frames transmitted since the stream started
   @Deprecated('Not used in protocol > 5.X')
@@ -70,10 +77,12 @@ class PastStreamData extends HiveObject {
 
   /// Number of frames rendered
   @HiveField(7)
+  @override
   int? renderTotalFrames;
 
   /// Number of frames missed due to rendering lag
   @HiveField(8)
+  @override
   int? renderMissedFrames;
 
   /// Number of frames outputted
@@ -86,6 +95,7 @@ class PastStreamData extends HiveObject {
 
   /// Average frame time (in milliseconds)
   @HiveField(11)
+  @override
   double? averageFrameTime;
 
   /// Custom properties which will not be set / transmitted by OBS but set
@@ -93,16 +103,19 @@ class PastStreamData extends HiveObject {
 
   /// Name of this [PastStreamData] to find it later / filtering etc.
   @HiveField(13)
+  @override
   String? name;
 
   /// If this [PastStreamData] has been starred by the user (like favourite).
   /// Also suitable for filtering etc.
   @HiveField(14)
+  @override
   bool? starred;
 
   /// Notes a user can write down for this [PastStreamData] for additional
   /// information on the stream or whatever
   @HiveField(15)
+  @override
   String? notes;
 
   /// List of current [StreamStats] which will be used to fill the
@@ -131,7 +144,7 @@ class PastStreamData extends HiveObject {
   /// called every time we get a new [StreamStats] instance through
   /// [addStreamStats]
   void _updateAbsoluteStats() {
-    this.totalStreamTime = _cacheStreamStats.last.totalStreamTime;
+    this.totalTime = _cacheStreamStats.last.totalTime;
     this.renderTotalFrames = _cacheStreamStats.last.renderTotalFrames;
     this.renderMissedFrames = _cacheStreamStats.last.renderMissedFrames;
     this.outputTotalFrames = _cacheStreamStats.last.outputTotalFrames;

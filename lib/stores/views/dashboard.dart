@@ -364,11 +364,11 @@ abstract class _DashboardStore with Store {
     tmp.sort((a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
 
     /// Check if the latest stream has its last entry (based on [listEntryDateMS]
-    /// set later than current time - [totalStreamTime] which means that we
+    /// set later than current time - [totalTime] which means that we
     /// connected to an OBS session we already were connected to
     if (tmp.isNotEmpty &&
         DateTime.now().millisecondsSinceEpoch -
-                this.latestStreamStats!.totalStreamTime * 1000 <=
+                this.latestStreamStats!.totalTime * 1000 <=
             tmp.last.listEntryDateMS.last) {
       this.streamData = tmp.last;
     } else {
@@ -390,11 +390,11 @@ abstract class _DashboardStore with Store {
     tmp.sort((a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
 
     /// Check if the latest stream has its last entry (based on [listEntryDateMS]
-    /// set later than current time - [totalStreamTime] which means that we
+    /// set later than current time - [totalTime] which means that we
     /// connected to an OBS session we already were connected to
     if (tmp.isNotEmpty &&
         DateTime.now().millisecondsSinceEpoch -
-                this.latestRecordStats!.totalRecordTime * 1000 <=
+                this.latestRecordStats!.totalTime * 1000 <=
             tmp.last.listEntryDateMS.last) {
       this.recordData = tmp.last;
     } else {
@@ -408,12 +408,12 @@ abstract class _DashboardStore with Store {
   /// a new one
   Future<void> _finishPastStreamData() async {
     if (this.streamData != null) {
-      /// Check if [streamData] is even "legit" - if [totalStreamTime]
+      /// Check if [streamData] is even "legit" - if [totalTime]
       /// is not greater than 3, it's not worth the statistic entry and
       /// will probably cause problems anyway. We will delete it therefore
       if (this.streamData!.isInBox &&
-          (this.streamData!.totalStreamTime == null ||
-              this.streamData!.totalStreamTime! <= 3)) {
+          (this.streamData!.totalTime == null ||
+              this.streamData!.totalTime! <= 3)) {
         await this.streamData!.delete();
       }
       this.streamData = null;
@@ -425,12 +425,12 @@ abstract class _DashboardStore with Store {
   /// a new one
   Future<void> _finishPastRecordData() async {
     if (this.recordData != null) {
-      /// Check if [recordData] is even "legit" - if [totalRecordTime]
+      /// Check if [recordData] is even "legit" - if [totalTime]
       /// is not greater than 3, it's not worth the statistic entry and
       /// will probably cause problems anyway. We will delete it therefore
       if (this.recordData!.isInBox &&
-          (this.recordData!.totalRecordTime == null ||
-              this.recordData!.totalRecordTime! <= 3)) {
+          (this.recordData!.totalTime == null ||
+              this.recordData!.totalTime! <= 3)) {
         await this.recordData!.delete();
       }
       this.recordData = null;
@@ -1089,7 +1089,7 @@ abstract class _DashboardStore with Store {
             kbitsPerSec:
                 (statsBatchResponse.streamStatus.outputBytes - _streamBytes) ~/
                     125,
-            totalStreamTime: (_timecodeToMS(
+            totalTime: (_timecodeToMS(
                         statsBatchResponse.streamStatus.outputTimecode) ??
                     0) ~/
                 1000,
@@ -1131,7 +1131,7 @@ abstract class _DashboardStore with Store {
             kbitsPerSec:
                 (statsBatchResponse.recordStatus.outputBytes - _streamBytes) ~/
                     125,
-            totalRecordTime: (_timecodeToMS(
+            totalTime: (_timecodeToMS(
                         statsBatchResponse.recordStatus.outputTimecode) ??
                     0) ~/
                 1000,

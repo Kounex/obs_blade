@@ -1,6 +1,6 @@
 class RecordStats {
   /// Total time (in seconds) since the record started
-  int totalRecordTime;
+  int totalTime;
 
   /// Current framerate
   double fps;
@@ -28,7 +28,7 @@ class RecordStats {
 
   RecordStats({
     required this.kbitsPerSec,
-    required this.totalRecordTime,
+    required this.totalTime,
     required this.fps,
     required this.renderTotalFrames,
     required this.renderMissedFrames,

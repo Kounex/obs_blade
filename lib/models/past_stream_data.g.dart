@@ -23,7 +23,7 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..memoryUsageList = (fields[17] as List).cast<double>()
       ..listEntryDateMS = (fields[18] as List).cast<int>()
       ..strain = fields[3] as double?
-      ..totalStreamTime = fields[4] as int?
+      ..totalTime = fields[4] as int?
       ..numTotalFrames = fields[5] as int?
       ..numDroppedFrames = fields[6] as int?
       ..renderTotalFrames = fields[7] as int?
@@ -53,7 +53,7 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..writeByte(3)
       ..write(obj.strain)
       ..writeByte(4)
-      ..write(obj.totalStreamTime)
+      ..write(obj.totalTime)
       ..writeByte(5)
       ..write(obj.numTotalFrames)
       ..writeByte(6)

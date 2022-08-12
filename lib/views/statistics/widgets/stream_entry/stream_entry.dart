@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'stream_date_chip.dart';
 
 import '../../../../models/past_stream_data.dart';
 import '../../../../types/extensions/int.dart';
 import '../../../../utils/routing_helper.dart';
+import 'stream_date_chip.dart';
 
 class StreamEntry extends StatelessWidget {
   final PastStreamData pastStreamData;
@@ -61,7 +61,7 @@ class StreamEntry extends StatelessWidget {
             child: StreamDateChip(
               label: 'From:',
               content:
-                  '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime! * 1000).millisecondsToFormattedDateString()} - ${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalStreamTime! * 1000).millisecondsToFormattedTimeString()}',
+                  '${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalTime! * 1000).millisecondsToFormattedDateString()} - ${(this.pastStreamData.listEntryDateMS.last - this.pastStreamData.totalTime! * 1000).millisecondsToFormattedTimeString()}',
             ),
           ),
           ConstrainedBox(

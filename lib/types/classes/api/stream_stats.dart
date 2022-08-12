@@ -24,7 +24,7 @@ class StreamStats {
   double? strain;
 
   /// Total time (in seconds) since the stream started
-  int totalStreamTime;
+  int totalTime;
 
   /// Total number of frames transmitted since the stream started
   @Deprecated('Not used in protocol > 5.X')
@@ -68,7 +68,7 @@ class StreamStats {
     this.bytesPerSec,
     required this.kbitsPerSec,
     this.strain,
-    required this.totalStreamTime,
+    required this.totalTime,
     this.numTotalFrames,
     this.numDroppedFrames,
     required this.fps,
