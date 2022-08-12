@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class StreamDateChip extends StatelessWidget {
+class StatsDateChip extends StatelessWidget {
   final String label;
   final String content;
 
-  const StreamDateChip({
+  const StatsDateChip({
     Key? key,
     required this.label,
     required this.content,

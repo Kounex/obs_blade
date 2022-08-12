@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/past_record_data.dart';
 
 import 'app.dart';
 import 'models/app_log.dart';
@@ -83,6 +84,7 @@ Future<void> _initializeHive() async {
   /// Classes which represent models which therefore get persisted
   Hive.registerAdapter(ConnectionAdapter());
   Hive.registerAdapter(PastStreamDataAdapter());
+  Hive.registerAdapter(PastRecordDataAdapter());
   Hive.registerAdapter(CustomThemeAdapter());
   Hive.registerAdapter(HiddenSceneItemAdapter());
   Hive.registerAdapter(HiddenSceneAdapter());
@@ -101,6 +103,10 @@ Future<void> _initializeHive() async {
   );
   await Hive.openBox<PastStreamData>(
     HiveKeys.PastStreamData.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<PastRecordData>(
+    HiveKeys.PastRecordData.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
   await Hive.openBox<CustomTheme>(

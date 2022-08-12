@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../../models/past_stream_data.dart';
 import '../../../../shared/general/base/divider.dart';
 import '../../../../stores/views/statistics.dart';
-import '../stream_entry/stream_entry.dart';
+import '../../../../types/interfaces/past_stats_data.dart';
+import '../stream_entry/stats_entry.dart';
 import 'pagination_control.dart';
 
 class PaginatedStatistics extends StatefulWidget {
-  final List<PastStreamData> filteredAndSortedStreamData;
+  final List<PastStatsData> sortedFilteredPastStatsData;
 
   const PaginatedStatistics(
-      {Key? key, required this.filteredAndSortedStreamData})
+      {Key? key, required this.sortedFilteredPastStatsData})
       : super(key: key);
 
   @override
@@ -26,7 +26,7 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
   int _page = 1;
 
   int _getMaxPages(int amountStatisticsEntries) =>
-      (this.widget.filteredAndSortedStreamData.length / amountStatisticsEntries)
+      (this.widget.sortedFilteredPastStatsData.length / amountStatisticsEntries)
           .ceil();
 
   @override
@@ -46,14 +46,14 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
               padding: const EdgeInsets.all(0),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) => StreamEntry(
-                  pastStreamData: this.widget.filteredAndSortedStreamData[
+              itemBuilder: (context, index) => StatsEntry(
+                  pastStatsData: this.widget.sortedFilteredPastStatsData[
                       ((_page - 1) *
                               statisticsStore.amountStatisticEntries.number) +
                           index]),
               separatorBuilder: (context, index) => const BaseDivider(),
               itemCount: min(
-                  this.widget.filteredAndSortedStreamData.length -
+                  this.widget.sortedFilteredPastStatsData.length -
                       ((_page - 1) *
                           statisticsStore.amountStatisticEntries.number),
                   statisticsStore.amountStatisticEntries.number),

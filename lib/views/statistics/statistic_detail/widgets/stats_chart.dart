@@ -13,7 +13,7 @@ import '../../../../utils/styling_helper.dart';
 /// the amount of "extra" steps after the max value
 const int kChartsNormalizedFactor = 3;
 
-class StreamChart extends StatelessWidget {
+class StatsChart extends StatelessWidget {
   final List<double> data;
   final List<int> dataTimesMS;
   final int amountFixedTooltipValue;
@@ -34,7 +34,7 @@ class StreamChart extends StatelessWidget {
   final int streamEndedMS;
   final int totalTime;
 
-  const StreamChart({
+  const StatsChart({
     Key? key,
     required this.data,
     required this.dataTimesMS,

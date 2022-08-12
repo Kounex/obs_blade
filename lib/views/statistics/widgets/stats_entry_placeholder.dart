@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-class StreamEntryPlaceholder extends StatelessWidget {
+class StatsEntryPlaceholder extends StatelessWidget {
   final String text;
 
-  const StreamEntryPlaceholder({Key? key, required this.text})
-      : super(key: key);
+  const StatsEntryPlaceholder({Key? key, required this.text}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

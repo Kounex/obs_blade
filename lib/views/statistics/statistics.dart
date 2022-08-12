@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/models/past_record_data.dart';
+import 'package:obs_blade/shared/general/column_separated.dart';
 
 import '../../models/past_stream_data.dart';
 import '../../shared/general/base/card.dart';
@@ -10,11 +12,12 @@ import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/views/statistics.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/order.dart';
+import '../../types/interfaces/past_stats_data.dart';
 import 'widgets/card_header/card_header.dart';
 import 'widgets/card_header/sort_filter_panel/sort_filter_panel.dart';
 import 'widgets/paginated_statistics/paginated_statistics.dart';
-import 'widgets/stream_entry/stream_entry.dart';
-import 'widgets/stream_entry_placeholder.dart';
+import 'widgets/stats_entry_placeholder.dart';
+import 'widgets/stream_entry/stats_entry.dart';
 
 class StatisticsView extends StatefulWidget {
   const StatisticsView({Key? key}) : super(key: key);
@@ -76,20 +79,20 @@ class _StatisticsViewState extends State<StatisticsView> {
   // }
 
   /// Uses both sort and filter functions
-  List<PastStreamData> _sortAndFilterPastStreamData(
+  List<PastStatsData> _sortAndFilterPastStatsData(
           StatisticsStore statisticsStore,
-          Iterable<PastStreamData> pastStreamData) =>
-      _filterStreamData(
-          statisticsStore, _sortStreamData(statisticsStore, pastStreamData));
+          Iterable<PastStatsData> pastStatsData) =>
+      _filterPastStatsData(
+          statisticsStore, _sortPastStatsData(statisticsStore, pastStatsData));
 
-  /// Sorts [PastStreamData] accroding to the selected [FilterType] and
+  /// Sorts [PastStatsData] accroding to the selected [FilterType] and
   /// [FilterOrder]
-  Iterable<PastStreamData> _sortStreamData(StatisticsStore statisticsStore,
-          Iterable<PastStreamData> pastStreamData) =>
-      pastStreamData.toList()
+  Iterable<PastStatsData> _sortPastStatsData(StatisticsStore statisticsStore,
+          Iterable<PastStatsData> pastStatsData) =>
+      pastStatsData.toList()
         ..sort((data1, data2) {
-          PastStreamData dataOrder1;
-          PastStreamData dataOrder2;
+          PastStatsData dataOrder1;
+          PastStatsData dataOrder2;
           int sortResult = 0;
           if (statisticsStore.filterOrder == Order.Ascending) {
             dataOrder1 = data1;
@@ -126,11 +129,11 @@ class _StatisticsViewState extends State<StatisticsView> {
           return sortResult;
         });
 
-  /// Filters [PastStreamData] according to various stuff the user has
+  /// Filters [PastStatsData] according to various stuff the user has
   /// set (like amount entries, favorited or not, date range etc.)
-  List<PastStreamData> _filterStreamData(StatisticsStore statisticsStore,
-      Iterable<PastStreamData> pastStreamData) {
-    pastStreamData = pastStreamData
+  List<PastStatsData> _filterPastStatsData(
+      StatisticsStore statisticsStore, Iterable<PastStatsData> pastStatsData) {
+    pastStatsData = pastStatsData
 
         /// Filter statistics which name contain the String entered by the user
         .where((data) => (data.name ?? 'Unnamed stream')
@@ -165,7 +168,7 @@ class _StatisticsViewState extends State<StatisticsView> {
           return data.name == null;
         });
 
-    return pastStreamData.toList();
+    return pastStatsData.toList();
   }
 
   @override
@@ -180,75 +183,123 @@ class _StatisticsViewState extends State<StatisticsView> {
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         listViewChildren: [
           HiveBuilder<PastStreamData>(
-            hiveKey: HiveKeys.PastStreamData,
-            builder: (context, pastStreamDataBox, child) {
-              // List<PastStreamData> pastStreamData = _pastStreamData
-              List<PastStreamData> pastStreamData = pastStreamDataBox.values
-                  .toList()
-                ..sort(
-                    (a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
-              return Column(
-                children: [
-                  BaseCard(
-                    bottomPadding: 12.0,
-                    titlePadding: const EdgeInsets.all(0),
-                    titleWidget: const CardHeader(
-                      headerDecorationIcon: CupertinoIcons.time_solid,
-                      title: 'Latest\nStream.',
-                      description:
-                          'The most freshest statistic of your latest stream session',
-                    ),
-                    paddingChild: const EdgeInsets.all(0),
-                    child: pastStreamData.isNotEmpty
-                        ? StreamEntry(
-                            pastStreamData: pastStreamData.reversed.first)
-                        : const StreamEntryPlaceholder(
-                            text:
-                                'You haven\'t streamed using this app or deleted all statistic entries?! Whatever it is, you should start streaming!',
-                          ),
-                  ),
-                  BaseCard(
-                    titlePadding: const EdgeInsets.all(0),
-                    titleWidget: const CardHeader(
-                      title: 'Previous\nStreams.',
-                      description:
-                          'All the statistics of your smexy stream sessions',
-                      additionalCardWidgets: [
-                        SortFilterPanel(),
-                      ],
-                    ),
-                    paddingChild: const EdgeInsets.all(0),
-                    child: Observer(
-                      builder: (_) {
-                        /// Only purpose of this line is to omit the debug message of
-                        /// missing observable (which is not correct) since I pass the
-                        /// store to internal functions to handle sort and filter where
-                        /// those observables are used. It even gets rebuilt propely but
-                        /// the message keeps coming up
-                        statisticsStore.filterName;
+              hiveKey: HiveKeys.PastStreamData,
+              builder: (context, pastStreamDataBox, child) {
+                return HiveBuilder<PastRecordData>(
+                    hiveKey: HiveKeys.PastRecordData,
+                    builder: (context, pastRecordDataBox, child) {
+                      // List<PastStreamData> pastStreamData = _pastStreamData
+                      List<PastStatsData> pastStatsData = [
+                        ...pastStreamDataBox.values.toList(),
+                        ...pastRecordDataBox.values.toList(),
+                      ]..sort((a, b) =>
+                          b.listEntryDateMS.last - a.listEntryDateMS.last);
 
-                        List<PastStreamData> sortedFilteredStreamData =
-                            _sortAndFilterPastStreamData(
-                          statisticsStore,
-                          pastStreamData.reversed.skip(1),
-                        );
-                        return sortedFilteredStreamData.isNotEmpty
-                            ? PaginatedStatistics(
-                                filteredAndSortedStreamData:
-                                    sortedFilteredStreamData,
-                              )
-                            : StreamEntryPlaceholder(
-                                text: pastStreamData.length <= 1
-                                    ? 'Can\'t find statistics for your previous streams. Go ahead - stream some good stuff!'
-                                    : 'No statistics found which match your filters! Change them and they will hopefully come back!',
-                              );
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+                      PastStreamData? latestStreamData;
+                      PastRecordData? latestRecordData;
+
+                      try {
+                        latestStreamData =
+                            pastStatsData.whereType<PastStreamData>().last;
+                      } catch (_) {}
+
+                      try {
+                        latestRecordData =
+                            pastStatsData.whereType<PastRecordData>().last;
+                      } catch (_) {}
+
+                      List<PastStatsData?> latestRecordStreamStat = [
+                        latestRecordData,
+                        latestStreamData,
+                      ]..sort((a, b) =>
+                          (b?.listEntryDateMS.last ?? 0) -
+                          (a?.listEntryDateMS.last ?? 0));
+
+                      return Column(
+                        children: [
+                          BaseCard(
+                            bottomPadding: 12.0,
+                            titlePadding: const EdgeInsets.all(0),
+                            titleWidget: const CardHeader(
+                              headerDecorationIcon: CupertinoIcons.time_solid,
+                              title: 'Latest\nStats.',
+                              description:
+                                  'The most freshest statistic of your latest streaming and recording session',
+                            ),
+                            paddingChild: const EdgeInsets.all(0),
+                            child: latestRecordStreamStat.isNotEmpty &&
+                                    latestRecordStreamStat.any(
+                                        (pastStatsData) =>
+                                            pastStatsData != null)
+                                ? ColumnSeparated(
+                                    paddingSeparator:
+                                        const EdgeInsets.symmetric(vertical: 0),
+                                    children: latestRecordStreamStat
+                                        .where((pastStatsData) =>
+                                            pastStatsData != null)
+                                        .map(
+                                          (pastStatsData) => StatsEntry(
+                                            pastStatsData: pastStatsData!,
+                                          ),
+                                        )
+                                        .toList(),
+                                  )
+                                : const StatsEntryPlaceholder(
+                                    text:
+                                        'You haven\'t streamed or recorded using this app? Or have you deleted all statistic entries?! Whatever it is, you should start streaming / recording!',
+                                  ),
+                          ),
+                          BaseCard(
+                            titlePadding: const EdgeInsets.all(0),
+                            titleWidget: const CardHeader(
+                              title: 'Previous\nStats.',
+                              description:
+                                  'All your streaming / recordording sessions',
+                              additionalCardWidgets: [
+                                SortFilterPanel(),
+                              ],
+                            ),
+                            paddingChild: const EdgeInsets.all(0),
+                            child: Observer(
+                              builder: (_) {
+                                /// Only purpose of this line is to omit the debug message of
+                                /// missing observable (which is not correct) since I pass the
+                                /// store to internal functions to handle sort and filter where
+                                /// those observables are used. It even gets rebuilt propely but
+                                /// the message keeps coming up
+                                statisticsStore.filterName;
+
+                                List<PastStatsData>
+                                    sortedFilteredPastStatsData =
+                                    _sortAndFilterPastStatsData(
+                                  statisticsStore,
+                                  pastStatsData
+                                    ..removeWhere(
+                                      (pastStatsData) => latestRecordStreamStat
+                                          .any((latestStat) =>
+                                              latestStat == pastStatsData),
+                                    ),
+                                );
+                                return sortedFilteredPastStatsData.isNotEmpty
+                                    ? PaginatedStatistics(
+                                        sortedFilteredPastStatsData:
+                                            sortedFilteredPastStatsData,
+                                      )
+                                    : StatsEntryPlaceholder(
+                                        text: latestRecordStreamStat
+                                                .where((latestStat) =>
+                                                    latestStat != null)
+                                                .isEmpty
+                                            ? 'Can\'t find statistics for your previous streams / recordings. Go ahead - stream or record some good stuff!'
+                                            : 'No additional statistics to the ones listed above found or none found which match your filters! Stream / record more or change your filters!',
+                                      );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    });
+              }),
         ],
       ),
     );
