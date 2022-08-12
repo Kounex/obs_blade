@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:hive/hive.dart';
 import 'package:obs_blade/types/classes/api/record_stats.dart';
-import 'package:obs_blade/types/interfaces/stats_data.dart';
+import 'package:obs_blade/types/interfaces/past_stats_data.dart';
 
 import 'type_ids.dart';
 
@@ -24,7 +24,7 @@ part 'past_record_data.g.dart';
 const int kAmountRecordStatsForAverage = 10;
 
 @HiveType(typeId: TypeIDs.PastRecordData)
-class PastRecordData extends HiveObject implements StatsData {
+class PastRecordData extends HiveObject implements PastStatsData {
   /// Single values for the duration of the stream - won't consist
   /// of every value from the StreamStats event (too many) but will
   /// consist of a realistic subset (see explanation above)

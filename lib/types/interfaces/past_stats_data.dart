@@ -1,4 +1,4 @@
-abstract class StatsData {
+abstract class PastStatsData {
   List<int> kbitsPerSecList = [];
   List<double> fpsList = [];
   List<double> cpuUsageList = [];
