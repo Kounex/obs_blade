@@ -8,7 +8,7 @@ import '../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import 'widgets/faq_block.dart';
 
-const kFAQSpaceHeight = 24.0;
+const kFAQSpaceHeight = 32.0;
 
 class FAQView extends StatelessWidget {
   const FAQView({Key? key}) : super(key: key);
@@ -28,8 +28,8 @@ class FAQView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Flexible(
-                  child: const Icon(
+                const Flexible(
+                  child: Icon(
                     CupertinoIcons.chat_bubble_text_fill,
                     size: 92.0,
                   ),
@@ -53,9 +53,7 @@ class FAQView extends StatelessWidget {
               children: const [
                 Text(
                     'Since I received several questions and problems regarding using OBS Blade, I tried to compile some information here which might help others as well if they encounter problems or are not sure about some functions / possibilities.'),
-                SizedBox(height: 12.0),
-                BaseDivider(),
-                SizedBox(height: 12.0),
+                BaseDivider(height: 32),
                 FAQBlock(
                   heading: 'Autodiscover does not find my OBS instance, why?',
                   customBody: EnumerationBlock(

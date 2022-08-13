@@ -36,6 +36,16 @@ extension AmountStatisticEntriesFunctions on AmountStatisticEntries {
       }[this]!;
 }
 
+enum StatType {
+  Stream,
+  Recording;
+
+  String get name => {
+        StatType.Stream: 'Stream',
+        StatType.Recording: 'Recording',
+      }[this]!;
+}
+
 class StatisticsStore = _StatisticsStore with _$StatisticsStore;
 
 abstract class _StatisticsStore with Store {
@@ -61,8 +71,12 @@ abstract class _StatisticsStore with Store {
   DateTime? toDate;
 
   @observable
-  bool? excludeUnnamedStreams = false;
+  bool? excludeUnnamedStats = false;
 
+  @observable
+  StatType? statType;
+
+  @observable
   @action
   void setFilterType(FilterType filterType) => this.filterType = filterType;
 
@@ -89,6 +103,9 @@ abstract class _StatisticsStore with Store {
   void setToDate(DateTime? toDate) => this.toDate = toDate;
 
   @action
-  void setExcludeUnnamedStreams(bool? excludeUnnamedStreams) =>
-      this.excludeUnnamedStreams = excludeUnnamedStreams;
+  void setExcludeUnnamedStats(bool? excludeUnnamedStats) =>
+      this.excludeUnnamedStats = excludeUnnamedStats;
+
+  @action
+  void setStatType(StatType? statType) => this.statType = statType;
 }

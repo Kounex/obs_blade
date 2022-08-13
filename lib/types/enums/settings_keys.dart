@@ -5,7 +5,14 @@ enum SettingsKeys {
 
   /// [bool]: If the user already saw the intro - will be set after being in landing
   /// of Home Tab and will prevent the user from seeing the intro slides again
-  HasUserSeenIntro,
+  /// IMPORTANT: Deprecated! We use the ones bound to dates to ensure users have
+  /// seen them after a spsecific time (even existing users) since there have been
+  /// important changes
+  //HasUserSeenIntro,
+
+  /// [bool]: If the user already saw the intro - will be set after being in landing
+  /// of Home Tab and will prevent the user from seeing the intro slides again
+  HasUserSeenIntro202208,
 
   /// [bool]: If the user has bought Blacksmith. Will be checked in [PurchaseBase] on the fly
   /// (checked from the App Store) but the user might have no internet connection so it's persisted
@@ -129,7 +136,8 @@ enum SettingsKeys {
 
 extension SettingsKeysFunctions on SettingsKeys {
   String get name => const {
-        SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
+        // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
+        SettingsKeys.HasUserSeenIntro202208: 'has-user-seen-intro-202208',
         SettingsKeys.BoughtBlacksmith: 'bought-blacksmith',
         SettingsKeys.TrueDark: 'true-dark',
         SettingsKeys.ReduceSmearing: 'reduce-smearing',

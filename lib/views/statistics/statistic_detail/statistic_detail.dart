@@ -13,7 +13,7 @@ import '../../../types/interfaces/past_stats_data.dart';
 import '../../../utils/modal_handler.dart';
 import '../../../utils/styling_helper.dart';
 import '../../dashboard/widgets/stream_widgets/stats/stats_container.dart';
-import '../widgets/stream_entry/stats_entry.dart';
+import '../widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {

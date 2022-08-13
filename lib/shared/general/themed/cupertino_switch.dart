@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../dialogs/info.dart';
+
 import '../../../utils/modal_handler.dart';
+import '../../dialogs/info.dart';
 
 class ThemedCupertinoSwitch extends StatelessWidget {
   final bool value;
@@ -30,8 +31,11 @@ class ThemedCupertinoSwitch extends StatelessWidget {
           : null,
       child: CupertinoSwitch(
         value: this.value,
-        activeColor:
-            this.activeColor ?? Theme.of(context).toggleableActiveColor,
+        activeColor: this.activeColor ??
+            Theme.of(context)
+                .switchTheme
+                .trackColor!
+                .resolve({MaterialState.selected}),
         onChanged: this.enabled ? this.onChanged : null,
       ),
     );

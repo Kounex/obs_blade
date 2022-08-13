@@ -16,8 +16,8 @@ import '../../types/interfaces/past_stats_data.dart';
 import 'widgets/card_header/card_header.dart';
 import 'widgets/card_header/sort_filter_panel/sort_filter_panel.dart';
 import 'widgets/paginated_statistics/paginated_statistics.dart';
+import 'widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_entry_placeholder.dart';
-import 'widgets/stream_entry/stats_entry.dart';
 
 class StatisticsView extends StatefulWidget {
   const StatisticsView({Key? key}) : super(key: key);
@@ -150,6 +150,15 @@ class _StatisticsViewState extends State<StatisticsView> {
           return data.starred == null || !data.starred!;
         })
 
+        /// Filter statistics which are either streams, recordings or both
+        .where((data) {
+          return statisticsStore.statType == StatType.Stream
+              ? data is PastStreamData
+              : statisticsStore.statType == StatType.Recording
+                  ? data is PastRecordData
+                  : true;
+        })
+
         /// Filter statistics which are inside the date range the user might have set
         .where((data) =>
             data.listEntryDateMS.first >=
@@ -160,8 +169,8 @@ class _StatisticsViewState extends State<StatisticsView> {
 
         /// Filter statistics which are not unnamed or specifically unnamed if user set this checkbox (or tristate)
         .where((data) {
-          if (statisticsStore.excludeUnnamedStreams != null) {
-            return statisticsStore.excludeUnnamedStreams!
+          if (statisticsStore.excludeUnnamedStats != null) {
+            return statisticsStore.excludeUnnamedStats!
                 ? data.name != null
                 : true;
           }

@@ -87,8 +87,6 @@ class App extends StatelessWidget {
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: accentColor ?? StylingHelper.highlight_color,
       ),
-      toggleableActiveColor:
-          toggleableActiveColor ?? StylingHelper.accent_color,
 
       /// Inner Widget themes
       primaryIconTheme: IconThemeData(
@@ -153,6 +151,52 @@ class App extends StatelessWidget {
         accentColor: hightlightColor ?? StylingHelper.highlight_color,
         brightness: brightness ?? Brightness.dark,
       ),
+      switchTheme: SwitchThemeData(
+        thumbColor: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+          if (states.contains(MaterialState.disabled)) {
+            return null;
+          }
+          if (states.contains(MaterialState.selected)) {
+            return toggleableActiveColor ?? StylingHelper.accent_color;
+          }
+          return null;
+        }),
+        trackColor: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+          if (states.contains(MaterialState.disabled)) {
+            return null;
+          }
+          if (states.contains(MaterialState.selected)) {
+            return toggleableActiveColor ?? StylingHelper.accent_color;
+          }
+          return null;
+        }),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+          if (states.contains(MaterialState.disabled)) {
+            return null;
+          }
+          if (states.contains(MaterialState.selected)) {
+            return toggleableActiveColor ?? StylingHelper.accent_color;
+          }
+          return null;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+          if (states.contains(MaterialState.disabled)) {
+            return null;
+          }
+          if (states.contains(MaterialState.selected)) {
+            return toggleableActiveColor ?? StylingHelper.accent_color;
+          }
+          return null;
+        }),
+      ),
     );
   }
 
@@ -173,8 +217,10 @@ class App extends StatelessWidget {
             navigatorKey: rootNavKey,
             debugShowCheckedModeBanner: false,
             theme: _getCurrentTheme(settingsBox),
-            initialRoute: settingsBox.get(SettingsKeys.HasUserSeenIntro.name,
-                    defaultValue: false)
+            initialRoute: settingsBox.get(
+              SettingsKeys.HasUserSeenIntro202208.name,
+              defaultValue: false,
+            )
                 ? AppRoutingKeys.Tabs.route
                 // ? AppRoutingKeys.Intro.route
                 : AppRoutingKeys.Intro.route,

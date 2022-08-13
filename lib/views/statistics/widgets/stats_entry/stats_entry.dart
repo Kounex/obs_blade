@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/shared/animator/status_dot.dart';
 import 'package:obs_blade/types/extensions/int.dart';
 
 import '../../../../types/interfaces/past_stats_data.dart';
@@ -53,21 +52,55 @@ class StatsEntry extends StatelessWidget {
             ),
             const SizedBox(height: 4.0),
             Padding(
-              padding: const EdgeInsets.only(left: 37.0),
-              child: StatusDot(
-                color: this.pastStatsData is PastStreamData
-                    ? CupertinoColors.destructiveRed
-                    : this.pastStatsData is PastRecordData
-                        ? CupertinoColors.activeOrange
-                        : Colors.grey,
-                text: this.pastStatsData is PastStreamData
-                    ? 'Stream'
-                    : this.pastStatsData is PastRecordData
-                        ? 'Recording'
-                        : 'Unknown',
-                style: Theme.of(context).textTheme.caption,
+              padding: const EdgeInsets.only(left: 35.0),
+              child: Row(
+                children: [
+                  this.pastStatsData is PastStreamData
+                      ? const Icon(
+                          Icons.fiber_manual_record_rounded,
+                          size: 18.0,
+                          color: CupertinoColors.destructiveRed,
+                        )
+                      : this.pastStatsData is PastRecordData
+                          ? const Icon(
+                              Icons.sensors,
+                              color: CupertinoColors.destructiveRed,
+                            )
+                          : const Icon(
+                              Icons.question_mark,
+                              color: CupertinoColors.systemGrey,
+                            ),
+                  const SizedBox(width: 6.0),
+                  this.pastStatsData is PastStreamData
+                      ? Text(
+                          'Recording',
+                          style: Theme.of(context).textTheme.caption,
+                        )
+                      : this.pastStatsData is PastRecordData
+                          ? Text(
+                              'Stream',
+                              style: Theme.of(context).textTheme.caption,
+                            )
+                          : Text(
+                              'Unknown',
+                              style: Theme.of(context).textTheme.caption,
+                            ),
+                ],
               ),
-            )
+            ),
+            // StatusDot(
+            //   color: this.pastStatsData is PastStreamData
+            //       ? CupertinoColors.destructiveRed
+            //       : this.pastStatsData is PastRecordData
+            //           ? CupertinoColors.activeOrange
+            //           : Colors.grey,
+            //   text: this.pastStatsData is PastStreamData
+            //       ? 'Stream'
+            //       : this.pastStatsData is PastRecordData
+            //           ? 'Recording'
+            //           : 'Unknown',
+            //   style: Theme.of(context).textTheme.caption,
+            // ),
           ],
         ),
       ),

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
+
 import '../../../../models/purchased_tip.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
-
 import '../../../../types/extensions/list.dart';
 import 'donate_button.dart';
 
@@ -65,33 +66,39 @@ class TipsContent extends StatelessWidget {
       children: [
         const Text(
             'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!'),
-        const SizedBox(height: 12.0),
+        // const SizedBox(height: 12.0),
+        const BaseDivider(
+          height: 24.0,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Column(
-            children: [
-              if (this.tipsDetails == null || this.tipsDetails!.isEmpty)
-                ...kTipAwesomeness.take(this.amountTips).map(
-                      (tipAwesomeness) => DonateButton(
-                        text: '$tipAwesomeness Tip',
-                        errorText: this.tipsDetails != null
-                            ? 'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!'
-                            : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: Column(
+              children: [
+                if (this.tipsDetails == null || this.tipsDetails!.isEmpty)
+                  ...kTipAwesomeness.take(this.amountTips).map(
+                        (tipAwesomeness) => DonateButton(
+                          text: '$tipAwesomeness Tip',
+                          errorText: this.tipsDetails != null
+                              ? 'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!'
+                              : null,
+                        ),
                       ),
-                    ),
-              if (this.tipsDetails != null && this.tipsDetails!.isNotEmpty)
-                ...this
-                    .tipsDetails!
-                    .take(kTipAwesomeness.length)
-                    .mapIndexed(
-                      (tip, index) => DonateButton(
-                        text: '${kTipAwesomeness[index]} Tip',
-                        price: tip.price,
-                        purchaseParam: PurchaseParam(productDetails: tip),
-                      ),
-                    )
-                    .toList(),
-            ],
+                if (this.tipsDetails != null && this.tipsDetails!.isNotEmpty)
+                  ...this
+                      .tipsDetails!
+                      .take(kTipAwesomeness.length)
+                      .mapIndexed(
+                        (tip, index) => DonateButton(
+                          text: '${kTipAwesomeness[index]} Tip',
+                          price: tip.price,
+                          purchaseParam: PurchaseParam(productDetails: tip),
+                        ),
+                      )
+                      .toList(),
+              ],
+            ),
           ),
         ),
         HiveBuilder<PurchasedTip>(

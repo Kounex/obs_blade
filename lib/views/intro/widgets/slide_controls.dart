@@ -46,7 +46,10 @@ class SlideControls extends StatelessWidget {
         SmoothPageIndicator(
             controller: this.pageController,
             effect: ScrollingDotsEffect(
-              activeDotColor: Theme.of(context).toggleableActiveColor,
+              activeDotColor: Theme.of(context)
+                  .switchTheme
+                  .trackColor!
+                  .resolve({MaterialState.selected})!,
               dotHeight: 12.0,
               dotWidth: 12.0,
             ),
@@ -62,8 +65,10 @@ class SlideControls extends StatelessWidget {
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeIn);
                 } else {
-                  Hive.box(HiveKeys.Settings.name)
-                      .put(SettingsKeys.HasUserSeenIntro.name, true);
+                  Hive.box(HiveKeys.Settings.name).put(
+                    SettingsKeys.HasUserSeenIntro202208.name,
+                    true,
+                  );
                   Navigator.of(context).pushReplacementNamed(this.manually
                       ? SettingsTabRoutingKeys.Landing.route
                       : AppRoutingKeys.Tabs.route);

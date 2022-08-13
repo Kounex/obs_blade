@@ -37,7 +37,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
               scrollController: scrollController,
             ),
           )
-        : ModalHandler.showBaseDialog(
+        : ModalHandler.showBaseDialog<bool?>(
             context: context,
             barrierDismissible: true,
             dialogWidget: const SupportDialog(
@@ -47,7 +47,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
             ),
           ).then(
             (clickedOnForgeTheme) {
-              if (clickedOnForgeTheme) {
+              if (clickedOnForgeTheme != null && clickedOnForgeTheme) {
                 _openAddTheme(context);
               }
             },

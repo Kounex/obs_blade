@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/stat_type_control.dart';
 
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
@@ -45,6 +46,8 @@ class SortFilterPanel extends StatelessWidget {
                       StatisticsDateRange(),
                       SizedBox(height: _kControlsPadding + 2.0),
                       FavoriteControl(),
+                      SizedBox(height: _kControlsPadding + 2.0),
+                      StatTypeControl(),
                       SizedBox(height: _kControlsPadding + 2.0),
                       AmountEntriesControl(),
                       SizedBox(height: 4.0),

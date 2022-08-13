@@ -66,7 +66,8 @@ class BlacksmithContent extends StatelessWidget {
                     DonateButton(
                       price: this.blacksmithDetails![0].price,
                       purchaseParam: PurchaseParam(
-                          productDetails: this.blacksmithDetails![0]),
+                        productDetails: this.blacksmithDetails![0],
+                      ),
                     ),
                   ],
                 );

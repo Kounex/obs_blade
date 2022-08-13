@@ -27,7 +27,10 @@ class SupportHeader extends StatelessWidget {
                   height: 64.0,
                   width: 64.0,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).toggleableActiveColor,
+                    color: Theme.of(context)
+                        .switchTheme
+                        .trackColor!
+                        .resolve({MaterialState.selected}),
                     borderRadius: const BorderRadius.all(
                       Radius.circular(12.0),
                     ),

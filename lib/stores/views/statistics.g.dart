@@ -122,20 +122,35 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$excludeUnnamedStreamsAtom =
-      Atom(name: '_StatisticsStore.excludeUnnamedStreams', context: context);
+  late final _$excludeUnnamedStatsAtom =
+      Atom(name: '_StatisticsStore.excludeUnnamedStats', context: context);
 
   @override
-  bool? get excludeUnnamedStreams {
-    _$excludeUnnamedStreamsAtom.reportRead();
-    return super.excludeUnnamedStreams;
+  bool? get excludeUnnamedStats {
+    _$excludeUnnamedStatsAtom.reportRead();
+    return super.excludeUnnamedStats;
   }
 
   @override
-  set excludeUnnamedStreams(bool? value) {
-    _$excludeUnnamedStreamsAtom.reportWrite(value, super.excludeUnnamedStreams,
-        () {
-      super.excludeUnnamedStreams = value;
+  set excludeUnnamedStats(bool? value) {
+    _$excludeUnnamedStatsAtom.reportWrite(value, super.excludeUnnamedStats, () {
+      super.excludeUnnamedStats = value;
+    });
+  }
+
+  late final _$statTypeAtom =
+      Atom(name: '_StatisticsStore.statType', context: context);
+
+  @override
+  StatType? get statType {
+    _$statTypeAtom.reportRead();
+    return super.statType;
+  }
+
+  @override
+  set statType(StatType? value) {
+    _$statTypeAtom.reportWrite(value, super.statType, () {
+      super.statType = value;
     });
   }
 
@@ -221,11 +236,22 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setExcludeUnnamedStreams(bool? excludeUnnamedStreams) {
+  void setExcludeUnnamedStats(bool? excludeUnnamedStats) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setExcludeUnnamedStreams');
+        name: '_StatisticsStore.setExcludeUnnamedStats');
     try {
-      return super.setExcludeUnnamedStreams(excludeUnnamedStreams);
+      return super.setExcludeUnnamedStats(excludeUnnamedStats);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setStatType(StatType? statType) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setStatType');
+    try {
+      return super.setStatType(statType);
     } finally {
       _$_StatisticsStoreActionController.endAction(_$actionInfo);
     }
@@ -241,7 +267,8 @@ filterName: ${filterName},
 showOnlyFavorites: ${showOnlyFavorites},
 fromDate: ${fromDate},
 toDate: ${toDate},
-excludeUnnamedStreams: ${excludeUnnamedStreams}
+excludeUnnamedStats: ${excludeUnnamedStats},
+statType: ${statType}
     ''';
   }
 }

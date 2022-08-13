@@ -25,7 +25,7 @@ class FAQBlock extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12.0),
+        const SizedBox(height: 8.0),
         this.text != null ? Text(this.text!) : this.customBody!,
       ],
     );

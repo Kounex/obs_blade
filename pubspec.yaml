@@ -61,7 +61,7 @@ dependencies:
   path_provider: ^2.0.1
 
   # Enable and manage in-app purchases
-  in_app_purchase: ^2.0.0
+  in_app_purchase: ^3.0.7
 
   # Fancy done layout shit
   modal_bottom_sheet: ^2.1.0

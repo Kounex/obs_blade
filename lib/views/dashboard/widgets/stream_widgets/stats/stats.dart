@@ -34,7 +34,10 @@ class _StatsState extends State<Stats> {
             controller: _pageController,
             count: 2,
             effect: ScrollingDotsEffect(
-              activeDotColor: Theme.of(context).toggleableActiveColor,
+              activeDotColor: Theme.of(context)
+                  .switchTheme
+                  .trackColor!
+                  .resolve({MaterialState.selected})!,
               dotHeight: 10.0,
               dotWidth: 10.0,
             ),
