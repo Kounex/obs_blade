@@ -10,8 +10,8 @@
       "internalID" : "3B8FF2BA",
       "localizations" : [
         {
-          "description" : "",
-          "displayName" : "",
+          "description" : "Customise the appearance of OBS Blade",
+          "displayName" : "Blacksmith",
           "locale" : "en_US"
         }
       ],
@@ -25,8 +25,8 @@
       "internalID" : "FE597D58",
       "localizations" : [
         {
-          "description" : "",
-          "displayName" : "",
+          "description" : "Generous tip to support me",
+          "displayName" : "Nice Tip",
           "locale" : "en_US"
         }
       ],
@@ -40,8 +40,8 @@
       "internalID" : "27FF5DCA",
       "localizations" : [
         {
-          "description" : "",
-          "displayName" : "",
+          "description" : "Very Generous tip to support me",
+          "displayName" : "Awesome Tip",
           "locale" : "en_US"
         }
       ],
@@ -55,8 +55,8 @@
       "internalID" : "8EF85490",
       "localizations" : [
         {
-          "description" : "",
-          "displayName" : "",
+          "description" : "Unbelieveable generous tip to support me",
+          "displayName" : "Incredible Tip",
           "locale" : "en_US"
         }
       ],
@@ -72,7 +72,7 @@
 
   ],
   "version" : {
-    "major" : 1,
-    "minor" : 1
+    "major" : 2,
+    "minor" : 0
   }
 }

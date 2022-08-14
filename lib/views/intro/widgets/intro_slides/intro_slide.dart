@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/animator/fader.dart';
-import '../intro.dart';
+import '../../../../shared/animator/fader.dart';
+import '../../intro.dart';
 
 class IntroSlide extends StatelessWidget {
   final String imagePath;

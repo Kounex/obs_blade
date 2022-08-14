@@ -60,7 +60,7 @@ class ModalHandler {
     required BuildContext context,
     required Widget Function(BuildContext, ScrollController) modalWidgetBuilder,
     bool useRootNavigator = true,
-    double maxWidth = kBaseCardMaxWidth,
+    double maxWidth = double.infinity,
     double additionalBottomViewInsets = 0,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(

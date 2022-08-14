@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../models/custom_theme.dart';
-import '../../../utils/styling_helper.dart';
+import 'package:obs_blade/shared/general/base/constrained_box.dart';
 
+import '../../../models/custom_theme.dart';
 import '../../../types/extensions/string.dart';
+import '../../../utils/styling_helper.dart';
 import 'divider.dart';
 
-const double kBaseCardMaxWidth = 772.0;
+const double kBaseCardMaxWidth = 640.0;
 const double kBaseCardBorderRadius = 12.0;
 
 class BaseCard extends StatelessWidget {
@@ -138,8 +139,8 @@ class BaseCard extends StatelessWidget {
     if (!this.constrained) return card;
 
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+      child: BaseConstrainedBox(
+        maxWidth: kBaseCardMaxWidth,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
