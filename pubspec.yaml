@@ -29,7 +29,7 @@ dependencies:
   get_it: ^7.2.0
   mobx: ^2.0.7+5
   flutter_mobx: ^2.0.6+1
-  path: ^1.8.2
+  path: ^1.8.1
 
   # Network stuff
   connectivity_plus: ^2.3.6+1

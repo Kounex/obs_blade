@@ -17,6 +17,7 @@ class BaseCard extends StatelessWidget {
   final Widget? below;
 
   final bool constrained;
+  final CrossAxisAlignment constrainedAlignment;
 
   final Color? backgroundColor;
   final bool paintBorder;
@@ -46,6 +47,7 @@ class BaseCard extends StatelessWidget {
     this.below,
     this.centerChild = true,
     this.constrained = true,
+    this.constrainedAlignment = CrossAxisAlignment.start,
     this.backgroundColor,
     this.paintBorder = false,
     this.borderColor,
@@ -142,7 +144,7 @@ class BaseCard extends StatelessWidget {
       child: BaseConstrainedBox(
         maxWidth: kBaseCardMaxWidth,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: this.constrainedAlignment,
           children: [
             this.above ?? Container(),
             card,

@@ -16,10 +16,13 @@ class _VersionSelectionState extends State<VersionSelection> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
           onTap: () => setState(() => _nextStage = IntroStage.TwentyEightParty),
           child: BaseCard(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            constrainedAlignment: CrossAxisAlignment.center,
             paintBorder: _nextStage == IntroStage.TwentyEightParty,
             borderColor: _nextStage == IntroStage.TwentyEightParty
                 ? Theme.of(context)
@@ -34,6 +37,8 @@ class _VersionSelectionState extends State<VersionSelection> {
           onTap: () =>
               setState(() => _nextStage = IntroStage.InstallationSlides),
           child: BaseCard(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            constrainedAlignment: CrossAxisAlignment.center,
             paintBorder: _nextStage == IntroStage.InstallationSlides,
             borderColor: _nextStage == IntroStage.InstallationSlides
                 ? Theme.of(context)
