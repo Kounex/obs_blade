@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/views/intro/widgets/back_so_selection_wrapper.dart';
 
 import '../../stores/views/intro.dart';
 import 'widgets/getting_started.dart';
@@ -65,7 +66,7 @@ class _IntroViewState extends State<IntroView> {
           color: Theme.of(context).backgroundColor,
           child: Observer(builder: (context) {
             return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 1000),
               switchInCurve: Curves.easeOutSine,
               switchOutCurve: Curves.easeOut,
               transitionBuilder: (child, animation) {
@@ -81,9 +82,13 @@ class _IntroViewState extends State<IntroView> {
                   case IntroStage.VersionSelection:
                     return const VersionSelection();
                   case IntroStage.TwentyEightParty:
-                    return TwentyEightParty(manually: this.widget.manually);
+                    return BackToSelectionWrapper(
+                      child: TwentyEightParty(manually: this.widget.manually),
+                    );
                   case IntroStage.InstallationSlides:
-                    return IntroSlides(manually: this.widget.manually);
+                    return BackToSelectionWrapper(
+                      child: IntroSlides(manually: this.widget.manually),
+                    );
                 }
               }(),
             );

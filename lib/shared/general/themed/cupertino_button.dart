@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ThemedCupertinoButton extends StatelessWidget {
-  final String text;
+  final String? text;
+  final Widget? child;
   final EdgeInsetsGeometry? padding;
   final bool isDestructive;
   final double? minSize;
@@ -11,7 +12,8 @@ class ThemedCupertinoButton extends StatelessWidget {
 
   const ThemedCupertinoButton({
     Key? key,
-    required this.text,
+    this.text,
+    this.child,
     this.padding,
     this.isDestructive = false,
     this.minSize,
@@ -23,8 +25,7 @@ class ThemedCupertinoButton extends StatelessWidget {
     return CupertinoButton(
       minSize: this.minSize ?? kMinInteractiveDimensionCupertino,
       padding: this.padding,
-      child: Text(
-        this.text,
+      child: DefaultTextStyle.merge(
         style: TextStyle(
           color: this.onPressed != null
               ? this.isDestructive
@@ -32,6 +33,10 @@ class ThemedCupertinoButton extends StatelessWidget {
                   : Theme.of(context).cupertinoOverrideTheme!.primaryColor
               : null,
         ),
+        child: this.child ??
+            Text(
+              this.text ?? '',
+            ),
       ),
       onPressed: this.onPressed,
     );
