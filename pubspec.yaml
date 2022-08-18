@@ -63,6 +63,9 @@ dependencies:
   # Enable and manage in-app purchases
   in_app_purchase: ^3.0.7
 
+  # QR Scanner for quick connect feature
+  qr_code_scanner: ^1.0.1
+
   # Fancy done layout stuff
   modal_bottom_sheet: ^2.1.0
   # fl_chart: ^0.35.0

@@ -9,7 +9,6 @@ import 'package:obs_blade/views/home/widgets/connect_box/connect_form/connect_ho
 import '../../../../../models/connection.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/keyboard_number_header.dart';
-import '../../../../../shared/general/question_mark_tooltip.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/home.dart';
 import '../../../../../utils/validation_helper.dart';
@@ -57,6 +56,23 @@ class _ConnectFormState extends State<ConnectForm> {
       key: _formKey,
       child: Column(
         children: <Widget>[
+          // if (this.widget.manual) ...[
+          //   const SizedBox(height: 12.0),
+          //   BaseButton(
+          //     onPressed: () => ModalHandler.showBaseDialog(
+          //       context: context,
+          //       dialogWidget: InfoDialog(
+          //         title: 'Quick Connect',
+          //         body: '',
+          //         enableDontShowAgainOption: true,
+          //         onPressed: (dontShow) {},
+          //       ),
+          //     ),
+          //     icon: const Icon(CupertinoIcons.qrcode_viewfinder),
+          //     text: 'Quick Connect',
+          //   ),
+          //   const BaseDivider(height: 24.0),
+          // ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -124,35 +140,57 @@ class _ConnectFormState extends State<ConnectForm> {
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
-                BaseButton(
-                  text: 'Connect',
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      FocusScope.of(context).unfocus();
-                      networkStore
-                          .setOBSWebSocket(
-                            Connection(
-                              (this.widget.manual
-                                      ? landingStore.protocolScheme
-                                      : '') +
-                                  _host.text,
-                              int.tryParse(_port.text),
-                              _pw.text,
-                              this.widget.manual
-                                  ? landingStore.domainMode
-                                  : false,
-                            ),
-                          )
-                          .then((clodeCode) => _clodeCode.add(clodeCode));
-                    }
-                  },
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // if (this.widget.manual) ...[
+                    //   BaseButton(
+                    //     onPressed: () => ModalHandler.showBaseDialog(
+                    //       context: context,
+                    //       dialogWidget: InfoDialog(
+                    //         title: 'Quick Connect',
+                    //         body: '',
+                    //         enableDontShowAgainOption: true,
+                    //         onPressed: (dontShow) {},
+                    //       ),
+                    //     ),
+                    //     icon: const Icon(CupertinoIcons.qrcode_viewfinder),
+                    //     text: 'Quick Connect',
+                    //   ),
+                    //   const SizedBox(width: 24.0),
+                    // ],
+                    BaseButton(
+                      text: 'Connect',
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          FocusScope.of(context).unfocus();
+                          networkStore
+                              .setOBSWebSocket(
+                                Connection(
+                                  (this.widget.manual
+                                          ? landingStore.protocolScheme
+                                          : '') +
+                                      _host.text,
+                                  int.tryParse(_port.text),
+                                  _pw.text,
+                                  this.widget.manual
+                                      ? landingStore.domainMode
+                                      : false,
+                                ),
+                              )
+                              .then((clodeCode) => _clodeCode.add(clodeCode));
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(left: 192.0),
-                  child: QuestionMarkTooltip(
-                      message:
-                          'Password is optional. You have to set it manually in the OBS WebSocket Plugin.\n\nIt is highly recommended though!'),
-                ),
+                // const Positioned(
+                //   bottom: 12.0,
+                //   right: 32.0,
+                //   child: QuestionMarkTooltip(
+                //       message:
+                //           'Password is optional. You have to set it manually in the OBS WebSocket Plugin.\n\nIt is highly recommended though!'),
+                // ),
               ],
             ),
           ),

@@ -11,13 +11,28 @@ import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
 import '../../../utils/routing_helper.dart';
 
-class TwentyEightParty extends StatelessWidget {
+class TwentyEightParty extends StatefulWidget {
   final bool manually;
 
   const TwentyEightParty({
     super.key,
     required this.manually,
   });
+
+  @override
+  State<TwentyEightParty> createState() => _TwentyEightPartyState();
+}
+
+class _TwentyEightPartyState extends State<TwentyEightParty> {
+  final ConfettiController _controller =
+      ConfettiController(duration: const Duration(milliseconds: 100));
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.delayed(const Duration(milliseconds: 500), () => _controller.play());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +61,7 @@ class TwentyEightParty extends StatelessWidget {
                     true,
                   );
                   Navigator.of(context).pushReplacementNamed(
-                    this.manually
+                    this.widget.manually
                         ? SettingsTabRoutingKeys.Landing.route
                         : AppRoutingKeys.Tabs.route,
                   );
@@ -59,17 +74,16 @@ class TwentyEightParty extends StatelessWidget {
         Positioned(
           top: 0,
           child: ConfettiWidget(
-            confettiController:
-                ConfettiController(duration: const Duration(milliseconds: 1000))
-                  ..play(),
+            confettiController: _controller,
             // maximumSize: const Size(20, 20),
             // minimumSize: const Size(16, 16),
             // createParticlePath: (size) => Path()
             //   ..addOval(Rect.fromCircle(
             //       center: Offset(size.width / 2, size.height / 2),
             //       radius: size.width / 2)),
+            gravity: 0.075,
             blastDirection: pi / 2,
-            emissionFrequency: 0.5,
+            emissionFrequency: 1.0,
             numberOfParticles: 10,
             blastDirectionality: BlastDirectionality.explosive,
           ),

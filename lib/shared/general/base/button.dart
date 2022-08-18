@@ -38,13 +38,13 @@ class BaseButton extends StatelessWidget {
   Widget build(BuildContext context) {
     ButtonStyle style = ElevatedButton.styleFrom(
       padding: this.padding,
-      minimumSize: this.shrinkWidth ? const Size(0, 36) : null,
-      primary: this.isDestructive
+      backgroundColor: this.isDestructive
           ? CupertinoColors.destructiveRed
           : this.secondary
               ? Colors.transparent
               : this.color ??
                   Theme.of(context).buttonTheme.colorScheme!.secondary,
+      minimumSize: this.shrinkWidth ? const Size(0, 36) : null,
       side: !this.isDestructive && this.secondary
           ? BorderSide(
               color: this.color ??

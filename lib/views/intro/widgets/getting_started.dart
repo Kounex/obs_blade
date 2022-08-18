@@ -44,8 +44,29 @@ class GettingStarted extends StatelessWidget {
                   child: ThemedRichText(
                     textSpans: [
                       const TextSpan(
+                        text: 'An unofficial, ',
+                      ),
+                      WidgetSpan(
+                        child: SocialBlock(
+                          topPadding: 0,
+                          bottomPadding: 0,
+                          socialInfos: [
+                            SocialEntry(
+                              linkText: 'open source',
+                              link: 'https://github.com/Kounex/obs_blade',
+                              textStyle: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall!
+                                  .copyWith(
+                                    fontSize: 18,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const TextSpan(
                         text:
-                            'An unofficial OBS controller to master your streams and recordings!\n\nMaking use of the beautiful ',
+                            ' OBS controller to master your streams and recordings!\n\nMaking use of the beautiful, open source ',
                       ),
                       WidgetSpan(
                         child: SocialBlock(
