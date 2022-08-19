@@ -23,8 +23,7 @@ abstract class _IntroStore with Store {
   @observable
   bool lockedOnSlide = false;
 
-  @observable
-  int slideLockSecondsLeft = kSecondsToLockSlide;
+  int slideLockSeconds = kSecondsToLockSlide;
 
   @action
   void setStage(IntroStage stage) => this.stage = stage;
@@ -34,7 +33,7 @@ abstract class _IntroStore with Store {
 
   @action
   void setLockedOnSlide(bool lockedOnSlide, [int? secondsToLockSlide]) {
-    this.slideLockSecondsLeft = secondsToLockSlide ?? kSecondsToLockSlide;
+    this.slideLockSeconds = secondsToLockSlide ?? kSecondsToLockSlide;
     this.lockedOnSlide = lockedOnSlide;
   }
 }

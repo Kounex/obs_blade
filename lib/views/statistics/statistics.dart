@@ -263,7 +263,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                             titleWidget: const CardHeader(
                               title: 'Previous\nStats.',
                               description:
-                                  'All your streaming / recordording sessions',
+                                  'All previous streaming / recording sessions',
                               additionalCardWidgets: [
                                 SortFilterPanel(),
                               ],

@@ -177,7 +177,9 @@ class _HomeViewState extends State<HomeView> {
 
             /// Switch back to autodiscover mode (of our [SwitcherCard]) if we refresh so the
             /// user can actually see the part thats refreshing
-            if (landingStore.manualMode) landingStore.toggleManualMode();
+            if (landingStore.connectMode != ConnectMode.Autodiscover) {
+              landingStore.setConnectMode(ConnectMode.Autodiscover);
+            }
             landingStore.updateAutodiscoverConnections();
           }
         },

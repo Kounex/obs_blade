@@ -34,7 +34,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.only(top: 24.0, right: 24.0, left: 24.0),
+          padding: const EdgeInsets.only(top: 18.0, right: 18.0, left: 18.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[

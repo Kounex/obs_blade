@@ -56,23 +56,6 @@ mixin _$IntroStore on _IntroStore, Store {
     });
   }
 
-  late final _$slideLockSecondsLeftAtom =
-      Atom(name: '_IntroStore.slideLockSecondsLeft', context: context);
-
-  @override
-  int get slideLockSecondsLeft {
-    _$slideLockSecondsLeftAtom.reportRead();
-    return super.slideLockSecondsLeft;
-  }
-
-  @override
-  set slideLockSecondsLeft(int value) {
-    _$slideLockSecondsLeftAtom.reportWrite(value, super.slideLockSecondsLeft,
-        () {
-      super.slideLockSecondsLeft = value;
-    });
-  }
-
   late final _$_IntroStoreActionController =
       ActionController(name: '_IntroStore', context: context);
 
@@ -114,8 +97,7 @@ mixin _$IntroStore on _IntroStore, Store {
     return '''
 stage: ${stage},
 currentPage: ${currentPage},
-lockedOnSlide: ${lockedOnSlide},
-slideLockSecondsLeft: ${slideLockSecondsLeft}
+lockedOnSlide: ${lockedOnSlide}
     ''';
   }
 }

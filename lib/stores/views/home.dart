@@ -6,6 +6,18 @@ import '../../utils/validation_helper.dart';
 
 part 'home.g.dart';
 
+enum ConnectMode {
+  Autodiscover,
+  QR,
+  Manual;
+
+  String get text => {
+        ConnectMode.Autodiscover: 'Autodiscover',
+        ConnectMode.QR: 'Quick Connect',
+        ConnectMode.Manual: 'Manual',
+      }[this]!;
+}
+
 class HomeStore = _HomeStore with _$HomeStore;
 
 abstract class _HomeStore with Store {
@@ -19,7 +31,7 @@ abstract class _HomeStore with Store {
   @observable
   bool doRefresh = false;
   @observable
-  bool manualMode = false;
+  ConnectMode connectMode = ConnectMode.Autodiscover;
   @observable
   bool domainMode = false;
   @observable
@@ -59,6 +71,6 @@ abstract class _HomeStore with Store {
       this.protocolScheme = protocolScheme;
 
   @action
-  void toggleManualMode([bool? manualMode]) =>
-      this.manualMode = manualMode ?? !this.manualMode;
+  void setConnectMode(ConnectMode connectMode) =>
+      this.connectMode = connectMode;
 }

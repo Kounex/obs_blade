@@ -1,8 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
 
 import '../../../../shared/general/base/card.dart';
-import '../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../stores/views/home.dart';
 
 class SwitcherCard extends StatelessWidget {
@@ -28,7 +29,7 @@ class SwitcherCard extends StatelessWidget {
       titleWidget: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: Align(
-          key: Key(this.title),
+          key: ValueKey(this.title),
           alignment: Alignment.centerLeft,
           child: Text(
             this.title,
@@ -36,28 +37,42 @@ class SwitcherCard extends StatelessWidget {
           ),
         ),
       ),
-      trailingTitleWidget: SizedBox(
-        width: 60.0,
-        child: ThemedCupertinoButton(
-          padding: const EdgeInsets.all(0),
-          onPressed: () => landingStore.toggleManualMode(),
-          text: landingStore.manualMode ? 'Auto' : 'Manual',
-        ),
-      ),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SizeTransition(
-            sizeFactor: animation.drive(
-              Tween(begin: 0.75, end: 1.0).chain(
-                CurveTween(curve: Curves.easeOut),
+      child: Column(
+        children: [
+          const SizedBox(height: 12.0),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: CupertinoSlidingSegmentedControl<ConnectMode>(
+              groupValue: landingStore.connectMode,
+              children: const {
+                ConnectMode.Autodiscover:
+                    Icon(CupertinoIcons.dot_radiowaves_left_right),
+                ConnectMode.QR: Icon(CupertinoIcons.qrcode_viewfinder),
+                ConnectMode.Manual: Icon(CupertinoIcons.textformat),
+              },
+              onValueChanged: (mode) => landingStore.setConnectMode(mode!),
+            ),
+          ),
+          const SizedBox(height: 12.0),
+          const BaseDivider(),
+          AnimatedSwitcher(
+            key: ValueKey(this.title),
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                sizeFactor: animation.drive(
+                  Tween(begin: 0.75, end: 1.0).chain(
+                    CurveTween(curve: Curves.easeOut),
+                  ),
+                ),
+                child: child,
               ),
             ),
-            child: child,
+            child: this.child,
           ),
-        ),
-        child: this.child,
+        ],
       ),
     );
   }

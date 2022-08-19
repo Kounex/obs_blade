@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -33,10 +32,10 @@ class _IntroSlidesState extends State<IntroSlides> {
   /// before being able to move on. This will ensure they at least see
   /// a slide for a speciic time and hopefully use this time to take
   /// a look at the instrcutions / possibilities
-  Timer? _timerToContinue;
+  // Timer? _timerToContinue;
 
-  final List<bool> _pagesLockedPreviously = [false, false, false, false];
-  final List<bool> _pagesToLockOn = [false, true, false, false];
+  final List<bool> _pagesLockedPreviously = [false, false, false];
+  final List<bool> _pagesToLockOn = [true, true, true];
 
   final List<ReactionDisposer> _disposers = [];
 
@@ -46,27 +45,32 @@ class _IntroSlidesState extends State<IntroSlides> {
 
     IntroStore introStore = GetIt.instance<IntroStore>();
 
+    _checkAndSetSlideLock(introStore, 0);
+
     _disposers.add(reaction<int>(
       (_) => introStore.currentPage,
       (currentPage) {
-        if (!this.widget.manually &&
-            _pagesToLockOn[currentPage] &&
-            !_pagesLockedPreviously[currentPage]) {
-          _pagesLockedPreviously[currentPage] = true;
-
-          introStore.setLockedOnSlide(true);
-
-          _timerToContinue =
-              Timer.periodic(const Duration(seconds: 1), (timer) {
-            introStore.slideLockSecondsLeft--;
-            if (introStore.slideLockSecondsLeft <= 0) {
-              _timerToContinue!.cancel();
-              introStore.setLockedOnSlide(false);
-            }
-          });
-        }
+        _checkAndSetSlideLock(introStore, currentPage);
       },
     ));
+  }
+
+  void _checkAndSetSlideLock(IntroStore introStore, int currentPage) {
+    if (!this.widget.manually &&
+        _pagesToLockOn[currentPage] &&
+        !_pagesLockedPreviously[currentPage]) {
+      _pagesLockedPreviously[currentPage] = true;
+
+      introStore.setLockedOnSlide(true);
+
+      // _timerToContinue = Timer.periodic(const Duration(seconds: 1), (timer) {
+      //   introStore.slideLockSecondsLeft--;
+      //   if (introStore.slideLockSecondsLeft <= 0) {
+      //     _timerToContinue!.cancel();
+      //     introStore.setLockedOnSlide(false);
+      //   }
+      // });
+    }
   }
 
   @override
@@ -92,10 +96,30 @@ class _IntroSlidesState extends State<IntroSlides> {
             WidgetSpan(
               child: SocialBlock(
                 topPadding: 12.0,
-                bottomPadding: 0,
+                bottomPadding: 12.0,
                 socialInfos: [
                   SocialEntry(
                     link: 'https://github.com/obsproject/obs-websocket',
+                    textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
+                          fontSize: 16,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const TextSpan(
+              text:
+                  'Click on the \'Releases\' link in the Downloads section as seen in the screenshot or ',
+            ),
+            WidgetSpan(
+              child: SocialBlock(
+                topPadding: 0.0,
+                bottomPadding: 0.0,
+                socialInfos: [
+                  SocialEntry(
+                    linkText: 'here',
+                    link:
+                        'https://github.com/obsproject/obs-websocket/releases',
                     textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
                           fontSize: 16,
                         ),
@@ -116,7 +140,11 @@ class _IntroSlidesState extends State<IntroSlides> {
           textSpans: const [
             TextSpan(
               text:
-                  'Click on \'Releases\' to get to the download area and select the correct installer (for your operating system)\n\nIMPORTANT: Download version 4.9.1!',
+                  'Scroll down to \'Assets\' and download the correct installer (for your operating system)\n\n',
+            ),
+            TextSpan(
+              text: 'IMPORTANT: Download version 5.X and above!',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
           textAlign: TextAlign.left,
@@ -131,7 +159,7 @@ class _IntroSlidesState extends State<IntroSlides> {
           textSpans: const [
             TextSpan(
               text:
-                  'After installing the plugin and restarting OBS, look if Tools -> WebSocket Server Settings is available and use the recommended settings (above) - Enjoy!',
+                  'After installing the plugin and restarting OBS, check if Tools -> obs-websocket Settings is available and use the recommended settings (above) - Enjoy!',
             ),
           ],
           textAlign: TextAlign.left,
@@ -162,7 +190,7 @@ class _IntroSlidesState extends State<IntroSlides> {
               }),
             ),
             const BaseDivider(),
-            const SizedBox(height: 24.0),
+            const SizedBox(height: 18.0),
             Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).padding.bottom +

@@ -74,19 +74,19 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$manualModeAtom =
-      Atom(name: '_HomeStore.manualMode', context: context);
+  late final _$connectModeAtom =
+      Atom(name: '_HomeStore.connectMode', context: context);
 
   @override
-  bool get manualMode {
-    _$manualModeAtom.reportRead();
-    return super.manualMode;
+  ConnectMode get connectMode {
+    _$connectModeAtom.reportRead();
+    return super.connectMode;
   }
 
   @override
-  set manualMode(bool value) {
-    _$manualModeAtom.reportWrite(value, super.manualMode, () {
-      super.manualMode = value;
+  set connectMode(ConnectMode value) {
+    _$connectModeAtom.reportWrite(value, super.connectMode, () {
+      super.connectMode = value;
     });
   }
 
@@ -192,11 +192,11 @@ mixin _$HomeStore on _HomeStore, Store {
   }
 
   @override
-  void toggleManualMode([bool? manualMode]) {
+  void setConnectMode(ConnectMode connectMode) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.toggleManualMode');
+        name: '_HomeStore.setConnectMode');
     try {
-      return super.toggleManualMode(manualMode);
+      return super.setConnectMode(connectMode);
     } finally {
       _$_HomeStoreActionController.endAction(_$actionInfo);
     }
@@ -209,7 +209,7 @@ autodiscoverConnections: ${autodiscoverConnections},
 autodiscoverPort: ${autodiscoverPort},
 refreshable: ${refreshable},
 doRefresh: ${doRefresh},
-manualMode: ${manualMode},
+connectMode: ${connectMode},
 domainMode: ${domainMode},
 protocolScheme: ${protocolScheme}
     ''';
