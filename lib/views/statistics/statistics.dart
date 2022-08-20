@@ -159,15 +159,36 @@ class _StatisticsViewState extends State<StatisticsView> {
                   : true;
         })
 
-        /// Filter statistics which are inside the date range the user might have set
+        /// Filter statistics which are inside the date range the user might
+        /// have set
         .where((data) =>
             data.listEntryDateMS.first >=
                 (statisticsStore.fromDate?.millisecondsSinceEpoch ?? 0) &&
             data.listEntryDateMS.last <=
                 (statisticsStore.toDate?.millisecondsSinceEpoch ??
                     DateTime.now().millisecondsSinceEpoch))
+        .where((data) {
+          if (statisticsStore.durationFilter != null &&
+              int.tryParse(statisticsStore.durationFilterAmount ?? '') !=
+                  null) {
+            switch (statisticsStore.durationFilter!) {
+              case DurationFilter.Shorter:
+                return data.totalTime! <
+                    int.parse(statisticsStore.durationFilterAmount!) *
+                        statisticsStore.durationFilterTimeUnit.factorToS;
+              case DurationFilter.Longer:
+                return data.totalTime! >
+                    int.parse(statisticsStore.durationFilterAmount!) *
+                        statisticsStore.durationFilterTimeUnit.factorToS;
+              case DurationFilter.Between:
+                return true;
+            }
+          }
+          return true;
+        })
 
-        /// Filter statistics which are not unnamed or specifically unnamed if user set this checkbox (or tristate)
+        /// Filter statistics which are not unnamed or specifically unnamed if
+        /// user set this checkbox (or tristate)
         .where((data) {
           if (statisticsStore.excludeUnnamedStats != null) {
             return statisticsStore.excludeUnnamedStats!

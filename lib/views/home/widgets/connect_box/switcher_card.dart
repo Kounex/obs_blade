@@ -47,7 +47,7 @@ class SwitcherCard extends StatelessWidget {
               groupValue: landingStore.connectMode,
               children: const {
                 ConnectMode.Autodiscover:
-                    Icon(CupertinoIcons.dot_radiowaves_left_right),
+                    Icon(CupertinoIcons.antenna_radiowaves_left_right),
                 ConnectMode.QR: Icon(CupertinoIcons.qrcode_viewfinder),
                 ConnectMode.Manual: Icon(CupertinoIcons.textformat),
               },

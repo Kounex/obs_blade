@@ -15,7 +15,7 @@ extension FilterTypeFunctions on FilterType {
   String get text => const {
         FilterType.StatisticTime: 'Date',
         FilterType.Name: 'Name',
-        FilterType.TotalTime: 'Total stream time',
+        FilterType.TotalTime: 'Session Time',
         FilterType.Kbits: 'kbit/s',
       }[this]!;
 }
@@ -43,6 +43,30 @@ enum StatType {
   String get name => {
         StatType.Stream: 'Stream',
         StatType.Recording: 'Recording',
+      }[this]!;
+}
+
+enum TimeUnit {
+  Seconds,
+  Minutes,
+  Hours;
+
+  int get factorToS => {
+        TimeUnit.Seconds: 1,
+        TimeUnit.Minutes: 60,
+        TimeUnit.Hours: 3600,
+      }[this]!;
+}
+
+enum DurationFilter {
+  Shorter,
+  Longer,
+  Between;
+
+  String get text => {
+        DurationFilter.Shorter: 'Shorter than...',
+        DurationFilter.Longer: 'Longer than...',
+        DurationFilter.Between: 'Between...',
       }[this]!;
 }
 
@@ -77,6 +101,15 @@ abstract class _StatisticsStore with Store {
   StatType? statType;
 
   @observable
+  DurationFilter? durationFilter;
+
+  @observable
+  String? durationFilterAmount;
+
+  @observable
+  TimeUnit durationFilterTimeUnit = TimeUnit.Minutes;
+
+  @observable
   @action
   void setFilterType(FilterType filterType) => this.filterType = filterType;
 
@@ -108,4 +141,16 @@ abstract class _StatisticsStore with Store {
 
   @action
   void setStatType(StatType? statType) => this.statType = statType;
+
+  @action
+  void setDurationFilter(DurationFilter? durationFilter) =>
+      this.durationFilter = durationFilter;
+
+  @action
+  void setDurationFilterAmount(String? durationFilterAmount) =>
+      this.durationFilterAmount = durationFilterAmount;
+
+  @action
+  void setDurationFilterTimeUnit(TimeUnit durationFilterTimeUnit) =>
+      this.durationFilterTimeUnit = durationFilterTimeUnit;
 }

@@ -29,7 +29,7 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
             ),
           ),
           Text(
-            'Exclude unnamed streams',
+            'Exclude unnamed entries',
             style: Theme.of(context).textTheme.subtitle1,
           ),
         ],

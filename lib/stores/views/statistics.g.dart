@@ -154,6 +154,56 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
+  late final _$durationFilterAtom =
+      Atom(name: '_StatisticsStore.durationFilter', context: context);
+
+  @override
+  DurationFilter? get durationFilter {
+    _$durationFilterAtom.reportRead();
+    return super.durationFilter;
+  }
+
+  @override
+  set durationFilter(DurationFilter? value) {
+    _$durationFilterAtom.reportWrite(value, super.durationFilter, () {
+      super.durationFilter = value;
+    });
+  }
+
+  late final _$durationFilterAmountAtom =
+      Atom(name: '_StatisticsStore.durationFilterAmount', context: context);
+
+  @override
+  String? get durationFilterAmount {
+    _$durationFilterAmountAtom.reportRead();
+    return super.durationFilterAmount;
+  }
+
+  @override
+  set durationFilterAmount(String? value) {
+    _$durationFilterAmountAtom.reportWrite(value, super.durationFilterAmount,
+        () {
+      super.durationFilterAmount = value;
+    });
+  }
+
+  late final _$durationFilterTimeUnitAtom =
+      Atom(name: '_StatisticsStore.durationFilterTimeUnit', context: context);
+
+  @override
+  TimeUnit get durationFilterTimeUnit {
+    _$durationFilterTimeUnitAtom.reportRead();
+    return super.durationFilterTimeUnit;
+  }
+
+  @override
+  set durationFilterTimeUnit(TimeUnit value) {
+    _$durationFilterTimeUnitAtom
+        .reportWrite(value, super.durationFilterTimeUnit, () {
+      super.durationFilterTimeUnit = value;
+    });
+  }
+
   late final _$_StatisticsStoreActionController =
       ActionController(name: '_StatisticsStore', context: context);
 
@@ -258,6 +308,39 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
+  void setDurationFilter(DurationFilter? durationFilter) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setDurationFilter');
+    try {
+      return super.setDurationFilter(durationFilter);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setDurationFilterAmount(String? durationFilterAmount) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setDurationFilterAmount');
+    try {
+      return super.setDurationFilterAmount(durationFilterAmount);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setDurationFilterTimeUnit(TimeUnit durationFilterTimeUnit) {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setDurationFilterTimeUnit');
+    try {
+      return super.setDurationFilterTimeUnit(durationFilterTimeUnit);
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
 filterType: ${filterType},
@@ -268,7 +351,10 @@ showOnlyFavorites: ${showOnlyFavorites},
 fromDate: ${fromDate},
 toDate: ${toDate},
 excludeUnnamedStats: ${excludeUnnamedStats},
-statType: ${statType}
+statType: ${statType},
+durationFilter: ${durationFilter},
+durationFilterAmount: ${durationFilterAmount},
+durationFilterTimeUnit: ${durationFilterTimeUnit}
     ''';
   }
 }

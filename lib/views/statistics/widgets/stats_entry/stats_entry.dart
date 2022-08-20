@@ -61,31 +61,34 @@ class StatsEntry extends StatelessWidget {
                     Radius.circular(6.0),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      this.pastStatsData is PastStreamData
-                          ? CupertinoIcons.dot_radiowaves_left_right
-                          : this.pastStatsData is PastRecordData
-                              ? CupertinoIcons.recordingtape
-                              : Icons.question_mark,
-                      size: 18.0,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 6.0),
-                    Text(
-                      this.pastStatsData is PastStreamData
-                          ? 'Stream'
-                          : this.pastStatsData is PastRecordData
-                              ? 'Recording'
-                              : 'Unknown',
-                      style: Theme.of(context)
-                          .textTheme
-                          .caption!
-                          .copyWith(color: Colors.white),
-                    ),
-                  ],
+                child: SizedBox(
+                  height: 24.0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        this.pastStatsData is PastStreamData
+                            ? CupertinoIcons.dot_radiowaves_left_right
+                            : this.pastStatsData is PastRecordData
+                                ? CupertinoIcons.recordingtape
+                                : Icons.question_mark,
+                        size: 18.0,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6.0),
+                      Text(
+                        this.pastStatsData is PastStreamData
+                            ? 'Stream'
+                            : this.pastStatsData is PastRecordData
+                                ? 'Recording'
+                                : 'Unknown',
+                        style: Theme.of(context)
+                            .textTheme
+                            .caption!
+                            .copyWith(color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

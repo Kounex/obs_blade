@@ -25,15 +25,13 @@ class OrderRow extends StatelessWidget {
           child: Observer(
             builder: (_) => CupertinoDropdown<FilterType>(
               value: statisticsStore.filterType,
-              items: FilterType.values
-                  .where(
-                      (filterType) => kActiveFilterTypes.contains(filterType))
+              items: kActiveFilterTypes
                   .map((filterType) => DropdownMenuItem<FilterType>(
                         value: filterType,
                         child: Text(filterType.text),
                       ))
                   .toList(),
-              selectedItemBuilder: (context) => FilterType.values
+              selectedItemBuilder: (context) => kActiveFilterTypes
                   .map((filterType) => Text(filterType.text))
                   .toList(),
               onChanged: (filterType) =>

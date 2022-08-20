@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/filter_duration.dart';
 import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/stat_type_control.dart';
 
 import '../../../../../shared/general/base/divider.dart';
@@ -33,7 +34,7 @@ class SortFilterPanel extends StatelessWidget {
                   padding: const EdgeInsets.only(
                     left: 14.0,
                     right: 14.0,
-                    bottom: 12.0,
+                    bottom: 8.0,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,6 +43,8 @@ class SortFilterPanel extends StatelessWidget {
                       OrderRow(),
                       SizedBox(height: _kControlsPadding),
                       FilterName(),
+                      SizedBox(height: _kControlsPadding),
+                      FilterDuration(),
                       SizedBox(height: _kControlsPadding),
                       StatisticsDateRange(),
                       SizedBox(height: _kControlsPadding + 2.0),

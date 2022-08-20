@@ -205,7 +205,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     title: 'Some numbers',
                     children: [
                       FormattedText(
-                        label: 'Session time',
+                        label: 'Session Time',
                         text: pastStatsData.totalTime!
                             .secondsToFormattedDurationString(),
                         width: 100.0,

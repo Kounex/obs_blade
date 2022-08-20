@@ -62,6 +62,8 @@ import '../shared/network.dart';
 
 part 'dashboard.g.dart';
 
+int kMinimumTotalTimeForStatisticInS = 10;
+
 class DashboardStore = _DashboardStore with _$DashboardStore;
 
 abstract class _DashboardStore with Store {
@@ -411,11 +413,12 @@ abstract class _DashboardStore with Store {
   Future<void> _finishPastStreamData() async {
     if (this.streamData != null) {
       /// Check if [streamData] is even "legit" - if [totalTime]
-      /// is not greater than 3, it's not worth the statistic entry and
-      /// will probably cause problems anyway. We will delete it therefore
+      /// is not greater than [kMinimumTotalTimeForStatisticInS], it's not worth
+      /// the statistic entry and will probably cause problems anyway. We will
+      /// delete it therefore
       if (this.streamData!.isInBox &&
           (this.streamData!.totalTime == null ||
-              this.streamData!.totalTime! <= 3)) {
+              this.streamData!.totalTime! < kMinimumTotalTimeForStatisticInS)) {
         await this.streamData!.delete();
       }
       this.streamData = null;
@@ -429,11 +432,12 @@ abstract class _DashboardStore with Store {
   Future<void> _finishPastRecordData() async {
     if (this.recordData != null) {
       /// Check if [recordData] is even "legit" - if [totalTime]
-      /// is not greater than 3, it's not worth the statistic entry and
-      /// will probably cause problems anyway. We will delete it therefore
+      /// is not greater than [kMinimumTotalTimeForStatisticInS], it's not worth
+      /// the statistic entry and will probably cause problems anyway. We will
+      /// delete it therefore
       if (this.recordData!.isInBox &&
           (this.recordData!.totalTime == null ||
-              this.recordData!.totalTime! <= 3)) {
+              this.recordData!.totalTime! < kMinimumTotalTimeForStatisticInS)) {
         await this.recordData!.delete();
       }
       this.recordData = null;
@@ -783,6 +787,7 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.ExitStarted:
         await _finishPastStreamData();
+        await _finishPastRecordData();
         this.stopTimers();
         GetIt.instance<NetworkStore>().obsTerminated = true;
         break;

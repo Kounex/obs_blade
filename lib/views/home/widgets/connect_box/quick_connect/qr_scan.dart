@@ -27,6 +27,8 @@ class _QRScanState extends State<QRScan> {
 
   bool _scanLocked = false;
 
+  bool _permission = false;
+
   @override
   void reassemble() {
     super.reassemble();
@@ -75,7 +77,7 @@ class _QRScanState extends State<QRScan> {
                   ),
                   formatsAllowed: const [BarcodeFormat.qrcode],
                   onQRViewCreated: (controller) {
-                    _controller = controller;
+                    setState(() => _controller = controller);
                     _controller!.scannedDataStream.listen(
                       (scanData) {
                         if (!_scanLocked && _qrScanState == null ||
@@ -133,32 +135,35 @@ class _QRScanState extends State<QRScan> {
                           onPressed: (_) => Navigator.of(context).pop(),
                         ),
                       );
+                    } else {
+                      setState(() => _permission = permission);
                     }
                   },
                 ),
               ],
             ),
           ),
-          SafeArea(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height / 5,
-              child: _qrScanState == null
-                  ? BaseProgressIndicator(
-                      text: 'Waiting for QR code...',
-                    )
-                  : _qrScanState!
-                      ? const BaseResult(
-                          icon: BaseResultIcon.Positive,
-                          iconColor: CupertinoColors.activeGreen,
-                          text: 'Quick connect QR code found!',
-                        )
-                      : const BaseResult(
-                          icon: BaseResultIcon.Negative,
-                          iconColor: CupertinoColors.destructiveRed,
-                          text: 'Wrong QR code!',
-                        ),
+          if (_controller != null && _permission)
+            SafeArea(
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height / 5,
+                child: _qrScanState == null
+                    ? BaseProgressIndicator(
+                        text: 'Waiting for QR code...',
+                      )
+                    : _qrScanState!
+                        ? const BaseResult(
+                            icon: BaseResultIcon.Positive,
+                            iconColor: CupertinoColors.activeGreen,
+                            text: 'Quick connect QR code found!',
+                          )
+                        : const BaseResult(
+                            icon: BaseResultIcon.Negative,
+                            iconColor: CupertinoColors.destructiveRed,
+                            text: 'Wrong QR code!',
+                          ),
+              ),
             ),
-          ),
         ],
       ),
     );

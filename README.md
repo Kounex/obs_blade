@@ -14,7 +14,7 @@ DISCLAIMER: This app is not in any way affiliated with [OBS](https://github.com/
 
 Control and manage your stream and recording while using OBS by making use of the WebSocket Plugin for OBS. This project is build with the Flutter framework and could therefore be compiled and deployed for various platforms. This release is optimized for iOS and Android (Phone as well as Tablet).
 
-Feel free to either create issues if something does not work or pull this repo and make changes and build it on your own!
+Feel free to either create issues if something does not work or you want to add a feature request or pull this repo and make changes and build it on your own!
 
 ## Preparation
 

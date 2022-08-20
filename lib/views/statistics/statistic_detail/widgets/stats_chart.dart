@@ -71,10 +71,11 @@ class StatsChart extends StatelessWidget {
                       this.minYInterval)
                   .toDouble();
         }
-      } else {
-        yInterval = this.minYInterval;
       }
     }
+
+    yInterval =
+        yInterval != null && yInterval > 0 ? yInterval : this.minYInterval;
 
     TextStyle tooltipTextStyle = Theme.of(context).textTheme.bodyText1!;
     TextStyle axisStepsTextStyle = Theme.of(context).textTheme.caption!;
