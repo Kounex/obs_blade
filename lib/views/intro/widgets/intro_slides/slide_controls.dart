@@ -17,12 +17,15 @@ import '../../../../utils/routing_helper.dart';
 class SlideControls extends StatefulWidget {
   final PageController pageController;
   final int amountChildren;
+  final VoidCallback onSlideLockWaited;
+
   final bool manually;
 
   const SlideControls({
     Key? key,
     required this.pageController,
     required this.amountChildren,
+    required this.onSlideLockWaited,
     this.manually = false,
   }) : super(key: key);
 
@@ -78,21 +81,23 @@ class _SlideControlsState extends State<SlideControls> {
               children: [
                 ThemedCupertinoButton(
                   padding: const EdgeInsets.all(0),
-                  onPressed:
-                      !introStore.lockedOnSlide && introStore.currentPage > 0
-                          ? () => this.widget.pageController.previousPage(
+                  onPressed: introStore.currentPage > 0
+                      ? () {
+                          introStore.setLockedOnSlide(false);
+                          this.widget.pageController.previousPage(
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeIn,
-                              )
-                          : null,
+                              );
+                        }
+                      : null,
                   text: 'Back',
                 ),
-                if (introStore.lockedOnSlide && introStore.currentPage != 0)
-                  BaseProgressIndicator(
-                    size: 52.0,
-                    countdownInSeconds: introStore.slideLockSeconds,
-                    onCountdownDone: () => introStore.setLockedOnSlide(false),
-                  )
+                // if (introStore.lockedOnSlide && introStore.currentPage != 0)
+                //   BaseProgressIndicator(
+                //     size: 52.0,
+                //     countdownInSeconds: introStore.slideLockSeconds,
+                //     onCountdownDone: () => introStore.setLockedOnSlide(false),
+                //   )
               ],
             ),
           );
@@ -147,7 +152,10 @@ class _SlideControlsState extends State<SlideControls> {
                   BaseProgressIndicator(
                     size: 52.0,
                     countdownInSeconds: introStore.slideLockSeconds,
-                    onCountdownDone: () => introStore.setLockedOnSlide(false),
+                    onCountdownDone: () {
+                      introStore.setLockedOnSlide(false);
+                      this.widget.onSlideLockWaited();
+                    },
                   )
               ],
             ),

@@ -13,15 +13,18 @@ extension BaseResultIconFunctions on BaseResultIcon {
 
 class BaseResult extends StatelessWidget {
   final BaseResultIcon icon;
+
   final String? text;
 
   final double iconSize;
+  final Color? iconColor;
 
   const BaseResult({
     Key? key,
     this.icon = BaseResultIcon.Positive,
     this.text,
     this.iconSize = 32.0,
+    this.iconColor,
   }) : super(key: key);
 
   @override
@@ -32,6 +35,7 @@ class BaseResult extends StatelessWidget {
         Icon(
           this.icon.data,
           size: this.iconSize,
+          color: this.iconColor,
         ),
         if (this.text != null)
           Padding(

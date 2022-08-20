@@ -12,7 +12,7 @@ Visit https://github.com/obsproject/obs-websocket/releases and scroll down to th
 
 DISCLAIMER: This app is not in any way affiliated with [OBS](https://github.com/obsproject/obs-studio) (Open Broadcaster Software).
 
-Control and manage your stream while using OBS by making use of the WebSocket Plugin for OBS. This project is build with the Flutter framework and could therefore be compiled and deployed for various platforms. This release is optimized for iOS and Android (Phone as well as Tablet).
+Control and manage your stream and recording while using OBS by making use of the WebSocket Plugin for OBS. This project is build with the Flutter framework and could therefore be compiled and deployed for various platforms. This release is optimized for iOS and Android (Phone as well as Tablet).
 
 Feel free to either create issues if something does not work or pull this repo and make changes and build it on your own!
 
@@ -22,7 +22,7 @@ In order to be able to connect to OBS with OBS Blade, you need to install the OB
 
 https://github.com/obsproject/obs-websocket/
 
-Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version 4.9.1 (important to use this one currently!) for your operating system (found under 'Assets').
+Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version **5.X and above** for your operating system (found under 'Assets').
 
 Once this plugin is installed and active (usually by restarting OBS right after) the device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address))
 
@@ -43,20 +43,19 @@ OBS Blade is designed to be your stream companion and help you to manage your li
 
 Currently OBS Blade supports:
 
-- Start / stop the stream
+- Start / stop your stream / recording
 - Changing the active scene
 - Toggle visibility of scene items (like desktop capture etc.)
 - Change the volume of your current audio sources (or mute them)
-- View any Twitch chat and write messages
-- See live statistics of your stream performance (FPS, CPU usage, kbit/s etc.)
+- View any Twitch and YouTube chats and write messages
+- See live statistics of your stream and recording performance (FPS, CPU usage, kbit/s etc.)
 
-OBS Blade also saves statistics of your previous streams so you can track the overall performance and some nice to know facts!
+OBS Blade also saves statistics of your previous streams and recordings so you can track the overall performance and some nice to know facts!
 
 This app is still in its early stages and will get updated with new features over time - for now the main features which I want to add are:
 
 - More engagement with OBS (renaming, sorting, scripted switching etc.)
 - Export / merge statistics
-- Enable Youtube chat
 - Soundboard
 - Incoming feature requests
 - (Maybe) Streamlabs client connection

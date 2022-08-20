@@ -80,17 +80,19 @@ class PastStreamData extends HiveObject implements PastStatsData {
   @override
   int? renderTotalFrames;
 
-  /// Number of frames missed due to rendering lag
+  /// Number of frames skipped due to rendering lag
   @HiveField(8)
   @override
-  int? renderMissedFrames;
+  int? renderSkippedFrames;
 
   /// Number of frames outputted
   @HiveField(9)
+  @override
   int? outputTotalFrames;
 
   /// Number of frames skipped due to encoding lag
   @HiveField(10)
+  @override
   int? outputSkippedFrames;
 
   /// Average frame time (in milliseconds)
@@ -146,7 +148,7 @@ class PastStreamData extends HiveObject implements PastStatsData {
   void _updateAbsoluteStats() {
     this.totalTime = _cacheStreamStats.last.totalTime;
     this.renderTotalFrames = _cacheStreamStats.last.renderTotalFrames;
-    this.renderMissedFrames = _cacheStreamStats.last.renderMissedFrames;
+    this.renderSkippedFrames = _cacheStreamStats.last.renderSkippedFrames;
     this.outputTotalFrames = _cacheStreamStats.last.outputTotalFrames;
     this.outputSkippedFrames = _cacheStreamStats.last.outputSkippedFrames;
     this.averageFrameTime = _cacheStreamStats.last.averageFrameTime;

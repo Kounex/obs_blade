@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:get_it/get_it.dart';
+import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/views/home/widgets/connect_box/quick_connect/qr_scan.dart';
 
-import '../../../../../shared/dialogs/info.dart';
+import '../../../../../models/connection.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../utils/modal_handler.dart';
 
@@ -12,26 +15,24 @@ class QuickConnect extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          // const ThemedRichText(
-          //   textAlign: TextAlign.center,
-          //   textSpans: [
-          //     TextSpan(
-          //       text:
-          //           'Useable with OBS Studio version >= 28.0.0 or WebSocket version >= 5.0!',
-          //       style: TextStyle(fontWeight: FontWeight.bold),
-          //     ),
-          //   ],
-          // ),
-          // const SizedBox(height: 12.0),
+          const Text(
+              'Scan the "Connect QR" of the WebSocket plugin to connect to OBS instantly.\n\nThis feature only works when connecting to an OBS instance which is in the same network as this device!'),
+          const SizedBox(height: 12.0),
           BaseButton(
-            onPressed: () => ModalHandler.showBaseDialog(
+            onPressed: () =>
+                ModalHandler.showBaseCupertinoBottomSheet<Connection?>(
               context: context,
-              dialogWidget: InfoDialog(
-                title: 'Quick Connect',
-                body: '',
-                enableDontShowAgainOption: true,
-                onPressed: (dontShow) {},
-              ),
+              modalWidgetBuilder: (context, controller) => const QRScan(),
+            ).then(
+              (connection) {
+                if (connection != null) {
+                  Future.delayed(
+                    const Duration(milliseconds: 500),
+                    () => GetIt.instance<NetworkStore>()
+                        .setOBSWebSocket(connection),
+                  );
+                }
+              },
             ),
             icon: const Icon(CupertinoIcons.qrcode_viewfinder),
             text: 'Scan',

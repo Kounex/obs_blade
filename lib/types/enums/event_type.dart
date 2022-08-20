@@ -8,6 +8,9 @@ enum EventType {
   /// The state of the replay buffer output has changed.
   ReplayBufferStateChanged,
 
+  /// The state of the virtualcam output has changed.
+  VirtualcamStateChanged,
+
   /// Emitted every 2 seconds when stream is active
   StreamStatus,
 

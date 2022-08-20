@@ -58,7 +58,8 @@ class ModalHandler {
 
   static Future<T?> showBaseCupertinoBottomSheet<T>({
     required BuildContext context,
-    required Widget Function(BuildContext, ScrollController) modalWidgetBuilder,
+    required Widget Function(BuildContext context, ScrollController controller)
+        modalWidgetBuilder,
     bool useRootNavigator = true,
     double maxWidth = double.infinity,
     double additionalBottomViewInsets = 0,

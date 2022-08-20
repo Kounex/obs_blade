@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
-class StreamWidgetsMobile extends StatelessWidget {
-  const StreamWidgetsMobile({Key? key}) : super(key: key);
+class OBSWidgetsMobile extends StatelessWidget {
+  const OBSWidgetsMobile({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -65,13 +65,23 @@ class PastRecordData extends HiveObject implements PastStatsData {
   @override
   int? renderTotalFrames;
 
-  /// Number of frames missed due to rendering lag
+  /// Number of frames skipped due to rendering lag
   @HiveField(7)
   @override
-  int? renderMissedFrames;
+  int? renderSkippedFrames;
+
+  /// Number of frames outputted
+  @HiveField(8)
+  @override
+  int? outputTotalFrames;
+
+  /// Number of frames skipped due to encoding lag
+  @HiveField(9)
+  @override
+  int? outputSkippedFrames;
 
   /// Average frame time (in milliseconds)
-  @HiveField(8)
+  @HiveField(10)
   @override
   double? averageFrameTime;
 
@@ -79,19 +89,19 @@ class PastRecordData extends HiveObject implements PastStatsData {
   /// by the user or internally for checks
 
   /// Name of this [PastStreamData] to find it later / filtering etc.
-  @HiveField(9)
+  @HiveField(11)
   @override
   String? name;
 
   /// If this [PastStreamData] has been starred by the user (like favourite).
   /// Also suitable for filtering etc.
-  @HiveField(10)
+  @HiveField(12)
   @override
   bool? starred;
 
   /// Notes a user can write down for this [PastStreamData] for additional
   /// information on the stream or whatever
-  @HiveField(11)
+  @HiveField(13)
   @override
   String? notes;
 
@@ -123,7 +133,9 @@ class PastRecordData extends HiveObject implements PastStatsData {
   void _updateAbsoluteStats() {
     this.totalTime = _cacheRecordStats.last.totalTime;
     this.renderTotalFrames = _cacheRecordStats.last.renderTotalFrames;
-    this.renderMissedFrames = _cacheRecordStats.last.renderMissedFrames;
+    this.renderSkippedFrames = _cacheRecordStats.last.renderSkippedFrames;
+    this.outputTotalFrames = _cacheRecordStats.last.outputTotalFrames;
+    this.outputSkippedFrames = _cacheRecordStats.last.outputSkippedFrames;
     this.averageFrameTime = _cacheRecordStats.last.averageFrameTime;
   }
 

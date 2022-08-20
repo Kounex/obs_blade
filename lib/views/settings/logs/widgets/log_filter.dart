@@ -37,9 +37,9 @@ class LogFilter extends StatelessWidget {
                     child: CupertinoDropdown<LogLevel>(
                       value: logsStore.logLevel,
                       items: [
-                        DropdownMenuItem(
+                        const DropdownMenuItem(
                           value: null,
-                          child: const Text('All'),
+                          child: Text('All'),
                         ),
                         ...LogLevel.values.map(
                           (logLevel) => DropdownMenuItem(
@@ -63,9 +63,9 @@ class LogFilter extends StatelessWidget {
                             child: Text(amount.number.toString()),
                           ),
                         ),
-                        DropdownMenuItem(
+                        const DropdownMenuItem(
                           value: null,
-                          child: const Text('All'),
+                          child: Text('All'),
                         ),
                       ],
                       onChanged: (amount) =>

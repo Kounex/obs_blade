@@ -52,40 +52,41 @@ class StatsEntry extends StatelessWidget {
             ),
             const SizedBox(height: 4.0),
             Padding(
-              padding: const EdgeInsets.only(left: 35.0),
-              child: Row(
-                children: [
-                  this.pastStatsData is PastStreamData
-                      ? const Icon(
-                          Icons.fiber_manual_record_rounded,
-                          size: 18.0,
-                          color: CupertinoColors.destructiveRed,
-                        )
-                      : this.pastStatsData is PastRecordData
-                          ? const Icon(
-                              Icons.sensors,
-                              color: CupertinoColors.destructiveRed,
-                            )
-                          : const Icon(
-                              Icons.question_mark,
-                              color: CupertinoColors.systemGrey,
-                            ),
-                  const SizedBox(width: 6.0),
-                  this.pastStatsData is PastStreamData
-                      ? Text(
-                          'Recording',
-                          style: Theme.of(context).textTheme.caption,
-                        )
-                      : this.pastStatsData is PastRecordData
-                          ? Text(
-                              'Stream',
-                              style: Theme.of(context).textTheme.caption,
-                            )
-                          : Text(
-                              'Unknown',
-                              style: Theme.of(context).textTheme.caption,
-                            ),
-                ],
+              padding: const EdgeInsets.only(left: 37.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                decoration: const BoxDecoration(
+                  color: CupertinoColors.destructiveRed,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(6.0),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      this.pastStatsData is PastStreamData
+                          ? CupertinoIcons.dot_radiowaves_left_right
+                          : this.pastStatsData is PastRecordData
+                              ? CupertinoIcons.recordingtape
+                              : Icons.question_mark,
+                      size: 18.0,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6.0),
+                    Text(
+                      this.pastStatsData is PastStreamData
+                          ? 'Stream'
+                          : this.pastStatsData is PastRecordData
+                              ? 'Recording'
+                              : 'Unknown',
+                      style: Theme.of(context)
+                          .textTheme
+                          .caption!
+                          .copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
               ),
             ),
             // StatusDot(

@@ -111,6 +111,11 @@ enum RequestType {
   /// No specified parameters
   GetStats,
 
+  /// Gets the status of the virtualcam output.
+  ///
+  /// No specified parameters
+  GetVirtualCamStatus,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
@@ -218,4 +223,9 @@ enum RequestType {
   ///
   /// No specified parameters
   SaveReplayBuffer,
+
+  /// Toggles the state of the virtualcam output.
+  ///
+  /// No specified parameters
+  ToggleVirtualCam,
 }

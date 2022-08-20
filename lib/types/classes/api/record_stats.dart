@@ -11,8 +11,14 @@ class RecordStats {
   /// Number of frames rendered
   int renderTotalFrames;
 
-  /// Number of frames missed due to rendering lag
-  int renderMissedFrames;
+  /// Number of frames skipped due to rendering lag
+  int renderSkippedFrames;
+
+  /// Number of frames outputted
+  int outputTotalFrames;
+
+  /// Number of frames skipped due to encoding lag
+  int outputSkippedFrames;
 
   /// Average frame time (in milliseconds)
   double averageFrameTime;
@@ -31,7 +37,9 @@ class RecordStats {
     required this.totalTime,
     required this.fps,
     required this.renderTotalFrames,
-    required this.renderMissedFrames,
+    required this.renderSkippedFrames,
+    required this.outputTotalFrames,
+    required this.outputSkippedFrames,
     required this.averageFrameTime,
     required this.cpuUsage,
     required this.memoryUsage,

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class FormattedText extends StatelessWidget {
@@ -22,6 +24,11 @@ class FormattedText extends StatelessWidget {
         controller: TextEditingController(
           text:
               (this.text ?? '-') + (this.text != null ? (this.unit ?? '') : ''),
+        ),
+        style: const TextStyle(
+          fontFeatures: [
+            FontFeature.tabularFigures(),
+          ],
         ),
         decoration: InputDecoration(
           isDense: true,

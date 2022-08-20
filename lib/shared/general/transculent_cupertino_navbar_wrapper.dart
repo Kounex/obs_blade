@@ -21,6 +21,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
   final List<Widget> listViewChildren;
   final Widget? customBody;
 
+  final Widget? leading;
   final Widget? actions;
 
   TransculentCupertinoNavBarWrapper({
@@ -32,6 +33,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.showScrollBar = false,
     this.listViewChildren = const [],
     this.customBody,
+    this.leading,
     this.actions,
   })  : assert((title != null || titleWidget != null) &&
             (customBody == null || listViewChildren.isEmpty)),
@@ -62,13 +64,16 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
         if (this.customBody != null)
           Padding(
             padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + kToolbarHeight),
+              top: MediaQuery.of(context).padding.top +
+                  kMinInteractiveDimensionCupertino,
+            ),
             child: this.customBody,
           ),
         if (this.customBody == null) customScrollView,
         CupertinoNavigationBar(
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-          leading: this.previousTitle == null ? Container() : null,
+          leading:
+              this.leading ?? (this.previousTitle == null ? Container() : null),
           previousPageTitle: this.previousTitle,
           middle: this.titleWidget ??
               Text(

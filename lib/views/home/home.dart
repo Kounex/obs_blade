@@ -7,6 +7,7 @@ import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dar
 import '../../models/enums/log_level.dart';
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';
+import '../../shared/general/themed/cupertino_scaffold.dart';
 import '../../shared/overlay/base_progress_indicator.dart';
 import '../../shared/overlay/base_result.dart';
 import '../../stores/shared/network.dart';
@@ -162,7 +163,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     HomeStore landingStore = GetIt.instance<HomeStore>();
-    return Scaffold(
+    return ThemedCupertinoScaffold(
       /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
       /// our extendedHeight, where we are ready to trigger searching for OBS connections,
       /// it is being set to true, false otherwise. I want to trigger the actual refresh only

@@ -127,8 +127,9 @@ abstract class _NetworkStore with Store {
         },
         onDone: () {
           GeneralHelper.advLog(
-            'Initial WebSocket connection done, close code: ${this.activeSession!.socket.closeCode}',
+            'Initial WebSocket connection done, close code: ${this.activeSession!.socket.closeCode}, {WebSocketCloseCode.values.firstWhere((closeCode) => closeCode.identifier == this.activeSession!.socket.closeCode, orElse: () => WebSocketCloseCode.UnknownReason).message}',
           );
+
           authCompleter.complete(
             WebSocketCloseCode.values.firstWhere(
                 (closeCode) =>

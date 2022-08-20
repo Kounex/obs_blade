@@ -129,6 +129,17 @@ class GeneralActions extends StatelessWidget {
                 ],
                 AppBarCupertinoActionEntry(
                   title:
+                      (dashboardStore.isVirtualCamActive ? 'Stop' : 'Start') +
+                          ' Virtual Camera',
+                  onAction: () {
+                    NetworkHelper.makeRequest(
+                      networkStore.activeSession!.socket,
+                      RequestType.ToggleVirtualCam,
+                    );
+                  },
+                ),
+                AppBarCupertinoActionEntry(
+                  title:
                       (dashboardStore.editSceneVisibility ? 'Finish' : 'Edit') +
                           ' Scene Visibility',
                   onAction: dashboardStore.editSceneVisibility

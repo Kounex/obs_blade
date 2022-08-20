@@ -35,6 +35,7 @@ import '../../types/classes/stream/events/input_volume_changed.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
+import '../../types/classes/stream/events/virtual_cam_state_changed.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene_transition.dart';
 import '../../types/classes/stream/responses/get_group_scene_item_list.dart';
@@ -49,6 +50,7 @@ import '../../types/classes/stream/responses/get_source_screenshot.dart';
 import '../../types/classes/stream/responses/get_stats.dart';
 import '../../types/classes/stream/responses/get_studio_mode_enabled.dart';
 import '../../types/classes/stream/responses/get_version.dart';
+import '../../types/classes/stream/responses/get_virtual_cam_status.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/request_type.dart';
@@ -71,6 +73,8 @@ abstract class _DashboardStore with Store {
   bool isRecordingPaused = false;
   @observable
   bool isReplayBufferActive = false;
+  @observable
+  bool isVirtualCamActive = false;
   @observable
   int? latestStreamTimeDurationMS;
   @observable
@@ -192,11 +196,12 @@ abstract class _DashboardStore with Store {
   @observable
   bool editSceneVisibility = false;
 
-  List<String>? inputKinds;
+  List<String>? _inputKinds;
 
-  Timer? checkConnectionTimer;
+  Timer? _checkConnectionTimer;
+  Timer? _getStatsTimer;
 
-  String previewFileFormat = 'jpeg';
+  String _previewFileFormat = 'jpeg';
 
   /// Will be used internally while switching scene collections.
   /// Since this operation takes time and "random" events are coming
@@ -205,7 +210,7 @@ abstract class _DashboardStore with Store {
   /// while waiting until we actually changed the scene collection
   /// (getting the response from [SetCurrentSceneCollection]) and then
   /// call [sceneCollectionRequests]
-  bool handleRequestsEvents = true;
+  bool _handleRequestsEvents = true;
 
   /// Bytes output of the stream - emitted by GetStreamStatus and will
   /// be used as the previous temp value to calculate kbit/s
@@ -214,6 +219,18 @@ abstract class _DashboardStore with Store {
   /// Bytes output of the record - emitted by GetRecordStatus and will
   /// be used as the previous temp value to calculate kbit/s
   int _recordBytes = 0;
+
+  /// The amount of render frames (in total and skipped) are part of the
+  /// general OBS stats and not bound to stream / record. To know wthe amount
+  /// of these in our stream / recording session, we will persist the latest
+  /// amount as received by the general OBS stats and subtract this for all
+  /// new values so we have only the new amounts which came in while streaming
+  /// / recording
+  int _streamStartedRenderFramesTotal = 0;
+  int _streamStartedRenderFramesSkipped = 0;
+
+  int _recordingStartedRenderFramesTotal = 0;
+  int _recordingStartedRenderFramesSkipped = 0;
 
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
@@ -242,8 +259,10 @@ abstract class _DashboardStore with Store {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetReplayBufferStatus,
     );
-
-    _periodicStatsRequest();
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetVirtualCamStatus,
+    );
 
     _sceneCollectionRequests();
   }
@@ -282,7 +301,7 @@ abstract class _DashboardStore with Store {
   void handleStream() {
     GetIt.instance<NetworkStore>().watchOBSStream().listen((message) {
       try {
-        if (handleRequestsEvents ||
+        if (_handleRequestsEvents ||
             (message is BaseEvent &&
                 message.eventType == EventType.CurrentSceneCollectionChanged)) {
           if (message is BaseEvent) {
@@ -309,7 +328,7 @@ abstract class _DashboardStore with Store {
                   this.studioMode
               ? this.studioModePreviewSceneName
               : this.activeSceneName,
-          'imageFormat': this.previewFileFormat,
+          'imageFormat': _previewFileFormat,
           'compressionQuality': -1,
         },
       );
@@ -319,7 +338,8 @@ abstract class _DashboardStore with Store {
   /// a status event every 2 seconds (as it was prior OBS WebSocket 4.9.1 and
   /// below)
   void _periodicStatsRequest() {
-    Timer.periodic(
+    _getStatsTimer?.cancel();
+    _getStatsTimer = Timer.periodic(
       const Duration(milliseconds: 1000),
       (_) => NetworkHelper.makeBatchRequest(
         GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -331,24 +351,6 @@ abstract class _DashboardStore with Store {
         ],
       ),
     );
-  }
-
-  /// SceneItems which type is 'group' can have children which are
-  /// SceneItems again - this would lead to checking those children
-  /// in many cases (a lot of work and extra code). So instead I flatten
-  /// this by adding those children to the general list and since
-  /// those children have their parent name as a property I can easily
-  /// identify them in the flat list
-  List<SceneItem> _flattenSceneItems(Iterable<SceneItem> sceneItems) {
-    List<SceneItem> tmpSceneItems = [];
-    for (var sceneItem in sceneItems) {
-      tmpSceneItems.add(sceneItem);
-      if (sceneItem.groupChildren != null &&
-          sceneItem.groupChildren!.isNotEmpty) {
-        tmpSceneItems.addAll(sceneItem.groupChildren!);
-      }
-    }
-    return tmpSceneItems;
   }
 
   /// If we are live and have no [PastStreamData]
@@ -417,6 +419,7 @@ abstract class _DashboardStore with Store {
         await this.streamData!.delete();
       }
       this.streamData = null;
+      this.latestStreamStats = null;
     }
   }
 
@@ -434,6 +437,7 @@ abstract class _DashboardStore with Store {
         await this.recordData!.delete();
       }
       this.recordData = null;
+      this.latestRecordStats = null;
     }
   }
 
@@ -450,6 +454,11 @@ abstract class _DashboardStore with Store {
     return null;
   }
 
+  void stopTimers() {
+    _getStatsTimer?.cancel();
+    _checkConnectionTimer?.cancel();
+  }
+
   @action
   void init() {
     this.handleStream();
@@ -458,11 +467,14 @@ abstract class _DashboardStore with Store {
     /// Since [setupNetworkStoreHandling] gets called as soon as we connect
     /// to an OBS instance, we trigger this [Timer] which will check if
     /// the connection is still alive periodically - see [_checkOBSConnection]
-    /// for more information
-    this.checkConnectionTimer = Timer(
+    /// for more information_checkConnectionTimer
+    _checkConnectionTimer?.cancel();
+    _checkConnectionTimer = Timer(
       const Duration(seconds: 5),
       () => _checkOBSConnection(),
     );
+
+    _periodicStatsRequest();
   }
 
   /// While using the device this app is running on while connected to an OBS
@@ -524,13 +536,15 @@ abstract class _DashboardStore with Store {
         this.reconnecting = false;
         this.handleStream();
         this.initialRequests();
-        this.checkConnectionTimer = Timer(
+        _checkConnectionTimer?.cancel();
+        _checkConnectionTimer = Timer(
           const Duration(seconds: 3),
           () => _checkOBSConnection(),
         );
       }
     } else {
-      this.checkConnectionTimer = Timer(
+      _checkConnectionTimer?.cancel();
+      _checkConnectionTimer = Timer(
         const Duration(seconds: 3),
         () => _checkOBSConnection(),
       );
@@ -629,9 +643,13 @@ abstract class _DashboardStore with Store {
           OverlayHandler.closeAnyOverlay(immediately: false);
         }
         break;
-
+      case EventType.VirtualcamStateChanged:
+        VirtualCamStateChangedEvent virtualCamStateChangedEvent =
+            VirtualCamStateChangedEvent(event.jsonRAW);
+        this.isVirtualCamActive = virtualCamStateChangedEvent.outputActive;
+        break;
       case EventType.CurrentSceneCollectionChanging:
-        this.handleRequestsEvents = false;
+        _handleRequestsEvents = false;
         break;
       case EventType.CurrentSceneCollectionChanged:
         CurrentSceneCollectionChangedEvent currentSceneCollectionChangedEvent =
@@ -642,7 +660,7 @@ abstract class _DashboardStore with Store {
         this.currentSceneCollectionName =
             currentSceneCollectionChangedEvent.sceneCollectionName;
 
-        this.handleRequestsEvents = true;
+        _handleRequestsEvents = true;
         _sceneCollectionRequests();
         break;
       case EventType.SceneCollectionListChanged:
@@ -765,6 +783,7 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.ExitStarted:
         await _finishPastStreamData();
+        this.stopTimers();
         GetIt.instance<NetworkStore>().obsTerminated = true;
         break;
       default:
@@ -785,7 +804,7 @@ abstract class _DashboardStore with Store {
 
         if (!getVersionResponse.supportedImageFormats.contains('jpg') &&
             !getVersionResponse.supportedImageFormats.contains('jpeg')) {
-          this.previewFileFormat = 'png';
+          _previewFileFormat = 'png';
         }
         break;
       case RequestType.GetSceneList:
@@ -965,6 +984,13 @@ abstract class _DashboardStore with Store {
             getReplayBufferStatusResponse.isReplayBufferActive;
 
         break;
+      case RequestType.GetVirtualCamStatus:
+        GetVirtualCamStatusResponse getVirtualCamStatusResponse =
+            GetVirtualCamStatusResponse(response.jsonRAW);
+
+        this.isVirtualCamActive = getVirtualCamStatusResponse.outputActive;
+
+        break;
       case RequestType.GetSpecialInputs:
         GetSpecialInputsResponse getSpecialInputsResponse =
             GetSpecialInputsResponse(response.jsonRAW);
@@ -988,7 +1014,7 @@ abstract class _DashboardStore with Store {
       case RequestType.GetInputKindList:
         GetInputKindListResponse getInputKindListResponse =
             GetInputKindListResponse(response.jsonRAW);
-        this.inputKinds = getInputKindListResponse.inputKinds;
+        _inputKinds = getInputKindListResponse.inputKinds;
         break;
       case RequestType.GetInputVolume:
         GetInputVolumeResponse getInputVolumeResponse =
@@ -1059,9 +1085,16 @@ abstract class _DashboardStore with Store {
         this.isRecordingPaused =
             statsBatchResponse.recordStatus.ouputPaused ?? false;
 
+        bool previouslyRecording = this.isRecording;
         this.isRecording = this.isRecordingPaused
             ? true
             : statsBatchResponse.recordStatus.outputActive;
+
+        /// We were recording and this batch request now indicates we are
+        /// not recording anymore - we can finish our recording statistic
+        if (previouslyRecording && !this.isRecording) {
+          _finishPastRecordData();
+        }
 
         bool previouslyLive = this.isLive;
         this.isLive = statsBatchResponse.streamStatus.outputActive;
@@ -1094,8 +1127,10 @@ abstract class _DashboardStore with Store {
                     0) ~/
                 1000,
             fps: statsBatchResponse.stats.activeFps,
-            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames,
-            renderMissedFrames: statsBatchResponse.stats.renderSkippedFrames,
+            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames -
+                _streamStartedRenderFramesTotal,
+            renderSkippedFrames: statsBatchResponse.stats.renderSkippedFrames -
+                _streamStartedRenderFramesSkipped,
             outputTotalFrames:
                 statsBatchResponse.streamStatus.outputTotalFrames,
             outputSkippedFrames:
@@ -1112,6 +1147,15 @@ abstract class _DashboardStore with Store {
 
           this.streamData!.addStreamStats(this.latestStreamStats!);
           await this.streamData!.save();
+        } else {
+          /// While we are not streaming, we set the render data to the current
+          /// value as exposed by the general OBS stats wo when we start to
+          /// stream, we can subtract this value by all upcoming stats so
+          /// we have the ones which have been generated while streaming
+          _streamStartedRenderFramesTotal =
+              statsBatchResponse.stats.renderTotalFrames;
+          _streamStartedRenderFramesSkipped =
+              statsBatchResponse.stats.renderSkippedFrames;
         }
 
         if (this.isRecording && !this.isRecordingPaused) {
@@ -1129,15 +1173,19 @@ abstract class _DashboardStore with Store {
 
           this.latestRecordStats = RecordStats(
             kbitsPerSec:
-                (statsBatchResponse.recordStatus.outputBytes - _streamBytes) ~/
+                (statsBatchResponse.recordStatus.outputBytes - _recordBytes) ~/
                     125,
             totalTime: (_timecodeToMS(
                         statsBatchResponse.recordStatus.outputTimecode) ??
                     0) ~/
                 1000,
             fps: statsBatchResponse.stats.activeFps,
-            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames,
-            renderMissedFrames: statsBatchResponse.stats.renderSkippedFrames,
+            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames -
+                _recordingStartedRenderFramesTotal,
+            renderSkippedFrames: statsBatchResponse.stats.renderSkippedFrames -
+                _recordingStartedRenderFramesSkipped,
+            outputTotalFrames: statsBatchResponse.stats.outputTotalFrames,
+            outputSkippedFrames: statsBatchResponse.stats.outputSkippedFrames,
             averageFrameTime: statsBatchResponse.stats.averageFrameRenderTime,
             cpuUsage: statsBatchResponse.stats.cpuUsage,
             memoryUsage: statsBatchResponse.stats.memoryUsage,
@@ -1150,6 +1198,15 @@ abstract class _DashboardStore with Store {
 
           this.recordData!.addRecordStats(this.latestRecordStats!);
           await this.recordData!.save();
+        } else {
+          /// While we are not recording, we set the render data to the current
+          /// value as exposed by the general OBS stats wo when we start to
+          /// record, we can subtract this value by all upcoming stats so
+          /// we have the ones which have been generated while recording
+          _recordingStartedRenderFramesTotal =
+              statsBatchResponse.stats.renderTotalFrames;
+          _recordingStartedRenderFramesSkipped =
+              statsBatchResponse.stats.renderSkippedFrames;
         }
         break;
       case RequestBatchType.Input:

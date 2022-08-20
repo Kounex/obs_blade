@@ -9,12 +9,15 @@ class DescribedBox extends StatelessWidget {
   /// Should match the color the box is on
   final Color? labelBackgroundColor;
 
+  final double? width;
+
   const DescribedBox({
     Key? key,
     this.label,
     this.child,
     this.borderColor,
     this.labelBackgroundColor,
+    this.width,
   }) : super(key: key);
 
   @override
@@ -22,6 +25,7 @@ class DescribedBox extends StatelessWidget {
     return Stack(
       children: [
         AnimatedContainer(
+          width: this.width,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInCubic,
           padding: const EdgeInsets.all(8.0),

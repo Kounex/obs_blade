@@ -24,17 +24,19 @@ class PastRecordDataAdapter extends TypeAdapter<PastRecordData> {
       ..listEntryDateMS = (fields[4] as List).cast<int>()
       ..totalTime = fields[5] as int?
       ..renderTotalFrames = fields[6] as int?
-      ..renderMissedFrames = fields[7] as int?
-      ..averageFrameTime = fields[8] as double?
-      ..name = fields[9] as String?
-      ..starred = fields[10] as bool?
-      ..notes = fields[11] as String?;
+      ..renderSkippedFrames = fields[7] as int?
+      ..outputTotalFrames = fields[8] as int?
+      ..outputSkippedFrames = fields[9] as int?
+      ..averageFrameTime = fields[10] as double?
+      ..name = fields[11] as String?
+      ..starred = fields[12] as bool?
+      ..notes = fields[13] as String?;
   }
 
   @override
   void write(BinaryWriter writer, PastRecordData obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.kbitsPerSecList)
       ..writeByte(1)
@@ -50,14 +52,18 @@ class PastRecordDataAdapter extends TypeAdapter<PastRecordData> {
       ..writeByte(6)
       ..write(obj.renderTotalFrames)
       ..writeByte(7)
-      ..write(obj.renderMissedFrames)
+      ..write(obj.renderSkippedFrames)
       ..writeByte(8)
-      ..write(obj.averageFrameTime)
+      ..write(obj.outputTotalFrames)
       ..writeByte(9)
-      ..write(obj.name)
+      ..write(obj.outputSkippedFrames)
       ..writeByte(10)
-      ..write(obj.starred)
+      ..write(obj.averageFrameTime)
       ..writeByte(11)
+      ..write(obj.name)
+      ..writeByte(12)
+      ..write(obj.starred)
+      ..writeByte(13)
       ..write(obj.notes);
   }
 

@@ -4,7 +4,6 @@ import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 
 import '../../../../shared/general/custom_cupertino_dialog.dart';
-import '../../../../shared/overlay/base_progress_indicator.dart';
 import 'blacksmith_content/blacksmith_content.dart';
 import 'support_header.dart';
 import 'tips_content.dart';

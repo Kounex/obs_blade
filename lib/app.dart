@@ -221,8 +221,8 @@ class App extends StatelessWidget {
               SettingsKeys.HasUserSeenIntro202208.name,
               defaultValue: false,
             )
-                // ? AppRoutingKeys.Tabs.route
-                ? AppRoutingKeys.Intro.route
+                ? AppRoutingKeys.Tabs.route
+                // ? AppRoutingKeys.Intro.route
                 : AppRoutingKeys.Intro.route,
             onGenerateInitialRoutes: (initialRoute) => [
               MaterialPageRoute(

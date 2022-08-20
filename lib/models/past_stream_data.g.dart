@@ -27,7 +27,7 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..numTotalFrames = fields[5] as int?
       ..numDroppedFrames = fields[6] as int?
       ..renderTotalFrames = fields[7] as int?
-      ..renderMissedFrames = fields[8] as int?
+      ..renderSkippedFrames = fields[8] as int?
       ..outputTotalFrames = fields[9] as int?
       ..outputSkippedFrames = fields[10] as int?
       ..averageFrameTime = fields[11] as double?
@@ -61,7 +61,7 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..writeByte(7)
       ..write(obj.renderTotalFrames)
       ..writeByte(8)
-      ..write(obj.renderMissedFrames)
+      ..write(obj.renderSkippedFrames)
       ..writeByte(9)
       ..write(obj.outputTotalFrames)
       ..writeByte(10)

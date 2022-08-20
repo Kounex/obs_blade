@@ -40,8 +40,8 @@ class StreamStats {
   /// Number of frames rendered
   int renderTotalFrames;
 
-  /// Number of frames missed due to rendering lag
-  int renderMissedFrames;
+  /// Number of frames skipped due to rendering lag
+  int renderSkippedFrames;
 
   /// Number of frames outputted
   int outputTotalFrames;
@@ -73,7 +73,7 @@ class StreamStats {
     this.numDroppedFrames,
     required this.fps,
     required this.renderTotalFrames,
-    required this.renderMissedFrames,
+    required this.renderSkippedFrames,
     required this.outputTotalFrames,
     required this.outputSkippedFrames,
     required this.averageFrameTime,

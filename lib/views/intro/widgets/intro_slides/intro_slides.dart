@@ -5,7 +5,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../shared/general/social_block.dart';
 import '../../../../shared/general/themed/rich_text.dart';
@@ -44,6 +43,7 @@ class _IntroSlidesState extends State<IntroSlides> {
     super.initState();
 
     IntroStore introStore = GetIt.instance<IntroStore>();
+    introStore.setCurrentPage(0);
 
     _checkAndSetSlideLock(introStore, 0);
 
@@ -59,17 +59,7 @@ class _IntroSlidesState extends State<IntroSlides> {
     if (!this.widget.manually &&
         _pagesToLockOn[currentPage] &&
         !_pagesLockedPreviously[currentPage]) {
-      _pagesLockedPreviously[currentPage] = true;
-
       introStore.setLockedOnSlide(true);
-
-      // _timerToContinue = Timer.periodic(const Duration(seconds: 1), (timer) {
-      //   introStore.slideLockSecondsLeft--;
-      //   if (introStore.slideLockSecondsLeft <= 0) {
-      //     _timerToContinue!.cancel();
-      //     introStore.setLockedOnSlide(false);
-      //   }
-      // });
     }
   }
 
@@ -109,7 +99,7 @@ class _IntroSlidesState extends State<IntroSlides> {
             ),
             const TextSpan(
               text:
-                  'Click on the \'Releases\' link in the Downloads section as seen in the screenshot or ',
+                  'Click on the "Releases" link in the Downloads section as seen in the screenshot or ',
             ),
             WidgetSpan(
               child: SocialBlock(
@@ -140,7 +130,7 @@ class _IntroSlidesState extends State<IntroSlides> {
           textSpans: const [
             TextSpan(
               text:
-                  'Scroll down to \'Assets\' and download the correct installer (for your operating system)\n\n',
+                  'Scroll down to "Assets" and download the correct installer (for your operating system)\n\n',
             ),
             TextSpan(
               text: 'IMPORTANT: Download version 5.X and above!',
@@ -180,9 +170,7 @@ class _IntroSlidesState extends State<IntroSlides> {
                 return PageView.builder(
                   controller: _pageController,
                   itemCount: _pageChildren.length,
-                  physics: GetIt.instance<IntroStore>().lockedOnSlide
-                      ? const NeverScrollableScrollPhysics()
-                      : StylingHelper.platformAwareScrollPhysics,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) => _pageChildren[index],
                   onPageChanged: (page) =>
                       GetIt.instance<IntroStore>().setCurrentPage(page),
@@ -207,6 +195,8 @@ class _IntroSlidesState extends State<IntroSlides> {
                   pageController: _pageController,
                   amountChildren: _pageChildren.length,
                   manually: this.widget.manually,
+                  onSlideLockWaited: () => _pagesLockedPreviously[
+                      GetIt.instance<IntroStore>().currentPage] = true,
                 ),
               ),
             )

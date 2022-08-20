@@ -89,6 +89,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$isVirtualCamActiveAtom =
+      Atom(name: '_DashboardStore.isVirtualCamActive', context: context);
+
+  @override
+  bool get isVirtualCamActive {
+    _$isVirtualCamActiveAtom.reportRead();
+    return super.isVirtualCamActive;
+  }
+
+  @override
+  set isVirtualCamActive(bool value) {
+    _$isVirtualCamActiveAtom.reportWrite(value, super.isVirtualCamActive, () {
+      super.isVirtualCamActive = value;
+    });
+  }
+
   late final _$latestStreamTimeDurationMSAtom = Atom(
       name: '_DashboardStore.latestStreamTimeDurationMS', context: context);
 
@@ -643,6 +659,7 @@ isLive: ${isLive},
 isRecording: ${isRecording},
 isRecordingPaused: ${isRecordingPaused},
 isReplayBufferActive: ${isReplayBufferActive},
+isVirtualCamActive: ${isVirtualCamActive},
 latestStreamTimeDurationMS: ${latestStreamTimeDurationMS},
 latestRecordTimeDurationMS: ${latestRecordTimeDurationMS},
 streamData: ${streamData},

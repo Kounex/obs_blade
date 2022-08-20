@@ -4,8 +4,8 @@ import '../../../../shared/general/base/card.dart';
 import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
-class StreamWidgets extends StatelessWidget {
-  const StreamWidgets({Key? key}) : super(key: key);
+class OBSWidgets extends StatelessWidget {
+  const OBSWidgets({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

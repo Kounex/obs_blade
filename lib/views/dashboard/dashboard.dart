@@ -4,6 +4,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets_mobile.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/dialogs/confirmation.dart';
@@ -20,8 +22,6 @@ import 'widgets/reconnect_toast.dart';
 import 'widgets/save_edit_connection_dialog.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
-import 'widgets/stream_widgets/stream_widgets.dart';
-import 'widgets/stream_widgets/stream_widgets_mobile.dart';
 
 /// InheritedWidget [DashBoardScroll] is used to expose the ScrollController
 /// which is being used for the main ListView in Dashboard to the descendant
@@ -149,13 +149,22 @@ class _DashboardViewState extends State<DashboardView> {
                                 style: Theme.of(context).textTheme.headline4,
                               ),
                             ),
-                            const Padding(
-                              padding: EdgeInsets.only(top: 8.0),
-                              child: BaseDivider(),
-                            ),
-                            const ResponsiveWidgetWrapper(
-                              mobileWidget: StreamWidgetsMobile(),
-                              tabletWidget: StreamWidgets(),
+                            ResponsiveWidgetWrapper(
+                              mobileWidget: Column(
+                                children: const [
+                                  SizedBox(height: 8.0),
+                                  OBSWidgetsMobile(),
+                                ],
+                              ),
+                              tabletWidget: Column(
+                                children: const [
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 8.0),
+                                    child: BaseDivider(),
+                                  ),
+                                  OBSWidgets(),
+                                ],
+                              ),
                             ),
                           ],
                         ),

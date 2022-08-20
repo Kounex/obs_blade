@@ -12,7 +12,7 @@ import '../../../types/extensions/int.dart';
 import '../../../types/interfaces/past_stats_data.dart';
 import '../../../utils/modal_handler.dart';
 import '../../../utils/styling_helper.dart';
-import '../../dashboard/widgets/stream_widgets/stats/stats_container.dart';
+import '../../dashboard/widgets/obs_widgets/stats/stats_container.dart';
 import '../widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_chart.dart';
 
@@ -67,7 +67,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         dataTimesMS: pastStatsData.listEntryDateMS,
         amountFixedTooltipValue: 3,
         amountFixedYAxis: 1,
-        dataName: 'RAM',
+        dataName: 'Memory Usage',
         dataUnit: ' GB',
         minYInterval: 0.1,
         chartColor: Colors.redAccent,
@@ -79,7 +79,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
         previousTitle: 'Statistics',
-        title: pastStatsData.name ?? 'Unnamed stream',
+        title: 'Details',
         actions: AppBarCupertinoActions(
           actions: [
             AppBarCupertinoActionEntry(
@@ -105,10 +105,9 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                   ModalHandler.showBaseDialog(
                     context: context,
                     dialogWidget: InputDialog(
-                      title: 'Rename stream statistic',
-                      body:
-                          'Please enter the new name for this stream statistic',
-                      inputPlaceholder: 'Statistics name',
+                      title: 'Rename entry',
+                      body: 'Please enter a new name for this entry',
+                      inputPlaceholder: 'Entry name',
                       inputText: pastStatsData.name,
                       onSave: (name) {
                         pastStatsData.name = name;
@@ -130,10 +129,10 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                 ModalHandler.showBaseDialog(
                   context: context,
                   dialogWidget: ConfirmationDialog(
-                    title: 'Delete stream statistic',
+                    title: 'Delete entry',
                     isYesDestructive: true,
                     body:
-                        'Are you sure you want to delete this stream statistic entry? This action can\'t be undone so be sure this is what you actually want!',
+                        'Are you sure you want to delete this entry? This action can\'t be undone so be sure this is what you actually want!',
                     onOk: (_) {
                       if (pastStatsData is PastStreamData) {
                         pastStatsData.delete();
@@ -206,7 +205,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     title: 'Some numbers',
                     children: [
                       FormattedText(
-                        label: 'Total stream time',
+                        label: 'Session time',
                         text: pastStatsData.totalTime!
                             .secondsToFormattedDurationString(),
                         width: 100.0,
@@ -236,36 +235,34 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                         width: 85.0,
                       ),
                       FormattedText(
-                        label: 'Average RAM',
+                        label: 'Average Memory Usage',
                         text: ((pastStatsData.memoryUsageList
                                         .reduce((a, b) => a + b) /
                                     pastStatsData.memoryUsageList.length) /
                                 1000)
                             .toStringAsFixed(2),
                         unit: ' GB',
-                        width: 80.0,
+                        width: 140.0,
                       ),
                       FormattedText(
-                        label: 'Missed Frames (render)',
-                        text: pastStatsData.renderMissedFrames.toString(),
-                        width: 135.0,
+                        label: 'Total Output Frames',
+                        text: pastStatsData.outputTotalFrames.toString(),
+                        width: 120.0,
                       ),
-                      if (pastStatsData is PastStreamData)
-                        FormattedText(
-                          label: 'Skipped Frames (encoder)',
-                          text: pastStatsData.outputSkippedFrames.toString(),
-                          width: 150.0,
-                        ),
-                      if (pastStatsData is PastStreamData)
-                        FormattedText(
-                          label: 'Total Output Frames (encoder)',
-                          text: pastStatsData.outputTotalFrames.toString(),
-                          width: 175.0,
-                        ),
                       FormattedText(
-                        label: 'Total Output Frames (render)',
+                        label: 'Skipped Output Frames',
+                        text: pastStatsData.outputSkippedFrames.toString(),
+                        width: 140.0,
+                      ),
+                      FormattedText(
+                        label: 'Total Render Frames',
                         text: pastStatsData.renderTotalFrames.toString(),
-                        width: 165.0,
+                        width: 120.0,
+                      ),
+                      FormattedText(
+                        label: 'Skipped Render Frames',
+                        text: pastStatsData.renderSkippedFrames.toString(),
+                        width: 140.0,
                       ),
                     ],
                   ),

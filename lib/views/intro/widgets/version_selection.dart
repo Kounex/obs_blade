@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/animator/selectable_box.dart';
+import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/base/constrained_box.dart';
-import 'package:obs_blade/shared/general/described_box.dart';
+import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 import 'package:obs_blade/stores/views/intro.dart';
 
@@ -30,10 +31,15 @@ class _VersionSelectionState extends State<VersionSelection> {
                   fontSize: 18,
                 ),
           ),
-          const SizedBox(height: 48.0),
-          DescribedBox(
-            label: 'OBS Version',
-            borderColor: Theme.of(context).dividerColor.withOpacity(0.4),
+          BaseCard(
+            paintBorder: true,
+            topPadding: 32.0,
+            bottomPadding: 18.0,
+            borderColor: Theme.of(context).dividerColor.withOpacity(0.2),
+            title: 'Version',
+            trailingTitleWidget: const QuestionMarkTooltip(
+                message:
+                    'Where to find the version of your OBS instance depends on your operating system:\n\nWindows / Linux:\nHelp -> About\n\nmacOS:\nOBS -> About OBS'),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 32.0),
               child: Row(
@@ -42,14 +48,14 @@ class _VersionSelectionState extends State<VersionSelection> {
                   SelectableBox(
                     colorUnselected: Theme.of(context).scaffoldBackgroundColor,
                     selected: _nextStage == IntroStage.TwentyEightParty,
-                    text: '>= 28.X',
+                    text: '28.X and above',
                     onTap: () => setState(
                         () => _nextStage = IntroStage.TwentyEightParty),
                   ),
                   SelectableBox(
                     colorUnselected: Theme.of(context).scaffoldBackgroundColor,
                     selected: _nextStage == IntroStage.InstallationSlides,
-                    text: '<= 27.X',
+                    text: '27.X and below',
                     onTap: () => setState(
                         () => _nextStage = IntroStage.InstallationSlides),
                   ),
@@ -97,7 +103,6 @@ class _VersionSelectionState extends State<VersionSelection> {
           //     child: const Text('OBS Version < 28.X'),
           //   ),
           // ),
-          const SizedBox(height: 48.0),
           ThemedCupertinoButton(
             onPressed: _nextStage != null
                 ? () => GetIt.instance<IntroStore>().setStage(_nextStage!)

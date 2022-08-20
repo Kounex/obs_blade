@@ -139,7 +139,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                   CustomSlidableAction(
                     backgroundColor: hiddenSceneItem != null
                         ? CupertinoColors.destructiveRed
-                        : Theme.of(context).buttonColor,
+                        : Theme.of(context).buttonTheme.colorScheme!.primary,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

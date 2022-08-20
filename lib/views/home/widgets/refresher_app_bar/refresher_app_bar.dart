@@ -1,17 +1,16 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../models/custom_theme.dart';
+import '../../../../shared/animator/fader.dart';
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
-import '../../../../utils/styling_helper.dart';
-
-import '../../../../shared/animator/fader.dart';
 import '../../../../types/extensions/string.dart';
+import '../../../../utils/styling_helper.dart';
 import 'scroll_refresh_icon.dart';
 
 const double kRefresherAppBarHeight = 44.0;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
@@ -89,7 +90,14 @@ class _StreamRecTimersState extends State<StreamRecTimers> {
               size: 16.0,
             ),
             const SizedBox(width: 8.0),
-            Text(_streamTimeS.secondsToFormattedDurationString()),
+            Text(
+              _streamTimeS.secondsToFormattedDurationString(),
+              style: const TextStyle(
+                fontFeatures: [
+                  FontFeature.tabularFigures(),
+                ],
+              ),
+            ),
           ],
         ),
         const SizedBox(width: 32.0),
@@ -100,7 +108,14 @@ class _StreamRecTimersState extends State<StreamRecTimers> {
               size: 18.0,
             ),
             const SizedBox(width: 8.0),
-            Text(_recordTimeS.secondsToFormattedDurationString()),
+            Text(
+              _recordTimeS.secondsToFormattedDurationString(),
+              style: const TextStyle(
+                fontFeatures: [
+                  FontFeature.tabularFigures(),
+                ],
+              ),
+            ),
           ],
         ),
       ],

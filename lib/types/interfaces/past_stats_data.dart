@@ -22,8 +22,14 @@ abstract class PastStatsData {
   /// Number of frames rendered
   int? renderTotalFrames;
 
-  /// Number of frames missed due to rendering lag
-  int? renderMissedFrames;
+  /// Number of frames skipped due to rendering lag
+  int? renderSkippedFrames;
+
+  /// Number of frames outputted
+  int? outputTotalFrames;
+
+  /// Number of frames skipped due to encoding lag
+  int? outputSkippedFrames;
 
   /// Average frame time (in milliseconds)
   double? averageFrameTime;
