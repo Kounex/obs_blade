@@ -9,6 +9,14 @@ part of 'statistics.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$StatisticsStore on _StatisticsStore, Store {
+  Computed<bool>? _$isFilterSortActiveComputed;
+
+  @override
+  bool get isFilterSortActive => (_$isFilterSortActiveComputed ??=
+          Computed<bool>(() => super.isFilterSortActive,
+              name: '_StatisticsStore.isFilterSortActive'))
+      .value;
+
   late final _$filterTypeAtom =
       Atom(name: '_StatisticsStore.filterType', context: context);
 
@@ -174,13 +182,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
       Atom(name: '_StatisticsStore.durationFilterAmount', context: context);
 
   @override
-  String? get durationFilterAmount {
+  String get durationFilterAmount {
     _$durationFilterAmountAtom.reportRead();
     return super.durationFilterAmount;
   }
 
   @override
-  set durationFilterAmount(String? value) {
+  set durationFilterAmount(String value) {
     _$durationFilterAmountAtom.reportWrite(value, super.durationFilterAmount,
         () {
       super.durationFilterAmount = value;
@@ -206,6 +214,17 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
 
   late final _$_StatisticsStoreActionController =
       ActionController(name: '_StatisticsStore', context: context);
+
+  @override
+  void setDefaults() {
+    final _$actionInfo = _$_StatisticsStoreActionController.startAction(
+        name: '_StatisticsStore.setDefaults');
+    try {
+      return super.setDefaults();
+    } finally {
+      _$_StatisticsStoreActionController.endAction(_$actionInfo);
+    }
+  }
 
   @override
   void setFilterType(FilterType filterType) {
@@ -319,7 +338,7 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setDurationFilterAmount(String? durationFilterAmount) {
+  void setDurationFilterAmount(String durationFilterAmount) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
         name: '_StatisticsStore.setDurationFilterAmount');
     try {
@@ -354,7 +373,8 @@ excludeUnnamedStats: ${excludeUnnamedStats},
 statType: ${statType},
 durationFilter: ${durationFilter},
 durationFilterAmount: ${durationFilterAmount},
-durationFilterTimeUnit: ${durationFilterTimeUnit}
+durationFilterTimeUnit: ${durationFilterTimeUnit},
+isFilterSortActive: ${isFilterSortActive}
     ''';
   }
 }

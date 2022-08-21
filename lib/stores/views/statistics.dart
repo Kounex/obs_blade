@@ -104,12 +104,40 @@ abstract class _StatisticsStore with Store {
   DurationFilter? durationFilter;
 
   @observable
-  String? durationFilterAmount;
+  String durationFilterAmount = '';
 
   @observable
   TimeUnit durationFilterTimeUnit = TimeUnit.Minutes;
 
-  @observable
+  @computed
+  bool get isFilterSortActive =>
+      this.filterType != FilterType.StatisticTime ||
+      this.filterOrder != Order.Descending ||
+      this.amountStatisticEntries != AmountStatisticEntries.Five ||
+      this.filterName != '' ||
+      this.showOnlyFavorites != false ||
+      this.fromDate != null ||
+      this.toDate != null ||
+      this.excludeUnnamedStats != false ||
+      this.statType != null ||
+      this.durationFilter != null;
+
+  @action
+  void setDefaults() {
+    this.filterType = FilterType.StatisticTime;
+    this.filterOrder = Order.Descending;
+    this.amountStatisticEntries = AmountStatisticEntries.Five;
+    this.filterName = '';
+    this.showOnlyFavorites = false;
+    this.fromDate = null;
+    this.toDate = null;
+    this.excludeUnnamedStats = false;
+    this.statType = null;
+    this.durationFilter = null;
+    this.durationFilterAmount = '';
+    this.durationFilterTimeUnit = TimeUnit.Minutes;
+  }
+
   @action
   void setFilterType(FilterType filterType) => this.filterType = filterType;
 
@@ -147,7 +175,7 @@ abstract class _StatisticsStore with Store {
       this.durationFilter = durationFilter;
 
   @action
-  void setDurationFilterAmount(String? durationFilterAmount) =>
+  void setDurationFilterAmount(String durationFilterAmount) =>
       this.durationFilterAmount = durationFilterAmount;
 
   @action

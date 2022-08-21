@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -24,7 +26,14 @@ class AmountEntriesControl extends StatelessWidget {
               AmountStatisticEntries.values.map(
                 (amount) => MapEntry(
                   amount,
-                  Text(amount.number.toString()),
+                  Text(
+                    amount.number.toString(),
+                    style: const TextStyle(
+                      fontFeatures: [
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

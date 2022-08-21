@@ -26,9 +26,9 @@ class ConnectBox extends StatelessWidget {
             case ConnectMode.QR:
               return const Padding(
                 padding: EdgeInsets.only(
-                  top: 18.0,
-                  left: 18.0,
-                  right: 18.0,
+                  top: 20.0,
+                  left: 24.0,
+                  right: 24.0,
                   bottom: 18.0,
                 ),
                 child: QuickConnect(),

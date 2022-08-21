@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../types/enums/order.dart';
 
 class OrderButton extends StatefulWidget {
@@ -41,6 +42,22 @@ class _OrderButtonState extends State<OrderButton>
     if (this.widget.order == Order.Ascending) {
       _controllerUp.animateTo(_controllerUp.upperBound,
           duration: Duration.zero);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant OrderButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.order != this.widget.order) {
+      if (this.widget.order == Order.Ascending) {
+        _controllerUp.forward();
+      } else {
+        _controllerDown.forward().then((value) {
+          _controllerUp.reset();
+          _controllerDown.reset();
+        });
+      }
     }
   }
 

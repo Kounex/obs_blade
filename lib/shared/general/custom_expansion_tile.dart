@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class CustomExpansionTile extends StatefulWidget {
   final IconData? leadingIcon;
   final String? headerText;
+  final Widget? trailing;
   final Widget? customHeader;
   final TextStyle? headerTextStyle;
   final EdgeInsetsGeometry headerPadding;
@@ -15,6 +16,7 @@ class CustomExpansionTile extends StatefulWidget {
     Key? key,
     this.leadingIcon,
     this.headerText,
+    this.trailing,
     this.customHeader,
     this.headerTextStyle,
     this.headerPadding = const EdgeInsets.all(12.0),
@@ -127,6 +129,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                         ),
                       ),
                 ),
+                this.widget.trailing ?? const SizedBox(),
                 AnimatedBuilder(
                   animation: _animController,
                   builder: (context, _) => RotationTransition(

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/button.dart';
+import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/filter_duration.dart';
+import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/filter_status.dart';
 import 'package:obs_blade/views/statistics/widgets/card_header/sort_filter_panel/stat_type_control.dart';
 
 import '../../../../../shared/general/base/divider.dart';
@@ -22,7 +26,11 @@ class SortFilterPanel extends StatelessWidget {
       children: [
         const BaseDivider(),
         CustomExpansionTile(
-          headerText: 'Expand to sort and filter your statistics',
+          headerText: 'Sort and filter panel',
+          trailing: const Padding(
+            padding: EdgeInsets.only(right: 12.0),
+            child: FilterStatus(),
+          ),
           headerPadding: const EdgeInsets.all(14.0),
           headerTextStyle: Theme.of(context).textTheme.bodyText2,
           expandedBody: SizedBox(
@@ -38,23 +46,33 @@ class SortFilterPanel extends StatelessWidget {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      SizedBox(height: _kControlsPadding + 8.0),
-                      OrderRow(),
-                      SizedBox(height: _kControlsPadding),
-                      FilterName(),
-                      SizedBox(height: _kControlsPadding),
-                      FilterDuration(),
-                      SizedBox(height: _kControlsPadding),
-                      StatisticsDateRange(),
-                      SizedBox(height: _kControlsPadding + 2.0),
-                      FavoriteControl(),
-                      SizedBox(height: _kControlsPadding + 2.0),
-                      StatTypeControl(),
-                      SizedBox(height: _kControlsPadding + 2.0),
-                      AmountEntriesControl(),
-                      SizedBox(height: 4.0),
-                      ExcludeUnnamedCheckbox(),
+                    children: [
+                      const SizedBox(height: _kControlsPadding + 8.0),
+                      const OrderRow(),
+                      const SizedBox(height: _kControlsPadding),
+                      const FilterName(),
+                      const SizedBox(height: _kControlsPadding),
+                      const FilterDuration(),
+                      const SizedBox(height: _kControlsPadding),
+                      const StatisticsDateRange(),
+                      const SizedBox(height: _kControlsPadding + 2.0),
+                      const FavoriteControl(),
+                      const SizedBox(height: _kControlsPadding + 2.0),
+                      const StatTypeControl(),
+                      const SizedBox(height: _kControlsPadding + 2.0),
+                      const AmountEntriesControl(),
+                      const SizedBox(height: 4.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const ExcludeUnnamedCheckbox(),
+                          BaseButton(
+                            text: 'Default',
+                            onPressed: () =>
+                                GetIt.instance<StatisticsStore>().setDefaults(),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

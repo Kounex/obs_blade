@@ -30,7 +30,7 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
           ),
           Text(
             'Exclude unnamed entries',
-            style: Theme.of(context).textTheme.subtitle1,
+            style: Theme.of(context).textTheme.subtitle2,
           ),
         ],
       ),

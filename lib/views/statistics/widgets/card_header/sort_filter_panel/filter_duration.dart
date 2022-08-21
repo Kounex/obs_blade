@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 
 import '../../../../../shared/general/cupertino_dropdown.dart';
@@ -24,6 +27,30 @@ class FilterDuration extends StatefulWidget {
 class _FilterDurationState extends State<FilterDuration> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+
+  final List<ReactionDisposer> _disposers = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _disposers.add(
+        reaction((_) => GetIt.instance<StatisticsStore>().durationFilter,
+            (durationFilter) {
+      if (durationFilter == null) {
+        _controller.text = '';
+      }
+    }));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    for (final d in _disposers) {
+      d();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +85,13 @@ class _FilterDurationState extends State<FilterDuration> {
                 focusNode: _focusNode,
                 enabled: statisticsStore.durationFilter != null,
                 style: TextStyle(
-                    color: statisticsStore.durationFilter == null
-                        ? Colors.white38
-                        : null),
+                  color: statisticsStore.durationFilter == null
+                      ? Colors.white38
+                      : null,
+                  fontFeatures: const [
+                    FontFeature.tabularFigures(),
+                  ],
+                ),
                 maxLength: 4,
                 maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 keyboardType: const TextInputType.numberWithOptions(),

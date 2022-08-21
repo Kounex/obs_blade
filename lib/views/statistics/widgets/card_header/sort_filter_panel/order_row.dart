@@ -19,11 +19,11 @@ class OrderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
-    return Row(
-      children: [
-        Expanded(
-          child: Observer(
-            builder: (_) => CupertinoDropdown<FilterType>(
+    return Observer(
+      builder: (_) => Row(
+        children: [
+          Expanded(
+            child: CupertinoDropdown<FilterType>(
               value: statisticsStore.filterType,
               items: kActiveFilterTypes
                   .map((filterType) => DropdownMenuItem<FilterType>(
@@ -38,14 +38,15 @@ class OrderRow extends StatelessWidget {
                   statisticsStore.setFilterType(filterType!),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 14.0),
-          child: OrderButton(
-            toggle: statisticsStore.toggleFilterOrder,
+          Padding(
+            padding: const EdgeInsets.only(left: 14.0),
+            child: OrderButton(
+              order: statisticsStore.filterOrder,
+              toggle: statisticsStore.toggleFilterOrder,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
