@@ -65,14 +65,18 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
     if (this.widget.countdownInSeconds != null) {
       _tempValue ??= 1.0;
       Timer.periodic(const Duration(milliseconds: 10), (timer) {
-        if (_tempValue! <= 0) {
+        if (this.mounted) {
+          if (_tempValue! <= 0) {
+            timer.cancel();
+            this.widget.onCountdownDone?.call();
+          }
+          setState(() {
+            _tempValue = _tempValue! -
+                (1.0 / ((this.widget.countdownInSeconds! * 1000) / 10));
+          });
+        } else {
           timer.cancel();
-          this.widget.onCountdownDone?.call();
         }
-        setState(() {
-          _tempValue = _tempValue! -
-              (1.0 / ((this.widget.countdownInSeconds! * 1000) / 10));
-        });
       });
     }
   }
@@ -90,11 +94,15 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
             milliseconds: this.widget.valueUpdateDuration.inMilliseconds ~/
                 this.widget.valueUpdateSteps,
           ), (timer) {
-        setState(() {
-          _tempValue = _tempValue! +
-              (this.widget.value! - oldWidget.value!) /
-                  this.widget.valueUpdateSteps;
-        });
+        if (this.mounted) {
+          setState(() {
+            _tempValue = _tempValue! +
+                (this.widget.value! - oldWidget.value!) /
+                    this.widget.valueUpdateSteps;
+          });
+        } else {
+          timer.cancel();
+        }
       });
     }
   }
