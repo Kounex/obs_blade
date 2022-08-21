@@ -27,6 +27,7 @@ class ValidationCupertinoTextfield extends StatefulWidget {
   final CustomValidationTextEditingController controller;
   final String? placeholder;
   final FocusNode? focusNode;
+  final TextStyle? style;
   final TextInputType keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final double bottomPadding;
@@ -40,6 +41,7 @@ class ValidationCupertinoTextfield extends StatefulWidget {
     required this.controller,
     this.placeholder,
     this.focusNode,
+    this.style,
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
     this.bottomPadding = 6.0,
@@ -93,6 +95,7 @@ class ValidationCupertinoTextfieldState
         CupertinoTextField(
           focusNode: this.widget.focusNode,
           controller: this.widget.controller,
+          style: this.widget.style,
           cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
           placeholder: this.widget.placeholder,
           keyboardType: this.widget.keyboardType,

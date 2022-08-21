@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class EnumerationEntry extends StatelessWidget {
@@ -52,7 +54,16 @@ class EnumerationEntry extends StatelessWidget {
                 ),
         ),
         Flexible(
-          child: this.text != null ? Text(this.text!) : this.customEntry!,
+          child: this.text != null
+              ? Text(
+                  this.text!,
+                  style: const TextStyle(
+                    fontFeatures: [
+                      FontFeature.tabularFigures(),
+                    ],
+                  ),
+                )
+              : this.customEntry!,
         ),
       ],
     );

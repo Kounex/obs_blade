@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -125,6 +127,11 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                 child: ValidationCupertinoTextfield(
                   controller: _host,
                   placeholder: 'Host',
+                  style: const TextStyle(
+                    fontFeatures: [
+                      FontFeature.tabularFigures(),
+                    ],
+                  ),
                   bottomWidget: SizedBox(
                     width: double.infinity,
                     child: CupertinoSlidingSegmentedControl<bool>(
@@ -157,6 +164,11 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     child: ValidationCupertinoTextfield(
                       controller: _port,
                       focusNode: _portFocusNode,
+                      style: const TextStyle(
+                        fontFeatures: [
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
                       placeholder: 'Port',
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],

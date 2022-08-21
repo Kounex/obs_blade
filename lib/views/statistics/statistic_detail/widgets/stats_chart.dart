@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -77,8 +78,18 @@ class StatsChart extends StatelessWidget {
     yInterval =
         yInterval != null && yInterval > 0 ? yInterval : this.minYInterval;
 
-    TextStyle tooltipTextStyle = Theme.of(context).textTheme.bodyText1!;
-    TextStyle axisStepsTextStyle = Theme.of(context).textTheme.caption!;
+    TextStyle tooltipTextStyle =
+        Theme.of(context).textTheme.bodyText1!.copyWith(
+      fontFeatures: const [
+        FontFeature.tabularFigures(),
+      ],
+    );
+    TextStyle axisStepsTextStyle =
+        Theme.of(context).textTheme.caption!.copyWith(
+      fontFeatures: const [
+        FontFeature.tabularFigures(),
+      ],
+    );
     TextStyle axisTitleTextStyle = Theme.of(context).textTheme.subtitle1!;
 
     return Column(

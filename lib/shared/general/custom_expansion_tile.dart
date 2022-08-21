@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 
@@ -125,7 +127,12 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                           this.widget.headerText!,
                           style: (this.widget.headerTextStyle ??
                                   Theme.of(context).textTheme.subtitle1)!
-                              .copyWith(color: _color.value),
+                              .copyWith(
+                            color: _color.value,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
                         ),
                       ),
                 ),

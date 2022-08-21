@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,6 +94,11 @@ class _ConnectFormState extends State<ConnectForm> {
                     focusNode: _portFocusNode,
                     readOnly: !this.widget.manual,
                     enabled: this.widget.manual,
+                    style: const TextStyle(
+                      fontFeatures: [
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],

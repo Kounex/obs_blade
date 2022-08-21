@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -85,6 +87,11 @@ class Transition extends StatelessWidget {
                     null,
                 controller: controller,
                 textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFeatures: [
+                    FontFeature.tabularFigures(),
+                  ],
+                ),
                 maxLength: 5,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 keyboardType: TextInputType.number,

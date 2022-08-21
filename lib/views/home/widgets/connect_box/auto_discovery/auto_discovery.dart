@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -58,6 +60,11 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               child: TextFormField(
                 focusNode: _portFocusNode,
                 textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFeatures: [
+                    FontFeature.tabularFigures(),
+                  ],
+                ),
                 controller:
                     TextEditingController(text: landingStore.autodiscoverPort),
                 keyboardType: TextInputType.number,

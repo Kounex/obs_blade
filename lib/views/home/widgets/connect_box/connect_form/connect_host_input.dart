@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -58,6 +60,11 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
             autocorrect: false,
             readOnly: !this.widget.manual,
             enabled: this.widget.manual,
+            style: const TextStyle(
+              fontFeatures: [
+                FontFeature.tabularFigures(),
+              ],
+            ),
             decoration: InputDecoration(
               prefix: this.widget.manual &&
                       landingStore.domainMode &&

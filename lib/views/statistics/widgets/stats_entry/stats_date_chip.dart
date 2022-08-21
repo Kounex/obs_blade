@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class StatsDateChip extends StatelessWidget {
@@ -30,7 +32,14 @@ class StatsDateChip extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 8.0),
-            child: Text(this.content),
+            child: Text(
+              this.content,
+              style: const TextStyle(
+                fontFeatures: [
+                  FontFeature.tabularFigures(),
+                ],
+              ),
+            ),
           ),
         ],
       ),

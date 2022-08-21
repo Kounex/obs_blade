@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -57,7 +59,11 @@ class ConnectionBox extends StatelessWidget {
                   // ),
                   Text(
                     '${this.connection.host}${this.connection.port != null ? (":" + this.connection.port.toString()) : ""}',
-                    style: Theme.of(context).textTheme.caption,
+                    style: Theme.of(context).textTheme.caption!.copyWith(
+                      fontFeatures: const [
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
                   ),
                 ],
               ),
