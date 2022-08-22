@@ -143,27 +143,28 @@ class _QRScanState extends State<QRScan> {
               ],
             ),
           ),
-          if (_controller != null && _permission)
-            SafeArea(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height / 5,
-                child: _qrScanState == null
-                    ? BaseProgressIndicator(
-                        text: 'Waiting for QR code...',
-                      )
-                    : _qrScanState!
-                        ? const BaseResult(
-                            icon: BaseResultIcon.Positive,
-                            iconColor: CupertinoColors.activeGreen,
-                            text: 'Quick connect QR code found!',
-                          )
-                        : const BaseResult(
-                            icon: BaseResultIcon.Negative,
-                            iconColor: CupertinoColors.destructiveRed,
-                            text: 'Wrong QR code!',
-                          ),
-              ),
+          SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height / 5,
+              child: _controller != null && _permission
+                  ? _qrScanState == null
+                      ? BaseProgressIndicator(
+                          text: 'Waiting for QR code...',
+                        )
+                      : _qrScanState!
+                          ? const BaseResult(
+                              icon: BaseResultIcon.Positive,
+                              iconColor: CupertinoColors.activeGreen,
+                              text: 'Quick connect QR code found!',
+                            )
+                          : const BaseResult(
+                              icon: BaseResultIcon.Negative,
+                              iconColor: CupertinoColors.destructiveRed,
+                              text: 'Wrong QR code!',
+                            )
+                  : const SizedBox(),
             ),
+          ),
         ],
       ),
     );
