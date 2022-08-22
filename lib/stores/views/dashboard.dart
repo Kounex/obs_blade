@@ -798,9 +798,11 @@ abstract class _DashboardStore with Store {
 
   @action
   void _handleResponse(BaseResponse response) {
-    GeneralHelper.advLog(
-      'Response Incoming: ${(response.requestType)}',
-    );
+    if (response.requestType != RequestType.GetSourceScreenshot) {
+      GeneralHelper.advLog(
+        'Response Incoming: ${(response.requestType)}',
+      );
+    }
 
     switch (response.requestType) {
       case RequestType.GetVersion:

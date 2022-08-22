@@ -303,9 +303,11 @@ class NetworkHelper {
     Map<String, dynamic>? fields,
     bool customContent = false,
   ]) {
-    GeneralHelper.advLog(
-      'Outgoing: $request',
-    );
+    if (request != RequestType.GetSourceScreenshot) {
+      GeneralHelper.advLog(
+        'Outgoing: $request',
+      );
+    }
 
     String requestUUID = const Uuid().v4();
 
