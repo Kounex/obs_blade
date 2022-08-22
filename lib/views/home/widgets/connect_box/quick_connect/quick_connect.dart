@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/views/home/widgets/connect_box/quick_connect/qr_scan.dart';
 
@@ -17,7 +18,9 @@ class QuickConnect extends StatelessWidget {
         children: [
           const Text(
               'Scan the "Connect QR" of the WebSocket plugin to connect to OBS instantly.\n\nThis feature only works when connecting to an OBS instance which is in the same network as this device!'),
-          const SizedBox(height: 12.0),
+          const SizedBox(height: 20.0),
+          const BaseDivider(),
+          const SizedBox(height: 18.0),
           BaseButton(
             onPressed: () =>
                 ModalHandler.showBaseCupertinoBottomSheet<Connection?>(

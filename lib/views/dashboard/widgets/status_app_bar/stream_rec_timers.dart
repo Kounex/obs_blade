@@ -30,43 +30,75 @@ class _StreamRecTimersState extends State<StreamRecTimers> {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     _disposers.add(
-        reaction<int?>((_) => dashboardStore.latestStreamTimeDurationMS,
-            (latestStreamTimeDurationMS) {
-      _streamTimer?.cancel();
-      setState(() {
-        if (dashboardStore.isLive) {
-          _streamTimeS = (latestStreamTimeDurationMS ?? 0) ~/ 1000;
-          _streamTimer = Timer.periodic(const Duration(seconds: 1),
-              (_) => setState(() => _streamTimeS++));
-        } else {
-          _streamTimeS = 0;
-        }
-      });
-    }));
+      reaction<int?>(
+        (_) => dashboardStore.latestStreamTimeDurationMS,
+        (latestStreamTimeDurationMS) {
+          _streamTimer?.cancel();
+          setState(
+            () {
+              if (dashboardStore.isLive) {
+                _streamTimeS = (latestStreamTimeDurationMS ?? 0) ~/ 1000;
+                _streamTimer = Timer.periodic(
+                  const Duration(seconds: 1),
+                  (_) => setState(() {
+                    if (this.mounted) {
+                      _streamTimeS++;
+                    }
+                  }),
+                );
+              } else {
+                _streamTimeS = 0;
+              }
+            },
+          );
+        },
+      ),
+    );
 
     _disposers.add(
-        reaction<int?>((_) => dashboardStore.latestRecordTimeDurationMS,
-            (latestRecordTimeDurationMS) {
-      _recordTimer?.cancel();
-      setState(() {
-        if (dashboardStore.isRecording) {
-          _recordTimeS = (latestRecordTimeDurationMS ?? 0) ~/ 1000;
-          _recordTimer = Timer.periodic(const Duration(seconds: 1),
-              (_) => setState(() => _recordTimeS++));
-        } else {
-          _recordTimeS = 0;
-        }
-      });
-    }));
+      reaction<int?>(
+        (_) => dashboardStore.latestRecordTimeDurationMS,
+        (latestRecordTimeDurationMS) {
+          _recordTimer?.cancel();
+          setState(
+            () {
+              if (dashboardStore.isRecording) {
+                _recordTimeS = (latestRecordTimeDurationMS ?? 0) ~/ 1000;
+                _recordTimer = Timer.periodic(
+                  const Duration(seconds: 1),
+                  (_) => setState(() {
+                    if (this.mounted) {
+                      _recordTimeS++;
+                    }
+                  }),
+                );
+              } else {
+                _recordTimeS = 0;
+              }
+            },
+          );
+        },
+      ),
+    );
 
-    _disposers.add(reaction<bool>((_) => dashboardStore.isRecordingPaused,
+    _disposers.add(
+      reaction<bool>(
+        (_) => dashboardStore.isRecordingPaused,
         (isRecordingPaused) {
-      _recordTimer?.cancel();
-      if (!isRecordingPaused) {
-        _recordTimer = Timer.periodic(
-            const Duration(seconds: 1), (_) => setState(() => _recordTimeS++));
-      }
-    }));
+          _recordTimer?.cancel();
+          if (!isRecordingPaused) {
+            _recordTimer = Timer.periodic(
+              const Duration(seconds: 1),
+              (_) => setState(() {
+                if (this.mounted) {
+                  _recordTimeS++;
+                }
+              }),
+            );
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -74,6 +106,9 @@ class _StreamRecTimersState extends State<StreamRecTimers> {
     for (var d in _disposers) {
       d();
     }
+
+    _recordTimer?.cancel();
+    _streamTimer?.cancel();
 
     super.dispose();
   }

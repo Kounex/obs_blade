@@ -174,11 +174,11 @@ class _StatisticsViewState extends State<StatisticsView> {
             switch (statisticsStore.durationFilter!) {
               case DurationFilter.Shorter:
                 return data.totalTime! <
-                    int.parse(statisticsStore.durationFilterAmount!) *
+                    int.parse(statisticsStore.durationFilterAmount) *
                         statisticsStore.durationFilterTimeUnit.factorToS;
               case DurationFilter.Longer:
                 return data.totalTime! >
-                    int.parse(statisticsStore.durationFilterAmount!) *
+                    int.parse(statisticsStore.durationFilterAmount) *
                         statisticsStore.durationFilterTimeUnit.factorToS;
               case DurationFilter.Between:
                 return true;
@@ -223,7 +223,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                         ...pastStreamDataBox.values.toList(),
                         ...pastRecordDataBox.values.toList(),
                       ]..sort((a, b) =>
-                          b.listEntryDateMS.last - a.listEntryDateMS.last);
+                          a.listEntryDateMS.last - b.listEntryDateMS.last);
 
                       PastStreamData? latestStreamData;
                       PastRecordData? latestRecordData;

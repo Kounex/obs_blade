@@ -15,26 +15,24 @@ class BackToSelectionWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
+    return Column(
       children: [
-        this.child ?? const SizedBox(),
-        Positioned(
-          top: MediaQuery.of(context).viewPadding.top,
-          left: 0,
-          child: ThemedCupertinoButton(
-            child: Row(
-              children: [
-                Icon(
-                  CupertinoIcons.chevron_left,
-                  color: Theme.of(context).cupertinoOverrideTheme!.primaryColor,
-                ),
-                const Text('Version Selection')
-              ],
-            ),
-            onPressed: () => GetIt.instance<IntroStore>()
-                .setStage(IntroStage.VersionSelection),
+        SizedBox(height: MediaQuery.of(context).viewPadding.top),
+        ThemedCupertinoButton(
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.chevron_left,
+                color: Theme.of(context).cupertinoOverrideTheme!.primaryColor,
+              ),
+              const Text('Version Selection')
+            ],
           ),
+          onPressed: () => GetIt.instance<IntroStore>()
+              .setStage(IntroStage.VersionSelection),
+        ),
+        Expanded(
+          child: this.child ?? const SizedBox(),
         ),
       ],
     );

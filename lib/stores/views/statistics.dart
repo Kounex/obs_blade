@@ -109,6 +109,9 @@ abstract class _StatisticsStore with Store {
   @observable
   TimeUnit durationFilterTimeUnit = TimeUnit.Minutes;
 
+  @observable
+  bool triggeredDefault = false;
+
   @computed
   bool get isFilterSortActive =>
       this.filterType != FilterType.StatisticTime ||
@@ -136,6 +139,11 @@ abstract class _StatisticsStore with Store {
     this.durationFilter = null;
     this.durationFilterAmount = '';
     this.durationFilterTimeUnit = TimeUnit.Minutes;
+
+    /// Used as a toggle (only listen for change, not value) to exactly determine
+    /// that the user set everything to default (because just setting the value
+    /// to the original value might not be enough)
+    this.triggeredDefault = !this.triggeredDefault;
   }
 
   @action

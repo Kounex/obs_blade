@@ -17,13 +17,12 @@ class GettingStarted extends StatelessWidget {
   Widget build(BuildContext context) {
     return BaseConstrainedBox(
       hasBasePadding: true,
-      child: Stack(
-        alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Positioned(
-            top: MediaQuery.of(context).size.height / 12,
-            left: 0,
-            right: 0,
+          const Spacer(flex: 1),
+          Flexible(
+            flex: 12,
             child: Column(
               children: [
                 Fader(
@@ -100,10 +99,8 @@ class GettingStarted extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 92.0,
+          Flexible(
+            flex: 2,
             child: Fader(
               duration: const Duration(milliseconds: 1000),
               delay: const Duration(milliseconds: 1000),

@@ -383,8 +383,8 @@ abstract class _DashboardStore with Store {
 
   /// If we are recording and have no [PastRecordData]
   /// instance (null) we need to check if we create a completely new
-  /// instance (indicating new stream) or we use the last one since it
-  /// seems as this is the same stream we already were connected to
+  /// instance (indicating new recording) or we use the last one since it
+  /// seems as this is the same recording we already were connected to
   Future<void> _manageRecordDataInit() async {
     Box<PastRecordData> pastRecordDataBox =
         Hive.box<PastRecordData>(HiveKeys.PastRecordData.name);
@@ -393,7 +393,7 @@ abstract class _DashboardStore with Store {
     /// Sort ascending so the last entry is the latest stream
     tmp.sort((a, b) => a.listEntryDateMS.last - b.listEntryDateMS.last);
 
-    /// Check if the latest stream has its last entry (based on [listEntryDateMS]
+    /// Check if the latest recording has its last entry (based on [listEntryDateMS]
     /// set later than current time - [totalTime] which means that we
     /// connected to an OBS session we already were connected to
     if (tmp.isNotEmpty &&
@@ -1111,10 +1111,6 @@ abstract class _DashboardStore with Store {
         }
 
         if (this.isLive) {
-          if (this.streamData == null) {
-            _manageStreamDataInit();
-          }
-
           /// Make sure our temp value is lower than the actual bytes emitted
           /// (might not be the case when starting and stopping the stream
           /// multiple times in a session and the value of the response gets
@@ -1146,6 +1142,10 @@ abstract class _DashboardStore with Store {
             freeDiskSpace: statsBatchResponse.stats.availableDiskSpace,
           );
 
+          if (this.streamData == null) {
+            _manageStreamDataInit();
+          }
+
           /// Set temp bytes to current for next iteration to correctly caluclate
           /// kbits
           _streamBytes = statsBatchResponse.streamStatus.outputBytes;
@@ -1164,10 +1164,6 @@ abstract class _DashboardStore with Store {
         }
 
         if (this.isRecording && !this.isRecordingPaused) {
-          if (this.recordData == null) {
-            _manageRecordDataInit();
-          }
-
           /// Make sure our temp value is lower than the actual bytes emitted
           /// (might not be the case when starting and stopping the stream
           /// multiple times in a session and the value of the response gets
@@ -1196,6 +1192,10 @@ abstract class _DashboardStore with Store {
             memoryUsage: statsBatchResponse.stats.memoryUsage,
             freeDiskSpace: statsBatchResponse.stats.availableDiskSpace,
           );
+
+          if (this.recordData == null) {
+            _manageRecordDataInit();
+          }
 
           /// Set temp bytes to current for next iteration to correctly caluclate
           /// kbits

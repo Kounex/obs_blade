@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
+import 'package:obs_blade/shared/tag_box.dart';
 import 'package:obs_blade/types/extensions/int.dart';
 
 import '../../../../types/interfaces/past_stats_data.dart';
@@ -53,44 +54,70 @@ class StatsEntry extends StatelessWidget {
             const SizedBox(height: 4.0),
             Padding(
               padding: const EdgeInsets.only(left: 37.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                decoration: const BoxDecoration(
-                  color: CupertinoColors.destructiveRed,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(6.0),
-                  ),
+              child: TagBox(
+                expand: false,
+                color: this.pastStatsData is PastStreamData
+                    ? Colors.blue[800]
+                    : this.pastStatsData is PastRecordData
+                        ? CupertinoColors.destructiveRed
+                        : Colors.grey,
+                icon: Icon(
+                  this.pastStatsData is PastStreamData
+                      ? CupertinoIcons.dot_radiowaves_left_right
+                      : this.pastStatsData is PastRecordData
+                          ? CupertinoIcons.recordingtape
+                          : Icons.question_mark,
+                  size: 18.0,
+                  color: Colors.white,
                 ),
-                child: SizedBox(
-                  height: 24.0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        this.pastStatsData is PastStreamData
-                            ? CupertinoIcons.dot_radiowaves_left_right
-                            : this.pastStatsData is PastRecordData
-                                ? CupertinoIcons.recordingtape
-                                : Icons.question_mark,
-                        size: 18.0,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 6.0),
-                      Text(
-                        this.pastStatsData is PastStreamData
-                            ? 'Stream'
-                            : this.pastStatsData is PastRecordData
-                                ? 'Recording'
-                                : 'Unknown',
-                        style: Theme.of(context)
-                            .textTheme
-                            .caption!
-                            .copyWith(color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
+                label: this.pastStatsData is PastStreamData
+                    ? 'Stream'
+                    : this.pastStatsData is PastRecordData
+                        ? 'Recording'
+                        : 'Unknown',
+                labelStyle: Theme.of(context)
+                    .textTheme
+                    .caption!
+                    .copyWith(color: Colors.white),
               ),
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              //   decoration: const BoxDecoration(
+              //     color: CupertinoColors.destructiveRed,
+              //     borderRadius: BorderRadius.all(
+              //       Radius.circular(6.0),
+              //     ),
+              //   ),
+              //   child: SizedBox(
+              //     height: 24.0,
+              //     child: Row(
+              //       mainAxisSize: MainAxisSize.min,
+              //       children: [
+              //         Icon(
+              //           this.pastStatsData is PastStreamData
+              //               ? CupertinoIcons.dot_radiowaves_left_right
+              //               : this.pastStatsData is PastRecordData
+              //                   ? CupertinoIcons.recordingtape
+              //                   : Icons.question_mark,
+              //           size: 18.0,
+              //           color: Colors.white,
+              //         ),
+              //         const SizedBox(width: 6.0),
+              //         Text(
+              //           this.pastStatsData is PastStreamData
+              //               ? 'Stream'
+              //               : this.pastStatsData is PastRecordData
+              //                   ? 'Recording'
+              //                   : 'Unknown',
+              //           style: Theme.of(context)
+              //               .textTheme
+              //               .caption!
+              //               .copyWith(color: Colors.white),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
             ),
             // StatusDot(
             //   color: this.pastStatsData is PastStreamData

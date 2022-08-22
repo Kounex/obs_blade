@@ -40,9 +40,12 @@ class ConnectBox extends StatelessWidget {
                   right: 24.0,
                   bottom: 18.0,
                 ),
-                child: ConnectForm(
-                  connection: landingStore.typedInConnection,
-                  manual: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: ConnectForm(
+                    connection: landingStore.typedInConnection,
+                    manual: true,
+                  ),
                 ),
               );
           }

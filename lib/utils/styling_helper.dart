@@ -40,7 +40,7 @@ class StylingHelper {
     assert(context != null || surroundingColor != null);
     return (surroundingColor ?? Theme.of(context!).cardColor)
                 .computeLuminance() <
-            0.2
+            0.3
         ? Colors.white
         : Colors.black;
   }
