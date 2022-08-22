@@ -34,11 +34,21 @@ class _FilterDurationState extends State<FilterDuration> {
   void initState() {
     super.initState();
 
-    _disposers.add(
-        reaction((_) => GetIt.instance<StatisticsStore>().durationFilter,
-            (durationFilter) {
-      if (durationFilter == null) {
-        _controller.text = '';
+    StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
+
+    _disposers.add(reaction((_) => statisticsStore.triggeredDefault, (_) {
+      _controller.text = '';
+    }));
+
+    _disposers
+        .add(reaction((_) => statisticsStore.durationFilter, (durationFilter) {
+      if (durationFilter != null && _controller.text == '') {
+        if (statisticsStore.durationFilterAmount == '') {
+          _controller.text = '1';
+          statisticsStore.setDurationFilterAmount(_controller.text);
+        } else {
+          _controller.text = statisticsStore.durationFilterAmount;
+        }
       }
     }));
   }

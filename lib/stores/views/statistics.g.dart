@@ -212,6 +212,22 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
+  late final _$triggeredDefaultAtom =
+      Atom(name: '_StatisticsStore.triggeredDefault', context: context);
+
+  @override
+  bool get triggeredDefault {
+    _$triggeredDefaultAtom.reportRead();
+    return super.triggeredDefault;
+  }
+
+  @override
+  set triggeredDefault(bool value) {
+    _$triggeredDefaultAtom.reportWrite(value, super.triggeredDefault, () {
+      super.triggeredDefault = value;
+    });
+  }
+
   late final _$_StatisticsStoreActionController =
       ActionController(name: '_StatisticsStore', context: context);
 
@@ -374,6 +390,7 @@ statType: ${statType},
 durationFilter: ${durationFilter},
 durationFilterAmount: ${durationFilterAmount},
 durationFilterTimeUnit: ${durationFilterTimeUnit},
+triggeredDefault: ${triggeredDefault},
 isFilterSortActive: ${isFilterSortActive}
     ''';
   }

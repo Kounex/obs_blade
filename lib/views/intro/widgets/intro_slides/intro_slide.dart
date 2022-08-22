@@ -18,17 +18,19 @@ class IntroSlide extends StatelessWidget {
     return Fader(
       duration: const Duration(milliseconds: 750),
       child: Padding(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 32.0,
+        padding: const EdgeInsets.only(
           left: 24.0,
           right: 24.0,
-          bottom: 2 * kIntroControlsBottomPadding,
+          bottom: kIntroControlsBottomPadding,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Expanded(
-              child: Image.asset(this.imagePath),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Image.asset(this.imagePath),
+              ),
             ),
             this.child,
           ],

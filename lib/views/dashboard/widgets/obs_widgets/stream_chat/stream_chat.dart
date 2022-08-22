@@ -60,97 +60,112 @@ class _StreamChatState extends State<StreamChat>
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
-                  /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
-                  /// in the region where the Twitch chat is. The Listener is used to determine
-                  /// where the user is trying to scroll and if it's where the Twitch chat is,
-                  /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
-                  /// the scroll
-                  Listener(
-                    onPointerDown: (onPointerDown) =>
-                        dashboardStore.setPointerOnChat(
-                            onPointerDown.localPosition.dy > 125.0 &&
-                                onPointerDown.localPosition.dy < 450.0),
-                    onPointerUp: (_) => dashboardStore.setPointerOnChat(false),
-                    onPointerCancel: (_) =>
-                        dashboardStore.setPointerOnChat(false),
-                    child: WebView(
-                      key: Key(
-                        chatType.toString() +
-                            settingsBox
-                                .get(SettingsKeys.SelectedTwitchUsername.name)
-                                .toString() +
-                            settingsBox
-                                .get(SettingsKeys.SelectedYoutubeUsername.name)
-                                .toString(),
+                  /// Only add the [WebView] to the widget tree if we have an
+                  /// actual chat to display because otherwise the [WebView]
+                  /// will still eat up performance
+                  if ((chatType == ChatType.Twitch &&
+                          settingsBox.get(
+                                  SettingsKeys.SelectedTwitchUsername.name) !=
+                              null) ||
+                      (chatType == ChatType.YouTube &&
+                          settingsBox.get(
+                                  SettingsKeys.SelectedYoutubeUsername.name) !=
+                              null))
+
+                    /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
+                    /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
+                    /// in the region where the Twitch chat is. The Listener is used to determine
+                    /// where the user is trying to scroll and if it's where the Twitch chat is,
+                    /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
+                    /// the scroll
+                    Listener(
+                      onPointerDown: (onPointerDown) =>
+                          dashboardStore.setPointerOnChat(
+                              onPointerDown.localPosition.dy > 125.0 &&
+                                  onPointerDown.localPosition.dy < 450.0),
+                      onPointerUp: (_) =>
+                          dashboardStore.setPointerOnChat(false),
+                      onPointerCancel: (_) =>
+                          dashboardStore.setPointerOnChat(false),
+                      child: WebView(
+                        key: Key(
+                          chatType.toString() +
+                              settingsBox
+                                  .get(SettingsKeys.SelectedTwitchUsername.name)
+                                  .toString() +
+                              settingsBox
+                                  .get(
+                                      SettingsKeys.SelectedYoutubeUsername.name)
+                                  .toString(),
+                        ),
+                        initialUrl: Uri.parse(chatType == ChatType.Twitch &&
+                                    settingsBox.get(SettingsKeys
+                                            .SelectedTwitchUsername.name) !=
+                                        null
+                                ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
+                                : chatType == ChatType.YouTube &&
+                                        settingsBox.get(SettingsKeys
+                                                .SelectedYoutubeUsername
+                                                .name) !=
+                                            null
+                                    ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
+                                    : 'about:blank')
+                            .toString(),
+                        allowsInlineMediaPlayback: true,
+                        zoomEnabled: false,
+                        userAgent:
+                            'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1',
+                        backgroundColor: Colors.transparent,
+                        javascriptMode: JavascriptMode.unrestricted,
+                        onWebViewCreated: (webController) {
+                          _webController = webController;
+                        },
                       ),
-                      initialUrl: Uri.parse(chatType == ChatType.Twitch &&
-                                  settingsBox.get(SettingsKeys
-                                          .SelectedTwitchUsername.name) !=
-                                      null
-                              ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-                              : chatType == ChatType.YouTube &&
-                                      settingsBox.get(SettingsKeys
-                                              .SelectedYoutubeUsername.name) !=
-                                          null
-                                  ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
-                                  : 'about:blank')
-                          .toString(),
-                      allowsInlineMediaPlayback: true,
-                      zoomEnabled: false,
-                      userAgent:
-                          'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1',
-                      backgroundColor: Colors.transparent,
-                      javascriptMode: JavascriptMode.unrestricted,
-                      onWebViewCreated: (webController) {
-                        _webController = webController;
-                      },
+                      // InAppWebView(
+                      //   key: Key(
+                      //     chatType.toString() +
+                      //         settingsBox
+                      //             .get(SettingsKeys.SelectedTwitchUsername.name)
+                      //             .toString() +
+                      //         settingsBox
+                      //             .get(SettingsKeys.SelectedYoutubeUsername.name)
+                      //             .toString(),
+                      //   ),
+                      //   initialUrlRequest: URLRequest(
+                      //     url: Uri.parse(chatType == ChatType.Twitch &&
+                      //             settingsBox.get(SettingsKeys
+                      //                     .SelectedTwitchUsername.name) !=
+                      //                 null
+                      //         ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
+                      //         : chatType == ChatType.YouTube &&
+                      //                 settingsBox.get(SettingsKeys
+                      //                         .SelectedYoutubeUsername.name) !=
+                      //                     null
+                      //             ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
+                      //             : 'about:blank'),
+                      //   ),
+                      //   initialOptions: InAppWebViewGroupOptions(
+                      //     crossPlatform: InAppWebViewOptions(
+                      //       transparentBackground: true,
+                      //       supportZoom: false,
+                      //       javaScriptCanOpenWindowsAutomatically: false,
+                      //       userAgent:
+                      //           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15',
+                      //     ),
+                      //   ),
+                      //   onWebViewCreated: (webController) {
+                      //     _webController = webController;
+                      //   },
+                      // ),
                     ),
-                    // InAppWebView(
-                    //   key: Key(
-                    //     chatType.toString() +
-                    //         settingsBox
-                    //             .get(SettingsKeys.SelectedTwitchUsername.name)
-                    //             .toString() +
-                    //         settingsBox
-                    //             .get(SettingsKeys.SelectedYoutubeUsername.name)
-                    //             .toString(),
-                    //   ),
-                    //   initialUrlRequest: URLRequest(
-                    //     url: Uri.parse(chatType == ChatType.Twitch &&
-                    //             settingsBox.get(SettingsKeys
-                    //                     .SelectedTwitchUsername.name) !=
-                    //                 null
-                    //         ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-                    //         : chatType == ChatType.YouTube &&
-                    //                 settingsBox.get(SettingsKeys
-                    //                         .SelectedYoutubeUsername.name) !=
-                    //                     null
-                    //             ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
-                    //             : 'about:blank'),
-                    //   ),
-                    //   initialOptions: InAppWebViewGroupOptions(
-                    //     crossPlatform: InAppWebViewOptions(
-                    //       transparentBackground: true,
-                    //       supportZoom: false,
-                    //       javaScriptCanOpenWindowsAutomatically: false,
-                    //       userAgent:
-                    //           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15',
-                    //     ),
-                    //   ),
-                    //   onWebViewCreated: (webController) {
-                    //     _webController = webController;
-                    //   },
-                    // ),
-                  ),
-                  if (chatType == ChatType.Twitch &&
+                  if ((chatType == ChatType.Twitch &&
                           settingsBox.get(
                                   SettingsKeys.SelectedTwitchUsername.name) ==
-                              null ||
-                      chatType == ChatType.YouTube &&
+                              null) ||
+                      (chatType == ChatType.YouTube &&
                           settingsBox.get(
                                   SettingsKeys.SelectedYoutubeUsername.name) ==
-                              null)
+                              null))
                     Positioned(
                       top: 48.0,
                       child: SizedBox(

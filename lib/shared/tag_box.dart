@@ -6,6 +6,7 @@ class TagBox extends StatelessWidget {
   final double borderRadius;
   final Icon? icon;
   final String? label;
+  final TextStyle? labelStyle;
   final Color? labelColor;
 
   final Widget? child;
@@ -13,20 +14,35 @@ class TagBox extends StatelessWidget {
   final double height;
   final double? width;
 
+  final bool expand;
+
   const TagBox({
     super.key,
     this.color,
     this.borderRadius = 6.0,
     this.icon,
     this.label,
+    this.labelStyle,
     this.labelColor,
     this.child,
     this.height = 24.0,
     this.width,
+    this.expand = true,
   }) : assert(icon != null || label != null || child != null);
 
   @override
   Widget build(BuildContext context) {
+    Widget text = Text(
+      this.label ?? '',
+      textAlign: TextAlign.center,
+      style: this.labelStyle ??
+          TextStyle(
+            color: this.labelColor ??
+                StylingHelper.surroundingAwareAccent(
+                    context: context, surroundingColor: this.color),
+          ),
+    );
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -47,17 +63,11 @@ class TagBox extends StatelessWidget {
                   this.icon!,
                   const SizedBox(width: 6.0),
                 ],
-                Expanded(
-                  child: Text(
-                    this.label ?? '',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: this.labelColor ??
-                          StylingHelper.surroundingAwareAccent(
-                              context: context, surroundingColor: this.color),
-                    ),
-                  ),
-                ),
+                this.expand
+                    ? Expanded(
+                        child: text,
+                      )
+                    : text,
               ],
             ),
       ),

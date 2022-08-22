@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/general/base/constrained_box.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 
 import '../../../../shared/general/social_block.dart';
@@ -12,7 +12,7 @@ import '../../../../stores/views/intro.dart';
 import 'intro_slide.dart';
 import 'slide_controls.dart';
 
-const double kIntroControlsBottomPadding = 24.0;
+const double kIntroControlsBottomPadding = 12.0;
 
 class IntroSlides extends StatefulWidget {
   final bool manually;
@@ -81,12 +81,12 @@ class _IntroSlidesState extends State<IntroSlides> {
           textSpans: [
             const TextSpan(
               text:
-                  'Visit the OBS WebSocket GitHub page to get the plugin to make this app work:',
+                  'Visit the OBS WebSocket GitHub page to get the plugin to make this app work:\n\n',
             ),
             WidgetSpan(
               child: SocialBlock(
-                topPadding: 12.0,
-                bottomPadding: 12.0,
+                topPadding: 0,
+                bottomPadding: 0,
                 socialInfos: [
                   SocialEntry(
                     link: 'https://github.com/obsproject/obs-websocket',
@@ -99,7 +99,7 @@ class _IntroSlidesState extends State<IntroSlides> {
             ),
             const TextSpan(
               text:
-                  'Click on the "Releases" link in the Downloads section as seen in the screenshot or ',
+                  '\n\nClick on the "Releases" link in the Downloads section as seen in the screenshot or ',
             ),
             WidgetSpan(
               child: SocialBlock(
@@ -166,19 +166,21 @@ class _IntroSlidesState extends State<IntroSlides> {
         child: Column(
           children: [
             Expanded(
-              child: Observer(builder: (context) {
-                return PageView.builder(
-                  controller: _pageController,
-                  itemCount: _pageChildren.length,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) => _pageChildren[index],
-                  onPageChanged: (page) =>
-                      GetIt.instance<IntroStore>().setCurrentPage(page),
-                );
-              }),
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _pageChildren.length,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) => Center(
+                  child: BaseConstrainedBox(
+                    child: _pageChildren[index],
+                  ),
+                ),
+                onPageChanged: (page) =>
+                    GetIt.instance<IntroStore>().setCurrentPage(page),
+              ),
             ),
             const BaseDivider(),
-            const SizedBox(height: 18.0),
+            const SizedBox(height: 12.0),
             Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).padding.bottom +
