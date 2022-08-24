@@ -33,9 +33,9 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
 
     _checkReachableStatus();
 
-    _disposers.add(reaction<bool>((_) => GetIt.instance<HomeStore>().doRefresh,
-        (doRefresh) {
-      if (doRefresh) _checkReachableStatus();
+    _disposers
+        .add(reaction<bool>((_) => GetIt.instance<HomeStore>().doRefresh, (_) {
+      _checkReachableStatus();
     }));
   }
 

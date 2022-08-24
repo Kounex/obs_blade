@@ -173,7 +173,7 @@ class _ConnectFormState extends State<ConnectForm> {
                           networkStore
                               .setOBSWebSocket(
                                 Connection(
-                                  (this.widget.manual
+                                  (this.widget.manual && landingStore.domainMode
                                           ? landingStore.protocolScheme
                                           : '') +
                                       _host.text,

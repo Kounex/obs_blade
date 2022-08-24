@@ -45,6 +45,57 @@ class _QRScanState extends State<QRScan> {
     super.dispose();
   }
 
+  void _handleScanData(Barcode scanData) {
+    if (!_scanLocked && _qrScanState == null || !_qrScanState!) {
+      bool result = scanData.code!.contains('obsws://');
+      if (result != _qrScanState) {
+        setState(() {
+          if (scanData.code != null) {
+            _qrScanState = result;
+            if (_qrScanState!) {
+              _scanLocked = true;
+              Future.delayed(const Duration(seconds: 1), () {
+                Navigator.of(context).pop(
+                  _connectionFromQR(scanData.code!),
+                );
+              });
+            } else {
+              Future.delayed(
+                const Duration(seconds: 3),
+                () {
+                  if (_qrScanState != null && !_qrScanState!) {
+                    setState(() => _qrScanState = null);
+                  }
+                },
+              );
+            }
+          } else {
+            _qrScanState = null;
+          }
+        });
+      }
+    }
+  }
+
+  Connection _connectionFromQR(String data) {
+    String host = data.split('//')[1].split(':')[0];
+
+    String portAndPW = data.split(':')[2];
+
+    int? port;
+    String? pw;
+
+    if (portAndPW.contains('/')) {
+      port = int.tryParse(data.split(':')[2].split('/')[0]);
+
+      pw = data.split('//')[1].split('/')[1];
+    } else {
+      port = int.tryParse(data.split(':')[2]);
+    }
+
+    return Connection(host, port, pw);
+  }
+
   @override
   Widget build(BuildContext context) {
     return TransculentCupertinoNavBarWrapper(
@@ -80,48 +131,7 @@ class _QRScanState extends State<QRScan> {
                     setState(() => _controller = controller);
                     _controller!.scannedDataStream.listen(
                       (scanData) {
-                        if (!_scanLocked && _qrScanState == null ||
-                            !_qrScanState!) {
-                          bool result = scanData.code!.contains('obsws://');
-                          if (result != _qrScanState) {
-                            setState(() {
-                              if (scanData.code != null) {
-                                _qrScanState = result;
-                                if (_qrScanState!) {
-                                  _scanLocked = true;
-                                  Future.delayed(const Duration(seconds: 1),
-                                      () {
-                                    Navigator.of(context).pop(
-                                      Connection(
-                                        scanData.code!
-                                            .split('//')[1]
-                                            .split(':')[0],
-                                        int.tryParse(scanData.code!
-                                            .split(':')[2]
-                                            .split('/')[0]),
-                                        scanData.code!
-                                            .split('//')[1]
-                                            .split('/')[1],
-                                      ),
-                                    );
-                                  });
-                                } else {
-                                  Future.delayed(
-                                    const Duration(seconds: 3),
-                                    () {
-                                      if (_qrScanState != null &&
-                                          !_qrScanState!) {
-                                        setState(() => _qrScanState = null);
-                                      }
-                                    },
-                                  );
-                                }
-                              } else {
-                                _qrScanState = null;
-                              }
-                            });
-                          }
-                        }
+                        _handleScanData(scanData);
                       },
                     );
                   },

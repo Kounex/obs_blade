@@ -57,13 +57,12 @@ abstract class _HomeStore with Store {
   @action
   void setDomainMode(bool domainMode) => this.domainMode = domainMode;
 
-  /// Basically just sets the [doRefresh] value to [true] for a short
-  /// period just so listeners can act on that - used to know when the
+  /// Basically just toggles the [doRefresh] value to ] just so listeners can
+  /// act on that (the actual value has no meaning) - used to know when the
   /// user initiated a refresh
   @action
   void initiateRefresh() {
-    this.doRefresh = true;
-    Future.microtask(() => this.doRefresh = false);
+    this.doRefresh = !this.doRefresh;
   }
 
   @action

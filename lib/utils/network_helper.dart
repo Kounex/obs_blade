@@ -253,6 +253,7 @@ class NetworkHelper {
         /// case very likely OBS WebSocket) and we will add it to the list
         socket = await Socket.connect(address, port ?? 4455, timeout: timeout);
         sendPort?.send(connectionScan);
+        socket.destroy();
         return connectionScan;
       } catch (e) {
         // An exception means timeout which is okay
