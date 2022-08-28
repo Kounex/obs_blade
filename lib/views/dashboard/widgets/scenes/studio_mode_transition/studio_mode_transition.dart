@@ -39,10 +39,18 @@ class StudioModeTransition extends StatelessWidget {
                     child: BaseButton(
                       text: 'Transition',
                       secondary: true,
-                      onPressed: () => NetworkHelper.makeRequest(
-                        GetIt.instance<NetworkStore>().activeSession!.socket,
-                        RequestType.TransitionToProgram,
-                      ),
+                      onPressed: () {
+                        dashboardStore.setActiveSceneName(
+                            dashboardStore.studioModePreviewSceneName!);
+                        NetworkHelper.makeRequest(
+                          GetIt.instance<NetworkStore>().activeSession!.socket,
+                          RequestType.SetCurrentProgramScene,
+                          {
+                            'sceneName':
+                                dashboardStore.studioModePreviewSceneName
+                          },
+                        );
+                      },
                     ),
                   ),
                 ),
