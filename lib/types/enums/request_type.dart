@@ -173,15 +173,10 @@ enum RequestType {
   /// No specified parameters
   ToggleRecord,
 
-  /// Pauses the record output.
+  /// Toggles pause on the record output.
   ///
   /// No specified parameters
-  PauseRecord,
-
-  /// Resumes the record output.
-  ///
-  /// No specified parameters
-  ResumeRecord,
+  ToggleRecordPause,
 
   /// Sets the duration of the current scene transition, if it is not fixed.
   ///

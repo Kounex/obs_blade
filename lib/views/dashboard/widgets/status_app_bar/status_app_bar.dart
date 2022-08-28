@@ -81,7 +81,7 @@ class StatusAppBar extends StatelessWidget {
                         key: Key(dashboardStore.isLive.toString()),
                         size: 10.0,
                         color: dashboardStore.isLive
-                            ? Colors.green
+                            ? CupertinoColors.activeGreen
                             : CupertinoColors.destructiveRed,
                         text: dashboardStore.isLive ? 'Live' : 'Not Live',
                         style: Theme.of(context).textTheme.caption,
@@ -93,8 +93,8 @@ class StatusAppBar extends StatelessWidget {
                         size: 10.0,
                         color: dashboardStore.isRecording
                             ? dashboardStore.isRecordingPaused
-                                ? Colors.orange
-                                : Colors.green
+                                ? CupertinoColors.activeOrange
+                                : CupertinoColors.activeGreen
                             : CupertinoColors.destructiveRed,
                         text: dashboardStore.isRecording
                             ? dashboardStore.isRecordingPaused

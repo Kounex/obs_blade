@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
@@ -48,7 +47,7 @@ class RecordingControls extends StatelessWidget {
                 ),
                 color: dashboardStore.isRecording
                     ? CupertinoColors.destructiveRed
-                    : Colors.green,
+                    : CupertinoColors.activeGreen,
                 text: dashboardStore.isRecording ? 'Stop' : 'Start',
               ),
             ),
@@ -59,9 +58,7 @@ class RecordingControls extends StatelessWidget {
                 onPressed: dashboardStore.isRecording
                     ? () => NetworkHelper.makeRequest(
                           GetIt.instance<NetworkStore>().activeSession!.socket,
-                          GetIt.instance<DashboardStore>().isRecordingPaused
-                              ? RequestType.ResumeRecord
-                              : RequestType.PauseRecord,
+                          RequestType.ToggleRecordPause,
                         )
                     : null,
                 icon: Icon(
@@ -69,7 +66,9 @@ class RecordingControls extends StatelessWidget {
                       ? CupertinoIcons.play
                       : CupertinoIcons.pause,
                 ),
-                color: Colors.orange,
+                color: dashboardStore.isRecordingPaused
+                    ? CupertinoColors.activeGreen
+                    : CupertinoColors.activeOrange,
                 text: dashboardStore.isRecordingPaused ? 'Resume' : 'Pause',
               ),
             ),

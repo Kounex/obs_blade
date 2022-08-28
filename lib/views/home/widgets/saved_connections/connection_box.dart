@@ -73,7 +73,7 @@ class ConnectionBox extends StatelessWidget {
                   color: this.connection.reachable == null
                       ? Colors.grey
                       : this.connection.reachable!
-                          ? Colors.green
+                          ? CupertinoColors.activeGreen
                           : CupertinoColors.destructiveRed,
                   text: this.connection.reachable == null
                       ? 'Checking...'

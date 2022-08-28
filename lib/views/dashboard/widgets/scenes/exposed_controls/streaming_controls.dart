@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import '../../../../../shared/general/base/button.dart';
 
+import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -45,7 +45,7 @@ class StreamingControls extends StatelessWidget {
             ),
             color: dashboardStore.isLive
                 ? CupertinoColors.destructiveRed
-                : Colors.green,
+                : CupertinoColors.activeGreen,
             text: dashboardStore.isLive ? 'Go Offline' : 'Go Live',
           ),
         ),

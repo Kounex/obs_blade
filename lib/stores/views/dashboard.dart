@@ -1090,7 +1090,7 @@ abstract class _DashboardStore with Store {
             _timecodeToMS(statsBatchResponse.streamStatus.outputTimecode);
 
         this.isRecordingPaused =
-            statsBatchResponse.recordStatus.ouputPaused ?? false;
+            statsBatchResponse.recordStatus.outputPaused ?? false;
 
         bool previouslyRecording = this.isRecording;
         this.isRecording = this.isRecordingPaused

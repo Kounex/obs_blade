@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
@@ -56,7 +55,7 @@ class ReplayBufferControls extends StatelessWidget {
                 ),
                 color: dashboardStore.isReplayBufferActive
                     ? CupertinoColors.destructiveRed
-                    : Colors.green,
+                    : CupertinoColors.activeGreen,
                 text: dashboardStore.isReplayBufferActive ? 'Stop' : 'Start',
               ),
             ),
@@ -70,7 +69,7 @@ class ReplayBufferControls extends StatelessWidget {
                         RequestType.SaveReplayBuffer)
                     : null,
                 icon: const Icon(CupertinoIcons.arrow_down_doc_fill),
-                color: Colors.orange,
+                color: CupertinoColors.activeOrange,
                 text: 'Save',
               ),
             ),

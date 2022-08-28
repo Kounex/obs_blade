@@ -86,9 +86,7 @@ class GeneralActions extends StatelessWidget {
                     onAction: dashboardStore.isRecording
                         ? () => NetworkHelper.makeRequest(
                               networkStore.activeSession!.socket,
-                              dashboardStore.isRecordingPaused
-                                  ? RequestType.ResumeRecord
-                                  : RequestType.PauseRecord,
+                              RequestType.ToggleRecordPause,
                             )
                         : null,
                   ),
