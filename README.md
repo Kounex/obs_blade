@@ -1,11 +1,3 @@
-# IMPORTANT
-
-OBS WebSocket updated its protocol to version `5.X` which is not compatible to the previous versions `4.9.1` and below. I will work on supporting the new protocol in the feature - meanwhile you can download and install the `4.9.1-compat` version of the plugin to use this app.
-
-Visit https://github.com/obsproject/obs-websocket/releases and scroll down to the list of assets and download&install one of those (depending on your operating system):
-
-<img src="https://assets.kounex.com/images/obs-blade/legacy-support.png" width="320">
-
 # OBS Blade
 
 ![alt text](https://assets.kounex.com/images/obs-blade/store_banner_3.png 'OBS Blade Store Banner')
@@ -18,13 +10,18 @@ Feel free to either create issues if something does not work or you want to add 
 
 ## Preparation
 
-In order to be able to connect to OBS with OBS Blade, you need to install the OBS WebSocket plugin:
+In order to be able to connect to OBS with OBS Blade, you need to have the OBS WebSocket plugin installed. Depending on the OBS Studio version you have installed, you either have to install it manually or can use it out of the box.
 
-https://github.com/obsproject/obs-websocket/
+If your OBS Studio version is:
+- 28.0 or higher: you are done 🎉🎉🎉 - since OBS Studio 28.0 the WebSocket plugin is part of OBS Studio out of the box and you can use the app immediately!
 
-Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version **5.X and above** for your operating system (found under 'Assets').
+- Lower than 28.0: you need to install the WebSocket manually (if possible, I recommend upgrading OBS Studio itself). Follow these steps to proceed manually:
+  - Visit https://github.com/obsproject/obs-websocket/
+  - Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version **5.X and above** for your operating system (found under 'Assets').
+  - Once this plugin is installed, make sure you restarted OBS Studio at least once
+  - Now you should be able to use this app!
 
-Once this plugin is installed and active (usually by restarting OBS right after) the device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address))
+The device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address)) or even enter a domain name!
 
 ## Features
 

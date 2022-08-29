@@ -15,6 +15,19 @@ import '../../../../../utils/network_helper.dart';
 class Transition extends StatelessWidget {
   const Transition({Key? key}) : super(key: key);
 
+  void _handleSubmit(TextEditingController controller) {
+    if (controller.text.isEmpty) {
+      controller.text = '0';
+      controller.selection =
+          TextSelection.fromPosition(const TextPosition(offset: 1));
+    }
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.SetCurrentSceneTransitionDuration,
+      {'transitionDuration': int.tryParse(controller.text) ?? 0},
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
@@ -69,18 +82,7 @@ class Transition extends StatelessWidget {
             width: 72.0,
             child: KeyboardNumberHeader(
               focusNode: focusNode,
-              onDone: () {
-                if (controller.text.isEmpty) {
-                  controller.text = '0';
-                  controller.selection =
-                      TextSelection.fromPosition(const TextPosition(offset: 1));
-                }
-                NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
-                  RequestType.SetCurrentSceneTransitionDuration,
-                  {'transitionDuration': int.tryParse(controller.text) ?? 0},
-                );
-              },
+              onDone: () => _handleSubmit(controller),
               child: CupertinoTextField(
                 focusNode: focusNode,
                 enabled: dashboardStore.currentTransition?.transitionDuration !=
@@ -95,6 +97,7 @@ class Transition extends StatelessWidget {
                 maxLength: 5,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 keyboardType: TextInputType.number,
+                onSubmitted: (_) => _handleSubmit(controller),
               ),
             ),
           ),

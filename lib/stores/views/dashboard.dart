@@ -821,7 +821,8 @@ abstract class _DashboardStore with Store {
         this.activeSceneName = getSceneListResponse.currentProgramSceneName;
         this.studioModePreviewSceneName =
             getSceneListResponse.currentPreviewSceneName;
-        this.scenes = ObservableList.of(getSceneListResponse.scenes);
+        this.scenes = ObservableList.of([...getSceneListResponse.scenes]
+          ..sort((a, b) => b.sceneIndex - a.sceneIndex));
 
         NetworkHelper.makeRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
