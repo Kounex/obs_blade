@@ -1,7 +1,7 @@
 name: obs_blade
 description: Control your OBS instance and manage your stream and recording - live!
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
-version: 3.0.2+2022082901
+version: 3.0.3+2022083101
 
 publish_to: 'none'
 
@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.3
+  cupertino_icons: ^1.0.5
 
   # CUSTOM
   # Language stuff
@@ -46,19 +46,19 @@ dependencies:
   uuid: ^3.0.6
 
   # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
-  url_launcher: ^6.0.12
+  url_launcher: ^6.1.5
 
   # Enable keeping the device active
   wakelock: ^0.6.2
 
   # Initiate native share sheet
-  share_plus: ^4.0.4
+  share_plus: ^4.0.10+1
 
   # Add custom images
   image_picker: ^0.8.4+2
 
   # Get various path related directories on host OS
-  path_provider: ^2.0.1
+  path_provider: ^2.0.11
 
   # Enable and manage in-app purchases
   in_app_purchase: ^3.0.7
@@ -73,7 +73,7 @@ dependencies:
   smooth_page_indicator: ^1.0.0+2
   keyboard_actions: ^4.0.1
   expandable: ^5.0.1
-  flutter_slidable: ^1.3.0
+  flutter_slidable: ^2.0.0
   confetti: ^0.7.0
 
   # Additional dependencies for packages

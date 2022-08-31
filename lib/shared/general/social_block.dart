@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../dialogs/info.dart';
-import '../../utils/modal_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../../utils/modal_handler.dart';
+import '../dialogs/info.dart';
 
 const double kSocialEntryDefaultIconSize = 28.0;
 
@@ -44,28 +45,26 @@ class SocialBlock extends StatelessWidget {
       BuildContext context, SocialEntry social) async {
     try {
       if (social.deepLink != null &&
-          await canLaunch(
+          await canLaunchUrl(Uri.parse(
             social.deepLink!,
-          )) {
-        if (!await launch(
-          social.deepLink!,
-          forceSafariVC: false,
-          universalLinksOnly: true,
+          ))) {
+        if (!await launchUrl(
+          Uri.parse(social.deepLink!),
+          mode: LaunchMode.externalApplication,
         )) {
-          await launch(
-            social.deepLink!,
+          await launchUrl(
+            Uri.parse(social.deepLink!),
           );
         }
-      } else if (await canLaunch(
-        social.link,
+      } else if (await canLaunchUrl(
+        Uri.parse(social.link),
       )) {
-        if (!await launch(
-          social.link,
-          forceSafariVC: false,
-          universalLinksOnly: true,
+        if (!await launchUrl(
+          Uri.parse(social.link),
+          mode: LaunchMode.externalApplication,
         )) {
-          await launch(
-            social.link,
+          await launchUrl(
+            Uri.parse(social.link),
           );
         }
       } else {
