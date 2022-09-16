@@ -3,6 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 
+import '../../../../../shared/general/base/dropdown.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../../stores/shared/network.dart';
@@ -27,65 +28,34 @@ class SceneCollectionControl extends StatelessWidget {
         SettingsKeys.ExposeSceneCollection.name,
         defaultValue: true,
       )
-          ? LayoutBuilder(builder: (context, constraints) {
-              return Align(
+          ? Observer(builder: (context) {
+              return BaseDropdown<String>(
+                value: dashboardStore.sceneCollections != null &&
+                        dashboardStore.sceneCollections!
+                            .contains(dashboardStore.currentSceneCollectionName)
+                    ? dashboardStore.currentSceneCollectionName
+                    : null,
+                items: dashboardStore.sceneCollections
+                        ?.map(
+                          (sceneCollection) => BaseDropdownItem(
+                            value: sceneCollection,
+                            text: sceneCollection,
+                          ),
+                        )
+                        .toList() ??
+                    [],
+                label: 'Scene Collection',
                 alignment: Alignment.centerRight,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Scene Collection',
-                      style: Theme.of(context).textTheme.caption,
-                    ),
-                    Observer(
-                      builder: (_) => DropdownButton<String>(
-                        value: dashboardStore.sceneCollections != null &&
-                                dashboardStore.sceneCollections!.contains(
-                                    dashboardStore.currentSceneCollectionName)
-                            ? dashboardStore.currentSceneCollectionName
-                            : null,
-                        isDense: true,
-                        onChanged: (sceneCollectionName) {
-                          if (sceneCollectionName !=
-                              dashboardStore.currentSceneCollectionName) {
-                            OverlayHandler.showStatusOverlay(
-                              showDuration: const Duration(seconds: 10),
-                              context: context,
-                              content: BaseProgressIndicator(
-                                text: 'Switching...',
-                              ),
-                            );
-                            NetworkHelper.makeRequest(
-                              GetIt.instance<NetworkStore>()
-                                  .activeSession!
-                                  .socket,
-                              RequestType.SetCurrentSceneCollection,
-                              {'sceneCollectionName': sceneCollectionName},
-                            );
-                          }
-                        },
-                        items: dashboardStore.sceneCollections
-                                ?.map(
-                                  (sceneCollectionName) => DropdownMenuItem(
-                                    value: sceneCollectionName,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minWidth: 72,
-                                        maxWidth: constraints.maxWidth - 24,
-                                      ),
-                                      child: Text(
-                                        sceneCollectionName,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList() ??
-                            [],
-                      ),
-                    ),
-                  ],
-                ),
+                onChanged: (sceneCollection) {
+                  if (sceneCollection !=
+                      dashboardStore.currentSceneCollectionName) {
+                    NetworkHelper.makeRequest(
+                      GetIt.instance<NetworkStore>().activeSession!.socket,
+                      RequestType.SetCurrentSceneCollection,
+                      {'sceneCollectionName': sceneCollection},
+                    );
+                  }
+                },
               );
             })
           : Container(),
