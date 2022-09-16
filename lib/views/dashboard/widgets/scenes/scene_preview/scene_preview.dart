@@ -74,7 +74,13 @@ class ScenePreview extends StatelessWidget {
                             Image.memory(
                               dashboardStore.scenePreviewImageBytes!,
                               // height: maxImageHeight,
-                              // cacheHeight: (maxImageHeight * 1.5).toInt(),
+
+                              /// Might reduce the memory used and therefore
+                              /// the performance of the frequently changing
+                              /// image - a mjltiplicator is used since
+                              /// using the original size would decrease the
+                              /// quality significantly
+                              cacheHeight: (maxImageHeight * 1.5).toInt(),
                               fit: BoxFit.contain,
                               gaplessPlayback: true,
                             ),

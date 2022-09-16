@@ -32,7 +32,7 @@ class OBSWidgetsMobile extends StatelessWidget {
                 ),
               ),
               const SizedBox(
-                height: 650.0,
+                height: 720.0,
                 child: TabBarView(
                   physics: NeverScrollableScrollPhysics(),
                   children: [

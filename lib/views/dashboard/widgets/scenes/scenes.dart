@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/profile_control.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/profile_control.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import 'exposed_controls/exposed_controls.dart';
 import 'scene_buttons/scene_buttons.dart';
-import 'scene_collection_control.dart';
+import 'exposed_controls/scene_collection_control.dart';
 import 'scene_content/scene_content.dart';
 import 'scene_content/scene_content_mobile.dart';
 import 'scene_preview/scene_preview.dart';
@@ -18,25 +18,10 @@ class Scenes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: [
-        const ExposedControls(),
-        const SizedBox(height: 24.0),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Row(
-            children: const [
-              Expanded(
-                child: ProfileControl(),
-              ),
-              SizedBox(width: 24.0),
-              Expanded(
-                child: SceneCollectionControl(),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24.0),
-        const Center(
+      children: const [
+        ExposedControls(),
+        SizedBox(height: 24.0),
+        Center(
           child: Padding(
             padding: EdgeInsets.only(
                 left: kSceneButtonSpace, right: kSceneButtonSpace),
@@ -50,7 +35,7 @@ class Scenes extends StatelessWidget {
         //       {'sourceName': 'was geht ab', 'playPause': false}),
         //   text: 'SOUND',
         // ),
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(
             top: 24.0,
             left: 12.0,
@@ -58,9 +43,9 @@ class Scenes extends StatelessWidget {
           ),
           child: StudioModeTransition(),
         ),
-        const SizedBox(height: 24.0),
-        const ScenePreview(),
-        const ResponsiveWidgetWrapper(
+        SizedBox(height: 24.0),
+        ScenePreview(),
+        ResponsiveWidgetWrapper(
           mobileWidget: SceneContentMobile(),
           tabletWidget: SceneContent(),
         ),

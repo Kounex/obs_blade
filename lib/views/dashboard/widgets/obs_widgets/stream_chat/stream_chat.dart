@@ -81,7 +81,7 @@ class _StreamChatState extends State<StreamChat>
                     Listener(
                       onPointerDown: (onPointerDown) =>
                           dashboardStore.setPointerOnChat(
-                              onPointerDown.localPosition.dy > 125.0 &&
+                              onPointerDown.localPosition.dy > 150.0 &&
                                   onPointerDown.localPosition.dy < 450.0),
                       onPointerUp: (_) =>
                           dashboardStore.setPointerOnChat(false),
