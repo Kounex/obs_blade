@@ -11,14 +11,11 @@ enum EventType {
   /// The state of the virtualcam output has changed.
   VirtualcamStateChanged,
 
-  /// Emitted every 2 seconds when stream is active
-  StreamStatus,
-
-  /// Triggered when switching to another scene collection or when renaming the current scene collection
-  SceneCollectionChanged,
-
-  /// Triggered when a scene collection is created, added, renamed, or removed
+  /// The scene collection list has changed.
   SceneCollectionListChanged,
+
+  /// The profile list has changed.
+  ProfileListChanged,
 
   /// Note: This event is not fired when the scenes are reordered
   ScenesChanged,
@@ -47,6 +44,9 @@ enum EventType {
   /// Note: If polling has been paused during CurrentSceneCollectionChanging,
   /// this is the que to restart polling.
   CurrentSceneCollectionChanged,
+
+  /// The current profile has changed.
+  CurrentProfileChanged,
 
   /// A scene item has been created.
   SceneItemCreated,

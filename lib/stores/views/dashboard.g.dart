@@ -252,6 +252,38 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$currentProfileNameAtom =
+      Atom(name: '_DashboardStore.currentProfileName', context: context);
+
+  @override
+  String? get currentProfileName {
+    _$currentProfileNameAtom.reportRead();
+    return super.currentProfileName;
+  }
+
+  @override
+  set currentProfileName(String? value) {
+    _$currentProfileNameAtom.reportWrite(value, super.currentProfileName, () {
+      super.currentProfileName = value;
+    });
+  }
+
+  late final _$profilesAtom =
+      Atom(name: '_DashboardStore.profiles', context: context);
+
+  @override
+  ObservableList<String>? get profiles {
+    _$profilesAtom.reportRead();
+    return super.profiles;
+  }
+
+  @override
+  set profiles(ObservableList<String>? value) {
+    _$profilesAtom.reportWrite(value, super.profiles, () {
+      super.profiles = value;
+    });
+  }
+
   late final _$activeSceneNameAtom =
       Atom(name: '_DashboardStore.activeSceneName', context: context);
 
@@ -669,6 +701,8 @@ latestRecordStats: ${latestRecordStats},
 latestOBSStats: ${latestOBSStats},
 currentSceneCollectionName: ${currentSceneCollectionName},
 sceneCollections: ${sceneCollections},
+currentProfileName: ${currentProfileName},
+profiles: ${profiles},
 activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 currentSceneItems: ${currentSceneItems},

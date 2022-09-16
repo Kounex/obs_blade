@@ -10,9 +10,12 @@ import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
+import 'package:obs_blade/types/classes/stream/events/current_profile_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/input_mute_state_changed.dart';
+import 'package:obs_blade/types/classes/stream/events/profile_list_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/replay_buffer_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
@@ -96,6 +99,10 @@ abstract class _DashboardStore with Store {
   String? currentSceneCollectionName;
   @observable
   ObservableList<String>? sceneCollections;
+  @observable
+  String? currentProfileName;
+  @observable
+  ObservableList<String>? profiles;
   @observable
   String? activeSceneName;
   @observable
@@ -244,6 +251,10 @@ abstract class _DashboardStore with Store {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneCollectionList,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetProfileList,
     );
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -659,6 +670,11 @@ abstract class _DashboardStore with Store {
         CurrentSceneCollectionChangedEvent currentSceneCollectionChangedEvent =
             CurrentSceneCollectionChangedEvent(event.jsonRAW);
 
+        NetworkHelper.makeRequest(
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestType.GetSceneCollectionList,
+        );
+
         OverlayHandler.closeAnyOverlay(immediately: false);
 
         this.currentSceneCollectionName =
@@ -675,10 +691,24 @@ abstract class _DashboardStore with Store {
             ObservableList.of(sceneCollectionListChangedEvent.sceneCollections);
 
         break;
+      case EventType.CurrentProfileChanged:
+        CurrentProfileChangedEvent currentProfileChangedEvent =
+            CurrentProfileChangedEvent(event.jsonRAW);
+
+        this.currentProfileName = currentProfileChangedEvent.profileName;
+        break;
+      case EventType.ProfileListChanged:
+        ProfileListChangedEvent profileListChangedEvent =
+            ProfileListChangedEvent(event.jsonRAW);
+
+        this.profiles = ObservableList.of(profileListChangedEvent.profiles);
+
+        break;
       case EventType.ScenesChanged:
         NetworkHelper.makeRequest(
-            GetIt.instance<NetworkStore>().activeSession!.socket,
-            RequestType.GetSceneList);
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestType.GetSceneList,
+        );
         break;
       case EventType.CurrentSceneTransitionChanged:
         NetworkHelper.makeRequest(
@@ -846,6 +876,15 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneCollectionName =
             getSceneCollectionListResponse.currentSceneCollectionName;
+        break;
+
+      case RequestType.GetProfileList:
+        GetProfileListResponse getProfileListResponse =
+            GetProfileListResponse(response.jsonRAW);
+
+        this.profiles = ObservableList.of(getProfileListResponse.profiles);
+
+        this.currentProfileName = getProfileListResponse.currentProfileName;
         break;
       case RequestType.GetSceneItemList:
         GetSceneItemListResponse getSceneItemListResponse =

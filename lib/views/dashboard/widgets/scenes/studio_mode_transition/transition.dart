@@ -58,7 +58,8 @@ class Transition extends StatelessWidget {
                         value: transition.transitionName,
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                              maxWidth: constraints.maxWidth - 24),
+                            maxWidth: constraints.maxWidth - 24,
+                          ),
                           child: Text(
                             transition.transitionName,
                             overflow: TextOverflow.ellipsis,

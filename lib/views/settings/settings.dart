@@ -45,8 +45,10 @@ class SettingsView extends StatelessWidget {
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual.',
                       trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(SettingsKeys.WakeLock.name,
-                            defaultValue: true),
+                        value: settingsBox.get(
+                          SettingsKeys.WakeLock.name,
+                          defaultValue: true,
+                        ),
                         onChanged: (wakeLock) {
                           settingsBox.put(SettingsKeys.WakeLock.name, wakeLock);
                           if (wakeLock) {
@@ -72,8 +74,9 @@ class SettingsView extends StatelessWidget {
                           'When active, OBS Blade will try to reconnect to a lost OBS connection indefinitely instead of aborting when reaching a fixed amount of attempts.',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.UnlimitedReconnects.name,
-                            defaultValue: false),
+                          SettingsKeys.UnlimitedReconnects.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (unlimitedReconnects) {
                           settingsBox.put(SettingsKeys.UnlimitedReconnects.name,
                               unlimitedReconnects);
@@ -91,13 +94,31 @@ class SettingsView extends StatelessWidget {
                   title: 'Dashboard',
                   blockEntries: [
                     BlockEntry(
+                      leading: CupertinoIcons.profile_circled,
+                      leadingSize: 30.0,
+                      title: 'Profiles',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                          SettingsKeys.ExposeProfile.name,
+                          defaultValue: true,
+                        ),
+                        onChanged: (exposeProfile) {
+                          settingsBox.put(
+                            SettingsKeys.ExposeProfile.name,
+                            exposeProfile,
+                          );
+                        },
+                      ),
+                    ),
+                    BlockEntry(
                       leading: CupertinoIcons.collections_solid,
                       leadingSize: 26.0,
                       title: 'Scene Collections',
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
-                            SettingsKeys.ExposeSceneCollection.name,
-                            defaultValue: true),
+                          SettingsKeys.ExposeSceneCollection.name,
+                          defaultValue: true,
+                        ),
                         onChanged: (exposeSceneCollection) {
                           settingsBox.put(
                             SettingsKeys.ExposeSceneCollection.name,

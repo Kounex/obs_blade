@@ -79,6 +79,10 @@ enum SettingsKeys {
   /// change it should be shown in the dashboard
   ExposeSceneCollection,
 
+  /// [bool]: If the profile dropdown to see the current profile and
+  /// change it should be shown in the dashboard
+  ExposeProfile,
+
   /// [bool]: If the replay buffer functions (start/stop/save) should be shown in the
   /// dashboard instead of in the menu action list of the app bar
   ExposeReplayBufferControls,
@@ -155,6 +159,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
         SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
         SettingsKeys.ExposeSceneCollection: 'expose-scene-collection',
+        SettingsKeys.ExposeProfile: 'expose-profile',
         SettingsKeys.ExposeReplayBufferControls:
             'expose-replay-buffer-collection',
         SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',

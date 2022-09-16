@@ -1,5 +1,6 @@
 import 'base.dart';
 
+/// Gets an array of all scene collections
 class GetSceneCollectionListResponse extends BaseResponse {
   GetSceneCollectionListResponse(super.json);
 

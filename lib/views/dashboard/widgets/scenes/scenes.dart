@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/profile_control.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import 'exposed_controls/exposed_controls.dart';
@@ -17,15 +18,25 @@ class Scenes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: const [
-        ExposedControls(),
-        SizedBox(height: 24.0),
+      children: [
+        const ExposedControls(),
+        const SizedBox(height: 24.0),
         Padding(
-          padding: EdgeInsets.only(right: 12.0),
-          child: SceneCollectionControl(),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Row(
+            children: const [
+              Expanded(
+                child: ProfileControl(),
+              ),
+              SizedBox(width: 24.0),
+              Expanded(
+                child: SceneCollectionControl(),
+              ),
+            ],
+          ),
         ),
-        SizedBox(height: 24.0),
-        Center(
+        const SizedBox(height: 24.0),
+        const Center(
           child: Padding(
             padding: EdgeInsets.only(
                 left: kSceneButtonSpace, right: kSceneButtonSpace),
@@ -39,7 +50,7 @@ class Scenes extends StatelessWidget {
         //       {'sourceName': 'was geht ab', 'playPause': false}),
         //   text: 'SOUND',
         // ),
-        Padding(
+        const Padding(
           padding: EdgeInsets.only(
             top: 24.0,
             left: 12.0,
@@ -47,9 +58,9 @@ class Scenes extends StatelessWidget {
           ),
           child: StudioModeTransition(),
         ),
-        SizedBox(height: 24.0),
-        ScenePreview(),
-        ResponsiveWidgetWrapper(
+        const SizedBox(height: 24.0),
+        const ScenePreview(),
+        const ResponsiveWidgetWrapper(
           mobileWidget: SceneContentMobile(),
           tabletWidget: SceneContent(),
         ),

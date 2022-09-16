@@ -84,6 +84,11 @@ enum RequestType {
   /// No specified parameters
   GetSceneCollectionList,
 
+  /// Gets an array of all profiles
+  ///
+  /// No specified parameters
+  GetProfileList,
+
   /// Get the status of the OBS replay buffer
   ///
   /// No specified parameters
@@ -208,6 +213,11 @@ enum RequestType {
   ///
   /// {'sceneCollectionName': String } - Name of the scene collection to switch to
   SetCurrentSceneCollection,
+
+  /// Switches to a profile.
+  ///
+  /// {'profileName': String } - Name of the profile to switch to
+  SetCurrentProfile,
 
   /// Toggles the state of the replay buffer output.
   ///
