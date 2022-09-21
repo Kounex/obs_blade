@@ -26,9 +26,9 @@ class StatusAppBar extends StatelessWidget {
       bottom: PreferredSize(
         child: Column(
           children: const [
-            Divider(),
+            Divider(height: 0),
             Padding(
-              padding: EdgeInsets.only(bottom: 8.0),
+              padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
               child: StreamRecTimers(),
             ),
           ],
