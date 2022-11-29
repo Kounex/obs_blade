@@ -42,7 +42,7 @@ import '../../types/classes/stream/events/virtual_cam_state_changed.dart';
 import '../../types/classes/stream/responses/base.dart';
 import '../../types/classes/stream/responses/get_current_scene_transition.dart';
 import '../../types/classes/stream/responses/get_group_scene_item_list.dart';
-import '../../types/classes/stream/responses/get_input_kind_list.dart';
+import '../../types/classes/stream/responses/get_hotkey_list.dart';
 import '../../types/classes/stream/responses/get_input_list.dart';
 import '../../types/classes/stream/responses/get_input_mute.dart';
 import '../../types/classes/stream/responses/get_input_volume.dart';
@@ -109,13 +109,12 @@ abstract class _DashboardStore with Store {
   ObservableList<Scene>? scenes;
 
   /// WebSocket API will return all top level scene items for
-  /// the current scene and elements of groups are inside the
-  /// separate [SceneItem.groupChildren]. To better maintain and work
-  /// with scene items, I flatten these so all scene items, even
-  /// the children of groups are on top level and a custom
-  /// [SceneItem.displayGroup] propertry toggles whether they
-  /// will be displayed or not, but this makes searching and
-  /// updating scene items easier
+  /// the current scene and elements of groups have to be requested
+  /// seperately. To better maintain and work with scene items, I
+  /// flatten these so all scene items, even the children of groups
+  /// are on top level and a custom [SceneItem.displayGroup] propertry
+  /// toggles whether they will be displayed or not, but this makes
+  /// searching and updating scene items easier
   @observable
   ObservableList<SceneItem>? currentSceneItems;
 
@@ -205,8 +204,6 @@ abstract class _DashboardStore with Store {
   @observable
   bool editSceneVisibility = false;
 
-  List<String>? _inputKinds;
-
   Timer? _checkConnectionTimer;
   Timer? _getStatsTimer;
 
@@ -230,11 +227,11 @@ abstract class _DashboardStore with Store {
   int _recordBytes = 0;
 
   /// The amount of render frames (in total and skipped) are part of the
-  /// general OBS stats and not bound to stream / record. To know wthe amount
+  /// general OBS stats and not bound to stream / record. To know the amount
   /// of these in our stream / recording session, we will persist the latest
   /// amount as received by the general OBS stats and subtract this for all
   /// new values so we have only the new amounts which came in while streaming
-  /// / recording
+  /// recording
   int _streamStartedRenderFramesTotal = 0;
   int _streamStartedRenderFramesSkipped = 0;
 
@@ -277,6 +274,11 @@ abstract class _DashboardStore with Store {
       RequestType.GetVirtualCamStatus,
     );
 
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetHotkeyList,
+    );
+
     _sceneCollectionRequests();
   }
 
@@ -299,15 +301,7 @@ abstract class _DashboardStore with Store {
     );
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetInputKindList,
-    );
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneTransitionList,
-    );
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetInputList,
     );
   }
 
@@ -1058,11 +1052,6 @@ abstract class _DashboardStore with Store {
         ]);
 
         break;
-      case RequestType.GetInputKindList:
-        GetInputKindListResponse getInputKindListResponse =
-            GetInputKindListResponse(response.jsonRAW);
-        _inputKinds = getInputKindListResponse.inputKinds;
-        break;
       case RequestType.GetInputVolume:
         GetInputVolumeResponse getInputVolumeResponse =
             GetInputVolumeResponse(response.jsonRAW);
@@ -1101,6 +1090,12 @@ abstract class _DashboardStore with Store {
             base64Decode(getSourceScreenshotResponse.imageData.split(',')[1]);
 
         if (this.shouldRequestPreviewImage) _requestPreviewImage();
+        break;
+      case RequestType.GetHotkeyList:
+        GetHotkeyListResponse getHotkeyListResponse =
+            GetHotkeyListResponse(response.jsonRAW);
+
+        // GeneralHelper.advLog(getHotkeyListResponse.hotkeys);
         break;
       default:
         break;
