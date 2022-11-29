@@ -68,6 +68,24 @@ This App is available in the iOS App Store and the Google Play Store:
 - [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
 - [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obsBlade)
 
+## How to build
+
+This app is build with the Flutter framework. To build it yourself, you need to setup Flutter in your environment: https://docs.flutter.dev/get-started/install. Make sure the platform you want to build for is listed and marked as ready (checkmark) when you run:
+
+```
+flutter doctor -v
+```
+
+If your platform is not listed or is not ready (exclamation mark or 'x'), check back with the install guide listed above and make sure you followed everthing correctly and / or check the output of `flutter doctor -v` what needs to be done.
+
+Once this has been done, open the project with your preferred IDE (VSCode and Android Studio will get all dependencies automatically, if you are using another IDE or this does not happen automatically, run `flutter pub get` in the root directory of the project to get the dependencies of this project). After that you should not have any errors left and you can run the app with:
+
+```
+flutter run
+```
+
+How to select the device you want the app to build on and how to run this project with your IDE instead of the CLI, refer to the install guide at the beginning.
+
 ## Support me!
 
 I love developing free, high quality applications accessible for everyone, no need for In-App purchases or Ads. No one wants that. It takes a lot of time creating and maintaining my work - if you like using them and want me to continue working on them please consider supporting me!
