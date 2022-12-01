@@ -22,11 +22,6 @@ enum RequestType {
   /// (Optional) {'inputKind': String } - Restrict the array to only inputs of the specified kind
   GetInputList,
 
-  /// Gets an array of all available input kinds in OBS.
-  ///
-  /// (Optional) {'unversioned': bool } - True == Return all kinds as unversioned, False == Return with version suffixes (if available)
-  GetInputKindList,
-
   /// Gets the current volume setting of an input.
   ///
   /// {'inputName': String } - Name of the input to get the volume of
@@ -120,6 +115,11 @@ enum RequestType {
   ///
   /// No specified parameters
   GetVirtualCamStatus,
+
+  /// Gets an array of all hotkey names in OBS
+  ///
+  /// No specified parameters
+  GetHotkeyList,
 
   /**
    * -----------------------------------------------------------------------

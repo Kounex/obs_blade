@@ -323,7 +323,7 @@ class NetworkHelper {
 
     channel.sink.add(
       json.encode(
-        NetworkHelper.requestObject(
+        _requestObject(
           customContent
               ? fields!
               : {
@@ -360,19 +360,19 @@ class NetworkHelper {
 
     channel.sink.add(
       json.encode(
-        NetworkHelper.requestBatchObject(requestUUID, batch),
+        _requestBatchObject(requestUUID, batch),
       ),
     );
   }
 
-  static Map<String, dynamic> requestObject(Map<String, dynamic> body,
+  static Map<String, dynamic> _requestObject(Map<String, dynamic> body,
           [WebSocketOpCode op = WebSocketOpCode.Request]) =>
       {
         'op': op.identifier,
         'd': body,
       };
 
-  static Map<String, dynamic> requestBatchObject(
+  static Map<String, dynamic> _requestBatchObject(
     String uuid,
     Iterable<RequestBatchObject> batch, [
     bool haltOnFailure = false,
@@ -387,7 +387,7 @@ class NetworkHelper {
           'executionType': executionType.identifier,
           'requests': batch
               .map(
-                (batchEntry) => NetworkHelper.requestObject(
+                (batchEntry) => _requestObject(
                   {
                     'requestType': batchEntry.type.name,
                     'requestId': batchEntry.uuid,
