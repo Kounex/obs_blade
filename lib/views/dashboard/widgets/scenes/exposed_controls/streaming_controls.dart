@@ -25,7 +25,7 @@ class StreamingControls extends StatelessWidget {
       ],
       builder: (context, settingsBox, child) => Observer(
         builder: (context) => SizedBox(
-          width: 268.0,
+          width: double.infinity,
           child: BaseButton(
             onPressed: () => RecordStreamService.triggerStreamStartStop(
               context,

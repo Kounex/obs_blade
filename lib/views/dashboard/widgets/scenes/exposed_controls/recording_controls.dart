@@ -11,6 +11,7 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/network_helper.dart';
 import '../../../services/record_stream.dart';
+import 'exposed_controls.dart';
 
 class RecordingControls extends StatelessWidget {
   const RecordingControls({Key? key}) : super(key: key);
@@ -29,8 +30,7 @@ class RecordingControls extends StatelessWidget {
         builder: (context) => Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 128.0,
+            Expanded(
               child: BaseButton(
                 onPressed: () => RecordStreamService.triggerRecordStartStop(
                   context,
@@ -51,9 +51,8 @@ class RecordingControls extends StatelessWidget {
                 text: dashboardStore.isRecording ? 'Stop' : 'Start',
               ),
             ),
-            const SizedBox(width: 12.0),
-            SizedBox(
-              width: 128.0,
+            const SizedBox(width: kExposedControlsSpace),
+            Expanded(
               child: BaseButton(
                 onPressed: dashboardStore.isRecording
                     ? () => NetworkHelper.makeRequest(

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/profile_control.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/profile_scene_collection/profile_scene_collection.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import 'exposed_controls/exposed_controls.dart';
 import 'scene_buttons/scene_buttons.dart';
-import 'exposed_controls/scene_collection_control.dart';
 import 'scene_content/scene_content.dart';
 import 'scene_content/scene_content_mobile.dart';
 import 'scene_preview/scene_preview.dart';
@@ -19,12 +18,15 @@ class Scenes extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: const [
+        ProfileSceneCollection(),
         ExposedControls(),
-        SizedBox(height: 24.0),
         Center(
           child: Padding(
             padding: EdgeInsets.only(
-                left: kSceneButtonSpace, right: kSceneButtonSpace),
+              top: 12.0,
+              left: kSceneButtonSpace,
+              right: kSceneButtonSpace,
+            ),
             child: SceneButtons(),
           ),
         ),
