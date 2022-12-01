@@ -185,6 +185,25 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     BlockEntry(
+                      leading: CupertinoIcons.square_grid_3x2_fill,
+                      leadingSize: 28.0,
+                      title: 'Hotkeys',
+                      help:
+                          'If active, the hotkey button will be added to the dashboard which enables you to list all available OBS hotkeys and trigger them. Enables more precise interaction with OBS, usually only needed for power users.',
+                      trailing: ThemedCupertinoSwitch(
+                        value: settingsBox.get(
+                          SettingsKeys.ExposeHotkeys.name,
+                          defaultValue: false,
+                        ),
+                        onChanged: (exposeHotkeys) {
+                          settingsBox.put(
+                            SettingsKeys.ExposeHotkeys.name,
+                            exposeHotkeys,
+                          );
+                        },
+                      ),
+                    ),
+                    BlockEntry(
                       leading: CupertinoIcons.film,
                       leadingSize: 26.0,
                       title: 'Studio Mode',

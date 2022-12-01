@@ -77,6 +77,7 @@ class ExposedControls extends StatelessWidget {
 
         return exposedControls.isNotEmpty
             ? BaseCard(
+                bottomPadding: 0.0,
                 child: Column(
                   children: exposedControls,
                 ),

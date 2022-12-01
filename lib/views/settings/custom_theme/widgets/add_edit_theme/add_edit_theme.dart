@@ -3,9 +3,6 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import '../../../../../utils/styling_helper.dart';
-import 'custom_logo_row.dart';
-import 'theme_loader.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
@@ -16,6 +13,9 @@ import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../types/extensions/color.dart';
 import '../../../../../utils/modal_handler.dart';
+import '../../../../../utils/styling_helper.dart';
+import 'custom_logo_row.dart';
+import 'theme_loader.dart';
 import 'theme_row.dart';
 
 class AddEditTheme extends StatefulWidget {
@@ -86,6 +86,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
             child: Column(
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       this.widget.customTheme != null
@@ -93,69 +94,75 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           : 'Add Theme',
                       style: Theme.of(context).textTheme.headline5,
                     ),
-                    ThemedCupertinoButton(
-                      padding: const EdgeInsets.only(left: 24.0),
-                      text: 'Save',
-                      onPressed: () {
-                        _name.submit();
-                        if (_name.isValid) {
-                          if (this.widget.customTheme != null) {
-                            CustomTheme.copyFrom(
-                                _customTheme, this.widget.customTheme!);
-                            this.widget.customTheme!.name = _name.text.trim();
-                            this.widget.customTheme!.description =
-                                _description.text.trim();
-                            this.widget.customTheme!.dateUpdatedMS =
-                                DateTime.now().millisecondsSinceEpoch;
-                            this.widget.customTheme!.save();
-                          } else {
-                            _customTheme.name = _name.text.trim();
-                            _customTheme.description = _description.text.trim();
-                            Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-                                .add(_customTheme);
-                          }
-                          Navigator.of(context).pop();
-                        }
-                      },
-                    ),
-                    ThemedCupertinoButton(
-                        padding: const EdgeInsets.only(left: 24.0),
-                        isDestructive: this.widget.customTheme != null,
-                        text: 'Delete',
-                        onPressed: this.widget.customTheme != null
-                            ? () => ModalHandler.showBaseDialog(
-                                  context: context,
-                                  dialogWidget: ConfirmationDialog(
-                                    title: 'Delete Theme',
-                                    isYesDestructive: true,
-                                    body:
-                                        'Are you sure you want to delete this custom theme? This action can\'t be undone!',
-                                    onOk: (_) {
-                                      Box settingsBox =
-                                          Hive.box(HiveKeys.Settings.name);
-                                      if (settingsBox.get(
+                    Row(
+                      children: [
+                        ThemedCupertinoButton(
+                          padding: const EdgeInsets.only(left: 24.0),
+                          text: 'Save',
+                          onPressed: () {
+                            _name.submit();
+                            if (_name.isValid) {
+                              if (this.widget.customTheme != null) {
+                                CustomTheme.copyFrom(
+                                    _customTheme, this.widget.customTheme!);
+                                this.widget.customTheme!.name =
+                                    _name.text.trim();
+                                this.widget.customTheme!.description =
+                                    _description.text.trim();
+                                this.widget.customTheme!.dateUpdatedMS =
+                                    DateTime.now().millisecondsSinceEpoch;
+                                this.widget.customTheme!.save();
+                              } else {
+                                _customTheme.name = _name.text.trim();
+                                _customTheme.description =
+                                    _description.text.trim();
+                                Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
+                                    .add(_customTheme);
+                              }
+                              Navigator.of(context).pop();
+                            }
+                          },
+                        ),
+                        ThemedCupertinoButton(
+                          padding: const EdgeInsets.only(left: 24.0),
+                          isDestructive: this.widget.customTheme != null,
+                          text: 'Delete',
+                          onPressed: this.widget.customTheme != null
+                              ? () => ModalHandler.showBaseDialog(
+                                    context: context,
+                                    dialogWidget: ConfirmationDialog(
+                                      title: 'Delete Theme',
+                                      isYesDestructive: true,
+                                      body:
+                                          'Are you sure you want to delete this custom theme? This action can\'t be undone!',
+                                      onOk: (_) {
+                                        Box settingsBox =
+                                            Hive.box(HiveKeys.Settings.name);
+                                        if (settingsBox.get(
+                                                SettingsKeys
+                                                    .ActiveCustomThemeUUID.name,
+                                                defaultValue: '') ==
+                                            this.widget.customTheme!.uuid) {
+                                          settingsBox.put(
                                               SettingsKeys
                                                   .ActiveCustomThemeUUID.name,
-                                              defaultValue: '') ==
-                                          this.widget.customTheme!.uuid) {
-                                        settingsBox.put(
-                                            SettingsKeys
-                                                .ActiveCustomThemeUUID.name,
-                                            '');
-                                      }
-                                      this.widget.customTheme!.delete();
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                )
-                            : null),
+                                              '');
+                                        }
+                                        this.widget.customTheme!.delete();
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  )
+                              : null,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 const BaseDivider(),
                 Expanded(
                   child: SingleChildScrollView(
                     controller: this.widget.scrollController,
-                    physics: const ClampingScrollPhysics(),
                     child: Padding(
                       padding: const EdgeInsets.only(top: 24.0),
                       child: Column(

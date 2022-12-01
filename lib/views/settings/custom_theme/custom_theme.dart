@@ -124,9 +124,9 @@ class _CustomThemeViewState extends State<CustomThemeView> {
               BaseCard(
                 title: 'Your Themes',
                 trailingTitleWidget: ThemedCupertinoButton(
+                  text: 'Add Theme',
                   padding: const EdgeInsets.all(0),
                   onPressed: () => _openAddTheme(context),
-                  text: 'Add Theme',
                 ),
                 bottomPadding: 12.0,
                 paddingChild: const EdgeInsets.all(0),

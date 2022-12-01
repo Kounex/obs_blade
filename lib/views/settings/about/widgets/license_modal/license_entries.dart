@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'license_detail.dart';
 
 import '../../../../../shared/overlay/base_progress_indicator.dart';
+import 'license_detail.dart';
 
 /// This is a collection of licenses and the packages to which they apply.
 /// [packageLicenseBindings] records the m+:n+ relationship between the license
@@ -90,7 +90,6 @@ class _LicenseEntriesState extends State<LicenseEntries> {
             child: ListView.builder(
               shrinkWrap: true,
               controller: this.widget.scrollController,
-              physics: const ClampingScrollPhysics(),
               padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).padding.bottom),
               itemCount: snapshot.data!.packages.length,

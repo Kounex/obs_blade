@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets_mobile.dart';
 import 'package:wakelock/wakelock.dart';
@@ -117,7 +118,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ThemedCupertinoScaffold(
       body: Observer(builder: (_) {
         return Stack(
           alignment: Alignment.topCenter,

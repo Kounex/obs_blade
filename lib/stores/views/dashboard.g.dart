@@ -316,6 +316,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$hotkeysAtom =
+      Atom(name: '_DashboardStore.hotkeys', context: context);
+
+  @override
+  ObservableList<String>? get hotkeys {
+    _$hotkeysAtom.reportRead();
+    return super.hotkeys;
+  }
+
+  @override
+  set hotkeys(ObservableList<String>? value) {
+    _$hotkeysAtom.reportWrite(value, super.hotkeys, () {
+      super.hotkeys = value;
+    });
+  }
+
   late final _$currentSceneItemsAtom =
       Atom(name: '_DashboardStore.currentSceneItems', context: context);
 
@@ -705,6 +721,7 @@ currentProfileName: ${currentProfileName},
 profiles: ${profiles},
 activeSceneName: ${activeSceneName},
 scenes: ${scenes},
+hotkeys: ${hotkeys},
 currentSceneItems: ${currentSceneItems},
 allInputs: ${allInputs},
 globalInputNames: ${globalInputNames},

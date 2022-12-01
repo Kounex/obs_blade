@@ -87,6 +87,10 @@ enum SettingsKeys {
   /// dashboard instead of in the menu action list of the app bar
   ExposeReplayBufferControls,
 
+  /// [bool]: If the hotkeys button (and feature) should be shown in the dashboard
+  /// so users can list available OBS hotkeys and trigger them
+  ExposeHotkeys,
+
   /// [bool]: If true OBS Blade will try to reconnect to an OBS instance on connection
   /// lost indefinetily instead of an amount of retries before aborting
   UnlimitedReconnects,
@@ -162,6 +166,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeProfile: 'expose-profile',
         SettingsKeys.ExposeReplayBufferControls:
             'expose-replay-buffer-collection',
+        SettingsKeys.ExposeHotkeys: 'expose-hotkeys',
         SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:

@@ -51,7 +51,7 @@ class LicenseModal extends StatelessWidget {
           const BaseDivider(),
           Expanded(
             child: LicenseEntries(
-              scrollController: scrollController,
+              scrollController: this.scrollController,
             ),
           ),
         ],

@@ -27,34 +27,59 @@ class StudioModeTransition extends StatelessWidget {
         dashboardStore.studioMode;
         return Column(
           children: [
-            if (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
-                    defaultValue: false) &&
-                dashboardStore.studioMode)
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: SizedBox(
-                    width: 128.0,
-                    child: BaseButton(
-                      text: 'Transition',
-                      secondary: true,
-                      onPressed: () {
-                        dashboardStore.setActiveSceneName(
-                            dashboardStore.studioModePreviewSceneName!);
-                        NetworkHelper.makeRequest(
-                          GetIt.instance<NetworkStore>().activeSession!.socket,
-                          RequestType.SetCurrentProgramScene,
-                          {
-                            'sceneName':
-                                dashboardStore.studioModePreviewSceneName
-                          },
-                        );
-                      },
-                    ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: animation,
+                  curve: const Interval(
+                    0.4,
+                    1.0,
+                    curve: Curves.easeInQuad,
                   ),
+                  reverseCurve: Curves.easeOutQuad,
+                ),
+                child: SizeTransition(
+                  sizeFactor: CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInQuad,
+                    reverseCurve: Curves.easeOutQuad,
+                  ),
+                  child: child,
                 ),
               ),
+              child: (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
+                          defaultValue: false) &&
+                      dashboardStore.studioMode)
+                  ? Align(
+                      alignment: Alignment.center,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 24.0),
+                        child: SizedBox(
+                          width: 128.0,
+                          child: BaseButton(
+                            text: 'Transition',
+                            secondary: true,
+                            onPressed: () {
+                              dashboardStore.setActiveSceneName(
+                                  dashboardStore.studioModePreviewSceneName!);
+                              NetworkHelper.makeRequest(
+                                GetIt.instance<NetworkStore>()
+                                    .activeSession!
+                                    .socket,
+                                RequestType.SetCurrentProgramScene,
+                                {
+                                  'sceneName':
+                                      dashboardStore.studioModePreviewSceneName
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox(),
+            ),
             Align(
               alignment: Alignment.centerRight,
               child: Row(
