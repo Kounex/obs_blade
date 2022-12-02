@@ -10,6 +10,7 @@ class OBSWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: const [
         Flexible(
@@ -18,7 +19,7 @@ class OBSWidgets extends StatelessWidget {
             rightPadding: 12.0,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
-              height: 650.0,
+              height: 750.0,
               child: StreamChat(
                 usernameRowPadding: true,
               ),

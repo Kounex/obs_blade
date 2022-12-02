@@ -100,7 +100,7 @@ class SettingsView extends StatelessWidget {
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeProfile.name,
-                          defaultValue: true,
+                          defaultValue: false,
                         ),
                         onChanged: (exposeProfile) {
                           settingsBox.put(
@@ -117,7 +117,7 @@ class SettingsView extends StatelessWidget {
                       trailing: ThemedCupertinoSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeSceneCollection.name,
-                          defaultValue: true,
+                          defaultValue: false,
                         ),
                         onChanged: (exposeSceneCollection) {
                           settingsBox.put(

@@ -80,7 +80,7 @@ class ScenePreview extends StatelessWidget {
                               /// image - a multiplicator is used since
                               /// using the original size would decrease the
                               /// quality significantly
-                              cacheHeight: (maxImageHeight * 1.5).toInt(),
+                              // cacheHeight: (maxImageHeight * 1.5).toInt(),
                               fit: BoxFit.contain,
                               gaplessPlayback: true,
                             ),

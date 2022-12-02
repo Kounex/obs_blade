@@ -20,8 +20,10 @@ class ProfileSceneCollection extends StatelessWidget {
       ],
       builder: (context, settingsBox, child) => settingsBox
                   .get(SettingsKeys.ExposeProfile.name, defaultValue: false) ||
-              settingsBox.get(SettingsKeys.ExposeSceneCollection.name,
-                  defaultValue: false)
+              settingsBox.get(
+                SettingsKeys.ExposeSceneCollection.name,
+                defaultValue: false,
+              )
           ? BaseCard(
               bottomPadding: 0,
               child: Row(
@@ -35,8 +37,9 @@ class ProfileSceneCollection extends StatelessWidget {
                   ],
                   Expanded(
                     child: settingsBox.get(
-                            SettingsKeys.ExposeSceneCollection.name,
-                            defaultValue: false)
+                      SettingsKeys.ExposeSceneCollection.name,
+                      defaultValue: false,
+                    )
                         ? const SceneCollectionControl()
                         : const SizedBox(),
                   ),

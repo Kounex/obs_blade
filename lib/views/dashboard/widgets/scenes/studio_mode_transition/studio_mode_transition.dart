@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/card.dart';
 
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/checkbox.dart';
@@ -80,8 +81,13 @@ class StudioModeTransition extends StatelessWidget {
                     )
                   : const SizedBox(),
             ),
-            Align(
-              alignment: Alignment.centerRight,
+            BaseCard(
+              backgroundColor: Colors.transparent,
+              topPadding: 0,
+              bottomPadding: 0,
+              rightPadding: 12,
+              leftPadding: 4,
+              paddingChild: const EdgeInsets.all(0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
