@@ -42,7 +42,9 @@ class App extends StatelessWidget {
             customTheme.uuid ==
             settingsBox.get(SettingsKeys.ActiveCustomThemeUUID.name,
                 defaultValue: ''));
-      } catch (e) {}
+      } catch (e) {
+        // No cusotm theme
+      }
       if (activeCustomTheme != null) {
         brightness = activeCustomTheme.useLightBrightness
             ? Brightness.light
@@ -301,21 +303,6 @@ class BorderRoundSliderThumbShape extends SliderComponentShape {
     final Color color = colorTween.evaluate(enableAnimation)!;
     final Color borderColor = borderColorTween.evaluate(enableAnimation)!;
     final double radius = radiusTween.evaluate(enableAnimation);
-
-    final Tween<double> elevationTween = Tween<double>(
-      begin: elevation,
-      end: pressedElevation,
-    );
-
-    // final double evaluatedElevation =
-    //     elevationTween.evaluate(activationAnimation);
-    // final Path path = Path()
-    //   ..addArc(
-    //       Rect.fromCenter(
-    //           center: center, width: 2 * radius, height: 2 * radius),
-    //       0,
-    //       pi * 2);
-    // canvas.drawShadow(path, Colors.black, evaluatedElevation, true);
 
     canvas.drawCircle(
       center,

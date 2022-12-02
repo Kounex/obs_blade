@@ -140,6 +140,10 @@ enum SettingsKeys {
   /// [bool]: If the user attempts to leave a tip without having purchased Blacksmith
   /// and doesn't want to see this warning again
   DontShowConsiderBlacksmithBeforeTip,
+
+  /// [bool]: If the user saw the message regarding the technical preview state of
+  /// the hotkey feature and doesn't want to see this warning again
+  DontShowHotkeysTechnicalPreviewWarning
 }
 
 extension SettingsKeysFunctions on SettingsKeys {
@@ -183,5 +187,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.DontShowRecordStopMessage: 'dont-show-record-stop-message',
         SettingsKeys.DontShowConsiderBlacksmithBeforeTip:
             'dont-show-consider-blacksmith-before-tip',
+        SettingsKeys.DontShowHotkeysTechnicalPreviewWarning:
+            'dont-show-hotkeys-technical-preview-warning',
       }[this]!;
 }

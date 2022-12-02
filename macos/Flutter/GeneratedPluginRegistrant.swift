@@ -5,10 +5,10 @@
 import FlutterMacOS
 import Foundation
 
-import connectivity_plus_macos
+import connectivity_plus
 import package_info
 import path_provider_macos
-import share_plus_macos
+import share_plus
 import url_launcher_macos
 import wakelock_macos
 

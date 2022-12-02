@@ -233,4 +233,9 @@ enum RequestType {
   ///
   /// No specified parameters
   ToggleVirtualCam,
+
+  /// Triggers a hotkey using its name. See GetHotkeyList
+  ///
+  /// {'hotkeyName': String } - Name of the hotkey to trigger
+  TriggerHotkeyByName,
 }

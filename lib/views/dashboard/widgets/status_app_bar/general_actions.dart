@@ -49,8 +49,8 @@ class GeneralActions extends StatelessWidget {
                 if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
                     defaultValue: false))
                   AppBarCupertinoActionEntry(
-                    title: (dashboardStore.isLive ? 'Stop' : 'Start') +
-                        ' Streaming',
+                    title:
+                        '${dashboardStore.isLive ? 'Stop' : 'Start'} Streaming',
                     onAction: () => RecordStreamService.triggerStreamStartStop(
                       context,
                       dashboardStore.isLive,
@@ -65,8 +65,8 @@ class GeneralActions extends StatelessWidget {
                 if (!settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
                     defaultValue: false)) ...[
                   AppBarCupertinoActionEntry(
-                    title: (dashboardStore.isRecording ? 'Stop' : 'Start') +
-                        ' Recording',
+                    title:
+                        '${dashboardStore.isRecording ? 'Stop' : 'Start'} Recording',
                     onAction: () => RecordStreamService.triggerRecordStartStop(
                       context,
                       dashboardStore.isRecording,
@@ -79,10 +79,8 @@ class GeneralActions extends StatelessWidget {
                     ),
                   ),
                   AppBarCupertinoActionEntry(
-                    title: (dashboardStore.isRecordingPaused
-                            ? 'Resume'
-                            : 'Pause') +
-                        ' Recording',
+                    title:
+                        '${dashboardStore.isRecordingPaused ? 'Resume' : 'Pause'} Recording',
                     onAction: dashboardStore.isRecording
                         ? () => NetworkHelper.makeRequest(
                               networkStore.activeSession!.socket,
@@ -95,10 +93,8 @@ class GeneralActions extends StatelessWidget {
                     SettingsKeys.ExposeReplayBufferControls.name,
                     defaultValue: false)) ...[
                   AppBarCupertinoActionEntry(
-                    title: (dashboardStore.isReplayBufferActive
-                            ? 'Stop'
-                            : 'Start') +
-                        ' Replay Buffer',
+                    title:
+                        '${dashboardStore.isReplayBufferActive ? 'Stop' : 'Start'} Replay Buffer',
                     onAction: () {
                       if (dashboardStore.isReplayBufferActive) {
                         OverlayHandler.showStatusOverlay(
@@ -127,8 +123,7 @@ class GeneralActions extends StatelessWidget {
                 ],
                 AppBarCupertinoActionEntry(
                   title:
-                      (dashboardStore.isVirtualCamActive ? 'Stop' : 'Start') +
-                          ' Virtual Camera',
+                      '${dashboardStore.isVirtualCamActive ? 'Stop' : 'Start'} Virtual Camera',
                   onAction: () {
                     NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
@@ -138,8 +133,7 @@ class GeneralActions extends StatelessWidget {
                 ),
                 AppBarCupertinoActionEntry(
                   title:
-                      (dashboardStore.editSceneVisibility ? 'Finish' : 'Edit') +
-                          ' Scene Visibility',
+                      '${dashboardStore.editSceneVisibility ? 'Finish' : 'Edit'} Scene Visibility',
                   onAction: dashboardStore.editSceneVisibility
                       ? () {
                           dashboardStore.setEditSceneVisibility(false);
@@ -182,7 +176,7 @@ class GeneralActions extends StatelessWidget {
                             },
                 ),
                 AppBarCupertinoActionEntry(
-                  title: (newConnection ? 'Save' : 'Edit') + ' Connection',
+                  title: '${newConnection ? 'Save' : 'Edit'} Connection',
                   onAction: () {
                     ModalHandler.showBaseDialog(
                       context: context,

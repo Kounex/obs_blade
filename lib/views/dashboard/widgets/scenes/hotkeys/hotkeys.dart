@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/stores/shared/network.dart';
@@ -9,6 +10,7 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/hotkeys/hotkey_list.dart';
 
+import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
@@ -31,17 +33,44 @@ class Hotkeys extends StatelessWidget {
                 width: double.infinity,
                 child: BaseButton(
                   onPressed: () {
-                    GetIt.instance<DashboardStore>().hotkeys = null;
-                    NetworkHelper.makeRequest(
-                      GetIt.instance<NetworkStore>().activeSession!.socket,
-                      RequestType.GetHotkeyList,
-                    );
-                    ModalHandler.showBaseCupertinoBottomSheet(
-                      context: context,
-                      modalWidgetBuilder: (context, controller) => HotkeyList(
-                        controller: controller,
-                      ),
-                    );
+                    void onHotkeys() {
+                      GetIt.instance<DashboardStore>().hotkeys = null;
+                      NetworkHelper.makeRequest(
+                        GetIt.instance<NetworkStore>().activeSession!.socket,
+                        RequestType.GetHotkeyList,
+                      );
+                      ModalHandler.showBaseCupertinoBottomSheet(
+                        context: context,
+                        modalWidgetBuilder: (context, controller) => HotkeyList(
+                          controller: controller,
+                        ),
+                      );
+                    }
+
+                    !Hive.box<dynamic>(HiveKeys.Settings.name).get(
+                            SettingsKeys
+                                .DontShowHotkeysTechnicalPreviewWarning.name,
+                            defaultValue: false)
+                        ? ModalHandler.showBaseDialog(
+                            context: context,
+                            dialogWidget: ConfirmationDialog(
+                              enableDontShowAgainOption: true,
+                              title: 'Technical Preview',
+                              body:
+                                  'The hotkey capabilities of the WebSocket API is currently very limited and is therefore marked as tehcnical preview here. Since it might still be useful for some, even in this condition, I added the basic functionality. It is expected to not work properly. I will update this feature once it is more mature!',
+                              noText: 'Cancel',
+                              okText: 'Ok',
+                              onOk: (checked) {
+                                Hive.box<dynamic>(HiveKeys.Settings.name).put(
+                                    SettingsKeys
+                                        .DontShowHotkeysTechnicalPreviewWarning
+                                        .name,
+                                    checked);
+                                onHotkeys();
+                              },
+                            ),
+                          )
+                        : onHotkeys();
                   },
                   icon: const Icon(
                     CupertinoIcons.rectangle_grid_3x2_fill,
