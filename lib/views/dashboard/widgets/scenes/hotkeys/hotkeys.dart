@@ -57,7 +57,7 @@ class Hotkeys extends StatelessWidget {
                               enableDontShowAgainOption: true,
                               title: 'Technical Preview',
                               body:
-                                  'The hotkey capabilities of the WebSocket API is currently very limited and is therefore marked as tehcnical preview here. Since it might still be useful for some, even in this condition, I added the basic functionality. It is expected to not work properly. I will update this feature once it is more mature!',
+                                  'The hotkey capabilities of the WebSocket API are currently very limited and therefore this feature is currently in technical preview. Since it might still be useful for some, even in this condition, I added the basic functionality. It is expected to not work properly. I will update this feature once it is more mature!',
                               noText: 'Cancel',
                               okText: 'Ok',
                               onOk: (checked) {
