@@ -50,7 +50,10 @@ class StatsEntry extends StatelessWidget {
                           style: Theme.of(context).textTheme.button!.copyWith(
                                 fontSize: 18.0,
                                 color: this.pastStatsData.name == null
-                                    ? Theme.of(context).textTheme.caption!.color
+                                    ? Theme.of(context)
+                                        .textTheme
+                                        .bodySmall!
+                                        .color
                                     : null,
                               ),
                           maxLines: 2,
@@ -83,7 +86,7 @@ class StatsEntry extends StatelessWidget {
                                     : 'Unknown',
                             labelStyle: Theme.of(context)
                                 .textTheme
-                                .caption!
+                                .bodySmall!
                                 .copyWith(color: Colors.white),
                           ),
                         ),

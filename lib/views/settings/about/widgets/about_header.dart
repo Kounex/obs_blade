@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../shared/general/base/divider.dart';
-import 'package:package_info/package_info.dart';
 
 class AboutHeader extends StatelessWidget {
   const AboutHeader({Key? key}) : super(key: key);
@@ -24,7 +24,7 @@ class AboutHeader extends StatelessWidget {
                 'OBS Blade',
                 style: Theme.of(context)
                     .textTheme
-                    .headline4!
+                    .headlineMedium!
                     .copyWith(fontWeight: FontWeight.w100),
               ),
             ),
@@ -37,7 +37,7 @@ class AboutHeader extends StatelessWidget {
               'by Kounex (René Schramowski)',
               style: Theme.of(context)
                   .textTheme
-                  .caption!
+                  .bodySmall!
                   .copyWith(fontWeight: FontWeight.w100),
             ),
             FutureBuilder<PackageInfo>(
@@ -49,7 +49,7 @@ class AboutHeader extends StatelessWidget {
                       'Version ',
                       style: Theme.of(context)
                           .textTheme
-                          .caption!
+                          .bodySmall!
                           .copyWith(fontWeight: FontWeight.w100),
                     ),
                     if (snapshot.hasData)
@@ -57,7 +57,7 @@ class AboutHeader extends StatelessWidget {
                         '${snapshot.data!.version} (${snapshot.data!.buildNumber})',
                         style: Theme.of(context)
                             .textTheme
-                            .caption!
+                            .bodySmall!
                             .copyWith(fontWeight: FontWeight.w100),
                       ),
                   ],

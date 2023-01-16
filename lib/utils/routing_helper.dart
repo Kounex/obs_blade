@@ -94,9 +94,9 @@ extension AppRoutingKeysFunctions on AppRoutingKeys {
 /// path for an enum
 extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
   String get route => {
-        HomeTabRoutingKeys.Landing: AppRoutingKeys.Tabs.route + '/home',
+        HomeTabRoutingKeys.Landing: '${AppRoutingKeys.Tabs.route}/home',
         HomeTabRoutingKeys.Dashboard:
-            AppRoutingKeys.Tabs.route + '/home/dashboard',
+            '${AppRoutingKeys.Tabs.route}/home/dashboard',
       }[this]!;
 }
 
@@ -105,9 +105,9 @@ extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
 extension StaticticsTabRoutingKeysFunctions on StaticticsTabRoutingKeys {
   String get route => {
         StaticticsTabRoutingKeys.Landing:
-            AppRoutingKeys.Tabs.route + '/statistics',
+            '${AppRoutingKeys.Tabs.route}/statistics',
         StaticticsTabRoutingKeys.Detail:
-            AppRoutingKeys.Tabs.route + '/statistics/detail',
+            '${AppRoutingKeys.Tabs.route}/statistics/detail',
       }[this]!;
 }
 
@@ -115,20 +115,20 @@ extension StaticticsTabRoutingKeysFunctions on StaticticsTabRoutingKeys {
 /// path for an enum
 extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
   String get route => {
-        SettingsTabRoutingKeys.Landing: AppRoutingKeys.Tabs.route + '/settings',
+        SettingsTabRoutingKeys.Landing: '${AppRoutingKeys.Tabs.route}/settings',
         SettingsTabRoutingKeys.PrivacyPolicy:
-            AppRoutingKeys.Tabs.route + '/settings/privacy-policy',
+            '${AppRoutingKeys.Tabs.route}/settings/privacy-policy',
         SettingsTabRoutingKeys.About:
-            AppRoutingKeys.Tabs.route + '/settings/about',
+            '${AppRoutingKeys.Tabs.route}/settings/about',
         SettingsTabRoutingKeys.CustomTheme:
-            AppRoutingKeys.Tabs.route + '/settings/custom-theme',
-        SettingsTabRoutingKeys.FAQ: AppRoutingKeys.Tabs.route + '/settings/faq',
+            '${AppRoutingKeys.Tabs.route}/settings/custom-theme',
+        SettingsTabRoutingKeys.FAQ: '${AppRoutingKeys.Tabs.route}/settings/faq',
         SettingsTabRoutingKeys.DataManagement:
-            AppRoutingKeys.Tabs.route + '/settings/data-management',
+            '${AppRoutingKeys.Tabs.route}/settings/data-management',
         SettingsTabRoutingKeys.Logs:
-            AppRoutingKeys.Tabs.route + '/settings/logs',
+            '${AppRoutingKeys.Tabs.route}/settings/logs',
         SettingsTabRoutingKeys.LogDetail:
-            AppRoutingKeys.Tabs.route + '/settings/logs/detail',
+            '${AppRoutingKeys.Tabs.route}/settings/logs/detail',
       }[this]!;
 }
 

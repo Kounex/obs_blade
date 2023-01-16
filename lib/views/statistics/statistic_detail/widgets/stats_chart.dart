@@ -85,7 +85,7 @@ class StatsChart extends StatelessWidget {
       ],
     );
     TextStyle axisStepsTextStyle =
-        Theme.of(context).textTheme.caption!.copyWith(
+        Theme.of(context).textTheme.bodySmall!.copyWith(
       fontFeatures: const [
         FontFeature.tabularFigures(),
       ],

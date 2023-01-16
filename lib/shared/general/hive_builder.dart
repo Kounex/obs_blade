@@ -24,8 +24,8 @@ class HiveBuilder<T> extends StatelessWidget {
       valueListenable: Hive.box<T>(this.hiveKey.name).listenable(
         keys: this.rebuildKeys?.map((key) => key.name).toList(),
       ),
-      child: this.child,
       builder: this.builder,
+      child: this.child,
     );
   }
 }

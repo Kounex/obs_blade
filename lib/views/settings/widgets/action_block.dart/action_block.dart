@@ -52,7 +52,7 @@ class ActionBlock extends StatelessWidget {
                 padding: EdgeInsets.only(left: this.generalizedPadding + 16),
                 child: Text(
                   this.title!.toUpperCase(),
-                  style: Theme.of(context).textTheme.caption,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               )
             : null,
@@ -63,7 +63,7 @@ class ActionBlock extends StatelessWidget {
                 child: this.descriptionWidget ??
                     Text(
                       this.description!.toUpperCase(),
-                      style: Theme.of(context).textTheme.caption,
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
               )
             : null,

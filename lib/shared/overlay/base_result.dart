@@ -43,7 +43,7 @@ class BaseResult extends StatelessWidget {
             child: Text(
               this.text!,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.caption,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           )
       ],

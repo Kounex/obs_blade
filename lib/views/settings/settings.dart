@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../../shared/general/custom_sliver_list.dart';
@@ -362,12 +362,12 @@ class SettingsView extends StatelessWidget {
                         children: [
                           Text(
                             'Version ',
-                            style: Theme.of(context).textTheme.caption,
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                           if (snapshot.hasData)
                             Text(
                               snapshot.data!.version,
-                              style: Theme.of(context).textTheme.caption,
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                         ],
                       );

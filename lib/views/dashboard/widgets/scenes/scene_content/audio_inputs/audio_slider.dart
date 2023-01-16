@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -15,6 +17,15 @@ class AudioSlider extends StatelessWidget {
     required this.input,
   }) : super(key: key);
 
+  double _transformMulToLevel(double mul) {
+    double level = 0.3 * (log(0.9 * mul) / log(10)) + 1;
+    return level < 0
+        ? 0
+        : level > 1
+            ? 1
+            : level;
+  }
+
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
@@ -28,6 +39,46 @@ class AudioSlider extends StatelessWidget {
             this.input.inputName != null ? this.input.inputName! : '',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 12.0),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: LayoutBuilder(
+              builder: (_, constraints) => Stack(
+                children: [
+                  Container(
+                    height: 4,
+                    width: double.infinity,
+                    color: Theme.of(context).disabledColor,
+                  ),
+                  if (this.input.inputLevelsMul != null &&
+                      this.input.inputLevelsMul!.isNotEmpty &&
+                      this.input.inputLevelsMul!.first.current! > 0)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 50),
+                      height: 4,
+                      width: constraints.maxWidth *
+                          _transformMulToLevel(
+                              this.input.inputLevelsMul!.first.current!),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  if (this.input.inputLevelsMul != null &&
+                      this.input.inputLevelsMul!.isNotEmpty &&
+                      this.input.inputLevelsMul!.first.average! > 0)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 200),
+                      left: constraints.maxWidth *
+                          _transformMulToLevel(
+                              this.input.inputLevelsMul!.first.average!),
+                      child: Container(
+                        height: 4,
+                        width: 2,
+                        color: Colors.black,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
           Row(
             children: [

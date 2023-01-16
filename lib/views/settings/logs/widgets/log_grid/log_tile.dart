@@ -41,7 +41,7 @@ class LogTile extends StatelessWidget {
         children: [
           Text(
             '${this.logs.length} entries',
-            style: Theme.of(context).textTheme.caption,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           const Icon(
             Icons.chevron_right,

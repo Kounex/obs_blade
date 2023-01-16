@@ -127,7 +127,7 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
             child: Text(
               this.widget.text!,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.caption,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           )
       ],

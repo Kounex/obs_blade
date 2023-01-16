@@ -80,6 +80,9 @@ enum EventType {
   /// The current preview scene has changed.
   CurrentPreviewSceneChanged,
 
+  /// A high-volume event providing volume levels of all active inputs every 50 milliseconds.
+  InputVolumeMeters,
+
   /// OBS has begun the shutdown process.
   ExitStarted,
 }

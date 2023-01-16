@@ -84,7 +84,7 @@ class StatusAppBar extends StatelessWidget {
                             ? CupertinoColors.activeGreen
                             : CupertinoColors.destructiveRed,
                         text: dashboardStore.isLive ? 'Live' : 'Not Live',
-                        style: Theme.of(context).textTheme.caption,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(width: 8.0),
                       StatusDot(
@@ -101,7 +101,7 @@ class StatusAppBar extends StatelessWidget {
                                 ? 'Paused Recording'
                                 : 'Recording'
                             : 'Not Recording',
-                        style: Theme.of(context).textTheme.caption,
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   );

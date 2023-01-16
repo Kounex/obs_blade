@@ -77,7 +77,7 @@ class ThemeEntry extends StatelessWidget {
                           Text(
                             this.customTheme.description!,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.caption,
+                            style: Theme.of(context).textTheme.bodySmall,
                             maxLines: 2,
                           ),
                         ],

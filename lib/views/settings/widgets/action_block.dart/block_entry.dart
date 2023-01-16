@@ -132,7 +132,7 @@ class _BlockEntryState extends State<BlockEntry> {
                           DefaultTextStyle(
                             style: Theme.of(context)
                                 .textTheme
-                                .caption!
+                                .bodySmall!
                                 .copyWith(fontSize: 14.0),
                             child: this.widget.navigateToResult!,
                           ),

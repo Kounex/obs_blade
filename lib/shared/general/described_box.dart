@@ -47,7 +47,7 @@ class DescribedBox extends StatelessWidget {
                 this.label!,
                 style: Theme.of(context)
                     .textTheme
-                    .caption!
+                    .bodySmall!
                     .copyWith(fontSize: 8.0),
               ),
             ),

@@ -29,7 +29,7 @@ class CleanListTile extends StatelessWidget {
               const SizedBox(height: 4.0),
               Text(
                 this.description,
-                style: Theme.of(context).textTheme.caption,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),

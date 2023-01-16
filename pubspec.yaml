@@ -16,14 +16,14 @@ dependencies:
 
   # CUSTOM
   # Language stuff
-  intl: ^0.17.0
+  intl: ^0.18.0
 
   # Get project meta info
-  package_info: ^2.0.0
+  package_info_plus: ^3.0.2
 
   # Webview
   # flutter_inappwebview: ^5.4.3+7
-  webview_flutter: ^3.0.4
+  webview_flutter: ^4.0.1
 
   # State Management and DI
   get_it: ^7.2.0
@@ -61,7 +61,7 @@ dependencies:
   path_provider: ^2.0.11
 
   # Enable and manage in-app purchases
-  in_app_purchase: ^3.0.8
+  in_app_purchase: ^3.1.1
 
   # QR Scanner for quick connect feature
   qr_code_scanner: ^1.0.1
@@ -100,7 +100,7 @@ dev_dependencies:
   mobx_codegen: ^2.1.1
 
   # App icons
-  flutter_launcher_icons: ^0.9.1
+  flutter_launcher_icons: ^0.11.0
 
 flutter_icons:
   android: true

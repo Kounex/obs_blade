@@ -263,7 +263,7 @@ class _ColorPickerState extends State<ColorPicker> {
           padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 12.0),
           child: Text(
             this.widget.description,
-            style: Theme.of(context).textTheme.caption,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
         const BaseDivider(),
@@ -328,7 +328,7 @@ class _ColorPickerState extends State<ColorPicker> {
                                       suffixText:
                                           '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
                                       suffixStyle:
-                                          Theme.of(context).textTheme.caption,
+                                          Theme.of(context).textTheme.bodySmall,
                                     ),
                                     validator: (color) =>
                                         ValidationHelper.colorHexValidator(

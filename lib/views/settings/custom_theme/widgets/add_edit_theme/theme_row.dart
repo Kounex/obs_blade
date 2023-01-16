@@ -78,7 +78,7 @@ class ThemeRow extends StatelessWidget {
                 ),
                 Text(
                   this.description ?? 'Title',
-                  style: Theme.of(context).textTheme.caption,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),

@@ -55,11 +55,11 @@ class ConnectionBox extends StatelessWidget {
                     ),
                   // Text(
                   //   '(${this.connection.ssid})',
-                  //   style: Theme.of(context).textTheme.caption,
+                  //   style: Theme.of(context).textTheme.bodySmall,
                   // ),
                   Text(
                     '${this.connection.host}${this.connection.port != null ? (":" + this.connection.port.toString()) : ""}',
-                    style: Theme.of(context).textTheme.caption!.copyWith(
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       fontFeatures: const [
                         FontFeature.tabularFigures(),
                       ],

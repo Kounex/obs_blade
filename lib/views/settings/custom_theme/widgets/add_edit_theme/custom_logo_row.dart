@@ -44,7 +44,7 @@ class CustomLogoRow extends StatelessWidget {
               decoration: BoxDecoration(
                 border: this.customTheme.customLogo == null
                     ? Border.all(
-                        color: Theme.of(context).textTheme.caption!.color!,
+                        color: Theme.of(context).textTheme.bodySmall!.color!,
                       )
                     : null,
                 borderRadius: const BorderRadius.all(
@@ -73,10 +73,11 @@ class CustomLogoRow extends StatelessWidget {
                         ),
                         Text(
                           '- None -',
-                          style: Theme.of(context).textTheme.caption!.copyWith(
-                                fontSize: 14.0,
-                                fontStyle: FontStyle.italic,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall!.copyWith(
+                                    fontSize: 14.0,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                         ),
                       ],
                     ),

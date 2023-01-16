@@ -6,6 +6,8 @@ class Input {
   double? inputVolumeMul;
   double? inputVolumeDb;
 
+  List<InputChannel>? inputLevelsMul;
+
   bool? inputMuted;
 
   Input({
@@ -19,4 +21,16 @@ class Input {
         inputName: json['inputName'],
         unversionedInputKind: json['unversionedInputKind'],
       );
+}
+
+class InputChannel {
+  double? current;
+  double? average;
+  double? potential;
+
+  InputChannel({
+    required this.current,
+    required this.average,
+    required this.potential,
+  });
 }

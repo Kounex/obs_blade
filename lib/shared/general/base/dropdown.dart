@@ -43,7 +43,7 @@ class BaseDropdown<T> extends StatelessWidget {
             this.label != null
                 ? Text(
                     this.label!,
-                    style: Theme.of(context).textTheme.caption,
+                    style: Theme.of(context).textTheme.bodySmall,
                   )
                 : const SizedBox(),
             DropdownButton<T>(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/enums/chat_type.dart';
@@ -24,6 +25,27 @@ class StreamChat extends StatefulWidget {
 class _StreamChatState extends State<StreamChat>
     with AutomaticKeepAliveClientMixin {
   late WebViewController _webController;
+
+  void _initializeWebController(Box<dynamic> settingsBox, ChatType chatType) {
+    _webController = WebViewController()
+      ..loadRequest(
+        Uri.parse(chatType == ChatType.Twitch &&
+                settingsBox.get(SettingsKeys.SelectedTwitchUsername.name) !=
+                    null
+            ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
+            : chatType == ChatType.YouTube &&
+                    settingsBox
+                            .get(SettingsKeys.SelectedYoutubeUsername.name) !=
+                        null
+                ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
+                : 'about:blank'),
+      )
+      ..enableZoom(false)
+      ..setUserAgent(
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1')
+      ..setBackgroundColor(Colors.transparent)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -57,6 +79,8 @@ class _StreamChatState extends State<StreamChat>
                 defaultValue: ChatType.Twitch,
               );
 
+              _initializeWebController(settingsBox, chatType);
+
               return Stack(
                 alignment: Alignment.center,
                 children: [
@@ -87,7 +111,7 @@ class _StreamChatState extends State<StreamChat>
                           dashboardStore.setPointerOnChat(false),
                       onPointerCancel: (_) =>
                           dashboardStore.setPointerOnChat(false),
-                      child: WebView(
+                      child: WebViewWidget(
                         key: Key(
                           chatType.toString() +
                               settingsBox
@@ -98,28 +122,7 @@ class _StreamChatState extends State<StreamChat>
                                       SettingsKeys.SelectedYoutubeUsername.name)
                                   .toString(),
                         ),
-                        initialUrl: Uri.parse(chatType == ChatType.Twitch &&
-                                    settingsBox.get(SettingsKeys
-                                            .SelectedTwitchUsername.name) !=
-                                        null
-                                ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-                                : chatType == ChatType.YouTube &&
-                                        settingsBox.get(SettingsKeys
-                                                .SelectedYoutubeUsername
-                                                .name) !=
-                                            null
-                                    ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
-                                    : 'about:blank')
-                            .toString(),
-                        allowsInlineMediaPlayback: true,
-                        zoomEnabled: false,
-                        userAgent:
-                            'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1',
-                        backgroundColor: Colors.transparent,
-                        javascriptMode: JavascriptMode.unrestricted,
-                        onWebViewCreated: (webController) {
-                          _webController = webController;
-                        },
+                        controller: _webController,
                       ),
                       // InAppWebView(
                       //   key: Key(

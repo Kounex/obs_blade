@@ -65,7 +65,7 @@ class LogEntry extends StatelessWidget {
                   FittedBox(
                     child: Text(
                       '${this.logs.length} entries',
-                      style: Theme.of(context).textTheme.caption,
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
                 ],
@@ -145,7 +145,7 @@ class LogEntry extends StatelessWidget {
                                             log.stackTrace!,
                                             style: Theme.of(context)
                                                 .textTheme
-                                                .caption,
+                                                .bodySmall,
                                           )
                                       ],
                                     ),

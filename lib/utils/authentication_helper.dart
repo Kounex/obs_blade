@@ -30,7 +30,7 @@ class AuthenticationHelper {
             'rpcVersion': 1,
             'authentication': AuthenticationHelper._getAuthRequestContent(
                 activeSession.connection),
-            // 'eventSubscriptions': 1048575
+            'eventSubscriptions': 131071
           }
         },
       ),

@@ -36,6 +36,7 @@ import '../../types/classes/stream/events/current_preview_scene_changed.dart';
 import '../../types/classes/stream/events/current_program_scene_changed.dart';
 import '../../types/classes/stream/events/current_scene_collection_changed.dart';
 import '../../types/classes/stream/events/input_volume_changed.dart';
+import '../../types/classes/stream/events/input_volume_meters.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
@@ -609,9 +610,11 @@ abstract class _DashboardStore with Store {
         'NOT HANDLED - Event Incoming: ${event.jsonRAW['d']['eventType']}',
       );
     } else {
-      GeneralHelper.advLog(
-        'Event Incoming: ${event.eventType}',
-      );
+      if (event.eventType != EventType.InputVolumeMeters) {
+        GeneralHelper.advLog(
+          'Event Incoming: ${event.eventType}',
+        );
+      }
     }
 
     switch (event.eventType) {
@@ -782,6 +785,22 @@ abstract class _DashboardStore with Store {
             (input) => input.inputName == inputVolumeChangedEvent.inputName)
           ..inputVolumeMul = inputVolumeChangedEvent.inputVolumeMul
           ..inputVolumeDb = inputVolumeChangedEvent.inputVolumeDb;
+        this.allInputs = this.allInputs;
+
+        break;
+      case EventType.InputVolumeMeters:
+        InputVolumeMetersEvent inputVolumeMetersEvent =
+            InputVolumeMetersEvent(event.jsonRAW);
+
+        for (var input in this.allInputs) {
+          try {
+            InputLevel inputLevel = inputVolumeMetersEvent.inputs.firstWhere(
+                (inputLevel) => inputLevel.inputName == input.inputName);
+
+            input.inputLevelsMul = inputLevel.inputLevelsMul;
+          } catch (e) {}
+        }
+
         this.allInputs = this.allInputs;
 
         break;
