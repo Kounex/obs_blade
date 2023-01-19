@@ -45,7 +45,7 @@ class OverlayHandler {
       _delayTimer = Timer(delayDuration, () {
         _currentOverlayEntry = OverlayHandler.getStatusOverlay(
             content: content, showDuration: showDuration);
-        Overlay.of(context, rootOverlay: true).insert(_currentOverlayEntry!);
+        Overlay.of(context, rootOverlay: true)!.insert(_currentOverlayEntry!);
       });
 
       /// Calculating the maximum amount of time an overlay will be shown with all

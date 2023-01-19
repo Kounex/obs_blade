@@ -45,6 +45,31 @@ class _StreamChatState extends State<StreamChat>
           'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1')
       ..setBackgroundColor(Colors.transparent)
       ..setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    _webController.setNavigationDelegate(
+      NavigationDelegate.fromPlatformCreationParams(
+        const PlatformNavigationDelegateCreationParams(),
+        onPageFinished: (url) {
+          _webController.runJavaScript('''
+            let observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                if(document.getElementsByClassName('consent-banner').length > 0) {
+                  [...document.getElementsByClassName('consent-banner')].forEach((element) => element.remove());
+                  observer.disconnect();
+                }
+              });
+            });
+
+            observer.observe(document.body, {
+              characterDataOldValue: true, 
+              subtree: true, 
+              childList: true, 
+              characterData: true
+            });
+          ''');
+        },
+      ),
+    );
   }
 
   @override
