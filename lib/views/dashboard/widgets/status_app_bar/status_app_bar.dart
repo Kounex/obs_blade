@@ -24,6 +24,7 @@ class StatusAppBar extends StatelessWidget {
     return TransculentSliverAppBar(
       pinned: true,
       bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(24.0),
         child: Column(
           children: const [
             Divider(height: 0),
@@ -33,7 +34,6 @@ class StatusAppBar extends StatelessWidget {
             ),
           ],
         ),
-        preferredSize: const Size.fromHeight(24.0),
       ),
       title: Stack(
         alignment: Alignment.center,
