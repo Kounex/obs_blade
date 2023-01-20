@@ -51,21 +51,23 @@ class _StreamChatState extends State<StreamChat>
         const PlatformNavigationDelegateCreationParams(),
         onProgress: (progress) {
           _webController.runJavaScript('''
-            let observer = new MutationObserver((mutations) => {
-              mutations.forEach((mutation) => {
-                if(document.getElementsByClassName('consent-banner').length > 0) {
-                  [...document.getElementsByClassName('consent-banner')].forEach((element) => element.remove());
-                  observer.disconnect();
-                }
+            if (document.body !== undefined) {
+              let observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                  if(document.getElementsByClassName('consent-banner').length > 0) {
+                    [...document.getElementsByClassName('consent-banner')].forEach((element) => element.remove());
+                    observer.disconnect();
+                  }
+                });
               });
-            });
 
-            observer.observe(document.body, {
-              characterDataOldValue: true, 
-              subtree: true, 
-              childList: true, 
-              characterData: true
-            });
+              observer.observe(document.body, {
+                characterDataOldValue: true, 
+                subtree: true, 
+                childList: true, 
+                characterData: true
+              });
+            }
           ''');
         },
         // onPageFinished: (url) {

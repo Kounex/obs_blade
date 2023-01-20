@@ -112,11 +112,13 @@ class _ScenePreviewState extends State<ScenePreview> {
                                     ModalHandler.showFullscreen(
                                       context: context,
                                       content: Fader(
-                                        child: Image.memory(
-                                          dashboardStore
-                                              .scenePreviewImageBytes!,
-                                          fit: BoxFit.contain,
-                                          gaplessPlayback: true,
+                                        child: Observer(
+                                          builder: (context) => Image.memory(
+                                            dashboardStore
+                                                .scenePreviewImageBytes!,
+                                            fit: BoxFit.contain,
+                                            gaplessPlayback: true,
+                                          ),
                                         ),
                                       ),
                                     ).then(
