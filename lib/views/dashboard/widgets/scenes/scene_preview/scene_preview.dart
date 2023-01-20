@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/animator/fader.dart';
+import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../shared/general/hive_builder.dart';
@@ -13,8 +15,15 @@ import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
 import 'preview_warning_dialog.dart';
 
-class ScenePreview extends StatelessWidget {
+class ScenePreview extends StatefulWidget {
   const ScenePreview({Key? key}) : super(key: key);
+
+  @override
+  State<ScenePreview> createState() => _ScenePreviewState();
+}
+
+class _ScenePreviewState extends State<ScenePreview> {
+  bool _fullscreen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -64,25 +73,59 @@ class ScenePreview extends StatelessWidget {
                       : onExpand();
                 },
                 expandedBody: ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: maxImageHeight),
+                  /// + X is the puffer used for the elements beside the scene
+                  /// preview - currently the maximize button so the height
+                  /// constraint is not set for the whole expandable but for the
+                  /// actual preview size
+                  constraints: BoxConstraints(maxHeight: maxImageHeight + 64),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Observer(
                       builder: (_) => Stack(
                         children: [
                           if (dashboardStore.scenePreviewImageBytes != null)
-                            Image.memory(
-                              dashboardStore.scenePreviewImageBytes!,
-                              // height: maxImageHeight,
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (!_fullscreen)
+                                  Flexible(
+                                    child: Image.memory(
+                                      dashboardStore.scenePreviewImageBytes!,
+                                      // height: maxImageHeight,
 
-                              /// Might reduce the memory used and therefore
-                              /// the performance of the frequently changing
-                              /// image - a multiplicator is used since
-                              /// using the original size would decrease the
-                              /// quality significantly
-                              // cacheHeight: (maxImageHeight * 1.5).toInt(),
-                              fit: BoxFit.contain,
-                              gaplessPlayback: true,
+                                      /// Might reduce the memory used and therefore
+                                      /// the performance of the frequently changing
+                                      /// image - a multiplicator is used since
+                                      /// using the original size would decrease the
+                                      /// quality significantly
+                                      // cacheHeight: (maxImageHeight * 1.5).toInt(),
+                                      fit: BoxFit.contain,
+                                      gaplessPlayback: true,
+                                    ),
+                                  ),
+                                const SizedBox(height: 12.0),
+                                ThemedCupertinoButton(
+                                  text: 'Maximize',
+                                  padding: const EdgeInsets.all(0),
+                                  onPressed: () {
+                                    setState(() => _fullscreen = true);
+                                    ModalHandler.showFullscreen(
+                                      context: context,
+                                      content: Fader(
+                                        child: Image.memory(
+                                          dashboardStore
+                                              .scenePreviewImageBytes!,
+                                          fit: BoxFit.contain,
+                                          gaplessPlayback: true,
+                                        ),
+                                      ),
+                                    ).then(
+                                      (_) =>
+                                          setState(() => _fullscreen = false),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           if (dashboardStore.scenePreviewImageBytes == null)
                             SizedBox(

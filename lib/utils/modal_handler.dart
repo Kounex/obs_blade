@@ -21,6 +21,31 @@ const double kDialogBlurAmount = 20.0;
 class ModalHandler {
   static Duration transitionDelayDuration = const Duration(milliseconds: 350);
 
+  static Future<T?> showFullscreen<T>({
+    required BuildContext context,
+    required Widget content,
+  }) async =>
+      showDialog(
+        context: context,
+        builder: (context) => Material(
+          color: Colors.black,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              content,
+              Positioned(
+                top: 12.0 + MediaQuery.of(context).padding.top,
+                right: 12.0 + MediaQuery.of(context).padding.right,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(CupertinoIcons.clear),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
   static Future<T?> showBaseDialog<T>({
     required BuildContext context,
     required Widget dialogWidget,
