@@ -1,7 +1,7 @@
 name: obs_blade
 description: Control your OBS instance and manage your stream and recording - live!
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
-version: 3.1.0+2022120201
+version: 3.2.0+2023012001
 
 publish_to: 'none'
 
@@ -106,12 +106,20 @@ flutter_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path_android: 'assets/icons/app/app_logo_android.png'
-  image_path_ios: 'assets/icons/app/app_logo_ios.png'
+  image_path: 'assets/icons/app/app_logo.png'
+  adaptive_icon_background: '#141C24'
+  adaptive_icon_foreground: 'assets/icons/app/app_logo_adaptive.png'
 
 flutter_native_splash:
   image: assets/icons/app/splash.png
-  color: '101823'
+  color: '#101823'
+  color_dark: '#101823'
+
+  android_12:
+    image: assets/icons/app/splash.png
+    icon_background_color: '#101823'
+    image_dark: assets/icons/app/splash.png
+    icon_background_color_dark: '#101823'
 
 flutter:
   uses-material-design: true

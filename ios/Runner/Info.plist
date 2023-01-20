@@ -23,7 +23,7 @@
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>LSRequiresIPhoneOS</key>
-		<true />
+		<true/>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>
@@ -42,19 +42,19 @@
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
-		<false />
+		<false/>
 		<key>UIStatusBarHidden</key>
-		<false />
+		<false/>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
-		<true />
+		<true/>
 		<key>NSLocalNetworkUsageDescription</key>
 		<string>In order to find running OBS instances automatically.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>In order to select your custom logo.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
-		<true />
+		<true/>
 		<key>io.flutter.embedded_views_preview</key>
-		<true />
+		<true/>
 		<key>NSCameraUsageDescription</key>
 		<string>OBS Blade needs camera access to enable the QR code quick connect feature.</string>
 	</dict>
