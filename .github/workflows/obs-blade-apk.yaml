@@ -33,4 +33,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.APP_VERSION }}
-          files: build/app/outputs/apk/release/obs-blade-${{ env.APP_VERSION }}.apk
+          files: build/app/outputs/flutter-apk/obs-blade-${{ env.APP_VERSION }}.apk
