@@ -26,6 +26,7 @@ class ModalHandler {
     required Widget content,
   }) async =>
       showDialog(
+        useSafeArea: false,
         context: context,
         builder: (context) => Material(
           color: Colors.black,
