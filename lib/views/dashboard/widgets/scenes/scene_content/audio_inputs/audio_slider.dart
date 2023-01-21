@@ -18,7 +18,7 @@ class AudioSlider extends StatelessWidget {
   }) : super(key: key);
 
   double _transformMulToLevel(double mul) {
-    double level = 0.3 * (log(0.9 * mul) / log(10)) + 1;
+    double level = 0.33 * (log(mul) / log(10)) + 1;
     return level < 0
         ? 0
         : level > 1
