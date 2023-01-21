@@ -1,7 +1,7 @@
 name: obs_blade
 description: Control your OBS instance and manage your stream and recording - live!
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
-version: 3.2.0+2023012002
+version: 3.2.0+2023012003
 
 publish_to: 'none'
 
