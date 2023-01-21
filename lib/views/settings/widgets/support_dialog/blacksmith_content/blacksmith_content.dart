@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';
@@ -11,16 +10,9 @@ import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/routing_helper.dart';
-import '../donate_button.dart';
-import 'restore_button.dart';
 
 class BlacksmithContent extends StatelessWidget {
-  final List<ProductDetails>? blacksmithDetails;
-
-  const BlacksmithContent({
-    Key? key,
-    required this.blacksmithDetails,
-  }) : super(key: key);
+  const BlacksmithContent({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -57,48 +49,29 @@ class BlacksmithContent extends StatelessWidget {
               SettingsKeys.BoughtBlacksmith.name,
               defaultValue: false,
             )) {
-              if (this.blacksmithDetails != null &&
-                  this.blacksmithDetails!.isNotEmpty) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    const RestoreButton(),
-                    DonateButton(
-                      price: this.blacksmithDetails![0].price,
-                      purchaseParam: PurchaseParam(
-                        productDetails: this.blacksmithDetails![0],
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return DonateButton(
-                errorText: this.blacksmithDetails != null &&
-                        this.blacksmithDetails!.isEmpty
-                    ? 'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!'
-                    : null,
-              );
+              /// Think about adding a way to get blacksmith
             }
-            return BaseButton(
-              text: 'Forge Theme',
-              secondary: true,
-              onPressed: () {
-                Navigator.of(context).pop(true);
-                TabsStore tabsStore = GetIt.instance<TabsStore>();
+            return const SizedBox();
+            // return BaseButton(
+            //   text: 'Forge Theme',
+            //   secondary: true,
+            //   onPressed: () {
+            //     Navigator.of(context).pop(true);
+            //     TabsStore tabsStore = GetIt.instance<TabsStore>();
 
-                if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
-                    SettingsTabRoutingKeys.CustomTheme.route) {
-                  Future.delayed(
-                    ModalHandler.transitionDelayDuration,
-                    () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
-                        ?.pushNamed(
-                      SettingsTabRoutingKeys.CustomTheme.route,
-                      arguments: {'blacksmith': true},
-                    ),
-                  );
-                }
-              },
-            );
+            //     if (tabsStore.activeRoutePerNavigator[Tabs.Settings] !=
+            //         SettingsTabRoutingKeys.CustomTheme.route) {
+            //       Future.delayed(
+            //         ModalHandler.transitionDelayDuration,
+            //         () => tabsStore.navigatorKeys[Tabs.Settings]?.currentState
+            //             ?.pushNamed(
+            //           SettingsTabRoutingKeys.CustomTheme.route,
+            //           arguments: {'blacksmith': true},
+            //         ),
+            //       );
+            //     }
+            //   },
+            // );
           },
         ),
       ],

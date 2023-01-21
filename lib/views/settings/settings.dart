@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/dialogs/info.dart';
+import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content/blacksmith_not_available_dialog.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:wakelock/wakelock.dart';
 
@@ -386,11 +388,12 @@ class SettingsView extends StatelessWidget {
                       onTap: () => ModalHandler.showBaseDialog(
                         context: context,
                         barrierDismissible: true,
-                        dialogWidget: const SupportDialog(
-                          title: 'Blacksmith',
-                          icon: CupertinoIcons.hammer_fill,
-                          type: SupportType.Blacksmith,
-                        ),
+                        dialogWidget: const BlacksmithNotAvailableDialog(),
+                        // const SupportDialog(
+                        //   title: 'Blacksmith',
+                        //   icon: CupertinoIcons.hammer_fill,
+                        //   type: SupportType.Blacksmith,
+                        // ),
                       ),
                     ),
                     BlockEntry(

@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/views/settings/widgets/support_dialog/blacksmith_content/blacksmith_not_available_dialog.dart';
 
+import '../../../shared/dialogs/info.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/clean_list_tile.dart';
 import '../../../shared/general/hive_builder.dart';
@@ -40,11 +42,12 @@ class _CustomThemeViewState extends State<CustomThemeView> {
         : ModalHandler.showBaseDialog<bool?>(
             context: context,
             barrierDismissible: true,
-            dialogWidget: const SupportDialog(
-              title: 'Blacksmith',
-              icon: CupertinoIcons.hammer_fill,
-              type: SupportType.Blacksmith,
-            ),
+            dialogWidget: const BlacksmithNotAvailableDialog(),
+            // const SupportDialog(
+            //   title: 'Blacksmith',
+            //   icon: CupertinoIcons.hammer_fill,
+            //   type: SupportType.Blacksmith,
+            // ),
           ).then(
             (clickedOnForgeTheme) {
               if (clickedOnForgeTheme != null && clickedOnForgeTheme) {

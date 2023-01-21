@@ -18,7 +18,6 @@ import 'models/hidden_scene.dart';
 import 'models/hidden_scene_item.dart';
 import 'models/past_stream_data.dart';
 import 'models/purchased_tip.dart';
-import 'purchase_base.dart';
 import 'stores/shared/network.dart';
 import 'stores/shared/tabs.dart';
 import 'stores/views/dashboard.dart';
@@ -171,7 +170,7 @@ void _logging(String line) {
       String stack = temp[1].trim();
 
       if (stack.length > 1024) {
-        stack = stack.substring(0, 1024) + '...';
+        stack = '${stack.substring(0, 1024)}...';
       }
 
       line = temp[0].trim();
@@ -211,9 +210,7 @@ void main() async {
       };
       runApp(
         const LifecycleWatcher(
-          app: PurchaseBase(
-            child: App(),
-          ),
+          app: App(),
         ),
       );
     },
