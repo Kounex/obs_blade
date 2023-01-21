@@ -3,7 +3,7 @@ on:
   push:
     branches: [foss]
     paths-ignore:
-      - '**/README.md'
+      - "**/README.md"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -17,18 +17,18 @@ jobs:
         uses: actions/checkout@v3
       - name: Set release version
         run: |
-          VER='cat pubspec.yaml | grep -o "version:[^:]*" | cut -f 2 -d ":" | cut -f 1 -d "+"'
-          echo 'APP_VERSION=$VER' >> $GITHUB_ENV
+          VER=$(cat pubspec.yaml | grep -o "version:[^:]*" | cut -f 2 -d ":" | cut -f 1 -d "+")
+          echo "APP_VERSION=$VER" >> $GITHUB_ENV
       - name: Get Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-         channel: 'beta'
+         channel: beta
       - name: Get pubspec dependencies
         run: flutter pub get
       - name: Build APK
         run: flutter build apk
       - name: Rename APK
-        run: mv build/app/outputs/apk/release/app-release.apk build/app/outputs/apk/release/obs-blade-${{ env.APP_VERSION }}.apk
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/obs-blade-${{ env.APP_VERSION }}.apk
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v1
         with:
