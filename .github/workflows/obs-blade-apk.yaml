@@ -28,9 +28,9 @@ jobs:
       - name: Build APK
         run: flutter build apk
       - name: Rename APK
-        run: mv build/app/outputs/apk/release/app-release.apk build/app/outputs/apk/release/obs-blade-{{env.APP_VERSION}}.apk
+        run: mv build/app/outputs/apk/release/app-release.apk build/app/outputs/apk/release/obs-blade-${{ env.APP_VERSION }}.apk
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: '{{env.APP_VERSION}}'
-          files: build/app/outputs/apk/release/obs-blade-{{env.APP_VERSION}}.apk
+          tag_name: ${{ env.APP_VERSION }}
+          files: build/app/outputs/apk/release/obs-blade-${{ env.APP_VERSION }}.apk
