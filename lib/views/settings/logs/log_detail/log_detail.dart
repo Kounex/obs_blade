@@ -27,7 +27,8 @@ class LogDetailView extends StatelessWidget {
 
   Future<File?> _createLogFile(
       List<Map<String, String>> jsonLogs, int timestampMS) async {
-    File logFile = File('${(await Directory.systemTemp.createTemp()).path}/${timestampMS.millisecondsToFileNameDate()}_obs_logs.json');
+    File logFile = File(
+        '${(await Directory.systemTemp.createTemp()).path}/${timestampMS.millisecondsToFileNameDate()}_obs_logs.json');
 
     try {
       logFile = await logFile.writeAsString(jsonEncode(jsonLogs));
