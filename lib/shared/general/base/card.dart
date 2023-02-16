@@ -119,7 +119,8 @@ class BaseCard extends StatelessWidget {
                         child: this.titleWidget == null
                             ? Text(
                                 this.title!,
-                                style: Theme.of(context).textTheme.headlineSmall,
+                                style:
+                                    Theme.of(context).textTheme.headlineSmall,
                               )
                             : this.titleWidget!),
                     if (this.trailingTitleWidget != null)
