@@ -70,7 +70,7 @@ class ThemeRow extends StatelessWidget {
                 this.titleWidget ??
                     Text(
                       this.title ?? 'Title',
-                      style: Theme.of(context).textTheme.button,
+                      style: Theme.of(context).textTheme.labelLarge,
                     ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
