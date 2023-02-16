@@ -92,7 +92,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       this.widget.customTheme != null
                           ? 'Edit Theme'
                           : 'Add Theme',
-                      style: Theme.of(context).textTheme.headline5,
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     Row(
                       children: [
