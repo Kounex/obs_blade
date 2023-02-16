@@ -49,7 +49,7 @@ class ConnectionBox extends StatelessWidget {
                   if (this.connection.name != null)
                     Text(
                       this.connection.name!,
-                      style: Theme.of(context).textTheme.headline6,
+                      style: Theme.of(context).textTheme.titleLarge,
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
                     ),
@@ -58,7 +58,7 @@ class ConnectionBox extends StatelessWidget {
                   //   style: Theme.of(context).textTheme.bodySmall,
                   // ),
                   Text(
-                    '${this.connection.host}${this.connection.port != null ? (":" + this.connection.port.toString()) : ""}',
+                    '${this.connection.host}${this.connection.port != null ? (":${this.connection.port}") : ""}',
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       fontFeatures: const [
                         FontFeature.tabularFigures(),
