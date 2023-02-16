@@ -36,10 +36,11 @@ class StatsContainer extends StatelessWidget {
         vertical: 12.0,
       ),
       titleWidget:
-          Text(this.title, style: Theme.of(context).textTheme.headline6),
+          Text(this.title, style: Theme.of(context).textTheme.titleLarge),
       trailingTitleWidget: this.trailing,
       paddingChild: const EdgeInsets.only(
           top: 18.0, right: 18.0, left: 18.0, bottom: 24.0),
+      centerChild: false,
       child: this.child ??
           LayoutBuilder(
             builder: (context, constraints) {
@@ -69,7 +70,6 @@ class StatsContainer extends StatelessWidget {
               );
             },
           ),
-      centerChild: false,
     );
   }
 }
