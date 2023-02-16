@@ -31,7 +31,7 @@ class CustomLogoRow extends StatelessWidget {
         children: [
           Text(
             'Custom Logo',
-            style: Theme.of(context).textTheme.bodyText1,
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(
