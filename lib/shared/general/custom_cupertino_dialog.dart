@@ -44,7 +44,7 @@ class CustomCupertinoDialog extends StatelessWidget {
                 this.content != null
                     ? Flexible(
                         child: DefaultTextStyle(
-                          style: Theme.of(context).textTheme.bodyText1!,
+                          style: Theme.of(context).textTheme.bodyLarge!,
                           textAlign: TextAlign.center,
                           child: Padding(
                             padding: this.contentPadding ??
