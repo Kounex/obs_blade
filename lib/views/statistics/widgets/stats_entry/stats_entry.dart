@@ -47,7 +47,7 @@ class StatsEntry extends StatelessWidget {
                       children: [
                         Text(
                           this.pastStatsData.name ?? 'Unnamed entry',
-                          style: Theme.of(context).textTheme.button!.copyWith(
+                          style: Theme.of(context).textTheme.labelLarge!.copyWith(
                                 fontSize: 18.0,
                                 color: this.pastStatsData.name == null
                                     ? Theme.of(context)
