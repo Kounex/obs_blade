@@ -162,7 +162,7 @@ class _IntroSlidesState extends State<IntroSlides> {
 
     return Scaffold(
       body: Container(
-        color: Theme.of(context).backgroundColor,
+        color: Theme.of(context).colorScheme.background,
         child: Column(
           children: [
             Expanded(
