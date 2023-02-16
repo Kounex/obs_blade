@@ -171,7 +171,7 @@ void _logging(String line) {
       String stack = temp[1].trim();
 
       if (stack.length > 1024) {
-        stack = stack.substring(0, 1024) + '...';
+        stack = '${stack.substring(0, 1024)}...';
       }
 
       line = temp[0].trim();
