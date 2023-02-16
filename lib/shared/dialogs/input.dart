@@ -77,9 +77,9 @@ class _InputDialogState extends State<InputDialog> {
       ),
       actions: [
         CupertinoDialogAction(
-          child: const Text('Cancel'),
           isDestructiveAction: true,
           onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
         ),
         CupertinoDialogAction(
           child: const Text('Save'),
