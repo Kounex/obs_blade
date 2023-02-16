@@ -38,6 +38,13 @@ class AppBarCupertinoActions extends StatelessWidget {
                 .actions
                 .map(
                   (action) => CupertinoActionSheetAction(
+                    isDestructiveAction: action.isDestructive,
+                    onPressed: () {
+                      if (action.onAction != null) {
+                        Navigator.of(context).pop();
+                        action.onAction!.call();
+                      }
+                    },
                     child: Text(
                       action.title!,
                       style: action.onAction == null
@@ -47,13 +54,6 @@ class AppBarCupertinoActions extends StatelessWidget {
                             )
                           : null,
                     ),
-                    isDestructiveAction: action.isDestructive,
-                    onPressed: () {
-                      if (action.onAction != null) {
-                        Navigator.of(context).pop();
-                        action.onAction!.call();
-                      }
-                    },
                   ),
                 )
                 .toList(),
