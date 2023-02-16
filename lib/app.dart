@@ -193,7 +193,8 @@ class App extends StatelessWidget {
           }
           return null;
         }),
-      ), colorScheme: ColorScheme.fromSwatch(
+      ),
+      colorScheme: ColorScheme.fromSwatch(
         accentColor: hightlightColor ?? StylingHelper.highlight_color,
         brightness: brightness ?? Brightness.dark,
       ).copyWith(background: backgroundColor ?? StylingHelper.primary_color),
