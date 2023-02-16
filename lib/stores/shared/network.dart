@@ -83,7 +83,7 @@ abstract class _NetworkStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog(
-        'Not possible to connect to ${connection.host}${connection.port != null ? (":" + connection.port.toString()) : ""}: $e',
+        'Not possible to connect to ${connection.host}${connection.port != null ? (":${connection.port}") : ""}: $e',
         level: LogLevel.Error,
         includeInLogs: true,
       );
