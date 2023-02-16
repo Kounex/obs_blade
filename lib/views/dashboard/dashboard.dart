@@ -147,7 +147,8 @@ class _DashboardViewState extends State<DashboardView> {
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Widgets',
-                                style: Theme.of(context).textTheme.headlineMedium,
+                                style:
+                                    Theme.of(context).textTheme.headlineMedium,
                               ),
                             ),
                             ResponsiveWidgetWrapper(
