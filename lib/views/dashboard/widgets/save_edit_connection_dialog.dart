@@ -23,7 +23,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
 
     Box<Connection> box = Hive.box<Connection>(HiveKeys.SavedConnections.name);
     return InputDialog(
-      title: (this.newConnection ? 'Save' : 'Edit') + ' Connection',
+      title: '${this.newConnection ? 'Save' : 'Edit'} Connection',
       body:
           'Please choose a name for the connection so you can recognize it later on',
       inputText: networkStore.activeSession!.connection.name,
