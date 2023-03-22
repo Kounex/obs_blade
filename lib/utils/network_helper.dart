@@ -57,7 +57,7 @@ class NetworkHelper {
 
     return IOWebSocketChannel.connect(
       Uri.parse(
-          '$protocol${connection.host}${connection.port != null ? (":" + connection.port.toString()) : ""}'),
+          '$protocol${connection.host}${connection.port != null ? (":${connection.port}") : ""}'),
       pingInterval: pingInterval,
     );
   }
@@ -95,13 +95,12 @@ class NetworkHelper {
       List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
 
       GeneralHelper.advLog(
-        'Autodiscover IPs: ' +
-            baseIPs.map(
-              (ip) {
-                List<String> ipSplit = ip.split('.')..removeLast();
-                return '${ipSplit.join('.')}.0/24';
-              },
-            ).toString(),
+        'Autodiscover IPs: ${baseIPs.map(
+          (ip) {
+            List<String> ipSplit = ip.split('.')..removeLast();
+            return '${ipSplit.join('.')}.0/24';
+          },
+        )}',
       );
 
       /// Completer used to manully deal with Future. [Completer] enables us to
@@ -158,7 +157,7 @@ class NetworkHelper {
         .where((connectionScan) => connectionScan.error != null)
         .forEach(
           (connectionScan) => GeneralHelper.advLog(
-            'Reachable check for your saved connection ${connectionScan.connection.host}${connectionScan.connection.port != null ? (":" + connectionScan.connection.port.toString()) : ""} failed: ${connectionScan.error}',
+            'Reachable check for your saved connection ${connectionScan.connection.host}${connectionScan.connection.port != null ? (":${connectionScan.connection.port}") : ""} failed: ${connectionScan.error}',
             level: LogLevel.Error,
             includeInLogs: true,
           ),

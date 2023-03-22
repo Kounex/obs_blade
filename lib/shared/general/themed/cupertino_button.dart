@@ -25,6 +25,7 @@ class ThemedCupertinoButton extends StatelessWidget {
     return CupertinoButton(
       minSize: this.minSize ?? kMinInteractiveDimensionCupertino,
       padding: this.padding,
+      onPressed: this.onPressed,
       child: DefaultTextStyle.merge(
         style: TextStyle(
           color: this.onPressed != null
@@ -38,7 +39,6 @@ class ThemedCupertinoButton extends StatelessWidget {
               this.text ?? '',
             ),
       ),
-      onPressed: this.onPressed,
     );
   }
 }

@@ -38,7 +38,7 @@ class PaginationControl extends StatelessWidget {
           const SizedBox(width: 14.0),
           Text(
             '${this.currentPage} / ${this.amountPages}',
-            style: Theme.of(context).textTheme.subtitle1,
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(width: 14.0),
           IconButton(

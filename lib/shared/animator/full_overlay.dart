@@ -65,8 +65,8 @@ class FullOverlayState extends State<FullOverlay>
             builder: (context, child) => FadeTransition(
               opacity: _opacity,
               child: Container(
-                child: child,
                 color: Colors.black26,
+                child: child,
               ),
             ),
           ),

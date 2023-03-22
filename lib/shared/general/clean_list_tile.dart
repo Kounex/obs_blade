@@ -23,8 +23,10 @@ class CleanListTile extends StatelessWidget {
             children: [
               Text(
                 this.title,
-                style:
-                    Theme.of(context).textTheme.button!.copyWith(fontSize: 16),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge!
+                    .copyWith(fontSize: 16),
               ),
               const SizedBox(height: 4.0),
               Text(

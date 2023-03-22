@@ -208,9 +208,9 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       ),
       actions: [
         CupertinoDialogAction(
-          child: const Text('Cancel'),
           isDefaultAction: true,
           onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
         ),
         CupertinoDialogAction(
           child: const Text('Save'),

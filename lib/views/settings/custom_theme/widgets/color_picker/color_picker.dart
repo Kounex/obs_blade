@@ -253,7 +253,7 @@ class _ColorPickerState extends State<ColorPicker> {
               Expanded(
                 child: Text(
                   this.widget.title,
-                  style: Theme.of(context).textTheme.headline5,
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
             ],
@@ -309,7 +309,7 @@ class _ColorPickerState extends State<ColorPicker> {
                             padding: const EdgeInsets.only(right: 24.0),
                             child: Text(
                               'Hex:',
-                              style: Theme.of(context).textTheme.headline6,
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ),
                           SizedBox(

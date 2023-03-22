@@ -79,7 +79,7 @@ class StatsChart extends StatelessWidget {
         yInterval != null && yInterval > 0 ? yInterval : this.minYInterval;
 
     TextStyle tooltipTextStyle =
-        Theme.of(context).textTheme.bodyText1!.copyWith(
+        Theme.of(context).textTheme.bodyLarge!.copyWith(
       fontFeatures: const [
         FontFeature.tabularFigures(),
       ],
@@ -90,7 +90,7 @@ class StatsChart extends StatelessWidget {
         FontFeature.tabularFigures(),
       ],
     );
-    TextStyle axisTitleTextStyle = Theme.of(context).textTheme.subtitle1!;
+    TextStyle axisTitleTextStyle = Theme.of(context).textTheme.titleMedium!;
 
     return Column(
       children: [
