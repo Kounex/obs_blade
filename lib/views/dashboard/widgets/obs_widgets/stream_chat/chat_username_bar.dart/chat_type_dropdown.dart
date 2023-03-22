@@ -27,7 +27,14 @@ class ChatTypeDropdown extends StatelessWidget {
                 value: chatType,
                 child: Row(
                   children: [
-                    Icon(chatType.icon),
+                    Icon(
+                      chatType.icon,
+                      color: chatType == ChatType.YouTube
+                          ? Colors.red
+                          : chatType == ChatType.Twitch
+                              ? const Color(0xFF6441a5)
+                              : null,
+                    ),
                     const SizedBox(width: 12.0),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
