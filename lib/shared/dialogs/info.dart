@@ -66,12 +66,12 @@ class _InfoDialogState extends State<InfoDialog> {
       ),
       actions: [
         CupertinoDialogAction(
-          child: const Text('OK'),
           isDefaultAction: false,
           onPressed: () {
             this.widget.onPressed?.call(_dontShowChecked);
             Navigator.of(context).pop();
           },
+          child: const Text('OK'),
         ),
       ],
     );

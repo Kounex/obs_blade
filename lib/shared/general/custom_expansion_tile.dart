@@ -126,7 +126,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                         builder: (context, _) => Text(
                           this.widget.headerText!,
                           style: (this.widget.headerTextStyle ??
-                                  Theme.of(context).textTheme.subtitle1)!
+                                  Theme.of(context).textTheme.titleMedium)!
                               .copyWith(
                             color: _color.value,
                             fontFeatures: const [

@@ -79,7 +79,6 @@ class App extends StatelessWidget {
                   ? StylingHelper.background_reduced_smearing_color
                   : StylingHelper.background_color
               : '212123'.hexToColor()),
-      backgroundColor: backgroundColor ?? StylingHelper.primary_color,
       canvasColor: canvasColor ?? StylingHelper.primary_color,
       cardColor: cardColor ?? StylingHelper.primary_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
@@ -149,10 +148,6 @@ class App extends StatelessWidget {
         barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),
-      colorScheme: ColorScheme.fromSwatch(
-        accentColor: hightlightColor ?? StylingHelper.highlight_color,
-        brightness: brightness ?? Brightness.dark,
-      ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith<Color?>(
             (Set<MaterialState> states) {
@@ -199,6 +194,10 @@ class App extends StatelessWidget {
           return null;
         }),
       ),
+      colorScheme: ColorScheme.fromSwatch(
+        accentColor: hightlightColor ?? StylingHelper.highlight_color,
+        brightness: brightness ?? Brightness.dark,
+      ).copyWith(background: backgroundColor ?? StylingHelper.primary_color),
     );
   }
 

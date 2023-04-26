@@ -61,7 +61,7 @@ class SupportHeader extends StatelessWidget {
               /// Taken from [CupertinoAlertDialog]'s title property where text
               /// is being transformed with this style hardcoded (not accessible from
               /// the outside unfortunately - therefore copy&pasted for now)
-              style: Theme.of(context).textTheme.bodyText1!.copyWith(
+              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                     fontFamily: '.SF UI Display',
                     inherit: false,
 

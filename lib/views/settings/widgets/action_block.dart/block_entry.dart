@@ -77,7 +77,7 @@ class _BlockEntryState extends State<BlockEntry> {
       child: Container(
         color: _isPressed
             ? CupertinoDynamicColor.resolve(kPressedColor, context)
-            : Theme.of(context).backgroundColor,
+            : Theme.of(context).colorScheme.background,
         height: kblockEntryHeight,
         width: MediaQuery.of(context).size.width,
         child: Padding(
@@ -110,7 +110,7 @@ class _BlockEntryState extends State<BlockEntry> {
                       child: Text(this.widget.title!,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                          style: Theme.of(context).textTheme.subtitle1
+                          style: Theme.of(context).textTheme.titleMedium
                           // .copyWith(fontSize: 15.0),
                           ),
                     ),

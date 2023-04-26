@@ -35,7 +35,7 @@ class CardHeader extends StatelessWidget {
                   children: [
                     Text(
                       this.title,
-                      style: Theme.of(context).textTheme.headline5,
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(
                       width: 108.0,

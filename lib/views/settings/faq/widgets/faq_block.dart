@@ -21,7 +21,7 @@ class FAQBlock extends StatelessWidget {
         Text(
           this.heading,
           style: TextStyle(
-            fontSize: Theme.of(context).textTheme.headline6!.fontSize,
+            fontSize: Theme.of(context).textTheme.titleLarge!.fontSize,
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -43,7 +43,7 @@ class HotkeyList extends StatelessWidget {
                   children: [
                     Text(
                       'Hotkeys',
-                      style: Theme.of(context).textTheme.headline5,
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 6.0),
                     const Text(

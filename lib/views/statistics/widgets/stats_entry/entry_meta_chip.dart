@@ -29,7 +29,7 @@ class EntryMetaChip extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4.0),
                   child: Text(
                     this.title,
-                    style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                    style: Theme.of(context).textTheme.titleSmall!.copyWith(
                           decoration: TextDecoration.underline,
                         ),
                   ),

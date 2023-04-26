@@ -1,0 +1,26 @@
+DISCLAIMER: This app is not in any way affiliated with OBS (Open Broadcaster Software). It's an unofficial, free and open source app to control OBS (https://github.com/Kounex/obs_blade)
+
+OBS Blade is designed to be your stream companion and help you to manage your live stream. While using OBS (Open Broadcaster Software) you can connect to the running instance and gain control over important parts of the software. This should help you to manage what your audience can see / hear without the need to switch to OBS on your machine and make such changes. You can keep doing what you do and easily use this app to control OBS!
+
+Currently OBS Blade supports:
+
+- Start / stop the stream
+- Changing the active scene
+- Toggle visibility of scene items (like desktop capture etc.)
+- Change the volume of your current audio sources (or mute them)
+- View any Twitch chat and write messages
+- See live statistics of your stream performance (FPS, CPU usage, kbit/s etc.)
+
+OBS Blade also saves statistics of your previous streams so you can track the overall performance and some nice to know facts!
+
+This app is still in its early stages and will get updated with new features over time - for now the main features which I want to add are:
+
+- More engagement with OBS (renaming, sorting, scripted switching etc.)
+- Export / merge statistics
+- Soundboard
+- Incoming feature requests
+- (Maybe) Streamlabs client connection
+
+I hope you have a good time using this app. If you encounter any bugs, have feature requests or anything similar, feel free to get in touch with me!
+
+contact@kounex.com

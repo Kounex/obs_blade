@@ -47,15 +47,16 @@ class StatsEntry extends StatelessWidget {
                       children: [
                         Text(
                           this.pastStatsData.name ?? 'Unnamed entry',
-                          style: Theme.of(context).textTheme.button!.copyWith(
-                                fontSize: 18.0,
-                                color: this.pastStatsData.name == null
-                                    ? Theme.of(context)
-                                        .textTheme
-                                        .bodySmall!
-                                        .color
-                                    : null,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelLarge!.copyWith(
+                                    fontSize: 18.0,
+                                    color: this.pastStatsData.name == null
+                                        ? Theme.of(context)
+                                            .textTheme
+                                            .bodySmall!
+                                            .color
+                                        : null,
+                                  ),
                           maxLines: 2,
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,

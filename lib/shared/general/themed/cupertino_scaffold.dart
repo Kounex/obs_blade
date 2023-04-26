@@ -13,7 +13,10 @@ class ThemedCupertinoScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoScaffold(
       transitionBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: this.body,
+      body: IconTheme(
+        data: Theme.of(context).iconTheme,
+        child: this.body,
+      ),
     );
   }
 }

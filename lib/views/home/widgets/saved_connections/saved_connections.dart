@@ -20,7 +20,7 @@ class SavedConnections extends StatelessWidget {
           padding: const EdgeInsets.only(top: 12.0, left: 24.0),
           child: Text(
             'Saved Connections',
-            style: Theme.of(context).textTheme.headline5,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
         const Divider(),

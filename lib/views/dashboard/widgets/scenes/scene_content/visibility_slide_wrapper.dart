@@ -126,12 +126,6 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
             child: Slidable(
               closeOnScroll: false,
               enabled: false,
-              child: Builder(
-                builder: (context) {
-                  _registerReaction(dashboardStore, Slidable.of(context)!);
-                  return this.widget.child;
-                },
-              ),
               startActionPane: ActionPane(
                 motion: const BehindMotion(),
                 extentRatio: 0.2,
@@ -140,29 +134,6 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                     backgroundColor: hiddenSceneItem != null
                         ? CupertinoColors.destructiveRed
                         : Theme.of(context).buttonTheme.colorScheme!.primary,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Icon(
-                            hiddenSceneItem != null
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            size: 18.0,
-                          ),
-                        ),
-                        const SizedBox(height: 2.0),
-                        Flexible(
-                          child: Text(
-                            hiddenSceneItem != null ? 'Hidden' : 'Visible',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyText2!
-                                .copyWith(fontSize: 12.0),
-                          ),
-                        ),
-                      ],
-                    ),
                     autoClose: false,
                     onPressed: (_) {
                       if (hiddenSceneItem != null) {
@@ -184,8 +155,37 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                         hiddenSceneItemsBox.add(hiddenSceneItem!);
                       }
                     },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Icon(
+                            hiddenSceneItem != null
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            size: 18.0,
+                          ),
+                        ),
+                        const SizedBox(height: 2.0),
+                        Flexible(
+                          child: Text(
+                            hiddenSceneItem != null ? 'Hidden' : 'Visible',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium!
+                                .copyWith(fontSize: 12.0),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
+              ),
+              child: Builder(
+                builder: (context) {
+                  _registerReaction(dashboardStore, Slidable.of(context)!);
+                  return this.widget.child;
+                },
               ),
             ),
           ),

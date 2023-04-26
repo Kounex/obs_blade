@@ -38,7 +38,7 @@ class BaseButton extends StatelessWidget {
   Widget build(BuildContext context) {
     ButtonStyle style = ElevatedButton.styleFrom(
       padding: this.padding,
-      primary: this.isDestructive
+      backgroundColor: this.isDestructive
           ? CupertinoColors.destructiveRed
           : this.secondary
               ? Colors.transparent
@@ -66,11 +66,11 @@ class BaseButton extends StatelessWidget {
           )
         : ElevatedButton(
             style: style,
+            onPressed: this.onPressed,
             child: this.child ??
                 FittedBox(
                   child: Text(this.text!),
                 ),
-            onPressed: this.onPressed,
           );
   }
 }

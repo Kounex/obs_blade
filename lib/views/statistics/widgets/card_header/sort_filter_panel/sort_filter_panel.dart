@@ -32,7 +32,7 @@ class SortFilterPanel extends StatelessWidget {
             child: FilterStatus(),
           ),
           headerPadding: const EdgeInsets.all(14.0),
-          headerTextStyle: Theme.of(context).textTheme.bodyText2,
+          headerTextStyle: Theme.of(context).textTheme.bodyMedium,
           expandedBody: SizedBox(
             width: double.infinity,
             child: Column(

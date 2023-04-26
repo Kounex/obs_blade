@@ -53,7 +53,7 @@ class LogEntry extends StatelessWidget {
                         bottom: BorderSide(
                           color: Theme.of(context)
                               .textTheme
-                              .bodyText1!
+                              .bodyLarge!
                               .color!
                               .withOpacity(0.5),
                         ),
@@ -85,7 +85,7 @@ class LogEntry extends StatelessWidget {
                             text: level.name,
                             style: Theme.of(context)
                                 .textTheme
-                                .bodyText1!
+                                .bodyLarge!
                                 .copyWith(fontSize: 12.0),
                             verticalSpacing: 6.0,
                             color: level.color,

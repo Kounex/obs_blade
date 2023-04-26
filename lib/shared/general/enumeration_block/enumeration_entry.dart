@@ -28,7 +28,7 @@ class EnumerationEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double enumerationSize = this.enumerationSize ??
-        Theme.of(context).textTheme.bodyText1!.fontSize!;
+        Theme.of(context).textTheme.bodyLarge!.fontSize!;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
