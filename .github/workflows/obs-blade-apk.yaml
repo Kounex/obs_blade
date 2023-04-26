@@ -4,9 +4,10 @@ on:
   push:
     branches: [foss]
     paths-ignore:
-      - "**/README.md"
+      - '**/README.md'
 
-  Allows you to run this workflow manually from the Actions tab
+  # Allows you to run this workflow manually from the Actions tab
+  # ONLY POSSIBLE IF IN *DEFAULT* BRANCH AS SET IN REPO
   workflow_dispatch:
 
 jobs:
