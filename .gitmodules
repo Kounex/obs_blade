@@ -1,0 +1,3 @@
+[submodule "vendor/flutter"]
+	path = vendor/flutter
+	url = https://github.com/flutter/flutter
