@@ -1,5 +1,13 @@
 name: Build and release FOSS version
-on: [workflow_dispatch]
+
+on:
+  push:
+    branches: [foss]
+    paths-ignore:
+      - "**/README.md"
+
+  Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build-release-foss:
