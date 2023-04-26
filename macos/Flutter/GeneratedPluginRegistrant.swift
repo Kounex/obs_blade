@@ -8,7 +8,7 @@ import Foundation
 import connectivity_plus
 import in_app_purchase_storekit
 import package_info_plus
-import path_provider_macos
+import path_provider_foundation
 import share_plus
 import url_launcher_macos
 import wakelock_macos

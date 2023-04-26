@@ -19,21 +19,21 @@ dependencies:
   intl: ^0.18.0
 
   # Get project meta info
-  package_info_plus: ^3.0.2
+  package_info_plus: ^3.1.1
 
   # Webview
   # flutter_inappwebview: ^5.4.3+7
-  webview_flutter: ^4.0.1
+  webview_flutter: ^4.2.0
 
   # State Management and DI
-  get_it: ^7.2.0
-  mobx: ^2.1.3
+  get_it: ^7.3.0
+  mobx: ^2.1.4
   flutter_mobx: ^2.0.6+5
-  path: ^1.8.1
+  path: ^1.8.2
 
   # Network stuff
-  connectivity_plus: ^3.0.2
-  web_socket_channel: ^2.2.0
+  connectivity_plus: ^3.0.5
+  web_socket_channel: ^2.4.0
 
   # Security
   crypto: ^3.0.2
@@ -46,22 +46,22 @@ dependencies:
   uuid: ^3.0.7
 
   # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
-  url_launcher: ^6.1.7
+  url_launcher: ^6.1.10
 
   # Enable keeping the device active
   wakelock: ^0.6.2
 
   # Initiate native share sheet
-  share_plus: ^6.3.0
+  share_plus: ^6.3.2
 
   # Add custom images
-  image_picker: ^0.8.6
+  image_picker: ^0.8.7+4
 
   # Get various path related directories on host OS
-  path_provider: ^2.0.11
+  path_provider: ^2.0.14
 
   # Enable and manage in-app purchases
-  in_app_purchase: ^3.1.1
+  in_app_purchase: ^3.1.5
 
   # QR Scanner for quick connect feature
   qr_code_scanner: ^1.0.1
@@ -72,19 +72,18 @@ dependencies:
       url: https://github.com/Kounex/modal_bottom_sheet.git
       ref: main
       path: modal_bottom_sheet
-  # fl_chart: ^0.35.0
-  fl_chart: ^0.55.2
-  smooth_page_indicator: ^1.0.0+2
-  keyboard_actions: ^4.1.0
+  fl_chart: ^0.62.0
+  smooth_page_indicator: ^1.1.0
+  keyboard_actions: ^4.2.0
   expandable: ^5.0.1
-  flutter_slidable: ^2.0.0
+  flutter_slidable: ^3.0.0
   confetti: ^0.7.0
 
   # Additional dependencies for packages
-  xml: ^6.1.0
+  xml: ^6.2.0
 
   # Splashscreen ios and android
-  flutter_native_splash: ^2.2.16
+  flutter_native_splash: ^2.2.19
 
 dev_dependencies:
   flutter_test:
@@ -98,13 +97,13 @@ dev_dependencies:
   flutter_lints: ^2.0.1
 
   # Codegen
-  build_resolvers: ^2.1.0
-  build_runner: ^2.3.2
+  build_resolvers: ^2.2.0
+  build_runner: ^2.3.3
   hive_generator: ^2.0.0
-  mobx_codegen: ^2.1.1
+  mobx_codegen: ^2.2.0
 
   # App icons
-  flutter_launcher_icons: ^0.11.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter_icons:
   android: true
