@@ -60,9 +60,6 @@ dependencies:
   # Get various path related directories on host OS
   path_provider: ^2.0.14
 
-  # Enable and manage in-app purchases
-  in_app_purchase: ^3.1.5
-
   # QR Scanner for quick connect feature
   qr_code_scanner: ^1.0.1
 
