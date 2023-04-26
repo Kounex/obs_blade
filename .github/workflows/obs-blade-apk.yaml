@@ -22,14 +22,23 @@ jobs:
         run: |
           VER=$(cat pubspec.yaml | grep -o "version:[^:]*" | cut -f 2 -d ":" | cut -f 1 -d "+" | xargs)
           echo "APP_VERSION=$VER" >> $GITHUB_ENV
-      - name: Get Flutter SDK
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
+      # - name: Get Flutter SDK
+      #   uses: subosito/flutter-action@v2
+      #   with:
+      #     channel: stable
+      # - name: Get pubspec dependencies
+      #   run: flutter pub get
+      # - name: Build APK
+      #   run: flutter build apk
+      #--------------------------------------------------------
+      # Make use of the pinned flutter version via gt submodule
+      # to ensure we are using a working flutter version for
+      # this app / release
+      #--------------------------------------------------------
       - name: Get pubspec dependencies
-        run: flutter pub get
+        run: ./flutterw pub get
       - name: Build APK
-        run: flutter build apk
+        run: ./flutterw build apk
       - name: Rename APK
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/obs-blade-${{ env.APP_VERSION }}.apk
       - name: Create GitHub release and upload APK
