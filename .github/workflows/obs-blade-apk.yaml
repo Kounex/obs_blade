@@ -23,7 +23,7 @@ jobs:
       - name: Get Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          channel: beta
+          channel: stable
       - name: Get pubspec dependencies
         run: flutter pub get
       - name: Build APK
