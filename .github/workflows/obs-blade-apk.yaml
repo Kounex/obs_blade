@@ -36,6 +36,6 @@ jobs:
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.APP_VERSION }}
+          tag_name: foss-${{ env.APP_VERSION }}
           target_commitish: foss
           files: build/app/outputs/flutter-apk/obs-blade-${{ env.APP_VERSION }}.apk
