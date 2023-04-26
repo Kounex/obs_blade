@@ -43,7 +43,7 @@ jobs:
       - name: Build APK
         run: ./flutterw build apk
       - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/obs-blade-${{ env.APP_VERSION }}.apk
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/obs-blade-foss-${{ env.APP_VERSION }}.apk
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v1
         with:
