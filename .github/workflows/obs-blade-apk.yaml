@@ -49,4 +49,4 @@ jobs:
         with:
           tag_name: foss-${{ env.APP_VERSION }}
           target_commitish: foss
-          files: build/app/outputs/flutter-apk/obs-blade-${{ env.APP_VERSION }}.apk
+          files: build/app/outputs/flutter-apk/obs-blade-foss-${{ env.APP_VERSION }}.apk
