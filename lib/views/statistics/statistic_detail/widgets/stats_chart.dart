@@ -248,6 +248,8 @@ class StatsChart extends StatelessWidget {
                   // ],
                   barWidth: 2,
                   isStrokeCapRound: false,
+                  isCurved: true,
+                  curveSmoothness: 0.2,
                   dotData: FlDotData(
                     show: false,
                   ),

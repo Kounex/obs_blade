@@ -56,7 +56,7 @@ class _StatisticsViewState extends State<StatisticsView> {
   //     numDroppedFrames: _random.nextInt(100),
   //     fps: 60 - (_random.nextDouble() * 20),
   //     renderTotalFrames: _random.nextInt(70000),
-  //     renderMissedFrames: _random.nextInt(100),
+  //     renderSkippedFrames: _random.nextInt(100),
   //     outputTotalFrames: _random.nextInt(70000),
   //     outputSkippedFrames: _random.nextInt(70000),
   //     averageFrameTime: _random.nextDouble() * 60,
@@ -217,9 +217,9 @@ class _StatisticsViewState extends State<StatisticsView> {
                 return HiveBuilder<PastRecordData>(
                     hiveKey: HiveKeys.PastRecordData,
                     builder: (context, pastRecordDataBox, child) {
-                      // List<PastStreamData> pastStreamData = _pastStreamData
                       List<PastStatsData> pastStatsData = [
                         ...pastStreamDataBox.values.toList(),
+                        // ..._pastStreamData,
                         ...pastRecordDataBox.values.toList(),
                       ]..sort((a, b) =>
                           a.listEntryDateMS.last - b.listEntryDateMS.last);
