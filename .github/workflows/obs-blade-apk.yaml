@@ -36,6 +36,8 @@ jobs:
       # to ensure we are using a working flutter version for
       # this app / release
       #--------------------------------------------------------
+      - name: Set flutter channel
+        run: ./flutterw channel stable
       - name: Get pubspec dependencies
         run: ./flutterw pub get
       - name: Build APK
