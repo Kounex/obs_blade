@@ -1,8 +1,0 @@
-Hello again! 2023 starting off with new features requested by the community:
-
-- Volume meters
-- Fullscreen preview feature
-- Fixed twitch chat
-- Performance improvements
-
-As always: feel free to drop some feature or bug requests via the GitHub page of OBS Blade or contact me via email! :)
