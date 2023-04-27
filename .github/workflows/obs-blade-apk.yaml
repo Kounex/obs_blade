@@ -33,16 +33,12 @@ jobs:
       # - name: Build APK
       #   run: flutter build apk
       #--------------------------------------------------------
-      # Make use of the pinned flutter version via gt submodule
+      # Make use of the pinned flutter version via git submodule
       # to ensure we are using a working flutter version for
       # this app / release
       #--------------------------------------------------------
-      # - name: Flutter doctor
-      #   run: ./flutterw doctor
-      # - name: Get pubspec dependencies
-      #   run: ./flutterw pub get
       - name: Get pubspec dependencies
-        run: vendor/flutter/bin/flutter pub get
+        run: ./flutterw pub get
       - name: Build APK
         run: ./flutterw build apk
       - name: Rename APK
