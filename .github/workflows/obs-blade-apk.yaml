@@ -38,6 +38,8 @@ jobs:
       # this app / release
       #--------------------------------------------------------
       - name: Get pubspec dependencies
+        run: ./flutterw config --no-analytics
+      - name: Get pubspec dependencies
         run: ./flutterw pub get
       - name: Build APK
         run: ./flutterw build apk
