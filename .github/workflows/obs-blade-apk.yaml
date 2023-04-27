@@ -19,6 +19,7 @@ jobs:
         with:
           ref: foss
           submodules: recursive
+          fetch-depth: 0
       - name: Set release version
         run: |
           VER=$(cat pubspec.yaml | grep -o "version:[^:]*" | cut -f 2 -d ":" | cut -f 1 -d "+" | xargs)
