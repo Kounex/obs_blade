@@ -43,16 +43,16 @@ jobs:
       # this app / release
       #--------------------------------------------------------
       - name: Get pubspec dependencies
-        run: ./flutterw config --no-analytics
+        run: /tmp/build/flutterw config --no-analytics
       - name: Get pubspec dependencies
-        run: ./flutterw pub get
+        run: /tmp/build/flutterw pub get
       - name: Build APK
-        run: ./flutterw build apk
+        run: /tmp/build/flutterw build apk
       - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/obs-blade-foss-${{ env.APP_VERSION }}.apk
+        run: mv /tmp/build/build/app/outputs/flutter-apk/app-release.apk /tmp/build/build/app/outputs/flutter-apk/obs-blade-foss-${{ env.APP_VERSION }}.apk
       - name: Create GitHub release and upload APK
         uses: softprops/action-gh-release@v1
         with:
           tag_name: foss-${{ env.APP_VERSION }}
           target_commitish: foss
-          files: build/app/outputs/flutter-apk/obs-blade-foss-${{ env.APP_VERSION }}.apk
+          files: /tmp/build/build/app/outputs/flutter-apk/obs-blade-foss-${{ env.APP_VERSION }}.apk
