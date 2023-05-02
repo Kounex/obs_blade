@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - name: Move repo to new working dir
         run: |
-          mv * /tmp/build
+          cp -Rp .
       - name: Set release version
         working-directory: /tmp/build
         run: |
