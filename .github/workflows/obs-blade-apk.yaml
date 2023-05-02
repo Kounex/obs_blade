@@ -25,7 +25,8 @@ jobs:
           fetch-depth: 0
       - name: Move repo to new working dir
         run: |
-          cp -Rp . /tmp/build
+          cd ..
+          mv obs_blade /tmp/build
       - name: Set release version
         working-directory: /tmp/build
         run: |
@@ -46,10 +47,7 @@ jobs:
       #--------------------------------------------------------
       - name: Get pubspec dependencies
         working-directory: /tmp/build
-        run: |
-          pwd
-          ls -la
-          ./flutterw config --no-analytics
+        run: ./flutterw config --no-analytics
       - name: Get pubspec dependencies
         working-directory: /tmp/build
         run: ./flutterw pub get
