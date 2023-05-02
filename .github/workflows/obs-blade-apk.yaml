@@ -18,13 +18,14 @@ jobs:
         run: |
           mkdir -p /tmp/build
       - name: Checkout
-        working-directory: /tmp/build
         uses: actions/checkout@v3
         with:
-          path: /tmp/build
           ref: foss
           submodules: recursive
           fetch-depth: 0
+      - name: Move repo to new working dir
+        run: |
+          mv * /tmp/build
       - name: Set release version
         working-directory: /tmp/build
         run: |
