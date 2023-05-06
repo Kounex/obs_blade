@@ -6,7 +6,7 @@ version: 3.2.0+2023012003
 publish_to: 'none'
 
 environment:
-  sdk: '>=2.18.4 <3.0.0'
+  sdk: '>=2.19.0 <3.0.0'
 
 dependencies:
   flutter:
@@ -16,27 +16,27 @@ dependencies:
 
   # CUSTOM
   # Language stuff
-  intl: ^0.18.0
+  intl: ^0.18.1
 
   # Get project meta info
-  package_info_plus: ^3.1.1
+  package_info_plus: ^3.1.2
 
   # Webview
   # flutter_inappwebview: ^5.4.3+7
   webview_flutter: ^4.2.0
 
   # State Management and DI
-  get_it: ^7.3.0
-  mobx: ^2.1.4
+  get_it: ^7.4.1
+  mobx: ^2.2.0
   flutter_mobx: ^2.0.6+5
   path: ^1.8.2
 
   # Network stuff
-  connectivity_plus: ^3.0.5
+  connectivity_plus: ^3.0.6
   web_socket_channel: ^2.4.0
 
   # Security
-  crypto: ^3.0.2
+  crypto: ^3.0.3
 
   # Local persistance stuff
   hive: ^2.2.3
@@ -52,7 +52,7 @@ dependencies:
   wakelock: ^0.6.2
 
   # Initiate native share sheet
-  share_plus: ^6.3.2
+  share_plus: ^6.3.4
 
   # Add custom images
   image_picker: ^0.8.7+4
