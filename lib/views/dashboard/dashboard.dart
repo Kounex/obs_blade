@@ -151,15 +151,15 @@ class _DashboardViewState extends State<DashboardView> {
                                     Theme.of(context).textTheme.headlineMedium,
                               ),
                             ),
-                            ResponsiveWidgetWrapper(
+                            const ResponsiveWidgetWrapper(
                               mobileWidget: Column(
-                                children: const [
+                                children: [
                                   SizedBox(height: 8.0),
                                   OBSWidgetsMobile(),
                                 ],
                               ),
                               tabletWidget: Column(
-                                children: const [
+                                children: [
                                   Padding(
                                     padding: EdgeInsets.only(top: 8.0),
                                     child: BaseDivider(),

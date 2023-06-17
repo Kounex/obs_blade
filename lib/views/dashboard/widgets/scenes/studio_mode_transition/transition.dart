@@ -43,9 +43,7 @@ class Transition extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         children: [
-          /// TODO: Check if there is a better solution to constrain the max
-          /// width of the Text widget in the DropdownButton. Currently need to
-          /// hard code maxWidth from LayoutBuilder - 24
+          /// TODO: Check if there is a better solution to constrain the max width of the Text widget in the DropdownButton. Currently need to hard code maxWidth from LayoutBuilder - 24
           Flexible(
             child: LayoutBuilder(
               builder: (context, constraints) => DropdownButton<String?>(

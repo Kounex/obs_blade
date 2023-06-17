@@ -18,10 +18,10 @@ class FavoriteControl extends StatelessWidget {
         child: CupertinoSlidingSegmentedControl(
           groupValue: statisticsStore.showOnlyFavorites ?? 'null',
           padding: const EdgeInsets.all(0),
-          children: {
+          children: const {
             false: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(
                   Icons.star,
                 ),
@@ -30,10 +30,10 @@ class FavoriteControl extends StatelessWidget {
                 ),
               ],
             ),
-            true: const Icon(
+            true: Icon(
               Icons.star,
             ),
-            'null': const Icon(
+            'null': Icon(
               Icons.star_border,
             ),
           },

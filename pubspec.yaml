@@ -23,16 +23,16 @@ dependencies:
 
   # Webview
   # flutter_inappwebview: ^5.4.3+7
-  webview_flutter: ^4.2.0
+  webview_flutter: ^4.2.2
 
   # State Management and DI
-  get_it: ^7.4.1
+  get_it: ^7.6.0
   mobx: ^2.2.0
   flutter_mobx: ^2.0.6+5
-  path: ^1.8.2
+  path: ^1.8.3
 
   # Network stuff
-  connectivity_plus: ^3.0.6
+  connectivity_plus: ^4.0.1
   web_socket_channel: ^2.4.0
 
   # Security
@@ -46,7 +46,7 @@ dependencies:
   uuid: ^3.0.7
 
   # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
-  url_launcher: ^6.1.10
+  url_launcher: ^6.1.11
 
   # Enable keeping the device active
   wakelock: ^0.6.2
@@ -55,24 +55,20 @@ dependencies:
   share_plus: ^6.3.4
 
   # Add custom images
-  image_picker: ^0.8.7+4
+  image_picker: ^0.8.9
 
   # Get various path related directories on host OS
   path_provider: ^2.0.14
 
   # Enable and manage in-app purchases
-  in_app_purchase: ^3.1.5
+  in_app_purchase: ^3.1.7
 
   # QR Scanner for quick connect feature
   qr_code_scanner: ^1.0.1
 
   # Fancy done layout stuff
-  modal_bottom_sheet:
-    git:
-      url: https://github.com/Kounex/modal_bottom_sheet.git
-      ref: main
-      path: modal_bottom_sheet
-  fl_chart: ^0.62.0
+  modal_bottom_sheet: ^2.1.2
+  fl_chart: ^0.63.0
   smooth_page_indicator: ^1.1.0
   keyboard_actions: ^4.2.0
   expandable: ^5.0.1
@@ -84,6 +80,13 @@ dependencies:
 
   # Splashscreen ios and android
   flutter_native_splash: ^2.2.19
+
+dependency_overrides:
+  modal_bottom_sheet:
+    git:
+      url: https://github.com/Kounex/modal_bottom_sheet.git
+      ref: main
+      path: modal_bottom_sheet
 
 dev_dependencies:
   flutter_test:

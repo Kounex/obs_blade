@@ -129,7 +129,7 @@ class StatsChart extends StatelessWidget {
               //     margin: 20.0,
               //   ),
               // ),
-              gridData: FlGridData(show: false),
+              gridData: const FlGridData(show: false),
               borderData: FlBorderData(
                 show: true,
                 border: Border(
@@ -199,12 +199,12 @@ class StatsChart extends StatelessWidget {
                     },
                   ),
                 ),
-                topTitles: AxisTitles(
+                topTitles: const AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: false,
                   ),
                 ),
-                rightTitles: AxisTitles(
+                rightTitles: const AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: false,
                   ),
@@ -250,7 +250,7 @@ class StatsChart extends StatelessWidget {
                   isStrokeCapRound: false,
                   isCurved: true,
                   curveSmoothness: 0.2,
-                  dotData: FlDotData(
+                  dotData: const FlDotData(
                     show: false,
                   ),
                   belowBarData: BarAreaData(

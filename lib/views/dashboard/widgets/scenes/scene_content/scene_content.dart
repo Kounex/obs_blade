@@ -9,9 +9,9 @@ class SceneContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: const [
+      children: [
         Flexible(
           child: BaseCard(
             title: 'Scene Items',
