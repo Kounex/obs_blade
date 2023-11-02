@@ -7,7 +7,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets_mobile.dart';
-import 'package:wakelock/wakelock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../shared/dialogs/confirmation.dart';
 import '../../shared/general/base/divider.dart';
@@ -67,7 +67,7 @@ class _DashboardViewState extends State<DashboardView> {
 
     if (Hive.box(HiveKeys.Settings.name)
         .get(SettingsKeys.WakeLock.name, defaultValue: true)) {
-      Wakelock.enable();
+      WakelockPlus.enable();
     }
 
     when(
@@ -92,7 +92,7 @@ class _DashboardViewState extends State<DashboardView> {
   void dispose() {
     /// Disable [Wakelock] - does not need to check whether this is active
     /// since calling disable is idempotent
-    Wakelock.disable();
+    WakelockPlus.disable();
     super.dispose();
   }
 
@@ -151,15 +151,15 @@ class _DashboardViewState extends State<DashboardView> {
                                     Theme.of(context).textTheme.headlineMedium,
                               ),
                             ),
-                            ResponsiveWidgetWrapper(
+                            const ResponsiveWidgetWrapper(
                               mobileWidget: Column(
-                                children: const [
+                                children: [
                                   SizedBox(height: 8.0),
                                   OBSWidgetsMobile(),
                                 ],
                               ),
                               tabletWidget: Column(
-                                children: const [
+                                children: [
                                   Padding(
                                     padding: EdgeInsets.only(top: 8.0),
                                     child: BaseDivider(),
