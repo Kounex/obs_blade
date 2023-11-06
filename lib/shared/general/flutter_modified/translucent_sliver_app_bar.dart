@@ -1,5 +1,5 @@
-import 'dart:ui';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -837,8 +837,6 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
             surfaceTintColor: surfaceTintColor,
             backgroundColor: backgroundColor,
             foregroundColor: foregroundColor,
-            //TODO: Fix the brightness deprecation
-            //brightness: brightness,
             iconTheme: iconTheme,
             actionsIconTheme: actionsIconTheme,
             primary: primary,

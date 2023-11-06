@@ -63,10 +63,12 @@ contact@kounex.com
 
 ## App Store
 
-This App is available in the iOS App Store and the Google Play Store:
+This App is available in the iOS App Store, Google Play Store, F-Droid and here on GitHub:
 
 - [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
 - [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obsBlade)
+- [F-Droid](https://f-droid.org/packages/com.kounex.obsBlade/)
+- [GitHub](https://github.com/Kounex/obs_blade/releases/latest)
 
 ## How to build
 
