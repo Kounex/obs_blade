@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
@@ -110,7 +111,7 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<Scene>? scenes;
   @observable
-  ObservableList<String>? hotkeys;
+  ObservableSet<Hotkey>? hotkeys;
 
   /// WebSocket API will return all top level scene items for
   /// the current scene and elements of groups have to be requested
@@ -1117,7 +1118,11 @@ abstract class _DashboardStore with Store {
         GetHotkeyListResponse getHotkeyListResponse =
             GetHotkeyListResponse(response.jsonRAW);
 
-        this.hotkeys = ObservableList.of(getHotkeyListResponse.hotkeys);
+        this.hotkeys = ObservableSet.of(
+          Set.of(getHotkeyListResponse.hotkeys).map(
+            (name) => Hotkey(name),
+          ),
+        );
         break;
       default:
         break;

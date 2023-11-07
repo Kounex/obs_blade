@@ -320,13 +320,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.hotkeys', context: context);
 
   @override
-  ObservableList<String>? get hotkeys {
+  ObservableSet<Hotkey>? get hotkeys {
     _$hotkeysAtom.reportRead();
     return super.hotkeys;
   }
 
   @override
-  set hotkeys(ObservableList<String>? value) {
+  set hotkeys(ObservableSet<Hotkey>? value) {
     _$hotkeysAtom.reportWrite(value, super.hotkeys, () {
       super.hotkeys = value;
     });

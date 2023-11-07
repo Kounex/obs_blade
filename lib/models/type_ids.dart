@@ -10,4 +10,5 @@ class TypeIDs {
   static const int LogLevel = 8;
   static const int PurchasedTip = 9;
   static const int PastRecordData = 10;
+  static const int Hotkey = 11;
 }

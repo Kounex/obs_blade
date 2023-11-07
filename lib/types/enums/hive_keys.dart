@@ -23,6 +23,9 @@ enum HiveKeys {
   /// Returns a List of [PurchasedTip]
   PurchasedTip,
 
+  /// Returns a List of [Hotkey]
+  Hotkey,
+
   /// Returns the box containing app settings - refer to [SettingsKeys]
   /// to see which key-value pairs are available
   Settings,
@@ -38,6 +41,7 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.HiddenScene: 'hidden-scene',
         HiveKeys.AppLog: 'app-log',
         HiveKeys.PurchasedTip: 'purchased-tip',
+        HiveKeys.Hotkey: 'hotkey',
         HiveKeys.Settings: 'settings',
       }[this]!;
 }

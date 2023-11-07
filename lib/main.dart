@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 
 import 'app.dart';
@@ -90,6 +91,7 @@ Future<void> _initializeHive() async {
   Hive.registerAdapter(HiddenSceneAdapter());
   Hive.registerAdapter(AppLogAdapter());
   Hive.registerAdapter(PurchasedTipAdapter());
+  Hive.registerAdapter(HotkeyAdapter());
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
@@ -127,6 +129,10 @@ Future<void> _initializeHive() async {
   );
   await Hive.openBox<PurchasedTip>(
     HiveKeys.PurchasedTip.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<Hotkey>(
+    HiveKeys.Hotkey.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 
