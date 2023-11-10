@@ -1,4 +1,5 @@
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_input_audio_sync_offset.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_input_mute.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_input_volume.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
@@ -15,4 +16,10 @@ class InputsBatchResponse extends BaseBatchResponse {
       .responses
       .where((response) => response.requestType == RequestType.GetInputMute)
       .map((response) => GetInputMuteResponse(response.jsonRAW));
+
+  Iterable<GetInputAudioSyncOffsetResponse> get inputsAudioSyncOffset => this
+      .responses
+      .where((response) =>
+          response.requestType == RequestType.GetInputAudioSyncOffset)
+      .map((response) => GetInputAudioSyncOffsetResponse(response.jsonRAW));
 }

@@ -26,6 +26,7 @@ mixin _$Input {
   double? get inputVolumeMul => throw _privateConstructorUsedError;
   double? get inputVolumeDb => throw _privateConstructorUsedError;
   List<InputChannel>? get inputLevelsMul => throw _privateConstructorUsedError;
+  int? get syncOffset => throw _privateConstructorUsedError;
   bool get inputMuted => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,6 +46,7 @@ abstract class $InputCopyWith<$Res> {
       double? inputVolumeMul,
       double? inputVolumeDb,
       List<InputChannel>? inputLevelsMul,
+      int? syncOffset,
       bool inputMuted});
 }
 
@@ -67,6 +69,7 @@ class _$InputCopyWithImpl<$Res, $Val extends Input>
     Object? inputVolumeMul = freezed,
     Object? inputVolumeDb = freezed,
     Object? inputLevelsMul = freezed,
+    Object? syncOffset = freezed,
     Object? inputMuted = null,
   }) {
     return _then(_value.copyWith(
@@ -94,6 +97,10 @@ class _$InputCopyWithImpl<$Res, $Val extends Input>
           ? _value.inputLevelsMul
           : inputLevelsMul // ignore: cast_nullable_to_non_nullable
               as List<InputChannel>?,
+      syncOffset: freezed == syncOffset
+          ? _value.syncOffset
+          : syncOffset // ignore: cast_nullable_to_non_nullable
+              as int?,
       inputMuted: null == inputMuted
           ? _value.inputMuted
           : inputMuted // ignore: cast_nullable_to_non_nullable
@@ -116,6 +123,7 @@ abstract class _$$InputImplCopyWith<$Res> implements $InputCopyWith<$Res> {
       double? inputVolumeMul,
       double? inputVolumeDb,
       List<InputChannel>? inputLevelsMul,
+      int? syncOffset,
       bool inputMuted});
 }
 
@@ -136,6 +144,7 @@ class __$$InputImplCopyWithImpl<$Res>
     Object? inputVolumeMul = freezed,
     Object? inputVolumeDb = freezed,
     Object? inputLevelsMul = freezed,
+    Object? syncOffset = freezed,
     Object? inputMuted = null,
   }) {
     return _then(_$InputImpl(
@@ -163,6 +172,10 @@ class __$$InputImplCopyWithImpl<$Res>
           ? _value._inputLevelsMul
           : inputLevelsMul // ignore: cast_nullable_to_non_nullable
               as List<InputChannel>?,
+      syncOffset: freezed == syncOffset
+          ? _value.syncOffset
+          : syncOffset // ignore: cast_nullable_to_non_nullable
+              as int?,
       inputMuted: null == inputMuted
           ? _value.inputMuted
           : inputMuted // ignore: cast_nullable_to_non_nullable
@@ -181,6 +194,7 @@ class _$InputImpl implements _Input {
       this.inputVolumeMul,
       this.inputVolumeDb,
       final List<InputChannel>? inputLevelsMul,
+      this.syncOffset,
       this.inputMuted = false})
       : _inputLevelsMul = inputLevelsMul;
 
@@ -208,12 +222,14 @@ class _$InputImpl implements _Input {
   }
 
   @override
+  final int? syncOffset;
+  @override
   @JsonKey()
   final bool inputMuted;
 
   @override
   String toString() {
-    return 'Input(inputKind: $inputKind, inputName: $inputName, unversionedInputKind: $unversionedInputKind, inputVolumeMul: $inputVolumeMul, inputVolumeDb: $inputVolumeDb, inputLevelsMul: $inputLevelsMul, inputMuted: $inputMuted)';
+    return 'Input(inputKind: $inputKind, inputName: $inputName, unversionedInputKind: $unversionedInputKind, inputVolumeMul: $inputVolumeMul, inputVolumeDb: $inputVolumeDb, inputLevelsMul: $inputLevelsMul, syncOffset: $syncOffset, inputMuted: $inputMuted)';
   }
 
   @override
@@ -233,6 +249,8 @@ class _$InputImpl implements _Input {
                 other.inputVolumeDb == inputVolumeDb) &&
             const DeepCollectionEquality()
                 .equals(other._inputLevelsMul, _inputLevelsMul) &&
+            (identical(other.syncOffset, syncOffset) ||
+                other.syncOffset == syncOffset) &&
             (identical(other.inputMuted, inputMuted) ||
                 other.inputMuted == inputMuted));
   }
@@ -247,6 +265,7 @@ class _$InputImpl implements _Input {
       inputVolumeMul,
       inputVolumeDb,
       const DeepCollectionEquality().hash(_inputLevelsMul),
+      syncOffset,
       inputMuted);
 
   @JsonKey(ignore: true)
@@ -271,6 +290,7 @@ abstract class _Input implements Input {
       final double? inputVolumeMul,
       final double? inputVolumeDb,
       final List<InputChannel>? inputLevelsMul,
+      final int? syncOffset,
       final bool inputMuted}) = _$InputImpl;
 
   factory _Input.fromJson(Map<String, dynamic> json) = _$InputImpl.fromJson;
@@ -287,6 +307,8 @@ abstract class _Input implements Input {
   double? get inputVolumeDb;
   @override
   List<InputChannel>? get inputLevelsMul;
+  @override
+  int? get syncOffset;
   @override
   bool get inputMuted;
   @override

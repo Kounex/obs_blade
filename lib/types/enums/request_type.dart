@@ -142,6 +142,13 @@ enum RequestType {
   /// No specified parameters
   GetHotkeyList,
 
+  /// Gets the audio sync offset of an input.
+  ///
+  /// Note: The audio sync offset can be negative too!
+  ///
+  /// { 'inputName': String } - Name of the input to get the audio sync offset of
+  GetInputAudioSyncOffset,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
@@ -259,4 +266,10 @@ enum RequestType {
   ///
   /// {'hotkeyName': String } - Name of the hotkey to trigger
   TriggerHotkeyByName,
+
+  /// Sets the audio sync offset of an input.
+  ///
+  /// {'inputName': String } - Name of the input to set the audio sync offset of
+  /// {'inputAudioSyncOffset': int } - New audio sync offset in milliseconds - >= -950, <= 20000
+  SetInputAudioSyncOffset,
 }

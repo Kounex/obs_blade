@@ -13,6 +13,7 @@ class Input with _$Input {
     double? inputVolumeMul,
     double? inputVolumeDb,
     List<InputChannel>? inputLevelsMul,
+    int? syncOffset,
     @Default(false) bool inputMuted,
   }) = _Input;
 

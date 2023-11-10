@@ -91,6 +91,10 @@ enum SettingsKeys {
   /// so users can list available OBS hotkeys and trigger them
   ExposeHotkeys,
 
+  /// [bool]: If audio sync offset should be shown for each audio input and if
+  /// they can be adjusted in the app
+  ExposeInputAudioSyncOffset,
+
   /// [bool]: If true OBS Blade will try to reconnect to an OBS instance on connection
   /// lost indefinetily instead of an amount of retries before aborting
   UnlimitedReconnects,
@@ -143,10 +147,8 @@ enum SettingsKeys {
 
   /// [bool]: If the user saw the message regarding the technical preview state of
   /// the hotkey feature and doesn't want to see this warning again
-  DontShowHotkeysTechnicalPreviewWarning
-}
+  DontShowHotkeysTechnicalPreviewWarning;
 
-extension SettingsKeysFunctions on SettingsKeys {
   String get name => const {
         // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
         SettingsKeys.HasUserSeenIntro202208: 'has-user-seen-intro-202208',
@@ -171,6 +173,8 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeReplayBufferControls:
             'expose-replay-buffer-collection',
         SettingsKeys.ExposeHotkeys: 'expose-hotkeys',
+        SettingsKeys.ExposeInputAudioSyncOffset:
+            'expose-input-audio-sync-offset',
         SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:

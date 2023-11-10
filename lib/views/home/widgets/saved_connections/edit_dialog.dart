@@ -183,22 +183,25 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             placeholder: 'Password',
             autocorrect: false,
             obscureText: _obscurePW,
-            suffix: Material(
-              color: Colors.grey[
-                  Theme.of(context).brightness == Brightness.light ? 300 : 900],
-              borderRadius:
-                  const BorderRadius.horizontal(right: Radius.circular(5.0)),
-              child: IconButton(
-                padding: const EdgeInsets.all(6),
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(
-                  maxHeight: 32.0,
-                  maxWidth: 32.0,
+            suffix: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[
+                    Theme.of(context).brightness == Brightness.light
+                        ? 300
+                        : 900],
+                borderRadius: const BorderRadius.horizontal(
+                  right: Radius.circular(5.0),
                 ),
-                onPressed: () => setState(() => _obscurePW = !_obscurePW),
-                iconSize: 20.0,
-                icon: Icon(
-                  _obscurePW ? Icons.visibility_off : Icons.visibility,
+              ),
+              child: GestureDetector(
+                onTap: () => setState(() => _obscurePW = !_obscurePW),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    _obscurePW ? Icons.visibility_off : Icons.visibility,
+                    size: 20.0,
+                  ),
                 ),
               ),
             ),

@@ -6,6 +6,7 @@ enum RequestBatchType {
   ///
   /// RequestType.GetInputVolume
   /// RequestType.GetInputMute
+  /// RequestType.GetInputAudioSyncOffset
   Input,
 
   /// Joint request to get the current status of stream and record as well
@@ -27,6 +28,7 @@ enum RequestBatchType {
         RequestBatchType.Input: [
           RequestType.GetInputVolume,
           RequestType.GetInputMute,
+          RequestType.GetInputAudioSyncOffset,
         ],
         RequestBatchType.Stats: [
           RequestType.GetStreamStatus,

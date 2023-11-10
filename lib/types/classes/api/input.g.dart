@@ -15,6 +15,7 @@ _$InputImpl _$$InputImplFromJson(Map<String, dynamic> json) => _$InputImpl(
       inputLevelsMul: (json['inputLevelsMul'] as List<dynamic>?)
           ?.map((e) => InputChannel.fromJson(e as Map<String, dynamic>))
           .toList(),
+      syncOffset: json['syncOffset'] as int?,
       inputMuted: json['inputMuted'] as bool? ?? false,
     );
 
@@ -26,5 +27,6 @@ Map<String, dynamic> _$$InputImplToJson(_$InputImpl instance) =>
       'inputVolumeMul': instance.inputVolumeMul,
       'inputVolumeDb': instance.inputVolumeDb,
       'inputLevelsMul': instance.inputLevelsMul,
+      'syncOffset': instance.syncOffset,
       'inputMuted': instance.inputMuted,
     };

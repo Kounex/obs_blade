@@ -1,12 +1,8 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/cupertino_number_text_field.dart';
 
-import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
@@ -31,7 +27,6 @@ class Transition extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
-    FocusNode focusNode = FocusNode();
 
     return Observer(builder: (_) {
       TextEditingController controller = TextEditingController(
@@ -39,70 +34,49 @@ class Transition extends StatelessWidget {
                   ?.toString() ??
               '-');
 
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          /// TODO: Check if there is a better solution to constrain the max
-          /// width of the Text widget in the DropdownButton. Currently need to
-          /// hard code maxWidth from LayoutBuilder - 24
-          Flexible(
-            child: LayoutBuilder(
-              builder: (context, constraints) => DropdownButton<String?>(
-                value: dashboardStore.currentTransition?.transitionName,
-                disabledHint: const Text('Empty...'),
-                isDense: true,
-                items: dashboardStore.availableTransitions
-                    ?.map(
-                      (transition) => DropdownMenuItem<String>(
-                        value: transition.transitionName,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth - 24,
-                          ),
-                          child: Text(
-                            transition.transitionName,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+      return Padding(
+        /// Small hack - not sure why, but without having this vertical padding
+        /// the textfield will kinda cut off its top and bottom border and it
+        /// makes it look weird (especially with the suffix)
+        padding: const EdgeInsets.symmetric(vertical: 1),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            DropdownButton<String?>(
+              value: dashboardStore.currentTransition?.transitionName,
+              disabledHint: const Text('Empty...'),
+              isDense: true,
+              items: dashboardStore.availableTransitions
+                  ?.map(
+                    (transition) => DropdownMenuItem<String>(
+                      value: transition.transitionName,
+                      child: Text(
+                        transition.transitionName,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    )
-                    .toList(),
-                onChanged: (selectedTransition) => NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
-                  RequestType.SetCurrentSceneTransition,
-                  {'transitionName': selectedTransition},
-                ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (selectedTransition) => NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.SetCurrentSceneTransition,
+                {'transitionName': selectedTransition},
               ),
             ),
-          ),
-          const SizedBox(
-            width: 12.0,
-          ),
-          SizedBox(
-            width: 72.0,
-            child: KeyboardNumberHeader(
-              focusNode: focusNode,
-              onDone: () => _handleSubmit(controller),
-              child: CupertinoTextField(
-                focusNode: focusNode,
-                enabled: dashboardStore.currentTransition?.transitionDuration !=
-                    null,
-                controller: controller,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFeatures: [
-                    FontFeature.tabularFigures(),
-                  ],
-                ),
-                maxLength: 5,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                keyboardType: TextInputType.number,
-                onSubmitted: (_) => _handleSubmit(controller),
-              ),
+            const SizedBox(
+              width: 24.0,
             ),
-          ),
-        ],
+            CupertinoNumberTextField(
+              width: 102.0,
+              enabled:
+                  dashboardStore.currentTransition?.transitionDuration != null,
+              controller: controller,
+              suffix: 'ms',
+              onDone: (_) => _handleSubmit(controller),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
       );
     });
   }

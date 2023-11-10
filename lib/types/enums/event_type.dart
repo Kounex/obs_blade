@@ -85,4 +85,7 @@ enum EventType {
 
   /// OBS has begun the shutdown process.
   ExitStarted,
+
+  /// The sync offset of an input has changed.
+  InputAudioSyncOffsetChanged,
 }

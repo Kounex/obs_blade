@@ -150,6 +150,25 @@ class DashboardCustomisationView extends StatelessWidget {
                     },
                   ),
                 ),
+                BlockEntry(
+                  leading: CupertinoIcons.memories,
+                  leadingSize: 30.0,
+                  title: 'Input Sync',
+                  help:
+                      'In the advanced settings section for an audio input in OBS, you can adjust "Sync Offset" to align potential delays of other elements with your audio input so they get in sync again.\n\nTurning this on will expose this value for each audio input which also enables it to adjust these in the app.',
+                  trailing: ThemedCupertinoSwitch(
+                    value: settingsBox.get(
+                      SettingsKeys.ExposeInputAudioSyncOffset.name,
+                      defaultValue: false,
+                    ),
+                    onChanged: (exposeInputAudioSyncOffset) {
+                      settingsBox.put(
+                        SettingsKeys.ExposeInputAudioSyncOffset.name,
+                        exposeInputAudioSyncOffset,
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ],

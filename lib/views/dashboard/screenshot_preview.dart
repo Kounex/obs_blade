@@ -53,27 +53,44 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
           left: 24.0,
           right: 24.0,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const BaseDivider(),
               const SizedBox(height: 12.0),
               const Text(
-                'This screenshot has been saved here:',
-                textAlign: TextAlign.center,
-              ),
+                  'Screenshot has been saved on your device running OBS.'),
               const SizedBox(height: 12.0),
-              Text(
-                'Path: ${GetIt.instance<DashboardStore>().recordDirectory}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 52.0,
+                    child: Text(
+                      'Path:',
+                    ),
+                  ),
+                  Text(
+                    GetIt.instance<DashboardStore>().recordDirectory!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'Name: ${this.widget.screenshotPath.split("/").removeLast()}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  const SizedBox(
+                    width: 52.0,
+                    child: Text('Name:'),
+                  ),
+                  Text(
+                    this.widget.screenshotPath.split("/").removeLast(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

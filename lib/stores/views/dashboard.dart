@@ -18,6 +18,7 @@ import 'package:obs_blade/types/classes/stream/events/input_mute_state_changed.d
 import 'package:obs_blade/types/classes/stream/events/profile_list_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/replay_buffer_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_input_audio_sync_offset.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_record_directory.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
@@ -39,6 +40,7 @@ import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/events/current_preview_scene_changed.dart';
 import '../../types/classes/stream/events/current_program_scene_changed.dart';
 import '../../types/classes/stream/events/current_scene_collection_changed.dart';
+import '../../types/classes/stream/events/input_audio_sync_offset_changed.dart';
 import '../../types/classes/stream/events/input_volume_changed.dart';
 import '../../types/classes/stream/events/input_volume_meters.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
@@ -867,6 +869,20 @@ abstract class _DashboardStore with Store {
           return sceneItem;
         }));
         break;
+      case EventType.InputAudioSyncOffsetChanged:
+        InputAudioSyncOffsetChangedEvent inputAudioSyncOffsetChangedEvent =
+            InputAudioSyncOffsetChangedEvent(event.jsonRAW);
+
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == inputAudioSyncOffsetChangedEvent.inputName) {
+            return input.copyWith(
+              syncOffset: inputAudioSyncOffsetChangedEvent.inputAudioSyncOffset,
+            );
+          }
+          return input;
+        }));
+
+        break;
       case EventType.ExitStarted:
         await _finishPastStreamData();
         await _finishPastRecordData();
@@ -1012,9 +1028,17 @@ abstract class _DashboardStore with Store {
           [
             for (var input in this.allInputs) ...[
               RequestBatchObject(
-                  RequestType.GetInputVolume, {'inputName': input.inputName}),
+                RequestType.GetInputVolume,
+                {'inputName': input.inputName},
+              ),
               RequestBatchObject(
-                  RequestType.GetInputMute, {'inputName': input.inputName}),
+                RequestType.GetInputMute,
+                {'inputName': input.inputName},
+              ),
+              RequestBatchObject(
+                RequestType.GetInputAudioSyncOffset,
+                {'inputName': input.inputName},
+              ),
             ],
           ],
         );
@@ -1148,6 +1172,21 @@ abstract class _DashboardStore with Store {
         this.allInputs = ObservableList.of(this.allInputs.map((input) {
           if (input.inputName == requestData['inputName']) {
             return input.copyWith(inputMuted: getInputMuteResponse.inputMuted);
+          }
+          return input;
+        }));
+        break;
+      case RequestType.GetInputAudioSyncOffset:
+        GetInputAudioSyncOffsetResponse getInputAudioSyncOffsetResponse =
+            GetInputAudioSyncOffsetResponse(response.jsonRAW);
+
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
+
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == requestData['inputName']) {
+            return input.copyWith(
+              syncOffset: getInputAudioSyncOffsetResponse.inputAudioSyncOffset,
+            );
           }
           return input;
         }));
@@ -1347,6 +1386,7 @@ abstract class _DashboardStore with Store {
 
         List<Map<String, dynamic>> muteObjects = [];
         List<Map<String, dynamic>> volumeObjects = [];
+        List<Map<String, dynamic>> syncOffsetObjects = [];
 
         for (final validGetInputMuteRespone in validGetInputMuteRespones) {
           for (final requestBatchObject in requestBatchObjects) {
@@ -1376,6 +1416,24 @@ abstract class _DashboardStore with Store {
           }
         }
 
+        for (final muteObject in muteObjects) {
+          for (final requestBatchObject in requestBatchObjects) {
+            if (requestBatchObject.type ==
+                    RequestType.GetInputAudioSyncOffset &&
+                muteObject['inputName'] ==
+                    requestBatchObject.body!['inputName']) {
+              syncOffsetObjects.add({
+                'inputName': requestBatchObject.body!['inputName'],
+                'response': inputsBatchResponse.inputsAudioSyncOffset
+                    .firstWhere((getInputAudioSyncOffset) =>
+                        getInputAudioSyncOffset.uuid ==
+                        requestBatchObject.uuid),
+              });
+              break;
+            }
+          }
+        }
+
         this.allInputs = ObservableList.of(this
             .allInputs
             .where((tempInput) => muteObjects.any(
@@ -1384,8 +1442,12 @@ abstract class _DashboardStore with Store {
           final muteObject = muteObjects.firstWhere(
               (muteObject) => muteObject['inputName'] == tempInput.inputName);
 
-          final volumeObject = volumeObjects.firstWhere(
-              (muteObject) => muteObject['inputName'] == tempInput.inputName);
+          final volumeObject = volumeObjects.firstWhere((volumeObject) =>
+              volumeObject['inputName'] == tempInput.inputName);
+
+          final syncOffsetObject = syncOffsetObjects.firstWhere(
+              (syncOffsetObject) =>
+                  syncOffsetObject['inputName'] == tempInput.inputName);
 
           tempInput = tempInput.copyWith(
             inputVolumeDb: (volumeObject['response'] as GetInputVolumeResponse)
@@ -1394,6 +1456,9 @@ abstract class _DashboardStore with Store {
                 .inputVolumeMul,
             inputMuted:
                 (muteObject['response'] as GetInputMuteResponse).inputMuted,
+            syncOffset: (syncOffsetObject['response']
+                    as GetInputAudioSyncOffsetResponse)
+                .inputAudioSyncOffset,
           );
 
           return tempInput;
