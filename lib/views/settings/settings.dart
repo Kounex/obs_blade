@@ -83,126 +83,18 @@ class SettingsView extends StatelessWidget {
                         },
                       ),
                     ),
-                    BlockEntry(
+                    const BlockEntry(
                       leading: CupertinoIcons.archivebox_fill,
                       title: 'Data Management',
-                      navigateTo: SettingsTabRoutingKeys.DataManagement.route,
+                      navigateTo: SettingsTabRoutingKeys.DataManagement,
                     ),
                   ],
                 ),
                 ActionBlock(
                   title: 'Dashboard',
+                  description:
+                      'Customisation allows you to change the UI of the dashboard view to add quick access buttons / features which are hidden in the menu bar by default.',
                   blockEntries: [
-                    BlockEntry(
-                      leading: CupertinoIcons.profile_circled,
-                      leadingSize: 30.0,
-                      title: 'Profiles',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeProfile.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeProfile) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeProfile.name,
-                            exposeProfile,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.collections_solid,
-                      leadingSize: 26.0,
-                      title: 'Scene Collections',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeSceneCollection.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeSceneCollection) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeSceneCollection.name,
-                            exposeSceneCollection,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: Icons.live_tv_rounded,
-                      leadingSize: 28.0,
-                      title: 'Streaming Controls',
-                      help:
-                          'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeStreamingControls.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeStreamingControls) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeStreamingControls.name,
-                            exposeStreamingControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.recordingtape,
-                      leadingSize: 30.0,
-                      title: 'Recording Controls',
-                      help:
-                          'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeRecordingControls.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeRecordingControls) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeRecordingControls.name,
-                            exposeRecordingControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.reply_thick_solid,
-                      leadingSize: 28.0,
-                      title: 'Replay Controls',
-                      help:
-                          'If active, the replay buffer actions (start/stop/save) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeReplayBufferControls.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeReplayBufferControls) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeReplayBufferControls.name,
-                            exposeReplayBufferControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.square_grid_3x2_fill,
-                      leadingSize: 28.0,
-                      title: 'Hotkeys',
-                      help:
-                          'If active, the hotkey button will be added to the dashboard which enables you to list all available OBS hotkeys and trigger them. Enables more precise interaction with OBS, usually only needed for power users.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeHotkeys.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeHotkeys) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeHotkeys.name,
-                            exposeHotkeys,
-                          );
-                        },
-                      ),
-                    ),
                     BlockEntry(
                       leading: CupertinoIcons.film,
                       leadingSize: 26.0,
@@ -218,22 +110,6 @@ class SettingsView extends StatelessWidget {
                           settingsBox.put(
                             SettingsKeys.ExposeStudioControls.name,
                             exposeStudioControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.person_2_square_stack,
-                      leadingSize: 30.0,
-                      title: 'Scene Preview',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                            SettingsKeys.ExposeScenePreview.name,
-                            defaultValue: true),
-                        onChanged: (exposeScenePreview) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeScenePreview.name,
-                            exposeScenePreview,
                           );
                         },
                       ),
@@ -256,21 +132,27 @@ class SettingsView extends StatelessWidget {
                         },
                       ),
                     ),
+                    const BlockEntry(
+                      leading: CupertinoIcons.layers_fill,
+                      title: 'Customisation',
+                      navigateTo: SettingsTabRoutingKeys.DashboardCustomisation,
+                    ),
                   ],
                 ),
                 ActionBlock(
                   title: 'Theme',
                   blockEntries: [
                     BlockEntry(
-                        leading: CupertinoIcons.lab_flask_solid,
-                        title: 'Custom Theme',
-                        navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
-                        navigateToResult: Text(
-                          settingsBox.get(SettingsKeys.CustomTheme.name,
-                                  defaultValue: false)
-                              ? 'Active'
-                              : 'Inactive',
-                        )),
+                      leading: CupertinoIcons.lab_flask_solid,
+                      title: 'Custom Theme',
+                      navigateTo: SettingsTabRoutingKeys.CustomTheme,
+                      navigateToResult: Text(
+                        settingsBox.get(SettingsKeys.CustomTheme.name,
+                                defaultValue: false)
+                            ? 'Active'
+                            : 'Inactive',
+                      ),
+                    ),
                     BlockEntry(
                       leading: CupertinoIcons.moon_circle_fill,
                       leadingSize: 30.0,
@@ -322,34 +204,34 @@ class SettingsView extends StatelessWidget {
                       ),
                   ],
                 ),
-                ActionBlock(
+                const ActionBlock(
                   title: 'Misc.',
                   blockEntries: [
                     BlockEntry(
                       leading: CupertinoIcons.info_circle_fill,
                       title: 'About',
-                      navigateTo: SettingsTabRoutingKeys.About.route,
+                      navigateTo: SettingsTabRoutingKeys.About,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.chat_bubble_text_fill,
                       title: 'FAQ | Help',
-                      navigateTo: SettingsTabRoutingKeys.FAQ.route,
+                      navigateTo: SettingsTabRoutingKeys.FAQ,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.book_fill,
                       title: 'Intro Slides',
-                      navigateTo: AppRoutingKeys.Intro.route,
+                      navigateTo: AppRoutingKeys.Intro,
                       rootNavigation: true,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.doc_person_fill,
                       title: 'Privacy Policy',
-                      navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
+                      navigateTo: SettingsTabRoutingKeys.PrivacyPolicy,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.square_list_fill,
                       title: 'Logs',
-                      navigateTo: SettingsTabRoutingKeys.Logs.route,
+                      navigateTo: SettingsTabRoutingKeys.Logs,
                     ),
                   ],
                 ),

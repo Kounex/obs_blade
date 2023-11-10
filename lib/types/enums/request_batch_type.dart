@@ -14,7 +14,14 @@ enum RequestBatchType {
   /// RequestType.GetStreamStatus
   /// RequestType.GetRecordStatus
   /// RequestType.GetStats
-  Stats;
+  Stats,
+
+  /// Joint request to trigger a screenshot of the current OBS scene which
+  /// should be saved on the filesystem where OBS is running and getting the
+  /// current screenshot to display on the app. [SaveSourceScreenshot], at least
+  /// from the docs, should also return the screenshot but in reality it does
+  /// not so we have to get one manually
+  Screenshot;
 
   List<RequestType> get requestTypes => {
         RequestBatchType.Input: [
@@ -26,6 +33,10 @@ enum RequestBatchType {
           RequestType.GetRecordStatus,
           RequestType.GetStats,
         ],
+        RequestBatchType.Screenshot: [
+          RequestType.SaveSourceScreenshot,
+          RequestType.GetSourceScreenshot,
+        ],
       }[this]!;
 
   /// Indicates whether we need to persist this request to get the
@@ -36,5 +47,6 @@ enum RequestBatchType {
   bool get lookup => {
         RequestBatchType.Input: true,
         RequestBatchType.Stats: false,
+        RequestBatchType.Screenshot: false,
       }[this]!;
 }

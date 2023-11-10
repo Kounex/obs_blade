@@ -11,6 +11,7 @@ import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/screenshot.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
 import 'package:obs_blade/types/classes/stream/events/current_profile_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/input_mute_state_changed.dart';
@@ -18,12 +19,14 @@ import 'package:obs_blade/types/classes/stream/events/profile_list_changed.dart'
 import 'package:obs_blade/types/classes/stream/events/replay_buffer_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_record_directory.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/types/extensions/int.dart';
 
 import '../../models/enums/log_level.dart';
 import '../../models/past_record_data.dart';
@@ -177,6 +180,12 @@ abstract class _DashboardStore with Store {
   @observable
   Uint8List? scenePreviewImageBytes;
 
+  /// Users can take screenshots of their current OBS scene manually. If they
+  /// do, the screenshot will be saved on their system where OBS is running and
+  /// we will get the taken screenshot as a response
+  @observable
+  Uint8List? manualScreenshotImageBytes;
+
   /// Checks whether the user is trying to scroll while the pointer (finger) is
   /// on the chat - this means the user probably wants to scroll the chat.
   /// If the user wants to scroll inside the app, the pointer (finger) may not
@@ -209,10 +218,16 @@ abstract class _DashboardStore with Store {
   @observable
   bool editSceneVisibility = false;
 
+  @computed
+  String get screenshotPath =>
+      '${this.recordDirectory}/Screenshot ${DateTime.now().millisecondsSinceEpoch.millisecondsToFileNameDate(separator: "-", withTime: true)}.${this.screenshotFileFormat}';
+
+  String previewFileFormat = 'jpeg';
+  String screenshotFileFormat = 'png';
+  String? recordDirectory;
+
   Timer? _checkConnectionTimer;
   Timer? _getStatsTimer;
-
-  String _previewFileFormat = 'jpeg';
 
   /// Will be used internally while switching scene collections.
   /// Since this operation takes time and "random" events are coming
@@ -249,6 +264,10 @@ abstract class _DashboardStore with Store {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetVersion,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetRecordDirectory,
     );
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -340,7 +359,7 @@ abstract class _DashboardStore with Store {
                   this.studioMode
               ? this.studioModePreviewSceneName
               : this.activeSceneName,
-          'imageFormat': _previewFileFormat,
+          'imageFormat': this.previewFileFormat,
           'compressionQuality': -1,
         },
       );
@@ -858,8 +877,18 @@ abstract class _DashboardStore with Store {
 
         if (!getVersionResponse.supportedImageFormats.contains('jpg') &&
             !getVersionResponse.supportedImageFormats.contains('jpeg')) {
-          _previewFileFormat = 'png';
+          this.previewFileFormat = 'png';
         }
+
+        if (!getVersionResponse.supportedImageFormats.contains('png')) {
+          this.screenshotFileFormat = this.previewFileFormat;
+        }
+        break;
+      case RequestType.GetRecordDirectory:
+        GetRecordDirectoryResponse getRecordDirectoryResponse =
+            GetRecordDirectoryResponse(response.jsonRAW);
+
+        this.recordDirectory = getRecordDirectoryResponse.recordDirectory;
         break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
@@ -1114,6 +1143,13 @@ abstract class _DashboardStore with Store {
 
         if (this.shouldRequestPreviewImage) _requestPreviewImage();
         break;
+      // case RequestType.SaveSourceScreenshot:
+      //   SaveSourceScreenshotResponse saveSourceScreenshotResponse =
+      //       SaveSourceScreenshotResponse(response.jsonRAW);
+
+      //   this.manualScreenshotImageBytes =
+      //       base64Decode(saveSourceScreenshotResponse.imageData.split(',')[1]);
+      //   break;
       case RequestType.GetHotkeyList:
         GetHotkeyListResponse getHotkeyListResponse =
             GetHotkeyListResponse(response.jsonRAW);
@@ -1347,6 +1383,14 @@ abstract class _DashboardStore with Store {
           return tempInput;
         }));
 
+        break;
+      case RequestBatchType.Screenshot:
+        ScreenshotBatchResponse screenshotBatchResponse =
+            ScreenshotBatchResponse(batchResponse.jsonRAW);
+
+        this.manualScreenshotImageBytes = base64Decode(screenshotBatchResponse
+            .getSourceScreenshotResponse.imageData
+            .split(',')[1]);
         break;
     }
   }

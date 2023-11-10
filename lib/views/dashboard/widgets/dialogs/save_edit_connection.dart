@@ -3,11 +3,11 @@ import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_blade/models/hidden_scene_item.dart';
 
-import '../../../models/connection.dart';
-import '../../../models/hidden_scene.dart';
-import '../../../shared/dialogs/input.dart';
-import '../../../stores/shared/network.dart';
-import '../../../types/enums/hive_keys.dart';
+import '../../../../models/connection.dart';
+import '../../../../models/hidden_scene.dart';
+import '../../../../shared/dialogs/input.dart';
+import '../../../../stores/shared/network.dart';
+import '../../../../types/enums/hive_keys.dart';
 
 class SaveEditConnectionDialog extends StatelessWidget {
   final bool newConnection;

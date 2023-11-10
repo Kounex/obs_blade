@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/general/base/card.dart';
 
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/base/divider.dart';
 import 'block_entry.dart';
 
@@ -49,7 +49,10 @@ class ActionBlock extends StatelessWidget {
       child: BaseCard(
         above: this.title != null && this.title!.isNotEmpty
             ? Padding(
-                padding: EdgeInsets.only(left: this.generalizedPadding + 16),
+                padding: EdgeInsets.only(
+                  left: this.generalizedPadding + 18,
+                  right: this.generalizedPadding + 18,
+                ),
                 child: Text(
                   this.title!.toUpperCase(),
                   style: Theme.of(context).textTheme.bodySmall,
@@ -59,10 +62,14 @@ class ActionBlock extends StatelessWidget {
         below: this.descriptionWidget != null ||
                 (this.description != null && this.title!.isNotEmpty)
             ? Padding(
-                padding: EdgeInsets.only(left: this.generalizedPadding + 16),
+                padding: EdgeInsets.only(
+                  left: this.generalizedPadding + 18,
+                  right: this.generalizedPadding + 18,
+                  bottom: 12.0,
+                ),
                 child: this.descriptionWidget ??
                     Text(
-                      this.description!.toUpperCase(),
+                      this.description!,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
               )

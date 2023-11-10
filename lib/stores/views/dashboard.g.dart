@@ -23,6 +23,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
           Computed<ObservableList<Input>>(() => super.globalInputs,
               name: '_DashboardStore.globalInputs'))
       .value;
+  Computed<String>? _$screenshotPathComputed;
+
+  @override
+  String get screenshotPath =>
+      (_$screenshotPathComputed ??= Computed<String>(() => super.screenshotPath,
+              name: '_DashboardStore.screenshotPath'))
+          .value;
 
   late final _$isLiveAtom =
       Atom(name: '_DashboardStore.isLive', context: context);
@@ -447,6 +454,23 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$manualScreenshotImageBytesAtom = Atom(
+      name: '_DashboardStore.manualScreenshotImageBytes', context: context);
+
+  @override
+  Uint8List? get manualScreenshotImageBytes {
+    _$manualScreenshotImageBytesAtom.reportRead();
+    return super.manualScreenshotImageBytes;
+  }
+
+  @override
+  set manualScreenshotImageBytes(Uint8List? value) {
+    _$manualScreenshotImageBytesAtom
+        .reportWrite(value, super.manualScreenshotImageBytes, () {
+      super.manualScreenshotImageBytes = value;
+    });
+  }
+
   late final _$isPointerOnChatAtom =
       Atom(name: '_DashboardStore.isPointerOnChat', context: context);
 
@@ -729,6 +753,7 @@ currentTransition: ${currentTransition},
 availableTransitions: ${availableTransitions},
 shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
+manualScreenshotImageBytes: ${manualScreenshotImageBytes},
 isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
 editSceneItemVisibility: ${editSceneItemVisibility},
@@ -737,7 +762,8 @@ studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
 currentInputs: ${currentInputs},
-globalInputs: ${globalInputs}
+globalInputs: ${globalInputs},
+screenshotPath: ${screenshotPath}
     ''';
   }
 }

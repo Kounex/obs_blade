@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/animator/fader.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 
 import '../../../../../shared/general/custom_expansion_tile.dart';
@@ -111,14 +110,12 @@ class _ScenePreviewState extends State<ScenePreview> {
                                     setState(() => _fullscreen = true);
                                     ModalHandler.showFullscreen(
                                       context: context,
-                                      content: Fader(
-                                        child: Observer(
-                                          builder: (context) => Image.memory(
-                                            dashboardStore
-                                                .scenePreviewImageBytes!,
-                                            fit: BoxFit.contain,
-                                            gaplessPlayback: true,
-                                          ),
+                                      content: Observer(
+                                        builder: (context) => Image.memory(
+                                          dashboardStore
+                                              .scenePreviewImageBytes!,
+                                          fit: BoxFit.contain,
+                                          gaplessPlayback: true,
                                         ),
                                       ),
                                     ).then(

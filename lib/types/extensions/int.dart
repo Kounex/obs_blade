@@ -15,11 +15,22 @@ extension IntStuff on int {
       (withoutSeconds ? DateFormat.Hm('de_DE') : DateFormat.Hms('de_DE'))
           .format(DateTime.fromMillisecondsSinceEpoch(this));
 
-  String millisecondsToFileNameDate() {
+  String millisecondsToFileNameDate(
+      {String separator = '', bool withTime = false}) {
     DateTime now = DateTime.fromMillisecondsSinceEpoch(this);
+
     String month = (now.month < 10 ? '0' : '') + now.month.toString();
     String day = (now.day < 10 ? '0' : '') + now.day.toString();
-    return '${now.year}$month$day';
+
+    if (!withTime) {
+      return '${now.year}$separator$month$separator$day';
+    }
+
+    String hour = (now.hour < 10 ? '0' : '') + now.hour.toString();
+    String minute = (now.minute < 10 ? '0' : '') + now.minute.toString();
+    String second = (now.second < 10 ? '0' : '') + now.second.toString();
+
+    return '${now.year}$separator$month$separator$day $hour$separator$minute$separator$second';
   }
 
   bool millisecondsSameDay(int ms) {

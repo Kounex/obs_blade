@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+import '../shared/animator/fader.dart';
 import '../shared/general/base/card.dart';
 import 'styling_helper.dart';
 
@@ -24,25 +25,31 @@ class ModalHandler {
   static Future<T?> showFullscreen<T>({
     required BuildContext context,
     required Widget content,
+    void Function()? onClose,
   }) async =>
       showDialog(
         useSafeArea: false,
         context: context,
-        builder: (context) => Material(
-          color: Colors.black,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              content,
-              Positioned(
-                top: 12.0 + MediaQuery.of(context).padding.top,
-                right: 12.0 + MediaQuery.of(context).padding.right,
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(CupertinoIcons.clear),
+        builder: (context) => Fader(
+          child: Material(
+            color: Colors.black,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                content,
+                Positioned(
+                  top: 12.0 + MediaQuery.of(context).padding.top,
+                  right: 12.0 + MediaQuery.of(context).padding.right,
+                  child: IconButton(
+                    onPressed: () {
+                      onClose?.call();
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(CupertinoIcons.clear),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );

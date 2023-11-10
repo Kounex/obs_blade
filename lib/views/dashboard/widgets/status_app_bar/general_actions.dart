@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 import 'package:obs_blade/utils/overlay_handler.dart';
 
 import '../../../../models/connection.dart';
@@ -12,12 +13,13 @@ import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/request_batch_type.dart';
 import '../../../../types/enums/request_type.dart';
 import '../../../../types/enums/settings_keys.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/network_helper.dart';
 import '../../services/record_stream.dart';
-import '../save_edit_connection_dialog.dart';
+import '../dialogs/save_edit_connection.dart';
 
 class GeneralActions extends StatelessWidget {
   const GeneralActions({Key? key}) : super(key: key);
@@ -128,6 +130,56 @@ class GeneralActions extends StatelessWidget {
                     NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
                       RequestType.ToggleVirtualCam,
+                    );
+                  },
+                ),
+                AppBarCupertinoActionEntry(
+                  title: 'Take OBS Screenshot',
+                  onAction: () {
+                    /// Intentionally having a different file format used for
+                    /// the [imageFormat] field for the request and the one
+                    /// used as the extension for the file. If we can, we want
+                    /// to save screenshots as pngs as OBS is doing it, but
+                    /// when doing so here, transparency is used correctly
+                    /// which OBS does not do... so I'm rather doing it like
+                    /// OBS itself is doing it (using png but without transparency)
+                    /// to deliver the same experience
+                    ///
+                    /// We also have to do this request in this batch format
+                    /// due to API inconsistency -> check the comment of
+                    /// [RequestBatchType.Screenshot]
+                    NetworkHelper.makeBatchRequest(
+                      networkStore.activeSession!.socket,
+                      RequestBatchType.Screenshot,
+                      [
+                        RequestBatchObject(
+                          RequestType.SaveSourceScreenshot,
+                          {
+                            'sourceName': Hive.box(HiveKeys.Settings.name).get(
+                                        SettingsKeys.ExposeStudioControls.name,
+                                        defaultValue: false) &&
+                                    dashboardStore.studioMode
+                                ? dashboardStore.studioModePreviewSceneName
+                                : dashboardStore.activeSceneName,
+                            'imageFilePath': dashboardStore.screenshotPath,
+                            'imageFormat': dashboardStore.previewFileFormat,
+                            'compressionQuality': -1,
+                          },
+                        ),
+                        RequestBatchObject(
+                          RequestType.GetSourceScreenshot,
+                          {
+                            'sourceName': Hive.box(HiveKeys.Settings.name).get(
+                                        SettingsKeys.ExposeStudioControls.name,
+                                        defaultValue: false) &&
+                                    dashboardStore.studioMode
+                                ? dashboardStore.studioModePreviewSceneName
+                                : dashboardStore.activeSceneName,
+                            'imageFormat': dashboardStore.previewFileFormat,
+                            'compressionQuality': -1,
+                          },
+                        ),
+                      ],
                     );
                   },
                 ),

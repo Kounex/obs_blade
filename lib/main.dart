@@ -200,21 +200,21 @@ void _logging(String line) {
 }
 
 void main() async {
-  /// Initialize Date Formatting - using European style
-  await initializeDateFormatting('de_DE');
-
-  /// Create all store objects and make them available in the app (DI)
-  _initializeStores();
-
-  /// Create all hive objects with references to the persistant boxes
-  await _initializeHive();
-
-  runZonedGuarded(
-    () {
-      WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded(
+    () async {
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.dumpErrorToConsole(details);
       };
+      WidgetsFlutterBinding.ensureInitialized();
+
+      /// Initialize Date Formatting - using European style
+      await initializeDateFormatting('de_DE');
+
+      /// Create all store objects and make them available in the app (DI)
+      _initializeStores();
+
+      /// Create all hive objects with references to the persistant boxes
+      await _initializeHive();
       runApp(
         const LifecycleWatcher(
           app: PurchaseBase(
