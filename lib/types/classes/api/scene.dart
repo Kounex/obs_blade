@@ -1,17 +1,17 @@
-class Scene {
-  /// Name of the currently active scene
-  String sceneName;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  /// Ordered list of the current scene's source items
-  int sceneIndex;
+part 'scene.freezed.dart';
+part 'scene.g.dart';
 
-  Scene({
-    required this.sceneName,
-    required this.sceneIndex,
-  });
+@freezed
+class Scene with _$Scene {
+  const factory Scene({
+    /// Name of the currently active scene
+    required String sceneName,
 
-  static Scene fromJSON(Map<String, dynamic> json) => Scene(
-        sceneName: json['sceneName'],
-        sceneIndex: json['sceneIndex'],
-      );
+    /// Ordered list of the current scene's source items
+    required int sceneIndex,
+  }) = _Scene;
+
+  factory Scene.fromJson(Map<String, Object?> json) => _$SceneFromJson(json);
 }

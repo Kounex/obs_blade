@@ -16,5 +16,5 @@ class GetSceneTransitionListResponse extends BaseResponse {
 
   /// List of transitions
   List<Transition> get transitions => List.from(
-      json['transitions'].map((transition) => Transition.fromJSON(transition)));
+      json['transitions'].map((transition) => Transition.fromJson(transition)));
 }

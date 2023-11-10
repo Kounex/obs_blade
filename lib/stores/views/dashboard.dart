@@ -599,8 +599,15 @@ abstract class _DashboardStore with Store {
 
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
-    sceneItem.displayGroup = !sceneItem.displayGroup;
-    this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+    this.currentSceneItems =
+        ObservableList.of(this.currentSceneItems!.map((currentSceneItem) {
+      if (currentSceneItem == sceneItem) {
+        return currentSceneItem.copyWith(
+          displayGroup: !sceneItem.displayGroup,
+        );
+      }
+      return currentSceneItem;
+    }));
   }
 
   @action
@@ -740,10 +747,10 @@ abstract class _DashboardStore with Store {
         CurrentSceneTransitionDurationChangedEvent
             currentSceneTransitionDurationChangedEvent =
             CurrentSceneTransitionDurationChangedEvent(event.jsonRAW);
-        this.currentTransition?.transitionDuration =
-            currentSceneTransitionDurationChangedEvent.transitionDuration;
 
-        this.currentTransition = this.currentTransition;
+        this.currentTransition = this.currentTransition?.copyWith(
+            transitionDuration:
+                currentSceneTransitionDurationChangedEvent.transitionDuration);
         break;
       case EventType.StudioModeStateChanged:
         if (Hive.box(HiveKeys.Settings.name)
@@ -801,55 +808,64 @@ abstract class _DashboardStore with Store {
         InputVolumeChangedEvent inputVolumeChangedEvent =
             InputVolumeChangedEvent(event.jsonRAW);
 
-        this.allInputs.firstWhere(
-            (input) => input.inputName == inputVolumeChangedEvent.inputName)
-          ..inputVolumeMul = inputVolumeChangedEvent.inputVolumeMul
-          ..inputVolumeDb = inputVolumeChangedEvent.inputVolumeDb;
-        this.allInputs = this.allInputs;
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == inputVolumeChangedEvent.inputName) {
+            return input.copyWith(
+              inputVolumeMul: inputVolumeChangedEvent.inputVolumeMul,
+              inputVolumeDb: inputVolumeChangedEvent.inputVolumeDb,
+            );
+          }
+          return input;
+        }));
 
         break;
       case EventType.InputVolumeMeters:
         InputVolumeMetersEvent inputVolumeMetersEvent =
             InputVolumeMetersEvent(event.jsonRAW);
 
-        for (var input in this.allInputs) {
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
           try {
             InputLevel inputLevel = inputVolumeMetersEvent.inputs.firstWhere(
                 (inputLevel) => inputLevel.inputName == input.inputName);
 
-            input.inputLevelsMul = inputLevel.inputLevelsMul;
+            if (input.inputName == inputLevel.inputName) {
+              return input.copyWith(inputLevelsMul: inputLevel.inputLevelsMul);
+            }
           } catch (e) {}
-        }
 
-        this.allInputs = this.allInputs;
+          return input;
+        }));
 
         break;
       case EventType.InputMuteStateChanged:
         InputMuteStateChangedEvent inputMuteStateChangedEvent =
             InputMuteStateChangedEvent(event.jsonRAW);
 
-        this
-            .allInputs
-            .firstWhere((input) =>
-                input.inputName == inputMuteStateChangedEvent.inputName)
-            .inputMuted = inputMuteStateChangedEvent.inputMuted;
-        this.allInputs = this.allInputs;
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == inputMuteStateChangedEvent.inputName) {
+            return input.copyWith(
+              inputMuted: inputMuteStateChangedEvent.inputMuted,
+            );
+          }
+          return input;
+        }));
 
         break;
       case EventType.SceneItemEnableStateChanged:
         SceneItemEnableStateChangedEvent sceneItemEnableStateChangedEvent =
             SceneItemEnableStateChangedEvent(event.jsonRAW);
 
-        this
-                .currentSceneItems!
-                .firstWhere((sceneItem) =>
-                    sceneItem.sceneItemId ==
-                    sceneItemEnableStateChangedEvent.sceneItemId)
-                .sceneItemEnabled =
-            sceneItemEnableStateChangedEvent.sceneItemEnabled;
-
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
-
+        this.currentSceneItems =
+            ObservableList.of(this.currentSceneItems!.map((sceneItem) {
+          if (sceneItem.sceneItemId ==
+              sceneItemEnableStateChangedEvent.sceneItemId) {
+            return sceneItem.copyWith(
+              sceneItemEnabled:
+                  sceneItemEnableStateChangedEvent.sceneItemEnabled,
+            );
+          }
+          return sceneItem;
+        }));
         break;
       case EventType.ExitStarted:
         await _finishPastStreamData();
@@ -962,11 +978,12 @@ abstract class _DashboardStore with Store {
             getGroupSceneItemListResponse.uuid)!['sceneName'];
 
         List<SceneItem> childrenSceneItems =
-            getGroupSceneItemListResponse.sceneItems;
-
-        for (var sceneItem in childrenSceneItems) {
-          sceneItem.parentGroupName = parentSceneItemName;
-        }
+            getGroupSceneItemListResponse.sceneItems
+                .map(
+                  (sceneItem) =>
+                      sceneItem.copyWith(parentGroupName: parentSceneItemName),
+                )
+                .toList();
 
         this.currentSceneItems = ObservableList.of([
           ...this.currentSceneItems!
@@ -1111,13 +1128,15 @@ abstract class _DashboardStore with Store {
         final requestData = NetworkHelper.requestBodyByUUID
             .remove(getInputVolumeResponse.uuid)!;
 
-        Input input = allInputs
-            .firstWhere((input) => input.inputName == requestData['inputName']);
-
-        input.inputVolumeDb = getInputVolumeResponse.inputVolumeDb;
-        input.inputVolumeMul = getInputVolumeResponse.inputVolumeMul;
-
-        this.allInputs = ObservableList.of(this.allInputs);
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == requestData['inputName']) {
+            return input.copyWith(
+              inputVolumeDb: getInputVolumeResponse.inputVolumeDb,
+              inputVolumeMul: getInputVolumeResponse.inputVolumeMul,
+            );
+          }
+          return input;
+        }));
 
         break;
       case RequestType.GetInputMute:
@@ -1126,13 +1145,12 @@ abstract class _DashboardStore with Store {
 
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
 
-        Input input = this
-            .allInputs
-            .firstWhere((input) => input.inputName == requestData['inputName']);
-
-        input.inputMuted = getInputMuteResponse.inputMuted;
-
-        this.allInputs = ObservableList.of(this.allInputs);
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == requestData['inputName']) {
+            return input.copyWith(inputMuted: getInputMuteResponse.inputMuted);
+          }
+          return input;
+        }));
         break;
       case RequestType.GetSourceScreenshot:
         GetSourceScreenshotResponse getSourceScreenshotResponse =
@@ -1369,16 +1387,14 @@ abstract class _DashboardStore with Store {
           final volumeObject = volumeObjects.firstWhere(
               (muteObject) => muteObject['inputName'] == tempInput.inputName);
 
-          tempInput.inputVolumeDb =
-              (volumeObject['response'] as GetInputVolumeResponse)
-                  .inputVolumeDb;
-
-          tempInput.inputVolumeMul =
-              (volumeObject['response'] as GetInputVolumeResponse)
-                  .inputVolumeMul;
-
-          tempInput.inputMuted =
-              (muteObject['response'] as GetInputMuteResponse).inputMuted;
+          tempInput = tempInput.copyWith(
+            inputVolumeDb: (volumeObject['response'] as GetInputVolumeResponse)
+                .inputVolumeDb,
+            inputVolumeMul: (volumeObject['response'] as GetInputVolumeResponse)
+                .inputVolumeMul,
+            inputMuted:
+                (muteObject['response'] as GetInputMuteResponse).inputMuted,
+          );
 
           return tempInput;
         }));

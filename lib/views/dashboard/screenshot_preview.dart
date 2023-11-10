@@ -57,12 +57,19 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
               const BaseDivider(),
               const SizedBox(height: 12.0),
               const Text(
-                'This screenshot has been saved under:',
+                'This screenshot has been saved here:',
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12.0),
+              const SizedBox(height: 12.0),
               Text(
-                this.widget.screenshotPath,
+                'Path: ${GetIt.instance<DashboardStore>().recordDirectory}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Name: ${this.widget.screenshotPath.split("/").removeLast()}',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,

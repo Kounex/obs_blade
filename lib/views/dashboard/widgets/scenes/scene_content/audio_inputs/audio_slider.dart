@@ -84,10 +84,8 @@ class AudioSlider extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(
-                  (this.input.inputMuted ?? true)
-                      ? Icons.volume_off
-                      : Icons.volume_up,
-                  color: (this.input.inputMuted ?? true)
+                  this.input.inputMuted ? Icons.volume_off : Icons.volume_up,
+                  color: this.input.inputMuted
                       ? CupertinoColors.destructiveRed
                       : Theme.of(context).buttonTheme.colorScheme!.primary,
                 ),
@@ -96,7 +94,7 @@ class AudioSlider extends StatelessWidget {
                     networkStore.activeSession!.socket,
                     RequestType.SetInputMute, {
                   'inputName': this.input.inputName,
-                  'inputMuted': !(this.input.inputMuted ?? true)
+                  'inputMuted': !this.input.inputMuted
                 }),
               ),
               Expanded(

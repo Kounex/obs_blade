@@ -10,6 +10,6 @@ class GetGroupSceneItemListResponse extends BaseResponse {
 
   /// Array of scene items in the group
   List<SceneItem> get sceneItems => (this.json['sceneItems'] as List<dynamic>)
-      .map((sceneItem) => SceneItem.fromJSON(sceneItem))
+      .map((sceneItem) => SceneItem.fromJson(sceneItem))
       .toList();
 }
