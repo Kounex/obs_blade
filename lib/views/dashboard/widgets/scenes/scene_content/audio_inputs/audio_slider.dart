@@ -2,11 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/cupertino_number_text_field.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 
@@ -88,11 +86,15 @@ class _AudioSliderState extends State<AudioSlider> {
                   defaultValue: false,
                 )
                     ? CupertinoNumberTextField(
-                        width: 102.0,
+                        width: 112.0,
                         controller: _controller,
                         focusNode: _focusNode,
+                        maxLength: 6,
+                        negativeAllowed: true,
+                        minValue: -950,
+                        maxValue: 20000,
                         suffix: 'ms',
-                        onDone: (_) => NetworkHelper.makeRequest(
+                        onDone: () => NetworkHelper.makeRequest(
                           GetIt.instance<NetworkStore>().activeSession!.socket,
                           RequestType.SetInputAudioSyncOffset,
                           {

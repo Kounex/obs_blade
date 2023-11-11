@@ -7,23 +7,32 @@ import 'package:flutter/services.dart';
 import 'keyboard_number_header.dart';
 
 class CupertinoNumberTextField extends StatefulWidget {
-  final TextEditingController? controller;
+  final TextEditingController controller;
   final FocusNode? focusNode;
   final double width;
-  final int maxLength;
+  final int? maxLength;
+  final bool negativeAllowed;
+  final int? minValue;
+  final int? maxValue;
+
+  final TextInputType? keyboardType;
 
   final bool enabled;
 
   final String? suffix;
 
-  final void Function(TextEditingController? controller)? onDone;
+  final void Function()? onDone;
 
   const CupertinoNumberTextField({
     super.key,
-    this.controller,
+    required this.controller,
     this.focusNode,
     required this.width,
-    this.maxLength = 5,
+    this.maxLength,
+    this.negativeAllowed = false,
+    this.minValue,
+    this.maxValue,
+    this.keyboardType,
     this.enabled = true,
     this.suffix,
     this.onDone,
@@ -44,13 +53,24 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
     _focusNode = this.widget.focusNode ?? FocusNode();
   }
 
+  void _onDone() {
+    int value = int.parse(this.widget.controller.text);
+    if (this.widget.minValue != null && value < this.widget.minValue!) {
+      this.widget.controller.text = this.widget.minValue.toString();
+    }
+    if (this.widget.minValue != null && value > this.widget.maxValue!) {
+      this.widget.controller.text = this.widget.maxValue.toString();
+    }
+    this.widget.onDone?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: this.widget.width,
       child: KeyboardNumberHeader(
         focusNode: _focusNode,
-        onDone: () => this.widget.onDone?.call(this.widget.controller),
+        onDone: _onDone,
         child: CupertinoTextField(
           focusNode: _focusNode,
           enabled: this.widget.enabled,
@@ -62,8 +82,14 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
             ],
           ),
           maxLength: this.widget.maxLength,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          keyboardType: TextInputType.number,
+          inputFormatters: [
+            NegativeIntFormatter(
+              negativeAllowed: this.widget.negativeAllowed,
+            ),
+          ],
+          keyboardType: this.widget.keyboardType ??
+              TextInputType.numberWithOptions(
+                  signed: this.widget.negativeAllowed),
           suffix: this.widget.suffix != null
               ? Container(
                   decoration: BoxDecoration(
@@ -81,9 +107,36 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
                   ),
                 )
               : const SizedBox(),
-          onSubmitted: (_) => this.widget.onDone?.call(this.widget.controller),
+          onSubmitted: (_) => _onDone(),
         ),
       ),
     );
+  }
+}
+
+class NegativeIntFormatter extends TextInputFormatter {
+  final bool negativeAllowed;
+
+  NegativeIntFormatter({
+    this.negativeAllowed = true,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (!this.negativeAllowed && newValue.text.startsWith('-')) {
+      return oldValue;
+    }
+
+    if (newValue.text.isEmpty || newValue.text == '-') {
+      return newValue;
+    }
+
+    int? newValueInt = int.tryParse(newValue.text);
+
+    if (newValueInt != null) {
+      return TextEditingValue(text: newValueInt.toString());
+    }
+    return oldValue;
   }
 }

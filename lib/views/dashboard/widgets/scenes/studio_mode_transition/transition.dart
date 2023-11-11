@@ -67,12 +67,14 @@ class Transition extends StatelessWidget {
               width: 24.0,
             ),
             CupertinoNumberTextField(
-              width: 102.0,
+              width: 112.0,
+              minValue: 50,
+              maxValue: 20000,
               enabled:
                   dashboardStore.currentTransition?.transitionDuration != null,
               controller: controller,
               suffix: 'ms',
-              onDone: (_) => _handleSubmit(controller),
+              onDone: () => _handleSubmit(controller),
             ),
             const SizedBox(width: 4),
           ],

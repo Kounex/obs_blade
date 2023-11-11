@@ -213,7 +213,7 @@ enum RequestType {
 
   /// Sets the duration of the current scene transition, if it is not fixed.
   ///
-  /// {'transitionDuration': int } - Duration in milliseconds
+  /// {'transitionDuration': int } - Duration in milliseconds - >= 50, <= 20000
   SetCurrentSceneTransitionDuration,
 
   /// Sets the current scene transition.
