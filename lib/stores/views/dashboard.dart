@@ -126,17 +126,13 @@ abstract class _DashboardStore with Store {
   /// toggles whether they will be displayed or not, but this makes
   /// searching and updating scene items easier
   @observable
-  ObservableList<SceneItem>? currentSceneItems;
+  ObservableList<SceneItem> currentSceneItems = ObservableList();
 
-  /// Not used currently as the WebSocket API does not expose working
-  /// with such sources (playing, stopping, etc.) right now. This will likely
-  /// be supported in the near future which therefore enables Soundboard support!
-  // @computed
-  // ObservableList<SceneItem> get currentSoundboardSceneItems =>
-  //     this.currentSceneItems != null
-  //         ? ObservableList.of(this.currentSceneItems!.where((sceneItem) =>
-  //             sceneItem.type == 'ffmpeg_source' && sceneItem.render!))
-  //         : ObservableList();
+  @computed
+  ObservableList<SceneItem> get mediaSceneItems =>
+      ObservableList.of(this.currentSceneItems.where((sceneItem) =>
+          (sceneItem.inputKind?.toLowerCase().contains('ffmpeg') ?? false) &&
+          (sceneItem.sceneItemEnabled ?? false)));
 
   /// Will contain all inputs returned by [GetInputList] which will even contian
   /// special inputs etc.
@@ -602,7 +598,7 @@ abstract class _DashboardStore with Store {
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
     this.currentSceneItems =
-        ObservableList.of(this.currentSceneItems!.map((currentSceneItem) {
+        ObservableList.of(this.currentSceneItems.map((currentSceneItem) {
       if (currentSceneItem == sceneItem) {
         return currentSceneItem.copyWith(
           displayGroup: !sceneItem.displayGroup,
@@ -858,7 +854,7 @@ abstract class _DashboardStore with Store {
             SceneItemEnableStateChangedEvent(event.jsonRAW);
 
         this.currentSceneItems =
-            ObservableList.of(this.currentSceneItems!.map((sceneItem) {
+            ObservableList.of(this.currentSceneItems.map((sceneItem) {
           if (sceneItem.sceneItemId ==
               sceneItemEnableStateChangedEvent.sceneItemId) {
             return sceneItem.copyWith(
@@ -973,7 +969,7 @@ abstract class _DashboardStore with Store {
               ..sort((sc1, sc2) =>
                   (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0));
 
-        for (final sceneItem in this.currentSceneItems!) {
+        for (final sceneItem in this.currentSceneItems) {
           if (sceneItem.isGroup ?? false) {
             NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -1002,10 +998,10 @@ abstract class _DashboardStore with Store {
                 .toList();
 
         this.currentSceneItems = ObservableList.of([
-          ...this.currentSceneItems!
+          ...this.currentSceneItems
             ..insertAll(
-                this.currentSceneItems!.indexOf(
-                          this.currentSceneItems!.firstWhere((sceneItem) =>
+                this.currentSceneItems.indexOf(
+                          this.currentSceneItems.firstWhere((sceneItem) =>
                               (sceneItem.isGroup ?? false) &&
                               sceneItem.sourceName == parentSceneItemName),
                         ) +

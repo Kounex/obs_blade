@@ -9,6 +9,14 @@ part of 'dashboard.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$DashboardStore on _DashboardStore, Store {
+  Computed<ObservableList<SceneItem>>? _$mediaSceneItemsComputed;
+
+  @override
+  ObservableList<SceneItem> get mediaSceneItems =>
+      (_$mediaSceneItemsComputed ??= Computed<ObservableList<SceneItem>>(
+              () => super.mediaSceneItems,
+              name: '_DashboardStore.mediaSceneItems'))
+          .value;
   Computed<ObservableList<Input>>? _$currentInputsComputed;
 
   @override
@@ -343,13 +351,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.currentSceneItems', context: context);
 
   @override
-  ObservableList<SceneItem>? get currentSceneItems {
+  ObservableList<SceneItem> get currentSceneItems {
     _$currentSceneItemsAtom.reportRead();
     return super.currentSceneItems;
   }
 
   @override
-  set currentSceneItems(ObservableList<SceneItem>? value) {
+  set currentSceneItems(ObservableList<SceneItem> value) {
     _$currentSceneItemsAtom.reportWrite(value, super.currentSceneItems, () {
       super.currentSceneItems = value;
     });
@@ -761,6 +769,7 @@ editAudioVisibility: ${editAudioVisibility},
 studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
+mediaSceneItems: ${mediaSceneItems},
 currentInputs: ${currentInputs},
 globalInputs: ${globalInputs},
 screenshotPath: ${screenshotPath}

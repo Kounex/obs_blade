@@ -86,9 +86,8 @@ class TipsContent extends StatelessWidget {
                         ),
                       ),
                 if (this.tipsDetails != null && this.tipsDetails!.isNotEmpty)
-                  ...this
-                      .tipsDetails!
-                      .take(kTipAwesomeness.length)
+                  ...(this.tipsDetails!
+                        ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice)))
                       .mapIndexed(
                         (tip, index) => DonateButton(
                           // text: '${kTipAwesomeness[index]} Tip',
