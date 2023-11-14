@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
 
 import '../general/validation_cupertino_textfield.dart';
 
@@ -52,12 +53,9 @@ class _InputDialogState extends State<InputDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      title: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Text(this.widget.title),
-      ),
-      content: Column(
+    return BaseAdaptiveDialog(
+      title: this.widget.title,
+      bodyWidget: Column(
         children: [
           Text(this.widget.body),
           Padding(
@@ -76,14 +74,14 @@ class _InputDialogState extends State<InputDialog> {
         ],
       ),
       actions: [
-        CupertinoDialogAction(
+        DialogActionConfig(
           isDestructiveAction: true,
-          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        CupertinoDialogAction(
+        DialogActionConfig(
           child: const Text('Save'),
-          onPressed: () {
+          popOnAction: false,
+          onPressed: (_) {
             bool valid = true;
             if (this.widget.inputCheck != null) {
               (_controller as CustomValidationTextEditingController).submit();

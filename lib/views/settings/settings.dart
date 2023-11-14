@@ -4,10 +4,10 @@ import 'package:get_it/get_it.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../shared/general/base/adaptive_switch.dart';
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/hive_builder.dart';
 import '../../shared/general/themed/cupertino_sliver_navigation_bar.dart';
-import '../../shared/general/themed/cupertino_switch.dart';
 import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
@@ -44,7 +44,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Wake Lock',
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: AdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.WakeLock.name,
                           defaultValue: true,
@@ -72,7 +72,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Unlimited Retries',
                       help:
                           'When active, OBS Blade will try to reconnect to a lost OBS connection indefinitely instead of aborting when reaching a fixed amount of attempts.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: AdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.UnlimitedReconnects.name,
                           defaultValue: false,
@@ -101,7 +101,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Studio Mode',
                       help:
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: AdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeStudioControls.name,
                           defaultValue: false,
@@ -120,7 +120,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Force Tablet Mode',
                       help:
                           'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: AdaptiveSwitch(
                         value: settingsBox.get(
                             SettingsKeys.EnforceTabletMode.name,
                             defaultValue: false),
@@ -157,7 +157,7 @@ class SettingsView extends StatelessWidget {
                       leading: CupertinoIcons.moon_circle_fill,
                       leadingSize: 30.0,
                       title: 'True Dark Mode',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: AdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.TrueDark.name,
                           defaultValue: false,
@@ -183,7 +183,7 @@ class SettingsView extends StatelessWidget {
                         title: 'Reduce Smearing',
                         help:
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery.',
-                        trailing: ThemedCupertinoSwitch(
+                        trailing: AdaptiveSwitch(
                           value: settingsBox.get(
                             SettingsKeys.ReduceSmearing.name,
                             defaultValue: false,

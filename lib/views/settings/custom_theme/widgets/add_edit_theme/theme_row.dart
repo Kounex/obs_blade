@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';
-import '../../../../../shared/general/themed/cupertino_switch.dart';
 import '../color_picker/color_bubble.dart';
 
 import '../../../../../types/extensions/string.dart';
@@ -87,7 +87,7 @@ class ThemeRow extends StatelessWidget {
           SizedBox(
             width: 75.0,
             child: this.onActiveChanged != null
-                ? ThemedCupertinoSwitch(
+                ? AdaptiveSwitch(
                     value: this.active!,
                     onChanged: this.onActiveChanged!,
                   )

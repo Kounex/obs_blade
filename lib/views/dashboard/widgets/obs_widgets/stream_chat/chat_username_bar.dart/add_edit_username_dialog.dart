@@ -84,6 +84,50 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
     return null;
   }
 
+  void _handleTwitchUsername() {
+    List<String> twitchUsernames = this.widget.settingsBox.get(
+      SettingsKeys.TwitchUsernames.name,
+      defaultValue: <String>[],
+    );
+    if (this.widget.username == null) {
+      twitchUsernames.add(_usernameController.text);
+    } else {
+      twitchUsernames[twitchUsernames.indexOf(this.widget.username!)] =
+          _usernameController.text;
+    }
+    this.widget.settingsBox.put(
+          SettingsKeys.TwitchUsernames.name,
+          twitchUsernames,
+        );
+    this.widget.settingsBox.put(
+          SettingsKeys.SelectedTwitchUsername.name,
+          _usernameController.text,
+        );
+  }
+
+  void _handleYoutubeUsername() {
+    Map<String, String> youtubeUsernames = Map<String, String>.from(
+      (this.widget.settingsBox.get(
+        SettingsKeys.YoutubeUsernames.name,
+        defaultValue: <String, String>{},
+      )),
+    );
+    if (this.widget.username != null) {
+      youtubeUsernames.remove(this.widget.username);
+    }
+    youtubeUsernames.putIfAbsent(
+        _usernameController.text, () => _youtubeLinkController.text);
+
+    this.widget.settingsBox.put(
+          SettingsKeys.YoutubeUsernames.name,
+          youtubeUsernames,
+        );
+    this.widget.settingsBox.put(
+          SettingsKeys.SelectedYoutubeUsername.name,
+          _usernameController.text,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ConfirmationDialog(
@@ -123,38 +167,9 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
                 ? _youtubeLinkController.isValid
                 : true)) {
           if (_chatType == ChatType.Twitch) {
-            List<String> twitchUsernames = this.widget.settingsBox.get(
-                SettingsKeys.TwitchUsernames.name,
-                defaultValue: <String>[]);
-            if (this.widget.username == null) {
-              twitchUsernames.add(_usernameController.text);
-            } else {
-              twitchUsernames[twitchUsernames.indexOf(this.widget.username!)] =
-                  _usernameController.text;
-            }
-            this
-                .widget
-                .settingsBox
-                .put(SettingsKeys.TwitchUsernames.name, twitchUsernames);
-            this.widget.settingsBox.put(
-                SettingsKeys.SelectedTwitchUsername.name,
-                _usernameController.text);
+            _handleTwitchUsername();
           } else if (_chatType == ChatType.YouTube) {
-            Map<String, String> youtubeUsernames = Map<String, String>.from(
-                (this.widget.settingsBox.get(SettingsKeys.YoutubeUsernames.name,
-                    defaultValue: <String, String>{})));
-            if (this.widget.username != null) {
-              youtubeUsernames.remove(this.widget.username);
-            }
-            youtubeUsernames.putIfAbsent(
-                _usernameController.text, () => _youtubeLinkController.text);
-            this
-                .widget
-                .settingsBox
-                .put(SettingsKeys.YoutubeUsernames.name, youtubeUsernames);
-            this.widget.settingsBox.put(
-                SettingsKeys.SelectedYoutubeUsername.name,
-                _usernameController.text);
+            _handleYoutubeUsername();
           }
           Navigator.of(context).pop();
         }
