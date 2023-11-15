@@ -83,7 +83,13 @@ class ModalHandler {
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
-          modalWidget: builder(context),
+          modalWidget: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              builder(context),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
           maxHeight: MediaQuery.of(context).size.height / 1.5,
           maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
         ),
@@ -95,6 +101,7 @@ class ModalHandler {
         modalWidgetBuilder,
     bool useRootNavigator = true,
     double maxWidth = double.infinity,
+    bool? blurryBackground,
     double additionalBottomViewInsets = 0,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(
@@ -111,7 +118,7 @@ class ModalHandler {
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
-          blurryBackground: true,
+          blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
           modalWidget: modalWidgetBuilder(
             context,
             ModalScrollController.of(context)!,

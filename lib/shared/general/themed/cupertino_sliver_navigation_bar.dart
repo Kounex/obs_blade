@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 class ThemedCupertinoSliverNavigationBar extends StatelessWidget {
   final Widget largeTitle;
@@ -12,7 +13,9 @@ class ThemedCupertinoSliverNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoSliverNavigationBar(
-      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      backgroundColor: StylingHelper.isApple(context)
+          ? Theme.of(context).appBarTheme.backgroundColor
+          : Theme.of(context).appBarTheme.backgroundColor!.withOpacity(1.0),
       largeTitle: this.largeTitle,
     );
   }

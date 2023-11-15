@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../utils/modal_handler.dart';
 import '../../dialogs/info.dart';
@@ -20,10 +21,6 @@ class BaseAdaptiveSwitch extends StatelessWidget {
     this.disabledChangeInfo,
   });
 
-  bool _isApple(BuildContext context) =>
-      Theme.of(context).platform == TargetPlatform.iOS ||
-      Theme.of(context).platform == TargetPlatform.macOS;
-
   @override
   Widget build(BuildContext context) {
     return Listener(
@@ -35,7 +32,7 @@ class BaseAdaptiveSwitch extends StatelessWidget {
                 dialogWidget: InfoDialog(body: this.disabledChangeInfo!),
               )
           : null,
-      child: _isApple(context)
+      child: StylingHelper.isApple(context)
           ? CupertinoSwitch(
               value: this.value,
               activeColor: this.activeColor ??

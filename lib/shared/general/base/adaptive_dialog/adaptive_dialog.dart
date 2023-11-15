@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog_action.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../checkbox.dart';
 
@@ -58,16 +59,17 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
           (this.widget.title != null
               ? Padding(
                   padding: EdgeInsets.only(
-                    bottom: Theme.of(context).platform == TargetPlatform.iOS ||
-                            Theme.of(context).platform == TargetPlatform.macOS
-                        ? 8.0
-                        : 0.0,
+                    bottom: StylingHelper.isApple(context) ? 8.0 : 0.0,
                   ),
                   child: Text(this.widget.title!),
                 )
               : null),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24.0) +
-          const EdgeInsets.only(top: 16.0),
+          EdgeInsets.only(
+              top: !StylingHelper.isApple(context) && this.widget.title == null
+                  ? 24.0
+                  : 16.0),
+      backgroundColor: Theme.of(context).cardColor,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

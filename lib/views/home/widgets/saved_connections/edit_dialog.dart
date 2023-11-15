@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
@@ -189,8 +190,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             autocorrect: false,
             obscureText: _obscurePW,
             errorPaddingAlways: true,
-            suffixIcon: Theme.of(context).platform == TargetPlatform.iOS ||
-                    Theme.of(context).platform == TargetPlatform.macOS
+            suffixIcon: StylingHelper.isApple(context)
                 ? Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[

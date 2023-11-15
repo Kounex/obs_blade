@@ -477,7 +477,7 @@ class _ColorPickerState extends State<ColorPicker> {
                     ],
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom + 12.0),
+                const SizedBox(height: 12.0),
               ],
             ),
           ),

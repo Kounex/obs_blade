@@ -2,6 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'stores/shared/tabs.dart';
 import 'utils/routing_helper.dart';
@@ -128,8 +132,12 @@ class _TabBaseState extends State<TabBase> {
           ),
         );
       }),
+      extendBody: true,
       bottomNavigationBar: Observer(
         builder: (_) => CupertinoTabBar(
+          backgroundColor: !StylingHelper.isApple(context)
+              ? CupertinoTheme.of(context).barBackgroundColor.withOpacity(1.0)
+              : null,
           activeColor: Theme.of(context).colorScheme.secondary,
           currentIndex: tabsStore.activeTab.index,
 

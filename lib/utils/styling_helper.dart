@@ -48,6 +48,10 @@ class StylingHelper {
   static String brightnessAwareOBSLogo(BuildContext context) =>
       'assets/images/${Theme.of(context).brightness == Brightness.dark ? 'base_logo.png' : 'base_logo_dark.png'}';
 
+  static bool isApple(BuildContext context) =>
+      Theme.of(context).platform == TargetPlatform.iOS ||
+      Theme.of(context).platform == TargetPlatform.macOS;
+
   static CustomTheme? currentCustomTheme([Box<dynamic>? settingsBox]) {
     settingsBox = settingsBox ?? Hive.box(HiveKeys.Settings.name);
 

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/animator/fader.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 class CustomValidationTextEditingController extends TextEditingController {
   bool submitted = false;
@@ -173,10 +174,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
               child: Padding(
                 padding: EdgeInsets.only(
                   top: 2.0,
-                  left: Theme.of(context).platform == TargetPlatform.iOS ||
-                          Theme.of(context).platform == TargetPlatform.macOS
-                      ? 4.0
-                      : 0,
+                  left: StylingHelper.isApple(context) ? 4.0 : 0,
                   bottom: this.widget.bottomPadding,
                 ),
                 child: Fader(
