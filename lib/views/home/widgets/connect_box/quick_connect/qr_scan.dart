@@ -103,7 +103,7 @@ class _QRScanState extends State<QRScan> {
         scale: 0.8,
         child: const QuestionMarkTooltip(
             message:
-                'You can find the QR code in:\n\nTools -> obs-websocket Settings -> Show Connect Info'),
+                'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info'),
       ),
       title: 'Quick Connect',
       actions: ThemedCupertinoButton(

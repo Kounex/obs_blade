@@ -85,7 +85,10 @@ class _TabBaseState extends State<TabBase> {
             settings: routeSettings,
           );
         },
-        observers: [_heroControllers[tab]!, ActiveRouteObserver(tab: tab)],
+        observers: [
+          _heroControllers[tab]!,
+          ActiveRouteObserver(tab: tab),
+        ],
       );
     }
   }

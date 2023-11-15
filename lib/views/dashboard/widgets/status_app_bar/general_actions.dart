@@ -7,7 +7,7 @@ import 'package:obs_blade/utils/overlay_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
-import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/shared/network.dart';
@@ -46,11 +46,11 @@ class GeneralActions extends StatelessWidget {
             SettingsKeys.DontShowStreamStopMessage,
           ],
           builder: (context, settingsBox, child) => Observer(
-            builder: (_) => AppBarCupertinoActions(
+            builder: (_) => AppBarActions(
               actions: [
                 if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
                     defaultValue: false))
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isLive ? 'Stop' : 'Start'} Streaming',
                     onAction: () => RecordStreamService.triggerStreamStartStop(
@@ -66,7 +66,7 @@ class GeneralActions extends StatelessWidget {
                   ),
                 if (!settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
                     defaultValue: false)) ...[
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecording ? 'Stop' : 'Start'} Recording',
                     onAction: () => RecordStreamService.triggerRecordStartStop(
@@ -80,7 +80,7 @@ class GeneralActions extends StatelessWidget {
                           defaultValue: false),
                     ),
                   ),
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecordingPaused ? 'Resume' : 'Pause'} Recording',
                     onAction: dashboardStore.isRecording
@@ -94,7 +94,7 @@ class GeneralActions extends StatelessWidget {
                 if (!settingsBox.get(
                     SettingsKeys.ExposeReplayBufferControls.name,
                     defaultValue: false)) ...[
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isReplayBufferActive ? 'Stop' : 'Start'} Replay Buffer',
                     onAction: () {
@@ -113,7 +113,7 @@ class GeneralActions extends StatelessWidget {
                       );
                     },
                   ),
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title: 'Save Replay Buffer',
                     onAction: dashboardStore.isReplayBufferActive
                         ? () => NetworkHelper.makeRequest(
@@ -123,7 +123,7 @@ class GeneralActions extends StatelessWidget {
                         : null,
                   ),
                 ],
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
                   title:
                       '${dashboardStore.isVirtualCamActive ? 'Stop' : 'Start'} Virtual Camera',
                   onAction: () {
@@ -133,7 +133,7 @@ class GeneralActions extends StatelessWidget {
                     );
                   },
                 ),
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
                   title: 'Take OBS Screenshot',
                   onAction: () {
                     /// Intentionally having a different file format used for
@@ -183,7 +183,7 @@ class GeneralActions extends StatelessWidget {
                     );
                   },
                 ),
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
                   title:
                       '${dashboardStore.editSceneVisibility ? 'Finish' : 'Edit'} Scene Visibility',
                   onAction: dashboardStore.editSceneVisibility
@@ -227,7 +227,7 @@ class GeneralActions extends StatelessWidget {
                               );
                             },
                 ),
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
                   title: '${newConnection ? 'Save' : 'Edit'} Connection',
                   onAction: () {
                     ModalHandler.showBaseDialog(

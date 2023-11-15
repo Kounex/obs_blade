@@ -9,7 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/dialogs/confirmation.dart';
-import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../shared/general/hive_builder.dart';
@@ -124,13 +124,13 @@ class LogDetailView extends StatelessWidget {
               previousTitle: 'Logs',
               title: dateMS.millisecondsToFormattedDateString(),
               showScrollBar: true,
-              actions: AppBarCupertinoActions(
+              actions: AppBarActions(
                 actions: [
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title: 'Export',
                     onAction: () => _createLogFileAndExport(mergedLogs),
                   ),
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title: 'Delete',
                     isDestructive: true,
                     onAction: () {
@@ -155,6 +155,7 @@ class LogDetailView extends StatelessWidget {
                 ],
               ),
               listViewChildren: [
+                const SizedBox(height: 12.0),
                 Center(
                   child: ConstrainedBox(
                     constraints:
@@ -187,6 +188,7 @@ class LogDetailView extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 4.0),
                 ...mergedLogs.entries.map(
                   (mergedLog) => LogEntry(
                     dateFormatted: mergedLog.key,

@@ -46,7 +46,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               Container(width: 10.0),
               const QuestionMarkTooltip(
                   message:
-                      'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> obs-websocket Settings'),
+                      'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> WebSocket Server Settings'),
             ],
           ),
         ),

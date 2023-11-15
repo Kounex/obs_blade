@@ -76,7 +76,7 @@ class ModalHandler {
       showModalBottomSheet(
         context: context,
         useRootNavigator: useRootNavigator,
-        isDismissible: false,
+        isDismissible: barrierDismissible,
         enableDrag: false,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
@@ -111,12 +111,12 @@ class ModalHandler {
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
+          blurryBackground: true,
           modalWidget: modalWidgetBuilder(
             context,
             ModalScrollController.of(context)!,
           ),
           maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
-          blurryBackground: true,
         ),
       );
 
@@ -152,16 +152,16 @@ class ModalHandler {
       );
     }
 
-    child = Align(
-      alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-          maxWidth: maxWidth,
-        ),
-        child: child,
-      ),
-    );
+    // child = Align(
+    //   alignment: Alignment.bottomCenter,
+    //   child: ConstrainedBox(
+    //     constraints: BoxConstraints(
+    //       maxHeight: maxHeight,
+    //       maxWidth: maxWidth,
+    //     ),
+    //     child: child,
+    //   ),
+    // );
 
     return Material(
       type: MaterialType.transparency,
@@ -169,10 +169,11 @@ class ModalHandler {
         bottom: false,
         child: Padding(
           padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom +
-                  (MediaQuery.of(context).viewInsets.bottom > 0
-                      ? additionalBottomViewInsets
-                      : 0)),
+            bottom: MediaQuery.of(context).viewInsets.bottom +
+                (MediaQuery.of(context).viewInsets.bottom > 0
+                    ? additionalBottomViewInsets
+                    : 0),
+          ),
           child: child,
         ),
       ),
