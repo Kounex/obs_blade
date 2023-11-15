@@ -29,9 +29,12 @@ class AdaptiveDialogAction extends StatelessWidget {
       _ => TextButton(
           onPressed: this.onPressed,
           style: this.isDestructiveAction
-              ? const ButtonStyle(
-                  foregroundColor:
-                      MaterialStatePropertyAll(CupertinoColors.destructiveRed),
+              ? ButtonStyle(
+                  foregroundColor: const MaterialStatePropertyAll(
+                      CupertinoColors.destructiveRed),
+                  overlayColor: MaterialStatePropertyAll(
+                    CupertinoColors.destructiveRed.withOpacity(0.1),
+                  ),
                 )
               : null,
           child: this.child,

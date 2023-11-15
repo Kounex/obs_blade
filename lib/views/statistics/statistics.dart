@@ -212,123 +212,122 @@ class _StatisticsViewState extends State<StatisticsView> {
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         listViewChildren: [
           HiveBuilder<PastStreamData>(
-              hiveKey: HiveKeys.PastStreamData,
-              builder: (context, pastStreamDataBox, child) {
-                return HiveBuilder<PastRecordData>(
-                    hiveKey: HiveKeys.PastRecordData,
-                    builder: (context, pastRecordDataBox, child) {
-                      List<PastStatsData> pastStatsData = [
-                        ...pastStreamDataBox.values.toList(),
-                        // ..._pastStreamData,
-                        ...pastRecordDataBox.values.toList(),
-                      ]..sort((a, b) =>
-                          a.listEntryDateMS.last - b.listEntryDateMS.last);
+            hiveKey: HiveKeys.PastStreamData,
+            builder: (context, pastStreamDataBox, child) {
+              return HiveBuilder<PastRecordData>(
+                  hiveKey: HiveKeys.PastRecordData,
+                  builder: (context, pastRecordDataBox, child) {
+                    List<PastStatsData> pastStatsData = [
+                      ...pastStreamDataBox.values.toList(),
+                      // ..._pastStreamData,
+                      ...pastRecordDataBox.values.toList(),
+                    ]..sort((a, b) =>
+                        a.listEntryDateMS.last - b.listEntryDateMS.last);
 
-                      PastStreamData? latestStreamData;
-                      PastRecordData? latestRecordData;
+                    PastStreamData? latestStreamData;
+                    PastRecordData? latestRecordData;
 
-                      try {
-                        latestStreamData =
-                            pastStatsData.whereType<PastStreamData>().last;
-                      } catch (_) {}
+                    try {
+                      latestStreamData =
+                          pastStatsData.whereType<PastStreamData>().last;
+                    } catch (_) {}
 
-                      try {
-                        latestRecordData =
-                            pastStatsData.whereType<PastRecordData>().last;
-                      } catch (_) {}
+                    try {
+                      latestRecordData =
+                          pastStatsData.whereType<PastRecordData>().last;
+                    } catch (_) {}
 
-                      List<PastStatsData?> latestRecordStreamStat = [
-                        latestRecordData,
-                        latestStreamData,
-                      ]..sort((a, b) =>
-                          (b?.listEntryDateMS.last ?? 0) -
-                          (a?.listEntryDateMS.last ?? 0));
+                    List<PastStatsData?> latestRecordStreamStat = [
+                      latestRecordData,
+                      latestStreamData,
+                    ]..sort((a, b) =>
+                        (b?.listEntryDateMS.last ?? 0) -
+                        (a?.listEntryDateMS.last ?? 0));
 
-                      return Column(
-                        children: [
-                          BaseCard(
-                            bottomPadding: 12.0,
-                            titlePadding: const EdgeInsets.all(0),
-                            titleWidget: const CardHeader(
-                              headerDecorationIcon: CupertinoIcons.time_solid,
-                              title: 'Latest\nStats.',
-                              description:
-                                  'The most freshest statistic of your latest streaming and recording session',
-                            ),
-                            paddingChild: const EdgeInsets.all(0),
-                            child: latestRecordStreamStat.isNotEmpty &&
-                                    latestRecordStreamStat.any(
-                                        (pastStatsData) =>
-                                            pastStatsData != null)
-                                ? ColumnSeparated(
-                                    paddingSeparator:
-                                        const EdgeInsets.symmetric(vertical: 0),
-                                    children: latestRecordStreamStat
-                                        .where((pastStatsData) =>
-                                            pastStatsData != null)
-                                        .map(
-                                          (pastStatsData) => StatsEntry(
-                                            pastStatsData: pastStatsData!,
-                                          ),
-                                        )
-                                        .toList(),
-                                  )
-                                : const StatsEntryPlaceholder(
-                                    text:
-                                        'You haven\'t streamed or recorded using this app? Or have you deleted all statistic entries?! Whatever it is, you should start streaming / recording!',
-                                  ),
+                    return Column(
+                      children: [
+                        BaseCard(
+                          bottomPadding: 12.0,
+                          titlePadding: const EdgeInsets.all(0),
+                          titleWidget: const CardHeader(
+                            headerDecorationIcon: CupertinoIcons.time_solid,
+                            title: 'Latest\nStats.',
+                            description:
+                                'The most freshest statistic of your latest streaming and recording session',
                           ),
-                          BaseCard(
-                            titlePadding: const EdgeInsets.all(0),
-                            titleWidget: const CardHeader(
-                              title: 'Previous\nStats.',
-                              description:
-                                  'All previous streaming / recording sessions',
-                              additionalCardWidgets: [
-                                SortFilterPanel(),
-                              ],
-                            ),
-                            paddingChild: const EdgeInsets.all(0),
-                            child: Observer(
-                              builder: (_) {
-                                /// Only purpose of this line is to omit the debug message of
-                                /// missing observable (which is not correct) since I pass the
-                                /// store to internal functions to handle sort and filter where
-                                /// those observables are used. It even gets rebuilt propely but
-                                /// the message keeps coming up
-                                statisticsStore.filterName;
-
-                                List<PastStatsData>
-                                    sortedFilteredPastStatsData =
-                                    _sortAndFilterPastStatsData(
-                                  statisticsStore,
-                                  pastStatsData
-                                    ..removeWhere(
-                                      (pastStatsData) => latestRecordStreamStat
-                                          .any((latestStat) =>
-                                              latestStat == pastStatsData),
-                                    ),
-                                );
-                                return sortedFilteredPastStatsData.isNotEmpty
-                                    ? PaginatedStatistics(
-                                        sortedFilteredPastStatsData:
-                                            sortedFilteredPastStatsData,
+                          paddingChild: const EdgeInsets.all(0),
+                          child: latestRecordStreamStat.isNotEmpty &&
+                                  latestRecordStreamStat.any(
+                                      (pastStatsData) => pastStatsData != null)
+                              ? ColumnSeparated(
+                                  paddingSeparator:
+                                      const EdgeInsets.symmetric(vertical: 0),
+                                  children: latestRecordStreamStat
+                                      .where((pastStatsData) =>
+                                          pastStatsData != null)
+                                      .map(
+                                        (pastStatsData) => StatsEntry(
+                                          pastStatsData: pastStatsData!,
+                                        ),
                                       )
-                                    : StatsEntryPlaceholder(
-                                        text: latestRecordStreamStat
-                                                .where((latestStat) =>
-                                                    latestStat != null)
-                                                .isEmpty
-                                            ? 'Can\'t find statistics for your previous streams / recordings. Go ahead - stream or record some good stuff!'
-                                            : 'No additional statistics to the ones listed above found or none found which match your filters! Stream / record more or change your filters!',
-                                      );
-                              },
-                            ),
+                                      .toList(),
+                                )
+                              : const StatsEntryPlaceholder(
+                                  text:
+                                      'You haven\'t streamed or recorded using this app? Or have you deleted all statistic entries?! Whatever it is, you should start streaming / recording!',
+                                ),
+                        ),
+                        BaseCard(
+                          titlePadding: const EdgeInsets.all(0),
+                          titleWidget: const CardHeader(
+                            title: 'Previous\nStats.',
+                            description:
+                                'All previous streaming / recording sessions',
+                            additionalCardWidgets: [
+                              SortFilterPanel(),
+                            ],
                           ),
-                        ],
-                      );
-                    });
-              }),
+                          paddingChild: const EdgeInsets.all(0),
+                          child: Observer(
+                            builder: (_) {
+                              /// Only purpose of this line is to omit the debug message of
+                              /// missing observable (which is not correct) since I pass the
+                              /// store to internal functions to handle sort and filter where
+                              /// those observables are used. It even gets rebuilt propely but
+                              /// the message keeps coming up
+                              statisticsStore.filterName;
+
+                              List<PastStatsData> sortedFilteredPastStatsData =
+                                  _sortAndFilterPastStatsData(
+                                statisticsStore,
+                                pastStatsData
+                                  ..removeWhere(
+                                    (pastStatsData) => latestRecordStreamStat
+                                        .any((latestStat) =>
+                                            latestStat == pastStatsData),
+                                  ),
+                              );
+                              return sortedFilteredPastStatsData.isNotEmpty
+                                  ? PaginatedStatistics(
+                                      sortedFilteredPastStatsData:
+                                          sortedFilteredPastStatsData,
+                                    )
+                                  : StatsEntryPlaceholder(
+                                      text: latestRecordStreamStat
+                                              .where((latestStat) =>
+                                                  latestStat != null)
+                                              .isEmpty
+                                          ? 'Can\'t find statistics for your previous streams / recordings. Go ahead - stream or record some good stuff!'
+                                          : 'No additional statistics to the ones listed above found or none found which match your filters! Stream / record more or change your filters!',
+                                    );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  });
+            },
+          ),
         ],
       ),
     );

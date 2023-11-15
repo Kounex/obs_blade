@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
-import '../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/validation_helper.dart';

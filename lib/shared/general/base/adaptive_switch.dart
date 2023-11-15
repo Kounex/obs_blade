@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import '../../../utils/modal_handler.dart';
 import '../../dialogs/info.dart';
 
-class AdaptiveSwitch extends StatelessWidget {
+class BaseAdaptiveSwitch extends StatelessWidget {
   final bool value;
   final bool enabled;
   final Color? activeColor;
   final dynamic Function(bool) onChanged;
   final String? disabledChangeInfo;
 
-  const AdaptiveSwitch({
+  const BaseAdaptiveSwitch({
     super.key,
     required this.value,
     this.enabled = true,
@@ -31,6 +31,7 @@ class AdaptiveSwitch extends StatelessWidget {
       onPointerDown: !this.enabled && this.disabledChangeInfo != null
           ? (_) => ModalHandler.showBaseDialog(
                 context: context,
+                barrierDismissible: true,
                 dialogWidget: InfoDialog(body: this.disabledChangeInfo!),
               )
           : null,

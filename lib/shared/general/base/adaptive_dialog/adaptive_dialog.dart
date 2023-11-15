@@ -25,23 +25,22 @@ class DialogActionConfig {
 
 class BaseAdaptiveDialog extends StatefulWidget {
   final String? title;
+  final Widget? titleWidget;
 
   final String? body;
   final Widget? bodyWidget;
 
   final bool enableDontShowAgainOption;
 
-  final bool popOnAction;
-
   final List<DialogActionConfig>? actions;
 
   const BaseAdaptiveDialog({
     super.key,
     this.title,
+    this.titleWidget,
     this.body,
     this.bodyWidget,
     this.enableDontShowAgainOption = false,
-    this.popOnAction = true,
     this.actions,
   }) : assert(body != null || bodyWidget != null);
 
@@ -55,17 +54,18 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog.adaptive(
-      title: this.widget.title != null
-          ? Padding(
-              padding: EdgeInsets.only(
-                bottom: Theme.of(context).platform == TargetPlatform.iOS ||
-                        Theme.of(context).platform == TargetPlatform.macOS
-                    ? 8.0
-                    : 0.0,
-              ),
-              child: Text(this.widget.title!),
-            )
-          : null,
+      title: this.widget.titleWidget ??
+          (this.widget.title != null
+              ? Padding(
+                  padding: EdgeInsets.only(
+                    bottom: Theme.of(context).platform == TargetPlatform.iOS ||
+                            Theme.of(context).platform == TargetPlatform.macOS
+                        ? 8.0
+                        : 0.0,
+                  ),
+                  child: Text(this.widget.title!),
+                )
+              : null),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24.0) +
           const EdgeInsets.only(top: 16.0),
       content: Column(
@@ -101,7 +101,7 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
           ?.map(
             (config) => AdaptiveDialogAction(
               onPressed: () {
-                if (this.widget.popOnAction) {
+                if (config.popOnAction) {
                   Navigator.of(context).pop();
                 }
                 config.onPressed?.call(_isDontShowChecked);

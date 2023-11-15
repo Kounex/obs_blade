@@ -29,8 +29,8 @@ class SaveEditConnectionDialog extends StatelessWidget {
       inputText: networkStore.activeSession!.connection.name,
       inputPlaceholder: 'Name of the connection',
       inputCheck: (name) {
-        name = name.trim();
-        if (name.isEmpty) {
+        name = name?.trim();
+        if (name?.isEmpty ?? false) {
           return 'Please provide a name!';
         }
         if (box.values.any((connection) =>

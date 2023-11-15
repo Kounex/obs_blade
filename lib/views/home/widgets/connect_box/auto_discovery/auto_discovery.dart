@@ -35,16 +35,16 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
       // mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.only(top: 18.0, right: 18.0, left: 18.0),
+        const Padding(
+          padding: EdgeInsets.only(top: 18.0, right: 18.0, left: 18.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Flexible(
+              Flexible(
                 child: Text('Port for autodiscovery: '),
               ),
-              Container(width: 10.0),
-              const QuestionMarkTooltip(
+              SizedBox(width: 10.0),
+              QuestionMarkTooltip(
                   message:
                       'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> WebSocket Server Settings'),
             ],

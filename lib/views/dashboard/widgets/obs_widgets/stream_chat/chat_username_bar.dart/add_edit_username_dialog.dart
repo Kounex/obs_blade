@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 
 class AddEditUsernameDialog extends StatefulWidget {
@@ -139,7 +139,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
             'Add the name of a ${_chatType.text} user to be able to view this user\'s chat',
           ),
           const SizedBox(height: 12.0),
-          ValidationCupertinoTextfield(
+          BaseAdaptiveTextField(
             controller: _usernameController,
             placeholder: '${_chatType.text} username',
           ),
@@ -148,7 +148,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
             const Text(
                 'For Youtube you also need to provide the Channel ID of the livestream - Usually at the end of the livestream link, for example:\n\nm-i_0DcfF1s'),
             const SizedBox(height: 12.0),
-            ValidationCupertinoTextfield(
+            BaseAdaptiveTextField(
               controller: _youtubeLinkController,
               placeholder: 'Youtube livestream link',
             ),

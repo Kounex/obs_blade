@@ -55,6 +55,10 @@ enum SettingsKeys {
   /// [String]: UUID of the active custom theme (only used if [CustomTheme] is true)
   ActiveCustomThemeUUID,
 
+  /// [bool]: If we should use the "non native" elements like switch, dialogs in
+  /// the app now that the app is somewhat adaptive
+  ForceNonNativeElements,
+
   /// [bool]: Indicates if the user wants to let his device stay active in the [DashboardView].
   /// Active by default
   WakeLock,
@@ -163,6 +167,7 @@ enum SettingsKeys {
         SettingsKeys.SelectedYoutubeUsername: 'selected-youtube-username',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
+        SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',
         SettingsKeys.WakeLock: 'wake-lock',
         SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',

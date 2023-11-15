@@ -92,7 +92,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                   title: 'Use Custom Theme',
                   description:
                       'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
-                  trailing: AdaptiveSwitch(
+                  trailing: BaseAdaptiveSwitch(
                     value: settingsBox.get(SettingsKeys.CustomTheme.name,
                         defaultValue: false),
                     onChanged: (customTheme) {

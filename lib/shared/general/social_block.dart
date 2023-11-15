@@ -73,6 +73,7 @@ class SocialBlock extends StatelessWidget {
     } catch (_) {
       ModalHandler.showBaseDialog(
         context: context,
+        barrierDismissible: true,
         dialogWidget: InfoDialog(
           title: 'Couldn\'t open link',
           body:

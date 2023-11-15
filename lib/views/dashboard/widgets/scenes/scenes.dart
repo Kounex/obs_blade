@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/hotkeys/hotkeys.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/profile_scene_collection/profile_scene_collection.dart';
 
 import '../../../../shared/general/responsive_widget_wrapper.dart';
@@ -17,11 +16,10 @@ class Scenes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: const [
+    return const Column(
+      children: [
         ProfileSceneCollection(),
         ExposedControls(),
-        Hotkeys(),
         Center(
           child: Padding(
             padding: EdgeInsets.only(
@@ -49,6 +47,7 @@ class Scenes extends StatelessWidget {
         ),
         SizedBox(height: 24.0),
         ScenePreview(),
+        SizedBox(height: 24.0),
         ResponsiveWidgetWrapper(
           mobileWidget: SceneContentMobile(),
           tabletWidget: SceneContent(),

@@ -53,6 +53,7 @@ class GeneralActions extends StatelessWidget {
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isLive ? 'Stop' : 'Start'} Streaming',
+                    leadingIcon: CupertinoIcons.dot_radiowaves_left_right,
                     onAction: () => RecordStreamService.triggerStreamStartStop(
                       context,
                       dashboardStore.isLive,
@@ -69,6 +70,7 @@ class GeneralActions extends StatelessWidget {
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecording ? 'Stop' : 'Start'} Recording',
+                    leadingIcon: CupertinoIcons.recordingtape,
                     onAction: () => RecordStreamService.triggerRecordStartStop(
                       context,
                       dashboardStore.isRecording,
@@ -83,6 +85,7 @@ class GeneralActions extends StatelessWidget {
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecordingPaused ? 'Resume' : 'Pause'} Recording',
+                    leadingIcon: CupertinoIcons.playpause_fill,
                     onAction: dashboardStore.isRecording
                         ? () => NetworkHelper.makeRequest(
                               networkStore.activeSession!.socket,
@@ -97,6 +100,7 @@ class GeneralActions extends StatelessWidget {
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isReplayBufferActive ? 'Stop' : 'Start'} Replay Buffer',
+                    leadingIcon: CupertinoIcons.reply_thick_solid,
                     onAction: () {
                       if (dashboardStore.isReplayBufferActive) {
                         OverlayHandler.showStatusOverlay(
@@ -115,6 +119,7 @@ class GeneralActions extends StatelessWidget {
                   ),
                   AppBarActionEntry(
                     title: 'Save Replay Buffer',
+                    leadingIcon: CupertinoIcons.arrow_down_doc_fill,
                     onAction: dashboardStore.isReplayBufferActive
                         ? () => NetworkHelper.makeRequest(
                               networkStore.activeSession!.socket,
@@ -126,6 +131,7 @@ class GeneralActions extends StatelessWidget {
                 AppBarActionEntry(
                   title:
                       '${dashboardStore.isVirtualCamActive ? 'Stop' : 'Start'} Virtual Camera',
+                  leadingIcon: CupertinoIcons.camera_on_rectangle_fill,
                   onAction: () {
                     NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
@@ -135,6 +141,7 @@ class GeneralActions extends StatelessWidget {
                 ),
                 AppBarActionEntry(
                   title: 'Take OBS Screenshot',
+                  leadingIcon: CupertinoIcons.square_stack_3d_down_right_fill,
                   onAction: () {
                     /// Intentionally having a different file format used for
                     /// the [imageFormat] field for the request and the one
@@ -186,6 +193,7 @@ class GeneralActions extends StatelessWidget {
                 AppBarActionEntry(
                   title:
                       '${dashboardStore.editSceneVisibility ? 'Finish' : 'Edit'} Scene Visibility',
+                  leadingIcon: CupertinoIcons.eyeglasses,
                   onAction: dashboardStore.editSceneVisibility
                       ? () {
                           dashboardStore.setEditSceneVisibility(false);
@@ -229,6 +237,7 @@ class GeneralActions extends StatelessWidget {
                 ),
                 AppBarActionEntry(
                   title: '${newConnection ? 'Save' : 'Edit'} Connection',
+                  leadingIcon: CupertinoIcons.pencil_ellipsis_rectangle,
                   onAction: () {
                     ModalHandler.showBaseDialog(
                       context: context,

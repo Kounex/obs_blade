@@ -69,6 +69,7 @@ class DonateButton extends StatelessWidget {
           : this.errorText != null
               ? () => ModalHandler.showBaseDialog(
                   context: context,
+                  barrierDismissible: true,
                   dialogWidget: InfoDialog(body: this.errorText!))
               : null,
       child: this.price != null || this.errorText != null

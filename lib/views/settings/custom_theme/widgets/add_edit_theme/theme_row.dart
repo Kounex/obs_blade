@@ -52,7 +52,7 @@ class ThemeRow extends StatelessWidget {
       onTap: this.onSave != null
           ? () => ModalHandler.showBaseBottomSheet(
                 context: context,
-                modalWidget: ColorPicker(
+                builder: (context) => ColorPicker(
                   title: this.title ?? 'Title',
                   description: this.description ?? 'Description',
                   color: this.colorHex,
@@ -87,7 +87,7 @@ class ThemeRow extends StatelessWidget {
           SizedBox(
             width: 75.0,
             child: this.onActiveChanged != null
-                ? AdaptiveSwitch(
+                ? BaseAdaptiveSwitch(
                     value: this.active!,
                     onChanged: this.onActiveChanged!,
                   )

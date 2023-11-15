@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
 
-import '../general/validation_cupertino_textfield.dart';
+import '../general/base/adaptive_text_field.dart';
 
 class InputDialog extends StatefulWidget {
   final String title;
@@ -13,7 +14,7 @@ class InputDialog extends StatefulWidget {
 
   /// Works like validation - return an empty String to tell it is valid and otherwise
   /// the error text which should be displayed (prevents the 'Ok' dialog callback)
-  final String? Function(String)? inputCheck;
+  final String? Function(String?)? inputCheck;
 
   const InputDialog({
     Key? key,
@@ -30,7 +31,8 @@ class InputDialog extends StatefulWidget {
 }
 
 class _InputDialogState extends State<InputDialog> {
-  late TextEditingController _controller;
+  final GlobalKey<FormState> _formKey = GlobalKey();
+  late final TextEditingController _controller;
 
   @override
   void initState() {
@@ -60,16 +62,14 @@ class _InputDialogState extends State<InputDialog> {
           Text(this.widget.body),
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
-            child: this.widget.inputCheck != null
-                ? ValidationCupertinoTextfield(
-                    controller:
-                        _controller as CustomValidationTextEditingController,
-                    placeholder: this.widget.inputPlaceholder,
-                  )
-                : CupertinoTextField(
-                    controller: _controller,
-                    placeholder: this.widget.inputPlaceholder,
-                  ),
+            child: Form(
+              key: _formKey,
+              child: BaseAdaptiveTextField(
+                controller:
+                    _controller as CustomValidationTextEditingController,
+                placeholder: this.widget.inputPlaceholder,
+              ),
+            ),
           ),
         ],
       ),
@@ -84,6 +84,7 @@ class _InputDialogState extends State<InputDialog> {
           onPressed: (_) {
             bool valid = true;
             if (this.widget.inputCheck != null) {
+              _formKey.currentState!.validate();
               (_controller as CustomValidationTextEditingController).submit();
               valid = (_controller as CustomValidationTextEditingController)
                   .isValid;

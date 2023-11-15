@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/media_inputs/media_inputs.dart';
 
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';

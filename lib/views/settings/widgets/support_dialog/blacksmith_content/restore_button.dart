@@ -48,6 +48,7 @@ class RestoreButton extends StatelessWidget {
                       OverlayHandler.closeAnyOverlay(immediately: false);
                       ModalHandler.showBaseDialog(
                         context: context,
+                        barrierDismissible: true,
                         dialogWidget: const InfoDialog(
                           body:
                               'It was not possible to restore Blacksmith. Make sure you have a working internet connection and you actually bought it before!\n\nYou can try to buy it again - it won\'t be possible if you bought it with your current App Store account.\n\nContact me if you can\'t find a solution!',

@@ -4,13 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
 import '../../../../models/hidden_scene_item.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
-import '../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/validation_helper.dart';
@@ -27,10 +28,9 @@ class EditConnectionDialog extends StatefulWidget {
 
 class _EditConnectionDialogState extends State<EditConnectionDialog> {
   late CustomValidationTextEditingController _name;
+  late CustomValidationTextEditingController _pw;
   late CustomValidationTextEditingController _host;
   late CustomValidationTextEditingController _port;
-
-  late TextEditingController _pw;
 
   late bool _isDomain;
 
@@ -54,18 +54,20 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
     );
     _port = CustomValidationTextEditingController(
       text: this.widget.connection.port?.toString() ?? '',
-      check: (text) =>
-          text.isNotEmpty ? ValidationHelper.portValidator(text) : null,
+      check: (text) => (text?.isNotEmpty ?? false)
+          ? ValidationHelper.portValidator(text)
+          : null,
     );
 
-    _pw = TextEditingController(text: this.widget.connection.pw);
+    _pw =
+        CustomValidationTextEditingController(text: this.widget.connection.pw);
 
     _isDomain = this.widget.connection.isDomain ?? false;
   }
 
-  String? _nameValidator(String name) => name.trim().isEmpty
+  String? _nameValidator(String? name) => (name?.trim().isEmpty ?? true)
       ? 'Please provide a name!'
-      : name.trim() != this.widget.connection.name &&
+      : name?.trim() != this.widget.connection.name &&
               Hive.box<Connection>(HiveKeys.SavedConnections.name)
                   .values
                   .any((connection) => connection.name == name)
@@ -74,8 +76,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      title: Row(
+    return BaseAdaptiveDialog(
+      titleWidget: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text('Edit Connection'),
@@ -104,7 +106,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           ),
         ],
       ),
-      content: Column(
+      bodyWidget: Column(
         children: [
           const SizedBox(height: 12.0),
           const Text(
@@ -114,8 +116,9 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           const SizedBox(height: 4.0),
           Padding(
             padding: const EdgeInsets.only(top: 12.0),
-            child: ValidationCupertinoTextfield(
+            child: BaseAdaptiveTextField(
               controller: _name,
+              errorPaddingAlways: true,
               placeholder: 'Name',
             ),
           ),
@@ -124,9 +127,10 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             children: [
               Flexible(
                 flex: 2,
-                child: ValidationCupertinoTextfield(
+                child: BaseAdaptiveTextField(
                   controller: _host,
                   placeholder: 'Host',
+                  errorPaddingAlways: true,
                   style: const TextStyle(
                     fontFeatures: [
                       FontFeature.tabularFigures(),
@@ -161,9 +165,10 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                   padding: const EdgeInsets.only(left: 4.0),
                   child: KeyboardNumberHeader(
                     focusNode: _portFocusNode,
-                    child: ValidationCupertinoTextfield(
+                    child: BaseAdaptiveTextField(
                       controller: _port,
                       focusNode: _portFocusNode,
+                      errorPaddingAlways: true,
                       style: const TextStyle(
                         fontFeatures: [
                           FontFeature.tabularFigures(),
@@ -178,50 +183,55 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               ),
             ],
           ),
-          CupertinoTextField(
+          BaseAdaptiveTextField(
             controller: _pw,
             placeholder: 'Password',
             autocorrect: false,
             obscureText: _obscurePW,
-            suffix: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[
-                    Theme.of(context).brightness == Brightness.light
-                        ? 300
-                        : 900],
-                borderRadius: const BorderRadius.horizontal(
-                  right: Radius.circular(5.0),
-                ),
-              ),
-              child: GestureDetector(
-                onTap: () => setState(() => _obscurePW = !_obscurePW),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(
-                    _obscurePW ? Icons.visibility_off : Icons.visibility,
-                    size: 20.0,
+            errorPaddingAlways: true,
+            suffixIcon: Theme.of(context).platform == TargetPlatform.iOS ||
+                    Theme.of(context).platform == TargetPlatform.macOS
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[
+                          Theme.of(context).brightness == Brightness.light
+                              ? 300
+                              : 900],
+                      borderRadius: const BorderRadius.horizontal(
+                        right: Radius.circular(5.0),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _obscurePW = !_obscurePW),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          _obscurePW ? Icons.visibility_off : Icons.visibility,
+                          size: 20.0,
+                        ),
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(
+                      _obscurePW ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () => setState(() => _obscurePW = !_obscurePW),
                   ),
-                ),
-              ),
-            ),
           ),
           const SizedBox(height: 8.0),
         ],
       ),
       actions: [
-        CupertinoDialogAction(
+        DialogActionConfig(
           isDefaultAction: true,
-          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        CupertinoDialogAction(
+        DialogActionConfig(
           child: const Text('Save'),
-          onPressed: () {
-            _name.submit();
-            _host.submit();
-            _port.submit();
-
+          popOnAction: false,
+          onPressed: (_) {
             if (_name.isValid && _host.isValid && _port.isValid) {
               String newName = _name.text.trim();
               String newHost = _host.text.trim();

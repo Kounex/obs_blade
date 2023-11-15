@@ -67,7 +67,7 @@ class ModalHandler {
 
   static Future<T?> showBaseBottomSheet<T>({
     required BuildContext context,
-    required Widget modalWidget,
+    required Widget Function(BuildContext context) builder,
     bool useRootNavigator = true,
     bool barrierDismissible = false,
     double maxWidth = kBaseCardMaxWidth,
@@ -83,7 +83,7 @@ class ModalHandler {
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
-          modalWidget: modalWidget,
+          modalWidget: builder(context),
           maxHeight: MediaQuery.of(context).size.height / 1.5,
           maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
         ),

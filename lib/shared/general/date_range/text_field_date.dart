@@ -37,7 +37,7 @@ class TextFieldDate extends StatelessWidget {
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,
-        modalWidget: DatePickerSheet(
+        builder: (context) => DatePickerSheet(
           selectedDate: this.selectedDate,
           minimumDate: this.minimumDate,
           maximumDate: this.maximumDate,

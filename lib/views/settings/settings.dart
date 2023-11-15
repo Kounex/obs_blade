@@ -44,7 +44,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Wake Lock',
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual.',
-                      trailing: AdaptiveSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.WakeLock.name,
                           defaultValue: true,
@@ -72,7 +72,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Unlimited Retries',
                       help:
                           'When active, OBS Blade will try to reconnect to a lost OBS connection indefinitely instead of aborting when reaching a fixed amount of attempts.',
-                      trailing: AdaptiveSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.UnlimitedReconnects.name,
                           defaultValue: false,
@@ -101,7 +101,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Studio Mode',
                       help:
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard.',
-                      trailing: AdaptiveSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeStudioControls.name,
                           defaultValue: false,
@@ -115,12 +115,12 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     BlockEntry(
-                      leading: CupertinoIcons.lock_fill,
-                      leadingSize: 30.0,
+                      leading: CupertinoIcons.table_fill,
+                      leadingSize: 28.0,
                       title: 'Force Tablet Mode',
                       help:
                           'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen.',
-                      trailing: AdaptiveSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                             SettingsKeys.EnforceTabletMode.name,
                             defaultValue: false),
@@ -157,7 +157,7 @@ class SettingsView extends StatelessWidget {
                       leading: CupertinoIcons.moon_circle_fill,
                       leadingSize: 30.0,
                       title: 'True Dark Mode',
-                      trailing: AdaptiveSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.TrueDark.name,
                           defaultValue: false,
@@ -183,7 +183,7 @@ class SettingsView extends StatelessWidget {
                         title: 'Reduce Smearing',
                         help:
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery.',
-                        trailing: AdaptiveSwitch(
+                        trailing: BaseAdaptiveSwitch(
                           value: settingsBox.get(
                             SettingsKeys.ReduceSmearing.name,
                             defaultValue: false,
@@ -202,6 +202,25 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
+                    BlockEntry(
+                      leading: CupertinoIcons.wand_stars,
+                      leadingSize: 30.0,
+                      title: 'Force non native UI',
+                      help:
+                          'OBS Blade started out with mostly using iOS UI components. It is now somewhat adaptive and should be platform agnostic to some degree.\n\nIf, for whatever reason, you want to use the non native elements, turn this on!',
+                      trailing: BaseAdaptiveSwitch(
+                        value: settingsBox.get(
+                          SettingsKeys.ForceNonNativeElements.name,
+                          defaultValue: false,
+                        ),
+                        onChanged: (forceNonNativeElements) {
+                          settingsBox.put(
+                            SettingsKeys.ForceNonNativeElements.name,
+                            forceNonNativeElements,
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
                 const ActionBlock(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/general/base/divider.dart';
+import '../../../../../../shared/general/base/divider.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;

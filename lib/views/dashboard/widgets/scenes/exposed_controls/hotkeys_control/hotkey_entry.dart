@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 
-import '../../../../../models/hotkey.dart';
-import '../../../../../shared/general/base/icon_button.dart';
-import '../../../../../stores/shared/network.dart';
-import '../../../../../types/enums/request_type.dart';
-import '../../../../../utils/network_helper.dart';
+import '../../../../../../models/hotkey.dart';
+import '../../../../../../shared/general/base/icon_button.dart';
+import '../../../../../../stores/shared/network.dart';
+import '../../../../../../types/enums/request_type.dart';
+import '../../../../../../utils/network_helper.dart';
 
 class HotkeyEntry extends StatelessWidget {
   final Box<Hotkey> hotkeyBox;

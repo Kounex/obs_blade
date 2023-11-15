@@ -86,6 +86,7 @@ class _HomeViewState extends State<HomeView> {
         if (this.mounted) {
           ModalHandler.showBaseDialog(
             context: context,
+            barrierDismissible: true,
             dialogWidget: const InfoDialog(
                 body:
                     'Your connection to OBS has been lost and the app was not able to reconnect.'),

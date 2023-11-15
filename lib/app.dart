@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
@@ -88,6 +91,15 @@ class App extends StatelessWidget {
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: accentColor ?? StylingHelper.highlight_color,
       ),
+
+      /// Setting a platform specifically to manipulate the platform
+      /// agnostic elements (if the user opted in for that)
+      platform: settingsBox.get(SettingsKeys.ForceNonNativeElements.name,
+              defaultValue: false)
+          ? (Platform.isIOS || Platform.isMacOS
+              ? TargetPlatform.android
+              : TargetPlatform.iOS)
+          : defaultTargetPlatform,
 
       /// Inner Widget themes
       primaryIconTheme: IconThemeData(
@@ -210,6 +222,7 @@ class App extends StatelessWidget {
         SettingsKeys.ReduceSmearing,
         SettingsKeys.CustomTheme,
         SettingsKeys.ActiveCustomThemeUUID,
+        SettingsKeys.ForceNonNativeElements,
       ],
       builder: (context, Box settingsBox, child) => HiveBuilder<CustomTheme>(
         hiveKey: HiveKeys.CustomTheme,
