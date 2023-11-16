@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
 
 import '../../../../models/connection.dart';
@@ -23,7 +24,8 @@ class SavedConnections extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
         ),
-        const Divider(),
+        const SizedBox(height: 4),
+        const BaseDivider(),
         Flexible(
           fit: FlexFit.loose,
           child: Padding(

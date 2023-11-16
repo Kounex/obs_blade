@@ -89,7 +89,8 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
           ],
           keyboardType: this.widget.keyboardType ??
               TextInputType.numberWithOptions(
-                  signed: this.widget.negativeAllowed),
+                signed: this.widget.negativeAllowed,
+              ),
           suffix: this.widget.suffix != null
               ? Container(
                   decoration: BoxDecoration(
@@ -102,8 +103,11 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(this.widget.suffix!),
+                    padding: const EdgeInsets.all(9.0),
+                    child: Text(
+                      this.widget.suffix!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                 )
               : const SizedBox(),

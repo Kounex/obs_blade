@@ -15,24 +15,17 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
 
     return Transform.translate(
       offset: const Offset(-12.0, 0.0),
-      child: Row(
-        children: [
-          Observer(
-            builder: (_) => BaseCheckbox(
-              value: statisticsStore.excludeUnnamedStats,
-              tristate: true,
-              onChanged: (excludeUnnamedStats) {
-                HapticFeedback.lightImpact();
+      child: Observer(
+        builder: (_) => BaseCheckbox(
+          value: statisticsStore.excludeUnnamedStats,
+          text: 'Exclude unnamed entries',
+          tristate: true,
+          onChanged: (excludeUnnamedStats) {
+            HapticFeedback.lightImpact();
 
-                statisticsStore.setExcludeUnnamedStats(excludeUnnamedStats);
-              },
-            ),
-          ),
-          Text(
-            'Exclude unnamed entries',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-        ],
+            statisticsStore.setExcludeUnnamedStats(excludeUnnamedStats);
+          },
+        ),
       ),
     );
   }

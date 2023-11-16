@@ -61,7 +61,7 @@ class SortFilterPanel extends StatelessWidget {
                       const StatTypeControl(),
                       const SizedBox(height: _kControlsPadding + 2.0),
                       const AmountEntriesControl(),
-                      const SizedBox(height: 8.0),
+                      const SizedBox(height: 12.0),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

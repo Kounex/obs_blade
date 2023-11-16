@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-import '../../../../shared/dialogs/confirmation.dart';
-import '../../../../types/enums/hive_keys.dart';
-import '../../../../types/enums/settings_keys.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../types/enums/hive_keys.dart';
+import '../../../../../types/enums/settings_keys.dart';
 
 class StartStopStreamingDialog extends StatelessWidget {
   final bool isLive;

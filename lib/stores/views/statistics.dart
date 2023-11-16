@@ -104,7 +104,7 @@ abstract class _StatisticsStore with Store {
   DurationFilter? durationFilter;
 
   @observable
-  String durationFilterAmount = '';
+  int? durationFilterAmount;
 
   @observable
   TimeUnit durationFilterTimeUnit = TimeUnit.Minutes;
@@ -137,7 +137,7 @@ abstract class _StatisticsStore with Store {
     this.excludeUnnamedStats = false;
     this.statType = null;
     this.durationFilter = null;
-    this.durationFilterAmount = '';
+    this.durationFilterAmount;
     this.durationFilterTimeUnit = TimeUnit.Minutes;
 
     /// Used as a toggle (only listen for change, not value) to exactly determine
@@ -183,8 +183,12 @@ abstract class _StatisticsStore with Store {
       this.durationFilter = durationFilter;
 
   @action
-  void setDurationFilterAmount(String durationFilterAmount) =>
-      this.durationFilterAmount = durationFilterAmount;
+  void setDurationFilterAmount(String durationFilterAmount) {
+    int? duration = int.tryParse(durationFilterAmount);
+    if (duration != null) {
+      this.durationFilterAmount = duration;
+    }
+  }
 
   @action
   void setDurationFilterTimeUnit(TimeUnit durationFilterTimeUnit) =>

@@ -109,7 +109,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       ),
       bodyWidget: Column(
         children: [
-          const SizedBox(height: 12.0),
+          if (StylingHelper.isApple(context)) const SizedBox(height: 12.0),
           const Text(
             'Change the following information to change your saved connection',
             textAlign: TextAlign.left,
@@ -220,7 +220,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     onPressed: () => setState(() => _obscurePW = !_obscurePW),
                   ),
           ),
-          const SizedBox(height: 8.0),
+          // const SizedBox(height: 8.0),
         ],
       ),
       actions: [

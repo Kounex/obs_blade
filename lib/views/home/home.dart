@@ -186,6 +186,7 @@ class _HomeViewState extends State<HomeView> {
           }
         },
         child: CustomScrollView(
+          physics: StylingHelper.platformAwareScrollPhysics,
           controller:
               ModalRoute.of(context)!.settings.arguments as ScrollController,
 
@@ -195,7 +196,7 @@ class _HomeViewState extends State<HomeView> {
           /// be able to scroll even though we reached the end. To achieve this we need different behaviour
           /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
           /// for the first group and [BouncingScrollPhysics] for the second
-          physics: StylingHelper.platformAwareScrollPhysics,
+          // physics: StylingHelper.platformAwareScrollPhysics,
           slivers: const [
             RefresherAppBar(
               expandedHeight: 200.0,

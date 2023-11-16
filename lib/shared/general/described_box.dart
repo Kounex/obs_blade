@@ -39,7 +39,7 @@ class DescribedBox extends StatelessWidget {
         ),
         if (this.label != null)
           Transform.translate(
-            offset: const Offset(-2, -4),
+            offset: const Offset(-2, -7),
             child: Container(
               padding: const EdgeInsets.only(right: 4.0, bottom: 2.0),
               color: labelBackgroundColor ?? Theme.of(context).cardColor,
@@ -48,7 +48,7 @@ class DescribedBox extends StatelessWidget {
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall!
-                    .copyWith(fontSize: 8.0),
+                    .copyWith(fontSize: 10.0),
               ),
             ),
           )

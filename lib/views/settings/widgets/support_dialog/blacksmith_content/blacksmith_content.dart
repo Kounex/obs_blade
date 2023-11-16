@@ -30,10 +30,8 @@ class BlacksmithContent extends StatelessWidget {
           textAlign: TextAlign.center,
           textSpans: [
             TextSpan(
-              text: 'Become a blacksmith and forge your OBS Blade',
-              style: DefaultTextStyle.of(context)
-                  .style
-                  .copyWith(fontStyle: FontStyle.italic),
+              text: 'Become a blacksmith and forge your own OBS Blade',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const WidgetSpan(
               alignment: PlaceholderAlignment.middle,
@@ -42,9 +40,10 @@ class BlacksmithContent extends StatelessWidget {
                 child: BaseDivider(),
               ),
             ),
-            const TextSpan(
+            TextSpan(
               text:
                   'Blacksmith offers you visual customisation options for this app to make it more personalised! Create your own theme to change the overall look and feel of this app to make it yours!',
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),

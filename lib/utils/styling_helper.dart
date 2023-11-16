@@ -31,16 +31,22 @@ class StylingHelper {
   static const double sigma_blurry = 10.0;
 
   /// Bouncing scroll for all cases
+  ///
+  /// TODO: Check why currently only [BouncingScrollPhysics] seems
+  /// to work properly for the [RefresherAppBar] to always scroll on
+  /// both iOS and Android
   static ScrollPhysics get platformAwareScrollPhysics => Platform.isIOS
-      ? const AlwaysScrollableScrollPhysics()
-      : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+      // ? const AlwaysScrollableScrollPhysics()
+      ? const BouncingScrollPhysics()
+      // : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+      : const BouncingScrollPhysics();
 
   static Color surroundingAwareAccent(
       {BuildContext? context, Color? surroundingColor}) {
     assert(context != null || surroundingColor != null);
     return (surroundingColor ?? Theme.of(context!).cardColor)
                 .computeLuminance() <
-            0.3
+            0.5
         ? Colors.white
         : Colors.black;
   }

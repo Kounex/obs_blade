@@ -7,6 +7,16 @@ class AboutHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    TextStyle titleStyle = Theme.of(context)
+        .textTheme
+        .headlineMedium!
+        .copyWith(fontWeight: FontWeight.w100);
+
+    TextStyle descriptionStyle = Theme.of(context)
+        .textTheme
+        .bodySmall!
+        .copyWith(fontWeight: FontWeight.w300);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -22,23 +32,17 @@ class AboutHeader extends StatelessWidget {
               offset: const Offset(-4.0, 0.0),
               child: Text(
                 'OBS Blade',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium!
-                    .copyWith(fontWeight: FontWeight.w100),
+                style: titleStyle,
               ),
             ),
             Container(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               width: 180.0,
               child: const BaseDivider(),
             ),
             Text(
               'by Kounex (René Schramowski)',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall!
-                  .copyWith(fontWeight: FontWeight.w100),
+              style: descriptionStyle,
             ),
             FutureBuilder<PackageInfo>(
               future: PackageInfo.fromPlatform(),
@@ -47,18 +51,12 @@ class AboutHeader extends StatelessWidget {
                   children: [
                     Text(
                       'Version ',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall!
-                          .copyWith(fontWeight: FontWeight.w100),
+                      style: descriptionStyle,
                     ),
                     if (snapshot.hasData)
                       Text(
                         '${snapshot.data!.version} (${snapshot.data!.buildNumber})',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(fontWeight: FontWeight.w100),
+                        style: descriptionStyle,
                       ),
                   ],
                 );

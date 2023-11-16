@@ -168,16 +168,15 @@ class _StatisticsViewState extends State<StatisticsView> {
                 (statisticsStore.toDate?.millisecondsSinceEpoch ??
                     DateTime.now().millisecondsSinceEpoch))
         .where((data) {
-          if (statisticsStore.durationFilter != null &&
-              int.tryParse(statisticsStore.durationFilterAmount) != null) {
+          if (statisticsStore.durationFilter != null) {
             switch (statisticsStore.durationFilter!) {
               case DurationFilter.Shorter:
                 return data.totalTime! <
-                    int.parse(statisticsStore.durationFilterAmount) *
+                    statisticsStore.durationFilterAmount! *
                         statisticsStore.durationFilterTimeUnit.factorToS;
               case DurationFilter.Longer:
                 return data.totalTime! >
-                    int.parse(statisticsStore.durationFilterAmount) *
+                    statisticsStore.durationFilterAmount! *
                         statisticsStore.durationFilterTimeUnit.factorToS;
               case DurationFilter.Between:
                 return true;

@@ -95,7 +95,7 @@ class _StatusDotState extends State<StatusDot>
           ),
           child: Text(
             widget.text!,
-            style: widget.style ?? Theme.of(context).textTheme.bodyLarge,
+            style: widget.style ?? Theme.of(context).textTheme.bodySmall,
           ),
         ),
     ];

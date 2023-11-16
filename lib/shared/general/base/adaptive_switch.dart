@@ -44,17 +44,17 @@ class BaseAdaptiveSwitch extends StatelessWidget {
             )
           : Switch(
               value: this.value,
-              activeColor: this.activeColor ??
-                  Theme.of(context)
-                      .switchTheme
-                      .trackColor!
-                      .resolve({MaterialState.selected}),
-              activeTrackColor: (this.activeColor ??
-                      Theme.of(context)
-                          .switchTheme
-                          .trackColor!
-                          .resolve({MaterialState.selected}))!
-                  .withOpacity(0.5),
+              // activeColor: this.activeColor ??
+              //     Theme.of(context)
+              //         .switchTheme
+              //         .trackColor!
+              //         .resolve({MaterialState.selected}),
+              // activeTrackColor: (this.activeColor ??
+              //         Theme.of(context)
+              //             .switchTheme
+              //             .trackColor!
+              //             .resolve({MaterialState.selected}))!
+              //     .withOpacity(0.5),
               onChanged: this.enabled ? this.onChanged : null,
             ),
     );

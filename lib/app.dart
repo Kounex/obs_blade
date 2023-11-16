@@ -85,11 +85,14 @@ class App extends StatelessWidget {
       canvasColor: canvasColor ?? StylingHelper.primary_color,
       cardColor: cardColor ?? StylingHelper.primary_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
-      dividerColor: dividerColor ?? StylingHelper.light_divider_color,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: accentColor ?? StylingHelper.highlight_color,
+      ),
+
+      dividerTheme: DividerThemeData(
+        color: dividerColor ?? StylingHelper.light_divider_color,
       ),
 
       /// Setting a platform specifically to manipulate the platform
@@ -102,10 +105,16 @@ class App extends StatelessWidget {
           : defaultTargetPlatform,
 
       /// Inner Widget themes
-      primaryIconTheme: IconThemeData(
+      primaryIconTheme: baseThemeData.iconTheme.copyWith(
         color: brightness != null && brightness == Brightness.light
             ? Colors.black
             : Colors.white,
+      ),
+
+      textTheme: baseThemeData.textTheme.copyWith(
+        bodySmall: TextStyle(
+          color: Colors.grey[500]!,
+        ),
       ),
 
       sliderTheme: SliderThemeData(
@@ -135,15 +144,16 @@ class App extends StatelessWidget {
       ),
 
       appBarTheme: AppBarTheme(
-        color: (appBarColor ?? StylingHelper.primary_color)
+        backgroundColor: (appBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
+        surfaceTintColor: Colors.transparent,
       ),
 
       buttonTheme: ButtonThemeData(
         colorScheme: ColorScheme.fromSwatch(
-            accentColor: buttonColor ?? StylingHelper.accent_color),
-        // buttonColor: buttonColor ?? StylingHelper.accent_color,
-        splashColor: Colors.transparent,
+          accentColor: buttonColor ?? StylingHelper.accent_color,
+        ),
+        buttonColor: buttonColor ?? StylingHelper.accent_color,
       ),
 
       cupertinoOverrideTheme: CupertinoThemeData(
@@ -163,11 +173,8 @@ class App extends StatelessWidget {
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith<Color?>(
             (Set<MaterialState> states) {
-          if (states.contains(MaterialState.disabled)) {
-            return null;
-          }
           if (states.contains(MaterialState.selected)) {
-            return toggleableActiveColor ?? StylingHelper.accent_color;
+            return Colors.white;
           }
           return null;
         }),

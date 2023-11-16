@@ -182,13 +182,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
       Atom(name: '_StatisticsStore.durationFilterAmount', context: context);
 
   @override
-  String get durationFilterAmount {
+  int? get durationFilterAmount {
     _$durationFilterAmountAtom.reportRead();
     return super.durationFilterAmount;
   }
 
   @override
-  set durationFilterAmount(String value) {
+  set durationFilterAmount(int? value) {
     _$durationFilterAmountAtom.reportWrite(value, super.durationFilterAmount,
         () {
       super.durationFilterAmount = value;

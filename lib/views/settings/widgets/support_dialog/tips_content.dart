@@ -65,7 +65,8 @@ class TipsContent extends StatelessWidget {
     return Column(
       children: [
         const Text(
-            'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!'),
+          'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!',
+        ),
         // const SizedBox(height: 12.0),
         const BaseDivider(
           height: 24.0,

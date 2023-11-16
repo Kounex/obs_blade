@@ -66,32 +66,32 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
               : null),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24.0) +
           EdgeInsets.only(
-              top: !StylingHelper.isApple(context) && this.widget.title == null
-                  ? 24.0
-                  : 16.0),
+            top: this.widget.title == null && this.widget.titleWidget == null
+                ? 24.0
+                : 16.0,
+            bottom: 12.0,
+          ),
       backgroundColor: Theme.of(context).cardColor,
+      elevation: 0,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           this.widget.bodyWidget ?? Text(this.widget.body!),
           if (this.widget.enableDontShowAgainOption)
             Padding(
-              padding: const EdgeInsets.only(top: 14.0),
-              child: Transform.translate(
-                offset: const Offset(-4, 0),
-                child: Row(
-                  children: [
-                    Material(
-                      type: MaterialType.transparency,
-                      child: BaseCheckbox(
-                        value: _isDontShowChecked,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        onChanged: (checked) =>
-                            setState(() => _isDontShowChecked = checked!),
-                      ),
-                    ),
-                    const Text('Don\'t show this again'),
-                  ],
+              padding: const EdgeInsets.only(top: 24.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: BaseCheckbox(
+                    value: _isDontShowChecked,
+                    text: 'Don\'t show this again',
+                    smallText: true,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    onChanged: (checked) =>
+                        setState(() => _isDontShowChecked = checked!),
+                  ),
                 ),
               ),
             ),

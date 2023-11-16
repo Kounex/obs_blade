@@ -8,8 +8,8 @@ import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
-class Transition extends StatelessWidget {
-  const Transition({Key? key}) : super(key: key);
+class TransitionControls extends StatelessWidget {
+  const TransitionControls({Key? key}) : super(key: key);
 
   void _handleSubmit(TextEditingController controller) {
     if (controller.text.isEmpty) {
