@@ -30,7 +30,8 @@ class EditConnectionDialog extends StatefulWidget {
 class _EditConnectionDialogState extends State<EditConnectionDialog> {
   late CustomValidationTextEditingController _name;
   late CustomValidationTextEditingController _pw;
-  late CustomValidationTextEditingController _host;
+  late CustomValidationTextEditingController _hostDomain;
+  late CustomValidationTextEditingController _hostIP;
   late CustomValidationTextEditingController _port;
 
   late bool _isDomain;
@@ -46,13 +47,23 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       text: this.widget.connection.name,
       check: _nameValidator,
     );
-    _host = CustomValidationTextEditingController(
-      text: this.widget.connection.host,
-      check: this.widget.connection.isDomain == null ||
-              !this.widget.connection.isDomain!
-          ? ValidationHelper.ipValidator
-          : (_) => null,
-    );
+
+    if (this.widget.connection.isDomain != null &&
+        this.widget.connection.isDomain!) {
+      _hostDomain = CustomValidationTextEditingController(
+        text: this.widget.connection.host,
+      );
+      _hostIP = CustomValidationTextEditingController(
+        check: ValidationHelper.ipValidator,
+      );
+    } else {
+      _hostDomain = CustomValidationTextEditingController();
+      _hostIP = CustomValidationTextEditingController(
+        text: this.widget.connection.host,
+        check: ValidationHelper.ipValidator,
+      );
+    }
+
     _port = CustomValidationTextEditingController(
       text: this.widget.connection.port?.toString() ?? '',
       check: (text) => (text?.isNotEmpty ?? false)
@@ -129,7 +140,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               Flexible(
                 flex: 2,
                 child: BaseAdaptiveTextField(
-                  controller: _host,
+                  controller: _isDomain ? _hostDomain : _hostIP,
                   placeholder: 'Host',
                   errorPaddingAlways: true,
                   style: const TextStyle(
@@ -149,12 +160,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                         FocusManager.instance.primaryFocus?.unfocus();
                         setState(() {
                           _isDomain = domainMode ?? false;
-                          _host = CustomValidationTextEditingController(
-                            text: '',
-                            check: !_isDomain
-                                ? ValidationHelper.ipValidator
-                                : (_) => null,
-                          );
+                          // _host = CustomValidationTextEditingController(
+                          //   text: '',
+                          //   check: !_isDomain
+                          //       ? ValidationHelper.ipValidator
+                          //       : (_) => null,
+                          // );
                         });
                       },
                     ),
@@ -232,9 +243,11 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           child: const Text('Save'),
           popOnAction: false,
           onPressed: (_) {
-            if (_name.isValid && _host.isValid && _port.isValid) {
+            CustomValidationTextEditingController host =
+                _isDomain ? _hostDomain : _hostIP;
+            if (_name.isValid && host.isValid && _port.isValid) {
               String newName = _name.text.trim();
-              String newHost = _host.text.trim();
+              String newHost = host.text.trim();
 
               /// Since [HiddenScene] and [HiddenSceneItem] elements are based on the
               /// connection name and host, once the user updates the connection, we need

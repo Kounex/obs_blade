@@ -14,16 +14,18 @@ class StatTypeControl extends StatelessWidget {
     return Observer(
       builder: (_) => SizedBox(
         width: double.infinity,
-        child: CupertinoSlidingSegmentedControl(
-          groupValue: statisticsStore.statType ?? 'null',
+        child: CupertinoSlidingSegmentedControl<StatType>(
+          groupValue: statisticsStore.statType,
           padding: const EdgeInsets.all(0),
-          children: {
-            'null': const Text('All Stats'),
-            StatType.Stream: Text(StatType.Stream.name),
-            StatType.Recording: Text(StatType.Recording.name),
-          },
-          onValueChanged: (value) => statisticsStore
-              .setStatType(value == 'null' ? null : value as StatType),
+          children: Map.fromEntries(
+            StatType.values.map(
+              (statType) => MapEntry(
+                statType,
+                Text(statType.name),
+              ),
+            ),
+          ),
+          onValueChanged: (statType) => statisticsStore.setStatType(statType!),
         ),
       ),
     );

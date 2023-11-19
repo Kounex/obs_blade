@@ -37,9 +37,9 @@ class StylingHelper {
   /// both iOS and Android
   static ScrollPhysics get platformAwareScrollPhysics => Platform.isIOS
       // ? const AlwaysScrollableScrollPhysics()
-      ? const BouncingScrollPhysics()
+      ? const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics())
       // : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
-      : const BouncingScrollPhysics();
+      : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 
   static Color surroundingAwareAccent(
       {BuildContext? context, Color? surroundingColor}) {

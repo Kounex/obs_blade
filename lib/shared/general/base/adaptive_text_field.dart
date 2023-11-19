@@ -103,6 +103,18 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
   }
 
   @override
+  void didUpdateWidget(covariant BaseAdaptiveTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (this.widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_textEditingListener);
+      this.widget.controller.addListener(_textEditingListener);
+      _validationText = null;
+      this.widget.controller.submit();
+    }
+  }
+
+  @override
   void dispose() {
     this.widget.controller.removeListener(_textEditingListener);
     super.dispose();
