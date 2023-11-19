@@ -42,6 +42,10 @@ class BaseAdaptiveTextField extends StatefulWidget {
   final int? maxLines;
   final bool autocorrect;
   final bool obscureText;
+  final bool readOnly;
+  final bool enabled;
+  final String? labelText;
+  final Widget? prefix;
   final Widget? suffix;
   final Widget? suffixIcon;
 
@@ -51,7 +55,9 @@ class BaseAdaptiveTextField extends StatefulWidget {
   /// all the time for better overall layout alignment
   final bool errorPaddingAlways;
 
-  final Widget? bottomWidget;
+  final Widget? bottom;
+
+  final TargetPlatform? platform;
 
   const BaseAdaptiveTextField({
     Key? key,
@@ -64,12 +70,17 @@ class BaseAdaptiveTextField extends StatefulWidget {
     this.bottomPadding = 6.0,
     this.minLines = 1,
     this.maxLines,
-    this.bottomWidget,
+    this.bottom,
     this.autocorrect = false,
     this.obscureText = false,
+    this.readOnly = false,
+    this.enabled = true,
+    this.labelText,
+    this.prefix,
     this.suffix,
     this.suffixIcon,
     this.errorPaddingAlways = false,
+    this.platform,
   }) : super(key: key);
 
   @override
@@ -110,7 +121,9 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
       oldWidget.controller.removeListener(_textEditingListener);
       this.widget.controller.addListener(_textEditingListener);
       _validationText = null;
-      this.widget.controller.submit();
+      if (this.widget.controller.submitted) {
+        this.widget.controller.submit();
+      }
     }
   }
 
@@ -124,7 +137,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        switch (Theme.of(context).platform) {
+        switch (this.widget.platform ?? Theme.of(context).platform) {
           TargetPlatform.iOS || TargetPlatform.macOS => CupertinoTextField(
               focusNode: this.widget.focusNode,
               controller: this.widget.controller,
@@ -137,6 +150,9 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
               maxLines: this.widget.maxLines ?? this.widget.minLines,
               autocorrect: this.widget.autocorrect,
               obscureText: this.widget.obscureText,
+              enabled: this.widget.enabled,
+              readOnly: this.widget.readOnly,
+              prefix: this.widget.prefix,
               suffix: this.widget.suffix ?? this.widget.suffixIcon,
             ),
           _ => Padding(
@@ -148,6 +164,8 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
                 cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
                 decoration: InputDecoration(
                   hintText: this.widget.placeholder,
+                  labelText: this.widget.labelText,
+                  prefix: this.widget.prefix,
                   suffix: this.widget.suffix,
                   suffixIcon: this.widget.suffixIcon,
                   enabledBorder: _validationText != null
@@ -175,10 +193,12 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
                 maxLines: this.widget.maxLines ?? this.widget.minLines,
                 autocorrect: this.widget.autocorrect,
                 obscureText: this.widget.obscureText,
+                enabled: this.widget.enabled,
+                readOnly: this.widget.readOnly,
               ),
             ),
         },
-        this.widget.bottomWidget ?? const SizedBox(),
+        this.widget.bottom ?? const SizedBox(),
         ...[
           if (_validationText != null || this.widget.errorPaddingAlways)
             Align(

@@ -48,21 +48,20 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       check: _nameValidator,
     );
 
-    if (this.widget.connection.isDomain != null &&
-        this.widget.connection.isDomain!) {
-      _hostDomain = CustomValidationTextEditingController(
-        text: this.widget.connection.host,
-      );
-      _hostIP = CustomValidationTextEditingController(
-        check: ValidationHelper.ipValidator,
-      );
-    } else {
-      _hostDomain = CustomValidationTextEditingController();
-      _hostIP = CustomValidationTextEditingController(
-        text: this.widget.connection.host,
-        check: ValidationHelper.ipValidator,
-      );
-    }
+    _hostDomain = CustomValidationTextEditingController(
+      text: this.widget.connection.isDomain != null &&
+              this.widget.connection.isDomain!
+          ? this.widget.connection.host
+          : null,
+      check: ValidationHelper.minLengthValidator,
+    );
+    _hostIP = CustomValidationTextEditingController(
+      text: this.widget.connection.isDomain == null ||
+              !this.widget.connection.isDomain!
+          ? this.widget.connection.host
+          : null,
+      check: ValidationHelper.ipValidator,
+    );
 
     _port = CustomValidationTextEditingController(
       text: this.widget.connection.port?.toString() ?? '',
@@ -148,7 +147,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                       FontFeature.tabularFigures(),
                     ],
                   ),
-                  bottomWidget: SizedBox(
+                  bottom: SizedBox(
                     width: double.infinity,
                     child: CupertinoSlidingSegmentedControl<bool>(
                       groupValue: _isDomain,

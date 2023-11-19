@@ -4,13 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
 import 'package:obs_blade/stores/views/home.dart';
 
 import '../../../../../shared/general/question_mark_tooltip.dart';
-import '../../../../../utils/validation_helper.dart';
 
 class ConnectHostInput extends StatefulWidget {
-  final TextEditingController host;
+  final CustomValidationTextEditingController host;
   final bool manual;
 
   const ConnectHostInput({
@@ -48,92 +48,77 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = GetIt.instance<HomeStore>();
+    HomeStore homeStore = GetIt.instance<HomeStore>();
 
     return Observer(builder: (_) {
       return Column(
         children: [
-          TextFormField(
+          BaseAdaptiveTextField(
             key: _hostFormFieldKey,
             controller: this.widget.host,
             focusNode: _inputFocusNode,
             autocorrect: false,
             readOnly: !this.widget.manual,
             enabled: this.widget.manual,
+            platform: TargetPlatform.android,
             style: const TextStyle(
               fontFeatures: [
                 FontFeature.tabularFigures(),
               ],
             ),
-            decoration: InputDecoration(
-              prefix: this.widget.manual &&
-                      landingStore.domainMode &&
-                      (_inputFocusNode.hasFocus ||
-                          this.widget.host.text.isNotEmpty)
-                  ? SizedBox(
-                      height: 18.0,
-                      child: DropdownButton<String>(
-                        value: landingStore.protocolScheme,
-                        isDense: true,
-                        underline: Container(),
-                        alignment: Alignment.center,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'wss://',
-                            child: Text('wss://'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'ws://',
-                            child: Text('ws://'),
-                          ),
-                          DropdownMenuItem(
-                            value: '',
-                            child: Text('-'),
-                          ),
-                        ],
-                        onTap: () => _dropdownTapped = true,
-                        onChanged: (scheme) {
-                          landingStore.setProtocolScheme(scheme ?? 'wss://');
-                          _inputFocusNode.requestFocus();
-                        },
-                      ),
-                    )
-                  : null,
-              // prefixText: landingStore.domainMode ? 'wss://' : null,
-              labelText: !landingStore.domainMode
-                  ? 'IP Address (internal)'
-                  : 'Hostname',
-              hintText: !landingStore.domainMode
-                  ? '192.168.178.10'
-                  : 'obs-stream.com',
-            ),
-            validator: (text) =>
-                ValidationHelper.minLengthValidator(text) ??
-                (!landingStore.domainMode
-                    ? ValidationHelper.ipValidator(text)
-                    : null),
-            onChanged: (host) => landingStore.typedInConnection.host = host,
-          ),
-
-          // const SizedBox(height: 6.0),
-          this.widget.manual
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Row(
+            prefix: this.widget.manual &&
+                    homeStore.domainMode &&
+                    (_inputFocusNode.hasFocus ||
+                        this.widget.host.text.isNotEmpty)
+                ? SizedBox(
+                    height: 18.0,
+                    child: DropdownButton<String>(
+                      value: homeStore.protocolScheme,
+                      isDense: true,
+                      underline: Container(),
+                      alignment: Alignment.center,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'wss://',
+                          child: Text('wss://'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'ws://',
+                          child: Text('ws://'),
+                        ),
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text('-'),
+                        ),
+                      ],
+                      onTap: () => _dropdownTapped = true,
+                      onChanged: (scheme) {
+                        homeStore.setProtocolScheme(scheme ?? 'wss://');
+                        _inputFocusNode.requestFocus();
+                      },
+                    ),
+                  )
+                : null,
+            labelText:
+                !homeStore.domainMode ? 'IP Address (internal)' : 'Hostname',
+            placeholder:
+                !homeStore.domainMode ? '192.168.178.10' : 'obs-stream.com',
+            bottom: this.widget.manual
+                ? Row(
                     children: [
                       Expanded(
                         child: CupertinoSlidingSegmentedControl<bool>(
-                          groupValue: landingStore.domainMode,
+                          groupValue: homeStore.domainMode,
                           children: const {
                             false: Text('IP'),
                             true: Text('Domain'),
                           },
                           onValueChanged: (domainMode) {
                             FocusManager.instance.primaryFocus?.unfocus();
-                            landingStore.setDomainMode(domainMode ?? true);
-                            landingStore.typedInConnection.host = '';
-                            _hostFormFieldKey.currentState?.reset();
-                            this.widget.host.clear();
+                            homeStore.setDomainMode(domainMode ?? true);
+                            // landingStore.typedInConnection.host = '';
+                            // _hostFormFieldKey.currentState?.reset();
+                            // this.widget.host.clear();
                           },
                         ),
                       ),
@@ -144,9 +129,10 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                       ),
                       // const SizedBox(width: 12.0),
                     ],
-                  ),
-                )
-              : Container(),
+                  )
+                : const SizedBox(),
+            // onChanged: (host) => homeStore.typedInConnection.host = host,
+          ),
         ],
       );
     });
