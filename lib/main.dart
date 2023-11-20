@@ -153,7 +153,7 @@ bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
         DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
         prevLog.entry == entry);
 
-void _logging(String line) {
+void _logging(String line, [LogLevel? fixedLevel]) {
   String? stack;
 
   LogLevel level = LogLevel.Info;
@@ -163,7 +163,7 @@ void _logging(String line) {
   Iterable<LogLevel> lineLevel =
       LogLevel.values.where((level) => line.startsWith(level.prefix));
 
-  if (lineLevel.isNotEmpty) {
+  if (fixedLevel != null || lineLevel.isNotEmpty) {
     manually = true;
     level = lineLevel.first;
     line = line.split(level.prefix)[1];
@@ -223,7 +223,8 @@ void main() async {
         ),
       );
     },
-    (Object error, StackTrace stack) => _logging('$error\n[STACK]\n$stack'),
+    (Object error, StackTrace stack) =>
+        _logging('[ERROR][ON] $error\n[STACK]\n$stack'),
     zoneSpecification: ZoneSpecification(
       // handleUncaughtError: (self, parent, zone, error, stackTrace) =>
       //     _logging('$error\n[STACK]\n$stackTrace'),

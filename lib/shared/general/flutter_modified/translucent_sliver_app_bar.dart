@@ -1202,7 +1202,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
             scrolledUnderElevation: scrolledUnderElevation,
             shadowColor: shadowColor,
             surfaceTintColor: surfaceTintColor,
-            backgroundColor: backgroundColor,
+            backgroundColor: StylingHelper.isApple(context)
+                ? backgroundColor
+                : (backgroundColor ??
+                        Theme.of(context).appBarTheme.backgroundColor)
+                    ?.withOpacity(1.0),
             foregroundColor: foregroundColor,
             iconTheme: iconTheme,
             actionsIconTheme: actionsIconTheme,

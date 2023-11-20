@@ -48,7 +48,11 @@ class _SupportDialogState extends State<SupportDialog> {
     if (!available) {
       _error =
           'Connection to the App Store is not possible. Make sure you have a working internet connection.\n\nFeel free to let me know if this problem persists!';
-      GeneralHelper.advLog(_error, includeInLogs: true, level: LogLevel.Error);
+      GeneralHelper.advLog(
+        _error,
+        includeInLogs: true,
+        level: LogLevel.Error,
+      );
     }
     Set<String> inAppPurchasesIDs = {};
     switch (this.widget.type) {
