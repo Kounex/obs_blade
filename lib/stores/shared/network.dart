@@ -32,6 +32,12 @@ abstract class _NetworkStore with Store {
   @observable
   bool obsTerminated = false;
 
+  /// Used as part of the autodiscovery process and will only be set when used.
+  /// If we want to know more about an active connection, use [activeSession].
+  String? ip;
+  String? subnetMask;
+  bool nonDefaultSubnetMask = false;
+
   @action
   Future<WebSocketCloseCode> setOBSWebSocket(
     Connection connection, {

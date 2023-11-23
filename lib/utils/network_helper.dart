@@ -4,6 +4,9 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:get_it/get_it.dart';
+import 'package:network_info_plus/network_info_plus.dart';
+import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_batch_execution_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_op_code.dart';
@@ -62,29 +65,6 @@ class NetworkHelper {
     );
   }
 
-  /// Returns a list of network addresses which are candidates for the assigned
-  /// local wifi address
-  static Future<Iterable<String>> getLocalIPAdress() async {
-    final List<NetworkInterface> interfaces =
-        await NetworkInterface.list(type: InternetAddressType.IPv4);
-
-    /// Currently checking if any of the network interfaces contain those
-    /// names since they can have different names in different OS environments.
-    /// Need to test this on several Android devices. If this filtered list
-    /// is empty, all interfaces will be searched which will increase
-    /// the probability of finding the correct one but might take a longer
-    /// time than anticipated
-    Iterable<NetworkInterface> candidateInterfaces = interfaces.where(
-        (interface) =>
-            interface.name.contains('en') ||
-            interface.name.contains('eth') ||
-            interface.name.contains('wlan'));
-
-    return (candidateInterfaces.isEmpty ? interfaces : candidateInterfaces)
-        .expand((interface) =>
-            interface.addresses.map((addresses) => addresses.address));
-  }
-
   /// Initiating an autodiscover process with an isolate function to make this
   /// kind of resource hungry operation threaded. Basically initiating a [Socket]
   /// connection to each IP in the corresponding IP range and see if timeout
@@ -92,41 +72,52 @@ class NetworkHelper {
   /// an application (most likely OBS in this case) which listens on this port
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
     if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
-      List<String> baseIPs = (await NetworkHelper.getLocalIPAdress()).toList();
+      NetworkStore networkStore = GetIt.instance<NetworkStore>();
+      NetworkInfo info = NetworkInfo();
+      networkStore.ip = await info.getWifiIP();
 
       GeneralHelper.advLog(
-        'Autodiscover IPs: ${baseIPs.map(
-          (ip) {
-            List<String> ipSplit = ip.split('.')..removeLast();
-            return '${ipSplit.join('.')}.0/24';
-          },
-        )}',
+        'Autodiscover base IP: ${networkStore.ip}',
       );
 
-      /// Completer used to manully deal with Future. [Completer] enables us to
-      /// call the [complete] funciton which will finalise the Future of
-      /// [Completer.future] so we can await this
-      Completer<List<ConnectionScan?>> completer = Completer();
-      ReceivePort receivePort = ReceivePort();
+      /// Check if the subnet mask is non "default" since it will
+      /// change the amount of possible clients and the general client
+      /// ip address range. 255.255.0.0 would already lead to roughly
+      /// 65k ip address to check which is not feasable. We set
+      /// [nonDefaultSubnetMask] which will indicate that we actually
+      /// have a case of non default subnet mask for this autodiscover
+      /// process so I can adjust the information to the user
+      networkStore.subnetMask = await info.getWifiSubmask();
+      networkStore.nonDefaultSubnetMask =
+          networkStore.subnetMask != '255.255.255.0';
 
-      /// "Spawning" the [Isolate] (thread) to deal with multiple [Socket]
-      /// connection tries.
-      Isolate.spawn<Map<String, dynamic>>(_isolateFullScanIPs, {
-        'sendPort': receivePort.sendPort,
-        'baseIPs': baseIPs,
-        'port': port,
-        'timeout': const Duration(milliseconds: 3000),
-      });
+      if (networkStore.ip != null) {
+        /// Completer used to manully deal with Future. [Completer] enables us to
+        /// call the [complete] funciton which will finalise the Future of
+        /// [Completer.future] so we can await this
+        Completer<List<ConnectionScan?>> completer = Completer();
+        ReceivePort receivePort = ReceivePort();
 
-      receivePort.listen((availableConnections) {
-        receivePort.close();
-        completer.complete(availableConnections);
-      });
+        /// "Spawning" the [Isolate] (thread) to deal with multiple [Socket]
+        /// connection tries.
+        Isolate.spawn<Map<String, dynamic>>(_isolateFullScanIPs, {
+          'sendPort': receivePort.sendPort,
+          'ip': networkStore.ip,
+          'port': port,
+          'timeout': const Duration(milliseconds: 5000),
+        });
 
-      return List.from((await completer.future)
-          .where((connectionScan) =>
-              connectionScan != null && connectionScan.error == null)
-          .map((connectionScan) => connectionScan!.connection));
+        receivePort.listen((availableConnections) {
+          receivePort.close();
+          completer.complete(availableConnections);
+        });
+
+        return List.from((await completer.future)
+            .where((connectionScan) =>
+                connectionScan != null && connectionScan.error == null)
+            .map((connectionScan) => connectionScan!.connection));
+      }
+      throw NoNetworkException();
     }
     throw NotInWLANException();
   }
@@ -142,7 +133,7 @@ class NetworkHelper {
       'ports': connections.map((connection) => connection.port).toList(),
       'isDomains':
           connections.map((connection) => connection.isDomain).toList(),
-      'timeout': const Duration(milliseconds: 3000),
+      'timeout': const Duration(milliseconds: 5000),
     });
 
     receivePort.listen((availableConnections) {
@@ -170,24 +161,19 @@ class NetworkHelper {
 
   static void _isolateFullScanIPs(Map<String, dynamic> arguments) async {
     SendPort sendPort = arguments['sendPort'];
-    List<String> baseIPs = List.from(arguments['baseIPs']);
+    String ip = arguments['ip'];
     int port = arguments['port'];
     Duration timeout = arguments['timeout'];
 
     List<Future<ConnectionScan?>> availableConnections = [];
-    String? address;
+    String cutIP = (ip.split('.')..removeLast()).join();
 
-    for (int i = 0; i < baseIPs.length; i++) {
-      String baseIP = baseIPs[i].split('.').take(3).join('.');
-
-      for (int k = 0; k < 256; k++) {
-        address = '$baseIP.${k.toString()}';
-        availableConnections.add(_singleScan({
-          'address': address,
-          'port': port,
-          'timeout': timeout,
-        }));
-      }
+    for (int k = 0; k < 256; k++) {
+      availableConnections.add(_singleScan({
+        'address': '$cutIP.${k.toString()}',
+        'port': port,
+        'timeout': timeout,
+      }));
     }
 
     /// It's important to start and collect all scans (which return a [Future]
