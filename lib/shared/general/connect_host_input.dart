@@ -146,7 +146,7 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                         onValueChanged: (domainMode) {
                           FocusManager.instance.primaryFocus?.unfocus();
                           this.widget.onChangeMode?.call(domainMode ?? true);
-                          // landingStore.typedInConnection.host = '';
+                          // homeStore.typedInConnection.host = '';
                           // _hostFormFieldKey.currentState?.reset();
                           // this.widget.host.clear();
                         },

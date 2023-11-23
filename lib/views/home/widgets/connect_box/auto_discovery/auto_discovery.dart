@@ -48,7 +48,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = GetIt.instance<HomeStore>();
+    HomeStore homeStore = GetIt.instance<HomeStore>();
 
     return Column(
       // mainAxisAlignment: MainAxisAlignment.center,
@@ -85,12 +85,12 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   ],
                 ),
                 controller:
-                    TextEditingController(text: landingStore.autodiscoverPort),
+                    TextEditingController(text: homeStore.autodiscoverPort),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onChanged: (text) {
-                  landingStore.setAutodiscoverPort(text);
+                  homeStore.setAutodiscoverPort(text);
                   _formKey.currentState!.validate();
                 },
                 validator: (text) => ValidationHelper.portValidator(text),
@@ -101,7 +101,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
         const BaseDivider(),
         Observer(
           builder: (context) => FutureBuilder<List<Connection>>(
-            future: landingStore.autodiscoverConnections,
+            future: homeStore.autodiscoverConnections,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasData && snapshot.data!.isNotEmpty) {
