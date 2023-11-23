@@ -174,7 +174,7 @@ class _ConnectFormState extends State<ConnectForm> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 24.0),
+            padding: const EdgeInsets.only(top: 32.0),
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[

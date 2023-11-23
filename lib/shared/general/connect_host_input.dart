@@ -90,35 +90,41 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                               platform: this.widget.platform)
                           ? 8.0
                           : 0),
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: DropdownButton<String>(
-                      value: this.widget.protocolScheme,
-                      isDense: true,
-                      underline: Container(),
-                      alignment: Alignment.center,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'wss://',
-                          child: Text('wss://'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'ws://',
-                          child: Text('ws://'),
-                        ),
-                        DropdownMenuItem(
-                          value: '',
-                          child: Text('-'),
-                        ),
-                      ],
-                      onTap: () => _dropdownTapped = true,
-                      onChanged: (scheme) {
-                        this
-                            .widget
-                            .onChangeProtocolScheme
-                            ?.call(scheme ?? 'wss://');
-                        _inputFocusNode.requestFocus();
-                      },
+                  child: SizedBox(
+                    height: StylingHelper.isApple(context,
+                            platform: this.widget.platform)
+                        ? null
+                        : 20.0,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: DropdownButton<String>(
+                        value: this.widget.protocolScheme,
+                        isDense: true,
+                        underline: const SizedBox(),
+                        alignment: Alignment.center,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'wss://',
+                            child: Text('wss://'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'ws://',
+                            child: Text('ws://'),
+                          ),
+                          DropdownMenuItem(
+                            value: '',
+                            child: Text('-'),
+                          ),
+                        ],
+                        onTap: () => _dropdownTapped = true,
+                        onChanged: (scheme) {
+                          this
+                              .widget
+                              .onChangeProtocolScheme
+                              ?.call(scheme ?? 'wss://');
+                          _inputFocusNode.requestFocus();
+                        },
+                      ),
                     ),
                   ),
                 )

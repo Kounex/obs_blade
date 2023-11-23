@@ -82,53 +82,56 @@ class ConnectionBox extends StatelessWidget {
                           : 'Not reachable',
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 24.0),
-                  Expanded(
-                    child: BaseButton(
-                      text: 'Connect',
-                      onPressed: () {
-                        FocusScope.of(context).unfocus();
-                        networkStore
-                            .setOBSWebSocket(this.connection)
-                            .then((closeCode) {
-                          if (closeCode ==
-                              WebSocketCloseCode.AuthenticationFailed) {
-                            OverlayHandler.showStatusOverlay(
-                              context: context,
-                              content: const BaseResult(
-                                icon: BaseResultIcon.Negative,
-                                text: 'Wrong password!',
-                              ),
-                            );
-                          }
-                        });
-                      },
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 24.0),
+                    Expanded(
+                      child: BaseButton(
+                        text: 'Connect',
+                        onPressed: () {
+                          FocusScope.of(context).unfocus();
+                          networkStore
+                              .setOBSWebSocket(this.connection)
+                              .then((closeCode) {
+                            if (closeCode ==
+                                WebSocketCloseCode.AuthenticationFailed) {
+                              OverlayHandler.showStatusOverlay(
+                                context: context,
+                                content: const BaseResult(
+                                  icon: BaseResultIcon.Negative,
+                                  text: 'Wrong password!',
+                                ),
+                              );
+                            }
+                          });
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 24.0),
-                  Expanded(
-                    child: BaseButton(
-                      // shrinkWidth: true,
-                      // padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      // child: const Icon(
-                      //   Icons.edit,
-                      //   size: 20.0,
-                      // ),
-                      text: 'Edit',
-                      secondary: true,
-                      onPressed: () => ModalHandler.showBaseDialog(
-                        context: context,
-                        dialogWidget: EditConnectionDialog(
-                          connection: this.connection,
+                    const SizedBox(width: 24.0),
+                    Expanded(
+                      child: BaseButton(
+                        // shrinkWidth: true,
+                        // padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        // child: const Icon(
+                        //   Icons.edit,
+                        //   size: 20.0,
+                        // ),
+                        text: 'Edit',
+                        secondary: true,
+                        onPressed: () => ModalHandler.showBaseDialog(
+                          context: context,
+                          dialogWidget: EditConnectionDialog(
+                            connection: this.connection,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 24.0),
-                ],
+                    const SizedBox(width: 24.0),
+                  ],
+                ),
               ),
             ],
           ),
