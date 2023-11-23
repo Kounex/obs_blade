@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/tag_box.dart';
+import 'package:obs_blade/shared/general/tag_box.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
 
 class FilterStatus extends StatelessWidget {

@@ -7,7 +7,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
-import 'package:obs_blade/views/home/widgets/connect_box/connect_form/connect_host_input.dart';
+import 'package:obs_blade/shared/general/connect_host_input.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/general/base/button.dart';
@@ -94,12 +94,25 @@ class _ConnectFormState extends State<ConnectForm> {
             children: <Widget>[
               Flexible(
                 flex: 7,
-                child: Observer(builder: (context) {
-                  return ConnectHostInput(
-                    host: homeStore.domainMode ? _hostDomain : _hostIP,
-                    manual: this.widget.manual,
-                  );
-                }),
+                child: Observer(
+                  builder: (context) {
+                    return ConnectHostInput(
+                      domainMode: homeStore.domainMode,
+                      hostDomain: _hostDomain,
+                      hostIP: _hostIP,
+                      manual: this.widget.manual,
+                      platform: TargetPlatform.android,
+                      protocolScheme: homeStore.protocolScheme,
+                      onChangeMode: (domainMode) => domainMode != null
+                          ? homeStore.setDomainMode(domainMode)
+                          : null,
+                      onChangeProtocolScheme: (protocolScheme) =>
+                          protocolScheme != null
+                              ? homeStore.setProtocolScheme(protocolScheme)
+                              : null,
+                    );
+                  },
+                ),
               ),
               const Spacer(),
               Flexible(

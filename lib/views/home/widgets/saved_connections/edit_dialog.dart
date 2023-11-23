@@ -11,6 +11,7 @@ import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
 import '../../../../models/hidden_scene_item.dart';
 import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/connect_host_input.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
 import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../types/enums/hive_keys.dart';
@@ -35,6 +36,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
   late CustomValidationTextEditingController _port;
 
   late bool _isDomain;
+  late String _protocolScheme;
 
   final FocusNode _portFocusNode = FocusNode();
 
@@ -51,7 +53,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
     _hostDomain = CustomValidationTextEditingController(
       text: this.widget.connection.isDomain != null &&
               this.widget.connection.isDomain!
-          ? this.widget.connection.host
+          ? this.widget.connection.host.split('://').last
           : null,
       check: ValidationHelper.minLengthValidator,
     );
@@ -74,6 +76,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         CustomValidationTextEditingController(text: this.widget.connection.pw);
 
     _isDomain = this.widget.connection.isDomain ?? false;
+
+    _protocolScheme = _isDomain
+        ? this.widget.connection.host.contains('://')
+            ? '${this.widget.connection.host.split('://')[0]}://'
+            : ''
+        : 'wss://';
   }
 
   String? _nameValidator(String? name) => (name?.trim().isEmpty ?? true)
@@ -124,75 +132,49 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             'Change the following information to change your saved connection',
             textAlign: TextAlign.left,
           ),
-          const SizedBox(height: 4.0),
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: BaseAdaptiveTextField(
-              controller: _name,
-              errorPaddingAlways: true,
-              placeholder: 'Name',
-            ),
-          ),
+          const SizedBox(height: 12.0),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                flex: 2,
+              Expanded(
                 child: BaseAdaptiveTextField(
-                  controller: _isDomain ? _hostDomain : _hostIP,
-                  placeholder: 'Host',
+                  controller: _name,
                   errorPaddingAlways: true,
-                  style: const TextStyle(
-                    fontFeatures: [
-                      FontFeature.tabularFigures(),
-                    ],
-                  ),
-                  bottom: SizedBox(
-                    width: double.infinity,
-                    child: CupertinoSlidingSegmentedControl<bool>(
-                      groupValue: _isDomain,
-                      children: const {
-                        false: Text('IP'),
-                        true: Text('Domain'),
-                      },
-                      onValueChanged: (domainMode) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        setState(() {
-                          _isDomain = domainMode ?? false;
-                          // _host = CustomValidationTextEditingController(
-                          //   text: '',
-                          //   check: !_isDomain
-                          //       ? ValidationHelper.ipValidator
-                          //       : (_) => null,
-                          // );
-                        });
-                      },
-                    ),
-                  ),
+                  placeholder: 'Name',
                 ),
               ),
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 4.0),
-                  child: KeyboardNumberHeader(
+              const SizedBox(width: 8.0),
+              SizedBox(
+                width: 64.0,
+                child: KeyboardNumberHeader(
+                  focusNode: _portFocusNode,
+                  child: BaseAdaptiveTextField(
+                    controller: _port,
                     focusNode: _portFocusNode,
-                    child: BaseAdaptiveTextField(
-                      controller: _port,
-                      focusNode: _portFocusNode,
-                      errorPaddingAlways: true,
-                      style: const TextStyle(
-                        fontFeatures: [
-                          FontFeature.tabularFigures(),
-                        ],
-                      ),
-                      placeholder: 'Port',
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    errorPaddingAlways: true,
+                    style: const TextStyle(
+                      fontFeatures: [
+                        FontFeature.tabularFigures(),
+                      ],
                     ),
+                    placeholder: 'Port',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ),
               ),
             ],
+          ),
+          ConnectHostInput(
+            domainMode: _isDomain,
+            hostIP: _hostIP,
+            hostDomain: _hostDomain,
+            manual: true,
+            showHelp: false,
+            protocolScheme: _protocolScheme,
+            onChangeMode: (domainMode) =>
+                setState(() => _isDomain = domainMode ?? false),
+            onChangeProtocolScheme: (protocolScheme) =>
+                setState(() => _protocolScheme = protocolScheme ?? 'wss://'),
           ),
           BaseAdaptiveTextField(
             controller: _pw,
@@ -282,7 +264,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               }
 
               this.widget.connection.name = newName;
-              this.widget.connection.host = newHost;
+              this.widget.connection.host =
+                  '${_isDomain ? _protocolScheme : ""}$newHost';
               this.widget.connection.port = int.tryParse(_port.text);
               this.widget.connection.pw = _pw.text.trim();
               this.widget.connection.isDomain = _isDomain;
