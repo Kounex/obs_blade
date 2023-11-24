@@ -3,10 +3,10 @@ description: Control your OBS instance and manage your stream and recording - li
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
 version: 3.2.0+2023012003
 
-publish_to: 'none'
+publish_to: "none"
 
 environment:
-  sdk: '>=3.1.5 <4.0.0'
+  sdk: ">=3.1.5 <4.0.0"
 
 dependencies:
   flutter:
@@ -16,7 +16,7 @@ dependencies:
 
   # CUSTOM
   # Language stuff
-  intl: ^0.18.1
+  intl: ^0.18.0
 
   # Get project meta info
   package_info_plus: ^4.2.0
@@ -34,6 +34,7 @@ dependencies:
   # Network stuff
   connectivity_plus: ^5.0.1
   web_socket_channel: ^2.4.0
+  network_info_plus: ^4.1.0
 
   # Security
   crypto: ^3.0.3
@@ -67,8 +68,13 @@ dependencies:
   qr_code_scanner: ^1.0.1
 
   # Fancy done layout stuff
-  modal_bottom_sheet: ^2.1.2
-  fl_chart: ^0.63.0
+  modal_bottom_sheet: ^3.0.0-pre
+  # modal_bottom_sheet:
+  #   git:
+  #     url: https://github.com/Kounex/modal_bottom_sheet.git
+  #     ref: main
+  #     path: modal_bottom_sheet
+  fl_chart: ^0.62.0
   smooth_page_indicator: ^1.1.0
   keyboard_actions: ^4.2.0
   expandable: ^5.0.1
@@ -81,12 +87,9 @@ dependencies:
   # Splashscreen ios and android
   flutter_native_splash: ^2.3.5
 
-dependency_overrides:
-  modal_bottom_sheet:
-    git:
-      url: https://github.com/Kounex/modal_bottom_sheet.git
-      ref: main
-      path: modal_bottom_sheet
+  # Annotations for the class magic
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
 
 dev_dependencies:
   flutter_test:
@@ -101,31 +104,35 @@ dev_dependencies:
 
   # Codegen
   build_resolvers: ^2.2.0
-  build_runner: ^2.3.3
+  build_runner: ^2.4.6
   hive_generator: ^2.0.0
   mobx_codegen: ^2.2.0
 
   # App icons
   flutter_launcher_icons: ^0.13.1
 
+  # Some class magic
+  freezed: ^2.4.5
+  json_serializable: ^6.7.1
+
 flutter_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  image_path: 'assets/icons/app/app_logo.png'
-  adaptive_icon_background: '#141C24'
-  adaptive_icon_foreground: 'assets/icons/app/app_logo_adaptive.png'
+  image_path: "assets/icons/app/app_logo.png"
+  adaptive_icon_background: "#141C24"
+  adaptive_icon_foreground: "assets/icons/app/app_logo_adaptive.png"
 
 flutter_native_splash:
   image: assets/icons/app/splash.png
-  color: '#101823'
-  color_dark: '#101823'
+  color: "#101823"
+  color_dark: "#101823"
 
   android_12:
     image: assets/icons/app/splash.png
-    icon_background_color: '#101823'
+    icon_background_color: "#101823"
     image_dark: assets/icons/app/splash.png
-    icon_background_color_dark: '#101823'
+    icon_background_color_dark: "#101823"
 
 flutter:
   uses-material-design: true
