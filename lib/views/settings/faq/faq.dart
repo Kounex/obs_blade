@@ -47,10 +47,10 @@ class FAQView extends StatelessWidget {
               ],
             ),
           ),
-          BaseCard(
+          const BaseCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                     'Since I received several questions and problems regarding using OBS Blade, I tried to compile some information here which might help others as well if they encounter problems or are not sure about some functions / possibilities.'),
                 BaseDivider(height: 32),

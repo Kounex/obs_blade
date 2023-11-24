@@ -84,7 +84,7 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
                     child: Text('Name:'),
                   ),
                   Text(
-                    this.widget.screenshotPath.split("/").removeLast(),
+                    this.widget.screenshotPath.split('/').removeLast(),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,

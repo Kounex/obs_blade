@@ -9,10 +9,10 @@ class OBSWidgets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: const [
+      children: [
         Flexible(
           child: BaseCard(
             title: 'Chat',
