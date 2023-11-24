@@ -28,7 +28,6 @@ class RefresherAppBar extends StatelessWidget {
     return TransculentSliverAppBar(
       pinned: true,
       stretch: true,
-      elevation: 0,
       toolbarHeight: kRefresherAppBarHeight,
       expandedHeight: this.expandedHeight,
       flexibleSpace: Container(
@@ -46,6 +45,7 @@ class RefresherAppBar extends StatelessWidget {
         ),
         child: FlexibleSpaceBar(
           centerTitle: true,
+          titlePadding: const EdgeInsetsDirectional.only(bottom: 16),
           title: LayoutBuilder(
             builder: (context, constraints) {
               if ((constraints.maxHeight -

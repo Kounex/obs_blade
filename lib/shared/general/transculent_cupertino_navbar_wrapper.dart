@@ -71,7 +71,9 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
           ),
         if (this.customBody == null) customScrollView,
         CupertinoNavigationBar(
-          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          backgroundColor: StylingHelper.isApple(context)
+              ? Theme.of(context).appBarTheme.backgroundColor
+              : Theme.of(context).appBarTheme.backgroundColor!.withOpacity(1.0),
           leading: this.leading,
           previousPageTitle: this.previousTitle,
           middle: this.titleWidget ??

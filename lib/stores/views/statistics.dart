@@ -37,10 +37,12 @@ extension AmountStatisticEntriesFunctions on AmountStatisticEntries {
 }
 
 enum StatType {
+  All,
   Stream,
   Recording;
 
   String get name => {
+        StatType.All: 'All Stats',
         StatType.Stream: 'Stream',
         StatType.Recording: 'Recording',
       }[this]!;
@@ -98,13 +100,13 @@ abstract class _StatisticsStore with Store {
   bool? excludeUnnamedStats = false;
 
   @observable
-  StatType? statType;
+  StatType statType = StatType.All;
 
   @observable
   DurationFilter? durationFilter;
 
   @observable
-  String durationFilterAmount = '';
+  int? durationFilterAmount;
 
   @observable
   TimeUnit durationFilterTimeUnit = TimeUnit.Minutes;
@@ -122,7 +124,7 @@ abstract class _StatisticsStore with Store {
       this.fromDate != null ||
       this.toDate != null ||
       this.excludeUnnamedStats != false ||
-      this.statType != null ||
+      this.statType != StatType.All ||
       this.durationFilter != null;
 
   @action
@@ -135,9 +137,9 @@ abstract class _StatisticsStore with Store {
     this.fromDate = null;
     this.toDate = null;
     this.excludeUnnamedStats = false;
-    this.statType = null;
+    this.statType = StatType.All;
     this.durationFilter = null;
-    this.durationFilterAmount = '';
+    this.durationFilterAmount;
     this.durationFilterTimeUnit = TimeUnit.Minutes;
 
     /// Used as a toggle (only listen for change, not value) to exactly determine
@@ -176,15 +178,19 @@ abstract class _StatisticsStore with Store {
       this.excludeUnnamedStats = excludeUnnamedStats;
 
   @action
-  void setStatType(StatType? statType) => this.statType = statType;
+  void setStatType(StatType statType) => this.statType = statType;
 
   @action
   void setDurationFilter(DurationFilter? durationFilter) =>
       this.durationFilter = durationFilter;
 
   @action
-  void setDurationFilterAmount(String durationFilterAmount) =>
-      this.durationFilterAmount = durationFilterAmount;
+  void setDurationFilterAmount(String durationFilterAmount) {
+    int? duration = int.tryParse(durationFilterAmount);
+    if (duration != null) {
+      this.durationFilterAmount = duration;
+    }
+  }
 
   @action
   void setDurationFilterTimeUnit(TimeUnit durationFilterTimeUnit) =>

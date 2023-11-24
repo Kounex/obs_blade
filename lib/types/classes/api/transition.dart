@@ -1,37 +1,30 @@
-class Transition {
-  /// Name of the transition
-  String transitionName;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  /// Kind of the transition
-  String transitionKind;
+part 'transition.freezed.dart';
+part 'transition.g.dart';
 
-  /// Whether the transition uses a fixed (unconfigurable) duration
-  bool transitionFixed;
+@freezed
+class Transition with _$Transition {
+  const factory Transition({
+    /// Name of the transition
+    required String transitionName,
 
-  /// Configured transition duration in milliseconds. null if transition is fixed
-  int? transitionDuration;
+    /// Kind of the transition
+    required String transitionKind,
 
-  /// Whether the transition supports being configured
-  bool transitionConfigurable;
+    /// Whether the transition uses a fixed (unconfigurable) duration
+    required bool transitionFixed,
 
-  /// Object of settings for the transition. null if transition is not configurable
-  dynamic transitionSettings;
+    /// Configured transition duration in milliseconds. null if transition is fixed
+    required int? transitionDuration,
 
-  Transition({
-    required this.transitionName,
-    required this.transitionKind,
-    required this.transitionFixed,
-    this.transitionDuration,
-    required this.transitionConfigurable,
-    this.transitionSettings,
-  });
+    /// Whether the transition supports being configured
+    required bool transitionConfigurable,
 
-  static Transition fromJSON(Map<String, dynamic> json) => Transition(
-        transitionName: json['transitionName'],
-        transitionKind: json['transitionKind'],
-        transitionFixed: json['transitionFixed'],
-        transitionDuration: json['transitionDuration'],
-        transitionConfigurable: json['transitionConfigurable'],
-        transitionSettings: json['transitionSettings'],
-      );
+    /// Object of settings for the transition. null if transition is not configurable
+    required dynamic transitionSettings,
+  }) = _Transition;
+
+  factory Transition.fromJson(Map<String, Object?> json) =>
+      _$TransitionFromJson(json);
 }

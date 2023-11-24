@@ -1,23 +1,24 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
 import 'package:obs_blade/utils/overlay_handler.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/confirmation.dart';
-import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/request_batch_type.dart';
 import '../../../../types/enums/request_type.dart';
 import '../../../../types/enums/settings_keys.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/network_helper.dart';
 import '../../services/record_stream.dart';
-import '../save_edit_connection_dialog.dart';
+import '../dialogs/save_edit_connection.dart';
 
 class GeneralActions extends StatelessWidget {
   const GeneralActions({Key? key}) : super(key: key);
@@ -44,13 +45,14 @@ class GeneralActions extends StatelessWidget {
             SettingsKeys.DontShowStreamStopMessage,
           ],
           builder: (context, settingsBox, child) => Observer(
-            builder: (_) => AppBarCupertinoActions(
+            builder: (_) => AppBarActions(
               actions: [
                 if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
                     defaultValue: false))
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isLive ? 'Stop' : 'Start'} Streaming',
+                    leadingIcon: CupertinoIcons.dot_radiowaves_left_right,
                     onAction: () => RecordStreamService.triggerStreamStartStop(
                       context,
                       dashboardStore.isLive,
@@ -64,9 +66,10 @@ class GeneralActions extends StatelessWidget {
                   ),
                 if (!settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
                     defaultValue: false)) ...[
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecording ? 'Stop' : 'Start'} Recording',
+                    leadingIcon: CupertinoIcons.recordingtape,
                     onAction: () => RecordStreamService.triggerRecordStartStop(
                       context,
                       dashboardStore.isRecording,
@@ -78,9 +81,10 @@ class GeneralActions extends StatelessWidget {
                           defaultValue: false),
                     ),
                   ),
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecordingPaused ? 'Resume' : 'Pause'} Recording',
+                    leadingIcon: CupertinoIcons.playpause_fill,
                     onAction: dashboardStore.isRecording
                         ? () => NetworkHelper.makeRequest(
                               networkStore.activeSession!.socket,
@@ -92,9 +96,10 @@ class GeneralActions extends StatelessWidget {
                 if (!settingsBox.get(
                     SettingsKeys.ExposeReplayBufferControls.name,
                     defaultValue: false)) ...[
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title:
                         '${dashboardStore.isReplayBufferActive ? 'Stop' : 'Start'} Replay Buffer',
+                    leadingIcon: CupertinoIcons.reply_thick_solid,
                     onAction: () {
                       if (dashboardStore.isReplayBufferActive) {
                         OverlayHandler.showStatusOverlay(
@@ -111,8 +116,9 @@ class GeneralActions extends StatelessWidget {
                       );
                     },
                   ),
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title: 'Save Replay Buffer',
+                    leadingIcon: CupertinoIcons.arrow_down_doc_fill,
                     onAction: dashboardStore.isReplayBufferActive
                         ? () => NetworkHelper.makeRequest(
                               networkStore.activeSession!.socket,
@@ -121,9 +127,10 @@ class GeneralActions extends StatelessWidget {
                         : null,
                   ),
                 ],
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
                   title:
                       '${dashboardStore.isVirtualCamActive ? 'Stop' : 'Start'} Virtual Camera',
+                  leadingIcon: CupertinoIcons.camera_on_rectangle_fill,
                   onAction: () {
                     NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
@@ -131,9 +138,61 @@ class GeneralActions extends StatelessWidget {
                     );
                   },
                 ),
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
+                  title: 'Take OBS Screenshot',
+                  leadingIcon: CupertinoIcons.square_stack_3d_down_right_fill,
+                  onAction: () {
+                    /// Intentionally having a different file format used for
+                    /// the [imageFormat] field for the request and the one
+                    /// used as the extension for the file. If we can, we want
+                    /// to save screenshots as pngs as OBS is doing it, but
+                    /// when doing so here, transparency is used correctly
+                    /// which OBS does not do... so I'm rather doing it like
+                    /// OBS itself is doing it (using png but without transparency)
+                    /// to deliver the same experience
+                    ///
+                    /// We also have to do this request in this batch format
+                    /// due to API inconsistency -> check the comment of
+                    /// [RequestBatchType.Screenshot]
+                    NetworkHelper.makeBatchRequest(
+                      networkStore.activeSession!.socket,
+                      RequestBatchType.Screenshot,
+                      [
+                        RequestBatchObject(
+                          RequestType.SaveSourceScreenshot,
+                          {
+                            'sourceName': Hive.box(HiveKeys.Settings.name).get(
+                                        SettingsKeys.ExposeStudioControls.name,
+                                        defaultValue: false) &&
+                                    dashboardStore.studioMode
+                                ? dashboardStore.studioModePreviewSceneName
+                                : dashboardStore.activeSceneName,
+                            'imageFilePath': dashboardStore.screenshotPath,
+                            'imageFormat': dashboardStore.previewFileFormat,
+                            'compressionQuality': -1,
+                          },
+                        ),
+                        RequestBatchObject(
+                          RequestType.GetSourceScreenshot,
+                          {
+                            'sourceName': Hive.box(HiveKeys.Settings.name).get(
+                                        SettingsKeys.ExposeStudioControls.name,
+                                        defaultValue: false) &&
+                                    dashboardStore.studioMode
+                                ? dashboardStore.studioModePreviewSceneName
+                                : dashboardStore.activeSceneName,
+                            'imageFormat': dashboardStore.previewFileFormat,
+                            'compressionQuality': -1,
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                AppBarActionEntry(
                   title:
                       '${dashboardStore.editSceneVisibility ? 'Finish' : 'Edit'} Scene Visibility',
+                  leadingIcon: CupertinoIcons.eyeglasses,
                   onAction: dashboardStore.editSceneVisibility
                       ? () {
                           dashboardStore.setEditSceneVisibility(false);
@@ -175,8 +234,9 @@ class GeneralActions extends StatelessWidget {
                               );
                             },
                 ),
-                AppBarCupertinoActionEntry(
+                AppBarActionEntry(
                   title: '${newConnection ? 'Save' : 'Edit'} Connection',
+                  leadingIcon: CupertinoIcons.pencil_ellipsis_rectangle,
                   onAction: () {
                     ModalHandler.showBaseDialog(
                       context: context,

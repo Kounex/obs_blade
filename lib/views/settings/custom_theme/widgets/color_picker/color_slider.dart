@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'color_label.dart';
 
 import '../../../../../shared/general/keyboard_number_header.dart';
-import '../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../utils/validation_helper.dart';
 import 'color_picker.dart';
 

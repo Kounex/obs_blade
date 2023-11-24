@@ -22,21 +22,21 @@ class AmountEntriesControl extends StatelessWidget {
           // selectedColor: Theme.of(context).toggleableActiveColor,
           // borderColor: Theme.of(context).toggleableActiveColor,
           // unselectedColor: Theme.of(context).cardColor,
-          children: {}..addEntries(
-              AmountStatisticEntries.values.map(
-                (amount) => MapEntry(
-                  amount,
-                  Text(
-                    amount.number.toString(),
-                    style: const TextStyle(
-                      fontFeatures: [
-                        FontFeature.tabularFigures(),
-                      ],
-                    ),
+          children: Map.fromEntries(
+            AmountStatisticEntries.values.map(
+              (amount) => MapEntry(
+                amount,
+                Text(
+                  amount.number.toString(),
+                  style: const TextStyle(
+                    fontFeatures: [
+                      FontFeature.tabularFigures(),
+                    ],
                   ),
                 ),
               ),
             ),
+          ),
           onValueChanged: (amountEntries) =>
               statisticsStore.setAmountStatisticEntries(amountEntries!),
         ),

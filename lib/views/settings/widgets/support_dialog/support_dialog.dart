@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
 import 'package:obs_blade/utils/general_helper.dart';
@@ -47,7 +48,11 @@ class _SupportDialogState extends State<SupportDialog> {
     if (!available) {
       _error =
           'Connection to the App Store is not possible. Make sure you have a working internet connection.\n\nFeel free to let me know if this problem persists!';
-      GeneralHelper.advLog(_error, includeInLogs: true, level: LogLevel.Error);
+      GeneralHelper.advLog(
+        _error,
+        includeInLogs: true,
+        level: LogLevel.Error,
+      );
     }
     Set<String> inAppPurchasesIDs = {};
     switch (this.widget.type) {
@@ -81,18 +86,21 @@ class _SupportDialogState extends State<SupportDialog> {
               inAppPurchasesSnapshot.connectionState == ConnectionState.done
                   ? (inAppPurchasesSnapshot.data ?? [])
                   : inAppPurchasesSnapshot.data;
-          return SingleChildScrollView(
-            child: () {
-              if (this.widget.type == SupportType.Tips) {
-                return TipsContent(
-                  tipsDetails: inAppPurchasesDetails,
-                );
-              } else {
-                return BlacksmithContent(
-                  blacksmithDetails: inAppPurchasesDetails,
-                );
-              }
-            }(),
+          return DefaultTextStyle(
+            style: Theme.of(context).textTheme.bodyMedium!,
+            child: SingleChildScrollView(
+              child: () {
+                if (this.widget.type == SupportType.Tips) {
+                  return TipsContent(
+                    tipsDetails: inAppPurchasesDetails,
+                  );
+                } else {
+                  return BlacksmithContent(
+                    blacksmithDetails: inAppPurchasesDetails,
+                  );
+                }
+              }(),
+            ),
           );
           // }
           // return Container(

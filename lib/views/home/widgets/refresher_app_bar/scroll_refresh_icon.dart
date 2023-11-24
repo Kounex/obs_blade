@@ -59,21 +59,21 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = GetIt.instance<HomeStore>();
+    HomeStore homeStore = GetIt.instance<HomeStore>();
     double barStretchOffset = MediaQuery.of(context).size.height / 15;
 
     if (this.widget.currentBarHeight - this.widget.expandedBarHeight >=
             barStretchOffset &&
         !_animController.isAnimating &&
-        !landingStore.refreshable) {
+        !homeStore.refreshable) {
       HapticFeedback.lightImpact();
-      landingStore.setRefreshable(true);
+      homeStore.setRefreshable(true);
       _animController.forward().then((_) => _animController.animateTo(0.5));
     }
     if (this.widget.currentBarHeight - this.widget.expandedBarHeight <
             barStretchOffset &&
-        landingStore.refreshable) {
-      landingStore.setRefreshable(false);
+        homeStore.refreshable) {
+      homeStore.setRefreshable(false);
       _animController.animateTo(0.0);
     }
     return Padding(

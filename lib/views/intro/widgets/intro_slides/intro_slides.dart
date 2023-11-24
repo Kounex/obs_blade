@@ -149,7 +149,7 @@ class _IntroSlidesState extends State<IntroSlides> {
           textSpans: const [
             TextSpan(
               text:
-                  'After installing the plugin and restarting OBS, check if Tools -> obs-websocket Settings is available and use the recommended settings (above) - Enjoy!',
+                  'After installing the plugin and restarting OBS, check if Tools -> WebSocket Server Settings is available and use the recommended settings (above) - Enjoy!',
             ),
           ],
           textAlign: TextAlign.left,

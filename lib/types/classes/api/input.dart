@@ -1,36 +1,21 @@
-class Input {
-  String? inputKind;
-  String? inputName;
-  String? unversionedInputKind;
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:obs_blade/types/classes/api/input_channel.dart';
 
-  double? inputVolumeMul;
-  double? inputVolumeDb;
+part 'input.freezed.dart';
+part 'input.g.dart';
 
-  List<InputChannel>? inputLevelsMul;
+@freezed
+class Input with _$Input {
+  const factory Input({
+    required String? inputKind,
+    required String? inputName,
+    required String? unversionedInputKind,
+    double? inputVolumeMul,
+    double? inputVolumeDb,
+    List<InputChannel>? inputLevelsMul,
+    int? syncOffset,
+    @Default(false) bool inputMuted,
+  }) = _Input;
 
-  bool? inputMuted;
-
-  Input({
-    required this.inputKind,
-    required this.inputName,
-    required this.unversionedInputKind,
-  });
-
-  static Input fromJSON(Map<String, dynamic> json) => Input(
-        inputKind: json['inputKind'],
-        inputName: json['inputName'],
-        unversionedInputKind: json['unversionedInputKind'],
-      );
-}
-
-class InputChannel {
-  double? current;
-  double? average;
-  double? potential;
-
-  InputChannel({
-    required this.current,
-    required this.average,
-    required this.potential,
-  });
+  factory Input.fromJson(Map<String, Object?> json) => _$InputFromJson(json);
 }

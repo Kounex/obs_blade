@@ -4,10 +4,10 @@ import 'package:get_it/get_it.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../shared/general/base/adaptive_switch.dart';
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/hive_builder.dart';
 import '../../shared/general/themed/cupertino_sliver_navigation_bar.dart';
-import '../../shared/general/themed/cupertino_switch.dart';
 import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
@@ -44,7 +44,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Wake Lock',
                       help:
                           'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.WakeLock.name,
                           defaultValue: true,
@@ -72,7 +72,7 @@ class SettingsView extends StatelessWidget {
                       title: 'Unlimited Retries',
                       help:
                           'When active, OBS Blade will try to reconnect to a lost OBS connection indefinitely instead of aborting when reaching a fixed amount of attempts.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.UnlimitedReconnects.name,
                           defaultValue: false,
@@ -83,133 +83,25 @@ class SettingsView extends StatelessWidget {
                         },
                       ),
                     ),
-                    BlockEntry(
+                    const BlockEntry(
                       leading: CupertinoIcons.archivebox_fill,
                       title: 'Data Management',
-                      navigateTo: SettingsTabRoutingKeys.DataManagement.route,
+                      navigateTo: SettingsTabRoutingKeys.DataManagement,
                     ),
                   ],
                 ),
                 ActionBlock(
                   title: 'Dashboard',
+                  description:
+                      'Customisation allows you to change the UI of the dashboard view to add quick access buttons / features which are hidden in the menu bar by default.',
                   blockEntries: [
-                    BlockEntry(
-                      leading: CupertinoIcons.profile_circled,
-                      leadingSize: 30.0,
-                      title: 'Profiles',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeProfile.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeProfile) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeProfile.name,
-                            exposeProfile,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.collections_solid,
-                      leadingSize: 26.0,
-                      title: 'Scene Collections',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeSceneCollection.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeSceneCollection) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeSceneCollection.name,
-                            exposeSceneCollection,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: Icons.live_tv_rounded,
-                      leadingSize: 28.0,
-                      title: 'Streaming Controls',
-                      help:
-                          'If active, the streaming actions (start/stop) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeStreamingControls.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeStreamingControls) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeStreamingControls.name,
-                            exposeStreamingControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.recordingtape,
-                      leadingSize: 30.0,
-                      title: 'Recording Controls',
-                      help:
-                          'If active, the recording actions (start/stop/pause) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeRecordingControls.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeRecordingControls) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeRecordingControls.name,
-                            exposeRecordingControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.reply_thick_solid,
-                      leadingSize: 28.0,
-                      title: 'Replay Controls',
-                      help:
-                          'If active, the replay buffer actions (start/stop/save) will be exposed in the dashboard view rather than in the action menu of the app bar. Makes it more accessible.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeReplayBufferControls.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeReplayBufferControls) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeReplayBufferControls.name,
-                            exposeReplayBufferControls,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.square_grid_3x2_fill,
-                      leadingSize: 28.0,
-                      title: 'Hotkeys',
-                      help:
-                          'If active, the hotkey button will be added to the dashboard which enables you to list all available OBS hotkeys and trigger them. Enables more precise interaction with OBS, usually only needed for power users.',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                          SettingsKeys.ExposeHotkeys.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (exposeHotkeys) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeHotkeys.name,
-                            exposeHotkeys,
-                          );
-                        },
-                      ),
-                    ),
                     BlockEntry(
                       leading: CupertinoIcons.film,
                       leadingSize: 26.0,
                       title: 'Studio Mode',
                       help:
                           'Enables the awareness and usage of the Studio Mode in OBS Blade. Will expose additional settings / buttons in the dashboard.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.ExposeStudioControls.name,
                           defaultValue: false,
@@ -223,28 +115,12 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     BlockEntry(
-                      leading: CupertinoIcons.person_2_square_stack,
-                      leadingSize: 30.0,
-                      title: 'Scene Preview',
-                      trailing: ThemedCupertinoSwitch(
-                        value: settingsBox.get(
-                            SettingsKeys.ExposeScenePreview.name,
-                            defaultValue: true),
-                        onChanged: (exposeScenePreview) {
-                          settingsBox.put(
-                            SettingsKeys.ExposeScenePreview.name,
-                            exposeScenePreview,
-                          );
-                        },
-                      ),
-                    ),
-                    BlockEntry(
-                      leading: CupertinoIcons.lock_fill,
-                      leadingSize: 30.0,
+                      leading: CupertinoIcons.table_fill,
+                      leadingSize: 28.0,
                       title: 'Force Tablet Mode',
                       help:
                           'Elements in the Dashboard View will be displayed next to each other instead of being in tabs if the screen is big enough. If you want to you can set this manually.\n\nCAUTION: Will probably not fit your screen.',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                             SettingsKeys.EnforceTabletMode.name,
                             defaultValue: false),
@@ -256,26 +132,32 @@ class SettingsView extends StatelessWidget {
                         },
                       ),
                     ),
+                    const BlockEntry(
+                      leading: CupertinoIcons.layers_fill,
+                      title: 'Customisation',
+                      navigateTo: SettingsTabRoutingKeys.DashboardCustomisation,
+                    ),
                   ],
                 ),
                 ActionBlock(
                   title: 'Theme',
                   blockEntries: [
                     BlockEntry(
-                        leading: CupertinoIcons.lab_flask_solid,
-                        title: 'Custom Theme',
-                        navigateTo: SettingsTabRoutingKeys.CustomTheme.route,
-                        navigateToResult: Text(
-                          settingsBox.get(SettingsKeys.CustomTheme.name,
-                                  defaultValue: false)
-                              ? 'Active'
-                              : 'Inactive',
-                        )),
+                      leading: CupertinoIcons.lab_flask_solid,
+                      title: 'Custom Theme',
+                      navigateTo: SettingsTabRoutingKeys.CustomTheme,
+                      navigateToResult: Text(
+                        settingsBox.get(SettingsKeys.CustomTheme.name,
+                                defaultValue: false)
+                            ? 'Active'
+                            : 'Inactive',
+                      ),
+                    ),
                     BlockEntry(
                       leading: CupertinoIcons.moon_circle_fill,
                       leadingSize: 30.0,
                       title: 'True Dark Mode',
-                      trailing: ThemedCupertinoSwitch(
+                      trailing: BaseAdaptiveSwitch(
                         value: settingsBox.get(
                           SettingsKeys.TrueDark.name,
                           defaultValue: false,
@@ -301,7 +183,7 @@ class SettingsView extends StatelessWidget {
                         title: 'Reduce Smearing',
                         help:
                             'Only relevant for OLED displays. Using a fully black background might cause smearing while scrolling so this option will apply a slightly lighter background color.\n\nCAUTION: Might drain "more" battery.',
-                        trailing: ThemedCupertinoSwitch(
+                        trailing: BaseAdaptiveSwitch(
                           value: settingsBox.get(
                             SettingsKeys.ReduceSmearing.name,
                             defaultValue: false,
@@ -320,36 +202,55 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
+                    BlockEntry(
+                      leading: CupertinoIcons.wand_stars,
+                      leadingSize: 30.0,
+                      title: 'Force non native UI',
+                      help:
+                          'OBS Blade started out with mostly using iOS UI components. It is now somewhat adaptive and should be platform agnostic to some degree.\n\nIf, for whatever reason, you want to use the non native elements, turn this on!',
+                      trailing: BaseAdaptiveSwitch(
+                        value: settingsBox.get(
+                          SettingsKeys.ForceNonNativeElements.name,
+                          defaultValue: false,
+                        ),
+                        onChanged: (forceNonNativeElements) {
+                          settingsBox.put(
+                            SettingsKeys.ForceNonNativeElements.name,
+                            forceNonNativeElements,
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
-                ActionBlock(
+                const ActionBlock(
                   title: 'Misc.',
                   blockEntries: [
                     BlockEntry(
                       leading: CupertinoIcons.info_circle_fill,
                       title: 'About',
-                      navigateTo: SettingsTabRoutingKeys.About.route,
+                      navigateTo: SettingsTabRoutingKeys.About,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.chat_bubble_text_fill,
                       title: 'FAQ | Help',
-                      navigateTo: SettingsTabRoutingKeys.FAQ.route,
+                      navigateTo: SettingsTabRoutingKeys.FAQ,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.book_fill,
                       title: 'Intro Slides',
-                      navigateTo: AppRoutingKeys.Intro.route,
+                      navigateTo: AppRoutingKeys.Intro,
                       rootNavigation: true,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.doc_person_fill,
                       title: 'Privacy Policy',
-                      navigateTo: SettingsTabRoutingKeys.PrivacyPolicy.route,
+                      navigateTo: SettingsTabRoutingKeys.PrivacyPolicy,
                     ),
                     BlockEntry(
                       leading: CupertinoIcons.square_list_fill,
                       title: 'Logs',
-                      navigateTo: SettingsTabRoutingKeys.Logs.route,
+                      navigateTo: SettingsTabRoutingKeys.Logs,
                     ),
                   ],
                 ),

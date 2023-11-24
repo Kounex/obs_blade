@@ -86,6 +86,7 @@ class _HomeViewState extends State<HomeView> {
         if (this.mounted) {
           ModalHandler.showBaseDialog(
             context: context,
+            barrierDismissible: true,
             dialogWidget: const InfoDialog(
                 body:
                     'Your connection to OBS has been lost and the app was not able to reconnect.'),
@@ -162,7 +163,7 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = GetIt.instance<HomeStore>();
+    HomeStore homeStore = GetIt.instance<HomeStore>();
     return ThemedCupertinoScaffold(
       /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
       /// our extendedHeight, where we are ready to trigger searching for OBS connections,
@@ -171,20 +172,21 @@ class _HomeViewState extends State<HomeView> {
       /// scroll up again without triggering a refresh (feels more natural in my opinion)
       body: Listener(
         onPointerUp: (_) {
-          if (landingStore.refreshable) {
+          if (homeStore.refreshable) {
             /// Used to globally (at least where [HomeStore] is listened to) to act on the
             /// refresh action which has now been triggered
-            landingStore.initiateRefresh();
+            homeStore.initiateRefresh();
 
             /// Switch back to autodiscover mode (of our [SwitcherCard]) if we refresh so the
             /// user can actually see the part thats refreshing
-            if (landingStore.connectMode != ConnectMode.Autodiscover) {
-              landingStore.setConnectMode(ConnectMode.Autodiscover);
+            if (homeStore.connectMode != ConnectMode.Autodiscover) {
+              homeStore.setConnectMode(ConnectMode.Autodiscover);
             }
-            landingStore.updateAutodiscoverConnections();
+            homeStore.updateAutodiscoverConnections();
           }
         },
         child: CustomScrollView(
+          physics: StylingHelper.platformAwareScrollPhysics,
           controller:
               ModalRoute.of(context)!.settings.arguments as ScrollController,
 
@@ -194,7 +196,7 @@ class _HomeViewState extends State<HomeView> {
           /// be able to scroll even though we reached the end. To achieve this we need different behaviour
           /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
           /// for the first group and [BouncingScrollPhysics] for the second
-          physics: StylingHelper.platformAwareScrollPhysics,
+          // physics: StylingHelper.platformAwareScrollPhysics,
           slivers: const [
             RefresherAppBar(
               expandedHeight: 200.0,

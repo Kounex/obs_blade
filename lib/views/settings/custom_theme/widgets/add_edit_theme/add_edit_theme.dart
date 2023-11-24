@@ -8,7 +8,7 @@ import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
-import '../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../types/extensions/color.dart';
@@ -53,8 +53,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
     super.initState();
   }
 
-  String? _nameValidation(String name) {
-    if (name.trim().isEmpty) {
+  String? _nameValidation(String? name) {
+    if (name?.trim().isEmpty ?? true) {
       return 'Please provide a theme name!';
     }
     if (Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
@@ -167,7 +167,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       padding: const EdgeInsets.only(top: 24.0),
                       child: Column(
                         children: [
-                          ValidationCupertinoTextfield(
+                          BaseAdaptiveTextField(
                             controller: _name,
                             placeholder: 'Name',
                           ),

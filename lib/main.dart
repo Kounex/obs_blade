@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 
 import 'app.dart';
@@ -90,6 +91,7 @@ Future<void> _initializeHive() async {
   Hive.registerAdapter(HiddenSceneAdapter());
   Hive.registerAdapter(AppLogAdapter());
   Hive.registerAdapter(PurchasedTipAdapter());
+  Hive.registerAdapter(HotkeyAdapter());
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
@@ -129,6 +131,10 @@ Future<void> _initializeHive() async {
     HiveKeys.PurchasedTip.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
+  await Hive.openBox<Hotkey>(
+    HiveKeys.Hotkey.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
 
   /// Open Hive boxes which are not bound to models
   await Hive.openBox(
@@ -147,7 +153,7 @@ bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
         DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
         prevLog.entry == entry);
 
-void _logging(String line) {
+void _logging(String line, [LogLevel? fixedLevel]) {
   String? stack;
 
   LogLevel level = LogLevel.Info;
@@ -157,7 +163,7 @@ void _logging(String line) {
   Iterable<LogLevel> lineLevel =
       LogLevel.values.where((level) => line.startsWith(level.prefix));
 
-  if (lineLevel.isNotEmpty) {
+  if (fixedLevel != null || lineLevel.isNotEmpty) {
     manually = true;
     level = lineLevel.first;
     line = line.split(level.prefix)[1];
@@ -194,21 +200,21 @@ void _logging(String line) {
 }
 
 void main() async {
-  /// Initialize Date Formatting - using European style
-  await initializeDateFormatting('de_DE');
-
-  /// Create all store objects and make them available in the app (DI)
-  _initializeStores();
-
-  /// Create all hive objects with references to the persistant boxes
-  await _initializeHive();
-
-  runZonedGuarded(
-    () {
-      WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded(
+    () async {
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.dumpErrorToConsole(details);
       };
+      WidgetsFlutterBinding.ensureInitialized();
+
+      /// Initialize Date Formatting - using European style
+      await initializeDateFormatting('de_DE');
+
+      /// Create all store objects and make them available in the app (DI)
+      _initializeStores();
+
+      /// Create all hive objects with references to the persistant boxes
+      await _initializeHive();
       runApp(
         const LifecycleWatcher(
           app: PurchaseBase(
@@ -217,7 +223,8 @@ void main() async {
         ),
       );
     },
-    (Object error, StackTrace stack) => _logging('$error\n[STACK]\n$stack'),
+    (Object error, StackTrace stack) =>
+        _logging('[ERROR][ON] $error\n[STACK]\n$stack'),
     zoneSpecification: ZoneSpecification(
       // handleUncaughtError: (self, parent, zone, error, stackTrace) =>
       //     _logging('$error\n[STACK]\n$stackTrace'),

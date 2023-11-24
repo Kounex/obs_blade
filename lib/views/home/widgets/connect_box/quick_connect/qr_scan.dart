@@ -103,7 +103,7 @@ class _QRScanState extends State<QRScan> {
         scale: 0.8,
         child: const QuestionMarkTooltip(
             message:
-                'You can find the QR code in:\n\nTools -> obs-websocket Settings -> Show Connect Info'),
+                'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info'),
       ),
       title: 'Quick Connect',
       actions: ThemedCupertinoButton(
@@ -139,6 +139,7 @@ class _QRScanState extends State<QRScan> {
                     if (!permission) {
                       ModalHandler.showBaseDialog(
                         context: context,
+                        barrierDismissible: true,
                         dialogWidget: InfoDialog(
                           body:
                               'OBS Blade has no permission to use your camera. This feature does not work without using the camera, since we will scan a QR code provided by the WebSocket plugin.\n\nIf you change your mind and want to use this feature, go to:\n\niOS Settings -> OBS Blade (scroll way down) -> Toggle camera on',

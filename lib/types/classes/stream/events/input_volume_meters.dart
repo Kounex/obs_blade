@@ -1,5 +1,4 @@
-import 'package:obs_blade/types/classes/api/input.dart';
-
+import '../../api/input_channel.dart';
 import 'base.dart';
 
 /// A high-volume event providing volume levels of all active inputs every 50 milliseconds.

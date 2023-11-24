@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/described_box.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/hotkeys_control/hotkeys_control.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/replay_buffer_controls.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
@@ -58,6 +59,17 @@ class ExposedControls extends StatelessWidget {
               label: 'Replay Buffer',
               borderColor: Theme.of(context).dividerColor,
               child: const ReplayBufferControls(),
+            ),
+          );
+        }
+
+        if (settingsBox.get(SettingsKeys.ExposeHotkeys.name,
+            defaultValue: false)) {
+          exposedControls.add(
+            DescribedBox(
+              label: 'Hotkeys',
+              borderColor: Theme.of(context).dividerColor,
+              child: const HotkeysControl(),
             ),
           );
         }

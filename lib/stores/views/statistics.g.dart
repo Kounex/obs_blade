@@ -150,13 +150,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
       Atom(name: '_StatisticsStore.statType', context: context);
 
   @override
-  StatType? get statType {
+  StatType get statType {
     _$statTypeAtom.reportRead();
     return super.statType;
   }
 
   @override
-  set statType(StatType? value) {
+  set statType(StatType value) {
     _$statTypeAtom.reportWrite(value, super.statType, () {
       super.statType = value;
     });
@@ -182,13 +182,13 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
       Atom(name: '_StatisticsStore.durationFilterAmount', context: context);
 
   @override
-  String get durationFilterAmount {
+  int? get durationFilterAmount {
     _$durationFilterAmountAtom.reportRead();
     return super.durationFilterAmount;
   }
 
   @override
-  set durationFilterAmount(String value) {
+  set durationFilterAmount(int? value) {
     _$durationFilterAmountAtom.reportWrite(value, super.durationFilterAmount,
         () {
       super.durationFilterAmount = value;
@@ -332,7 +332,7 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   }
 
   @override
-  void setStatType(StatType? statType) {
+  void setStatType(StatType statType) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
         name: '_StatisticsStore.setStatType');
     try {

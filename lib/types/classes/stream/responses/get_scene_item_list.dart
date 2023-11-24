@@ -9,5 +9,5 @@ class GetSceneItemListResponse extends BaseResponse {
   /// Array of scene items in the scene
   Iterable<SceneItem> get sceneItems =>
       (this.json['sceneItems'] as List<dynamic>)
-          .map((sceneItem) => SceneItem.fromJSON(sceneItem));
+          .map((sceneItem) => SceneItem.fromJson(sceneItem));
 }

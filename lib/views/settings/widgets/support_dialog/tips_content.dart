@@ -65,7 +65,8 @@ class TipsContent extends StatelessWidget {
     return Column(
       children: [
         const Text(
-            'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!'),
+          'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!',
+        ),
         // const SizedBox(height: 12.0),
         const BaseDivider(
           height: 24.0,
@@ -86,9 +87,8 @@ class TipsContent extends StatelessWidget {
                         ),
                       ),
                 if (this.tipsDetails != null && this.tipsDetails!.isNotEmpty)
-                  ...this
-                      .tipsDetails!
-                      .take(kTipAwesomeness.length)
+                  ...(this.tipsDetails!
+                        ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice)))
                       .mapIndexed(
                         (tip, index) => DonateButton(
                           // text: '${kTipAwesomeness[index]} Tip',

@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 
 class AddEditUsernameDialog extends StatefulWidget {
@@ -84,6 +84,50 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
     return null;
   }
 
+  void _handleTwitchUsername() {
+    List<String> twitchUsernames = this.widget.settingsBox.get(
+      SettingsKeys.TwitchUsernames.name,
+      defaultValue: <String>[],
+    );
+    if (this.widget.username == null) {
+      twitchUsernames.add(_usernameController.text);
+    } else {
+      twitchUsernames[twitchUsernames.indexOf(this.widget.username!)] =
+          _usernameController.text;
+    }
+    this.widget.settingsBox.put(
+          SettingsKeys.TwitchUsernames.name,
+          twitchUsernames,
+        );
+    this.widget.settingsBox.put(
+          SettingsKeys.SelectedTwitchUsername.name,
+          _usernameController.text,
+        );
+  }
+
+  void _handleYoutubeUsername() {
+    Map<String, String> youtubeUsernames = Map<String, String>.from(
+      (this.widget.settingsBox.get(
+        SettingsKeys.YoutubeUsernames.name,
+        defaultValue: <String, String>{},
+      )),
+    );
+    if (this.widget.username != null) {
+      youtubeUsernames.remove(this.widget.username);
+    }
+    youtubeUsernames.putIfAbsent(
+        _usernameController.text, () => _youtubeLinkController.text);
+
+    this.widget.settingsBox.put(
+          SettingsKeys.YoutubeUsernames.name,
+          youtubeUsernames,
+        );
+    this.widget.settingsBox.put(
+          SettingsKeys.SelectedYoutubeUsername.name,
+          _usernameController.text,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ConfirmationDialog(
@@ -95,7 +139,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
             'Add the name of a ${_chatType.text} user to be able to view this user\'s chat',
           ),
           const SizedBox(height: 12.0),
-          ValidationCupertinoTextfield(
+          BaseAdaptiveTextField(
             controller: _usernameController,
             placeholder: '${_chatType.text} username',
           ),
@@ -104,7 +148,7 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
             const Text(
                 'For Youtube you also need to provide the Channel ID of the livestream - Usually at the end of the livestream link, for example:\n\nm-i_0DcfF1s'),
             const SizedBox(height: 12.0),
-            ValidationCupertinoTextfield(
+            BaseAdaptiveTextField(
               controller: _youtubeLinkController,
               placeholder: 'Youtube livestream link',
             ),
@@ -123,38 +167,9 @@ class _AddEditUsernameDialogState extends State<AddEditUsernameDialog> {
                 ? _youtubeLinkController.isValid
                 : true)) {
           if (_chatType == ChatType.Twitch) {
-            List<String> twitchUsernames = this.widget.settingsBox.get(
-                SettingsKeys.TwitchUsernames.name,
-                defaultValue: <String>[]);
-            if (this.widget.username == null) {
-              twitchUsernames.add(_usernameController.text);
-            } else {
-              twitchUsernames[twitchUsernames.indexOf(this.widget.username!)] =
-                  _usernameController.text;
-            }
-            this
-                .widget
-                .settingsBox
-                .put(SettingsKeys.TwitchUsernames.name, twitchUsernames);
-            this.widget.settingsBox.put(
-                SettingsKeys.SelectedTwitchUsername.name,
-                _usernameController.text);
+            _handleTwitchUsername();
           } else if (_chatType == ChatType.YouTube) {
-            Map<String, String> youtubeUsernames = Map<String, String>.from(
-                (this.widget.settingsBox.get(SettingsKeys.YoutubeUsernames.name,
-                    defaultValue: <String, String>{})));
-            if (this.widget.username != null) {
-              youtubeUsernames.remove(this.widget.username);
-            }
-            youtubeUsernames.putIfAbsent(
-                _usernameController.text, () => _youtubeLinkController.text);
-            this
-                .widget
-                .settingsBox
-                .put(SettingsKeys.YoutubeUsernames.name, youtubeUsernames);
-            this.widget.settingsBox.put(
-                SettingsKeys.SelectedYoutubeUsername.name,
-                _usernameController.text);
+            _handleYoutubeUsername();
           }
           Navigator.of(context).pop();
         }

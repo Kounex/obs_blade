@@ -4,13 +4,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
 import '../../../../models/hidden_scene_item.dart';
 import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/connect_host_input.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
-import '../../../../shared/general/validation_cupertino_textfield.dart';
+import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/validation_helper.dart';
@@ -27,12 +30,13 @@ class EditConnectionDialog extends StatefulWidget {
 
 class _EditConnectionDialogState extends State<EditConnectionDialog> {
   late CustomValidationTextEditingController _name;
-  late CustomValidationTextEditingController _host;
+  late CustomValidationTextEditingController _pw;
+  late CustomValidationTextEditingController _hostDomain;
+  late CustomValidationTextEditingController _hostIP;
   late CustomValidationTextEditingController _port;
 
-  late TextEditingController _pw;
-
   late bool _isDomain;
+  late String _protocolScheme;
 
   final FocusNode _portFocusNode = FocusNode();
 
@@ -45,27 +49,44 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       text: this.widget.connection.name,
       check: _nameValidator,
     );
-    _host = CustomValidationTextEditingController(
-      text: this.widget.connection.host,
-      check: this.widget.connection.isDomain == null ||
-              !this.widget.connection.isDomain!
-          ? ValidationHelper.ipValidator
-          : (_) => null,
+
+    _hostDomain = CustomValidationTextEditingController(
+      text: this.widget.connection.isDomain != null &&
+              this.widget.connection.isDomain!
+          ? this.widget.connection.host.split('://').last
+          : null,
+      check: ValidationHelper.minLengthValidator,
     );
+    _hostIP = CustomValidationTextEditingController(
+      text: this.widget.connection.isDomain == null ||
+              !this.widget.connection.isDomain!
+          ? this.widget.connection.host
+          : null,
+      check: ValidationHelper.ipValidator,
+    );
+
     _port = CustomValidationTextEditingController(
       text: this.widget.connection.port?.toString() ?? '',
-      check: (text) =>
-          text.isNotEmpty ? ValidationHelper.portValidator(text) : null,
+      check: (text) => (text?.isNotEmpty ?? false)
+          ? ValidationHelper.portValidator(text)
+          : null,
     );
 
-    _pw = TextEditingController(text: this.widget.connection.pw);
+    _pw =
+        CustomValidationTextEditingController(text: this.widget.connection.pw);
 
     _isDomain = this.widget.connection.isDomain ?? false;
+
+    _protocolScheme = _isDomain
+        ? this.widget.connection.host.contains('://')
+            ? '${this.widget.connection.host.split('://')[0]}://'
+            : ''
+        : 'wss://';
   }
 
-  String? _nameValidator(String name) => name.trim().isEmpty
+  String? _nameValidator(String? name) => (name?.trim().isEmpty ?? true)
       ? 'Please provide a name!'
-      : name.trim() != this.widget.connection.name &&
+      : name?.trim() != this.widget.connection.name &&
               Hive.box<Connection>(HiveKeys.SavedConnections.name)
                   .values
                   .any((connection) => connection.name == name)
@@ -74,8 +95,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      title: Row(
+    return BaseAdaptiveDialog(
+      titleWidget: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text('Edit Connection'),
@@ -104,124 +125,110 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           ),
         ],
       ),
-      content: Column(
+      bodyWidget: Column(
         children: [
-          const SizedBox(height: 12.0),
+          if (StylingHelper.isApple(context)) const SizedBox(height: 12.0),
           const Text(
             'Change the following information to change your saved connection',
             textAlign: TextAlign.left,
           ),
-          const SizedBox(height: 4.0),
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: ValidationCupertinoTextfield(
-              controller: _name,
-              placeholder: 'Name',
-            ),
-          ),
+          const SizedBox(height: 12.0),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                flex: 2,
-                child: ValidationCupertinoTextfield(
-                  controller: _host,
-                  placeholder: 'Host',
-                  style: const TextStyle(
-                    fontFeatures: [
-                      FontFeature.tabularFigures(),
-                    ],
-                  ),
-                  bottomWidget: SizedBox(
-                    width: double.infinity,
-                    child: CupertinoSlidingSegmentedControl<bool>(
-                      groupValue: _isDomain,
-                      children: const {
-                        false: Text('IP'),
-                        true: Text('Domain'),
-                      },
-                      onValueChanged: (domainMode) {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        setState(() {
-                          _isDomain = domainMode ?? false;
-                          _host = CustomValidationTextEditingController(
-                            text: '',
-                            check: !_isDomain
-                                ? ValidationHelper.ipValidator
-                                : (_) => null,
-                          );
-                        });
-                      },
-                    ),
-                  ),
+              Expanded(
+                child: BaseAdaptiveTextField(
+                  controller: _name,
+                  errorPaddingAlways: true,
+                  placeholder: 'Name',
                 ),
               ),
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 4.0),
-                  child: KeyboardNumberHeader(
+              const SizedBox(width: 8.0),
+              SizedBox(
+                width: 64.0,
+                child: KeyboardNumberHeader(
+                  focusNode: _portFocusNode,
+                  child: BaseAdaptiveTextField(
+                    controller: _port,
                     focusNode: _portFocusNode,
-                    child: ValidationCupertinoTextfield(
-                      controller: _port,
-                      focusNode: _portFocusNode,
-                      style: const TextStyle(
-                        fontFeatures: [
-                          FontFeature.tabularFigures(),
-                        ],
-                      ),
-                      placeholder: 'Port',
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    errorPaddingAlways: true,
+                    style: const TextStyle(
+                      fontFeatures: [
+                        FontFeature.tabularFigures(),
+                      ],
                     ),
+                    placeholder: 'Port',
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ),
               ),
             ],
           ),
-          CupertinoTextField(
+          ConnectHostInput(
+            domainMode: _isDomain,
+            hostIP: _hostIP,
+            hostDomain: _hostDomain,
+            manual: true,
+            showHelp: false,
+            protocolScheme: _protocolScheme,
+            onChangeMode: (domainMode) =>
+                setState(() => _isDomain = domainMode ?? false),
+            onChangeProtocolScheme: (protocolScheme) =>
+                setState(() => _protocolScheme = protocolScheme ?? 'wss://'),
+          ),
+          BaseAdaptiveTextField(
             controller: _pw,
             placeholder: 'Password',
             autocorrect: false,
             obscureText: _obscurePW,
-            suffix: Material(
-              color: Colors.grey[
-                  Theme.of(context).brightness == Brightness.light ? 300 : 900],
-              borderRadius:
-                  const BorderRadius.horizontal(right: Radius.circular(5.0)),
-              child: IconButton(
-                padding: const EdgeInsets.all(6),
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(
-                  maxHeight: 32.0,
-                  maxWidth: 32.0,
-                ),
-                onPressed: () => setState(() => _obscurePW = !_obscurePW),
-                iconSize: 20.0,
-                icon: Icon(
-                  _obscurePW ? Icons.visibility_off : Icons.visibility,
-                ),
-              ),
-            ),
+            errorPaddingAlways: true,
+            suffixIcon: StylingHelper.isApple(context)
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[
+                          Theme.of(context).brightness == Brightness.light
+                              ? 300
+                              : 900],
+                      borderRadius: const BorderRadius.horizontal(
+                        right: Radius.circular(5.0),
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _obscurePW = !_obscurePW),
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Icon(
+                          _obscurePW ? Icons.visibility_off : Icons.visibility,
+                          size: 20.0,
+                        ),
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(
+                      _obscurePW ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () => setState(() => _obscurePW = !_obscurePW),
+                  ),
           ),
-          const SizedBox(height: 8.0),
+          // const SizedBox(height: 8.0),
         ],
       ),
       actions: [
-        CupertinoDialogAction(
+        DialogActionConfig(
           isDefaultAction: true,
-          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        CupertinoDialogAction(
+        DialogActionConfig(
           child: const Text('Save'),
-          onPressed: () {
-            _name.submit();
-            _host.submit();
-            _port.submit();
-
-            if (_name.isValid && _host.isValid && _port.isValid) {
+          popOnAction: false,
+          onPressed: (_) {
+            CustomValidationTextEditingController host =
+                _isDomain ? _hostDomain : _hostIP;
+            if (_name.isValid && host.isValid && _port.isValid) {
               String newName = _name.text.trim();
-              String newHost = _host.text.trim();
+              String newHost = host.text.trim();
 
               /// Since [HiddenScene] and [HiddenSceneItem] elements are based on the
               /// connection name and host, once the user updates the connection, we need
@@ -257,7 +264,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               }
 
               this.widget.connection.name = newName;
-              this.widget.connection.host = newHost;
+              this.widget.connection.host =
+                  '${_isDomain ? _protocolScheme : ""}$newHost';
               this.widget.connection.port = int.tryParse(_port.text);
               this.widget.connection.pw = _pw.text.trim();
               this.widget.connection.isDomain = _isDomain;

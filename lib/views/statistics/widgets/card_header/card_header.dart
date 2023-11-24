@@ -42,7 +42,10 @@ class CardHeader extends StatelessWidget {
                       child: Divider(height: 8.0),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
+                      padding: const EdgeInsets.only(
+                        top: 4.0,
+                        bottom: 12.0,
+                      ),
                       child: Text(
                         this.description,
                         style: Theme.of(context).textTheme.bodySmall,

@@ -19,7 +19,7 @@ class LogTile extends StatelessWidget {
       title: Row(
         children: [
           SizedBox(
-            width: 92.0,
+            width: 102.0,
             child: Text(
               this.dateMS.millisecondsToFormattedDateString(),
             ),

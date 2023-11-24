@@ -4,7 +4,7 @@ import 'package:obs_blade/models/past_record_data.dart';
 import '../../../models/past_stream_data.dart';
 import '../../../shared/dialogs/confirmation.dart';
 import '../../../shared/dialogs/input.dart';
-import '../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../shared/general/app_bar_actions.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/formatted_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
@@ -80,9 +80,9 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
       body: TransculentCupertinoNavBarWrapper(
         previousTitle: 'Statistics',
         title: 'Details',
-        actions: AppBarCupertinoActions(
+        actions: AppBarActions(
           actions: [
-            AppBarCupertinoActionEntry(
+            AppBarActionEntry(
                 title: pastStatsData.starred != null && pastStatsData.starred!
                     ? 'Delete from Favorites'
                     : 'Mark as Favorite',
@@ -99,7 +99,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                   }
                   setState(() {});
                 }),
-            AppBarCupertinoActionEntry(
+            AppBarActionEntry(
                 title: 'Rename',
                 onAction: () {
                   ModalHandler.showBaseDialog(
@@ -122,7 +122,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     ),
                   );
                 }),
-            AppBarCupertinoActionEntry(
+            AppBarActionEntry(
               title: 'Delete',
               isDestructive: true,
               onAction: () {

@@ -15,10 +15,6 @@ class SceneContent extends StatelessWidget {
         Flexible(
           child: BaseCard(
             title: 'Scene Items',
-            // trailingTitleWidget: VisibilityEditToggle(
-            //   sceneItemType: SceneItemType.Source,
-            //   tabletMode: true,
-            // ),
             rightPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
@@ -30,10 +26,6 @@ class SceneContent extends StatelessWidget {
         Flexible(
           child: BaseCard(
             title: 'Audio',
-            // trailingTitleWidget: VisibilityEditToggle(
-            //   sceneItemType: SceneItemType.Audio,
-            //   tabletMode: true,
-            // ),
             leftPadding: 12,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
@@ -42,6 +34,17 @@ class SceneContent extends StatelessWidget {
             ),
           ),
         ),
+        // Flexible(
+        //   child: BaseCard(
+        //     title: 'Media',
+        //     leftPadding: 12,
+        //     paddingChild: EdgeInsets.all(0),
+        //     child: SizedBox(
+        //       height: 400.0,
+        //       child: AudioInputs(),
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

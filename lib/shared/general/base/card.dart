@@ -147,9 +147,9 @@ class BaseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: this.constrainedAlignment,
           children: [
-            this.above ?? Container(),
+            this.above ?? const SizedBox(),
             card,
-            this.below ?? Container(),
+            this.below ?? const SizedBox(),
           ],
         ),
       ),

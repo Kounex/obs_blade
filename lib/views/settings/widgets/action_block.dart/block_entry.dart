@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 
 import '../../../../shared/general/question_mark_tooltip.dart';
 
@@ -25,7 +26,7 @@ class BlockEntry extends StatefulWidget {
   final String? help;
   final Widget? trailing;
   final Function? onTap;
-  final String? navigateTo;
+  final RoutingKeys? navigateTo;
   final bool rootNavigation;
   final Widget? navigateToResult;
 
@@ -69,8 +70,8 @@ class _BlockEntryState extends State<BlockEntry> {
       onTap: this.widget.navigateTo != null
           ? () => this.widget.rootNavigation
               ? Navigator.of(context, rootNavigator: true)
-                  .pushReplacementNamed(this.widget.navigateTo!)
-              : Navigator.of(context).pushNamed(this.widget.navigateTo!)
+                  .pushReplacementNamed(this.widget.navigateTo!.route)
+              : Navigator.of(context).pushNamed(this.widget.navigateTo!.route)
           : this.widget.onTap != null
               ? () => this.widget.onTap!()
               : null,

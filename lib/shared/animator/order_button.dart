@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 
 import '../../types/enums/order.dart';
 
@@ -71,7 +71,7 @@ class _OrderButtonState extends State<OrderButton>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return BaseIconButton(
       onTap: () {
         HapticFeedback.lightImpact();
         if (!_controllerDown.isAnimating && !_controllerUp.isAnimating) {
@@ -86,29 +86,22 @@ class _OrderButtonState extends State<OrderButton>
           }
         }
       },
-      child: Container(
-        padding: const EdgeInsets.all(4.0),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Theme.of(context).buttonTheme.colorScheme!.secondary,
-        ),
+      child: AnimatedBuilder(
+        animation: _controllerUp,
         child: AnimatedBuilder(
-          animation: _controllerUp,
-          child: AnimatedBuilder(
-            animation: _controllerDown,
-            child: const Icon(
-              CupertinoIcons.down_arrow,
-              size: 22.0,
-            ),
-            builder: (context, child) => RotationTransition(
-              turns: _halfTurnDown,
-              child: child,
-            ),
+          animation: _controllerDown,
+          child: const Icon(
+            CupertinoIcons.down_arrow,
+            size: 22.0,
           ),
           builder: (context, child) => RotationTransition(
-            turns: _halfTurnUp,
+            turns: _halfTurnDown,
             child: child,
           ),
+        ),
+        builder: (context, child) => RotationTransition(
+          turns: _halfTurnUp,
+          child: child,
         ),
       ),
     );

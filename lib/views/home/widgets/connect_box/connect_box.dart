@@ -14,13 +14,13 @@ class ConnectBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = GetIt.instance<HomeStore>();
+    HomeStore homeStore = GetIt.instance<HomeStore>();
 
     return Observer(
       builder: (_) => SwitcherCard(
-        title: landingStore.connectMode.text,
+        title: homeStore.connectMode.text,
         child: () {
-          switch (landingStore.connectMode) {
+          switch (homeStore.connectMode) {
             case ConnectMode.Autodiscover:
               return const AutoDiscovery();
             case ConnectMode.QR:
@@ -43,7 +43,7 @@ class ConnectBox extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12.0),
                   child: ConnectForm(
-                    connection: landingStore.typedInConnection,
+                    connection: homeStore.typedInConnection,
                     manual: true,
                   ),
                 ),

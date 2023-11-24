@@ -6,23 +6,28 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/screenshot.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
 import 'package:obs_blade/types/classes/stream/events/current_profile_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/input_mute_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/profile_list_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/replay_buffer_state_changed.dart';
 import 'package:obs_blade/types/classes/stream/events/transition_duration_changed.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_input_audio_sync_offset.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_record_directory.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/types/extensions/int.dart';
 
 import '../../models/enums/log_level.dart';
 import '../../models/past_record_data.dart';
@@ -35,6 +40,7 @@ import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/events/current_preview_scene_changed.dart';
 import '../../types/classes/stream/events/current_program_scene_changed.dart';
 import '../../types/classes/stream/events/current_scene_collection_changed.dart';
+import '../../types/classes/stream/events/input_audio_sync_offset_changed.dart';
 import '../../types/classes/stream/events/input_volume_changed.dart';
 import '../../types/classes/stream/events/input_volume_meters.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
@@ -110,7 +116,7 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<Scene>? scenes;
   @observable
-  ObservableList<String>? hotkeys;
+  ObservableSet<Hotkey>? hotkeys;
 
   /// WebSocket API will return all top level scene items for
   /// the current scene and elements of groups have to be requested
@@ -120,17 +126,13 @@ abstract class _DashboardStore with Store {
   /// toggles whether they will be displayed or not, but this makes
   /// searching and updating scene items easier
   @observable
-  ObservableList<SceneItem>? currentSceneItems;
+  ObservableList<SceneItem> currentSceneItems = ObservableList();
 
-  /// Not used currently as the WebSocket API does not expose working
-  /// with such sources (playing, stopping, etc.) right now. This will likely
-  /// be supported in the near future which therefore enables Soundboard support!
-  // @computed
-  // ObservableList<SceneItem> get currentSoundboardSceneItems =>
-  //     this.currentSceneItems != null
-  //         ? ObservableList.of(this.currentSceneItems!.where((sceneItem) =>
-  //             sceneItem.type == 'ffmpeg_source' && sceneItem.render!))
-  //         : ObservableList();
+  @computed
+  ObservableList<SceneItem> get mediaSceneItems =>
+      ObservableList.of(this.currentSceneItems.where((sceneItem) =>
+          (sceneItem.inputKind?.toLowerCase().contains('ffmpeg') ?? false) &&
+          (sceneItem.sceneItemEnabled ?? false)));
 
   /// Will contain all inputs returned by [GetInputList] which will even contian
   /// special inputs etc.
@@ -176,6 +178,12 @@ abstract class _DashboardStore with Store {
   @observable
   Uint8List? scenePreviewImageBytes;
 
+  /// Users can take screenshots of their current OBS scene manually. If they
+  /// do, the screenshot will be saved on their system where OBS is running and
+  /// we will get the taken screenshot as a response
+  @observable
+  Uint8List? manualScreenshotImageBytes;
+
   /// Checks whether the user is trying to scroll while the pointer (finger) is
   /// on the chat - this means the user probably wants to scroll the chat.
   /// If the user wants to scroll inside the app, the pointer (finger) may not
@@ -208,10 +216,16 @@ abstract class _DashboardStore with Store {
   @observable
   bool editSceneVisibility = false;
 
+  @computed
+  String get screenshotPath =>
+      '${this.recordDirectory}/Screenshot ${DateTime.now().millisecondsSinceEpoch.millisecondsToFileNameDate(separator: "-", withTime: true)}.${this.screenshotFileFormat}';
+
+  String previewFileFormat = 'jpeg';
+  String screenshotFileFormat = 'png';
+  String? recordDirectory;
+
   Timer? _checkConnectionTimer;
   Timer? _getStatsTimer;
-
-  String _previewFileFormat = 'jpeg';
 
   /// Will be used internally while switching scene collections.
   /// Since this operation takes time and "random" events are coming
@@ -248,6 +262,10 @@ abstract class _DashboardStore with Store {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetVersion,
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetRecordDirectory,
     );
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -339,7 +357,7 @@ abstract class _DashboardStore with Store {
                   this.studioMode
               ? this.studioModePreviewSceneName
               : this.activeSceneName,
-          'imageFormat': _previewFileFormat,
+          'imageFormat': this.previewFileFormat,
           'compressionQuality': -1,
         },
       );
@@ -579,8 +597,15 @@ abstract class _DashboardStore with Store {
 
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
-    sceneItem.displayGroup = !sceneItem.displayGroup;
-    this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+    this.currentSceneItems =
+        ObservableList.of(this.currentSceneItems.map((currentSceneItem) {
+      if (currentSceneItem == sceneItem) {
+        return currentSceneItem.copyWith(
+          displayGroup: !sceneItem.displayGroup,
+        );
+      }
+      return currentSceneItem;
+    }));
   }
 
   @action
@@ -720,10 +745,10 @@ abstract class _DashboardStore with Store {
         CurrentSceneTransitionDurationChangedEvent
             currentSceneTransitionDurationChangedEvent =
             CurrentSceneTransitionDurationChangedEvent(event.jsonRAW);
-        this.currentTransition?.transitionDuration =
-            currentSceneTransitionDurationChangedEvent.transitionDuration;
 
-        this.currentTransition = this.currentTransition;
+        this.currentTransition = this.currentTransition?.copyWith(
+            transitionDuration:
+                currentSceneTransitionDurationChangedEvent.transitionDuration);
         break;
       case EventType.StudioModeStateChanged:
         if (Hive.box(HiveKeys.Settings.name)
@@ -781,54 +806,77 @@ abstract class _DashboardStore with Store {
         InputVolumeChangedEvent inputVolumeChangedEvent =
             InputVolumeChangedEvent(event.jsonRAW);
 
-        this.allInputs.firstWhere(
-            (input) => input.inputName == inputVolumeChangedEvent.inputName)
-          ..inputVolumeMul = inputVolumeChangedEvent.inputVolumeMul
-          ..inputVolumeDb = inputVolumeChangedEvent.inputVolumeDb;
-        this.allInputs = this.allInputs;
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == inputVolumeChangedEvent.inputName) {
+            return input.copyWith(
+              inputVolumeMul: inputVolumeChangedEvent.inputVolumeMul,
+              inputVolumeDb: inputVolumeChangedEvent.inputVolumeDb,
+            );
+          }
+          return input;
+        }));
 
         break;
       case EventType.InputVolumeMeters:
         InputVolumeMetersEvent inputVolumeMetersEvent =
             InputVolumeMetersEvent(event.jsonRAW);
 
-        for (var input in this.allInputs) {
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
           try {
             InputLevel inputLevel = inputVolumeMetersEvent.inputs.firstWhere(
                 (inputLevel) => inputLevel.inputName == input.inputName);
 
-            input.inputLevelsMul = inputLevel.inputLevelsMul;
+            if (input.inputName == inputLevel.inputName) {
+              return input.copyWith(inputLevelsMul: inputLevel.inputLevelsMul);
+            }
           } catch (e) {}
-        }
 
-        this.allInputs = this.allInputs;
+          return input;
+        }));
 
         break;
       case EventType.InputMuteStateChanged:
         InputMuteStateChangedEvent inputMuteStateChangedEvent =
             InputMuteStateChangedEvent(event.jsonRAW);
 
-        this
-            .allInputs
-            .firstWhere((input) =>
-                input.inputName == inputMuteStateChangedEvent.inputName)
-            .inputMuted = inputMuteStateChangedEvent.inputMuted;
-        this.allInputs = this.allInputs;
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == inputMuteStateChangedEvent.inputName) {
+            return input.copyWith(
+              inputMuted: inputMuteStateChangedEvent.inputMuted,
+            );
+          }
+          return input;
+        }));
 
         break;
       case EventType.SceneItemEnableStateChanged:
         SceneItemEnableStateChangedEvent sceneItemEnableStateChangedEvent =
             SceneItemEnableStateChangedEvent(event.jsonRAW);
 
-        this
-                .currentSceneItems!
-                .firstWhere((sceneItem) =>
-                    sceneItem.sceneItemId ==
-                    sceneItemEnableStateChangedEvent.sceneItemId)
-                .sceneItemEnabled =
-            sceneItemEnableStateChangedEvent.sceneItemEnabled;
+        this.currentSceneItems =
+            ObservableList.of(this.currentSceneItems.map((sceneItem) {
+          if (sceneItem.sceneItemId ==
+              sceneItemEnableStateChangedEvent.sceneItemId) {
+            return sceneItem.copyWith(
+              sceneItemEnabled:
+                  sceneItemEnableStateChangedEvent.sceneItemEnabled,
+            );
+          }
+          return sceneItem;
+        }));
+        break;
+      case EventType.InputAudioSyncOffsetChanged:
+        InputAudioSyncOffsetChangedEvent inputAudioSyncOffsetChangedEvent =
+            InputAudioSyncOffsetChangedEvent(event.jsonRAW);
 
-        this.currentSceneItems = ObservableList.of(this.currentSceneItems!);
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == inputAudioSyncOffsetChangedEvent.inputName) {
+            return input.copyWith(
+              syncOffset: inputAudioSyncOffsetChangedEvent.inputAudioSyncOffset,
+            );
+          }
+          return input;
+        }));
 
         break;
       case EventType.ExitStarted:
@@ -857,8 +905,18 @@ abstract class _DashboardStore with Store {
 
         if (!getVersionResponse.supportedImageFormats.contains('jpg') &&
             !getVersionResponse.supportedImageFormats.contains('jpeg')) {
-          _previewFileFormat = 'png';
+          this.previewFileFormat = 'png';
         }
+
+        if (!getVersionResponse.supportedImageFormats.contains('png')) {
+          this.screenshotFileFormat = this.previewFileFormat;
+        }
+        break;
+      case RequestType.GetRecordDirectory:
+        GetRecordDirectoryResponse getRecordDirectoryResponse =
+            GetRecordDirectoryResponse(response.jsonRAW);
+
+        this.recordDirectory = getRecordDirectoryResponse.recordDirectory;
         break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse =
@@ -911,7 +969,7 @@ abstract class _DashboardStore with Store {
               ..sort((sc1, sc2) =>
                   (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0));
 
-        for (final sceneItem in this.currentSceneItems!) {
+        for (final sceneItem in this.currentSceneItems) {
           if (sceneItem.isGroup ?? false) {
             NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -932,17 +990,18 @@ abstract class _DashboardStore with Store {
             getGroupSceneItemListResponse.uuid)!['sceneName'];
 
         List<SceneItem> childrenSceneItems =
-            getGroupSceneItemListResponse.sceneItems;
-
-        for (var sceneItem in childrenSceneItems) {
-          sceneItem.parentGroupName = parentSceneItemName;
-        }
+            getGroupSceneItemListResponse.sceneItems
+                .map(
+                  (sceneItem) =>
+                      sceneItem.copyWith(parentGroupName: parentSceneItemName),
+                )
+                .toList();
 
         this.currentSceneItems = ObservableList.of([
-          ...this.currentSceneItems!
+          ...this.currentSceneItems
             ..insertAll(
-                this.currentSceneItems!.indexOf(
-                          this.currentSceneItems!.firstWhere((sceneItem) =>
+                this.currentSceneItems.indexOf(
+                          this.currentSceneItems.firstWhere((sceneItem) =>
                               (sceneItem.isGroup ?? false) &&
                               sceneItem.sourceName == parentSceneItemName),
                         ) +
@@ -965,9 +1024,17 @@ abstract class _DashboardStore with Store {
           [
             for (var input in this.allInputs) ...[
               RequestBatchObject(
-                  RequestType.GetInputVolume, {'inputName': input.inputName}),
+                RequestType.GetInputVolume,
+                {'inputName': input.inputName},
+              ),
               RequestBatchObject(
-                  RequestType.GetInputMute, {'inputName': input.inputName}),
+                RequestType.GetInputMute,
+                {'inputName': input.inputName},
+              ),
+              RequestBatchObject(
+                RequestType.GetInputAudioSyncOffset,
+                {'inputName': input.inputName},
+              ),
             ],
           ],
         );
@@ -1081,13 +1148,15 @@ abstract class _DashboardStore with Store {
         final requestData = NetworkHelper.requestBodyByUUID
             .remove(getInputVolumeResponse.uuid)!;
 
-        Input input = allInputs
-            .firstWhere((input) => input.inputName == requestData['inputName']);
-
-        input.inputVolumeDb = getInputVolumeResponse.inputVolumeDb;
-        input.inputVolumeMul = getInputVolumeResponse.inputVolumeMul;
-
-        this.allInputs = ObservableList.of(this.allInputs);
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == requestData['inputName']) {
+            return input.copyWith(
+              inputVolumeDb: getInputVolumeResponse.inputVolumeDb,
+              inputVolumeMul: getInputVolumeResponse.inputVolumeMul,
+            );
+          }
+          return input;
+        }));
 
         break;
       case RequestType.GetInputMute:
@@ -1096,13 +1165,27 @@ abstract class _DashboardStore with Store {
 
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
 
-        Input input = this
-            .allInputs
-            .firstWhere((input) => input.inputName == requestData['inputName']);
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == requestData['inputName']) {
+            return input.copyWith(inputMuted: getInputMuteResponse.inputMuted);
+          }
+          return input;
+        }));
+        break;
+      case RequestType.GetInputAudioSyncOffset:
+        GetInputAudioSyncOffsetResponse getInputAudioSyncOffsetResponse =
+            GetInputAudioSyncOffsetResponse(response.jsonRAW);
 
-        input.inputMuted = getInputMuteResponse.inputMuted;
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
 
-        this.allInputs = ObservableList.of(this.allInputs);
+        this.allInputs = ObservableList.of(this.allInputs.map((input) {
+          if (input.inputName == requestData['inputName']) {
+            return input.copyWith(
+              syncOffset: getInputAudioSyncOffsetResponse.inputAudioSyncOffset,
+            );
+          }
+          return input;
+        }));
         break;
       case RequestType.GetSourceScreenshot:
         GetSourceScreenshotResponse getSourceScreenshotResponse =
@@ -1113,11 +1196,22 @@ abstract class _DashboardStore with Store {
 
         if (this.shouldRequestPreviewImage) _requestPreviewImage();
         break;
+      // case RequestType.SaveSourceScreenshot:
+      //   SaveSourceScreenshotResponse saveSourceScreenshotResponse =
+      //       SaveSourceScreenshotResponse(response.jsonRAW);
+
+      //   this.manualScreenshotImageBytes =
+      //       base64Decode(saveSourceScreenshotResponse.imageData.split(',')[1]);
+      //   break;
       case RequestType.GetHotkeyList:
         GetHotkeyListResponse getHotkeyListResponse =
             GetHotkeyListResponse(response.jsonRAW);
 
-        this.hotkeys = ObservableList.of(getHotkeyListResponse.hotkeys);
+        this.hotkeys = ObservableSet.of(
+          Set.of(getHotkeyListResponse.hotkeys).map(
+            (name) => Hotkey(name),
+          ),
+        );
         break;
       default:
         break;
@@ -1288,6 +1382,7 @@ abstract class _DashboardStore with Store {
 
         List<Map<String, dynamic>> muteObjects = [];
         List<Map<String, dynamic>> volumeObjects = [];
+        List<Map<String, dynamic>> syncOffsetObjects = [];
 
         for (final validGetInputMuteRespone in validGetInputMuteRespones) {
           for (final requestBatchObject in requestBatchObjects) {
@@ -1317,6 +1412,24 @@ abstract class _DashboardStore with Store {
           }
         }
 
+        for (final muteObject in muteObjects) {
+          for (final requestBatchObject in requestBatchObjects) {
+            if (requestBatchObject.type ==
+                    RequestType.GetInputAudioSyncOffset &&
+                muteObject['inputName'] ==
+                    requestBatchObject.body!['inputName']) {
+              syncOffsetObjects.add({
+                'inputName': requestBatchObject.body!['inputName'],
+                'response': inputsBatchResponse.inputsAudioSyncOffset
+                    .firstWhere((getInputAudioSyncOffset) =>
+                        getInputAudioSyncOffset.uuid ==
+                        requestBatchObject.uuid),
+              });
+              break;
+            }
+          }
+        }
+
         this.allInputs = ObservableList.of(this
             .allInputs
             .where((tempInput) => muteObjects.any(
@@ -1325,23 +1438,36 @@ abstract class _DashboardStore with Store {
           final muteObject = muteObjects.firstWhere(
               (muteObject) => muteObject['inputName'] == tempInput.inputName);
 
-          final volumeObject = volumeObjects.firstWhere(
-              (muteObject) => muteObject['inputName'] == tempInput.inputName);
+          final volumeObject = volumeObjects.firstWhere((volumeObject) =>
+              volumeObject['inputName'] == tempInput.inputName);
 
-          tempInput.inputVolumeDb =
-              (volumeObject['response'] as GetInputVolumeResponse)
-                  .inputVolumeDb;
+          final syncOffsetObject = syncOffsetObjects.firstWhere(
+              (syncOffsetObject) =>
+                  syncOffsetObject['inputName'] == tempInput.inputName);
 
-          tempInput.inputVolumeMul =
-              (volumeObject['response'] as GetInputVolumeResponse)
-                  .inputVolumeMul;
-
-          tempInput.inputMuted =
-              (muteObject['response'] as GetInputMuteResponse).inputMuted;
+          tempInput = tempInput.copyWith(
+            inputVolumeDb: (volumeObject['response'] as GetInputVolumeResponse)
+                .inputVolumeDb,
+            inputVolumeMul: (volumeObject['response'] as GetInputVolumeResponse)
+                .inputVolumeMul,
+            inputMuted:
+                (muteObject['response'] as GetInputMuteResponse).inputMuted,
+            syncOffset: (syncOffsetObject['response']
+                    as GetInputAudioSyncOffsetResponse)
+                .inputAudioSyncOffset,
+          );
 
           return tempInput;
         }));
 
+        break;
+      case RequestBatchType.Screenshot:
+        ScreenshotBatchResponse screenshotBatchResponse =
+            ScreenshotBatchResponse(batchResponse.jsonRAW);
+
+        this.manualScreenshotImageBytes = base64Decode(screenshotBatchResponse
+            .getSourceScreenshotResponse.imageData
+            .split(',')[1]);
         break;
     }
   }

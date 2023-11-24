@@ -42,12 +42,12 @@ class _FilterDurationState extends State<FilterDuration> {
 
     _disposers
         .add(reaction((_) => statisticsStore.durationFilter, (durationFilter) {
-      if (durationFilter != null && _controller.text == '') {
-        if (statisticsStore.durationFilterAmount == '') {
+      if (durationFilter != null && _controller.text.trim().isEmpty) {
+        if (statisticsStore.durationFilterAmount == null) {
           _controller.text = '1';
           statisticsStore.setDurationFilterAmount(_controller.text);
         } else {
-          _controller.text = statisticsStore.durationFilterAmount;
+          _controller.text = statisticsStore.durationFilterAmount.toString();
         }
       }
     }));

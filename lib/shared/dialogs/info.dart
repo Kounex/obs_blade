@@ -1,15 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
 
-import '../general/base/checkbox.dart';
-
-class InfoDialog extends StatefulWidget {
+class InfoDialog extends StatelessWidget {
   final String? title;
   final String body;
 
   final bool enableDontShowAgainOption;
 
-  final Function(bool checked)? onPressed;
+  final Function(bool isDontShowAgainChecked)? onPressed;
 
   const InfoDialog({
     Key? key,
@@ -20,57 +19,16 @@ class InfoDialog extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<InfoDialog> createState() => _InfoDialogState();
-}
-
-class _InfoDialogState extends State<InfoDialog> {
-  bool _dontShowChecked = false;
-
-  @override
   Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      title: this.widget.title != null
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(this.widget.title!),
-            )
-          : null,
-      content: Column(
-        children: [
-          Text(
-            this.widget.body,
-            textAlign: TextAlign.center,
-          ),
-          if (this.widget.enableDontShowAgainOption)
-            Padding(
-              padding: const EdgeInsets.only(top: 14.0),
-              child: Transform.translate(
-                offset: const Offset(-4, 0),
-                child: Row(
-                  children: [
-                    Material(
-                      type: MaterialType.transparency,
-                      child: BaseCheckbox(
-                        value: _dontShowChecked,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        onChanged: (checked) =>
-                            setState(() => _dontShowChecked = checked!),
-                      ),
-                    ),
-                    const Text('Don\'t show this again'),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+    return BaseAdaptiveDialog(
+      title: this.title,
+      body: this.body,
+      enableDontShowAgainOption: this.enableDontShowAgainOption,
       actions: [
-        CupertinoDialogAction(
+        DialogActionConfig(
           isDefaultAction: false,
-          onPressed: () {
-            this.widget.onPressed?.call(_dontShowChecked);
-            Navigator.of(context).pop();
-          },
+          onPressed: (isDontShowAgainChecked) =>
+              this.onPressed?.call(isDontShowAgainChecked),
           child: const Text('OK'),
         ),
       ],

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
-import 'package:obs_blade/shared/tag_box.dart';
+import 'package:obs_blade/shared/general/tag_box.dart';
 import 'package:obs_blade/types/extensions/int.dart';
 
 import '../../../../types/interfaces/past_stats_data.dart';

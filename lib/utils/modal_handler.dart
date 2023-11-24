@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+import '../shared/animator/fader.dart';
 import '../shared/general/base/card.dart';
 import 'styling_helper.dart';
 
@@ -24,25 +25,31 @@ class ModalHandler {
   static Future<T?> showFullscreen<T>({
     required BuildContext context,
     required Widget content,
+    void Function()? onClose,
   }) async =>
       showDialog(
         useSafeArea: false,
         context: context,
-        builder: (context) => Material(
-          color: Colors.black,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              content,
-              Positioned(
-                top: 12.0 + MediaQuery.of(context).padding.top,
-                right: 12.0 + MediaQuery.of(context).padding.right,
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(CupertinoIcons.clear),
+        builder: (context) => Fader(
+          child: Material(
+            color: Colors.black,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                content,
+                Positioned(
+                  top: 12.0 + MediaQuery.of(context).padding.top,
+                  right: 12.0 + MediaQuery.of(context).padding.right,
+                  child: IconButton(
+                    onPressed: () {
+                      onClose?.call();
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(CupertinoIcons.clear),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -52,7 +59,7 @@ class ModalHandler {
     required Widget dialogWidget,
     bool barrierDismissible = false,
   }) async =>
-      showCupertinoDialog<T>(
+      showAdaptiveDialog<T>(
         context: context,
         barrierDismissible: barrierDismissible,
         builder: (context) => dialogWidget,
@@ -60,7 +67,7 @@ class ModalHandler {
 
   static Future<T?> showBaseBottomSheet<T>({
     required BuildContext context,
-    required Widget modalWidget,
+    required Widget Function(BuildContext context) builder,
     bool useRootNavigator = true,
     bool barrierDismissible = false,
     double maxWidth = kBaseCardMaxWidth,
@@ -69,14 +76,20 @@ class ModalHandler {
       showModalBottomSheet(
         context: context,
         useRootNavigator: useRootNavigator,
-        isDismissible: false,
+        isDismissible: barrierDismissible,
         enableDrag: false,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
-          modalWidget: modalWidget,
+          modalWidget: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              builder(context),
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
+          ),
           maxHeight: MediaQuery.of(context).size.height / 1.5,
           maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
         ),
@@ -88,6 +101,7 @@ class ModalHandler {
         modalWidgetBuilder,
     bool useRootNavigator = true,
     double maxWidth = double.infinity,
+    bool? blurryBackground,
     double additionalBottomViewInsets = 0,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(
@@ -104,12 +118,12 @@ class ModalHandler {
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
+          blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
           modalWidget: modalWidgetBuilder(
             context,
             ModalScrollController.of(context)!,
           ),
           maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
-          blurryBackground: true,
         ),
       );
 
@@ -145,16 +159,16 @@ class ModalHandler {
       );
     }
 
-    child = Align(
-      alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: maxHeight,
-          maxWidth: maxWidth,
-        ),
-        child: child,
-      ),
-    );
+    // child = Align(
+    //   alignment: Alignment.bottomCenter,
+    //   child: ConstrainedBox(
+    //     constraints: BoxConstraints(
+    //       maxHeight: maxHeight,
+    //       maxWidth: maxWidth,
+    //     ),
+    //     child: child,
+    //   ),
+    // );
 
     return Material(
       type: MaterialType.transparency,
@@ -162,10 +176,11 @@ class ModalHandler {
         bottom: false,
         child: Padding(
           padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom +
-                  (MediaQuery.of(context).viewInsets.bottom > 0
-                      ? additionalBottomViewInsets
-                      : 0)),
+            bottom: MediaQuery.of(context).viewInsets.bottom +
+                (MediaQuery.of(context).viewInsets.bottom > 0
+                    ? additionalBottomViewInsets
+                    : 0),
+          ),
           child: child,
         ),
       ),

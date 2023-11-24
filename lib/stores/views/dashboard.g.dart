@@ -9,6 +9,14 @@ part of 'dashboard.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$DashboardStore on _DashboardStore, Store {
+  Computed<ObservableList<SceneItem>>? _$mediaSceneItemsComputed;
+
+  @override
+  ObservableList<SceneItem> get mediaSceneItems =>
+      (_$mediaSceneItemsComputed ??= Computed<ObservableList<SceneItem>>(
+              () => super.mediaSceneItems,
+              name: '_DashboardStore.mediaSceneItems'))
+          .value;
   Computed<ObservableList<Input>>? _$currentInputsComputed;
 
   @override
@@ -23,6 +31,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
           Computed<ObservableList<Input>>(() => super.globalInputs,
               name: '_DashboardStore.globalInputs'))
       .value;
+  Computed<String>? _$screenshotPathComputed;
+
+  @override
+  String get screenshotPath =>
+      (_$screenshotPathComputed ??= Computed<String>(() => super.screenshotPath,
+              name: '_DashboardStore.screenshotPath'))
+          .value;
 
   late final _$isLiveAtom =
       Atom(name: '_DashboardStore.isLive', context: context);
@@ -320,13 +335,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.hotkeys', context: context);
 
   @override
-  ObservableList<String>? get hotkeys {
+  ObservableSet<Hotkey>? get hotkeys {
     _$hotkeysAtom.reportRead();
     return super.hotkeys;
   }
 
   @override
-  set hotkeys(ObservableList<String>? value) {
+  set hotkeys(ObservableSet<Hotkey>? value) {
     _$hotkeysAtom.reportWrite(value, super.hotkeys, () {
       super.hotkeys = value;
     });
@@ -336,13 +351,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
       Atom(name: '_DashboardStore.currentSceneItems', context: context);
 
   @override
-  ObservableList<SceneItem>? get currentSceneItems {
+  ObservableList<SceneItem> get currentSceneItems {
     _$currentSceneItemsAtom.reportRead();
     return super.currentSceneItems;
   }
 
   @override
-  set currentSceneItems(ObservableList<SceneItem>? value) {
+  set currentSceneItems(ObservableList<SceneItem> value) {
     _$currentSceneItemsAtom.reportWrite(value, super.currentSceneItems, () {
       super.currentSceneItems = value;
     });
@@ -444,6 +459,23 @@ mixin _$DashboardStore on _DashboardStore, Store {
     _$scenePreviewImageBytesAtom
         .reportWrite(value, super.scenePreviewImageBytes, () {
       super.scenePreviewImageBytes = value;
+    });
+  }
+
+  late final _$manualScreenshotImageBytesAtom = Atom(
+      name: '_DashboardStore.manualScreenshotImageBytes', context: context);
+
+  @override
+  Uint8List? get manualScreenshotImageBytes {
+    _$manualScreenshotImageBytesAtom.reportRead();
+    return super.manualScreenshotImageBytes;
+  }
+
+  @override
+  set manualScreenshotImageBytes(Uint8List? value) {
+    _$manualScreenshotImageBytesAtom
+        .reportWrite(value, super.manualScreenshotImageBytes, () {
+      super.manualScreenshotImageBytes = value;
     });
   }
 
@@ -729,6 +761,7 @@ currentTransition: ${currentTransition},
 availableTransitions: ${availableTransitions},
 shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
+manualScreenshotImageBytes: ${manualScreenshotImageBytes},
 isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
 editSceneItemVisibility: ${editSceneItemVisibility},
@@ -736,8 +769,10 @@ editAudioVisibility: ${editAudioVisibility},
 studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
+mediaSceneItems: ${mediaSceneItems},
 currentInputs: ${currentInputs},
-globalInputs: ${globalInputs}
+globalInputs: ${globalInputs},
+screenshotPath: ${screenshotPath}
     ''';
   }
 }

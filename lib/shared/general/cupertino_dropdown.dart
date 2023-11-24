@@ -27,7 +27,11 @@ class CupertinoDropdown<T> extends StatelessWidget {
         const CupertinoTextField(readOnly: true),
         Container(
           padding: const EdgeInsets.only(
-              left: 6.0, top: 4.0, bottom: 4.0, right: 2.0),
+            left: 10.0,
+            top: 4.0,
+            bottom: 4.0,
+            right: 2.0,
+          ),
           child: DropdownButton<T>(
             underline: Container(),
             isExpanded: true,

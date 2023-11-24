@@ -21,7 +21,7 @@ class SwitcherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    HomeStore landingStore = GetIt.instance<HomeStore>();
+    HomeStore homeStore = GetIt.instance<HomeStore>();
 
     return BaseCard(
       paddingChild: this.paddingChild,
@@ -44,14 +44,14 @@ class SwitcherCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: CupertinoSlidingSegmentedControl<ConnectMode>(
-              groupValue: landingStore.connectMode,
+              groupValue: homeStore.connectMode,
               children: const {
                 ConnectMode.Autodiscover:
                     Icon(CupertinoIcons.antenna_radiowaves_left_right),
                 ConnectMode.QR: Icon(CupertinoIcons.qrcode_viewfinder),
                 ConnectMode.Manual: Icon(CupertinoIcons.textformat),
               },
-              onValueChanged: (mode) => landingStore.setConnectMode(mode!),
+              onValueChanged: (mode) => homeStore.setConnectMode(mode!),
             ),
           ),
           const SizedBox(height: 12.0),

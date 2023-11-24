@@ -39,14 +39,13 @@ class _SceneItemsState extends State<SceneItems>
             physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.all(0.0),
             children: [
-              ...dashboardStore.currentSceneItems != null &&
-                      dashboardStore.currentSceneItems!.isNotEmpty
-                  ? dashboardStore.currentSceneItems!
+              ...dashboardStore.currentSceneItems.isNotEmpty
+                  ? dashboardStore.currentSceneItems
                       .where(
                         (sceneItem) =>
                             sceneItem.parentGroupName == null ||
                             (sceneItem.parentGroupName != null &&
-                                dashboardStore.currentSceneItems!
+                                dashboardStore.currentSceneItems
                                     .firstWhere((parentSceneItem) =>
                                         parentSceneItem.sourceName ==
                                         sceneItem.parentGroupName)

@@ -55,6 +55,10 @@ enum SettingsKeys {
   /// [String]: UUID of the active custom theme (only used if [CustomTheme] is true)
   ActiveCustomThemeUUID,
 
+  /// [bool]: If we should use the "non native" elements like switch, dialogs in
+  /// the app now that the app is somewhat adaptive
+  ForceNonNativeElements,
+
   /// [bool]: Indicates if the user wants to let his device stay active in the [DashboardView].
   /// Active by default
   WakeLock,
@@ -90,6 +94,10 @@ enum SettingsKeys {
   /// [bool]: If the hotkeys button (and feature) should be shown in the dashboard
   /// so users can list available OBS hotkeys and trigger them
   ExposeHotkeys,
+
+  /// [bool]: If audio sync offset should be shown for each audio input and if
+  /// they can be adjusted in the app
+  ExposeInputAudioSyncOffset,
 
   /// [bool]: If true OBS Blade will try to reconnect to an OBS instance on connection
   /// lost indefinetily instead of an amount of retries before aborting
@@ -143,10 +151,8 @@ enum SettingsKeys {
 
   /// [bool]: If the user saw the message regarding the technical preview state of
   /// the hotkey feature and doesn't want to see this warning again
-  DontShowHotkeysTechnicalPreviewWarning
-}
+  DontShowHotkeysTechnicalPreviewWarning;
 
-extension SettingsKeysFunctions on SettingsKeys {
   String get name => const {
         // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
         SettingsKeys.HasUserSeenIntro202208: 'has-user-seen-intro-202208',
@@ -161,6 +167,7 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.SelectedYoutubeUsername: 'selected-youtube-username',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
+        SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',
         SettingsKeys.WakeLock: 'wake-lock',
         SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
@@ -171,6 +178,8 @@ extension SettingsKeysFunctions on SettingsKeys {
         SettingsKeys.ExposeReplayBufferControls:
             'expose-replay-buffer-collection',
         SettingsKeys.ExposeHotkeys: 'expose-hotkeys',
+        SettingsKeys.ExposeInputAudioSyncOffset:
+            'expose-input-audio-sync-offset',
         SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:

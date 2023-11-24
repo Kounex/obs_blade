@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
@@ -82,18 +85,36 @@ class App extends StatelessWidget {
       canvasColor: canvasColor ?? StylingHelper.primary_color,
       cardColor: cardColor ?? StylingHelper.primary_color,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
-      dividerColor: dividerColor ?? StylingHelper.light_divider_color,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: accentColor ?? StylingHelper.highlight_color,
       ),
 
+      dividerTheme: DividerThemeData(
+        color: dividerColor ?? StylingHelper.light_divider_color,
+      ),
+
+      /// Setting a platform specifically to manipulate the platform
+      /// agnostic elements (if the user opted in for that)
+      platform: settingsBox.get(SettingsKeys.ForceNonNativeElements.name,
+              defaultValue: false)
+          ? (Platform.isIOS || Platform.isMacOS
+              ? TargetPlatform.android
+              : TargetPlatform.iOS)
+          : defaultTargetPlatform,
+
       /// Inner Widget themes
-      primaryIconTheme: IconThemeData(
+      primaryIconTheme: baseThemeData.iconTheme.copyWith(
         color: brightness != null && brightness == Brightness.light
             ? Colors.black
             : Colors.white,
+      ),
+
+      textTheme: baseThemeData.textTheme.copyWith(
+        bodySmall: TextStyle(
+          color: Colors.grey[500]!,
+        ),
       ),
 
       sliderTheme: SliderThemeData(
@@ -123,15 +144,16 @@ class App extends StatelessWidget {
       ),
 
       appBarTheme: AppBarTheme(
-        color: (appBarColor ?? StylingHelper.primary_color)
+        backgroundColor: (appBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
+        surfaceTintColor: Colors.transparent,
       ),
 
       buttonTheme: ButtonThemeData(
         colorScheme: ColorScheme.fromSwatch(
-            accentColor: buttonColor ?? StylingHelper.accent_color),
-        // buttonColor: buttonColor ?? StylingHelper.accent_color,
-        splashColor: Colors.transparent,
+          accentColor: buttonColor ?? StylingHelper.accent_color,
+        ),
+        buttonColor: buttonColor ?? StylingHelper.accent_color,
       ),
 
       cupertinoOverrideTheme: CupertinoThemeData(
@@ -151,11 +173,8 @@ class App extends StatelessWidget {
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith<Color?>(
             (Set<MaterialState> states) {
-          if (states.contains(MaterialState.disabled)) {
-            return null;
-          }
           if (states.contains(MaterialState.selected)) {
-            return toggleableActiveColor ?? StylingHelper.accent_color;
+            return Colors.white;
           }
           return null;
         }),
@@ -210,6 +229,7 @@ class App extends StatelessWidget {
         SettingsKeys.ReduceSmearing,
         SettingsKeys.CustomTheme,
         SettingsKeys.ActiveCustomThemeUUID,
+        SettingsKeys.ForceNonNativeElements,
       ],
       builder: (context, Box settingsBox, child) => HiveBuilder<CustomTheme>(
         hiveKey: HiveKeys.CustomTheme,

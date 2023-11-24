@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 class BaseButton extends StatelessWidget {
   final String? text;
@@ -38,6 +39,7 @@ class BaseButton extends StatelessWidget {
   Widget build(BuildContext context) {
     ButtonStyle style = ElevatedButton.styleFrom(
       padding: this.padding,
+      elevation: 0,
       backgroundColor: this.isDestructive
           ? CupertinoColors.destructiveRed
           : this.secondary
@@ -52,6 +54,14 @@ class BaseButton extends StatelessWidget {
               width: 1.0,
             )
           : null,
+      foregroundColor: StylingHelper.surroundingAwareAccent(
+        surroundingColor: this.isDestructive
+            ? CupertinoColors.destructiveRed
+            : this.secondary
+                ? Theme.of(context).cardColor
+                : this.color ??
+                    Theme.of(context).buttonTheme.colorScheme!.secondary,
+      ),
     );
 
     return this.icon != null

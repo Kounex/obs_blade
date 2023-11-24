@@ -9,6 +9,7 @@ class SceneContentMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
+      // length: 3,
       length: 2,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -22,7 +23,10 @@ class SceneContentMobile extends StatelessWidget {
                 ),
                 Tab(
                   child: Text('Audio'),
-                )
+                ),
+                // Tab(
+                //   child: Text('Media'),
+                // ),
               ],
             ),
           ),
@@ -33,14 +37,7 @@ class SceneContentMobile extends StatelessWidget {
               children: [
                 SceneItems(),
                 AudioInputs(),
-                // VisibilityEditToggle(
-                //   sceneItemType: SceneItemType.Source,
-                //   child: SceneItems(),
-                // ),
-                // VisibilityEditToggle(
-                //   sceneItemType: SceneItemType.Audio,
-                //   child: AudioInputs(),
-                // ),
+                // MediaInputs(),
               ],
             ),
           )

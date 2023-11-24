@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -9,7 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/dialogs/confirmation.dart';
-import '../../../../shared/general/app_bar_cupertino_actions.dart';
+import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../shared/general/hive_builder.dart';
@@ -124,14 +125,16 @@ class LogDetailView extends StatelessWidget {
               previousTitle: 'Logs',
               title: dateMS.millisecondsToFormattedDateString(),
               showScrollBar: true,
-              actions: AppBarCupertinoActions(
+              actions: AppBarActions(
                 actions: [
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title: 'Export',
+                    leadingIcon: CupertinoIcons.share,
                     onAction: () => _createLogFileAndExport(mergedLogs),
                   ),
-                  AppBarCupertinoActionEntry(
+                  AppBarActionEntry(
                     title: 'Delete',
+                    leadingIcon: CupertinoIcons.delete,
                     isDestructive: true,
                     onAction: () {
                       ModalHandler.showBaseDialog(
@@ -155,6 +158,7 @@ class LogDetailView extends StatelessWidget {
                 ],
               ),
               listViewChildren: [
+                const SizedBox(height: 12.0),
                 Center(
                   child: ConstrainedBox(
                     constraints:
@@ -187,6 +191,7 @@ class LogDetailView extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 4.0),
                 ...mergedLogs.entries.map(
                   (mergedLog) => LogEntry(
                     dateFormatted: mergedLog.key,

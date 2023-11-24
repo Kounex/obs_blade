@@ -56,8 +56,29 @@ enum RequestType {
   /// { 'sourceName':	String } - Name of the source to take a screenshot of
   /// { 'imageFormat': String } - Image compression format to use. Use GetVersion to get compatible image formats
   /// (Optional) { 'imageHeight': int } - Height to scale the screenshot to - >= 8, <= 4096
+  /// (Optional) { 'imageWidth': int } - Width to scale the screenshot to - >= 8, <= 4096
   /// (Optional) { 'imageCompressionQuality': int } - Compression ratio between -1 and 100 to write the image with. -1 is automatic, 1 is smallest file/most compression, 100 is largest file/least compression. Varies with image typeCompression quality to use. 0 for high compression, 100 for uncompressed. -1 to use "default" (whatever that means, idk)
   GetSourceScreenshot,
+
+  /// Saves a screenshot of a source to the filesystem.
+  ///
+  /// The imageWidth and imageHeight parameters are treated as "scale to inner",
+  /// meaning the smallest ratio will be used and the aspect ratio of the
+  /// original resolution is kept. If imageWidth and imageHeight are not
+  /// specified, the compressed image will use the full resolution of the source.
+  ///
+  /// { 'sourceName':	String } - Name of the source to take a screenshot of
+  /// { 'imageFormat': String } - Image compression format to use. Use GetVersion to get compatible image formats
+  /// { 'imageFilePath': String } - Path to save the screenshot file to. Eg. C:\Users\user\Desktop\screenshot.png
+  /// (Optional) { 'imageHeight': int } - Height to scale the screenshot to - >= 8, <= 4096
+  /// (Optional) { 'imageWidth': int } - Width to scale the screenshot to - >= 8, <= 4096
+  /// (Optional) { 'imageCompressionQuality': int } - Compression ratio between -1 and 100 to write the image with. -1 is automatic, 1 is smallest file/most compression, 100 is largest file/least compression. Varies with image typeCompression quality to use. 0 for high compression, 100 for uncompressed. -1 to use "default" (whatever that means, idk)
+  SaveSourceScreenshot,
+
+  /// Gets the current directory that the record output is set to.
+  ///
+  /// No specified parameters
+  GetRecordDirectory,
 
   /// Gets the status of the record output.
   ///
@@ -120,6 +141,13 @@ enum RequestType {
   ///
   /// No specified parameters
   GetHotkeyList,
+
+  /// Gets the audio sync offset of an input.
+  ///
+  /// Note: The audio sync offset can be negative too!
+  ///
+  /// { 'inputName': String } - Name of the input to get the audio sync offset of
+  GetInputAudioSyncOffset,
 
   /**
    * -----------------------------------------------------------------------
@@ -185,7 +213,7 @@ enum RequestType {
 
   /// Sets the duration of the current scene transition, if it is not fixed.
   ///
-  /// {'transitionDuration': int } - Duration in milliseconds
+  /// {'transitionDuration': int } - Duration in milliseconds - >= 50, <= 20000
   SetCurrentSceneTransitionDuration,
 
   /// Sets the current scene transition.
@@ -238,4 +266,10 @@ enum RequestType {
   ///
   /// {'hotkeyName': String } - Name of the hotkey to trigger
   TriggerHotkeyByName,
+
+  /// Sets the audio sync offset of an input.
+  ///
+  /// {'inputName': String } - Name of the input to set the audio sync offset of
+  /// {'inputAudioSyncOffset': int } - New audio sync offset in milliseconds - >= -950, <= 20000
+  SetInputAudioSyncOffset,
 }

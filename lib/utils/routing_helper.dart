@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/dashboard_customisation.dart';
 
 import '../tab_base.dart';
 import '../views/dashboard/dashboard.dart';
@@ -15,12 +16,22 @@ import '../views/settings/settings.dart';
 import '../views/statistics/statistic_detail/statistic_detail.dart';
 import '../views/statistics/statistics.dart';
 
+abstract class RoutingKeys {
+  String get route;
+}
+
 /// All routing keys available on root level - for now the whole app
 /// is wrapped in tabs and no other root level views (which are not inside
 /// those tabs) are used
-enum AppRoutingKeys {
+enum AppRoutingKeys implements RoutingKeys {
   Intro,
-  Tabs,
+  Tabs;
+
+  @override
+  String get route => const {
+        AppRoutingKeys.Intro: '/intro',
+        AppRoutingKeys.Tabs: '/tabs',
+      }[this]!;
 }
 
 /// All available and used tabs in our TabView which is basically the root
@@ -58,19 +69,31 @@ extension TabsFunctions on Tabs {
 }
 
 /// Routing keys for the home tab
-enum HomeTabRoutingKeys {
+enum HomeTabRoutingKeys implements RoutingKeys {
   Landing,
-  Dashboard,
+  Dashboard;
+
+  @override
+  String get route => '${AppRoutingKeys.Tabs.route}/home${{
+        HomeTabRoutingKeys.Landing: '',
+        HomeTabRoutingKeys.Dashboard: '/dashboard',
+      }[this]!}';
 }
 
 /// Routing keys for the statistics tab
-enum StaticticsTabRoutingKeys {
+enum StaticticsTabRoutingKeys implements RoutingKeys {
   Landing,
-  Detail,
+  Detail;
+
+  @override
+  String get route => '${AppRoutingKeys.Tabs.route}/statistic${{
+        StaticticsTabRoutingKeys.Landing: '',
+        StaticticsTabRoutingKeys.Detail: '/detail',
+      }[this]!}';
 }
 
 /// Routing keys for the settings tab
-enum SettingsTabRoutingKeys {
+enum SettingsTabRoutingKeys implements RoutingKeys {
   Landing,
   PrivacyPolicy,
   About,
@@ -79,57 +102,21 @@ enum SettingsTabRoutingKeys {
   DataManagement,
   Logs,
   LogDetail,
-}
+  DashboardCustomisation;
 
-/// Extension method for [AppRoutingKeys] enum to get the actual route
-/// path for an enum
-extension AppRoutingKeysFunctions on AppRoutingKeys {
-  String get route => const {
-        AppRoutingKeys.Intro: '/intro',
-        AppRoutingKeys.Tabs: '/tabs',
-      }[this]!;
-}
-
-/// Extension method for [HomeTabRoutingKeys] enum to get the actual route
-/// path for an enum
-extension HomeTabRoutingKeysFunctions on HomeTabRoutingKeys {
-  String get route => {
-        HomeTabRoutingKeys.Landing: '${AppRoutingKeys.Tabs.route}/home',
-        HomeTabRoutingKeys.Dashboard:
-            '${AppRoutingKeys.Tabs.route}/home/dashboard',
-      }[this]!;
-}
-
-/// Extension method for [StaticticsTabRoutingKeys] enum to get the actual route
-/// path for an enum
-extension StaticticsTabRoutingKeysFunctions on StaticticsTabRoutingKeys {
-  String get route => {
-        StaticticsTabRoutingKeys.Landing:
-            '${AppRoutingKeys.Tabs.route}/statistics',
-        StaticticsTabRoutingKeys.Detail:
-            '${AppRoutingKeys.Tabs.route}/statistics/detail',
-      }[this]!;
-}
-
-/// Extension method for [SettingsTabRoutingKeys] enum to get the actual route
-/// path for an enum
-extension SettingsTabRoutingKeysFunctions on SettingsTabRoutingKeys {
-  String get route => {
-        SettingsTabRoutingKeys.Landing: '${AppRoutingKeys.Tabs.route}/settings',
-        SettingsTabRoutingKeys.PrivacyPolicy:
-            '${AppRoutingKeys.Tabs.route}/settings/privacy-policy',
-        SettingsTabRoutingKeys.About:
-            '${AppRoutingKeys.Tabs.route}/settings/about',
-        SettingsTabRoutingKeys.CustomTheme:
-            '${AppRoutingKeys.Tabs.route}/settings/custom-theme',
-        SettingsTabRoutingKeys.FAQ: '${AppRoutingKeys.Tabs.route}/settings/faq',
-        SettingsTabRoutingKeys.DataManagement:
-            '${AppRoutingKeys.Tabs.route}/settings/data-management',
-        SettingsTabRoutingKeys.Logs:
-            '${AppRoutingKeys.Tabs.route}/settings/logs',
-        SettingsTabRoutingKeys.LogDetail:
-            '${AppRoutingKeys.Tabs.route}/settings/logs/detail',
-      }[this]!;
+  @override
+  String get route => '$AppRoutingKeys.Tabs.route/settings${{
+        SettingsTabRoutingKeys.Landing: '',
+        SettingsTabRoutingKeys.PrivacyPolicy: '/privacy-policy',
+        SettingsTabRoutingKeys.About: '/about',
+        SettingsTabRoutingKeys.CustomTheme: '/custom-theme',
+        SettingsTabRoutingKeys.FAQ: '/faq',
+        SettingsTabRoutingKeys.DataManagement: '/data-management',
+        SettingsTabRoutingKeys.Logs: '/logs',
+        SettingsTabRoutingKeys.LogDetail: '/logs/detail',
+        SettingsTabRoutingKeys.DashboardCustomisation:
+            '/dashboard-customisation',
+      }[this]!}';
 }
 
 /// Used to summarize routing tasks and information at one point
@@ -155,6 +142,8 @@ class RoutingHelper {
         const DataManagementView(),
     SettingsTabRoutingKeys.Logs.route: (_) => const LogsView(),
     SettingsTabRoutingKeys.LogDetail.route: (_) => const LogDetailView(),
+    SettingsTabRoutingKeys.DashboardCustomisation.route: (_) =>
+        const DashboardCustomisationView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {

@@ -7,6 +7,6 @@ class GetInputListResponse extends BaseResponse {
 
   /// Array of inputs
   List<Input> get inputs => (this.json['inputs'] as List<dynamic>)
-      .map((input) => Input.fromJSON(input))
+      .map((input) => Input.fromJson(input))
       .toList();
 }

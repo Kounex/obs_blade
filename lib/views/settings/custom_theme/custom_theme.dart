@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:hive/hive.dart';
 
+import '../../../shared/general/base/adaptive_switch.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/clean_list_tile.dart';
 import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/themed/cupertino_button.dart';
 import '../../../shared/general/themed/cupertino_scaffold.dart';
-import '../../../shared/general/themed/cupertino_switch.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
@@ -92,7 +92,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                   title: 'Use Custom Theme',
                   description:
                       'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
-                  trailing: ThemedCupertinoSwitch(
+                  trailing: BaseAdaptiveSwitch(
                     value: settingsBox.get(SettingsKeys.CustomTheme.name,
                         defaultValue: false),
                     onChanged: (customTheme) {

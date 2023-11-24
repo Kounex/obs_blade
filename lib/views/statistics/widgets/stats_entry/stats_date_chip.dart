@@ -16,6 +16,7 @@ class StatsDateChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       labelPadding: const EdgeInsets.all(2.0),
+      // shape: LinearBorder.none,
       label: Row(
         children: [
           Chip(

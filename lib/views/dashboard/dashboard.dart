@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
+import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets_mobile.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -19,8 +20,8 @@ import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
+import 'widgets/dialogs/save_edit_connection.dart';
 import 'widgets/reconnect_toast.dart';
-import 'widgets/save_edit_connection_dialog.dart';
 import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
 
@@ -82,8 +83,22 @@ class _DashboardViewState extends State<DashboardView> {
       (_) => GetIt.instance<NetworkStore>().obsTerminated,
       () => SchedulerBinding.instance.addPostFrameCallback(
         (_) => Navigator.of(context).pushReplacementNamed(
-            HomeTabRoutingKeys.Landing.route,
-            arguments: ModalRoute.of(context)!.settings.arguments),
+          HomeTabRoutingKeys.Landing.route,
+          arguments: ModalRoute.of(context)!.settings.arguments,
+        ),
+      ),
+    );
+
+    reaction(
+      (_) =>
+          GetIt.instance<DashboardStore>().manualScreenshotImageBytes != null,
+      (_) => ModalHandler.showFullscreen(
+        context: context,
+        content: ScreenshotPreview(
+          screenshotPath: GetIt.instance<DashboardStore>().screenshotPath,
+          screenshot:
+              GetIt.instance<DashboardStore>().manualScreenshotImageBytes!,
+        ),
       ),
     );
   }

@@ -89,6 +89,7 @@ class _PurchaseBaseState extends State<PurchaseBase> {
               OverlayHandler.closeAnyOverlay(immediately: false);
               ModalHandler.showBaseDialog(
                 context: rootNavKey.currentState!.context,
+                barrierDismissible: true,
                 dialogWidget: const InfoDialog(
                   body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
                 ),
