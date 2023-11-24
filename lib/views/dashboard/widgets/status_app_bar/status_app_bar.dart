@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/dialogs/confirmation.dart';
@@ -23,11 +25,16 @@ class StatusAppBar extends StatelessWidget {
 
     return TransculentSliverAppBar(
       pinned: true,
+      elevation: 0,
+      toolbarHeight: kTextTabBarHeight + 24.0,
+      backgroundColor: !StylingHelper.isApple(context)
+          ? Theme.of(context).appBarTheme.backgroundColor!.withOpacity(1.0)
+          : null,
       bottom: const PreferredSize(
         preferredSize: Size.fromHeight(24.0),
         child: Column(
           children: [
-            Divider(height: 0),
+            BaseDivider(),
             Padding(
               padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
               child: StreamRecTimers(),
