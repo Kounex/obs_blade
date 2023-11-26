@@ -167,9 +167,9 @@ class DataManagementView extends StatelessWidget {
                     'All YouTube usernames that have been added to the stream chat widget in the dashboard.',
                 onClear: () {
                   Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.SelectedYoutubeUsername.name);
+                      .delete(SettingsKeys.SelectedYouTubeUsername.name);
                   Hive.box(HiveKeys.Settings.name)
-                      .delete(SettingsKeys.YoutubeUsernames.name);
+                      .delete(SettingsKeys.YouTubeUsernames.name);
 
                   Hive.box<AppLog>(HiveKeys.AppLog.name).add(
                     AppLog(

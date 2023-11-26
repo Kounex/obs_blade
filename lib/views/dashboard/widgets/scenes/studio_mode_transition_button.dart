@@ -45,37 +45,32 @@ class StudioModeTransitionButton extends StatelessWidget {
               child: child,
             ),
           ),
-          child: Observer(
-            builder: (context) => (settingsBox.get(
-                        SettingsKeys.ExposeStudioControls.name,
-                        defaultValue: false) &&
-                    dashboardStore.studioMode)
-                ? Align(
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: 128.0,
-                      child: BaseButton(
-                        text: 'Transition',
-                        secondary: true,
-                        onPressed: () {
-                          dashboardStore.setActiveSceneName(
-                              dashboardStore.studioModePreviewSceneName!);
-                          NetworkHelper.makeRequest(
-                            GetIt.instance<NetworkStore>()
-                                .activeSession!
-                                .socket,
-                            RequestType.SetCurrentProgramScene,
-                            {
-                              'sceneName':
-                                  dashboardStore.studioModePreviewSceneName
-                            },
-                          );
-                        },
-                      ),
+          child: (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
+                      defaultValue: false) &&
+                  dashboardStore.studioMode)
+              ? Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: 128.0,
+                    child: BaseButton(
+                      text: 'Transition',
+                      secondary: true,
+                      onPressed: () {
+                        dashboardStore.setActiveSceneName(
+                            dashboardStore.studioModePreviewSceneName!);
+                        NetworkHelper.makeRequest(
+                          GetIt.instance<NetworkStore>().activeSession!.socket,
+                          RequestType.SetCurrentProgramScene,
+                          {
+                            'sceneName':
+                                dashboardStore.studioModePreviewSceneName
+                          },
+                        );
+                      },
                     ),
-                  )
-                : const SizedBox(),
-          ),
+                  ),
+                )
+              : const SizedBox(),
         );
       },
     );

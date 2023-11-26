@@ -166,7 +166,7 @@ class NetworkHelper {
     Duration timeout = arguments['timeout'];
 
     List<Future<ConnectionScan?>> availableConnections = [];
-    String cutIP = (ip.split('.')..removeLast()).join();
+    String cutIP = (ip.split('.')..removeLast()).join('.');
 
     for (int k = 0; k < 256; k++) {
       availableConnections.add(_singleScan({

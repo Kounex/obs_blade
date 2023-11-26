@@ -29,16 +29,7 @@ class _StreamChatState extends State<StreamChat>
   void _initializeWebController(Box<dynamic> settingsBox, ChatType chatType) {
     _webController = WebViewController()
       ..loadRequest(
-        Uri.parse(chatType == ChatType.Twitch &&
-                settingsBox.get(SettingsKeys.SelectedTwitchUsername.name) !=
-                    null
-            ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-            : chatType == ChatType.YouTube &&
-                    settingsBox
-                            .get(SettingsKeys.SelectedYoutubeUsername.name) !=
-                        null
-                ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
-                : 'about:blank'),
+        Uri.parse(_urlForChatType(chatType, settingsBox)),
       )
       ..enableZoom(false)
       ..setUserAgent(
@@ -96,6 +87,33 @@ class _StreamChatState extends State<StreamChat>
   @override
   bool get wantKeepAlive => true;
 
+  String _urlForChatType(ChatType chatType, Box<dynamic> settingsBox) {
+    if (chatType == ChatType.Twitch &&
+        (settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)) != null) {
+      return 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat';
+    }
+    if (chatType == ChatType.YouTube &&
+        (settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)) != null) {
+      return 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YouTubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)].split(RegExp(r'[/?&]'))[0]}';
+    }
+    if (chatType == ChatType.Owncast &&
+        (settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)) != null) {
+      return '${settingsBox.get(SettingsKeys.OwncastUsernames.name)[settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)]}/embed/chat/readwrite';
+    }
+    return 'about:blank';
+  }
+
+  bool anyChatActive(ChatType chatType, Box<dynamic> settingsBox) {
+    bool twitchActive = chatType == ChatType.Twitch &&
+        settingsBox.get(SettingsKeys.SelectedTwitchUsername.name) != null;
+    bool youtubeActive = chatType == ChatType.YouTube &&
+        settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name) != null;
+    bool owncastActive = chatType == ChatType.Owncast &&
+        settingsBox.get(SettingsKeys.SelectedOwncastUsername.name) != null;
+
+    return twitchActive || youtubeActive || owncastActive;
+  }
+
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
@@ -117,7 +135,8 @@ class _StreamChatState extends State<StreamChat>
             rebuildKeys: const [
               SettingsKeys.SelectedChatType,
               SettingsKeys.SelectedTwitchUsername,
-              SettingsKeys.SelectedYoutubeUsername,
+              SettingsKeys.SelectedYouTubeUsername,
+              SettingsKeys.SelectedOwncastUsername,
             ],
             builder: (context, settingsBox, child) {
               ChatType chatType = settingsBox.get(
@@ -133,14 +152,7 @@ class _StreamChatState extends State<StreamChat>
                   /// Only add the [WebView] to the widget tree if we have an
                   /// actual chat to display because otherwise the [WebView]
                   /// will still eat up performance
-                  if ((chatType == ChatType.Twitch &&
-                          settingsBox.get(
-                                  SettingsKeys.SelectedTwitchUsername.name) !=
-                              null) ||
-                      (chatType == ChatType.YouTube &&
-                          settingsBox.get(
-                                  SettingsKeys.SelectedYoutubeUsername.name) !=
-                              null))
+                  if (anyChatActive(chatType, settingsBox))
 
                     /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
                     /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
@@ -165,7 +177,11 @@ class _StreamChatState extends State<StreamChat>
                                   .toString() +
                               settingsBox
                                   .get(
-                                      SettingsKeys.SelectedYoutubeUsername.name)
+                                      SettingsKeys.SelectedYouTubeUsername.name)
+                                  .toString() +
+                              settingsBox
+                                  .get(
+                                      SettingsKeys.SelectedOwncastUsername.name)
                                   .toString(),
                         ),
                         controller: _webController,
@@ -177,7 +193,7 @@ class _StreamChatState extends State<StreamChat>
                       //             .get(SettingsKeys.SelectedTwitchUsername.name)
                       //             .toString() +
                       //         settingsBox
-                      //             .get(SettingsKeys.SelectedYoutubeUsername.name)
+                      //             .get(SettingsKeys.SelectedYouTubeUsername.name)
                       //             .toString(),
                       //   ),
                       //   initialUrlRequest: URLRequest(
@@ -188,9 +204,9 @@ class _StreamChatState extends State<StreamChat>
                       //         ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
                       //         : chatType == ChatType.YouTube &&
                       //                 settingsBox.get(SettingsKeys
-                      //                         .SelectedYoutubeUsername.name) !=
+                      //                         .SelectedYouTubeUsername.name) !=
                       //                     null
-                      //             ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YoutubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYoutubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
+                      //             ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YouTubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
                       //             : 'about:blank'),
                       //   ),
                       //   initialOptions: InAppWebViewGroupOptions(
@@ -207,14 +223,7 @@ class _StreamChatState extends State<StreamChat>
                       //   },
                       // ),
                     ),
-                  if ((chatType == ChatType.Twitch &&
-                          settingsBox.get(
-                                  SettingsKeys.SelectedTwitchUsername.name) ==
-                              null) ||
-                      (chatType == ChatType.YouTube &&
-                          settingsBox.get(
-                                  SettingsKeys.SelectedYoutubeUsername.name) ==
-                              null))
+                  if (!anyChatActive(chatType, settingsBox))
                     Positioned(
                       top: 48.0,
                       child: SizedBox(

@@ -44,10 +44,18 @@ enum SettingsKeys {
   /// [Map<String, String>]: All entered youtube users to see the chat from
   /// key: username (just for the user of this app to recognize)
   /// value: youtube chat url
-  YoutubeUsernames,
+  YouTubeUsernames,
 
   /// [String]: The currently selected youtube username to use for the youtube chat
-  SelectedYoutubeUsername,
+  SelectedYouTubeUsername,
+
+  /// [Map<String, String>]: All entered owncast users to see the chat from
+  /// key: username (just for the user of this app to recognize)
+  /// value: owncast chat domain + protocol
+  OwncastUsernames,
+
+  /// [String]: The currently selected owncast username to use for the owncast chat
+  SelectedOwncastUsername,
 
   /// [bool]: If user wants to use his custom theme
   CustomTheme,
@@ -163,8 +171,10 @@ enum SettingsKeys {
         SettingsKeys.SelectedChatType: 'selected-chat-type',
         SettingsKeys.TwitchUsernames: 'twitch-usernames',
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
-        SettingsKeys.YoutubeUsernames: 'youtube-usernames',
-        SettingsKeys.SelectedYoutubeUsername: 'selected-youtube-username',
+        SettingsKeys.YouTubeUsernames: 'youtube-usernames',
+        SettingsKeys.SelectedYouTubeUsername: 'selected-youtube-username',
+        SettingsKeys.OwncastUsernames: 'owncast-usernames',
+        SettingsKeys.SelectedOwncastUsername: 'selected-owncast-username',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',

@@ -146,3 +146,6 @@ flutter:
     - family: JamIcons
       fonts:
         - asset: assets/fonts/JamIcons.ttf
+    - family: CustomFlutterIcons
+      fonts:
+        - asset: assets/fonts/CustomFlutterIcons.ttf

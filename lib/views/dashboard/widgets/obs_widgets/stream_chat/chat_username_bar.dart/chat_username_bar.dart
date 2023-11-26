@@ -19,25 +19,37 @@ class ChatUsernameBar extends StatelessWidget {
         SettingsKeys.SelectedChatType,
         SettingsKeys.TwitchUsernames,
         SettingsKeys.SelectedTwitchUsername,
-        SettingsKeys.YoutubeUsernames,
-        SettingsKeys.SelectedYoutubeUsername,
+        SettingsKeys.YouTubeUsernames,
+        SettingsKeys.SelectedYouTubeUsername,
+        SettingsKeys.OwncastUsernames,
+        SettingsKeys.SelectedOwncastUsername,
       ],
       builder: (context, settingsBox, child) => Padding(
         padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            ChatTypeDropdown(settingsBox: settingsBox),
-            Row(
-              children: [
-                UsernameDropdown(
-                  settingsBox: settingsBox,
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 256.0,
                 ),
-                const SizedBox(width: 32.0),
-                UsernameActionRow(
-                  settingsBox: settingsBox,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ChatTypeDropdown(settingsBox: settingsBox),
+                    UsernameDropdown(
+                      settingsBox: settingsBox,
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ),
+            const SizedBox(width: 12.0),
+            UsernameActionRow(
+              settingsBox: settingsBox,
             ),
           ],
         ),

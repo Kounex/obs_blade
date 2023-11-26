@@ -38,16 +38,30 @@ class DeleteUsernameDialog extends StatelessWidget {
         } else if (chatType == ChatType.YouTube) {
           Map<String, String> youtubeUsernames = Map<String, String>.from((this
               .settingsBox
-              .get(SettingsKeys.YoutubeUsernames.name,
+              .get(SettingsKeys.YouTubeUsernames.name,
                   defaultValue: <String, String>{})));
           youtubeUsernames.remove(this.username);
           this
               .settingsBox
-              .put(SettingsKeys.YoutubeUsernames.name, youtubeUsernames);
+              .put(SettingsKeys.YouTubeUsernames.name, youtubeUsernames);
           this.settingsBox.put(
-              SettingsKeys.SelectedYoutubeUsername.name,
+              SettingsKeys.SelectedYouTubeUsername.name,
               youtubeUsernames.isNotEmpty
                   ? youtubeUsernames[youtubeUsernames.keys.last]
+                  : null);
+        } else if (chatType == ChatType.Owncast) {
+          Map<String, String> owncastUsernames = Map<String, String>.from((this
+              .settingsBox
+              .get(SettingsKeys.OwncastUsernames.name,
+                  defaultValue: <String, String>{})));
+          owncastUsernames.remove(this.username);
+          this
+              .settingsBox
+              .put(SettingsKeys.OwncastUsernames.name, owncastUsernames);
+          this.settingsBox.put(
+              SettingsKeys.SelectedOwncastUsername.name,
+              owncastUsernames.isNotEmpty
+                  ? owncastUsernames[owncastUsernames.keys.last]
                   : null);
         }
       },
