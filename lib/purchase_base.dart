@@ -5,7 +5,6 @@ import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
 
-import 'app.dart';
 import 'models/enums/log_level.dart';
 import 'models/purchased_tip.dart';
 import 'shared/dialogs/info.dart';
