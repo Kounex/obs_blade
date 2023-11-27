@@ -25,16 +25,17 @@ class FormattedText extends StatelessWidget {
           text:
               (this.text ?? '-') + (this.text != null ? (this.unit ?? '') : ''),
         ),
-        style: const TextStyle(
+        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
           fontFeatures: [
-            FontFeature.tabularFigures(),
+            const FontFeature.tabularFigures(),
           ],
         ),
         decoration: InputDecoration(
           isDense: true,
           enabled: false,
           labelText: this.label,
-          labelStyle: const TextStyle(height: 0.75),
+          labelStyle:
+              Theme.of(context).textTheme.bodyMedium!.copyWith(height: 0.75),
         ),
       ),
     );

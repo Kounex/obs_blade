@@ -90,8 +90,8 @@ class _LicenseEntriesState extends State<LicenseEntries> {
             child: ListView.builder(
               shrinkWrap: true,
               controller: this.widget.scrollController,
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewPaddingOf(context).bottom),
+              padding:
+                  EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
               itemCount: snapshot.data!.packages.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,

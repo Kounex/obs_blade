@@ -17,7 +17,7 @@ class BackToSelectionWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: MediaQuery.viewPaddingOf(context).top),
+        SizedBox(height: MediaQuery.paddingOf(context).top),
         ThemedCupertinoButton(
           child: Row(
             children: [

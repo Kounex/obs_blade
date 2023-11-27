@@ -18,11 +18,11 @@ class CustomSliverList extends StatelessWidget {
     return SliverPadding(
       padding: EdgeInsets.only(
         top: this.customTopPadding ?? 0.0,
-        right: MediaQuery.viewPaddingOf(context).right,
+        right: MediaQuery.paddingOf(context).right,
         bottom: this.customBottomPadding ??
             (2 * kBottomNavigationBarHeight +
-                MediaQuery.viewPaddingOf(context).bottom),
-        left: MediaQuery.viewPaddingOf(context).left,
+                MediaQuery.paddingOf(context).bottom / 2),
+        left: MediaQuery.paddingOf(context).left,
       ),
       sliver: SliverList(
         delegate: SliverChildListDelegate(this.children),

@@ -38,8 +38,8 @@ class ModalHandler {
               children: [
                 content,
                 Positioned(
-                  top: 12.0 + MediaQuery.viewPaddingOf(context).top,
-                  right: 12.0 + MediaQuery.viewPaddingOf(context).right,
+                  top: 12.0 + MediaQuery.paddingOf(context).top,
+                  right: 12.0 + MediaQuery.paddingOf(context).right,
                   child: IconButton(
                     onPressed: () {
                       onClose?.call();
@@ -87,7 +87,7 @@ class ModalHandler {
             mainAxisSize: MainAxisSize.min,
             children: [
               builder(context),
-              SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
+              SizedBox(height: MediaQuery.paddingOf(context).bottom),
             ],
           ),
           maxHeight: MediaQuery.sizeOf(context).height / 1.5,
@@ -120,7 +120,7 @@ class ModalHandler {
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
           blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
-          includeCloseButton: true,
+          includeCloseButton: includeCloseButton,
           modalWidget: modalWidgetBuilder(
             context,
             ModalScrollController.of(context)!,
@@ -162,11 +162,9 @@ class ModalHandler {
                 ),
               ),
             ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(top: includeCloseButton ? 24.0 : 0),
-              child: modalWidget,
-            ),
+          Padding(
+            padding: EdgeInsets.only(top: includeCloseButton ? 24.0 : 0),
+            child: modalWidget,
           ),
         ],
       ),

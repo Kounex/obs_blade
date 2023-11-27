@@ -41,6 +41,10 @@ class GettingStarted extends StatelessWidget {
                   delay: const Duration(milliseconds: 500),
                   curve: Curves.easeIn,
                   child: ThemedRichText(
+                    textAlign: TextAlign.center,
+                    textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
+                          fontSize: 18,
+                        ),
                     textSpans: [
                       const TextSpan(
                         text: 'An unofficial, ',
@@ -90,10 +94,6 @@ class GettingStarted extends StatelessWidget {
                         text: ' plugin!',
                       ),
                     ],
-                    textAlign: TextAlign.center,
-                    textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                          fontSize: 18,
-                        ),
                   ),
                 ),
               ],

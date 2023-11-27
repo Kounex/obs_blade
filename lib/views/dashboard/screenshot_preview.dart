@@ -39,7 +39,7 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
       fit: StackFit.expand,
       children: [
         Positioned(
-          top: MediaQuery.viewPaddingOf(context).top + 24,
+          top: MediaQuery.paddingOf(context).top + 24,
           left: 0,
           right: 0,
           child: Text(
@@ -49,7 +49,7 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
           ),
         ),
         Positioned(
-          bottom: MediaQuery.viewPaddingOf(context).bottom + 24,
+          bottom: MediaQuery.paddingOf(context).bottom + 24,
           left: 24.0,
           right: 24.0,
           child: Column(

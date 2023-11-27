@@ -108,9 +108,8 @@ class _HotkeyListState extends State<HotkeyList> {
                         controller: this.widget.controller,
                         padding: const EdgeInsets.symmetric(horizontal: 24.0) +
                             EdgeInsets.only(
-                                bottom:
-                                    MediaQuery.viewPaddingOf(context).bottom +
-                                        12.0),
+                                bottom: MediaQuery.paddingOf(context).bottom +
+                                    12.0),
                         children: [
                           if (hotkeyBox.values.isNotEmpty) ...[
                             const SectionHeader(

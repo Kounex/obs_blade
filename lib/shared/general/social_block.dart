@@ -125,7 +125,7 @@ class SocialBlock extends StatelessWidget {
                   social.linkText ?? social.link,
                   softWrap: true,
                   style: (social.textStyle ??
-                          Theme.of(context).textTheme.bodyLarge!)
+                          Theme.of(context).textTheme.bodyMedium!)
                       .copyWith(
                     color: Theme.of(context).colorScheme.secondary,
                     // decoration: TextDecoration.underline,
@@ -139,8 +139,10 @@ class SocialBlock extends StatelessWidget {
     }
 
     return Padding(
-      padding:
-          EdgeInsets.only(top: this.topPadding, bottom: this.bottomPadding),
+      padding: EdgeInsets.only(
+        top: this.topPadding,
+        bottom: this.bottomPadding,
+      ),
       child: Wrap(
         spacing: 12.0,
         runSpacing: 12.0,

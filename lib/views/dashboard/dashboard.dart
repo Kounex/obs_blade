@@ -195,7 +195,7 @@ class _DashboardViewState extends State<DashboardView> {
               ],
             ),
             Positioned(
-              top: kToolbarHeight + MediaQuery.viewPaddingOf(context).top,
+              top: kToolbarHeight + MediaQuery.paddingOf(context).top,
               child: const Align(
                 alignment: Alignment.center,
                 child: FittedBox(

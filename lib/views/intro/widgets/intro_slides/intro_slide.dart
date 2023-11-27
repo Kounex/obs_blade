@@ -41,10 +41,10 @@ class IntroSlide extends StatelessWidget {
     //   duration: const Duration(milliseconds: 750),
     //   child: Padding(
     //     padding: EdgeInsets.only(
-    //       top: MediaQuery.viewPaddingOf(context).top + 32.0,
+    //       top: MediaQuery.paddingOf(context).top + 32.0,
     //       left: 24.0,
     //       right: 24.0,
-    //       bottom: MediaQuery.viewPaddingOf(context).bottom +
+    //       bottom: MediaQuery.paddingOf(context).bottom +
     //           kIntroControlsBottomPadding,
     //     ),
     //     child: Column(

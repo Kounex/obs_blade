@@ -25,6 +25,7 @@ class QuickConnect extends StatelessWidget {
             onPressed: () =>
                 ModalHandler.showBaseCupertinoBottomSheet<Connection?>(
               context: context,
+              includeCloseButton: false,
               modalWidgetBuilder: (context, controller) => const QRScan(),
             ).then(
               (connection) {

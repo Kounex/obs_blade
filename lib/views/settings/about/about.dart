@@ -114,6 +114,7 @@ class AboutView extends StatelessWidget {
                               // showAboutDialog(context: context),
                               ModalHandler.showBaseCupertinoBottomSheet(
                             context: context,
+                            includeCloseButton: false,
                             modalWidgetBuilder: (context, scrollController) =>
                                 LicenseModal(
                               scrollController: scrollController,

@@ -181,7 +181,6 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             placeholder: 'Password',
             autocorrect: false,
             obscureText: _obscurePW,
-            errorPaddingAlways: true,
             suffixIcon: StylingHelper.isApple(context)
                 ? Container(
                     decoration: BoxDecoration(

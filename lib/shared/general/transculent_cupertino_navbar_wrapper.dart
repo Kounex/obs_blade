@@ -46,8 +46,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
       physics: StylingHelper.platformAwareScrollPhysics,
       slivers: [
         CustomSliverList(
-          customTopPadding:
-              MediaQuery.viewPaddingOf(context).top + kToolbarHeight,
+          customTopPadding: MediaQuery.paddingOf(context).top + kToolbarHeight,
           children: this.listViewChildren,
         ),
       ],
@@ -65,7 +64,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
         if (this.customBody != null)
           Padding(
             padding: EdgeInsets.only(
-              top: MediaQuery.viewPaddingOf(context).top +
+              top: MediaQuery.paddingOf(context).top +
                   kMinInteractiveDimensionCupertino,
             ),
             child: this.customBody,
