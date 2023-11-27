@@ -117,7 +117,7 @@ class _HomeViewState extends State<HomeView> {
         if ((networkStore.connectionClodeCode ??
                 WebSocketCloseCode.UnknownReason) ==
             WebSocketCloseCode.DontClose) {
-          OverlayHandler.closeAnyOverlay();
+          OverlayHandler.closeAnyOverlay(immediately: true);
           Navigator.pushReplacementNamed(
             context,
             HomeTabRoutingKeys.Dashboard.route,
@@ -145,7 +145,7 @@ class _HomeViewState extends State<HomeView> {
             ),
           );
         } else {
-          OverlayHandler.closeAnyOverlay();
+          OverlayHandler.closeAnyOverlay(immediately: true);
         }
       }
     }));

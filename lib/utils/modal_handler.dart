@@ -38,8 +38,8 @@ class ModalHandler {
               children: [
                 content,
                 Positioned(
-                  top: 12.0 + MediaQuery.of(context).padding.top,
-                  right: 12.0 + MediaQuery.of(context).padding.right,
+                  top: 12.0 + MediaQuery.viewPaddingOf(context).top,
+                  right: 12.0 + MediaQuery.viewPaddingOf(context).right,
                   child: IconButton(
                     onPressed: () {
                       onClose?.call();
@@ -87,11 +87,11 @@ class ModalHandler {
             mainAxisSize: MainAxisSize.min,
             children: [
               builder(context),
-              SizedBox(height: MediaQuery.of(context).padding.bottom),
+              SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
             ],
           ),
-          maxHeight: MediaQuery.of(context).size.height / 1.5,
-          maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
+          maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+          maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
         ),
       );
 
@@ -102,6 +102,7 @@ class ModalHandler {
     bool useRootNavigator = true,
     double maxWidth = double.infinity,
     bool? blurryBackground,
+    bool includeCloseButton = true,
     double additionalBottomViewInsets = 0,
   }) async =>
       CupertinoScaffold.showCupertinoModalBottomSheet(
@@ -119,11 +120,12 @@ class ModalHandler {
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
           blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
+          includeCloseButton: true,
           modalWidget: modalWidgetBuilder(
             context,
             ModalScrollController.of(context)!,
           ),
-          maxWidth: min(MediaQuery.of(context).size.width, maxWidth),
+          maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
         ),
       );
 
@@ -133,6 +135,7 @@ class ModalHandler {
     double maxWidth = double.infinity,
     double maxHeight = double.infinity,
     bool blurryBackground = false,
+    bool includeCloseButton = false,
     double additionalBottomViewInsets = 0,
   }) {
     Widget child = Container(
@@ -144,7 +147,29 @@ class ModalHandler {
           top: Radius.circular(kBaseCardBorderRadius),
         ),
       ),
-      child: modalWidget,
+      child: Stack(
+        children: [
+          if (includeCloseButton)
+            Positioned(
+              top: 4.0,
+              right: 4.0,
+              child: Container(
+                padding: const EdgeInsets.only(right: 4.0),
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  icon: const Icon(CupertinoIcons.clear_circled_solid),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(top: includeCloseButton ? 24.0 : 0),
+              child: modalWidget,
+            ),
+          ),
+        ],
+      ),
     );
 
     if (blurryBackground) {
@@ -176,8 +201,8 @@ class ModalHandler {
         bottom: false,
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom +
-                (MediaQuery.of(context).viewInsets.bottom > 0
+            bottom: MediaQuery.viewInsetsOf(context).bottom +
+                (MediaQuery.viewInsetsOf(context).bottom > 0
                     ? additionalBottomViewInsets
                     : 0),
           ),

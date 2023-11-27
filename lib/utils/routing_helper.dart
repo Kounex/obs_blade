@@ -121,6 +121,8 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
 
 /// Used to summarize routing tasks and information at one point
 class RoutingHelper {
+  static GlobalKey tabBaseKey = GlobalKey();
+
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
     HomeTabRoutingKeys.Landing.route: (_) => const HomeView(),
     HomeTabRoutingKeys.Dashboard.route: (_) => const DashboardView(),
@@ -148,6 +150,6 @@ class RoutingHelper {
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {
     AppRoutingKeys.Intro.route: (_) => const IntroView(),
-    AppRoutingKeys.Tabs.route: (_) => const TabBase(),
+    AppRoutingKeys.Tabs.route: (_) => TabBase(key: tabBaseKey),
   };
 }

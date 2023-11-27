@@ -149,6 +149,11 @@ enum RequestType {
   /// { 'inputName': String } - Name of the input to get the audio sync offset of
   GetInputAudioSyncOffset,
 
+  /// Gets an array of all of a source's filters.
+  ///
+  /// { 'sourceName': String } - Name of the source
+  GetSourceFilterList,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
@@ -272,4 +277,11 @@ enum RequestType {
   /// {'inputName': String } - Name of the input to set the audio sync offset of
   /// {'inputAudioSyncOffset': int } - New audio sync offset in milliseconds - >= -950, <= 20000
   SetInputAudioSyncOffset,
+
+  /// Sets the enable state of a source filter.
+  ///
+  /// {'sourceName': String } - Name of the source the filter is on
+  /// {'filterName': String } - Name of the filter
+  /// {'filterEnabled': bool } - New enable state of the filter
+  SetSourceFilterEnabled,
 }

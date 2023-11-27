@@ -60,7 +60,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
   @override
   Widget build(BuildContext context) {
     HomeStore homeStore = GetIt.instance<HomeStore>();
-    double barStretchOffset = MediaQuery.of(context).size.height / 15;
+    double barStretchOffset = MediaQuery.sizeOf(context).height / 15;
 
     if (this.widget.currentBarHeight - this.widget.expandedBarHeight >=
             barStretchOffset &&

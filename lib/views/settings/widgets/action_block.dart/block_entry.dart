@@ -80,7 +80,7 @@ class _BlockEntryState extends State<BlockEntry> {
             ? CupertinoDynamicColor.resolve(kPressedColor, context)
             : Theme.of(context).colorScheme.background,
         height: kblockEntryHeight,
-        width: MediaQuery.of(context).size.width,
+        width: MediaQuery.sizeOf(context).width,
         child: Padding(
           padding: const EdgeInsets.only(
               left: kblockEntryPadding, right: kblockEntryPadding),

@@ -38,8 +38,8 @@ class RequestBatchObject {
 }
 
 class NetworkHelper {
-  static Map<String, Map<String, dynamic>?> requestBodyByUUID = {};
-  static Map<String, Iterable<RequestBatchObject>> requestBatchByUUID = {};
+  static Map<String, Map<String, dynamic>?> _requestBodyByUUID = {};
+  static Map<String, List<RequestBatchObject>> _requestBatchByUUID = {};
 
   /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port). Currently using a
@@ -55,8 +55,8 @@ class NetworkHelper {
         connection.isDomain == null || !connection.isDomain! ? 'ws://' : '';
 
     /// Clear the map for a new connection
-    NetworkHelper.requestBodyByUUID = {};
-    NetworkHelper.requestBatchByUUID = {};
+    NetworkHelper._requestBodyByUUID = {};
+    NetworkHelper._requestBatchByUUID = {};
 
     return IOWebSocketChannel.connect(
       Uri.parse(
@@ -275,11 +275,11 @@ class NetworkHelper {
   }
 
   static Map<String, dynamic>? getRequestBodyForUUID(String uuid) =>
-      NetworkHelper.requestBodyByUUID.remove(uuid);
+      NetworkHelper._requestBodyByUUID.remove(uuid);
 
   static Iterable<RequestBatchObject>? getRequestBatchBodyForUUID(
           String uuid) =>
-      NetworkHelper.requestBatchByUUID.remove(uuid);
+      NetworkHelper._requestBatchByUUID.remove(uuid);
 
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
@@ -303,7 +303,7 @@ class NetworkHelper {
     /// in the new protocol (>= 5.X) we don't get this information
     /// in the response anymore
     if (fields != null && request.name.startsWith('Get')) {
-      NetworkHelper.requestBodyByUUID[requestUUID] = fields;
+      NetworkHelper._requestBodyByUUID[requestUUID] = fields;
     }
 
     channel.sink.add(
@@ -329,7 +329,7 @@ class NetworkHelper {
   static void makeBatchRequest(
     IOWebSocketChannel channel,
     RequestBatchType batchRequest,
-    Iterable<RequestBatchObject> batch,
+    List<RequestBatchObject> batch,
   ) {
     if (batchRequest != RequestBatchType.Stats) {
       GeneralHelper.advLog(
@@ -340,7 +340,7 @@ class NetworkHelper {
     String requestUUID = const Uuid().v4();
 
     if (batchRequest.lookup) {
-      NetworkHelper.requestBatchByUUID[requestUUID] = batch;
+      NetworkHelper._requestBatchByUUID[requestUUID] = batch;
     }
 
     channel.sink.add(

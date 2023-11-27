@@ -305,8 +305,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                                 _customTheme.backgroundColorHex = colorHex),
                           ),
                           SizedBox(
-                              height:
-                                  MediaQuery.of(context).padding.bottom + 32.0),
+                              height: MediaQuery.viewPaddingOf(context).bottom +
+                                  32.0),
                         ],
                       ),
                     ),

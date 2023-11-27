@@ -175,7 +175,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                             (streamChart) => ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxWidth: StylingHelper.max_width_mobile /
-                                    (MediaQuery.of(context).size.width <
+                                    (MediaQuery.sizeOf(context).width <
                                             StylingHelper.max_width_mobile
                                         ? 1
                                         : 2),

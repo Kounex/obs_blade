@@ -21,7 +21,7 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
       hiveKey: HiveKeys.Settings,
       rebuildKeys: const [SettingsKeys.EnforceTabletMode],
       builder: (context, settingsBox, child) =>
-          MediaQuery.of(context).size.width > StylingHelper.max_width_mobile ||
+          MediaQuery.sizeOf(context).width > StylingHelper.max_width_mobile ||
                   settingsBox.get(SettingsKeys.EnforceTabletMode.name,
                       defaultValue: false)
               ? this.tabletWidget

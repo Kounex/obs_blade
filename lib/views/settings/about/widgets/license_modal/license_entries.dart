@@ -91,7 +91,7 @@ class _LicenseEntriesState extends State<LicenseEntries> {
               shrinkWrap: true,
               controller: this.widget.scrollController,
               padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom),
+                  bottom: MediaQuery.viewPaddingOf(context).bottom),
               itemCount: snapshot.data!.packages.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,

@@ -72,8 +72,8 @@ class FullOverlayState extends State<FullOverlay>
           ),
         ),
         Positioned(
-          top: (MediaQuery.of(context).size.height / 2) - 75.0,
-          left: (MediaQuery.of(context).size.width / 2) - 75.0,
+          top: (MediaQuery.sizeOf(context).height / 2) - 75.0,
+          left: (MediaQuery.sizeOf(context).width / 2) - 75.0,
           child: Material(
             type: MaterialType.transparency,
             child: AnimatedBuilder(

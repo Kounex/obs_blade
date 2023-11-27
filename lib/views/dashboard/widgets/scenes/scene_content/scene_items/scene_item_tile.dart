@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/shared/network.dart';
@@ -55,35 +56,56 @@ class SceneItemTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: HiveBuilder<dynamic>(
-        hiveKey: HiveKeys.Settings,
-        rebuildKeys: const [SettingsKeys.ExposeStudioControls],
-        builder: (context, settingsBox, child) => IconButton(
-          icon: Icon(
-            this.sceneItem.sceneItemEnabled!
-                ? Icons.visibility
-                : Icons.visibility_off,
-            color: this.sceneItem.sceneItemEnabled!
-                ? Theme.of(context).buttonTheme.colorScheme!.primary
-                : CupertinoColors.destructiveRed,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          HiveBuilder<dynamic>(
+            hiveKey: HiveKeys.Settings,
+            rebuildKeys: const [
+              SettingsKeys.ExposeStudioControls,
+            ],
+            builder: (context, settingsBox, child) => IconButton(
+              icon: Icon(
+                this.sceneItem.sceneItemEnabled!
+                    ? Icons.visibility
+                    : Icons.visibility_off,
+                color: this.sceneItem.sceneItemEnabled!
+                    ? Theme.of(context).buttonTheme.colorScheme!.primary
+                    : CupertinoColors.destructiveRed,
+              ),
+              onPressed: () => NetworkHelper.makeRequest(
+                GetIt.instance<NetworkStore>().activeSession!.socket,
+                RequestType.SetSceneItemEnabled,
+                {
+                  /// Groups in WebSocket 5.X and higher is weird, therefore
+                  /// we need to use the parents scene item name as the
+                  /// 'sceneName' property if we are toggling a child of a
+                  /// group...
+                  'sceneName': this.sceneItem.parentGroupName ??
+                      (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
+                                  defaultValue: false) &&
+                              dashboardStore.studioMode
+                          ? dashboardStore.studioModePreviewSceneName
+                          : dashboardStore.activeSceneName),
+                  'sceneItemId': this.sceneItem.sceneItemId,
+                  'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
+                },
+              ),
+            ),
           ),
-          onPressed: () => NetworkHelper.makeRequest(
-              GetIt.instance<NetworkStore>().activeSession!.socket,
-              RequestType.SetSceneItemEnabled, {
-            /// Groups in WebSocket 5.X and higher is weird, therefore
-            /// we need to use the parents scene item name as the
-            /// 'sceneName' property if we are toggling a child of a
-            /// group...
-            'sceneName': this.sceneItem.parentGroupName ??
-                (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
-                            defaultValue: false) &&
-                        dashboardStore.studioMode
-                    ? dashboardStore.studioModePreviewSceneName
-                    : dashboardStore.activeSceneName),
-            'sceneItemId': this.sceneItem.sceneItemId,
-            'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
-          }),
-        ),
+          IconButton(
+            onPressed: this.sceneItem.filters != null &&
+                    this.sceneItem.filters!.isNotEmpty
+                ? () => ModalHandler.showBaseCupertinoBottomSheet(
+                      context: context,
+                      modalWidgetBuilder: (context, controller) => const Column(
+                        children: [Text('Test')],
+                      ),
+                    )
+                : null,
+            icon: const Icon(CupertinoIcons.color_filter),
+          )
+        ],
       ),
     );
   }

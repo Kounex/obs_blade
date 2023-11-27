@@ -31,6 +31,7 @@ mixin _$SceneItem {
       throw _privateConstructorUsedError;
   String? get sourceName => throw _privateConstructorUsedError;
   String? get sourceType => throw _privateConstructorUsedError;
+  List<Filter>? get filters => throw _privateConstructorUsedError;
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
   String? get parentGroupName => throw _privateConstructorUsedError;
@@ -65,6 +66,7 @@ abstract class $SceneItemCopyWith<$Res> {
       SceneItemTransform? sceneItemTransform,
       String? sourceName,
       String? sourceType,
+      List<Filter>? filters,
       String? parentGroupName,
       List<SceneItem>? groupChildren,
       bool displayGroup});
@@ -95,6 +97,7 @@ class _$SceneItemCopyWithImpl<$Res, $Val extends SceneItem>
     Object? sceneItemTransform = freezed,
     Object? sourceName = freezed,
     Object? sourceType = freezed,
+    Object? filters = freezed,
     Object? parentGroupName = freezed,
     Object? groupChildren = freezed,
     Object? displayGroup = null,
@@ -140,6 +143,10 @@ class _$SceneItemCopyWithImpl<$Res, $Val extends SceneItem>
           ? _value.sourceType
           : sourceType // ignore: cast_nullable_to_non_nullable
               as String?,
+      filters: freezed == filters
+          ? _value.filters
+          : filters // ignore: cast_nullable_to_non_nullable
+              as List<Filter>?,
       parentGroupName: freezed == parentGroupName
           ? _value.parentGroupName
           : parentGroupName // ignore: cast_nullable_to_non_nullable
@@ -188,6 +195,7 @@ abstract class _$$SceneItemImplCopyWith<$Res>
       SceneItemTransform? sceneItemTransform,
       String? sourceName,
       String? sourceType,
+      List<Filter>? filters,
       String? parentGroupName,
       List<SceneItem>? groupChildren,
       bool displayGroup});
@@ -217,6 +225,7 @@ class __$$SceneItemImplCopyWithImpl<$Res>
     Object? sceneItemTransform = freezed,
     Object? sourceName = freezed,
     Object? sourceType = freezed,
+    Object? filters = freezed,
     Object? parentGroupName = freezed,
     Object? groupChildren = freezed,
     Object? displayGroup = null,
@@ -262,6 +271,10 @@ class __$$SceneItemImplCopyWithImpl<$Res>
           ? _value.sourceType
           : sourceType // ignore: cast_nullable_to_non_nullable
               as String?,
+      filters: freezed == filters
+          ? _value._filters
+          : filters // ignore: cast_nullable_to_non_nullable
+              as List<Filter>?,
       parentGroupName: freezed == parentGroupName
           ? _value.parentGroupName
           : parentGroupName // ignore: cast_nullable_to_non_nullable
@@ -292,10 +305,12 @@ class _$SceneItemImpl implements _SceneItem {
       required this.sceneItemTransform,
       required this.sourceName,
       required this.sourceType,
+      final List<Filter>? filters,
       this.parentGroupName,
       final List<SceneItem>? groupChildren,
       this.displayGroup = false})
-      : _groupChildren = groupChildren;
+      : _filters = filters,
+        _groupChildren = groupChildren;
 
   factory _$SceneItemImpl.fromJson(Map<String, dynamic> json) =>
       _$$SceneItemImplFromJson(json);
@@ -320,6 +335,15 @@ class _$SceneItemImpl implements _SceneItem {
   final String? sourceName;
   @override
   final String? sourceType;
+  final List<Filter>? _filters;
+  @override
+  List<Filter>? get filters {
+    final value = _filters;
+    if (value == null) return null;
+    if (_filters is EqualUnmodifiableListView) return _filters;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
   @override
@@ -347,7 +371,7 @@ class _$SceneItemImpl implements _SceneItem {
 
   @override
   String toString() {
-    return 'SceneItem(inputKind: $inputKind, isGroup: $isGroup, sceneItemBlendMode: $sceneItemBlendMode, sceneItemEnabled: $sceneItemEnabled, sceneItemId: $sceneItemId, sceneItemIndex: $sceneItemIndex, sceneItemLocked: $sceneItemLocked, sceneItemTransform: $sceneItemTransform, sourceName: $sourceName, sourceType: $sourceType, parentGroupName: $parentGroupName, groupChildren: $groupChildren, displayGroup: $displayGroup)';
+    return 'SceneItem(inputKind: $inputKind, isGroup: $isGroup, sceneItemBlendMode: $sceneItemBlendMode, sceneItemEnabled: $sceneItemEnabled, sceneItemId: $sceneItemId, sceneItemIndex: $sceneItemIndex, sceneItemLocked: $sceneItemLocked, sceneItemTransform: $sceneItemTransform, sourceName: $sourceName, sourceType: $sourceType, filters: $filters, parentGroupName: $parentGroupName, groupChildren: $groupChildren, displayGroup: $displayGroup)';
   }
 
   @override
@@ -374,6 +398,7 @@ class _$SceneItemImpl implements _SceneItem {
                 other.sourceName == sourceName) &&
             (identical(other.sourceType, sourceType) ||
                 other.sourceType == sourceType) &&
+            const DeepCollectionEquality().equals(other._filters, _filters) &&
             (identical(other.parentGroupName, parentGroupName) ||
                 other.parentGroupName == parentGroupName) &&
             const DeepCollectionEquality()
@@ -396,6 +421,7 @@ class _$SceneItemImpl implements _SceneItem {
       sceneItemTransform,
       sourceName,
       sourceType,
+      const DeepCollectionEquality().hash(_filters),
       parentGroupName,
       const DeepCollectionEquality().hash(_groupChildren),
       displayGroup);
@@ -426,6 +452,7 @@ abstract class _SceneItem implements SceneItem {
       required final SceneItemTransform? sceneItemTransform,
       required final String? sourceName,
       required final String? sourceType,
+      final List<Filter>? filters,
       final String? parentGroupName,
       final List<SceneItem>? groupChildren,
       final bool displayGroup}) = _$SceneItemImpl;
@@ -453,6 +480,8 @@ abstract class _SceneItem implements SceneItem {
   String? get sourceName;
   @override
   String? get sourceType;
+  @override
+  List<Filter>? get filters;
   @override
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)

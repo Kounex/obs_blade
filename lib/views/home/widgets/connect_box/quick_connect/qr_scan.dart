@@ -156,7 +156,7 @@ class _QRScanState extends State<QRScan> {
           ),
           SafeArea(
             child: SizedBox(
-              height: MediaQuery.of(context).size.height / 5,
+              height: MediaQuery.sizeOf(context).height / 5,
               child: _controller != null && _permission
                   ? _qrScanState == null
                       ? BaseProgressIndicator(

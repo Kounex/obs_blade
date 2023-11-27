@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:obs_blade/types/classes/api/filter.dart';
 
 import 'scene_item_transform.dart';
 
@@ -18,6 +19,7 @@ class SceneItem with _$SceneItem {
     required SceneItemTransform? sceneItemTransform,
     required String? sourceName,
     required String? sourceType,
+    List<Filter>? filters,
 
     /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
     String? parentGroupName,

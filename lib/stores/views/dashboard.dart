@@ -10,6 +10,7 @@ import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/filter_list.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/screenshot.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
@@ -23,6 +24,7 @@ import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_record_directory.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_source_filter_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
@@ -680,7 +682,7 @@ abstract class _DashboardStore with Store {
         this.isReplayBufferActive = replayBufferStateChangedEvent.outputActive;
 
         if (!this.isReplayBufferActive) {
-          OverlayHandler.closeAnyOverlay(immediately: false);
+          OverlayHandler.closeAnyOverlay();
         }
         break;
       case EventType.VirtualcamStateChanged:
@@ -700,7 +702,7 @@ abstract class _DashboardStore with Store {
           RequestType.GetSceneCollectionList,
         );
 
-        OverlayHandler.closeAnyOverlay(immediately: false);
+        OverlayHandler.closeAnyOverlay();
 
         this.currentSceneCollectionName =
             currentSceneCollectionChangedEvent.sceneCollectionName;
@@ -969,6 +971,20 @@ abstract class _DashboardStore with Store {
               ..sort((sc1, sc2) =>
                   (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0));
 
+        NetworkHelper.makeBatchRequest(
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestBatchType.FilterList,
+          this
+              .currentSceneItems
+              .map(
+                (sceneItem) => RequestBatchObject(
+                  RequestType.GetSourceFilterList,
+                  {'sourceName': sceneItem.sourceName},
+                ),
+              )
+              .toList(),
+        );
+
         for (final sceneItem in this.currentSceneItems) {
           if (sceneItem.isGroup ?? false) {
             NetworkHelper.makeRequest(
@@ -1145,8 +1161,8 @@ abstract class _DashboardStore with Store {
         GetInputVolumeResponse getInputVolumeResponse =
             GetInputVolumeResponse(response.jsonRAW);
 
-        final requestData = NetworkHelper.requestBodyByUUID
-            .remove(getInputVolumeResponse.uuid)!;
+        final requestData =
+            NetworkHelper.getRequestBodyForUUID(getInputVolumeResponse.uuid)!;
 
         this.allInputs = ObservableList.of(this.allInputs.map((input) {
           if (input.inputName == requestData['inputName']) {
@@ -1468,6 +1484,37 @@ abstract class _DashboardStore with Store {
         this.manualScreenshotImageBytes = base64Decode(screenshotBatchResponse
             .getSourceScreenshotResponse.imageData
             .split(',')[1]);
+        break;
+
+      case RequestBatchType.FilterList:
+        FilterListBatchResponse filterListBatchResponse =
+            FilterListBatchResponse(batchResponse.jsonRAW);
+        final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
+            filterListBatchResponse.uuid)!;
+
+        List<Map<String, dynamic>> filterObjects = [];
+
+        for (final getSourceFilterListResponse
+            in filterListBatchResponse.filterLists) {
+          for (final requestBatchObject in requestBatchObjects) {
+            if (getSourceFilterListResponse.uuid == requestBatchObject.uuid) {
+              filterObjects.add({
+                'sourceName': requestBatchObject.body!['sourceName'],
+                'response': getSourceFilterListResponse,
+              });
+            }
+          }
+        }
+
+        this.currentSceneItems =
+            ObservableList.of(this.currentSceneItems.map((sceneItem) {
+          final filterObject = filterObjects.firstWhere((filterObject) =>
+              filterObject['sourceName'] == sceneItem.sourceName);
+
+          return sceneItem.copyWith(
+              filters: (filterObject['response'] as GetSourceFilterListResponse)
+                  .filters);
+        }));
         break;
     }
   }

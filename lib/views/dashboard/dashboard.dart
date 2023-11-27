@@ -150,7 +150,7 @@ class _DashboardViewState extends State<DashboardView> {
                   children: [
                     Align(
                       child: SizedBox(
-                        // width: MediaQuery.of(context).size.width / 100 * 85,
+                        // width: MediaQuery.sizeOf(context).width / 100 * 85,
                         child: Column(
                           children: [
                             const Padding(
@@ -195,7 +195,7 @@ class _DashboardViewState extends State<DashboardView> {
               ],
             ),
             Positioned(
-              top: kToolbarHeight + MediaQuery.of(context).padding.top,
+              top: kToolbarHeight + MediaQuery.viewPaddingOf(context).top,
               child: const Align(
                 alignment: Alignment.center,
                 child: FittedBox(

@@ -31,7 +31,7 @@ class RestoreButton extends StatelessWidget {
                 InAppPurchase.instance.restorePurchases();
                 OverlayHandler.showStatusOverlay(
                   context: context,
-                  showDuration: const Duration(seconds: 5),
+                  showDuration: const Duration(seconds: 10),
                   content: BaseProgressIndicator(
                     text: 'Trying to restore...',
                   ),
@@ -45,7 +45,7 @@ class RestoreButton extends StatelessWidget {
                   () {
                     if (!settingsBox.get(SettingsKeys.BoughtBlacksmith.name,
                         defaultValue: false)) {
-                      OverlayHandler.closeAnyOverlay(immediately: false);
+                      OverlayHandler.closeAnyOverlay();
                       ModalHandler.showBaseDialog(
                         context: context,
                         barrierDismissible: true,

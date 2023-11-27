@@ -21,6 +21,9 @@ _$SceneItemImpl _$$SceneItemImplFromJson(Map<String, dynamic> json) =>
               json['sceneItemTransform'] as Map<String, dynamic>),
       sourceName: json['sourceName'] as String?,
       sourceType: json['sourceType'] as String?,
+      filters: (json['filters'] as List<dynamic>?)
+          ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
+          .toList(),
       parentGroupName: json['parentGroupName'] as String?,
       groupChildren: (json['groupChildren'] as List<dynamic>?)
           ?.map((e) => SceneItem.fromJson(e as Map<String, dynamic>))
@@ -40,6 +43,7 @@ Map<String, dynamic> _$$SceneItemImplToJson(_$SceneItemImpl instance) =>
       'sceneItemTransform': instance.sceneItemTransform,
       'sourceName': instance.sourceName,
       'sourceType': instance.sourceType,
+      'filters': instance.filters,
       'parentGroupName': instance.parentGroupName,
       'groupChildren': instance.groupChildren,
       'displayGroup': instance.displayGroup,

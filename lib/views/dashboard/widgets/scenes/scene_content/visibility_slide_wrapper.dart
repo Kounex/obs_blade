@@ -128,7 +128,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
               enabled: false,
               startActionPane: ActionPane(
                 motion: const BehindMotion(),
-                extentRatio: 0.2,
+                extentRatio: 0.3,
                 children: [
                   CustomSlidableAction(
                     backgroundColor: hiddenSceneItem != null
@@ -155,28 +155,31 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                         hiddenSceneItemsBox.add(hiddenSceneItem!);
                       }
                     },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Icon(
-                            hiddenSceneItem != null
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            size: 18.0,
+                    child: Transform.translate(
+                      offset: const Offset(-18.0, 0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Icon(
+                              hiddenSceneItem != null
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              size: 18.0,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2.0),
-                        Flexible(
-                          child: Text(
-                            hiddenSceneItem != null ? 'Hidden' : 'Visible',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium!
-                                .copyWith(fontSize: 12.0),
+                          const SizedBox(height: 2.0),
+                          Flexible(
+                            child: Text(
+                              hiddenSceneItem != null ? 'Hidden' : 'Visible',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .copyWith(fontSize: 12.0),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],

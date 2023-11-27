@@ -20,18 +20,19 @@ class OverlayHandler {
   /// Any [content] can be displayed, just needs to be a [Widget]. [replaceIfActive], if true,
   /// will close any other overlay which may be active right now and display the new one then, otherwise
   /// the new overlay will be inserted on top
-  static Future<void> showStatusOverlay(
-      {required BuildContext context,
-      required Widget content,
-      Duration showDuration = kShowDuration,
-      Duration delayDuration = const Duration(milliseconds: 250),
-      bool replaceIfActive = false}) async {
+  static Future<void> showStatusOverlay({
+    required BuildContext context,
+    required Widget content,
+    Duration showDuration = kShowDuration,
+    Duration delayDuration = const Duration(milliseconds: 250),
+    bool replaceIfActive = false,
+  }) async {
     /// If a overlay is currently shown and [replaceIfActive] is false, we skip
     /// this function since we don't want to stack overlays and we didn't set
     /// [replaceIfActive]
     if (_currentOverlayEntry == null || replaceIfActive) {
       if (replaceIfActive) {
-        await OverlayHandler.closeAnyOverlay(immediately: false);
+        await OverlayHandler.closeAnyOverlay();
       }
 
       /// I have set an [Timer] as a delay after which we actually show the overlay.
@@ -43,8 +44,10 @@ class OverlayHandler {
       /// this delay but this gives us enough time to react to this overlay wanting to be
       /// shown
       _delayTimer = Timer(delayDuration, () {
-        _currentOverlayEntry = OverlayHandler.getStatusOverlay(
-            content: content, showDuration: showDuration);
+        _currentOverlayEntry = OverlayHandler._getStatusOverlay(
+          content: content,
+          showDuration: showDuration,
+        );
         Overlay.of(context, rootOverlay: true).insert(_currentOverlayEntry!);
       });
 
@@ -62,14 +65,16 @@ class OverlayHandler {
   }
 
   /// Manually close any overlay (if exists)
-  static Future<void> closeAnyOverlay({bool immediately = true}) async {
+  static Future<void> closeAnyOverlay({bool immediately = false}) async {
     _currentOverlayTimer?.cancel();
     _delayTimer?.cancel();
     if (!immediately) {
       await _fullOverlayKey.currentState?.closeOverlay();
     }
     try {
-      _currentOverlayEntry?.remove();
+      if (_currentOverlayEntry != null && _currentOverlayEntry!.mounted) {
+        _currentOverlayEntry?.remove();
+      }
       _currentOverlayEntry = null;
     } catch (e) {
       throw Exception(
@@ -80,16 +85,19 @@ class OverlayHandler {
   /// Function which actually returns the [OverlayEntry] used in
   /// [OverlayHelper.showStatusOverlay] and doesn't need to be called
   /// manually
-  static OverlayEntry getStatusOverlay({
+  static OverlayEntry _getStatusOverlay({
     required Widget content,
     required Duration showDuration,
   }) =>
       OverlayEntry(
-        builder: (context) => FullOverlay(
-          key: _fullOverlayKey,
-          content: content,
-          showDuration: showDuration,
-          animationDuration: kAnimationDuration,
+        builder: (context) => Material(
+          type: MaterialType.transparency,
+          child: FullOverlay(
+            key: _fullOverlayKey,
+            content: content,
+            showDuration: showDuration,
+            animationDuration: kAnimationDuration,
+          ),
         ),
       );
 }

@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 
 import 'app.dart';
 import 'models/enums/log_level.dart';
 import 'models/purchased_tip.dart';
 import 'shared/dialogs/info.dart';
+import 'shared/overlay/base_progress_indicator.dart';
 import 'types/enums/hive_keys.dart';
 import 'types/enums/settings_keys.dart';
 import 'utils/general_helper.dart';
@@ -28,9 +30,6 @@ class PurchaseBase extends StatefulWidget {
 
 class _PurchaseBaseState extends State<PurchaseBase> {
   late StreamSubscription<List<PurchaseDetails>> _subscription;
-
-  PurchaseStatus? _purchaseStatus;
-  final bool _showStatus = false;
 
   @override
   void initState() {
@@ -86,9 +85,9 @@ class _PurchaseBaseState extends State<PurchaseBase> {
                 SettingsKeys.BoughtBlacksmith.name,
                 true,
               );
-              OverlayHandler.closeAnyOverlay(immediately: false);
+              OverlayHandler.closeAnyOverlay();
               ModalHandler.showBaseDialog(
-                context: rootNavKey.currentState!.context,
+                context: RoutingHelper.tabBaseKey.currentContext!,
                 barrierDismissible: true,
                 dialogWidget: const InfoDialog(
                   body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
@@ -106,10 +105,19 @@ class _PurchaseBaseState extends State<PurchaseBase> {
     }
   }
 
+  void _showPendingUI() {
+    OverlayHandler.showStatusOverlay(
+      context: RoutingHelper.tabBaseKey.currentContext!,
+      showDuration: const Duration(seconds: 10),
+      content: BaseProgressIndicator(
+        text: 'Pending...',
+      ),
+    );
+  }
+
   Future<void> _listenToPurchaseUpdated(
       List<PurchaseDetails> purchaseDetailsList) async {
     for (var purchaseDetails in purchaseDetailsList) {
-      _purchaseStatus = purchaseDetails.status;
       GeneralHelper.advLog(
           '${purchaseDetails.productID} - ${purchaseDetails.status}');
       try {
@@ -118,8 +126,9 @@ class _PurchaseBaseState extends State<PurchaseBase> {
             .productDetails
             .first;
         if (purchaseDetails.status == PurchaseStatus.pending) {
-          // _showPendingUI();
+          _showPendingUI();
         } else {
+          OverlayHandler.closeAnyOverlay();
           if (purchaseDetails.status == PurchaseStatus.error) {
             // _handleError(purchaseDetails.error!);
           } else if (purchaseDetails.status == PurchaseStatus.purchased) {
@@ -144,7 +153,7 @@ class _PurchaseBaseState extends State<PurchaseBase> {
       alignment: Alignment.center,
       children: [
         this.widget.child,
-        Container(),
+        const SizedBox(),
       ],
     );
   }

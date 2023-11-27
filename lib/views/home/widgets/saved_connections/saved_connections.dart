@@ -46,7 +46,7 @@ class SavedConnections extends StatelessWidget {
                 } else {
                   return ReachableBuilder(
                     savedConnectionsBuilder: ((savedConnections) =>
-                        MediaQuery.of(context).size.width < width * 2.5
+                        MediaQuery.sizeOf(context).width < width * 2.5
                             ? SizedBox(
                                 height: height,
                                 child: PageView.builder(
@@ -101,7 +101,7 @@ class SavedConnections extends StatelessWidget {
                   //                   : 1
                   //               : c1.name!.compareTo(c2.name!));
 
-                  //       return MediaQuery.of(context).size.width < width * 2.5
+                  //       return MediaQuery.sizeOf(context).width < width * 2.5
                   //           ? SizedBox(
                   //               height: height,
                   //               child: PageView.builder(

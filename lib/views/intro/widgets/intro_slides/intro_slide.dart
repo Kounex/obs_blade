@@ -41,17 +41,17 @@ class IntroSlide extends StatelessWidget {
     //   duration: const Duration(milliseconds: 750),
     //   child: Padding(
     //     padding: EdgeInsets.only(
-    //       top: MediaQuery.of(context).padding.top + 32.0,
+    //       top: MediaQuery.viewPaddingOf(context).top + 32.0,
     //       left: 24.0,
     //       right: 24.0,
-    //       bottom: MediaQuery.of(context).padding.bottom +
+    //       bottom: MediaQuery.viewPaddingOf(context).bottom +
     //           kIntroControlsBottomPadding,
     //     ),
     //     child: Column(
     //       mainAxisAlignment: MainAxisAlignment.center,
     //       children: [
     //         SizedBox(
-    //           height: MediaQuery.of(context).size.height / 3,
+    //           height: MediaQuery.sizeOf(context).height / 3,
     //           child: Image.asset(this.imagePath),
     //         ),
     //         SizedBox(

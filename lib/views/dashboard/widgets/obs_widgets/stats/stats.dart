@@ -51,7 +51,7 @@ class _StatsState extends State<Stats> {
               controller: _pageController,
               children: <Widget>[
                 SizedBox(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery.sizeOf(context).width,
                   child: StatsContainer(
                     elevation: 0.0,
                     title: 'OBS Stats',
@@ -121,7 +121,7 @@ class _StatsState extends State<Stats> {
                   ),
                 ),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery.sizeOf(context).width,
                   child: StatsContainer(
                     elevation: 0.0,
                     title: 'Stream',
@@ -170,7 +170,7 @@ class _StatsState extends State<Stats> {
                   ),
                 ),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width,
+                  width: MediaQuery.sizeOf(context).width,
                   child: StatsContainer(
                     elevation: 0.0,
                     title: 'Recording',

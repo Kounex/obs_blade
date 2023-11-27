@@ -49,7 +49,7 @@ class RefresherAppBar extends StatelessWidget {
           title: LayoutBuilder(
             builder: (context, constraints) {
               if ((constraints.maxHeight -
-                          (MediaQuery.of(context).viewPadding.top - 16))
+                          (MediaQuery.viewPaddingOf(context).top - 16))
                       .toInt() <=
                   kRefresherAppBarHeight.toInt()) {
                 return Fader(

@@ -29,7 +29,7 @@ class _ScenePreviewState extends State<ScenePreview> {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     double maxImageHeight = min(
-      MediaQuery.of(context).size.height -
+      MediaQuery.sizeOf(context).height -
           kBottomNavigationBarHeight -
           kToolbarHeight -
           64,

@@ -183,13 +183,13 @@ class _IntroSlidesState extends State<IntroSlides> {
             const SizedBox(height: 12.0),
             Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).padding.bottom +
+                bottom: MediaQuery.viewPaddingOf(context).bottom +
                     kIntroControlsBottomPadding,
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: min(
-                    MediaQuery.of(context).size.width * 0.75,
+                    MediaQuery.sizeOf(context).width * 0.75,
                     500.0,
                   ),
                 ),
