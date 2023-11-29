@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/scene_items/filter_list.dart';
 
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/shared/network.dart';
@@ -98,9 +99,8 @@ class SceneItemTile extends StatelessWidget {
                     this.sceneItem.filters!.isNotEmpty
                 ? () => ModalHandler.showBaseCupertinoBottomSheet(
                       context: context,
-                      modalWidgetBuilder: (context, controller) => const Column(
-                        children: [Text('Test')],
-                      ),
+                      modalWidgetBuilder: (context, controller) =>
+                          FilterList(sceneItem: this.sceneItem),
                     )
                 : null,
             icon: const Icon(CupertinoIcons.color_filter),

@@ -80,7 +80,7 @@ class _HotkeyListState extends State<HotkeyList> {
                 placeholder: 'Filter...',
                 clearButtonMode: OverlayVisibilityMode.editing,
               ),
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 12.0),
             ],
           ),
         ),
@@ -108,8 +108,9 @@ class _HotkeyListState extends State<HotkeyList> {
                         controller: this.widget.controller,
                         padding: const EdgeInsets.symmetric(horizontal: 24.0) +
                             EdgeInsets.only(
-                                bottom: MediaQuery.paddingOf(context).bottom +
-                                    12.0),
+                              bottom:
+                                  MediaQuery.paddingOf(context).bottom + 12.0,
+                            ),
                         children: [
                           if (hotkeyBox.values.isNotEmpty) ...[
                             const SectionHeader(

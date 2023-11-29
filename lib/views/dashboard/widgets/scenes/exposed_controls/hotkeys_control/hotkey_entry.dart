@@ -37,11 +37,11 @@ class HotkeyEntry extends StatelessWidget {
             icon: this.hotkey.isInBox
                 ? CupertinoIcons.star_fill
                 : CupertinoIcons.star,
-            backgroundColor: Theme.of(context).colorScheme.background,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             foregroundColor: this.hotkey.isInBox
                 ? Colors.amber
-                : Theme.of(context).colorScheme.onBackground,
-            iconSize: 20.0,
+                : Theme.of(context).colorScheme.onSurface,
+            iconSize: 18.0,
             buttonSize: 32.0,
           ),
           const SizedBox(width: 18.0),
@@ -60,9 +60,9 @@ class HotkeyEntry extends StatelessWidget {
               );
             },
             icon: CupertinoIcons.play_arrow_solid,
-            backgroundColor: Theme.of(context).colorScheme.background,
-            foregroundColor: Theme.of(context).colorScheme.onBackground,
-            iconSize: 20.0,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+            iconSize: 18.0,
             buttonSize: 32.0,
           ),
         ],

@@ -53,7 +53,6 @@ class _StatsState extends State<Stats> {
                 SizedBox(
                   width: MediaQuery.sizeOf(context).width,
                   child: StatsContainer(
-                    elevation: 0.0,
                     title: 'OBS Stats',
                     trailing: const QuestionMarkTooltip(
                         message:
@@ -123,7 +122,6 @@ class _StatsState extends State<Stats> {
                 SizedBox(
                   width: MediaQuery.sizeOf(context).width,
                   child: StatsContainer(
-                    elevation: 0.0,
                     title: 'Stream',
                     children: [
                       FormattedText(
@@ -172,7 +170,6 @@ class _StatsState extends State<Stats> {
                 SizedBox(
                   width: MediaQuery.sizeOf(context).width,
                   child: StatsContainer(
-                    elevation: 0.0,
                     title: 'Recording',
                     children: [
                       FormattedText(

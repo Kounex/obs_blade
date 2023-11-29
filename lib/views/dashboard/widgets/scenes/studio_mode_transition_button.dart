@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';

@@ -10,8 +10,6 @@ class StatsContainer extends StatelessWidget {
   final List<FormattedText>? children;
   final Widget? child;
 
-  final double? elevation;
-
   final bool wrapWithDescribedBox;
 
   const StatsContainer({
@@ -20,7 +18,6 @@ class StatsContainer extends StatelessWidget {
     this.children,
     this.child,
     this.trailing,
-    this.elevation,
     this.wrapWithDescribedBox = false,
   })  : assert(child != null || children != null),
         super(key: key);
@@ -30,7 +27,6 @@ class StatsContainer extends StatelessWidget {
     return BaseCard(
       topPadding: 0.0,
       bottomPadding: 0.0,
-      elevation: this.elevation,
       titlePadding: const EdgeInsets.symmetric(
         horizontal: 18.0,
         vertical: 12.0,

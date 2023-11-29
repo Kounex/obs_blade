@@ -47,6 +47,7 @@ import '../../types/classes/stream/events/input_volume_changed.dart';
 import '../../types/classes/stream/events/input_volume_meters.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
+import '../../types/classes/stream/events/source_filter_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/events/virtual_cam_state_changed.dart';
 import '../../types/classes/stream/responses/base.dart';
@@ -880,6 +881,33 @@ abstract class _DashboardStore with Store {
           return input;
         }));
 
+        break;
+
+      case EventType.SourceFilterEnableStateChanged:
+        SourceFilterEnableStateChangedEvent
+            sourceFilterEnableStateChangedEvent =
+            SourceFilterEnableStateChangedEvent(event.jsonRAW);
+
+        this.currentSceneItems = ObservableList.of(
+          this.currentSceneItems.map((sceneItem) {
+            if ((sceneItem.filters?.isNotEmpty ?? false) &&
+                sceneItem.sourceName ==
+                    sourceFilterEnableStateChangedEvent.sourceName) {
+              return sceneItem.copyWith(
+                  filters: sceneItem.filters?.map((filter) {
+                if (filter.filterName ==
+                    sourceFilterEnableStateChangedEvent.filterName) {
+                  return filter.copyWith(
+                    filterEnabled:
+                        sourceFilterEnableStateChangedEvent.filterEnabled,
+                  );
+                }
+                return filter;
+              }).toList());
+            }
+            return sceneItem;
+          }),
+        );
         break;
       case EventType.ExitStarted:
         await _finishPastStreamData();
