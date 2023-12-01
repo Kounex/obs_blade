@@ -30,7 +30,15 @@ enum RequestBatchType {
   /// of these requests in one go and handle them at once!
   ///
   /// RequestType.GetSourceFilterList
-  FilterList;
+  FilterList,
+
+  /// [RequestType.GetSourceFilterList] returns the settings for the filters,
+  /// but only those which are changed (not default values). So we need to also
+  /// get the default values because otherwise we don't know the values
+  /// at all
+  ///
+  /// RequestType.GetSourceFilterDefaultSettings
+  FilterDefaultSettings;
 
   List<RequestType> get requestTypes => {
         RequestBatchType.Input: [
@@ -50,6 +58,9 @@ enum RequestBatchType {
         RequestBatchType.FilterList: [
           RequestType.GetSourceFilterList,
         ],
+        RequestBatchType.FilterDefaultSettings: [
+          RequestType.GetSourceFilterDefaultSettings,
+        ],
       }[this]!;
 
   /// Indicates whether we need to persist this request to get the
@@ -62,5 +73,6 @@ enum RequestBatchType {
         RequestBatchType.Stats: false,
         RequestBatchType.Screenshot: false,
         RequestBatchType.FilterList: true,
+        RequestBatchType.FilterDefaultSettings: true,
       }[this]!;
 }

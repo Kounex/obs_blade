@@ -154,6 +154,11 @@ enum RequestType {
   /// { 'sourceName': String } - Name of the source
   GetSourceFilterList,
 
+  /// Gets the default settings for a filter kind.
+  ///
+  /// { 'filterKind': String } - Filter kind to get the default settings for
+  GetSourceFilterDefaultSettings,
+
   /**
    * -----------------------------------------------------------------------
    * Requests which serve as 'setter' - we will set specific parameters
@@ -284,4 +289,12 @@ enum RequestType {
   /// {'filterName': String } - Name of the filter
   /// {'filterEnabled': bool } - New enable state of the filter
   SetSourceFilterEnabled,
+
+  /// Sets the settings of a source filter.
+  ///
+  /// {'sourceName': String } - Name of the source the filter is on
+  /// {'filterName': String } - Name of the filter to set the settings of
+  /// {'filterSettings': Object } - Object of settings to apply
+  /// (Optional) {'overlay': bool } - True == apply the settings on top of existing ones, False == reset the input to its defaults, then apply settings.
+  SetSourceFilterSettings,
 }

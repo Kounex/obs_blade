@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/scene_items/filter_list.dart';
+import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/scene_items/filter_list/filter_list.dart';
 
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/shared/network.dart';

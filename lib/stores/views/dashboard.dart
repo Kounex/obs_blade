@@ -10,6 +10,7 @@ import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/api/transition.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/filter_default_settings.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/filter_list.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/screenshot.dart';
@@ -24,6 +25,7 @@ import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_record_directory.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_source_filter_default_settings.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_source_filter_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
@@ -34,6 +36,7 @@ import 'package:obs_blade/types/extensions/int.dart';
 import '../../models/enums/log_level.dart';
 import '../../models/past_record_data.dart';
 import '../../models/past_stream_data.dart';
+import '../../types/classes/api/filter.dart';
 import '../../types/classes/api/record_stats.dart';
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
@@ -1155,7 +1158,7 @@ abstract class _DashboardStore with Store {
             GetReplayBufferStatusResponse(response.jsonRAW);
 
         this.isReplayBufferActive =
-            getReplayBufferStatusResponse.isReplayBufferActive;
+            getReplayBufferStatusResponse.isReplayBufferActive ?? false;
 
         break;
       case RequestType.GetVirtualCamStatus:
@@ -1543,6 +1546,74 @@ abstract class _DashboardStore with Store {
               filters: (filterObject['response'] as GetSourceFilterListResponse)
                   .filters);
         }));
+
+        /// Now we need to also fetch the default settings since previously we
+        /// only got the ones who have non default values
+        Set<String> filterKinds = {};
+
+        for (final sceneItem in this.currentSceneItems) {
+          for (final filter in sceneItem.filters ?? <Filter>[]) {
+            filterKinds.add(filter.filterKind);
+          }
+        }
+
+        NetworkHelper.makeBatchRequest(
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestBatchType.FilterDefaultSettings,
+          filterKinds
+              .map(
+                (filterKind) => RequestBatchObject(
+                    RequestType.GetSourceFilterDefaultSettings, {
+                  'filterKind': filterKind,
+                }),
+              )
+              .toList(),
+        );
+        break;
+      case RequestBatchType.FilterDefaultSettings:
+        FilterDefaultSettingsResponse filterDefaultSettingsResponse =
+            FilterDefaultSettingsResponse(batchResponse.jsonRAW);
+        final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
+            filterDefaultSettingsResponse.uuid)!;
+
+        List<Map<String, dynamic>> filterDefaultSettings = [];
+
+        for (final getSourceFilterDefaultSettingsResponse
+            in filterDefaultSettingsResponse.defaultSettings) {
+          for (final requestBatchObject in requestBatchObjects) {
+            if (getSourceFilterDefaultSettingsResponse.uuid ==
+                requestBatchObject.uuid) {
+              filterDefaultSettings.add({
+                'filterKind': requestBatchObject.body!['filterKind'],
+                'response': getSourceFilterDefaultSettingsResponse,
+              });
+            }
+          }
+        }
+
+        this.currentSceneItems =
+            ObservableList.of(this.currentSceneItems.map((sceneItem) {
+          return sceneItem.copyWith(
+              filters: sceneItem.filters?.map((filter) {
+            late final GetSourceFilterDefaultSettingsResponse
+                getSourceFilterDefaultSettingsResponse;
+            try {
+              getSourceFilterDefaultSettingsResponse =
+                  filterDefaultSettings.firstWhere((filterDefaultSetting) =>
+                          filterDefaultSetting['filterKind'] ==
+                          filter.filterKind)['response']
+                      as GetSourceFilterDefaultSettingsResponse;
+
+              return filter.copyWith(
+                filterSettings:
+                    getSourceFilterDefaultSettingsResponse.defaultFilterSettings
+                      ..addAll(filter.filterSettings),
+              );
+            } catch (_) {}
+            return filter;
+          }).toList());
+        }));
+
         break;
     }
   }

@@ -59,6 +59,8 @@ class BaseAdaptiveTextField extends StatefulWidget {
 
   final TargetPlatform? platform;
 
+  final void Function(String text)? onChanged;
+
   const BaseAdaptiveTextField({
     Key? key,
     required this.controller,
@@ -81,6 +83,7 @@ class BaseAdaptiveTextField extends StatefulWidget {
     this.suffixIcon,
     this.errorPaddingAlways = false,
     this.platform,
+    this.onChanged,
   }) : super(key: key);
 
   @override
@@ -154,6 +157,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
               readOnly: this.widget.readOnly,
               prefix: this.widget.prefix,
               suffix: this.widget.suffix ?? this.widget.suffixIcon,
+              onChanged: this.widget.onChanged,
             ),
           _ => Padding(
               padding: const EdgeInsets.only(bottom: 4.0),
@@ -195,6 +199,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
                 obscureText: this.widget.obscureText,
                 enabled: this.widget.enabled,
                 readOnly: this.widget.readOnly,
+                onChanged: this.widget.onChanged,
               ),
             ),
         },
