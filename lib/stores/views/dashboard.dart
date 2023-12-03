@@ -496,6 +496,20 @@ abstract class _DashboardStore with Store {
     _checkConnectionTimer?.cancel();
   }
 
+  void fetchSceneItemsFilters() => NetworkHelper.makeBatchRequest(
+        GetIt.instance<NetworkStore>().activeSession!.socket,
+        RequestBatchType.FilterList,
+        this
+            .currentSceneItems
+            .map(
+              (sceneItem) => RequestBatchObject(
+                RequestType.GetSourceFilterList,
+                {'sourceName': sceneItem.sourceName},
+              ),
+            )
+            .toList(),
+      );
+
   @action
   void init() {
     this.handleStream();
@@ -1002,19 +1016,7 @@ abstract class _DashboardStore with Store {
               ..sort((sc1, sc2) =>
                   (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0));
 
-        NetworkHelper.makeBatchRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestBatchType.FilterList,
-          this
-              .currentSceneItems
-              .map(
-                (sceneItem) => RequestBatchObject(
-                  RequestType.GetSourceFilterList,
-                  {'sourceName': sceneItem.sourceName},
-                ),
-              )
-              .toList(),
-        );
+        this.fetchSceneItemsFilters();
 
         for (final sceneItem in this.currentSceneItems) {
           if (sceneItem.isGroup ?? false) {

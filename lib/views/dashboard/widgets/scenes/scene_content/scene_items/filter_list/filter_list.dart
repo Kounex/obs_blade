@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -27,9 +29,15 @@ class FilterList extends StatefulWidget {
 class _FilterListState extends State<FilterList> {
   final List<ReactionDisposer> _d = [];
 
+  late final Timer _timer;
+
   @override
   void initState() {
     super.initState();
+
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      GetIt.instance<DashboardStore>().fetchSceneItemsFilters();
+    });
 
     when(
       (_) => GetIt.instance<NetworkStore>().obsTerminated,
@@ -43,6 +51,8 @@ class _FilterListState extends State<FilterList> {
       d();
     }
 
+    _timer.cancel();
+
     super.dispose();
   }
 
@@ -50,118 +60,115 @@ class _FilterListState extends State<FilterList> {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Observer(builder: (context) {
-      /// Hacky approach... this widget will be displayed in a
-      /// CupertinoModalBottomSheet which will be provided the [SceneItem]
-      /// which filters we are editing. When we update the filters, the
-      /// underlying [SceneItem] is updated but not a new one is provided
-      /// here in the widget since it's being called imperatively...
-      late SceneItem sceneItem;
-      try {
-        sceneItem = dashboardStore.currentSceneItems.firstWhere(
-          (sceneItem) => sceneItem.sceneItemId == sceneItem.sceneItemId,
-        );
-      } catch (_) {
-        Navigator.of(context).pop();
-      }
-      return Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Filters',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                Text(
-                  sceneItem.sourceName!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 12.0),
-                const Text(
-                    'List of filters which are attached to the selected scene item.'),
-                const SizedBox(height: 24.0),
-                const BaseDivider(),
-              ],
+    return Observer(
+      builder: (context) {
+        /// Hacky approach... this widget will be displayed in a
+        /// CupertinoModalBottomSheet which will be provided the [SceneItem]
+        /// which filters we are editing. When we update the filters, the
+        /// underlying [SceneItem] is updated but not a new one is provided
+        /// here in the widget since it's being called imperatively...
+        late SceneItem sceneItem;
+        try {
+          sceneItem = dashboardStore.currentSceneItems.firstWhere(
+            (sceneItem) => sceneItem.sceneItemId == sceneItem.sceneItemId,
+          );
+        } catch (_) {
+          Navigator.of(context).pop();
+        }
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filters',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  Text(
+                    sceneItem.sourceName!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12.0),
+                  const Text(
+                      'List of filters which are attached to the selected scene item.'),
+                  const SizedBox(height: 24.0),
+                  const BaseDivider(),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: Scrollbar(
-              child: ListView.builder(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.paddingOf(context).bottom + 12.0,
-                ),
-                itemCount: sceneItem.filters?.length ?? 0,
-                itemBuilder: (context, index) => ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  title: Text(sceneItem.filters![index].filterName),
-                  subtitle: Column(
-                    children: sceneItem.filters![index].filterSettings.entries
-                        .mapIndexed(
-                          (filterSetting, settingIndex) => DynamicInput(
-                            label: filterSetting.key,
-                            value: filterSetting.value,
-                            onUpdate: (updatedValue) =>
-                                NetworkHelper.makeRequest(
+            Expanded(
+              child: Scrollbar(
+                child: ListView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.paddingOf(context).bottom + 12.0,
+                  ),
+                  children: sceneItem.filters!
+                      .map(
+                        (filter) => ListTile(
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 24.0),
+                          title: Text(filter.filterName),
+                          trailing: IconButton(
+                            onPressed: () => NetworkHelper.makeRequest(
                               GetIt.instance<NetworkStore>()
                                   .activeSession!
                                   .socket,
-                              RequestType.SetSourceFilterSettings,
+                              RequestType.SetSourceFilterEnabled,
                               {
                                 'sourceName': sceneItem.sourceName,
-                                'filterName': filterSetting.key,
-                                'filterSettings':
-                                    sceneItem.filters![index].filterSettings
-                                      ..update(filterSetting.key,
-                                          (value) => updatedValue),
-                                // {}..addEntries(
-                                //     sceneItem.filters![index].filterSettings
-                                //         .entries
-                                //         .map((innerFilterSetting) {
-                                //       if (innerFilterSetting.key ==
-                                //           filterSetting.key) {
-                                //         return MapEntry(
-                                //           filterSetting.key,
-                                //           updatedValue,
-                                //         );
-                                //       }
-                                //       return innerFilterSetting;
-                                //     }),
-                                //   )
+                                'filterName': filter.filterName,
+                                'filterEnabled': !filter.filterEnabled,
                               },
                             ),
+                            icon: Icon(
+                              filter.filterEnabled
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: filter.filterEnabled
+                                  ? Theme.of(context)
+                                      .buttonTheme
+                                      .colorScheme!
+                                      .primary
+                                  : CupertinoColors.destructiveRed,
+                            ),
                           ),
-                        )
-                        .toList(),
-                  ),
-                  trailing: IconButton(
-                    onPressed: () => NetworkHelper.makeRequest(
-                      GetIt.instance<NetworkStore>().activeSession!.socket,
-                      RequestType.SetSourceFilterEnabled,
-                      {
-                        'sourceName': sceneItem.sourceName,
-                        'filterName': sceneItem.filters![index].filterName,
-                        'filterEnabled':
-                            !sceneItem.filters![index].filterEnabled,
-                      },
-                    ),
-                    icon: Icon(
-                      sceneItem.filters![index].filterEnabled
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: sceneItem.filters![index].filterEnabled
-                          ? Theme.of(context).buttonTheme.colorScheme!.primary
-                          : CupertinoColors.destructiveRed,
-                    ),
-                  ),
+                          subtitle: Column(
+                            children: filter.filterSettings.entries
+                                .mapIndexed(
+                                  (filterSetting, settingIndex) => DynamicInput(
+                                    label: filterSetting.key,
+                                    value: filterSetting.value,
+                                    onUpdate: (updatedValue) {
+                                      NetworkHelper.makeRequest(
+                                        GetIt.instance<NetworkStore>()
+                                            .activeSession!
+                                            .socket,
+                                        RequestType.SetSourceFilterSettings,
+                                        {
+                                          'sourceName': sceneItem.sourceName,
+                                          'filterName': filter.filterName,
+                                          'filterSettings': {}
+                                            ..addAll(filter.filterSettings)
+                                            ..update(filterSetting.key,
+                                                (value) => updatedValue),
+                                        },
+                                      );
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 }
