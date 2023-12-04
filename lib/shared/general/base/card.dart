@@ -24,6 +24,7 @@ class BaseCard extends StatelessWidget {
   final Color? borderColor;
 
   final String? title;
+  final TextStyle? titleStyle;
   final Widget? titleWidget;
 
   final Widget? trailingTitleWidget;
@@ -52,6 +53,7 @@ class BaseCard extends StatelessWidget {
     this.paintBorder = false,
     this.borderColor,
     this.title,
+    this.titleStyle,
     this.titleWidget,
     this.trailingTitleWidget,
     this.paddingChild = const EdgeInsets.all(18.0),
@@ -119,7 +121,7 @@ class BaseCard extends StatelessWidget {
                         child: this.titleWidget == null
                             ? Text(
                                 this.title!,
-                                style:
+                                style: this.titleStyle ??
                                     Theme.of(context).textTheme.headlineSmall,
                               )
                             : this.titleWidget!),

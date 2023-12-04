@@ -72,7 +72,7 @@ class _DynamicInputState extends State<DynamicInput> {
           ),
         ),
         Container(
-          width: 128.0,
+          width: 102.0,
           alignment: Alignment.centerRight,
           child: switch (_type) {
             InputType.Int => BaseAdaptiveTextField(
@@ -94,8 +94,7 @@ class _DynamicInputState extends State<DynamicInput> {
               ),
             InputType.Bool => BaseAdaptiveSwitch(
                 value: this.widget.value,
-                onChanged: (value) =>
-                    this.widget.onUpdate?.call(value.toString()),
+                onChanged: (value) => this.widget.onUpdate?.call(value),
               ),
             InputType.String => BaseAdaptiveTextField(
                 focusNode: _focusNode,

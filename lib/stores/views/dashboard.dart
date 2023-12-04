@@ -25,7 +25,6 @@ import 'package:obs_blade/types/classes/stream/responses/get_profile_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_record_directory.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_status.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
-import 'package:obs_blade/types/classes/stream/responses/get_source_filter_default_settings.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_source_filter_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
@@ -41,6 +40,7 @@ import '../../types/classes/api/record_stats.dart';
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/stream_stats.dart';
+import '../../types/classes/default_filter.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/events/current_preview_scene_changed.dart';
 import '../../types/classes/stream/events/current_program_scene_changed.dart';
@@ -261,6 +261,8 @@ abstract class _DashboardStore with Store {
 
   int _recordingStartedRenderFramesTotal = 0;
   int _recordingStartedRenderFramesSkipped = 0;
+
+  final List<DefaultFilter> _defaultFilters = [];
 
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
@@ -489,6 +491,87 @@ abstract class _DashboardStore with Store {
       ).inMilliseconds;
     }
     return null;
+  }
+
+  /// Here we need to drill down to every single FilterSetting of every [Filter]
+  /// a [SceneItem] can have and check if the values in those have been updated
+  /// (which means the corresponding FilterSetting in [filterObjects] has a
+  /// different value)
+  bool _filterSettingsUnchanged(List<Map<String, dynamic>> filterObjects) =>
+      this.currentSceneItems.every((sceneItem) {
+        final filterObject = filterObjects.firstWhere((filterObject) =>
+            filterObject['sourceName'] == sceneItem.sourceName);
+
+        if (sceneItem.filters.length !=
+            (filterObject['response'] as GetSourceFilterListResponse)
+                .filters
+                .length) {
+          return false;
+        }
+
+        return sceneItem.filters.every((filter) {
+          final responseFilter =
+              (filterObject['response'] as GetSourceFilterListResponse)
+                  .filters
+                  .firstWhere((responseFilter) =>
+                      responseFilter.filterName == filter.filterName);
+
+          if (filter.filterSettings.length !=
+              responseFilter.filterSettings.length) {
+            return false;
+          }
+
+          return filter.filterSettings.entries.every((filterSetting) {
+            return filterSetting.value ==
+                responseFilter.filterSettings.entries
+                    .firstWhere((responseFilterSetting) =>
+                        responseFilterSetting.key == filterSetting.key)
+                    .value;
+          });
+        });
+      });
+
+  /// Currently (hopefully fixed someday) not all [Filter]s have default
+  /// FilterSettings... some are just empty. To have a consistent experience
+  /// with this circumstance, we need to remove FilterSettings which have
+  /// been set back to a default value and we just don't have that default
+  /// value
+  void _removeEmptyDefaultFilterSettings(
+    Map<String, dynamic> filterSettings,
+    Map<String, dynamic> responseFilterSettings,
+    Filter filter,
+  ) {
+    final defaultFilter = _defaultFilters.firstWhere(
+        (defaultFilter) => defaultFilter.filterKind == filter.filterKind);
+
+    filterSettings.removeWhere((key, value) =>
+        (!responseFilterSettings.containsKey(key) &&
+            !defaultFilter.filterSettings.containsKey(key)));
+  }
+
+  Filter _filterWithDefaults(Filter filter) {
+    try {
+      final defaultFilterSettings = _defaultFilters
+          .firstWhere(
+              (defaultFilter) => defaultFilter.filterKind == filter.filterKind)
+          .filterSettings;
+
+      final filterSettings = <String, dynamic>{}..addAll(filter.filterSettings);
+
+      /// Other than in the update request for our [Filter]s, where we
+      /// use the update function on map, we will use the putIfAbsent
+      /// since we only want to add a default value when there is no
+      /// other present because otherwise the changed value is the
+      /// correct one.
+      for (final defaultFilterSetting in defaultFilterSettings.entries) {
+        filterSettings.putIfAbsent(
+            defaultFilterSetting.key, () => defaultFilterSetting.value);
+      }
+
+      return filter.copyWith(filterSettings: filterSettings);
+    } catch (_) {
+      return filter;
+    }
   }
 
   void stopTimers() {
@@ -907,11 +990,11 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneItems = ObservableList.of(
           this.currentSceneItems.map((sceneItem) {
-            if ((sceneItem.filters?.isNotEmpty ?? false) &&
+            if ((sceneItem.filters.isNotEmpty) &&
                 sceneItem.sourceName ==
                     sourceFilterEnableStateChangedEvent.sourceName) {
               return sceneItem.copyWith(
-                  filters: sceneItem.filters?.map((filter) {
+                  filters: sceneItem.filters.map((filter) {
                 if (filter.filterName ==
                     sourceFilterEnableStateChangedEvent.filterName) {
                   return filter.copyWith(
@@ -1539,38 +1622,102 @@ abstract class _DashboardStore with Store {
           }
         }
 
-        this.currentSceneItems =
-            ObservableList.of(this.currentSceneItems.map((sceneItem) {
-          final filterObject = filterObjects.firstWhere((filterObject) =>
-              filterObject['sourceName'] == sceneItem.sourceName);
+        /// We only want to update our [currentSceneItems] when we actually have
+        /// new values in our FilterSettings of our [Filters] to avoid possible
+        /// UI rebuilds
+        if (!_filterSettingsUnchanged(filterObjects)) {
+          this.currentSceneItems = ObservableList.of(
+            this.currentSceneItems.map((sceneItem) {
+              final filterObject = filterObjects.firstWhere((filterObject) =>
+                  filterObject['sourceName'] == sceneItem.sourceName);
 
-          return sceneItem.copyWith(
-              filters: (filterObject['response'] as GetSourceFilterListResponse)
-                  .filters);
-        }));
+              final List<Filter> responseFilters =
+                  (filterObject['response'] as GetSourceFilterListResponse)
+                      .filters;
 
-        /// Now we need to also fetch the default settings since previously we
-        /// only got the ones who have non default values
+              /// Our existing [Filter]s are the leading information. Since the
+              /// the order is: first getting all [Filter]s of a [SceneItem]
+              /// which will only expose the FilterSettings of non-default values
+              /// and then (since we now have the [filterKind]s) we fetch the
+              /// default FilterSettings of these.
+              List<Filter> filters = [...sceneItem.filters];
+
+              /// If this is the first time we fetch the current [Filter]s, we
+              /// can just add them since there are no default ones.
+              if (filters.length != responseFilters.length) {
+                filters = [];
+                filters.addAll(responseFilters.map(_filterWithDefaults));
+              } else {
+                /// We handle this case if this is a subsequent fetch and our
+                /// [Filter]s are already populated. Here we need to make sure
+                /// to find the correct corresponding FilterSetting of our response
+                /// and update our existing ones.
+                filters = filters.map((filter) {
+                  final responseFilterSettings = responseFilters
+                      .firstWhere((responseFilter) =>
+                          responseFilter.filterKind == filter.filterKind)
+                      .filterSettings;
+
+                  final filterSettings = <String, dynamic>{}
+                    ..addAll(filter.filterSettings);
+
+                  _removeEmptyDefaultFilterSettings(
+                    filterSettings,
+                    responseFilterSettings,
+                    filter,
+                  );
+
+                  for (final responseFilterSetting
+                      in responseFilterSettings.entries) {
+                    filterSettings.update(
+                      responseFilterSetting.key,
+                      (_) => responseFilterSetting.value,
+                      ifAbsent: () => responseFilterSetting.value,
+                    );
+                  }
+
+                  return filter.copyWith(filterSettings: filterSettings);
+                }).toList();
+              }
+              filters.sort((a, b) => a.filterIndex - b.filterIndex);
+
+              return sceneItem.copyWith(filters: filters);
+            }),
+          );
+        }
+
+        /// Since this request is used for updating our FilterSettings but is
+        /// also the first one to call without having one before, we need
+        /// to check that. We basically check if we already have the
+        /// default values for the [Filter]s we have active. If that is
+        /// the case, we don't need to get these and therefore don't update
+        /// our [Filter]s. If not done yet or we just got a new [Filter], we
+        /// will make an additional batch request (see below)
         Set<String> filterKinds = {};
 
         for (final sceneItem in this.currentSceneItems) {
-          for (final filter in sceneItem.filters ?? <Filter>[]) {
-            filterKinds.add(filter.filterKind);
+          for (final filter in sceneItem.filters) {
+            if (!_defaultFilters.any((defaultFilter) =>
+                defaultFilter.filterKind == filter.filterKind)) {
+              filterKinds.add(filter.filterKind);
+            }
           }
         }
 
-        NetworkHelper.makeBatchRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestBatchType.FilterDefaultSettings,
-          filterKinds
-              .map(
-                (filterKind) => RequestBatchObject(
-                    RequestType.GetSourceFilterDefaultSettings, {
-                  'filterKind': filterKind,
-                }),
-              )
-              .toList(),
-        );
+        if (filterKinds.isNotEmpty) {
+          NetworkHelper.makeBatchRequest(
+            GetIt.instance<NetworkStore>().activeSession!.socket,
+            RequestBatchType.FilterDefaultSettings,
+            filterKinds
+                .map(
+                  (filterKind) => RequestBatchObject(
+                      RequestType.GetSourceFilterDefaultSettings, {
+                    'filterKind': filterKind,
+                  }),
+                )
+                .toList(),
+          );
+        }
         break;
       case RequestBatchType.FilterDefaultSettings:
         FilterDefaultSettingsResponse filterDefaultSettingsResponse =
@@ -1578,43 +1725,31 @@ abstract class _DashboardStore with Store {
         final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
             filterDefaultSettingsResponse.uuid)!;
 
-        List<Map<String, dynamic>> filterDefaultSettings = [];
-
         for (final getSourceFilterDefaultSettingsResponse
             in filterDefaultSettingsResponse.defaultSettings) {
           for (final requestBatchObject in requestBatchObjects) {
             if (getSourceFilterDefaultSettingsResponse.uuid ==
-                requestBatchObject.uuid) {
-              filterDefaultSettings.add({
-                'filterKind': requestBatchObject.body!['filterKind'],
-                'response': getSourceFilterDefaultSettingsResponse,
-              });
+                    requestBatchObject.uuid &&
+                !_defaultFilters.any((defaultFilter) =>
+                    defaultFilter.filterKind ==
+                    requestBatchObject.body!['filterKind'])) {
+              _defaultFilters.add(
+                DefaultFilter(
+                  requestBatchObject.body!['filterKind'],
+                  getSourceFilterDefaultSettingsResponse.defaultFilterSettings,
+                ),
+              );
             }
           }
         }
 
-        this.currentSceneItems =
-            ObservableList.of(this.currentSceneItems.map((sceneItem) {
-          return sceneItem.copyWith(
-              filters: sceneItem.filters?.map((filter) {
-            late final GetSourceFilterDefaultSettingsResponse
-                getSourceFilterDefaultSettingsResponse;
-            try {
-              getSourceFilterDefaultSettingsResponse =
-                  filterDefaultSettings.firstWhere((filterDefaultSetting) =>
-                          filterDefaultSetting['filterKind'] ==
-                          filter.filterKind)['response']
-                      as GetSourceFilterDefaultSettingsResponse;
-
-              return filter.copyWith(
-                filterSettings:
-                    getSourceFilterDefaultSettingsResponse.defaultFilterSettings
-                      ..addAll(filter.filterSettings),
-              );
-            } catch (_) {}
-            return filter;
-          }).toList());
-        }));
+        this.currentSceneItems = ObservableList.of(
+          this.currentSceneItems.map(
+                (sceneItem) => sceneItem.copyWith(
+                  filters: sceneItem.filters.map(_filterWithDefaults).toList(),
+                ),
+              ),
+        );
 
         break;
     }

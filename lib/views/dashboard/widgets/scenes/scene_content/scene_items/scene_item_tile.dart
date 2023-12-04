@@ -95,8 +95,7 @@ class SceneItemTile extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: this.sceneItem.filters != null &&
-                    this.sceneItem.filters!.isNotEmpty
+            onPressed: this.sceneItem.filters.isNotEmpty
                 ? () => ModalHandler.showBaseCupertinoBottomSheet(
                       context: context,
                       modalWidgetBuilder: (context, controller) =>

@@ -31,7 +31,7 @@ mixin _$SceneItem {
       throw _privateConstructorUsedError;
   String? get sourceName => throw _privateConstructorUsedError;
   String? get sourceType => throw _privateConstructorUsedError;
-  List<Filter>? get filters => throw _privateConstructorUsedError;
+  List<Filter> get filters => throw _privateConstructorUsedError;
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
   String? get parentGroupName => throw _privateConstructorUsedError;
@@ -66,7 +66,7 @@ abstract class $SceneItemCopyWith<$Res> {
       SceneItemTransform? sceneItemTransform,
       String? sourceName,
       String? sourceType,
-      List<Filter>? filters,
+      List<Filter> filters,
       String? parentGroupName,
       List<SceneItem>? groupChildren,
       bool displayGroup});
@@ -97,7 +97,7 @@ class _$SceneItemCopyWithImpl<$Res, $Val extends SceneItem>
     Object? sceneItemTransform = freezed,
     Object? sourceName = freezed,
     Object? sourceType = freezed,
-    Object? filters = freezed,
+    Object? filters = null,
     Object? parentGroupName = freezed,
     Object? groupChildren = freezed,
     Object? displayGroup = null,
@@ -143,10 +143,10 @@ class _$SceneItemCopyWithImpl<$Res, $Val extends SceneItem>
           ? _value.sourceType
           : sourceType // ignore: cast_nullable_to_non_nullable
               as String?,
-      filters: freezed == filters
+      filters: null == filters
           ? _value.filters
           : filters // ignore: cast_nullable_to_non_nullable
-              as List<Filter>?,
+              as List<Filter>,
       parentGroupName: freezed == parentGroupName
           ? _value.parentGroupName
           : parentGroupName // ignore: cast_nullable_to_non_nullable
@@ -195,7 +195,7 @@ abstract class _$$SceneItemImplCopyWith<$Res>
       SceneItemTransform? sceneItemTransform,
       String? sourceName,
       String? sourceType,
-      List<Filter>? filters,
+      List<Filter> filters,
       String? parentGroupName,
       List<SceneItem>? groupChildren,
       bool displayGroup});
@@ -225,7 +225,7 @@ class __$$SceneItemImplCopyWithImpl<$Res>
     Object? sceneItemTransform = freezed,
     Object? sourceName = freezed,
     Object? sourceType = freezed,
-    Object? filters = freezed,
+    Object? filters = null,
     Object? parentGroupName = freezed,
     Object? groupChildren = freezed,
     Object? displayGroup = null,
@@ -271,10 +271,10 @@ class __$$SceneItemImplCopyWithImpl<$Res>
           ? _value.sourceType
           : sourceType // ignore: cast_nullable_to_non_nullable
               as String?,
-      filters: freezed == filters
+      filters: null == filters
           ? _value._filters
           : filters // ignore: cast_nullable_to_non_nullable
-              as List<Filter>?,
+              as List<Filter>,
       parentGroupName: freezed == parentGroupName
           ? _value.parentGroupName
           : parentGroupName // ignore: cast_nullable_to_non_nullable
@@ -305,7 +305,7 @@ class _$SceneItemImpl implements _SceneItem {
       required this.sceneItemTransform,
       required this.sourceName,
       required this.sourceType,
-      final List<Filter>? filters,
+      final List<Filter> filters = const [],
       this.parentGroupName,
       final List<SceneItem>? groupChildren,
       this.displayGroup = false})
@@ -335,14 +335,13 @@ class _$SceneItemImpl implements _SceneItem {
   final String? sourceName;
   @override
   final String? sourceType;
-  final List<Filter>? _filters;
+  final List<Filter> _filters;
   @override
-  List<Filter>? get filters {
-    final value = _filters;
-    if (value == null) return null;
+  @JsonKey()
+  List<Filter> get filters {
     if (_filters is EqualUnmodifiableListView) return _filters;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_filters);
   }
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
@@ -452,7 +451,7 @@ abstract class _SceneItem implements SceneItem {
       required final SceneItemTransform? sceneItemTransform,
       required final String? sourceName,
       required final String? sourceType,
-      final List<Filter>? filters,
+      final List<Filter> filters,
       final String? parentGroupName,
       final List<SceneItem>? groupChildren,
       final bool displayGroup}) = _$SceneItemImpl;
@@ -481,7 +480,7 @@ abstract class _SceneItem implements SceneItem {
   @override
   String? get sourceType;
   @override
-  List<Filter>? get filters;
+  List<Filter> get filters;
   @override
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)

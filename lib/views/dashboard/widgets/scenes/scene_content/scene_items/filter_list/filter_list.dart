@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/types/extensions/list.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/scene_items/filter_list/dynamic_input.dart';
 
@@ -104,13 +104,19 @@ class _FilterListState extends State<FilterList> {
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.paddingOf(context).bottom + 12.0,
                   ),
-                  children: sceneItem.filters!
+                  children: sceneItem.filters
                       .map(
-                        (filter) => ListTile(
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 24.0),
-                          title: Text(filter.filterName),
-                          trailing: IconButton(
+                        (filter) => BaseCard(
+                          leftPadding: 24.0,
+                          rightPadding: 24.0,
+                          bottomPadding: 0,
+                          title: filter.filterName,
+                          titlePadding: const EdgeInsets.symmetric(
+                            horizontal: 18.0,
+                            vertical: 12.0,
+                          ),
+                          titleStyle: Theme.of(context).textTheme.bodyLarge,
+                          trailingTitleWidget: IconButton(
                             onPressed: () => NetworkHelper.makeRequest(
                               GetIt.instance<NetworkStore>()
                                   .activeSession!
@@ -134,28 +140,31 @@ class _FilterListState extends State<FilterList> {
                                   : CupertinoColors.destructiveRed,
                             ),
                           ),
-                          subtitle: Column(
+                          child: Column(
                             children: filter.filterSettings.entries
-                                .mapIndexed(
-                                  (filterSetting, settingIndex) => DynamicInput(
-                                    label: filterSetting.key,
-                                    value: filterSetting.value,
-                                    onUpdate: (updatedValue) {
-                                      NetworkHelper.makeRequest(
-                                        GetIt.instance<NetworkStore>()
-                                            .activeSession!
-                                            .socket,
-                                        RequestType.SetSourceFilterSettings,
-                                        {
-                                          'sourceName': sceneItem.sourceName,
-                                          'filterName': filter.filterName,
-                                          'filterSettings': {}
-                                            ..addAll(filter.filterSettings)
-                                            ..update(filterSetting.key,
-                                                (value) => updatedValue),
-                                        },
-                                      );
-                                    },
+                                .map(
+                                  (filterSetting) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: DynamicInput(
+                                      label: filterSetting.key,
+                                      value: filterSetting.value,
+                                      onUpdate: (updatedValue) {
+                                        NetworkHelper.makeRequest(
+                                          GetIt.instance<NetworkStore>()
+                                              .activeSession!
+                                              .socket,
+                                          RequestType.SetSourceFilterSettings,
+                                          {
+                                            'sourceName': sceneItem.sourceName,
+                                            'filterName': filter.filterName,
+                                            'filterSettings': {}
+                                              ..addAll(filter.filterSettings)
+                                              ..update(filterSetting.key,
+                                                  (value) => updatedValue),
+                                          },
+                                        );
+                                      },
+                                    ),
                                   ),
                                 )
                                 .toList(),

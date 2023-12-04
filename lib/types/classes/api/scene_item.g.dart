@@ -22,8 +22,9 @@ _$SceneItemImpl _$$SceneItemImplFromJson(Map<String, dynamic> json) =>
       sourceName: json['sourceName'] as String?,
       sourceType: json['sourceType'] as String?,
       filters: (json['filters'] as List<dynamic>?)
-          ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
-          .toList(),
+              ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
       parentGroupName: json['parentGroupName'] as String?,
       groupChildren: (json['groupChildren'] as List<dynamic>?)
           ?.map((e) => SceneItem.fromJson(e as Map<String, dynamic>))
