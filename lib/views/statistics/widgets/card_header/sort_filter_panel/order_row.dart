@@ -20,7 +20,6 @@ class OrderRow extends StatelessWidget {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(builder: (context) {
-      statisticsStore.triggeredDefault;
       return Row(
         children: [
           Expanded(
