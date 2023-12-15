@@ -136,6 +136,27 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
     super.dispose();
   }
 
+  List<TextInputFormatter>? _textInputFormatter() {
+    if (this.widget.inputFormatters != null) {
+      return this.widget.inputFormatters;
+    }
+
+    if (this.widget.keyboardType == TextInputType.number) {
+      return [
+        FilteringTextInputFormatter.digitsOnly,
+      ];
+    }
+
+    if (this.widget.keyboardType ==
+        const TextInputType.numberWithOptions(decimal: true)) {
+      return [
+        FilteringTextInputFormatter.deny(',', replacementString: '.'),
+        FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d*')),
+      ];
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -148,7 +169,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
               cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
               placeholder: this.widget.placeholder,
               keyboardType: this.widget.keyboardType,
-              inputFormatters: this.widget.inputFormatters ?? [],
+              inputFormatters: _textInputFormatter(),
               minLines: this.widget.minLines,
               maxLines: this.widget.maxLines ?? this.widget.minLines,
               autocorrect: this.widget.autocorrect,
@@ -192,7 +213,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
                       : null,
                 ),
                 keyboardType: this.widget.keyboardType,
-                inputFormatters: this.widget.inputFormatters ?? [],
+                inputFormatters: _textInputFormatter(),
                 minLines: this.widget.minLines,
                 maxLines: this.widget.maxLines ?? this.widget.minLines,
                 autocorrect: this.widget.autocorrect,

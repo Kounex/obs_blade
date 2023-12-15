@@ -102,7 +102,7 @@ class LogDetailView extends StatelessWidget {
       body: HiveBuilder<AppLog>(
         hiveKey: HiveKeys.AppLog,
         builder: (context, appLogBox, child) => Observer(
-          builder: (_) {
+          builder: (context) {
             Map<String, List<AppLog>> mergedLogs = {};
 
             List<AppLog>.from(appLogBox.values)

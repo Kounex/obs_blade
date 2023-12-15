@@ -28,7 +28,7 @@ class TransitionControls extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Observer(builder: (_) {
+    return Observer(builder: (context) {
       TextEditingController controller = TextEditingController(
           text: dashboardStore.currentTransition?.transitionDuration
                   ?.toString() ??

@@ -13,7 +13,7 @@ class StatisticsDateRange extends StatelessWidget {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(
-      builder: (_) => DateRange(
+      builder: (context) => DateRange(
         selectedFromDate: statisticsStore.fromDate,
         updateFromDate: (date) => statisticsStore.setFromDate(date),
         selectedToDate: statisticsStore.toDate,

@@ -67,7 +67,7 @@ class _FilterDurationState extends State<FilterDuration> {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(
-      builder: (_) => Row(
+      builder: (context) => Row(
         children: [
           SizedBox(
             width: 142.0,

@@ -33,7 +33,7 @@ class CupertinoDropdown<T> extends StatelessWidget {
             right: 2.0,
           ),
           child: DropdownButton<T>(
-            underline: Container(),
+            underline: const SizedBox(),
             isExpanded: true,
             isDense: true,
             value: this.value,

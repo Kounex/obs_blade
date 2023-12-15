@@ -19,8 +19,9 @@ class OrderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
-    return Observer(
-      builder: (_) => Row(
+    return Observer(builder: (context) {
+      statisticsStore.triggeredDefault;
+      return Row(
         children: [
           Expanded(
             child: CupertinoDropdown<FilterType>(
@@ -46,7 +47,7 @@ class OrderRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 }

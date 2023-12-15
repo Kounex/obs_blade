@@ -46,7 +46,7 @@ class _StatsState extends State<Stats> {
           ),
         ),
         Expanded(
-          child: Observer(builder: (_) {
+          child: Observer(builder: (context) {
             return PageView(
               controller: _pageController,
               children: <Widget>[

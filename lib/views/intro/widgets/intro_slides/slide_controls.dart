@@ -72,7 +72,7 @@ class _SlideControlsState extends State<SlideControls> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Observer(builder: (_) {
+        Observer(builder: (context) {
           return SizedBox(
             height: 52.0,
             width: 52.0,
@@ -114,7 +114,7 @@ class _SlideControlsState extends State<SlideControls> {
           ),
           count: this.widget.amountChildren,
         ),
-        Observer(builder: (_) {
+        Observer(builder: (context) {
           return SizedBox(
             height: 52.0,
             width: 52.0,

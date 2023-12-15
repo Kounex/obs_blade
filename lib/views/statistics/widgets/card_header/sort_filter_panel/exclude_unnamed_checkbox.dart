@@ -16,7 +16,7 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
     return Transform.translate(
       offset: const Offset(-12.0, 0.0),
       child: Observer(
-        builder: (_) => BaseCheckbox(
+        builder: (context) => BaseCheckbox(
           value: statisticsStore.excludeUnnamedStats,
           text: 'Exclude unnamed entries',
           tristate: true,

@@ -78,7 +78,7 @@ class _ScenePreviewState extends State<ScenePreview> {
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Observer(
-                    builder: (_) => Stack(
+                    builder: (context) => Stack(
                       children: [
                         if (dashboardStore.scenePreviewImageBytes != null)
                           Column(

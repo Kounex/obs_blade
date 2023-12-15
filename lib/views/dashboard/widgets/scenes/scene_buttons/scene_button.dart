@@ -38,7 +38,7 @@ class SceneButton extends StatelessWidget {
       hiveKey: HiveKeys.Settings,
       rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) => Observer(
-        builder: (_) =>
+        builder: (context) =>
             // GestureDetector(
             //   onTap: () {
             //     if (dashboardStore.editSceneVisibility) {

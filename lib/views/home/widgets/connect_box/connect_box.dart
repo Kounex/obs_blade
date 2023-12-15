@@ -17,7 +17,7 @@ class ConnectBox extends StatelessWidget {
     HomeStore homeStore = GetIt.instance<HomeStore>();
 
     return Observer(
-      builder: (_) => SwitcherCard(
+      builder: (context) => SwitcherCard(
         title: homeStore.connectMode.text,
         child: () {
           switch (homeStore.connectMode) {

@@ -34,7 +34,7 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(
-      builder: (_) {
+      builder: (context) {
         int amountPages =
             _getMaxPages(statisticsStore.amountStatisticEntries.number);
         if (_page > amountPages) {

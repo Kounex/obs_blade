@@ -51,7 +51,7 @@ class BlacksmithContent extends StatelessWidget {
         HiveBuilder<dynamic>(
           hiveKey: HiveKeys.Settings,
           rebuildKeys: const [SettingsKeys.BoughtBlacksmith],
-          builder: (_, settingsBox, child) {
+          builder: (context, settingsBox, child) {
             if (!settingsBox.get(
               SettingsKeys.BoughtBlacksmith.name,
               defaultValue: false,

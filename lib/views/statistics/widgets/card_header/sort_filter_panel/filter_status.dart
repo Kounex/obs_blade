@@ -12,7 +12,7 @@ class FilterStatus extends StatelessWidget {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(
-      builder: (_) => TagBox(
+      builder: (context) => TagBox(
         color: statisticsStore.isFilterSortActive
             ? Theme.of(context).colorScheme.secondary
             : Theme.of(context).scaffoldBackgroundColor,

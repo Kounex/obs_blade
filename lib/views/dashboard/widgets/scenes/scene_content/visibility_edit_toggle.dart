@@ -41,7 +41,7 @@ class VisibilityEditToggle extends StatelessWidget {
     };
 
     Widget editButton = Observer(
-      builder: (_) => ThemedCupertinoButton(
+      builder: (context) => ThemedCupertinoButton(
         text: (this.sceneItemType == SceneItemType.Source
                 ? dashboardStore.editSceneItemVisibility
                 : dashboardStore.editAudioVisibility)

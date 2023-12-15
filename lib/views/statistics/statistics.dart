@@ -288,7 +288,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                           ),
                           paddingChild: const EdgeInsets.all(0),
                           child: Observer(
-                            builder: (_) {
+                            builder: (context) {
                               /// Only purpose of this line is to omit the debug message of
                               /// missing observable (which is not correct) since I pass the
                               /// store to internal functions to handle sort and filter where

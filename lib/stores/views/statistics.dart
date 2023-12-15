@@ -139,7 +139,7 @@ abstract class _StatisticsStore with Store {
     this.excludeUnnamedStats = false;
     this.statType = StatType.All;
     this.durationFilter = null;
-    this.durationFilterAmount;
+    this.durationFilterAmount = null;
     this.durationFilterTimeUnit = TimeUnit.Minutes;
 
     /// Used as a toggle (only listen for change, not value) to exactly determine

@@ -14,7 +14,7 @@ class AmountEntriesControl extends StatelessWidget {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(
-      builder: (_) => SizedBox(
+      builder: (context) => SizedBox(
         width: double.infinity,
         child: CupertinoSlidingSegmentedControl<AmountStatisticEntries>(
           groupValue: statisticsStore.amountStatisticEntries,

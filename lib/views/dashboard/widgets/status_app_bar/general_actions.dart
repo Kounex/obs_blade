@@ -45,7 +45,7 @@ class GeneralActions extends StatelessWidget {
             SettingsKeys.DontShowStreamStopMessage,
           ],
           builder: (context, settingsBox, child) => Observer(
-            builder: (_) => AppBarActions(
+            builder: (context) => AppBarActions(
               actions: [
                 if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
                     defaultValue: false))

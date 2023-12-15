@@ -81,7 +81,7 @@ class SavedConnections extends StatelessWidget {
                               )),
                   );
                   // return Observer(
-                  //   builder: (_) => FutureBuilder<List<Connection>>(
+                  //   builder: (context) => FutureBuilder<List<Connection>>(
                   //     future:
                   //         GetIt.instance<HomeStore>().autodiscoverConnections,
                   //     builder: (context, snapshot) {

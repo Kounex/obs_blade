@@ -13,7 +13,7 @@ class FavoriteControl extends StatelessWidget {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Observer(
-      builder: (_) => SizedBox(
+      builder: (context) => SizedBox(
         width: double.infinity,
         child: CupertinoSlidingSegmentedControl(
           groupValue: statisticsStore.showOnlyFavorites ?? 'null',

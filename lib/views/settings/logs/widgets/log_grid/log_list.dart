@@ -25,7 +25,7 @@ class LogList extends StatelessWidget {
       child: HiveBuilder<AppLog>(
           hiveKey: HiveKeys.AppLog,
           builder: (context, appLogBox, child) {
-            return Observer(builder: (_) {
+            return Observer(builder: (context) {
               List<int> datesMSWithLogs = [];
 
               Iterable<AppLog> filteredOrderedLogs =

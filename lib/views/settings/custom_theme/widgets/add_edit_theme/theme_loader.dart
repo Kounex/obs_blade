@@ -63,7 +63,7 @@ class _ThemeLoaderState extends State<ThemeLoader> {
                     ),
                   )
                   .toList(),
-              selectedItemBuilder: (_) => _availableThemes
+              selectedItemBuilder: (context) => _availableThemes
                   .map(
                     (theme) => Text(
                       theme.name ?? 'OBS Blade Base',

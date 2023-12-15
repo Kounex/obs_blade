@@ -99,7 +99,7 @@ class _TabBaseState extends State<TabBase> {
     TabsStore tabsStore = GetIt.instance<TabsStore>();
 
     return Scaffold(
-      body: Observer(builder: (_) {
+      body: Observer(builder: (context) {
         return WillPopScope(
           onWillPop: () {
             if (tabsStore.navigatorKeys[tabsStore.activeTab]!.currentState!
@@ -131,7 +131,7 @@ class _TabBaseState extends State<TabBase> {
       }),
       extendBody: true,
       bottomNavigationBar: Observer(
-        builder: (_) => CupertinoTabBar(
+        builder: (context) => CupertinoTabBar(
           backgroundColor: !StylingHelper.isApple(context)
               ? CupertinoTheme.of(context).barBackgroundColor.withOpacity(1.0)
               : null,

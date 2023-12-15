@@ -134,7 +134,7 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     return ThemedCupertinoScaffold(
-      body: Observer(builder: (_) {
+      body: Observer(builder: (context) {
         return Stack(
           alignment: Alignment.topCenter,
           children: [

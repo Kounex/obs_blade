@@ -151,7 +151,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
             ),
           ),
         ),
-        collapsed: Container(),
+        collapsed: const SizedBox(),
         expanded: this.widget.expandedBody,
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
+import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
 import 'package:obs_blade/shared/general/described_box.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/hotkeys_control/hotkeys_control.dart';
 import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/replay_buffer_controls.dart';
@@ -90,8 +92,23 @@ class ExposedControls extends StatelessWidget {
         return exposedControls.isNotEmpty
             ? BaseCard(
                 bottomPadding: 0.0,
-                child: Column(
-                  children: exposedControls,
+                paddingChild: const EdgeInsets.symmetric(vertical: 18.0),
+                child: CustomExpansionTile(
+                  headerText: 'Exposed Controls',
+                  headerPadding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  expandedBody: Column(
+                    children: [
+                      const SizedBox(height: 18.0),
+                      const BaseDivider(),
+                      const SizedBox(height: 24.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                        child: Column(
+                          children: exposedControls,
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               )
             : const SizedBox();

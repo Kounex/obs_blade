@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/adaptive_switch.dart';
 import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
+import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 
 enum InputType {
   Int,
@@ -75,22 +76,28 @@ class _DynamicInputState extends State<DynamicInput> {
           width: 102.0,
           alignment: Alignment.centerRight,
           child: switch (_type) {
-            InputType.Int => BaseAdaptiveTextField(
+            InputType.Int => KeyboardNumberHeader(
                 focusNode: _focusNode,
-                controller: _controller,
-                keyboardType: TextInputType.number,
-                onChanged: (value) => int.tryParse(value) != null
-                    ? this.widget.onUpdate?.call(int.parse(value))
-                    : null,
+                child: BaseAdaptiveTextField(
+                  focusNode: _focusNode,
+                  controller: _controller,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) => int.tryParse(value) != null
+                      ? this.widget.onUpdate?.call(int.parse(value))
+                      : null,
+                ),
               ),
-            InputType.Double => BaseAdaptiveTextField(
+            InputType.Double => KeyboardNumberHeader(
                 focusNode: _focusNode,
-                controller: _controller,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                onChanged: (value) => double.tryParse(value) != null
-                    ? this.widget.onUpdate?.call(double.parse(value))
-                    : null,
+                child: BaseAdaptiveTextField(
+                  focusNode: _focusNode,
+                  controller: _controller,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (value) => double.tryParse(value) != null
+                      ? this.widget.onUpdate?.call(double.parse(value))
+                      : null,
+                ),
               ),
             InputType.Bool => BaseAdaptiveSwitch(
                 value: this.widget.value,

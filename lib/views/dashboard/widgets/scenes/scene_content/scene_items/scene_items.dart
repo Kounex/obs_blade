@@ -27,7 +27,7 @@ class _SceneItemsState extends State<SceneItems>
     super.build(context);
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Observer(builder: (_) {
+    return Observer(builder: (context) {
       return NestedScrollManager(
         parentScrollController:
             ModalRoute.of(context)!.settings.arguments as ScrollController,

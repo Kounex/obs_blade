@@ -28,7 +28,7 @@ class _AudioInputsState extends State<AudioInputs>
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return Observer(
-      builder: (_) => NestedScrollManager(
+      builder: (context) => NestedScrollManager(
         parentScrollController:
             ModalRoute.of(context)!.settings.arguments as ScrollController,
         child: Scrollbar(

@@ -19,7 +19,7 @@ class LogFilter extends StatelessWidget {
     return BaseCard(
       bottomPadding: 12.0,
       child: Observer(
-        builder: (_) {
+        builder: (context) {
           return Column(
             children: [
               DateRange(

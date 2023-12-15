@@ -29,7 +29,8 @@ class SceneButtons extends StatelessWidget {
 
       return HiveBuilder<HiddenScene>(
         hiveKey: HiveKeys.HiddenScene,
-        builder: (context, hiddenScenesBox, child) => Observer(builder: (_) {
+        builder: (context, hiddenScenesBox, child) =>
+            Observer(builder: (context) {
           Iterable<Scene>? visibleScenes = dashboardStore.scenes;
           List<HiddenScene> hiddenScenes = [];
 

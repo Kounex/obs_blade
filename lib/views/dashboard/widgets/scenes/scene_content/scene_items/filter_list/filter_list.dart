@@ -102,7 +102,7 @@ class _FilterListState extends State<FilterList> {
               child: Scrollbar(
                 child: ListView(
                   padding: EdgeInsets.only(
-                    bottom: MediaQuery.paddingOf(context).bottom + 12.0,
+                    bottom: MediaQuery.paddingOf(context).bottom + 24.0,
                   ),
                   children: sceneItem.filters
                       .map(

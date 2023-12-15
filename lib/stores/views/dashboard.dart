@@ -549,7 +549,7 @@ abstract class _DashboardStore with Store {
             !defaultFilter.filterSettings.containsKey(key)));
   }
 
-  Filter _filterWithDefaults(Filter filter) {
+  Filter _populateFiltersWithDefaults(Filter filter) {
     try {
       final defaultFilterSettings = _defaultFilters
           .firstWhere(
@@ -1642,11 +1642,13 @@ abstract class _DashboardStore with Store {
               /// default FilterSettings of these.
               List<Filter> filters = [...sceneItem.filters];
 
-              /// If this is the first time we fetch the current [Filter]s, we
-              /// can just add them since there are no default ones.
+              /// If this is the first time we fetch the current [Filter]s or we
+              /// have new ones or some were deleted, we can just add them since
+              /// there are no default ones.
               if (filters.length != responseFilters.length) {
                 filters = [];
-                filters.addAll(responseFilters.map(_filterWithDefaults));
+                filters
+                    .addAll(responseFilters.map(_populateFiltersWithDefaults));
               } else {
                 /// We handle this case if this is a subsequent fetch and our
                 /// [Filter]s are already populated. Here we need to make sure
@@ -1746,7 +1748,9 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(
           this.currentSceneItems.map(
                 (sceneItem) => sceneItem.copyWith(
-                  filters: sceneItem.filters.map(_filterWithDefaults).toList(),
+                  filters: sceneItem.filters
+                      .map(_populateFiltersWithDefaults)
+                      .toList(),
                 ),
               ),
         );

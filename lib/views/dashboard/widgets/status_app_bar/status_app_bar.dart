@@ -80,7 +80,7 @@ class StatusAppBar extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 2.0, bottom: 2.0),
-                child: Observer(builder: (_) {
+                child: Observer(builder: (context) {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

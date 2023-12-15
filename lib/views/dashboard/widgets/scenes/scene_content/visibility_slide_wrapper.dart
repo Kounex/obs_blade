@@ -120,7 +120,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
         }
 
         return Observer(
-          builder: (_) => Offstage(
+          builder: (context) => Offstage(
             offstage: _isItemHidden(
                 dashboardStore, hiddenSceneItemsBox, hiddenSceneItem),
             child: Slidable(
