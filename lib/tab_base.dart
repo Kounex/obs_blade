@@ -103,9 +103,8 @@ class _TabBaseState extends State<TabBase> {
         return PopScope(
           canPop: false,
           onPopInvoked: (didPop) {
-            if (tabsStore.navigatorKeys[tabsStore.activeTab]!.currentState!
-                .canPop()) {
-              tabsStore.navigatorKeys[tabsStore.activeTab]!.currentState!.pop();
+            if (tabsStore.keyForCurrentTab().currentState!.canPop()) {
+              tabsStore.keyForCurrentTab().currentState!.pop();
             } else if (tabsStore.activeTab != Tabs.Home) {
               tabsStore.setActiveTab(Tabs.Home);
             }

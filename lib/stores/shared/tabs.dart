@@ -23,6 +23,12 @@ abstract class _TabsStore with Store {
   @observable
   bool performTabClickAction = false;
 
+  GlobalKey<NavigatorState> keyForCurrentTab() =>
+      this.navigatorKeys[this.activeTab]!;
+      
+  String activeRouteForCurrentTab() =>
+      this.activeRoutePerNavigator[this.activeTab]!;
+
   @action
   void setActiveTab(Tabs activeTab) => this.activeTab = activeTab;
 
