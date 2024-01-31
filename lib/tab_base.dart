@@ -100,17 +100,15 @@ class _TabBaseState extends State<TabBase> {
 
     return Scaffold(
       body: Observer(builder: (context) {
-        return WillPopScope(
-          onWillPop: () {
+        return PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) {
             if (tabsStore.navigatorKeys[tabsStore.activeTab]!.currentState!
                 .canPop()) {
               tabsStore.navigatorKeys[tabsStore.activeTab]!.currentState!.pop();
-              return Future.value(false);
             } else if (tabsStore.activeTab != Tabs.Home) {
               tabsStore.setActiveTab(Tabs.Home);
-              return Future.value(false);
             }
-            return Future.value(true);
           },
           child: IndexedStack(
             index: tabsStore.activeTab.index,
