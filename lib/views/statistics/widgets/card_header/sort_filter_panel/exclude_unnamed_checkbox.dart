@@ -14,11 +14,12 @@ class ExcludeUnnamedCheckbox extends StatelessWidget {
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Transform.translate(
-      offset: const Offset(-12.0, 0.0),
+      offset: const Offset(-14.0, 0.0),
       child: Observer(
         builder: (context) => BaseCheckbox(
           value: statisticsStore.excludeUnnamedStats,
           text: 'Exclude unnamed entries',
+          smallText: true,
           tristate: true,
           onChanged: (excludeUnnamedStats) {
             HapticFeedback.lightImpact();

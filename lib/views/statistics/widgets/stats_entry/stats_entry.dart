@@ -101,27 +101,30 @@ class StatsEntry extends StatelessWidget {
                             arguments: this.pastStatsData,
                           )
                       : null,
-                  subtitle: Wrap(
-                    spacing: 8.0,
-                    runSpacing: 4.0,
-                    children: [
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 250.0),
-                        child: StatsDateChip(
-                          label: 'From:',
-                          content:
-                              '${(this.pastStatsData.listEntryDateMS.last - this.pastStatsData.totalTime! * 1000).millisecondsToFormattedDateString()} - ${(this.pastStatsData.listEntryDateMS.last - this.pastStatsData.totalTime! * 1000).millisecondsToFormattedTimeString()}',
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 250.0),
+                          child: StatsDateChip(
+                            label: 'From:',
+                            content:
+                                '${(this.pastStatsData.listEntryDateMS.last - this.pastStatsData.totalTime! * 1000).millisecondsToFormattedDateString()} - ${(this.pastStatsData.listEntryDateMS.last - this.pastStatsData.totalTime! * 1000).millisecondsToFormattedTimeString()}',
+                          ),
                         ),
-                      ),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 250.0),
-                        child: StatsDateChip(
-                          label: 'To:',
-                          content:
-                              '${this.pastStatsData.listEntryDateMS.last.millisecondsToFormattedDateString()} - ${this.pastStatsData.listEntryDateMS.last.millisecondsToFormattedTimeString()}',
+                        const SizedBox(height: 12.0),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 250.0),
+                          child: StatsDateChip(
+                            label: 'To:',
+                            content:
+                                '${this.pastStatsData.listEntryDateMS.last.millisecondsToFormattedDateString()} - ${this.pastStatsData.listEntryDateMS.last.millisecondsToFormattedTimeString()}',
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/types/extensions/color.dart';
 
 import '../models/custom_theme.dart';
 import '../types/enums/hive_keys.dart';
@@ -41,12 +42,20 @@ class StylingHelper {
       // : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
       : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 
+  static bool colorIsDark({BuildContext? context, Color? color}) {
+    assert(context != null || color != null);
+    return (color ?? Theme.of(context!).cardColor).computeLuminance() < 0.5;
+  }
+
+  static Color lightenDarkenColor(Color color, [int percent = 5]) =>
+      StylingHelper.colorIsDark(color: color)
+          ? color.lighten(percent)
+          : color.darken(percent);
+
   static Color surroundingAwareAccent(
       {BuildContext? context, Color? surroundingColor}) {
     assert(context != null || surroundingColor != null);
-    return (surroundingColor ?? Theme.of(context!).cardColor)
-                .computeLuminance() <
-            0.5
+    return StylingHelper.colorIsDark(context: context, color: surroundingColor)
         ? Colors.white
         : Colors.black;
   }
