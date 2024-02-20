@@ -12,7 +12,7 @@ class KeyboardNumberHeader extends StatelessWidget {
     required this.child,
     required this.focusNode,
     this.onDone,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

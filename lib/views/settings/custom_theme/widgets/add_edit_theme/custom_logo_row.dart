@@ -21,7 +21,7 @@ class CustomLogoRow extends StatelessWidget {
     required this.customTheme,
     required this.onSelectLogo,
     required this.onReset,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

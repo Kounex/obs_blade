@@ -17,7 +17,7 @@ import '../widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {
-  const StatisticDetailView({Key? key}) : super(key: key);
+  const StatisticDetailView({Key? key});
 
   @override
   _StatisticDetailViewState createState() => _StatisticDetailViewState();

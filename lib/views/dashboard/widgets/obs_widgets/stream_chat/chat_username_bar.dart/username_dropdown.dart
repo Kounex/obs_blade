@@ -7,8 +7,7 @@ import '../../../../../../types/enums/settings_keys.dart';
 class UsernameDropdown extends StatelessWidget {
   final Box settingsBox;
 
-  const UsernameDropdown({Key? key, required this.settingsBox})
-      : super(key: key);
+  const UsernameDropdown({super.key, required this.settingsBox});
 
   @override
   Widget build(BuildContext context) {

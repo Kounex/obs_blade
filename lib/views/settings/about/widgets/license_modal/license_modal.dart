@@ -10,7 +10,7 @@ import '../license_modal/license_entries.dart';
 class LicenseModal extends StatelessWidget {
   final ScrollController? scrollController;
 
-  const LicenseModal({Key? key, this.scrollController}) : super(key: key);
+  const LicenseModal({super.key, this.scrollController});
 
   @override
   Widget build(BuildContext context) {

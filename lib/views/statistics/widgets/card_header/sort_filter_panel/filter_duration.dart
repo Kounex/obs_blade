@@ -18,7 +18,7 @@ const List<DurationFilter?> kActiveDurationFilters = [
 ];
 
 class FilterDuration extends StatefulWidget {
-  const FilterDuration({Key? key}) : super(key: key);
+  const FilterDuration({Key? key});
 
   @override
   State<FilterDuration> createState() => _FilterDurationState();

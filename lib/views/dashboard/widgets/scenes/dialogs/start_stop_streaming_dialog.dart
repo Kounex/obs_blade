@@ -13,7 +13,7 @@ class StartStopStreamingDialog extends StatelessWidget {
     Key? key,
     required this.isLive,
     required this.onStreamStartStop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -9,7 +9,7 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
 class TransitionControls extends StatelessWidget {
-  const TransitionControls({Key? key}) : super(key: key);
+  const TransitionControls({Key? key});
 
   void _handleSubmit(TextEditingController controller) {
     if (controller.text.isEmpty) {

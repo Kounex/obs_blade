@@ -16,7 +16,7 @@ class InfoDialog extends StatelessWidget {
     this.title,
     this.enableDontShowAgainOption = false,
     this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

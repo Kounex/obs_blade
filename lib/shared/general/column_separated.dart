@@ -22,7 +22,7 @@ class ColumnSeparated extends StatelessWidget {
     this.additionalPaddingSeparator = const EdgeInsets.all(0.0),
     this.lightDivider = true,
     this.customSeparator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

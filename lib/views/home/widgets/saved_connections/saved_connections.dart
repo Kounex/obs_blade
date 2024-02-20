@@ -9,7 +9,7 @@ import 'connection_box.dart';
 import 'placeholder_connection.dart';
 
 class SavedConnections extends StatelessWidget {
-  const SavedConnections({Key? key}) : super(key: key);
+  const SavedConnections({Key? key});
 
   @override
   Widget build(BuildContext context) {

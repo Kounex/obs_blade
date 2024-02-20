@@ -20,7 +20,7 @@ class BlacksmithContent extends StatelessWidget {
   const BlacksmithContent({
     Key? key,
     required this.blacksmithDetails,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

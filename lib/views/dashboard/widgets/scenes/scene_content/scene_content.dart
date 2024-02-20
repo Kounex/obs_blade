@@ -5,7 +5,7 @@ import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
 
 class SceneContent extends StatelessWidget {
-  const SceneContent({Key? key}) : super(key: key);
+  const SceneContent({Key? key});
 
   @override
   Widget build(BuildContext context) {

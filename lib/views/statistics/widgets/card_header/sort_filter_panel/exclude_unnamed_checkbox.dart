@@ -7,7 +7,7 @@ import '../../../../../shared/general/base/checkbox.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class ExcludeUnnamedCheckbox extends StatelessWidget {
-  const ExcludeUnnamedCheckbox({Key? key}) : super(key: key);
+  const ExcludeUnnamedCheckbox({Key? key});
 
   @override
   Widget build(BuildContext context) {

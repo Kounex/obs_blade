@@ -16,8 +16,7 @@ class ThemeEntry extends StatelessWidget {
   final bool isEditable;
 
   const ThemeEntry(
-      {Key? key, required this.customTheme, this.isEditable = true})
-      : super(key: key);
+      {super.key, required this.customTheme, this.isEditable = true});
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class BaseDivider extends StatelessWidget {
   final double? height;
 
-  const BaseDivider({Key? key, this.height}) : super(key: key);
+  const BaseDivider({super.key, this.height});
 
   @override
   Widget build(BuildContext context) {

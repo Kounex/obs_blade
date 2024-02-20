@@ -8,7 +8,7 @@ class PreviewWarningDialog extends StatelessWidget {
   const PreviewWarningDialog({
     Key? key,
     required this.onOk,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

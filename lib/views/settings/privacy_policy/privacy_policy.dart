@@ -8,7 +8,7 @@ import '../../../shared/general/base/card.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
-  const PrivacyPolicyView({Key? key}) : super(key: key);
+  const PrivacyPolicyView({Key? key});
 
   @override
   Widget build(BuildContext context) {

@@ -12,7 +12,7 @@ import 'stats_container.dart';
 class Stats extends StatefulWidget {
   final EdgeInsets? pageIndicatorPadding;
 
-  const Stats({Key? key, this.pageIndicatorPadding}) : super(key: key);
+  const Stats({super.key, this.pageIndicatorPadding});
 
   @override
   _StatsState createState() => _StatsState();

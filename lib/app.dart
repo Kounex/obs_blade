@@ -17,7 +17,7 @@ import 'utils/styling_helper.dart';
 // GlobalKey<NavigatorState> rootNavKey = GlobalKey();
 
 class App extends StatelessWidget {
-  const App({Key? key}) : super(key: key);
+  const App({super.key});
 
   ThemeData _getCurrentTheme(Box settingsBox) {
     Brightness? brightness;
@@ -87,6 +87,7 @@ class App extends StatelessWidget {
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+
       textSelectionTheme: TextSelectionThemeData(
         selectionColor: accentColor ?? StylingHelper.highlight_color,
       ),

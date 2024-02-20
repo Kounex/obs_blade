@@ -14,7 +14,7 @@ class Fader extends StatefulWidget {
     this.delay = const Duration(milliseconds: 0),
     this.curve = Curves.linear,
     this.showDuration,
-  }) : super(key: key);
+  });
 
   @override
   _FaderState createState() => _FaderState();

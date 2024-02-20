@@ -16,7 +16,7 @@ class CardHeader extends StatelessWidget {
     this.description = '',
     this.headerDecorationIcon,
     this.additionalCardWidgets = const [],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -37,7 +37,7 @@ class AppBarActions extends StatelessWidget {
     Key? key,
     this.actionSheetTitle,
     required this.actions,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

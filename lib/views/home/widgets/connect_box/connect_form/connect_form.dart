@@ -20,8 +20,7 @@ class ConnectForm extends StatefulWidget {
   final Connection? connection;
   final bool manual;
 
-  const ConnectForm({Key? key, this.connection, this.manual = false})
-      : super(key: key);
+  const ConnectForm({super.key, this.connection, this.manual = false});
 
   @override
   _ConnectFormState createState() => _ConnectFormState();

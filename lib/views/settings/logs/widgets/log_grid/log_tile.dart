@@ -10,8 +10,7 @@ class LogTile extends StatelessWidget {
   final int dateMS;
   final List<AppLog> logs;
 
-  const LogTile({Key? key, required this.dateMS, required this.logs})
-      : super(key: key);
+  const LogTile({super.key, required this.dateMS, required this.logs});
 
   @override
   Widget build(BuildContext context) {

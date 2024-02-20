@@ -9,7 +9,7 @@ class SupportHeader extends StatelessWidget {
     Key? key,
     required this.title,
     required this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

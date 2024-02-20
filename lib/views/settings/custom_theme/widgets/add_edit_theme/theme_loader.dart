@@ -14,7 +14,7 @@ class ThemeLoader extends StatefulWidget {
   const ThemeLoader({
     Key? key,
     this.onLoadTheme,
-  }) : super(key: key);
+  });
 
   @override
   _ThemeLoaderState createState() => _ThemeLoaderState();

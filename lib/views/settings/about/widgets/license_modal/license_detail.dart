@@ -9,8 +9,7 @@ class LicenseDetail extends StatelessWidget {
   final List<LicenseEntry> licenseEntries;
 
   const LicenseDetail(
-      {Key? key, required this.package, required this.licenseEntries})
-      : super(key: key);
+      {super.key, required this.package, required this.licenseEntries});
 
   @override
   Widget build(BuildContext context) {

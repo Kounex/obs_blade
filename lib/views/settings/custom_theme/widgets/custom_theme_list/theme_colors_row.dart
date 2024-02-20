@@ -8,7 +8,7 @@ import '../../../../../types/extensions/string.dart';
 class ThemeColorsRow extends StatelessWidget {
   final CustomTheme customTheme;
 
-  const ThemeColorsRow({Key? key, required this.customTheme}) : super(key: key);
+  const ThemeColorsRow({super.key, required this.customTheme});
 
   @override
   Widget build(BuildContext context) {

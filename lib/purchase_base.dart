@@ -21,7 +21,7 @@ class PurchaseBase extends StatefulWidget {
   const PurchaseBase({
     Key? key,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   _PurchaseBaseState createState() => _PurchaseBaseState();

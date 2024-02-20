@@ -16,7 +16,7 @@ dependencies:
 
   # CUSTOM
   # Language stuff
-  intl: ^0.18.1
+  intl: ^0.19.0
 
   # Get project meta info
   package_info_plus: ^5.0.1
@@ -74,7 +74,7 @@ dependencies:
   #     url: https://github.com/Kounex/modal_bottom_sheet.git
   #     ref: main
   #     path: modal_bottom_sheet
-  fl_chart: ^0.65.0
+  fl_chart: ^0.66.1
   smooth_page_indicator: ^1.1.0
   keyboard_actions: ^4.2.0
   expandable: ^5.0.1
@@ -100,7 +100,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.1
+  flutter_lints: ^3.0.1
 
   # Codegen
   build_resolvers: ^2.2.0

@@ -87,7 +87,7 @@ class ColorSlider extends StatefulWidget {
     this.saturation,
     this.lightness,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   _ColorSliderState createState() => _ColorSliderState();

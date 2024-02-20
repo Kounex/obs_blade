@@ -16,7 +16,7 @@ const double kExposedButtonsMaxWidth = 92.0;
 const double kExposedControlsSpace = 12.0;
 
 class ExposedControls extends StatelessWidget {
-  const ExposedControls({Key? key}) : super(key: key);
+  const ExposedControls({Key? key});
 
   @override
   Widget build(BuildContext context) {

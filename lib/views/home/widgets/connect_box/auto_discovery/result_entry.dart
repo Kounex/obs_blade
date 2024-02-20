@@ -5,7 +5,7 @@ import '../../../../../shared/general/themed/rich_text.dart';
 class ResultEntry extends StatelessWidget {
   final String result;
 
-  const ResultEntry({Key? key, required this.result}) : super(key: key);
+  const ResultEntry({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {

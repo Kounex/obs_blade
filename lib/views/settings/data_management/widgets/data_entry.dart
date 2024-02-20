@@ -21,7 +21,7 @@ class DataEntry extends StatelessWidget {
     this.customConfirmationText,
     this.additionalConfirmationText,
     this.onClear,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

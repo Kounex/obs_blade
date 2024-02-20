@@ -25,7 +25,7 @@ class SupportDialog extends StatefulWidget {
     required this.title,
     this.icon = CupertinoIcons.heart_solid,
     required this.type,
-  }) : super(key: key);
+  });
 
   @override
   State<SupportDialog> createState() => _SupportDialogState();

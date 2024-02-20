@@ -33,7 +33,7 @@ import 'utils/general_helper.dart';
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
 
-  const LifecycleWatcher({Key? key, required this.app}) : super(key: key);
+  const LifecycleWatcher({super.key, required this.app});
 
   @override
   _LifecycleWatcherState createState() => _LifecycleWatcherState();
@@ -215,6 +215,7 @@ void main() async {
 
       /// Create all hive objects with references to the persistant boxes
       await _initializeHive();
+
       runApp(
         const LifecycleWatcher(
           app: PurchaseBase(

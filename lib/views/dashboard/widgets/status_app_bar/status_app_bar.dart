@@ -17,7 +17,7 @@ import 'general_actions.dart';
 import 'stream_rec_timers.dart';
 
 class StatusAppBar extends StatelessWidget {
-  const StatusAppBar({Key? key}) : super(key: key);
+  const StatusAppBar({Key? key});
 
   @override
   Widget build(BuildContext context) {

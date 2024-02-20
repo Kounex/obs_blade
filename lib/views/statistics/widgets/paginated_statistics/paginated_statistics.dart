@@ -15,8 +15,7 @@ class PaginatedStatistics extends StatefulWidget {
   final List<PastStatsData> sortedFilteredPastStatsData;
 
   const PaginatedStatistics(
-      {Key? key, required this.sortedFilteredPastStatsData})
-      : super(key: key);
+      {super.key, required this.sortedFilteredPastStatsData});
 
   @override
   _PaginatedStatisticsState createState() => _PaginatedStatisticsState();

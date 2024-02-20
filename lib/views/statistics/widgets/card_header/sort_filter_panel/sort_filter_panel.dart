@@ -18,7 +18,7 @@ import 'statistics_date_range.dart';
 const double _kControlsPadding = 14.0;
 
 class SortFilterPanel extends StatelessWidget {
-  const SortFilterPanel({Key? key}) : super(key: key);
+  const SortFilterPanel({Key? key});
 
   @override
   Widget build(BuildContext context) {

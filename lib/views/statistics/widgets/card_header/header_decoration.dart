@@ -48,7 +48,7 @@ class HeaderDecoration extends StatelessWidget {
     this.iconXCut = 28.0,
     this.iconYCut = 42.0,
     this.iconCornerRadius = kBaseCardBorderRadius,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

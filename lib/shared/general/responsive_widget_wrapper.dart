@@ -13,7 +13,7 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
     Key? key,
     required this.mobileWidget,
     required this.tabletWidget,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

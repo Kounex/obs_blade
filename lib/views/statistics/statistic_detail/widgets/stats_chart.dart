@@ -48,7 +48,7 @@ class StatsChart extends StatelessWidget {
     this.chartColor = Colors.white,
     required this.streamEndedMS,
     required this.totalTime,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

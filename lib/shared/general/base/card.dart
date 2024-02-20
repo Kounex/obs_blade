@@ -65,7 +65,7 @@ class BaseCard extends StatelessWidget {
         const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
     this.titleCrossAlignment = CrossAxisAlignment.center,
     this.elevation = 0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

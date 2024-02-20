@@ -17,7 +17,7 @@ import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
 
 class CustomThemeView extends StatefulWidget {
-  const CustomThemeView({Key? key}) : super(key: key);
+  const CustomThemeView({Key? key});
 
   @override
   State<CustomThemeView> createState() => _CustomThemeViewState();

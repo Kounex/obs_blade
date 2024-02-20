@@ -10,7 +10,7 @@ class ThemedRichText extends StatelessWidget {
     required this.textSpans,
     this.textAlign,
     this.textStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

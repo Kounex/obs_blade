@@ -9,7 +9,7 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
 class SceneCollectionControl extends StatelessWidget {
-  const SceneCollectionControl({Key? key}) : super(key: key);
+  const SceneCollectionControl({Key? key});
 
   @override
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ class DataBlock extends StatelessWidget {
   const DataBlock({
     Key? key,
     required this.dataEntries,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

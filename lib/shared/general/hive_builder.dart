@@ -16,7 +16,7 @@ class HiveBuilder<T> extends StatelessWidget {
     this.child,
     required this.builder,
     this.rebuildKeys,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

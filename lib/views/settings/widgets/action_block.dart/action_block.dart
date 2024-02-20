@@ -21,7 +21,7 @@ class ActionBlock extends StatelessWidget {
     this.descriptionWidget,
     required this.blockEntries,
     this.dense = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

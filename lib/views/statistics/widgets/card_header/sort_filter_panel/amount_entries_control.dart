@@ -7,7 +7,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class AmountEntriesControl extends StatelessWidget {
-  const AmountEntriesControl({Key? key}) : super(key: key);
+  const AmountEntriesControl({Key? key});
 
   @override
   Widget build(BuildContext context) {

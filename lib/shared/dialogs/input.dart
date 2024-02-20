@@ -24,7 +24,7 @@ class InputDialog extends StatefulWidget {
     this.inputText,
     this.inputPlaceholder,
     this.inputCheck,
-  }) : super(key: key);
+  });
 
   @override
   _InputDialogState createState() => _InputDialogState();

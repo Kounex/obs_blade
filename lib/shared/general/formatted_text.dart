@@ -14,7 +14,7 @@ class FormattedText extends StatelessWidget {
     this.text,
     this.width = 50.0,
     this.unit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

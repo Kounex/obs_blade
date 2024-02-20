@@ -21,7 +21,7 @@ import '../../services/record_stream.dart';
 import '../dialogs/save_edit_connection.dart';
 
 class GeneralActions extends StatelessWidget {
-  const GeneralActions({Key? key}) : super(key: key);
+  const GeneralActions({Key? key});
 
   @override
   Widget build(BuildContext context) {

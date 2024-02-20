@@ -24,7 +24,7 @@ import '../../../../utils/modal_handler.dart';
 import 'widgets/log_entry.dart';
 
 class LogDetailView extends StatelessWidget {
-  const LogDetailView({Key? key}) : super(key: key);
+  const LogDetailView({Key? key});
 
   Future<File?> _createLogFile(
       List<Map<String, String>> jsonLogs, int timestampMS) async {

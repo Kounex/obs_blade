@@ -11,7 +11,7 @@ import 'widgets/faq_block.dart';
 const kFAQSpaceHeight = 32.0;
 
 class FAQView extends StatelessWidget {
-  const FAQView({Key? key}) : super(key: key);
+  const FAQView({Key? key});
 
   @override
   Widget build(BuildContext context) {

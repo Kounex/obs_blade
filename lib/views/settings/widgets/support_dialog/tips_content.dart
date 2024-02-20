@@ -28,7 +28,7 @@ class TipsContent extends StatelessWidget {
     Key? key,
     required this.tipsDetails,
     this.amountTips = 3,
-  }) : super(key: key);
+  });
 
   String _sumTipped(Iterable<PurchasedTip> tips) {
     if (tips.isNotEmpty) {

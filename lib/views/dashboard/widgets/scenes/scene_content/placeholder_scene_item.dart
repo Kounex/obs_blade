@@ -6,7 +6,7 @@ class PlaceholderSceneItem extends StatelessWidget {
   const PlaceholderSceneItem({
     Key? key,
     required this.text,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

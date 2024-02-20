@@ -12,8 +12,7 @@ class LogEntry extends StatelessWidget {
   final String dateFormatted;
   final List<AppLog> logs;
 
-  const LogEntry({Key? key, required this.dateFormatted, required this.logs})
-      : super(key: key);
+  const LogEntry({super.key, required this.dateFormatted, required this.logs});
 
   @override
   Widget build(BuildContext context) {

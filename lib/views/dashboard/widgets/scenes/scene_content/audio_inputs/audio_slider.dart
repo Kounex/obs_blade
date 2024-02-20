@@ -19,7 +19,7 @@ class AudioSlider extends StatefulWidget {
   const AudioSlider({
     Key? key,
     required this.input,
-  }) : super(key: key);
+  });
 
   @override
   State<AudioSlider> createState() => _AudioSliderState();

@@ -8,7 +8,7 @@ class ColorLabel extends StatelessWidget {
     Key? key,
     required this.label,
     this.width = 24.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

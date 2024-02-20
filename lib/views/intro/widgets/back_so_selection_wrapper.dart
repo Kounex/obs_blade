@@ -11,7 +11,7 @@ class BackToSelectionWrapper extends StatelessWidget {
   const BackToSelectionWrapper({
     Key? key,
     this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

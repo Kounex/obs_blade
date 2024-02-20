@@ -27,7 +27,7 @@ class SlideControls extends StatefulWidget {
     required this.amountChildren,
     required this.onSlideLockWaited,
     this.manually = false,
-  }) : super(key: key);
+  });
 
   @override
   State<SlideControls> createState() => _SlideControlsState();

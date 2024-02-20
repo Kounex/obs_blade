@@ -13,7 +13,7 @@ import '../scenes.dart';
 import 'scene_button.dart';
 
 class SceneButtons extends StatelessWidget {
-  const SceneButtons({Key? key}) : super(key: key);
+  const SceneButtons({Key? key});
 
   @override
   Widget build(BuildContext context) {

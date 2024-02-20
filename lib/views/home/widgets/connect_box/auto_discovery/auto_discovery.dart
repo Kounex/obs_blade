@@ -18,7 +18,7 @@ import 'result_entry.dart';
 import 'session_tile.dart';
 
 class AutoDiscovery extends StatefulWidget {
-  const AutoDiscovery({Key? key}) : super(key: key);
+  const AutoDiscovery({Key? key});
 
   @override
   _AutoDiscoveryState createState() => _AutoDiscoveryState();
@@ -38,7 +38,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
     if (snapshot.hasData && snapshot.data!.isEmpty) {
       if (GetIt.instance<NetworkStore>().subnetMask != null &&
           GetIt.instance<NetworkStore>().nonDefaultSubnetMask) {
-        return 'Your network is using a "non default" subnet mask to assign local client ip addresses (${GetIt.instance<NetworkStore>().subnetMask}). Therefore OBS Blade can\'t reliably perform the autodiscovery.\n\nEither adjust the network settings of your router (if you really need autodiscovery) or use the manual mode to enter the IP address directly!';
+        return 'Your network is using a "non default" subnet mask to assign local client ip addresses (${GetIt.instance<NetworkStore>().subnetMask}). Therefore OBS Blade can\'t reliably perform the autodiscovery.\n\nEither adjust the network settings of your router (if you really need autodiscovery) or use the Quick Connect or Manual mode!';
       }
       return 'Could not find an open OBS session via autodiscovery! Make sure you have an open OBS session in your local network with the OBS WebSocket plugin installed!\n\nCheck the FAQ section in the settings tab.';
     }

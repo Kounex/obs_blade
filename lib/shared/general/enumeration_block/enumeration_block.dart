@@ -19,7 +19,7 @@ class EnumerationBlock extends StatelessWidget {
     this.entries,
     this.customEntries,
     this.entrySpacing = 4.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

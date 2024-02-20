@@ -31,7 +31,7 @@ class ConnectHostInput extends StatefulWidget {
     this.onChangeMode,
     this.onChangeProtocolScheme,
     this.platform,
-  }) : super(key: key);
+  });
 
   @override
   State<ConnectHostInput> createState() => _ConnectHostInputState();

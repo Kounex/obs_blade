@@ -49,7 +49,7 @@ class LicenseData {
 class LicenseEntries extends StatefulWidget {
   final ScrollController? scrollController;
 
-  const LicenseEntries({Key? key, this.scrollController}) : super(key: key);
+  const LicenseEntries({super.key, this.scrollController});
 
   @override
   _LicenseEntriesState createState() => _LicenseEntriesState();

@@ -14,7 +14,7 @@ import 'scene_preview/scene_preview.dart';
 const double kSceneButtonSpace = 18.0;
 
 class Scenes extends StatelessWidget {
-  const Scenes({Key? key}) : super(key: key);
+  const Scenes({Key? key});
 
   @override
   Widget build(BuildContext context) {

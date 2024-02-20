@@ -9,7 +9,7 @@ import 'username_action_row.dart';
 import 'username_dropdown.dart';
 
 class ChatUsernameBar extends StatelessWidget {
-  const ChatUsernameBar({Key? key}) : super(key: key);
+  const ChatUsernameBar({Key? key});
 
   @override
   Widget build(BuildContext context) {

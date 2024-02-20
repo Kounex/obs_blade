@@ -12,7 +12,6 @@ import '../../shared/general/base/card.dart';
 import '../../shared/general/hive_builder.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/views/statistics.dart';
-import '../../types/classes/api/stream_stats.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/order.dart';
 import '../../types/interfaces/past_stats_data.dart';
@@ -23,63 +22,64 @@ import 'widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_entry_placeholder.dart';
 
 class StatisticsView extends StatefulWidget {
-  const StatisticsView({Key? key}) : super(key: key);
+  const StatisticsView({super.key});
 
   @override
   _StatisticsViewState createState() => _StatisticsViewState();
 }
 
 class _StatisticsViewState extends State<StatisticsView> {
-  late List<PastStreamData> _pastStreamData;
-
-  final List<String> _mockedStreamNames = [
-    'Dark Souls Speeeeeeedrun',
-    'No Hit attempt (DS 3)',
-    'Soulsborne Playthrough (this time for real)',
-    'ELDEN RING HYPE!',
-    'Age of Empires 4 is out, wtf!!!',
-    'Endwalker prepssss (FF14)',
-    'Grind to GC, oof (RL)',
-    'Hybrid Meteorb Sorc (D2R)',
-    'Trying out Barb (D2R)',
-    'Okay okay, wind dudu it is (D2R)',
-    'INSCRYYYYPTION',
-  ];
   final Random _random = Random();
 
-  StreamStats _randomStreamStats() => StreamStats(
-      streaming: true,
-      recording: false,
-      replayBufferActive: true,
-      bytesPerSec: _random.nextInt(70000),
-      kbitsPerSec: 6000 - _random.nextInt(500),
-      strain: _random.nextDouble() * 100,
-      totalTime: _random.nextInt(64000),
-      numTotalFrames: _random.nextInt(70000),
-      numDroppedFrames: _random.nextInt(100),
-      fps: 60 - (_random.nextDouble() * 20),
-      renderTotalFrames: _random.nextInt(70000),
-      renderSkippedFrames: _random.nextInt(100),
-      outputTotalFrames: _random.nextInt(70000),
-      outputSkippedFrames: _random.nextInt(70000),
-      averageFrameTime: _random.nextDouble() * 60,
-      cpuUsage: _random.nextDouble() * 100,
-      memoryUsage: _random.nextDouble() * 1000,
-      freeDiskSpace: _random.nextDouble() * 1000000);
+  // late List<PastStreamData> _pastStreamData;
 
-  @override
-  void initState() {
-    _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
-      PastStreamData pastStreamData = PastStreamData();
-      List.generate(_random.nextInt(1000), (index) {
-        pastStreamData.addStreamStats(_randomStreamStats());
-        pastStreamData.name =
-            _mockedStreamNames[_random.nextInt(_mockedStreamNames.length)];
-      });
-      return pastStreamData;
-    });
-    super.initState();
-  }
+  // final List<String> _mockedStreamNames = [
+  //   'Dark Souls Speeeeeeedrun',
+  //   'No Hit attempt (DS 3)',
+  //   'Soulsborne Playthrough (this time for real)',
+  //   'ELDEN RING HYPE!',
+  //   'Age of Empires 4 is out, wtf!!!',
+  //   'Endwalker prepssss (FF14)',
+  //   'Grind to GC, oof (RL)',
+  //   'Hybrid Meteorb Sorc (D2R)',
+  //   'Trying out Barb (D2R)',
+  //   'Okay okay, wind dudu it is (D2R)',
+  //   'INSCRYYYYPTION',
+  // ];
+
+  // StreamStats _randomStreamStats() => StreamStats(
+  //     streaming: true,
+  //     recording: false,
+  //     replayBufferActive: true,
+  //     bytesPerSec: _random.nextInt(70000),
+  //     kbitsPerSec: 6000 - _random.nextInt(500),
+  //     strain: _random.nextDouble() * 100,
+  //     totalTime: _random.nextInt(64000),
+  //     numTotalFrames: _random.nextInt(70000),
+  //     numDroppedFrames: _random.nextInt(100),
+  //     fps: 60 - (_random.nextDouble() * 20),
+  //     renderTotalFrames: _random.nextInt(70000),
+  //     renderSkippedFrames: _random.nextInt(100),
+  //     outputTotalFrames: _random.nextInt(70000),
+  //     outputSkippedFrames: _random.nextInt(70000),
+  //     averageFrameTime: _random.nextDouble() * 60,
+  //     cpuUsage: _random.nextDouble() * 100,
+  //     memoryUsage: _random.nextDouble() * 1000,
+  //     freeDiskSpace: _random.nextDouble() * 1000000);
+
+  // @override
+  // void initState() {
+  //   _pastStreamData = List.generate(20 + _random.nextInt(50), (_) {
+  //     PastStreamData pastStreamData = PastStreamData();
+  //     List.generate(_random.nextInt(1000), (index) {
+  //       pastStreamData.addStreamStats(_randomStreamStats());
+  //       pastStreamData.name =
+  //           _mockedStreamNames[_random.nextInt(_mockedStreamNames.length)];
+  //     });
+  //     return pastStreamData;
+  //   });
+  //   super.initState();
+  // }
 
   /// Uses both sort and filter functions
   List<PastStatsData> _sortAndFilterPastStatsData(
@@ -220,9 +220,9 @@ class _StatisticsViewState extends State<StatisticsView> {
                   hiveKey: HiveKeys.PastRecordData,
                   builder: (context, pastRecordDataBox, child) {
                     List<PastStatsData> pastStatsData = [
-                      ...pastStreamDataBox.values.toList(),
-                      ..._pastStreamData,
-                      ...pastRecordDataBox.values.toList(),
+                      ...pastStreamDataBox.values,
+                      // ..._pastStreamData,
+                      ...pastRecordDataBox.values,
                     ]..sort((a, b) =>
                         a.listEntryDateMS.last - b.listEntryDateMS.last);
 

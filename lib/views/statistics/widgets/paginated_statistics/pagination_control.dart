@@ -18,7 +18,7 @@ class PaginationControl extends StatelessWidget {
     this.onBack,
     this.onForward,
     this.onForwardMax,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

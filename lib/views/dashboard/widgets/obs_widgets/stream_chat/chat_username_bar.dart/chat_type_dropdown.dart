@@ -10,8 +10,7 @@ import '../../../../../../utils/modal_handler.dart';
 class ChatTypeDropdown extends StatelessWidget {
   final Box settingsBox;
 
-  const ChatTypeDropdown({Key? key, required this.settingsBox})
-      : super(key: key);
+  const ChatTypeDropdown({super.key, required this.settingsBox});
 
   @override
   Widget build(BuildContext context) {

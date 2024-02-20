@@ -11,7 +11,7 @@ class IntroSlide extends StatelessWidget {
     Key? key,
     required this.imagePath,
     required this.child,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -13,7 +13,7 @@ class FullOverlay extends StatefulWidget {
     required this.content,
     required this.animationDuration,
     required this.showDuration,
-  }) : super(key: key);
+  });
 
   @override
   FullOverlayState createState() => FullOverlayState();

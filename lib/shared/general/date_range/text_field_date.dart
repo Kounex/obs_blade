@@ -19,7 +19,7 @@ class TextFieldDate extends StatelessWidget {
     this.placeholder,
     this.minimumDate,
     this.maximumDate,
-  }) : super(key: key);
+  });
 
   late final TextEditingController _controller;
 

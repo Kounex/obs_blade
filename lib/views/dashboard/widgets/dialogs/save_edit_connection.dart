@@ -15,7 +15,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
   const SaveEditConnectionDialog({
     Key? key,
     this.newConnection = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

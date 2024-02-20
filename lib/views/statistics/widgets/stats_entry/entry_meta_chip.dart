@@ -11,7 +11,7 @@ class EntryMetaChip extends StatelessWidget {
     required this.title,
     required this.content,
     this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

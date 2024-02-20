@@ -14,7 +14,7 @@ class DatePickerSheet extends StatefulWidget {
     this.updateDateTime,
     this.minimumDate,
     this.maximumDate,
-  }) : super(key: key);
+  });
 
   @override
   _DatePickerSheetState createState() => _DatePickerSheetState();

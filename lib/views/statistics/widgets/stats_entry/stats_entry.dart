@@ -17,7 +17,7 @@ class StatsEntry extends StatelessWidget {
     Key? key,
     required this.pastStatsData,
     this.usedInDetail = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

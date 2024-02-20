@@ -21,11 +21,10 @@ class ConnectionBox extends StatelessWidget {
   final double width;
 
   const ConnectionBox(
-      {Key? key,
+      {super.key,
       required this.connection,
       this.height = 200.0,
-      this.width = 250.0})
-      : super(key: key);
+      this.width = 250.0});
 
   @override
   Widget build(BuildContext context) {

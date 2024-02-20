@@ -84,7 +84,7 @@ class BaseAdaptiveTextField extends StatefulWidget {
     this.errorPaddingAlways = false,
     this.platform,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   BaseAdaptiveTextFieldState createState() => BaseAdaptiveTextFieldState();

@@ -40,7 +40,7 @@ class ColorPicker extends StatefulWidget {
     this.editableColorValues = false,
     this.useAlpha = false,
     this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   _ColorPickerState createState() => _ColorPickerState();

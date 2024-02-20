@@ -4,7 +4,7 @@ import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
 class OBSWidgetsMobile extends StatelessWidget {
-  const OBSWidgetsMobile({Key? key}) : super(key: key);
+  const OBSWidgetsMobile({Key? key});
 
   @override
   Widget build(BuildContext context) {

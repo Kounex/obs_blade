@@ -9,8 +9,7 @@ class PlaceholderConnection extends StatelessWidget {
   final double width;
 
   const PlaceholderConnection(
-      {Key? key, required this.height, required this.width})
-      : super(key: key);
+      {super.key, required this.height, required this.width});
 
   @override
   Widget build(BuildContext context) {

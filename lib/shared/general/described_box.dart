@@ -18,7 +18,7 @@ class DescribedBox extends StatelessWidget {
     this.borderColor,
     this.labelBackgroundColor,
     this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

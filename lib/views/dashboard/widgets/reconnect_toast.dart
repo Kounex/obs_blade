@@ -9,7 +9,7 @@ import '../../../stores/views/dashboard.dart';
 import '../../../utils/general_helper.dart';
 
 class ReconnectToast extends StatefulWidget {
-  const ReconnectToast({Key? key}) : super(key: key);
+  const ReconnectToast({Key? key});
 
   @override
   _ReconnectToastState createState() => _ReconnectToastState();

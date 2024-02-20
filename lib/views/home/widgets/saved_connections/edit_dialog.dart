@@ -21,8 +21,7 @@ import '../../../../utils/validation_helper.dart';
 class EditConnectionDialog extends StatefulWidget {
   final Connection connection;
 
-  const EditConnectionDialog({Key? key, required this.connection})
-      : super(key: key);
+  const EditConnectionDialog({super.key, required this.connection});
 
   @override
   _EditConnectionDialogState createState() => _EditConnectionDialogState();

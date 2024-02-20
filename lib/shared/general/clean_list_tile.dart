@@ -11,7 +11,7 @@ class CleanListTile extends StatelessWidget {
     required this.title,
     required this.description,
     this.trailing,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

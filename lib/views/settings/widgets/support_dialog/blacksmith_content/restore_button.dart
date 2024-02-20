@@ -10,7 +10,7 @@ import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/overlay_handler.dart';
 
 class RestoreButton extends StatelessWidget {
-  const RestoreButton({Key? key}) : super(key: key);
+  const RestoreButton({Key? key});
 
   @override
   Widget build(BuildContext context) {

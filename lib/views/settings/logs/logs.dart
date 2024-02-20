@@ -8,7 +8,7 @@ import 'widgets/log_filter.dart';
 import 'widgets/log_grid/log_list.dart';
 
 class LogsView extends StatelessWidget {
-  const LogsView({Key? key}) : super(key: key);
+  const LogsView({Key? key});
 
   @override
   Widget build(BuildContext context) {

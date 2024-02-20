@@ -19,7 +19,7 @@ class BaseCheckbox extends StatelessWidget {
     this.tristate,
     this.materialTapTargetSize,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -17,7 +17,7 @@ class SwitcherCard extends StatelessWidget {
     required this.title,
     required this.child,
     this.paddingChild = const EdgeInsets.all(0),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

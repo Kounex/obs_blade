@@ -18,7 +18,7 @@ class ThemedCupertinoButton extends StatelessWidget {
     this.isDestructive = false,
     this.minSize,
     this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

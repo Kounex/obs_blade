@@ -11,7 +11,7 @@ import '../../../../../types/enums/settings_keys.dart';
 import '../../../services/record_stream.dart';
 
 class StreamingControls extends StatelessWidget {
-  const StreamingControls({Key? key}) : super(key: key);
+  const StreamingControls({Key? key});
 
   @override
   Widget build(BuildContext context) {

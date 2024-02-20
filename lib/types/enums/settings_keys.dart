@@ -71,6 +71,11 @@ enum SettingsKeys {
   /// Active by default
   WakeLock,
 
+  /// [bool]: If true, the dashboard will transform into a "streaming"
+  /// mode where scene preview and chat will be the focus while the
+  /// rest will be cut or shown underneath
+  StreamingMode,
+
   /// [bool]: If the recording functions (start/stop/pause) should be shown in the
   /// dashboard instead of in the menu action list of the app bar
   ExposeRecordingControls,
@@ -179,6 +184,7 @@ enum SettingsKeys {
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',
         SettingsKeys.WakeLock: 'wake-lock',
+        SettingsKeys.StreamingMode: 'streaming-mode',
         SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
         SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
         SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',

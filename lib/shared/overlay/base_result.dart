@@ -25,7 +25,7 @@ class BaseResult extends StatelessWidget {
     this.text,
     this.iconSize = 32.0,
     this.iconColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

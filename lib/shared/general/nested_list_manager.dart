@@ -17,7 +17,7 @@ class NestedScrollManager extends StatefulWidget {
     Key? key,
     required this.child,
     required this.parentScrollController,
-  }) : super(key: key);
+  });
 
   @override
   _NestedScrollManagerState createState() => _NestedScrollManagerState();

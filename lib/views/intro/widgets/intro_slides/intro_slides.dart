@@ -17,7 +17,7 @@ const double kIntroControlsBottomPadding = 12.0;
 class IntroSlides extends StatefulWidget {
   final bool manually;
 
-  const IntroSlides({Key? key, this.manually = false}) : super(key: key);
+  const IntroSlides({super.key, this.manually = false});
 
   @override
   _IntroSlidesState createState() => _IntroSlidesState();

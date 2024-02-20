@@ -25,7 +25,7 @@ class DonateButton extends StatelessWidget {
     this.price,
     this.errorText,
     this.purchaseParam,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

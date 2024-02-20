@@ -10,7 +10,7 @@ import '../../../../shared/general/date_range/date_range.dart';
 import '../../../../stores/views/logs.dart';
 
 class LogFilter extends StatelessWidget {
-  const LogFilter({Key? key}) : super(key: key);
+  const LogFilter({Key? key});
 
   @override
   Widget build(BuildContext context) {

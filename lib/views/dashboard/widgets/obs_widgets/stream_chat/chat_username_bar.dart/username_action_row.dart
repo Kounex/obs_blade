@@ -13,8 +13,7 @@ import 'delete_username_dialog.dart';
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;
 
-  const UsernameActionRow({Key? key, required this.settingsBox})
-      : super(key: key);
+  const UsernameActionRow({super.key, required this.settingsBox});
 
   @override
   Widget build(BuildContext context) {

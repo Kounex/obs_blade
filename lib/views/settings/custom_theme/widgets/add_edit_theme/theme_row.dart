@@ -43,7 +43,7 @@ class ThemeRow extends StatelessWidget {
     this.onResetButtonPressed,
     this.onReset,
     this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

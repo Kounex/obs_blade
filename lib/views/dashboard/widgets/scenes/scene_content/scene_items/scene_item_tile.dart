@@ -19,7 +19,7 @@ class SceneItemTile extends StatelessWidget {
   const SceneItemTile({
     Key? key,
     required this.sceneItem,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

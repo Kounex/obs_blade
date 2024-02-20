@@ -13,7 +13,7 @@ class StartStopRecordingDialog extends StatelessWidget {
     Key? key,
     required this.isRecording,
     required this.onRecordStartStop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

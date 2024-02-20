@@ -26,7 +26,7 @@ class CustomCupertinoDialog extends StatelessWidget {
     this.paddingRight,
     this.paddingBottom,
     this.paddingLeft,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

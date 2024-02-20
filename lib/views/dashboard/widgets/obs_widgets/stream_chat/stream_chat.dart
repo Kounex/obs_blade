@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
+import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/enums/chat_type.dart';
@@ -14,9 +15,15 @@ import 'chat_username_bar.dart/chat_username_bar.dart';
 
 class StreamChat extends StatefulWidget {
   final bool usernameRowPadding;
+  final bool usernameRowExpandable;
+  final bool usernameRowBeneath;
 
-  const StreamChat({Key? key, this.usernameRowPadding = false})
-      : super(key: key);
+  const StreamChat({
+    super.key,
+    this.usernameRowPadding = false,
+    this.usernameRowExpandable = false,
+    this.usernameRowBeneath = false,
+  });
 
   @override
   _StreamChatState createState() => _StreamChatState();
@@ -118,17 +125,27 @@ class _StreamChatState extends State<StreamChat>
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
+    Widget usernameBar = Padding(
+      padding: EdgeInsets.only(
+        top: 0,
+        left: this.widget.usernameRowPadding ? 4.0 : 0.0,
+        right: this.widget.usernameRowPadding ? 4.0 : 0.0,
+        bottom: 12.0,
+      ),
+      child: const ChatUsernameBar(),
+    );
+
+    if (this.widget.usernameRowExpandable) {
+      usernameBar = CustomExpansionTile(
+        headerText: 'Chat options',
+        expandedBody: usernameBar,
+      );
+    }
+
     super.build(context);
     return Column(
       children: [
-        Padding(
-          padding: EdgeInsets.only(
-            left: this.widget.usernameRowPadding ? 4.0 : 0.0,
-            right: this.widget.usernameRowPadding ? 4.0 : 0.0,
-            bottom: 12.0,
-          ),
-          child: const ChatUsernameBar(),
-        ),
+        if (!this.widget.usernameRowBeneath) usernameBar,
         Expanded(
           child: HiveBuilder<dynamic>(
             hiveKey: HiveKeys.Settings,
@@ -243,6 +260,7 @@ class _StreamChatState extends State<StreamChat>
             },
           ),
         ),
+        if (this.widget.usernameRowBeneath) usernameBar,
       ],
     );
   }

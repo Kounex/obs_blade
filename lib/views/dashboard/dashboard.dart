@@ -4,8 +4,11 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content_streaming.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets_mobile.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -34,8 +37,7 @@ import 'widgets/status_app_bar/status_app_bar.dart';
 class DashboardScroll extends InheritedWidget {
   final ScrollController scrollController = ScrollController();
 
-  DashboardScroll({Key? key, required Widget child})
-      : super(key: key, child: child);
+  DashboardScroll({super.key, required super.child});
 
   static DashboardScroll of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<DashboardScroll>()!;
@@ -46,7 +48,7 @@ class DashboardScroll extends InheritedWidget {
 }
 
 class DashboardView extends StatefulWidget {
-  const DashboardView({Key? key}) : super(key: key);
+  const DashboardView({super.key});
 
   @override
   _DashboardViewState createState() => _DashboardViewState();
@@ -146,51 +148,17 @@ class _DashboardViewState extends State<DashboardView> {
                   as ScrollController,
               slivers: [
                 const StatusAppBar(),
-                CustomSliverList(
-                  children: [
-                    Align(
-                      child: SizedBox(
-                        // width: MediaQuery.sizeOf(context).width / 100 * 85,
-                        child: Column(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 24.0),
-                              child: Scenes(),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Widgets',
-                                style:
-                                    Theme.of(context).textTheme.headlineMedium,
-                              ),
-                            ),
-                            const ResponsiveWidgetWrapper(
-                              mobileWidget: Column(
-                                children: [
-                                  SizedBox(height: 8.0),
-                                  OBSWidgetsMobile(),
-                                ],
-                              ),
-                              tabletWidget: Column(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 8.0),
-                                    child: BaseDivider(),
-                                  ),
-                                  OBSWidgets(),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // SizedBox(
-                    //   height: kBottomNavigationBarHeight,
-                    // ),
+                HiveBuilder<dynamic>(
+                  hiveKey: HiveKeys.Settings,
+                  rebuildKeys: const [
+                    SettingsKeys.StreamingMode,
                   ],
+                  builder: (context, settingsBox, child) => settingsBox.get(
+                    SettingsKeys.StreamingMode.name,
+                    defaultValue: false,
+                  )
+                      ? const DashboardContentStreaming()
+                      : const DashboardContent(),
                 ),
               ],
             ),

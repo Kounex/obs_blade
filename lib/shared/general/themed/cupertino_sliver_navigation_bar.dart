@@ -8,7 +8,7 @@ class ThemedCupertinoSliverNavigationBar extends StatelessWidget {
   const ThemedCupertinoSliverNavigationBar({
     Key? key,
     required this.largeTitle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

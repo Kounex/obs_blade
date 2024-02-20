@@ -21,9 +21,8 @@ class VisibilitySlideWrapper extends StatefulWidget {
   final Widget child;
 
   const VisibilitySlideWrapper(
-      {Key? key, required this.child, this.sceneItem, this.input})
-      : assert(sceneItem != null || input != null),
-        super(key: key);
+      {super.key, required this.child, this.sceneItem, this.input})
+      : assert(sceneItem != null || input != null);
 
   @override
   _VisibilitySlideWrapperState createState() => _VisibilitySlideWrapperState();

@@ -10,8 +10,7 @@ class DeleteUsernameDialog extends StatelessWidget {
   final String username;
 
   const DeleteUsernameDialog(
-      {Key? key, required this.settingsBox, required this.username})
-      : super(key: key);
+      {super.key, required this.settingsBox, required this.username});
 
   @override
   Widget build(BuildContext context) {

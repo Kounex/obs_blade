@@ -14,7 +14,7 @@ class AddEditTwitchUsernameDialog extends StatefulWidget {
     Key? key,
     required this.settingsBox,
     this.username,
-  }) : super(key: key);
+  });
 
   @override
   _AddEditTwitchUsernameDialogState createState() =>

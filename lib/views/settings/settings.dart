@@ -19,7 +19,7 @@ import 'widgets/action_block.dart/block_entry.dart';
 import 'widgets/support_dialog/support_dialog.dart';
 
 class SettingsView extends StatelessWidget {
-  const SettingsView({Key? key}) : super(key: key);
+  const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +95,25 @@ class SettingsView extends StatelessWidget {
                   description:
                       'Customisation allows you to change the UI of the dashboard view to add quick access buttons / features which are hidden in the menu bar by default.',
                   blockEntries: [
+                    BlockEntry(
+                      leading: CupertinoIcons.camera_on_rectangle_fill,
+                      leadingSize: 28.0,
+                      title: 'Streaming Mode',
+                      help:
+                          'Changes the whole layout of the dashboard to focus on scene preview and chat. Better to keep an overview of the most important part while streaming!',
+                      trailing: BaseAdaptiveSwitch(
+                        value: settingsBox.get(
+                          SettingsKeys.StreamingMode.name,
+                          defaultValue: false,
+                        ),
+                        onChanged: (streamingMode) {
+                          settingsBox.put(
+                            SettingsKeys.StreamingMode.name,
+                            streamingMode,
+                          );
+                        },
+                      ),
+                    ),
                     BlockEntry(
                       leading: CupertinoIcons.film,
                       leadingSize: 26.0,

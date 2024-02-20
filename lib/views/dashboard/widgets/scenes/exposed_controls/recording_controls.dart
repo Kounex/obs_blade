@@ -14,7 +14,7 @@ import '../../../services/record_stream.dart';
 import 'exposed_controls.dart';
 
 class RecordingControls extends StatelessWidget {
-  const RecordingControls({Key? key}) : super(key: key);
+  const RecordingControls({Key? key});
 
   @override
   Widget build(BuildContext context) {

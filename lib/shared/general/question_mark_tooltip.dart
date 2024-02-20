@@ -9,7 +9,7 @@ class QuestionMarkTooltip extends StatelessWidget {
   const QuestionMarkTooltip({
     Key? key,
     required this.message,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

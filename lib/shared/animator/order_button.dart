@@ -8,8 +8,7 @@ class OrderButton extends StatefulWidget {
   final Order order;
   final VoidCallback? toggle;
 
-  const OrderButton({Key? key, this.order = Order.Descending, this.toggle})
-      : super(key: key);
+  const OrderButton({super.key, this.order = Order.Descending, this.toggle});
 
   @override
   _OrderButtonState createState() => _OrderButtonState();

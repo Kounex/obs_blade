@@ -8,7 +8,7 @@ import '../connect_form/connect_form.dart';
 class SessionTile extends StatelessWidget {
   final Connection connection;
 
-  const SessionTile({Key? key, required this.connection}) : super(key: key);
+  const SessionTile({super.key, required this.connection});
 
   @override
   Widget build(BuildContext context) {

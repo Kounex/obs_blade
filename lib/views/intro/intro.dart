@@ -17,7 +17,7 @@ const double kIntroControlsBottomPadding = 24.0;
 class IntroView extends StatefulWidget {
   final bool manually;
 
-  const IntroView({Key? key, this.manually = false}) : super(key: key);
+  const IntroView({super.key, this.manually = false});
 
   @override
   _IntroViewState createState() => _IntroViewState();

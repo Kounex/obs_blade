@@ -11,7 +11,7 @@ class StatsDateChip extends StatelessWidget {
     Key? key,
     required this.label,
     required this.content,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

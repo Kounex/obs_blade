@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class StatsEntryPlaceholder extends StatelessWidget {
   final String text;
 
-  const StatsEntryPlaceholder({Key? key, required this.text}) : super(key: key);
+  const StatsEntryPlaceholder({super.key, required this.text});
 
   @override
   Widget build(BuildContext context) {

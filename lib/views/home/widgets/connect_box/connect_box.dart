@@ -10,7 +10,7 @@ import 'connect_form/connect_form.dart';
 import 'switcher_card.dart';
 
 class ConnectBox extends StatelessWidget {
-  const ConnectBox({Key? key}) : super(key: key);
+  const ConnectBox({Key? key});
 
   @override
   Widget build(BuildContext context) {

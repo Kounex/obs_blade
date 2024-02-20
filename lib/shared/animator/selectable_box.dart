@@ -31,7 +31,7 @@ class SelectableBox extends StatelessWidget {
     this.child,
     this.text,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

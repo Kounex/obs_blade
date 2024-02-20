@@ -8,7 +8,7 @@ import '../../../../stores/views/dashboard.dart';
 import '../../../../types/extensions/int.dart';
 
 class StreamRecTimers extends StatefulWidget {
-  const StreamRecTimers({Key? key}) : super(key: key);
+  const StreamRecTimers({Key? key});
 
   @override
   State<StreamRecTimers> createState() => _StreamRecTimersState();

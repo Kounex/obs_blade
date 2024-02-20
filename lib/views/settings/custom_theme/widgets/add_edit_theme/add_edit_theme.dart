@@ -22,8 +22,7 @@ class AddEditTheme extends StatefulWidget {
   final CustomTheme? customTheme;
   final ScrollController? scrollController;
 
-  const AddEditTheme({Key? key, this.customTheme, this.scrollController})
-      : super(key: key);
+  const AddEditTheme({super.key, this.customTheme, this.scrollController});
 
   @override
   _AddEditThemeState createState() => _AddEditThemeState();

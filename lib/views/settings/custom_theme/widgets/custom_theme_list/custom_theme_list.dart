@@ -12,8 +12,7 @@ import 'theme_entry.dart';
 class CustomThemeList extends StatelessWidget {
   final bool predefinedThemes;
 
-  const CustomThemeList({Key? key, this.predefinedThemes = false})
-      : super(key: key);
+  const CustomThemeList({super.key, this.predefinedThemes = false});
 
   @override
   Widget build(BuildContext context) {

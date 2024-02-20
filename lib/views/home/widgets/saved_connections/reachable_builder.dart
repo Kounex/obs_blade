@@ -14,7 +14,7 @@ class ReachableBuilder extends StatefulWidget {
   const ReachableBuilder({
     Key? key,
     required this.savedConnectionsBuilder,
-  }) : super(key: key);
+  });
 
   @override
   State<ReachableBuilder> createState() => _ReachableBuilderState();

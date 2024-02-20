@@ -14,7 +14,7 @@ class AddEditOwncastUsernameDialog extends StatefulWidget {
     Key? key,
     required this.settingsBox,
     this.username,
-  }) : super(key: key);
+  });
 
   @override
   _AddEditOwncastUsernameDialogState createState() =>

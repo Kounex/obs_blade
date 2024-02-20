@@ -21,7 +21,7 @@ class RefresherAppBar extends StatelessWidget {
   const RefresherAppBar({
     Key? key,
     this.expandedHeight,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

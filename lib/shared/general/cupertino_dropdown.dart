@@ -13,7 +13,7 @@ class CupertinoDropdown<T> extends StatelessWidget {
     this.items,
     this.selectedItemBuilder,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

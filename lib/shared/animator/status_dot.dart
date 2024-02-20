@@ -19,7 +19,7 @@ class StatusDot extends StatefulWidget {
     this.text,
     this.direction = Axis.horizontal,
     this.style,
-  }) : super(key: key);
+  });
 
   @override
   _StatusDotState createState() => _StatusDotState();

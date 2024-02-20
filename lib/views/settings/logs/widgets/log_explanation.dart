@@ -8,7 +8,7 @@ import '../../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../../shared/general/themed/rich_text.dart';
 
 class LogExplanation extends StatelessWidget {
-  const LogExplanation({Key? key}) : super(key: key);
+  const LogExplanation({Key? key});
 
   @override
   Widget build(BuildContext context) {

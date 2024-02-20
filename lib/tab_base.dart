@@ -38,7 +38,7 @@ class ActiveRouteObserver extends NavigatorObserver {
 }
 
 class TabBase extends StatefulWidget {
-  const TabBase({Key? key}) : super(key: key);
+  const TabBase({Key? key});
 
   @override
   _TabBaseState createState() => _TabBaseState();
