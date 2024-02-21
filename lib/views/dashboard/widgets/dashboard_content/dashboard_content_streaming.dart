@@ -20,6 +20,7 @@ class DashboardContentStreaming extends StatelessWidget {
           const SizedBox(height: 12.0),
           const SceneButtons(
             size: 64,
+            mode: SceneButtonsMode.horizontalScroll,
           ),
           const SizedBox(height: 12.0),
           const Flexible(
@@ -30,7 +31,7 @@ class DashboardContentStreaming extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: 50 + MediaQuery.viewInsetsOf(context).bottom,
+            height: MediaQuery.of(context).padding.bottom,
           ),
         ],
       ),

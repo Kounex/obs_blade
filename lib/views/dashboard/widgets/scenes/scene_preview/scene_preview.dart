@@ -91,6 +91,10 @@ class _ScenePreviewState extends State<ScenePreview> {
         child: Stack(
           alignment: Alignment.center,
           children: [
+            Container(
+              width: double.infinity,
+              color: Colors.black,
+            ),
             if (_imageAvailable && !_fullscreen)
               Observer(builder: (context) {
                 return AnimatedScale(

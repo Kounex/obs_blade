@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
@@ -12,11 +14,20 @@ import '../../../../../types/enums/hive_keys.dart';
 import '../scenes.dart';
 import 'scene_button.dart';
 
+enum SceneButtonsMode {
+  wrap,
+  horizontalScroll,
+}
+
 class SceneButtons extends StatelessWidget {
   final double size;
+
+  final SceneButtonsMode mode;
+
   const SceneButtons({
     super.key,
     this.size = 100,
+    this.mode = SceneButtonsMode.wrap,
   });
 
   @override
@@ -74,40 +85,66 @@ class SceneButtons extends StatelessWidget {
                 (hiddenScene) => scene.sceneName != hiddenScene.sceneName));
           }
 
-          return Wrap(
-            runSpacing: kSceneButtonSpace,
-            spacing: kSceneButtonSpace,
-            children: visibleScenes != null && visibleScenes.isNotEmpty
-                ? visibleScenes.map((scene) {
-                    HiddenScene? hiddenScene;
-                    try {
-                      hiddenScene = hiddenScenes.firstWhere(
-                          (element) => element.sceneName == scene.sceneName);
-                    } catch (e) {}
+          final List<Widget>? sceneButtons = visibleScenes?.map((scene) {
+            HiddenScene? hiddenScene;
+            try {
+              hiddenScene = hiddenScenes.firstWhere(
+                  (element) => element.sceneName == scene.sceneName);
+            } catch (e) {}
 
-                    return SceneButton(
-                      scene: scene,
-                      height: size,
-                      width: size,
-                      visible: hiddenScene == null,
-                      onVisibilityTap: () {
-                        if (hiddenScene != null) {
-                          hiddenScene!.delete();
-                        } else {
-                          hiddenScene = HiddenScene(
-                            scene.sceneName,
-                            networkStore.activeSession!.connection.name,
-                            networkStore.activeSession!.connection.host,
-                          );
+            return SceneButton(
+              scene: scene,
+              height: size,
+              width: size,
+              visible: hiddenScene == null,
+              onVisibilityTap: () {
+                if (hiddenScene != null) {
+                  hiddenScene!.delete();
+                } else {
+                  hiddenScene = HiddenScene(
+                    scene.sceneName,
+                    networkStore.activeSession!.connection.name,
+                    networkStore.activeSession!.connection.host,
+                  );
 
-                          Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
-                              .add(hiddenScene!);
-                        }
-                      },
-                    );
-                  }).toList()
-                : [const Text('No Scenes available')],
-          );
+                  Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
+                      .add(hiddenScene!);
+                }
+              },
+            );
+          }).toList();
+
+          if (sceneButtons == null || sceneButtons.isEmpty) {
+            return const Center(
+              child: Text(
+                'No Scenes available',
+              ),
+            );
+          }
+
+          return switch (this.mode) {
+            SceneButtonsMode.wrap => Wrap(
+                runSpacing: kSceneButtonSpace,
+                spacing: kSceneButtonSpace,
+                children: sceneButtons,
+              ),
+            SceneButtonsMode.horizontalScroll => SizedBox(
+                height: this.size,
+                child: Scrollbar(
+                  scrollbarOrientation: ScrollbarOrientation.bottom,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(left: 12.0),
+                    itemCount: sceneButtons.length,
+                    itemBuilder: (context, index) => sceneButtons[index],
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 12.0),
+                  ),
+                ),
+              ),
+          };
         }),
       );
     });

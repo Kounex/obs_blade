@@ -136,6 +136,7 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     final DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
+
     return ThemedCupertinoScaffold(
       body: Stack(
         alignment: Alignment.topCenter,
