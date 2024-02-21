@@ -13,7 +13,11 @@ import '../scenes.dart';
 import 'scene_button.dart';
 
 class SceneButtons extends StatelessWidget {
-  const SceneButtons({Key? key});
+  final double size;
+  const SceneButtons({
+    super.key,
+    this.size = 100,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +25,7 @@ class SceneButtons extends StatelessWidget {
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
     return LayoutBuilder(builder: (context, constraints) {
-      double size = 100.0;
+      double size = this.size;
       double buttonSizeToFitThree =
           (constraints.maxWidth - 4 * kSceneButtonSpace) / 3;
 

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
 class SelectableBox extends StatelessWidget {
@@ -19,7 +20,7 @@ class SelectableBox extends StatelessWidget {
   final void Function()? onTap;
 
   const SelectableBox({
-    Key? key,
+    super.key,
     this.boxAnimation = const Duration(milliseconds: 300),
     this.boxBorderAnimation = const Duration(milliseconds: 50),
     this.height = 100,
@@ -54,8 +55,10 @@ class SelectableBox extends StatelessWidget {
             child: this.child ??
                 Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Text(
+                  child: AutoSizeText(
                     this.text ?? '',
+                    wrapWords: false,
+                    maxLines: 3,
                     textAlign: TextAlign.center,
                   ),
                 ),

@@ -135,46 +135,51 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
+    final DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
     return ThemedCupertinoScaffold(
-      body: Observer(builder: (context) {
-        return Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            CustomScrollView(
-              physics: GetIt.instance<DashboardStore>().isPointerOnChat
-                  ? const NeverScrollableScrollPhysics()
-                  : const ClampingScrollPhysics(),
-              controller: ModalRoute.of(context)!.settings.arguments
-                  as ScrollController,
-              slivers: [
-                const StatusAppBar(),
-                HiveBuilder<dynamic>(
-                  hiveKey: HiveKeys.Settings,
-                  rebuildKeys: const [
-                    SettingsKeys.StreamingMode,
-                  ],
-                  builder: (context, settingsBox, child) => settingsBox.get(
+      body: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          HiveBuilder<dynamic>(
+            hiveKey: HiveKeys.Settings,
+            rebuildKeys: const [
+              SettingsKeys.StreamingMode,
+            ],
+            builder: (context, settingsBox, child) => Observer(
+              builder: (context) => CustomScrollView(
+                physics: settingsBox.get(
+                          SettingsKeys.StreamingMode.name,
+                          defaultValue: false,
+                        ) ||
+                        dashboardStore.isPointerOnChat
+                    ? const NeverScrollableScrollPhysics()
+                    : const ClampingScrollPhysics(),
+                controller: ModalRoute.of(context)!.settings.arguments
+                    as ScrollController,
+                slivers: [
+                  const StatusAppBar(),
+                  settingsBox.get(
                     SettingsKeys.StreamingMode.name,
                     defaultValue: false,
                   )
                       ? const DashboardContentStreaming()
                       : const DashboardContent(),
-                ),
-              ],
-            ),
-            Positioned(
-              top: kToolbarHeight + MediaQuery.paddingOf(context).top,
-              child: const Align(
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: ReconnectToast(),
-                ),
+                ],
               ),
             ),
-          ],
-        );
-      }),
+          ),
+          Positioned(
+            top: kToolbarHeight + MediaQuery.paddingOf(context).top,
+            child: const Align(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: ReconnectToast(),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

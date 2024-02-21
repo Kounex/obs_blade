@@ -80,6 +80,7 @@ dependencies:
   expandable: ^5.0.1
   flutter_slidable: ^3.0.1
   confetti: ^0.7.0
+  auto_size_text: ^3.0.0
 
   # Additional dependencies for packages
   xml: ^6.5.0
