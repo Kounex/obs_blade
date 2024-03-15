@@ -63,7 +63,6 @@ class BaseAdaptiveTextField extends StatefulWidget {
 
   const BaseAdaptiveTextField({
     super.key,
-    Key? key,
     required this.controller,
     this.placeholder,
     this.focusNode,
