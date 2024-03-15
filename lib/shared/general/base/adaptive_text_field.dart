@@ -15,8 +15,8 @@ class CustomValidationTextEditingController extends TextEditingController {
 
   CustomValidationTextEditingController({
     this.check,
-    String? text,
-  }) : super(text: text);
+    super.text,
+  });
 
   bool get isValid {
     this.submit();
@@ -62,6 +62,7 @@ class BaseAdaptiveTextField extends StatefulWidget {
   final void Function(String text)? onChanged;
 
   const BaseAdaptiveTextField({
+    super.key,
     Key? key,
     required this.controller,
     this.placeholder,
@@ -160,6 +161,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         switch (this.widget.platform ?? Theme.of(context).platform) {
           TargetPlatform.iOS || TargetPlatform.macOS => CupertinoTextField(

@@ -129,18 +129,22 @@ class SceneButtons extends StatelessWidget {
                 children: sceneButtons,
               ),
             SceneButtonsMode.horizontalScroll => SizedBox(
-                height: this.size,
-                child: Scrollbar(
-                  scrollbarOrientation: ScrollbarOrientation.bottom,
-                  thumbVisibility: true,
-                  trackVisibility: true,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(left: 12.0),
-                    itemCount: sceneButtons.length,
-                    itemBuilder: (context, index) => sceneButtons[index],
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 12.0),
+                height: this.size + 24.0,
+                child: MediaQuery.removePadding(
+                  removeBottom: true,
+                  context: context,
+                  child: Scrollbar(
+                    scrollbarOrientation: ScrollbarOrientation.bottom,
+                    thumbVisibility: true,
+                    trackVisibility: true,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.all(12.0),
+                      itemCount: sceneButtons.length,
+                      itemBuilder: (context, index) => sceneButtons[index],
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(width: 12.0),
+                    ),
                   ),
                 ),
               ),

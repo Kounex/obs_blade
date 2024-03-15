@@ -17,12 +17,10 @@ class DashboardContentStreaming extends StatelessWidget {
           const ResizeableScenePreview(
             resizeable: false,
           ),
-          const SizedBox(height: 12.0),
           const SceneButtons(
             size: 64,
             mode: SceneButtonsMode.horizontalScroll,
           ),
-          const SizedBox(height: 12.0),
           const Flexible(
             child: StreamChat(
               usernameRowExpandable: true,
