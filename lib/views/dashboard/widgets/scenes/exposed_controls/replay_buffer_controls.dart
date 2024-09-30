@@ -15,7 +15,9 @@ import '../../../../../utils/overlay_handler.dart';
 import 'exposed_controls.dart';
 
 class ReplayBufferControls extends StatelessWidget {
-  const ReplayBufferControls({Key? key});
+  const ReplayBufferControls({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

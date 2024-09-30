@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 
@@ -11,7 +12,7 @@ class HiveBuilder<T> extends StatelessWidget {
       builder;
 
   const HiveBuilder({
-    Key? key,
+    super.key,
     required this.hiveKey,
     this.child,
     required this.builder,

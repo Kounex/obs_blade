@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +35,7 @@ class StatsChart extends StatelessWidget {
   final int totalTime;
 
   const StatsChart({
-    Key? key,
+    super.key,
     required this.data,
     required this.dataTimesMS,
     this.amountFixedTooltipValue = 0,
@@ -151,7 +150,7 @@ class StatsChart extends StatelessWidget {
               ),
               lineTouchData: LineTouchData(
                 touchTooltipData: LineTouchTooltipData(
-                  tooltipBgColor: Theme.of(context).cardColor,
+                  getTooltipColor: (touchedSpot) => Theme.of(context).cardColor,
                   getTooltipItems: (touchedSpots) => touchedSpots
                       .map(
                         (touchSpot) => LineTooltipItem(

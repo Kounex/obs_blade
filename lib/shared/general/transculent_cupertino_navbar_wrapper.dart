@@ -25,7 +25,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
   final Widget? actions;
 
   TransculentCupertinoNavBarWrapper({
-    Key? key,
+    super.key,
     this.previousTitle,
     this.title,
     this.titleWidget,
@@ -37,7 +37,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.actions,
   })  : assert((title != null || titleWidget != null) &&
             (customBody == null || listViewChildren.isEmpty)),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

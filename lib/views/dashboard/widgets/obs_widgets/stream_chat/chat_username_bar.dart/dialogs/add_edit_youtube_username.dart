@@ -11,7 +11,7 @@ class AddEditYouTubeUsernameDialog extends StatefulWidget {
   final String? username;
 
   const AddEditYouTubeUsernameDialog({
-    Key? key,
+    super.key,
     required this.settingsBox,
     this.username,
   });

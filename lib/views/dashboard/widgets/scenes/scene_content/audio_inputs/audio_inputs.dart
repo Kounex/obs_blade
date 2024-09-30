@@ -9,7 +9,9 @@ import '../visibility_slide_wrapper.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatefulWidget {
-  const AudioInputs({Key? key});
+  const AudioInputs({
+    super.key,
+  });
 
   @override
   _AudioInputsState createState() => _AudioInputsState();

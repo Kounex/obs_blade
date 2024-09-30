@@ -20,7 +20,7 @@ class DateRange extends StatelessWidget {
   final String placeholderTo;
 
   DateRange({
-    Key? key,
+    super.key,
     this.selectedFromDate,
     this.selectedToDate,
     this.minimumFromDate,
@@ -33,7 +33,7 @@ class DateRange extends StatelessWidget {
     this.placeholderTo = 'To...',
   })  : this.maximumFromDate = selectedToDate ?? DateTime.now(),
         this.minimumToDate = selectedFromDate,
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

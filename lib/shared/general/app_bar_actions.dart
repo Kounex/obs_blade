@@ -34,7 +34,7 @@ class AppBarActions extends StatelessWidget {
   final List<AppBarActionEntry> actions;
 
   const AppBarActions({
-    Key? key,
+    super.key,
     this.actionSheetTitle,
     required this.actions,
   });

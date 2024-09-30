@@ -12,7 +12,7 @@ class DescribedBox extends StatelessWidget {
   final double? width;
 
   const DescribedBox({
-    Key? key,
+    super.key,
     this.label,
     this.child,
     this.borderColor,

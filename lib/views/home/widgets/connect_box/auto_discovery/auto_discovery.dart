@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -18,7 +16,9 @@ import 'result_entry.dart';
 import 'session_tile.dart';
 
 class AutoDiscovery extends StatefulWidget {
-  const AutoDiscovery({Key? key});
+  const AutoDiscovery({
+    super.key,
+  });
 
   @override
   _AutoDiscoveryState createState() => _AutoDiscoveryState();

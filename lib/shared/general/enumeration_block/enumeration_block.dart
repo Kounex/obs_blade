@@ -13,7 +13,7 @@ class EnumerationBlock extends StatelessWidget {
   final double entrySpacing;
 
   const EnumerationBlock({
-    Key? key,
+    super.key,
     this.title,
     this.ordered = false,
     this.entries,

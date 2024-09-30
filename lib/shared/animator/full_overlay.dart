@@ -9,7 +9,7 @@ class FullOverlay extends StatefulWidget {
   final Duration showDuration;
 
   const FullOverlay({
-    Key? key,
+    super.key,
     required this.content,
     required this.animationDuration,
     required this.showDuration,

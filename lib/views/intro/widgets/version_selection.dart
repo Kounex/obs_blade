@@ -8,7 +8,9 @@ import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 import 'package:obs_blade/stores/views/intro.dart';
 
 class VersionSelection extends StatefulWidget {
-  const VersionSelection({super.key});
+  const VersionSelection({
+    super.key,
+  });
 
   @override
   State<VersionSelection> createState() => _VersionSelectionState();

@@ -22,7 +22,7 @@ class BaseButton extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
 
   const BaseButton({
-    Key? key,
+    super.key,
     this.text,
     this.child,
     this.icon,
@@ -33,7 +33,7 @@ class BaseButton extends StatelessWidget {
     this.isDestructive = false,
     this.padding,
   })  : assert(child != null || text != null),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

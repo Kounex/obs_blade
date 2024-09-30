@@ -13,14 +13,14 @@ class StatsContainer extends StatelessWidget {
   final bool wrapWithDescribedBox;
 
   const StatsContainer({
-    Key? key,
+    super.key,
     required this.title,
     this.children,
     this.child,
     this.trailing,
     this.wrapWithDescribedBox = false,
   })  : assert(child != null || children != null),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

@@ -6,7 +6,9 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class FavoriteControl extends StatelessWidget {
-  const FavoriteControl({Key? key});
+  const FavoriteControl({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

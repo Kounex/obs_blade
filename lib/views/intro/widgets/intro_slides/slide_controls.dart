@@ -22,7 +22,7 @@ class SlideControls extends StatefulWidget {
   final bool manually;
 
   const SlideControls({
-    Key? key,
+    super.key,
     required this.pageController,
     required this.amountChildren,
     required this.onSlideLockWaited,

@@ -31,7 +31,7 @@ class BlockEntry extends StatefulWidget {
   final Widget? navigateToResult;
 
   const BlockEntry({
-    Key? key,
+    super.key,
     this.leading,
     this.leadingSize = 28.0,
     this.heroPlaceholder,
@@ -46,7 +46,7 @@ class BlockEntry extends StatefulWidget {
                 ((navigateTo != null && onTap == null) ||
                     (navigateTo == null && onTap != null)) ||
             (trailing != null && (navigateTo == null && onTap == null)))),
-        super(key: key);
+        super();
 
   @override
   _BlockEntryState createState() => _BlockEntryState();
@@ -78,7 +78,7 @@ class _BlockEntryState extends State<BlockEntry> {
       child: Container(
         color: _isPressed
             ? CupertinoDynamicColor.resolve(kPressedColor, context)
-            : Theme.of(context).colorScheme.background,
+            : Theme.of(context).colorScheme.surface,
         height: kblockEntryHeight,
         width: MediaQuery.sizeOf(context).width,
         child: Padding(

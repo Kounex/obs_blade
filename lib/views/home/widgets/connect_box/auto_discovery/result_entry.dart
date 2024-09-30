@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../shared/animator/fader.dart';
 import '../../../../../shared/general/themed/rich_text.dart';
 

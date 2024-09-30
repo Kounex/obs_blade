@@ -21,7 +21,7 @@ class SupportDialog extends StatefulWidget {
   final SupportType type;
 
   const SupportDialog({
-    Key? key,
+    super.key,
     required this.title,
     this.icon = CupertinoIcons.heart_solid,
     required this.type,

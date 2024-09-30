@@ -8,7 +8,9 @@ import 'profile_control.dart';
 import 'scene_collection_control.dart';
 
 class ProfileSceneCollection extends StatelessWidget {
-  const ProfileSceneCollection({super.key});
+  const ProfileSceneCollection({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -11,7 +11,7 @@ class CardHeader extends StatelessWidget {
   final List<Widget> additionalCardWidgets;
 
   const CardHeader({
-    Key? key,
+    super.key,
     required this.title,
     this.description = '',
     this.headerDecorationIcon,

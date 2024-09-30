@@ -4,7 +4,9 @@ import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
 class OBSWidgetsMobile extends StatelessWidget {
-  const OBSWidgetsMobile({Key? key});
+  const OBSWidgetsMobile({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +31,7 @@ class OBSWidgetsMobile extends StatelessWidget {
                       child: Text('Stats'),
                     )
                   ],
+                  dividerColor: Colors.transparent,
                 ),
               ),
               const SizedBox(

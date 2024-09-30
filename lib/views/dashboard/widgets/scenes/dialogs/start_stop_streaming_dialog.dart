@@ -10,7 +10,7 @@ class StartStopStreamingDialog extends StatelessWidget {
   final VoidCallback onStreamStartStop;
 
   const StartStopStreamingDialog({
-    Key? key,
+    super.key,
     required this.isLive,
     required this.onStreamStartStop,
   });

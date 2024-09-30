@@ -6,7 +6,7 @@ class PreviewWarningDialog extends StatelessWidget {
   final void Function(bool) onOk;
 
   const PreviewWarningDialog({
-    Key? key,
+    super.key,
     required this.onOk,
   });
 

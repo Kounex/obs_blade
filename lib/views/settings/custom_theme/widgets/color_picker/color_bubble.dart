@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../utils/styling_helper.dart';
 
 class ColorBubble extends StatelessWidget {

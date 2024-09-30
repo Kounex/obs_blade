@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
-import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/validation_helper.dart';
@@ -33,7 +33,7 @@ class ColorPicker extends StatefulWidget {
   final void Function(String)? onSave;
 
   const ColorPicker({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     this.color,

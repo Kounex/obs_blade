@@ -40,7 +40,7 @@ class HeaderDecoration extends StatelessWidget {
   final double iconCornerRadius;
 
   const HeaderDecoration({
-    Key? key,
+    super.key,
     this.icon = CupertinoIcons.chart_pie_fill,
     this.iconSize = 128.0,
     this.iconXOffset = 28.0,

@@ -9,7 +9,9 @@ import '../visibility_slide_wrapper.dart';
 import 'scene_item_tile.dart';
 
 class SceneItems extends StatefulWidget {
-  const SceneItems({Key? key});
+  const SceneItems({
+    super.key,
+  });
 
   @override
   _SceneItemsState createState() => _SceneItemsState();

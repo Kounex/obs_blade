@@ -9,7 +9,7 @@ class BackToSelectionWrapper extends StatelessWidget {
   final Widget? child;
 
   const BackToSelectionWrapper({
-    Key? key,
+    super.key,
     this.child,
   });
 

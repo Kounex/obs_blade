@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class FormattedText extends StatelessWidget {
@@ -9,7 +7,7 @@ class FormattedText extends StatelessWidget {
   final String? unit;
 
   const FormattedText({
-    Key? key,
+    super.key,
     required this.label,
     this.text,
     this.width = 50.0,

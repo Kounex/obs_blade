@@ -25,7 +25,7 @@ class TipsContent extends StatelessWidget {
   final int amountTips;
 
   const TipsContent({
-    Key? key,
+    super.key,
     required this.tipsDetails,
     this.amountTips = 3,
   });

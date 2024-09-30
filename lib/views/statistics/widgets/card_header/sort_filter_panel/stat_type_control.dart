@@ -5,7 +5,9 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class StatTypeControl extends StatelessWidget {
-  const StatTypeControl({Key? key});
+  const StatTypeControl({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

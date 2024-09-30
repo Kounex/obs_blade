@@ -11,7 +11,7 @@ class AddEditTwitchUsernameDialog extends StatefulWidget {
   final String? username;
 
   const AddEditTwitchUsernameDialog({
-    Key? key,
+    super.key,
     required this.settingsBox,
     this.username,
   });

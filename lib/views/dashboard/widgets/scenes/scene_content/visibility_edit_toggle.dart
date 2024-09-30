@@ -18,12 +18,12 @@ class VisibilityEditToggle extends StatelessWidget {
   final bool tabletMode;
 
   const VisibilityEditToggle({
-    Key? key,
+    super.key,
     this.child,
     required this.sceneItemType,
     this.tabletMode = false,
   })  : assert(!tabletMode && child != null || tabletMode),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

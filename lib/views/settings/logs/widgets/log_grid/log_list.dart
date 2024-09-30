@@ -14,7 +14,9 @@ import '../../../../../types/extensions/int.dart';
 import 'log_tile.dart';
 
 class LogList extends StatelessWidget {
-  const LogList({Key? key});
+  const LogList({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

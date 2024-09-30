@@ -9,14 +9,9 @@ import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content_streaming.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/obs_widgets_mobile.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../shared/dialogs/confirmation.dart';
-import '../../shared/general/base/divider.dart';
-import '../../shared/general/custom_sliver_list.dart';
-import '../../shared/general/responsive_widget_wrapper.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/dashboard.dart';
 import '../../types/enums/hive_keys.dart';
@@ -25,7 +20,6 @@ import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/dialogs/save_edit_connection.dart';
 import 'widgets/reconnect_toast.dart';
-import 'widgets/scenes/scenes.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
 
 /// InheritedWidget [DashBoardScroll] is used to expose the ScrollController
@@ -48,7 +42,9 @@ class DashboardScroll extends InheritedWidget {
 }
 
 class DashboardView extends StatefulWidget {
-  const DashboardView({super.key});
+  const DashboardView({
+    super.key,
+  });
 
   @override
   _DashboardViewState createState() => _DashboardViewState();

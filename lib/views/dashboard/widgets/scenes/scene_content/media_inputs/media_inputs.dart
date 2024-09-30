@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
 
 class MediaInputs extends StatefulWidget {
-  const MediaInputs({super.key});
+  const MediaInputs({
+    super.key,
+  });
 
   @override
   State<MediaInputs> createState() => _MediaInputsState();

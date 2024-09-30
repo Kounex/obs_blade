@@ -10,7 +10,7 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
   final Widget tabletWidget;
 
   const ResponsiveWidgetWrapper({
-    Key? key,
+    super.key,
     required this.mobileWidget,
     required this.tabletWidget,
   });

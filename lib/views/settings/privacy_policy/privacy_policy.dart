@@ -1,14 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../shared/general/social_block.dart';
-import '../../../shared/general/themed/rich_text.dart';
-import '../../../utils/icons/jam_icons.dart';
 
 import '../../../shared/general/base/card.dart';
+import '../../../shared/general/social_block.dart';
+import '../../../shared/general/themed/rich_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../utils/icons/jam_icons.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
-  const PrivacyPolicyView({Key? key});
+  const PrivacyPolicyView({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

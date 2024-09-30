@@ -8,7 +8,7 @@ class CupertinoDropdown<T> extends StatelessWidget {
   final void Function(T?)? onChanged;
 
   const CupertinoDropdown({
-    Key? key,
+    super.key,
     this.value,
     this.items,
     this.selectedItemBuilder,

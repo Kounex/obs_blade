@@ -17,7 +17,9 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 
 class HotkeysControl extends StatelessWidget {
-  const HotkeysControl({super.key});
+  const HotkeysControl({
+    super.key,
+  });
 
   void _onHotkeys(BuildContext context) {
     GetIt.instance<DashboardStore>().hotkeys = null;

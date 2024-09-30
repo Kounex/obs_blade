@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';
-import '../color_picker/color_bubble.dart';
-
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';
+import '../color_picker/color_bubble.dart';
 import '../color_picker/color_picker.dart';
 
 class ThemeRow extends StatelessWidget {
@@ -29,7 +29,7 @@ class ThemeRow extends StatelessWidget {
   final void Function(String)? onSave;
 
   const ThemeRow({
-    Key? key,
+    super.key,
     this.title,
     this.titleWidget,
     this.description,

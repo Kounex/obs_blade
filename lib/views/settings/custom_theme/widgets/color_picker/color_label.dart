@@ -5,7 +5,7 @@ class ColorLabel extends StatelessWidget {
   final double width;
 
   const ColorLabel({
-    Key? key,
+    super.key,
     required this.label,
     this.width = 24.0,
   });

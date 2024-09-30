@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -20,7 +18,7 @@ class DonateButton extends StatelessWidget {
   final PurchaseParam? purchaseParam;
 
   const DonateButton({
-    Key? key,
+    super.key,
     this.text,
     this.price,
     this.errorText,

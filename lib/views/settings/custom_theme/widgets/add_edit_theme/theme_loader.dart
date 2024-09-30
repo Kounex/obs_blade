@@ -12,7 +12,7 @@ class ThemeLoader extends StatefulWidget {
   final void Function(CustomTheme theme)? onLoadTheme;
 
   const ThemeLoader({
-    Key? key,
+    super.key,
     this.onLoadTheme,
   });
 

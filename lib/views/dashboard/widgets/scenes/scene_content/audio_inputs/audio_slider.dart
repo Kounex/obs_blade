@@ -17,7 +17,7 @@ class AudioSlider extends StatefulWidget {
   final Input input;
 
   const AudioSlider({
-    Key? key,
+    super.key,
     required this.input,
   });
 

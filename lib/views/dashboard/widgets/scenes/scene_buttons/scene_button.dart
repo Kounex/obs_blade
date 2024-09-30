@@ -22,7 +22,7 @@ class SceneButton extends StatelessWidget {
   final double width;
 
   const SceneButton({
-    Key? key,
+    super.key,
     required this.scene,
     required this.visible,
     required this.onVisibilityTap,

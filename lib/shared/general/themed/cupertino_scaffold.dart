@@ -5,7 +5,7 @@ class ThemedCupertinoScaffold extends StatelessWidget {
   final Widget body;
 
   const ThemedCupertinoScaffold({
-    Key? key,
+    super.key,
     required this.body,
   });
 

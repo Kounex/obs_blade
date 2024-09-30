@@ -13,7 +13,7 @@ class TextFieldDate extends StatelessWidget {
 
   // ignore: prefer_const_constructors_in_immutables
   TextFieldDate({
-    Key? key,
+    super.key,
     required this.selectedDate,
     required this.updateDateTime,
     this.placeholder,

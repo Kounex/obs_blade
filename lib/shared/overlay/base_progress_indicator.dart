@@ -27,7 +27,7 @@ class BaseProgressIndicator extends StatefulWidget {
   final String? text;
 
   BaseProgressIndicator({
-    Key? key,
+    super.key,
     this.text,
     this.countdownInSeconds,
     this.onCountdownDone,
@@ -49,7 +49,7 @@ class BaseProgressIndicator extends StatefulWidget {
                               .toDouble()
                   : true,
         ),
-        super(key: key);
+        super();
 
   @override
   State<BaseProgressIndicator> createState() => _BaseProgressIndicatorState();

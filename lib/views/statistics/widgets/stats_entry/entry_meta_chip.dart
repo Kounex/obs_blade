@@ -7,7 +7,7 @@ class EntryMetaChip extends StatelessWidget {
   final double? width;
 
   const EntryMetaChip({
-    Key? key,
+    super.key,
     required this.title,
     required this.content,
     this.width,

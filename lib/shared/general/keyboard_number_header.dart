@@ -8,7 +8,7 @@ class KeyboardNumberHeader extends StatelessWidget {
   final void Function()? onDone;
 
   const KeyboardNumberHeader({
-    Key? key,
+    super.key,
     required this.child,
     required this.focusNode,
     this.onDone,

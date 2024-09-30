@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'color_label.dart';
 
-import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/base/adaptive_text_field.dart';
+import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../utils/validation_helper.dart';
+import 'color_label.dart';
 import 'color_picker.dart';
 
 enum ColorType {
@@ -76,7 +76,7 @@ class ColorSlider extends StatefulWidget {
   final void Function(String)? onChanged;
 
   const ColorSlider({
-    Key? key,
+    super.key,
     this.controller,
     this.label,
     this.value,

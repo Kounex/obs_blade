@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,7 +16,9 @@ const List<DurationFilter?> kActiveDurationFilters = [
 ];
 
 class FilterDuration extends StatefulWidget {
-  const FilterDuration({Key? key});
+  const FilterDuration({
+    super.key,
+  });
 
   @override
   State<FilterDuration> createState() => _FilterDurationState();

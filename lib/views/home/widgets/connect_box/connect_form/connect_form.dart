@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
-import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/shared/general/connect_host_input.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/general/base/button.dart';

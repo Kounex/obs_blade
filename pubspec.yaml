@@ -1,12 +1,12 @@
 name: obs_blade
 description: Control your OBS instance and manage your stream and recording - live!
 # Major.Minor.Patch+YYYYMMDD(XX) - XX = incrementing build (resets with new date)
-version: 3.2.0+2023012003
+version: 3.3.0+2023012003
 
 publish_to: "none"
 
 environment:
-  sdk: ">=3.1.5 <4.0.0"
+  sdk: ">=3.4.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -19,50 +19,50 @@ dependencies:
   intl: ^0.19.0
 
   # Get project meta info
-  package_info_plus: ^5.0.1
+  package_info_plus: ^8.0.2
 
   # Webview
-  # flutter_inappwebview: ^5.4.3+7
-  webview_flutter: ^4.4.2
+  # flutter_inappwebview: ^6.1.3
+  webview_flutter: ^4.9.0
 
   # State Management and DI
   get_it: ^7.6.4
-  mobx: ^2.2.1
-  flutter_mobx: ^2.2.0
+  mobx: ^2.3.3
+  flutter_mobx: ^2.2.1+1
   path: ^1.8.3
 
   # Network stuff
-  connectivity_plus: ^5.0.2
-  web_socket_channel: ^2.4.0
-  network_info_plus: ^4.1.0
+  connectivity_plus: ^6.0.5
+  web_socket_channel: ^3.0.1
+  network_info_plus: ^6.0.1
 
   # Security
-  crypto: ^3.0.3
+  crypto: ^3.0.5
 
   # Local persistance stuff
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
   # To enable unique identifiable objects (models)
-  uuid: ^4.2.1
+  uuid: ^4.5.1
 
   # Enable launching stuff based on URL scheme (Twitter, Browser etc.)
   url_launcher: ^6.2.1
 
   # Enable keeping the device active
-  wakelock_plus: ^1.1.4
+  wakelock_plus: ^1.2.8
 
   # Initiate native share sheet
-  share_plus: ^7.2.1
+  share_plus: ^10.0.2
 
   # Add custom images
-  image_picker: ^1.0.4
+  image_picker: ^1.1.2
 
   # Get various path related directories on host OS
   path_provider: ^2.1.1
 
   # Enable and manage in-app purchases
-  in_app_purchase: ^3.1.11
+  in_app_purchase: ^3.2.0
 
   # QR Scanner for quick connect feature
   qr_code_scanner: ^1.0.1
@@ -74,12 +74,12 @@ dependencies:
   #     url: https://github.com/Kounex/modal_bottom_sheet.git
   #     ref: main
   #     path: modal_bottom_sheet
-  fl_chart: ^0.66.1
-  smooth_page_indicator: ^1.1.0
+  fl_chart: ^0.69.0
+  smooth_page_indicator: ^1.2.0+3
   keyboard_actions: ^4.2.0
   expandable: ^5.0.1
-  flutter_slidable: ^3.0.1
-  confetti: ^0.7.0
+  flutter_slidable: ^3.1.1
+  confetti: ^0.8.0
   auto_size_text: ^3.0.0
 
   # Additional dependencies for packages

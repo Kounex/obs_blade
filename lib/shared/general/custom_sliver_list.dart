@@ -7,7 +7,7 @@ class CustomSliverList extends StatelessWidget {
   final double? customBottomPadding;
 
   const CustomSliverList({
-    Key? key,
+    super.key,
     required this.children,
     this.customTopPadding,
     this.customBottomPadding,

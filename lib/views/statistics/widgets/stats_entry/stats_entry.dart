@@ -14,7 +14,7 @@ class StatsEntry extends StatelessWidget {
   final bool usedInDetail;
 
   const StatsEntry({
-    Key? key,
+    super.key,
     required this.pastStatsData,
     this.usedInDetail = false,
   });

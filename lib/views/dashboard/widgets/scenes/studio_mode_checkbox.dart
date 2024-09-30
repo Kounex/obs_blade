@@ -12,7 +12,9 @@ import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
 
 class StudioModeCheckbox extends StatelessWidget {
-  const StudioModeCheckbox({Key? key});
+  const StudioModeCheckbox({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

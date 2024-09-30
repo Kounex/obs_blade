@@ -5,7 +5,9 @@ import 'package:mobx/mobx.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class FilterName extends StatefulWidget {
-  const FilterName({Key? key});
+  const FilterName({
+    super.key,
+  });
 
   @override
   State<FilterName> createState() => _FilterNameState();

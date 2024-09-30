@@ -11,7 +11,7 @@ class PaginationControl extends StatelessWidget {
   final void Function()? onForwardMax;
 
   const PaginationControl({
-    Key? key,
+    super.key,
     this.currentPage,
     this.amountPages,
     this.onBackMax,

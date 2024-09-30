@@ -7,8 +7,8 @@ import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
-import 'dialogs/add_edit_twitch_username.dart';
 import 'delete_username_dialog.dart';
+import 'dialogs/add_edit_twitch_username.dart';
 
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;

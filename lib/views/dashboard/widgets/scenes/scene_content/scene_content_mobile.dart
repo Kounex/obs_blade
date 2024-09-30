@@ -4,7 +4,9 @@ import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
 
 class SceneContentMobile extends StatelessWidget {
-  const SceneContentMobile({Key? key});
+  const SceneContentMobile({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,7 @@ class SceneContentMobile extends StatelessWidget {
                 //   child: Text('Media'),
                 // ),
               ],
+              dividerColor: Colors.transparent,
             ),
           ),
           const SizedBox(

@@ -34,12 +34,12 @@ class SocialBlock extends StatelessWidget {
   final double bottomPadding;
 
   SocialBlock({
-    Key? key,
+    super.key,
     required this.socialInfos,
     this.topPadding = 18.0,
     this.bottomPadding = 18.0,
   })  : assert(socialInfos.isNotEmpty),
-        super(key: key);
+        super();
 
   Future<void> _handleSocialTap(
       BuildContext context, SocialEntry social) async {

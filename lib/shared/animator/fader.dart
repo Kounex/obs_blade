@@ -8,7 +8,7 @@ class Fader extends StatefulWidget {
   final Duration? showDuration;
 
   const Fader({
-    Key? key,
+    super.key,
     required this.child,
     this.duration = const Duration(milliseconds: 200),
     this.delay = const Duration(milliseconds: 0),

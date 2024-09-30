@@ -7,7 +7,7 @@ class QuestionMarkTooltip extends StatelessWidget {
   final String message;
 
   const QuestionMarkTooltip({
-    Key? key,
+    super.key,
     required this.message,
   });
 

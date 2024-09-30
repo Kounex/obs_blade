@@ -11,7 +11,7 @@ class InfoDialog extends StatelessWidget {
   final Function(bool isDontShowAgainChecked)? onPressed;
 
   const InfoDialog({
-    Key? key,
+    super.key,
     required this.body,
     this.title,
     this.enableDontShowAgainOption = false,

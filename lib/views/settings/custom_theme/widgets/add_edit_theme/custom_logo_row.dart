@@ -3,11 +3,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
-
 import 'theme_row.dart';
 
 class CustomLogoRow extends StatelessWidget {
@@ -17,7 +17,7 @@ class CustomLogoRow extends StatelessWidget {
   final VoidCallback onReset;
 
   const CustomLogoRow({
-    Key? key,
+    super.key,
     required this.customTheme,
     required this.onSelectLogo,
     required this.onReset,

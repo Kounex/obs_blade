@@ -18,7 +18,9 @@ import 'widgets/data_block.dart';
 import 'widgets/data_entry.dart';
 
 class DataManagementView extends StatelessWidget {
-  const DataManagementView({Key? key});
+  const DataManagementView({
+    super.key,
+  });
 
   Future<void> _deleteAll(BuildContext context) async {
     await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();

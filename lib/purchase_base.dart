@@ -19,7 +19,7 @@ class PurchaseBase extends StatefulWidget {
   final Widget child;
 
   const PurchaseBase({
-    Key? key,
+    super.key,
     required this.child,
   });
 

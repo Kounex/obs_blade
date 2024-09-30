@@ -22,7 +22,9 @@ import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({Key? key});
+  const HomeView({
+    super.key,
+  });
 
   @override
   _HomeViewState createState() => _HomeViewState();

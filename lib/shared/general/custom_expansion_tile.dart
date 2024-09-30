@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +13,7 @@ class CustomExpansionTile extends StatefulWidget {
   final void Function(VoidCallback, bool)? manualExpand;
 
   const CustomExpansionTile({
-    Key? key,
+    super.key,
     this.leadingIcon,
     this.headerText,
     this.trailing,
@@ -26,7 +24,7 @@ class CustomExpansionTile extends StatefulWidget {
     this.onExpand,
     this.manualExpand,
   })  : assert(headerText != null || customHeader != null),
-        super(key: key);
+        super();
 
   @override
   _CustomExpansionTileState createState() => _CustomExpansionTileState();

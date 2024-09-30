@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+
 import '../../../../../shared/dialogs/info.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
@@ -10,7 +11,9 @@ import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/overlay_handler.dart';
 
 class RestoreButton extends StatelessWidget {
-  const RestoreButton({Key? key});
+  const RestoreButton({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

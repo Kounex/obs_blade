@@ -11,7 +11,7 @@ class StatusDot extends StatefulWidget {
   final TextStyle? style;
 
   const StatusDot({
-    Key? key,
+    super.key,
     this.size = 12.0,
     this.horizontalSpacing = 8.0,
     this.verticalSpacing = 4.0,

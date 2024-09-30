@@ -8,7 +8,7 @@ class IntroSlide extends StatelessWidget {
   final Widget child;
 
   const IntroSlide({
-    Key? key,
+    super.key,
     required this.imagePath,
     required this.child,
   });

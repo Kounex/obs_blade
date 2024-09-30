@@ -17,7 +17,7 @@ class InputDialog extends StatefulWidget {
   final String? Function(String?)? inputCheck;
 
   const InputDialog({
-    Key? key,
+    super.key,
     required this.title,
     required this.body,
     required this.onSave,

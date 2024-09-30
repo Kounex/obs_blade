@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,9 +9,9 @@ import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
 import '../../../../models/hidden_scene_item.dart';
 import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../shared/general/connect_host_input.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
-import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/validation_helper.dart';

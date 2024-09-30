@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
@@ -8,7 +6,7 @@ class StatsDateChip extends StatelessWidget {
   final String content;
 
   const StatsDateChip({
-    Key? key,
+    super.key,
     required this.label,
     required this.content,
   });

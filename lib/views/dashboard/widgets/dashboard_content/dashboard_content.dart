@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/general/base/divider.dart';
@@ -9,7 +8,9 @@ import '../obs_widgets/obs_widgets_mobile.dart';
 import '../scenes/scenes.dart';
 
 class DashboardContent extends StatelessWidget {
-  const DashboardContent({super.key});
+  const DashboardContent({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -17,7 +17,7 @@ class CustomCupertinoDialog extends StatelessWidget {
   final double? paddingLeft;
 
   const CustomCupertinoDialog({
-    Key? key,
+    super.key,
     this.title,
     this.content,
     this.dialogWidth = 420.0,

@@ -16,7 +16,9 @@ const double kExposedButtonsMaxWidth = 92.0;
 const double kExposedControlsSpace = 12.0;
 
 class ExposedControls extends StatelessWidget {
-  const ExposedControls({Key? key});
+  const ExposedControls({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,7 @@ class ExposedControls extends StatelessWidget {
         SettingsKeys.ExposeRecordingControls,
         SettingsKeys.ExposeStreamingControls,
         SettingsKeys.ExposeReplayBufferControls,
+        SettingsKeys.ExposeHotkeys,
       ],
       builder: (context, settingsBox, child) {
         List<Widget> exposedControls = [];

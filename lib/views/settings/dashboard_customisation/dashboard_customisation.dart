@@ -10,7 +10,9 @@ import '../widgets/action_block.dart/action_block.dart';
 import '../widgets/action_block.dart/block_entry.dart';
 
 class DashboardCustomisationView extends StatelessWidget {
-  const DashboardCustomisationView({super.key});
+  const DashboardCustomisationView({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

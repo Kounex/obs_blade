@@ -18,7 +18,7 @@ class BlacksmithContent extends StatelessWidget {
   final List<ProductDetails>? blacksmithDetails;
 
   const BlacksmithContent({
-    Key? key,
+    super.key,
     required this.blacksmithDetails,
   });
 

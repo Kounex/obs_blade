@@ -6,7 +6,9 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream
 import 'package:obs_blade/views/dashboard/widgets/scenes/scene_buttons/scene_buttons.dart';
 
 class DashboardContentStreaming extends StatelessWidget {
-  const DashboardContentStreaming({super.key});
+  const DashboardContentStreaming({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

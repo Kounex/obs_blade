@@ -9,7 +9,7 @@ class DataBlock extends StatelessWidget {
   final List<DataEntry> dataEntries;
 
   const DataBlock({
-    Key? key,
+    super.key,
     required this.dataEntries,
   });
 

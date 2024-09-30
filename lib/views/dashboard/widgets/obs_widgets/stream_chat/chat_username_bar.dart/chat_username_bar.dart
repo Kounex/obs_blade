@@ -9,7 +9,9 @@ import 'username_action_row.dart';
 import 'username_dropdown.dart';
 
 class ChatUsernameBar extends StatelessWidget {
-  const ChatUsernameBar({Key? key});
+  const ChatUsernameBar({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

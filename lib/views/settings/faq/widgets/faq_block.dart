@@ -6,12 +6,12 @@ class FAQBlock extends StatelessWidget {
   final Widget? customBody;
 
   const FAQBlock({
-    Key? key,
+    super.key,
     required this.heading,
     this.text,
     this.customBody,
   })  : assert(text != null || customBody != null),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

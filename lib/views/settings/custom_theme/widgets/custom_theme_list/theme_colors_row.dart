@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../models/custom_theme.dart';
+import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../color_picker/color_bubble.dart';
-
-import '../../../../../types/extensions/string.dart';
 
 class ThemeColorsRow extends StatelessWidget {
   final CustomTheme customTheme;

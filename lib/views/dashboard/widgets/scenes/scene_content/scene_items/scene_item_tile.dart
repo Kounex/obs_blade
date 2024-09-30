@@ -17,7 +17,7 @@ class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
 
   const SceneItemTile({
-    Key? key,
+    super.key,
     required this.sceneItem,
   });
 

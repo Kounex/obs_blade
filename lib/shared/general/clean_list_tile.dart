@@ -7,7 +7,7 @@ class CleanListTile extends StatelessWidget {
   final Widget? trailing;
 
   const CleanListTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     this.trailing,

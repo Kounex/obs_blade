@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'base/divider.dart';
 
 class ColumnSeparated extends StatelessWidget {
@@ -14,7 +15,7 @@ class ColumnSeparated extends StatelessWidget {
   final Widget? customSeparator;
 
   const ColumnSeparated({
-    Key? key,
+    super.key,
     required this.children,
     this.padding = const EdgeInsets.all(0),
     this.useSymmetricOutsidePadding = false,

@@ -9,7 +9,7 @@ class DatePickerSheet extends StatefulWidget {
   final void Function(DateTime?)? updateDateTime;
 
   const DatePickerSheet({
-    Key? key,
+    super.key,
     this.selectedDate,
     this.updateDateTime,
     this.minimumDate,

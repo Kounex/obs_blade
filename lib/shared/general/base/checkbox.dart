@@ -12,7 +12,7 @@ class BaseCheckbox extends StatelessWidget {
   final void Function(bool?)? onChanged;
 
   const BaseCheckbox({
-    Key? key,
+    super.key,
     required this.value,
     this.text,
     this.smallText = false,

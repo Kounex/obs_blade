@@ -13,7 +13,9 @@ import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class QRScan extends StatefulWidget {
-  const QRScan({super.key});
+  const QRScan({
+    super.key,
+  });
 
   @override
   State<QRScan> createState() => _QRScanState();

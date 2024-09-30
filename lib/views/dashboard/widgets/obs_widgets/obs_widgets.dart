@@ -5,7 +5,9 @@ import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
 class OBSWidgets extends StatelessWidget {
-  const OBSWidgets({Key? key});
+  const OBSWidgets({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

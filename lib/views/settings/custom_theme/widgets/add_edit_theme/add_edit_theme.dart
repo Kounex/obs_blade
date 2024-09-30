@@ -6,9 +6,9 @@ import 'package:hive/hive.dart';
 
 import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
-import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../types/extensions/color.dart';

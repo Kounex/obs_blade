@@ -71,7 +71,8 @@ class NetworkHelper {
   /// is triggered (therefore [SocketException] is thrown) or if not, there is
   /// an application (most likely OBS in this case) which listens on this port
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
-    if ((await Connectivity().checkConnectivity()) == ConnectivityResult.wifi) {
+    if ((await Connectivity().checkConnectivity())
+        .contains(ConnectivityResult.wifi)) {
       NetworkStore networkStore = GetIt.instance<NetworkStore>();
       NetworkInfo info = NetworkInfo();
       networkStore.ip = await info.getWifiIP();

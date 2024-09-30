@@ -24,7 +24,9 @@ import '../../../../utils/modal_handler.dart';
 import 'widgets/log_entry.dart';
 
 class LogDetailView extends StatelessWidget {
-  const LogDetailView({Key? key});
+  const LogDetailView({
+    super.key,
+  });
 
   Future<File?> _createLogFile(
       List<Map<String, String>> jsonLogs, int timestampMS) async {
@@ -82,7 +84,8 @@ class LogDetailView extends StatelessWidget {
 
     if (logFile != null) {
       try {
-        await Share.shareFiles([logFile.path], subject: 'OBS Blade Log');
+        await Share.shareXFiles([XFile(logFile.path)],
+            subject: 'OBS Blade Log');
       } catch (e) {
         GeneralHelper.advLog(
           'Unable to share log file!\n$e',

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
@@ -21,7 +19,7 @@ class ConnectHostInput extends StatefulWidget {
   final void Function(String? protocolScheme)? onChangeProtocolScheme;
 
   const ConnectHostInput({
-    Key? key,
+    super.key,
     required this.hostIP,
     required this.hostDomain,
     required this.manual,

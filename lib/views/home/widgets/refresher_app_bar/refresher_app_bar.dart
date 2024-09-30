@@ -19,7 +19,7 @@ class RefresherAppBar extends StatelessWidget {
   final double? expandedHeight;
 
   const RefresherAppBar({
-    Key? key,
+    super.key,
     this.expandedHeight,
   });
 

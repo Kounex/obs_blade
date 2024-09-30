@@ -4,7 +4,7 @@ class PlaceholderSceneItem extends StatelessWidget {
   final String text;
 
   const PlaceholderSceneItem({
-    Key? key,
+    super.key,
     required this.text,
   });
 

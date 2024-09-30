@@ -6,7 +6,7 @@ class ThemedRichText extends StatelessWidget {
   final TextStyle? textStyle;
 
   const ThemedRichText({
-    Key? key,
+    super.key,
     required this.textSpans,
     this.textAlign,
     this.textStyle,

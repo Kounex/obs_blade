@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../../../../shared/general/base/button.dart';
-import '../../../../shared/general/clean_list_tile.dart';
 
 import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/base/button.dart';
+import '../../../../shared/general/clean_list_tile.dart';
 import '../../../../utils/modal_handler.dart';
 
 class DataEntry extends StatelessWidget {
@@ -15,7 +15,7 @@ class DataEntry extends StatelessWidget {
   final VoidCallback? onClear;
 
   const DataEntry({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     this.customConfirmationText,

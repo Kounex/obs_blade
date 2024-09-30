@@ -5,7 +5,9 @@ import 'package:obs_blade/shared/general/tag_box.dart';
 import 'package:obs_blade/stores/views/statistics.dart';
 
 class FilterStatus extends StatelessWidget {
-  const FilterStatus({super.key});
+  const FilterStatus({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

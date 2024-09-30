@@ -6,7 +6,7 @@ class SupportHeader extends StatelessWidget {
   final IconData icon;
 
   const SupportHeader({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
   });

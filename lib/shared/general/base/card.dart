@@ -42,7 +42,7 @@ class BaseCard extends StatelessWidget {
   final double? elevation;
 
   const BaseCard({
-    Key? key,
+    super.key,
     required this.child,
     this.above,
     this.below,

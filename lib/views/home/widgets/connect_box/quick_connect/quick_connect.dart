@@ -9,7 +9,9 @@ import '../../../../../shared/general/base/button.dart';
 import '../../../../../utils/modal_handler.dart';
 
 class QuickConnect extends StatelessWidget {
-  const QuickConnect({super.key});
+  const QuickConnect({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

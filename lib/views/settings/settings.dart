@@ -19,7 +19,9 @@ import 'widgets/action_block.dart/block_entry.dart';
 import 'widgets/support_dialog/support_dialog.dart';
 
 class SettingsView extends StatelessWidget {
-  const SettingsView({super.key});
+  const SettingsView({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

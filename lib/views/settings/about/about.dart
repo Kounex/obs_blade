@@ -13,7 +13,9 @@ import 'widgets/about_header.dart';
 import 'widgets/license_modal/license_modal.dart';
 
 class AboutView extends StatelessWidget {
-  const AboutView({Key? key});
+  const AboutView({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

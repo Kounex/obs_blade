@@ -12,7 +12,7 @@ class ReachableBuilder extends StatefulWidget {
       savedConnectionsBuilder;
 
   const ReachableBuilder({
-    Key? key,
+    super.key,
     required this.savedConnectionsBuilder,
   });
 

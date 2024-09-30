@@ -17,7 +17,7 @@ class ConfirmationDialog extends StatelessWidget {
   final void Function(bool isDontShowAgainChecked) onOk;
 
   const ConfirmationDialog({
-    Key? key,
+    super.key,
     required this.title,
     this.body,
     this.bodyWidget,
@@ -29,7 +29,7 @@ class ConfirmationDialog extends StatelessWidget {
     this.enableDontShowAgainOption = false,
   })  : assert(body != null && bodyWidget == null ||
             body == null && bodyWidget != null),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

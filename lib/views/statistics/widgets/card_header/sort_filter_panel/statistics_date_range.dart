@@ -6,7 +6,9 @@ import '../../../../../shared/general/date_range/date_range.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class StatisticsDateRange extends StatelessWidget {
-  const StatisticsDateRange({Key? key});
+  const StatisticsDateRange({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

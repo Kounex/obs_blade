@@ -3,20 +3,20 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
-import 'refresher_app_bar.dart';
 
 import '../../../../stores/views/home.dart';
+import 'refresher_app_bar.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
   final double expandedBarHeight;
   final double currentBarHeight;
 
   const ScrollRefreshIcon({
-    Key? key,
+    super.key,
     required expandedBarHeight,
     required this.currentBarHeight,
   })  : expandedBarHeight = expandedBarHeight + kRefresherAppBarHeight,
-        super(key: key);
+        super();
 
   @override
   _ScrollRefreshIconState createState() => _ScrollRefreshIconState();

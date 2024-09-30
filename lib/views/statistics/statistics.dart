@@ -22,7 +22,9 @@ import 'widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_entry_placeholder.dart';
 
 class StatisticsView extends StatefulWidget {
-  const StatisticsView({super.key});
+  const StatisticsView({
+    super.key,
+  });
 
   @override
   _StatisticsViewState createState() => _StatisticsViewState();

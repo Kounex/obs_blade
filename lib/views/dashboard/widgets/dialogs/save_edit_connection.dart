@@ -13,7 +13,7 @@ class SaveEditConnectionDialog extends StatelessWidget {
   final bool newConnection;
 
   const SaveEditConnectionDialog({
-    Key? key,
+    super.key,
     this.newConnection = true,
   });
 

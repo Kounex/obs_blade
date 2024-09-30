@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -7,7 +5,9 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class AmountEntriesControl extends StatelessWidget {
-  const AmountEntriesControl({Key? key});
+  const AmountEntriesControl({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

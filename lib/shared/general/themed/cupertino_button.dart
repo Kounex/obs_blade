@@ -11,7 +11,7 @@ class ThemedCupertinoButton extends StatelessWidget {
   final void Function()? onPressed;
 
   const ThemedCupertinoButton({
-    Key? key,
+    super.key,
     this.text,
     this.child,
     this.padding,

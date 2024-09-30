@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class EnumerationEntry extends StatelessWidget {
@@ -14,7 +12,7 @@ class EnumerationEntry extends StatelessWidget {
   final int level;
 
   const EnumerationEntry({
-    Key? key,
+    super.key,
     this.text,
     this.customEntry,
     this.enumerationTopPadding = 0,
@@ -23,7 +21,7 @@ class EnumerationEntry extends StatelessWidget {
     this.levelSpacing = 12.0,
     this.level = 1,
   })  : assert(text != null || customEntry != null && level > 0),
-        super(key: key);
+        super();
 
   @override
   Widget build(BuildContext context) {

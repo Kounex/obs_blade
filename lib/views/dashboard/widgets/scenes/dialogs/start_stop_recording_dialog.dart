@@ -10,7 +10,7 @@ class StartStopRecordingDialog extends StatelessWidget {
   final VoidCallback onRecordStartStop;
 
   const StartStopRecordingDialog({
-    Key? key,
+    super.key,
     required this.isRecording,
     required this.onRecordStartStop,
   });

@@ -20,7 +20,7 @@ class BaseResult extends StatelessWidget {
   final Color? iconColor;
 
   const BaseResult({
-    Key? key,
+    super.key,
     this.icon = BaseResultIcon.Positive,
     this.text,
     this.iconSize = 32.0,

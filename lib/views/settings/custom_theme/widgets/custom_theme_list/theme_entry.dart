@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import '../../../../../shared/general/hive_builder.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';

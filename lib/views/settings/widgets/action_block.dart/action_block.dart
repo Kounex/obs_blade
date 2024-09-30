@@ -15,7 +15,7 @@ class ActionBlock extends StatelessWidget {
   final double iconSize = 32.0;
 
   const ActionBlock({
-    Key? key,
+    super.key,
     this.title,
     this.description,
     this.descriptionWidget,
