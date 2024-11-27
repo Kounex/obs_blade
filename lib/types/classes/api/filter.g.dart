@@ -8,7 +8,7 @@ part of 'filter.dart';
 
 _$FilterImpl _$$FilterImplFromJson(Map<String, dynamic> json) => _$FilterImpl(
       filterEnabled: json['filterEnabled'] as bool,
-      filterIndex: json['filterIndex'] as int,
+      filterIndex: (json['filterIndex'] as num).toInt(),
       filterKind: json['filterKind'] as String,
       filterName: json['filterName'] as String,
       filterSettings: json['filterSettings'] as Map<String, dynamic>,

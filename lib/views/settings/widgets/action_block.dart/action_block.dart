@@ -59,8 +59,7 @@ class ActionBlock extends StatelessWidget {
                 ),
               )
             : null,
-        below: this.descriptionWidget != null ||
-                (this.description != null && this.title!.isNotEmpty)
+        below: this.descriptionWidget != null || this.description != null
             ? Padding(
                 padding: EdgeInsets.only(
                   left: this.generalizedPadding + 18,

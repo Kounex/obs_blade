@@ -12,7 +12,7 @@ part of 'input_channel.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 InputChannel _$InputChannelFromJson(Map<String, dynamic> json) {
   return _InputChannel.fromJson(json);
@@ -24,8 +24,12 @@ mixin _$InputChannel {
   double? get average => throw _privateConstructorUsedError;
   double? get potential => throw _privateConstructorUsedError;
 
+  /// Serializes this InputChannel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of InputChannel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $InputChannelCopyWith<InputChannel> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -49,6 +53,8 @@ class _$InputChannelCopyWithImpl<$Res, $Val extends InputChannel>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of InputChannel
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -92,6 +98,8 @@ class __$$InputChannelImplCopyWithImpl<$Res>
       _$InputChannelImpl _value, $Res Function(_$InputChannelImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of InputChannel
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -138,7 +146,7 @@ class _$InputChannelImpl implements _InputChannel {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputChannelImpl &&
@@ -148,11 +156,13 @@ class _$InputChannelImpl implements _InputChannel {
                 other.potential == potential));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, current, average, potential);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of InputChannel
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$InputChannelImplCopyWith<_$InputChannelImpl> get copyWith =>
@@ -181,8 +191,11 @@ abstract class _InputChannel implements InputChannel {
   double? get average;
   @override
   double? get potential;
+
+  /// Create a copy of InputChannel
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$InputChannelImplCopyWith<_$InputChannelImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

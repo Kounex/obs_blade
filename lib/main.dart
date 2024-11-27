@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 
@@ -97,6 +98,7 @@ Future<void> _initializeHive() async {
   Hive.registerAdapter(ChatTypeAdapter());
   Hive.registerAdapter(SceneItemTypeAdapter());
   Hive.registerAdapter(LogLevelAdapter());
+  Hive.registerAdapter(DashboardElementAdapter());
 
   /// Open Hive boxes which are coupled to HiveObjects (models)
   await Hive.openBox<Connection>(

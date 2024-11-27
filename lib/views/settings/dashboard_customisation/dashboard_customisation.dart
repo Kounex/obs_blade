@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 
 import '../../../shared/general/base/adaptive_switch.dart';
 import '../../../shared/general/hive_builder.dart';
@@ -22,10 +23,23 @@ class DashboardCustomisationView extends StatelessWidget {
         builder: (context, settingsBox, child) =>
             TransculentCupertinoNavBarWrapper(
           previousTitle: 'Settings',
-          title: 'Dashboard Customisation',
+          title: 'Customisation',
           listViewChildren: [
-            ActionBlock(
+            const ActionBlock(
               dense: true,
+              description: 'Change the order of the elements on the Dashboard.',
+              blockEntries: [
+                BlockEntry(
+                  leading: CupertinoIcons.rectangle_3_offgrid_fill,
+                  leadingSize: 28.0,
+                  title: 'Elements Order',
+                  navigateTo:
+                      SettingsTabRoutingKeys.DashboardCustomisationOrder,
+                ),
+              ],
+            ),
+            ActionBlock(
+              title: 'Features',
               blockEntries: [
                 BlockEntry(
                   leading: CupertinoIcons.profile_circled,

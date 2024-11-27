@@ -12,7 +12,7 @@ part of 'scene.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Scene _$SceneFromJson(Map<String, dynamic> json) {
   return _Scene.fromJson(json);
@@ -26,8 +26,12 @@ mixin _$Scene {
   /// Ordered list of the current scene's source items
   int get sceneIndex => throw _privateConstructorUsedError;
 
+  /// Serializes this Scene to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of Scene
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $SceneCopyWith<Scene> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -49,6 +53,8 @@ class _$SceneCopyWithImpl<$Res, $Val extends Scene>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of Scene
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -86,6 +92,8 @@ class __$$SceneImplCopyWithImpl<$Res>
       _$SceneImpl _value, $Res Function(_$SceneImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of Scene
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -127,7 +135,7 @@ class _$SceneImpl implements _Scene {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SceneImpl &&
@@ -137,11 +145,13 @@ class _$SceneImpl implements _Scene {
                 other.sceneIndex == sceneIndex));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, sceneName, sceneIndex);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of Scene
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$SceneImplCopyWith<_$SceneImpl> get copyWith =>
@@ -162,16 +172,18 @@ abstract class _Scene implements Scene {
 
   factory _Scene.fromJson(Map<String, dynamic> json) = _$SceneImpl.fromJson;
 
-  @override
-
   /// Name of the currently active scene
-  String get sceneName;
   @override
+  String get sceneName;
 
   /// Ordered list of the current scene's source items
-  int get sceneIndex;
   @override
-  @JsonKey(ignore: true)
+  int get sceneIndex;
+
+  /// Create a copy of Scene
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SceneImplCopyWith<_$SceneImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

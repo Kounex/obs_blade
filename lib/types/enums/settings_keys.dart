@@ -116,6 +116,10 @@ enum SettingsKeys {
   /// lost indefinetily instead of an amount of retries before aborting
   UnlimitedReconnects,
 
+  /// [List<DashboardElement>]: A list which represents the order in which the
+  /// elements in the dashboard will be shown
+  DashboardElementsOrder,
+
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
   /// IMPORTANT: Name should always start with 'DontShow'/'dont-show'
@@ -197,6 +201,7 @@ enum SettingsKeys {
         SettingsKeys.ExposeInputAudioSyncOffset:
             'expose-input-audio-sync-offset',
         SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
+        SettingsKeys.DashboardElementsOrder: 'dashboard-elements-order',
         SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
         SettingsKeys.DontShowHidingSceneItemsWarning:
             'dont-show-hiding-scene-items-warning',

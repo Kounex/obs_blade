@@ -7,6 +7,7 @@ import '../views/home/home.dart';
 import '../views/intro/intro.dart';
 import '../views/settings/about/about.dart';
 import '../views/settings/custom_theme/custom_theme.dart';
+import '../views/settings/dashboard_customisation/order/order.dart';
 import '../views/settings/data_management/data_management.dart';
 import '../views/settings/faq/faq.dart';
 import '../views/settings/logs/log_detail/log_detail.dart';
@@ -102,7 +103,8 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
   DataManagement,
   Logs,
   LogDetail,
-  DashboardCustomisation;
+  DashboardCustomisation,
+  DashboardCustomisationOrder;
 
   @override
   String get route => '$AppRoutingKeys.Tabs.route/settings${{
@@ -116,6 +118,8 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
         SettingsTabRoutingKeys.LogDetail: '/logs/detail',
         SettingsTabRoutingKeys.DashboardCustomisation:
             '/dashboard-customisation',
+        SettingsTabRoutingKeys.DashboardCustomisationOrder:
+            '/dashboard-customisation/order',
       }[this]!}';
 }
 
@@ -146,6 +150,8 @@ class RoutingHelper {
     SettingsTabRoutingKeys.LogDetail.route: (_) => const LogDetailView(),
     SettingsTabRoutingKeys.DashboardCustomisation.route: (_) =>
         const DashboardCustomisationView(),
+    SettingsTabRoutingKeys.DashboardCustomisationOrder.route: (_) =>
+        const DashboardCustomisationOrderView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {

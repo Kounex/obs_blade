@@ -11,7 +11,7 @@ _$TransitionImpl _$$TransitionImplFromJson(Map<String, dynamic> json) =>
       transitionName: json['transitionName'] as String,
       transitionKind: json['transitionKind'] as String,
       transitionFixed: json['transitionFixed'] as bool,
-      transitionDuration: json['transitionDuration'] as int?,
+      transitionDuration: (json['transitionDuration'] as num?)?.toInt(),
       transitionConfigurable: json['transitionConfigurable'] as bool,
       transitionSettings: json['transitionSettings'],
     );

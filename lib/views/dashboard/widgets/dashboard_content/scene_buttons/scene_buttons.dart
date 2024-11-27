@@ -9,7 +9,6 @@ import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/classes/api/scene.dart';
 import '../../../../../types/enums/hive_keys.dart';
-import '../scenes.dart';
 import 'scene_button.dart';
 
 enum SceneButtonsMode {
@@ -35,8 +34,7 @@ class SceneButtons extends StatelessWidget {
 
     return LayoutBuilder(builder: (context, constraints) {
       double size = this.size;
-      double buttonSizeToFitThree =
-          (constraints.maxWidth - 4 * kSceneButtonSpace) / 3;
+      double buttonSizeToFitThree = (constraints.maxWidth - 4 * 18.0) / 3;
 
       size = buttonSizeToFitThree < size ? buttonSizeToFitThree : size;
 
@@ -122,8 +120,8 @@ class SceneButtons extends StatelessWidget {
 
           return switch (this.mode) {
             SceneButtonsMode.wrap => Wrap(
-                runSpacing: kSceneButtonSpace,
-                spacing: kSceneButtonSpace,
+                runSpacing: 18.0,
+                spacing: 18.0,
                 children: sceneButtons,
               ),
             SceneButtonsMode.horizontalScroll => SizedBox(

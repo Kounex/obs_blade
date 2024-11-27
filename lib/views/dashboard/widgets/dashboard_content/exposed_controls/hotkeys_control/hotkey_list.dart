@@ -7,8 +7,8 @@ import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/hotkeys_control/hotkey_entry.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/hotkeys_control/section_header.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/exposed_controls/hotkeys_control/hotkey_entry.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/exposed_controls/hotkeys_control/section_header.dart';
 
 import '../../../../../../models/hotkey.dart';
 

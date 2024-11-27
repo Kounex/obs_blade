@@ -15,7 +15,7 @@ _$InputImpl _$$InputImplFromJson(Map<String, dynamic> json) => _$InputImpl(
       inputLevelsMul: (json['inputLevelsMul'] as List<dynamic>?)
           ?.map((e) => InputChannel.fromJson(e as Map<String, dynamic>))
           .toList(),
-      syncOffset: json['syncOffset'] as int?,
+      syncOffset: (json['syncOffset'] as num?)?.toInt(),
       inputMuted: json['inputMuted'] as bool? ?? false,
     );
 

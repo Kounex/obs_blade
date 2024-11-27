@@ -5,8 +5,8 @@ import '../../../stores/shared/network.dart';
 import '../../../types/enums/request_type.dart';
 import '../../../utils/modal_handler.dart';
 import '../../../utils/network_helper.dart';
-import '../widgets/scenes/dialogs/start_stop_recording_dialog.dart';
-import '../widgets/scenes/dialogs/start_stop_streaming_dialog.dart';
+import '../widgets/dashboard_content/dialogs/start_stop_recording_dialog.dart';
+import '../widgets/dashboard_content/dialogs/start_stop_streaming_dialog.dart';
 
 class RecordStreamService {
   static void triggerRecordStartStop(

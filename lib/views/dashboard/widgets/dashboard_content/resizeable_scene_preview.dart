@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
-import '../scenes/scene_preview/scene_preview.dart';
+import 'scene_preview/scene_preview.dart';
 
 class ResizeableScenePreview extends StatefulWidget {
   final bool resizeable;

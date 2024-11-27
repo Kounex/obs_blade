@@ -12,7 +12,7 @@ import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/utils/network_helper.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_content/scene_items/filter_list/dynamic_input.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/filter_list/dynamic_input.dart';
 
 class FilterList extends StatefulWidget {
   final SceneItem sceneItem;

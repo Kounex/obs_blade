@@ -12,7 +12,7 @@ part of 'scene_item.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 SceneItem _$SceneItemFromJson(Map<String, dynamic> json) {
   return _SceneItem.fromJson(json);
@@ -44,8 +44,12 @@ mixin _$SceneItem {
   /// (if this [SceneItem] is a group)
   bool get displayGroup => throw _privateConstructorUsedError;
 
+  /// Serializes this SceneItem to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+
+  /// Create a copy of SceneItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   $SceneItemCopyWith<SceneItem> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -84,6 +88,8 @@ class _$SceneItemCopyWithImpl<$Res, $Val extends SceneItem>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
+  /// Create a copy of SceneItem
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -162,6 +168,8 @@ class _$SceneItemCopyWithImpl<$Res, $Val extends SceneItem>
     ) as $Val);
   }
 
+  /// Create a copy of SceneItem
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $SceneItemTransformCopyWith<$Res>? get sceneItemTransform {
@@ -212,6 +220,8 @@ class __$$SceneItemImplCopyWithImpl<$Res>
       _$SceneItemImpl _value, $Res Function(_$SceneItemImpl) _then)
       : super(_value, _then);
 
+  /// Create a copy of SceneItem
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -374,7 +384,7 @@ class _$SceneItemImpl implements _SceneItem {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SceneItemImpl &&
@@ -406,7 +416,7 @@ class _$SceneItemImpl implements _SceneItem {
                 other.displayGroup == displayGroup));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -425,7 +435,9 @@ class _$SceneItemImpl implements _SceneItem {
       const DeepCollectionEquality().hash(_groupChildren),
       displayGroup);
 
-  @JsonKey(ignore: true)
+  /// Create a copy of SceneItem
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   @pragma('vm:prefer-inline')
   _$$SceneItemImplCopyWith<_$SceneItemImpl> get copyWith =>
@@ -481,22 +493,25 @@ abstract class _SceneItem implements SceneItem {
   String? get sourceType;
   @override
   List<Filter> get filters;
-  @override
 
   /// OPTIONAL - Name of the item's parent (if this item belongs to a group)
-  String? get parentGroupName;
   @override
+  String? get parentGroupName;
 
   /// OPTIONAL - List of children (if this item is a group)
-  List<SceneItem>? get groupChildren;
   @override
+  List<SceneItem>? get groupChildren;
 
   /// CUSTOM - added myself to handle stuff internally
   /// Indicate whether we want to display the children of this group
   /// (if this [SceneItem] is a group)
-  bool get displayGroup;
   @override
-  @JsonKey(ignore: true)
+  bool get displayGroup;
+
+  /// Create a copy of SceneItem
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
   _$$SceneItemImplCopyWith<_$SceneItemImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

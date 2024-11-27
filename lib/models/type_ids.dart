@@ -11,4 +11,5 @@ class TypeIDs {
   static const int PurchasedTip = 9;
   static const int PastRecordData = 10;
   static const int Hotkey = 11;
+  static const int DashboardElement = 12;
 }

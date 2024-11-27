@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/resizeable_scene_preview.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_buttons/scene_buttons.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/scene_buttons/scene_buttons.dart';
 
 class DashboardContentStreaming extends StatelessWidget {
   const DashboardContentStreaming({

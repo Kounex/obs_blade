@@ -8,7 +8,7 @@ import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/network_helper.dart';
-import 'package:obs_blade/views/dashboard/widgets/scenes/exposed_controls/hotkeys_control/hotkey_list.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/exposed_controls/hotkeys_control/hotkey_list.dart';
 
 import '../../../../../../models/hotkey.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';

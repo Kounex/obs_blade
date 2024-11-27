@@ -8,7 +8,7 @@ part of 'scene.dart';
 
 _$SceneImpl _$$SceneImplFromJson(Map<String, dynamic> json) => _$SceneImpl(
       sceneName: json['sceneName'] as String,
-      sceneIndex: json['sceneIndex'] as int,
+      sceneIndex: (json['sceneIndex'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$SceneImplToJson(_$SceneImpl instance) =>
