@@ -1,25 +1,99 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/profiles_preview.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_buttons_preview.dart';
 
 import '../../../../../models/enums/dashboard_element.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
+import 'controls_preview.dart';
 import 'element_body.dart';
 
-class ElementList extends StatefulWidget {
-  const ElementList({super.key});
+class PreviewConfig {
+  final DashboardElement element;
+  final Widget widget;
+  final bool canBeNotVisible;
+  final bool visible;
 
-  @override
-  State<ElementList> createState() => _ElementListState();
+  PreviewConfig({
+    required this.element,
+    required this.widget,
+    required this.canBeNotVisible,
+    required this.visible,
+  });
 }
 
-class _ElementListState extends State<ElementList> {
-  final Map<DashboardElement, Widget> _preview = {};
+class ElementList extends StatelessWidget {
+  const ElementList({super.key});
+
+  List<PreviewConfig> _previewConfigs() => [
+        PreviewConfig(
+          element: DashboardElement.ExposedProfile,
+          widget: const ProfilesPreview(),
+          canBeNotVisible: true,
+          visible: Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeProfile.name,
+                defaultValue: false,
+              ) ||
+              Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeSceneCollection.name,
+                defaultValue: false,
+              ),
+        ),
+        PreviewConfig(
+          element: DashboardElement.ExposedControls,
+          widget: const ControlsPreview(),
+          canBeNotVisible: true,
+          visible: Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeStreamingControls.name,
+                defaultValue: false,
+              ) ||
+              Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeRecordingControls.name,
+                defaultValue: false,
+              ) ||
+              Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeReplayBufferControls.name,
+                defaultValue: false,
+              ) ||
+              Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeHotkeys.name,
+                defaultValue: false,
+              ),
+        ),
+        PreviewConfig(
+          element: DashboardElement.SceneButtons,
+          widget: const SceneButtonsPreview(),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
+          element: DashboardElement.SceneItems,
+          widget: const Text('PLACEHOLDER'),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
+          element: DashboardElement.SceneItemsAudio,
+          widget: const Text('PLACEHOLDER'),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
+          element: DashboardElement.SceneItems,
+          widget: const Text('PLACEHOLDER'),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
+    final List<PreviewConfig> config = _previewConfigs();
+
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
       builder: (context, settingsBox, child) {
@@ -47,10 +121,17 @@ class _ElementListState extends State<ElementList> {
             child: child,
           ),
           itemBuilder: (context, index) => ElementBody(
-            index: index,
             key: ValueKey(elements[index]),
-            element: elements[index],
-            preview: _preview[elements[index]] ?? const Text('???'),
+            index: index,
+            config: config.firstWhere(
+              (config) => config.element == elements[index],
+              orElse: () => PreviewConfig(
+                element: elements[index],
+                widget: const Text('Missing!'),
+                canBeNotVisible: false,
+                visible: true,
+              ),
+            ),
           ),
           onReorder: (oldIndex, newIndex) {
             if (oldIndex < newIndex) {
