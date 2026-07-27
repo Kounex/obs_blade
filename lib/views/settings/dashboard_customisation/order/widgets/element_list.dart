@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/profiles_preview.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_buttons_preview.dart';
 
@@ -103,7 +103,10 @@ class ElementList extends StatelessWidget {
         ];
         return ReorderableListView.builder(
           shrinkWrap: true,
-          padding: const EdgeInsets.only(top: 18.0),
+          padding: const EdgeInsets.only(
+            top: 18.0,
+            bottom: kBottomNavigationBarHeight,
+          ),
           buildDefaultDragHandles: false,
           itemCount: elements.length,
           proxyDecorator: (child, index, animation) => AnimatedBuilder(

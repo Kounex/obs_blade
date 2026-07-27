@@ -24,8 +24,10 @@ mixin _$IntroStore on _IntroStore, Store {
     });
   }
 
-  late final _$currentPageAtom =
-      Atom(name: '_IntroStore.currentPage', context: context);
+  late final _$currentPageAtom = Atom(
+    name: '_IntroStore.currentPage',
+    context: context,
+  );
 
   @override
   int get currentPage {
@@ -40,8 +42,10 @@ mixin _$IntroStore on _IntroStore, Store {
     });
   }
 
-  late final _$lockedOnSlideAtom =
-      Atom(name: '_IntroStore.lockedOnSlide', context: context);
+  late final _$lockedOnSlideAtom = Atom(
+    name: '_IntroStore.lockedOnSlide',
+    context: context,
+  );
 
   @override
   bool get lockedOnSlide {
@@ -56,13 +60,16 @@ mixin _$IntroStore on _IntroStore, Store {
     });
   }
 
-  late final _$_IntroStoreActionController =
-      ActionController(name: '_IntroStore', context: context);
+  late final _$_IntroStoreActionController = ActionController(
+    name: '_IntroStore',
+    context: context,
+  );
 
   @override
   void setStage(IntroStage stage) {
-    final _$actionInfo =
-        _$_IntroStoreActionController.startAction(name: '_IntroStore.setStage');
+    final _$actionInfo = _$_IntroStoreActionController.startAction(
+      name: '_IntroStore.setStage',
+    );
     try {
       return super.setStage(stage);
     } finally {
@@ -73,7 +80,8 @@ mixin _$IntroStore on _IntroStore, Store {
   @override
   void setCurrentPage(int currentPage) {
     final _$actionInfo = _$_IntroStoreActionController.startAction(
-        name: '_IntroStore.setCurrentPage');
+      name: '_IntroStore.setCurrentPage',
+    );
     try {
       return super.setCurrentPage(currentPage);
     } finally {
@@ -84,7 +92,8 @@ mixin _$IntroStore on _IntroStore, Store {
   @override
   void setLockedOnSlide(bool lockedOnSlide, [int? secondsToLockSlide]) {
     final _$actionInfo = _$_IntroStoreActionController.startAction(
-        name: '_IntroStore.setLockedOnSlide');
+      name: '_IntroStore.setLockedOnSlide',
+    );
     try {
       return super.setLockedOnSlide(lockedOnSlide, secondsToLockSlide);
     } finally {

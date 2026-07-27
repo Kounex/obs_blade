@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';

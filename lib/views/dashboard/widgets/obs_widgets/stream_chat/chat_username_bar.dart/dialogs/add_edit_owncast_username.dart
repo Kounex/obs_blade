@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import '../../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../../shared/general/base/adaptive_text_field.dart';

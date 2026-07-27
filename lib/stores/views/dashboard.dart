@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
@@ -262,6 +262,8 @@ abstract class _DashboardStore with Store {
   int _recordingStartedRenderFramesTotal = 0;
   int _recordingStartedRenderFramesSkipped = 0;
 
+  StreamSubscription? _obsStreamSubscription;
+
   final List<DefaultFilter> _defaultFilters = [];
 
   /// Set of initial requests to call in order to get all the basic
@@ -335,8 +337,40 @@ abstract class _DashboardStore with Store {
     );
   }
 
+  /// Scene name whose items the dashboard is currently showing (preview in
+  /// studio mode when exposed, otherwise program).
+  String? get _displayedSceneName {
+    final exposeStudio = Hive.box(HiveKeys.Settings.name).get(
+      SettingsKeys.ExposeStudioControls.name,
+      defaultValue: false,
+    );
+    if (exposeStudio && this.studioMode) {
+      return this.studioModePreviewSceneName ?? this.activeSceneName;
+    }
+    return this.activeSceneName;
+  }
+
+  /// Refresh only scene items for the displayed scene (not full collection).
+  void _requestDisplayedSceneItems() {
+    final sceneName = _displayedSceneName;
+    if (sceneName == null) return;
+
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetSceneItemList,
+      {'sceneName': sceneName},
+    );
+  }
+
+  void _pauseStatsPolling() {
+    _getStatsTimer?.cancel();
+    _getStatsTimer = null;
+  }
+
   void handleStream() {
-    GetIt.instance<NetworkStore>().watchOBSStream().listen((message) {
+    _obsStreamSubscription?.cancel();
+    _obsStreamSubscription =
+        GetIt.instance<NetworkStore>().watchOBSStream().listen((message) {
       try {
         if (_handleRequestsEvents ||
             (message is BaseEvent &&
@@ -353,6 +387,14 @@ abstract class _DashboardStore with Store {
         GeneralHelper.advLog(e);
       }
     });
+  }
+
+  /// Cancel timers and the OBS message subscription (e.g. when leaving
+  /// dashboard / resetting the store).
+  void disposeListeners() {
+    stopTimers();
+    _obsStreamSubscription?.cancel();
+    _obsStreamSubscription = null;
   }
 
   void _requestPreviewImage() => NetworkHelper.makeRequest(
@@ -746,37 +788,11 @@ abstract class _DashboardStore with Store {
     }
 
     switch (event.eventType) {
+      // Stream/Record output state: intentionally not handled here — the 1s
+      // Stats batch owns isLive / isRecording / charts. See
+      // docs/dashboard-store-websocket-audit.md
       // case EventType.StreamStateChanged:
-      //   StreamStateChangedEvent streamStateChangedEvent =
-      //       StreamStateChangedEvent(event.jsonRAW);
-
-      //   this.isLive = streamStateChangedEvent.outputActive;
-
-      //   if (!this.isLive) {
-      //     this.latestStreamTimeDurationMS = null;
-      //   }
-      //   break;
       // case EventType.RecordStateChanged:
-      //   RecordStateChangedEvent recordStateChangedEvent =
-      //       RecordStateChangedEvent(event.jsonRAW);
-
-      //   switch (recordStateChangedEvent.outputState) {
-      //     case 'OBS_WEBSOCKET_OUTPUT_STARTING':
-      //       this.isRecording = true;
-      //       break;
-      //     case 'OBS_WEBSOCKET_OUTPUT_STOPPED':
-      //       this.isRecording = false;
-      //       this.isRecordingPaused = false;
-      //       this.latestRecordTimeDurationMS = null;
-      //       break;
-      //     case 'OBS_WEBSOCKET_OUTPUT_PAUSED':
-      //       this.isRecordingPaused = true;
-      //       break;
-      //     case 'OBS_WEBSOCKET_OUTPUT_RESUMED':
-      //       this.isRecordingPaused = false;
-      //       break;
-      //   }
-      //   break;
       case EventType.ReplayBufferStateChanged:
         ReplayBufferStateChangedEvent replayBufferStateChangedEvent =
             ReplayBufferStateChangedEvent(event.jsonRAW);
@@ -792,7 +808,9 @@ abstract class _DashboardStore with Store {
         this.isVirtualCamActive = virtualCamStateChangedEvent.outputActive;
         break;
       case EventType.CurrentSceneCollectionChanging:
+        /// OBS: requests during a collection change are undefined / crash-risk.
         _handleRequestsEvents = false;
+        _pauseStatsPolling();
         break;
       case EventType.CurrentSceneCollectionChanged:
         CurrentSceneCollectionChangedEvent currentSceneCollectionChangedEvent =
@@ -810,6 +828,7 @@ abstract class _DashboardStore with Store {
 
         _handleRequestsEvents = true;
         _sceneCollectionRequests();
+        _periodicStatsRequest();
         break;
       case EventType.SceneCollectionListChanged:
         SceneCollectionListChangedEvent sceneCollectionListChangedEvent =
@@ -832,7 +851,7 @@ abstract class _DashboardStore with Store {
         this.profiles = ObservableList.of(profileListChangedEvent.profiles);
 
         break;
-      case EventType.ScenesChanged:
+      case EventType.SceneListChanged:
         NetworkHelper.makeRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.GetSceneList,
@@ -854,13 +873,15 @@ abstract class _DashboardStore with Store {
                 currentSceneTransitionDurationChangedEvent.transitionDuration);
         break;
       case EventType.StudioModeStateChanged:
-        if (Hive.box(HiveKeys.Settings.name)
-            .get(SettingsKeys.ExposeStudioControls.name, defaultValue: false)) {
-          StudioModeStateChangedEvent studioModeStateChangedEvent =
-              StudioModeStateChangedEvent(event.jsonRAW);
+        StudioModeStateChangedEvent studioModeStateChangedEvent =
+            StudioModeStateChangedEvent(event.jsonRAW);
 
-          this.studioMode = studioModeStateChangedEvent.studioModeEnabled;
+        this.studioMode = studioModeStateChangedEvent.studioModeEnabled;
 
+        if (Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false) &&
+            this.studioMode) {
           NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestType.GetSceneList,
@@ -872,7 +893,7 @@ abstract class _DashboardStore with Store {
             CurrentProgramSceneChangedEvent(event.jsonRAW);
 
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
-        _sceneCollectionRequests();
+        _requestDisplayedSceneItems();
         break;
       case EventType.CurrentPreviewSceneChanged:
         CurrentPreviewSceneChangedEvent currentPreviewSceneChangedEvent =
@@ -885,14 +906,12 @@ abstract class _DashboardStore with Store {
                 SettingsKeys.ExposeStudioControls.name,
                 defaultValue: false) &&
             this.studioMode) {
-          _sceneCollectionRequests();
+          _requestDisplayedSceneItems();
         }
         break;
 
-      /// I could handle the following events smarter in the future - instead
-      /// of making the full request I could handle the change. Currently
-      /// not worth the hassle since we have to deal with cross synergies
-      /// like scene items being tied to inputs, having groups etc.
+      /// Full collection refresh: scene items ↔ inputs/groups cross-cut;
+      /// incremental patches are not worth the edge cases yet.
       case EventType.SceneItemCreated:
         _sceneCollectionRequests();
         break;
@@ -955,6 +974,12 @@ abstract class _DashboardStore with Store {
       case EventType.SceneItemEnableStateChanged:
         SceneItemEnableStateChangedEvent sceneItemEnableStateChangedEvent =
             SceneItemEnableStateChangedEvent(event.jsonRAW);
+
+        /// sceneItemId is only unique within a scene — ignore other scenes.
+        if (sceneItemEnableStateChangedEvent.sceneName !=
+            _displayedSceneName) {
+          break;
+        }
 
         this.currentSceneItems =
             ObservableList.of(this.currentSceneItems.map((sceneItem) {
@@ -1027,6 +1052,8 @@ abstract class _DashboardStore with Store {
         'Response Incoming: ${(response.requestType)}',
       );
     }
+
+    if (!_obsRequestSucceeded(response)) return;
 
     switch (response.requestType) {
       case RequestType.GetVersion:
@@ -1118,8 +1145,17 @@ abstract class _DashboardStore with Store {
         GetGroupSceneItemListResponse getGroupSceneItemListResponse =
             GetGroupSceneItemListResponse(response.jsonRAW);
 
-        final parentSceneItemName = NetworkHelper.getRequestBodyForUUID(
-            getGroupSceneItemListResponse.uuid)!['sceneName'];
+        final requestBody = NetworkHelper.getRequestBodyForUUID(
+            getGroupSceneItemListResponse.uuid);
+        if (requestBody == null) {
+          GeneralHelper.advLog(
+            'GetGroupSceneItemList: missing request body for uuid',
+            level: LogLevel.Warning,
+            includeInLogs: true,
+          );
+          break;
+        }
+        final parentSceneItemName = requestBody['sceneName'];
 
         List<SceneItem> childrenSceneItems =
             getGroupSceneItemListResponse.sceneItems
@@ -1129,15 +1165,15 @@ abstract class _DashboardStore with Store {
                 )
                 .toList();
 
+        final parentIndex = this.currentSceneItems.indexWhere((sceneItem) =>
+            (sceneItem.isGroup ?? false) &&
+            sceneItem.sourceName == parentSceneItemName);
+        if (parentIndex < 0) break;
+
         this.currentSceneItems = ObservableList.of([
           ...this.currentSceneItems
             ..insertAll(
-                this.currentSceneItems.indexOf(
-                          this.currentSceneItems.firstWhere((sceneItem) =>
-                              (sceneItem.isGroup ?? false) &&
-                              sceneItem.sourceName == parentSceneItemName),
-                        ) +
-                    1,
+                parentIndex + 1,
                 childrenSceneItems
                   ..sort((sc1, sc2) =>
                       (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0))),
@@ -1278,7 +1314,8 @@ abstract class _DashboardStore with Store {
             GetInputVolumeResponse(response.jsonRAW);
 
         final requestData =
-            NetworkHelper.getRequestBodyForUUID(getInputVolumeResponse.uuid)!;
+            NetworkHelper.getRequestBodyForUUID(getInputVolumeResponse.uuid);
+        if (requestData == null) break;
 
         this.allInputs = ObservableList.of(this.allInputs.map((input) {
           if (input.inputName == requestData['inputName']) {
@@ -1295,7 +1332,8 @@ abstract class _DashboardStore with Store {
         GetInputMuteResponse getInputMuteResponse =
             GetInputMuteResponse(response.jsonRAW);
 
-        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        if (requestData == null) break;
 
         this.allInputs = ObservableList.of(this.allInputs.map((input) {
           if (input.inputName == requestData['inputName']) {
@@ -1308,7 +1346,8 @@ abstract class _DashboardStore with Store {
         GetInputAudioSyncOffsetResponse getInputAudioSyncOffsetResponse =
             GetInputAudioSyncOffsetResponse(response.jsonRAW);
 
-        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid)!;
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        if (requestData == null) break;
 
         this.allInputs = ObservableList.of(this.allInputs.map((input) {
           if (input.inputName == requestData['inputName']) {
@@ -1350,6 +1389,20 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  /// Returns false when OBS rejected the request — skip applying responseData.
+  bool _obsRequestSucceeded(BaseResponse response) {
+    if (response.status.result) return true;
+
+    GeneralHelper.advLog(
+      'OBS request failed: ${response.requestType} '
+      '(code ${response.status.code}'
+      '${response.status.comment != null ? ", ${response.status.comment}" : ""})',
+      level: LogLevel.Warning,
+      includeInLogs: true,
+    );
+    return false;
+  }
+
   @action
   Future<void> _handleBatchResponse(BaseBatchResponse batchResponse) async {
     if (batchResponse.batchRequestType != RequestBatchType.Stats) {
@@ -1362,6 +1415,12 @@ abstract class _DashboardStore with Store {
       case RequestBatchType.Stats:
         StatsBatchResponse statsBatchResponse =
             StatsBatchResponse(batchResponse.jsonRAW);
+
+        if (!_obsRequestSucceeded(statsBatchResponse.streamStatus) ||
+            !_obsRequestSucceeded(statsBatchResponse.recordStatus) ||
+            !_obsRequestSucceeded(statsBatchResponse.stats)) {
+          break;
+        }
 
         this.latestOBSStats = statsBatchResponse.stats;
 
@@ -1597,6 +1656,11 @@ abstract class _DashboardStore with Store {
         ScreenshotBatchResponse screenshotBatchResponse =
             ScreenshotBatchResponse(batchResponse.jsonRAW);
 
+        if (!_obsRequestSucceeded(
+            screenshotBatchResponse.getSourceScreenshotResponse)) {
+          break;
+        }
+
         this.manualScreenshotImageBytes = base64Decode(screenshotBatchResponse
             .getSourceScreenshotResponse.imageData
             .split(',')[1]);
@@ -1606,12 +1670,22 @@ abstract class _DashboardStore with Store {
         FilterListBatchResponse filterListBatchResponse =
             FilterListBatchResponse(batchResponse.jsonRAW);
         final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
-            filterListBatchResponse.uuid)!;
+            filterListBatchResponse.uuid);
+        if (requestBatchObjects == null) {
+          GeneralHelper.advLog(
+            'FilterList batch: missing request bodies for uuid',
+            level: LogLevel.Warning,
+            includeInLogs: true,
+          );
+          break;
+        }
 
         List<Map<String, dynamic>> filterObjects = [];
 
         for (final getSourceFilterListResponse
             in filterListBatchResponse.filterLists) {
+          if (!_obsRequestSucceeded(getSourceFilterListResponse)) continue;
+
           for (final requestBatchObject in requestBatchObjects) {
             if (getSourceFilterListResponse.uuid == requestBatchObject.uuid) {
               filterObjects.add({

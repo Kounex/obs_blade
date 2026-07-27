@@ -8,7 +8,7 @@ part of 'hidden_scene_item.dart';
 
 class HiddenSceneItemAdapter extends TypeAdapter<HiddenSceneItem> {
   @override
-  final int typeId = 3;
+  final typeId = 3;
 
   @override
   HiddenSceneItem read(BinaryReader reader) {
@@ -19,7 +19,7 @@ class HiddenSceneItemAdapter extends TypeAdapter<HiddenSceneItem> {
     return HiddenSceneItem(
       fields[0] as String,
       fields[1] as SceneItemType,
-      fields[2] as int?,
+      (fields[2] as num?)?.toInt(),
       fields[3] as String,
       fields[4] as String?,
       fields[5] as String?,

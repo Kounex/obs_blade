@@ -1,7 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Prefer a machine-local Flutter install (analyze / pub / test only on the NAS).
+# Override with FLUTTER_ROOT if needed.
+if [[ -n "${FLUTTER_ROOT:-}" && -x "${FLUTTER_ROOT}/bin/flutter" ]]; then
+  exec "${FLUTTER_ROOT}/bin/flutter" "$@"
+fi
+if [[ -x "$HOME/flutter/bin/flutter" ]]; then
+  exec "$HOME/flutter/bin/flutter" "$@"
+fi
 
-export PATH="$DIR/vendor/flutter/bin:$PATH"
-exec flutter $@
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [[ -x "$DIR/vendor/flutter/bin/flutter" ]]; then
+  export PATH="$DIR/vendor/flutter/bin:$PATH"
+  exec flutter "$@"
+fi
+
+echo "flutterw: no Flutter SDK found (set FLUTTER_ROOT or install to ~/flutter)" >&2
+exit 1

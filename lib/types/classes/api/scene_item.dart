@@ -7,7 +7,7 @@ part 'scene_item.freezed.dart';
 part 'scene_item.g.dart';
 
 @freezed
-class SceneItem with _$SceneItem {
+abstract class SceneItem with _$SceneItem {
   const factory SceneItem({
     required String? inputKind,
     required bool? isGroup,

@@ -4,7 +4,7 @@ part 'transition.freezed.dart';
 part 'transition.g.dart';
 
 @freezed
-class Transition with _$Transition {
+abstract class Transition with _$Transition {
   const factory Transition({
     /// Name of the transition
     required String transitionName,

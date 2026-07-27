@@ -9,8 +9,10 @@ part of 'home.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$HomeStore on _HomeStore, Store {
-  late final _$autodiscoverConnectionsAtom =
-      Atom(name: '_HomeStore.autodiscoverConnections', context: context);
+  late final _$autodiscoverConnectionsAtom = Atom(
+    name: '_HomeStore.autodiscoverConnections',
+    context: context,
+  );
 
   @override
   Future<List<Connection>>? get autodiscoverConnections {
@@ -20,14 +22,19 @@ mixin _$HomeStore on _HomeStore, Store {
 
   @override
   set autodiscoverConnections(Future<List<Connection>>? value) {
-    _$autodiscoverConnectionsAtom
-        .reportWrite(value, super.autodiscoverConnections, () {
-      super.autodiscoverConnections = value;
-    });
+    _$autodiscoverConnectionsAtom.reportWrite(
+      value,
+      super.autodiscoverConnections,
+      () {
+        super.autodiscoverConnections = value;
+      },
+    );
   }
 
-  late final _$autodiscoverPortAtom =
-      Atom(name: '_HomeStore.autodiscoverPort', context: context);
+  late final _$autodiscoverPortAtom = Atom(
+    name: '_HomeStore.autodiscoverPort',
+    context: context,
+  );
 
   @override
   String get autodiscoverPort {
@@ -42,8 +49,10 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$refreshableAtom =
-      Atom(name: '_HomeStore.refreshable', context: context);
+  late final _$refreshableAtom = Atom(
+    name: '_HomeStore.refreshable',
+    context: context,
+  );
 
   @override
   bool get refreshable {
@@ -58,8 +67,10 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$doRefreshAtom =
-      Atom(name: '_HomeStore.doRefresh', context: context);
+  late final _$doRefreshAtom = Atom(
+    name: '_HomeStore.doRefresh',
+    context: context,
+  );
 
   @override
   bool get doRefresh {
@@ -74,8 +85,10 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$connectModeAtom =
-      Atom(name: '_HomeStore.connectMode', context: context);
+  late final _$connectModeAtom = Atom(
+    name: '_HomeStore.connectMode',
+    context: context,
+  );
 
   @override
   ConnectMode get connectMode {
@@ -90,8 +103,10 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$domainModeAtom =
-      Atom(name: '_HomeStore.domainMode', context: context);
+  late final _$domainModeAtom = Atom(
+    name: '_HomeStore.domainMode',
+    context: context,
+  );
 
   @override
   bool get domainMode {
@@ -106,8 +121,10 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$protocolSchemeAtom =
-      Atom(name: '_HomeStore.protocolScheme', context: context);
+  late final _$protocolSchemeAtom = Atom(
+    name: '_HomeStore.protocolScheme',
+    context: context,
+  );
 
   @override
   String get protocolScheme {
@@ -122,13 +139,16 @@ mixin _$HomeStore on _HomeStore, Store {
     });
   }
 
-  late final _$_HomeStoreActionController =
-      ActionController(name: '_HomeStore', context: context);
+  late final _$_HomeStoreActionController = ActionController(
+    name: '_HomeStore',
+    context: context,
+  );
 
   @override
   void setAutodiscoverPort(String autodiscoverPort) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.setAutodiscoverPort');
+      name: '_HomeStore.setAutodiscoverPort',
+    );
     try {
       return super.setAutodiscoverPort(autodiscoverPort);
     } finally {
@@ -139,7 +159,8 @@ mixin _$HomeStore on _HomeStore, Store {
   @override
   void updateAutodiscoverConnections() {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.updateAutodiscoverConnections');
+      name: '_HomeStore.updateAutodiscoverConnections',
+    );
     try {
       return super.updateAutodiscoverConnections();
     } finally {
@@ -150,7 +171,8 @@ mixin _$HomeStore on _HomeStore, Store {
   @override
   void setRefreshable(bool refreshable) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.setRefreshable');
+      name: '_HomeStore.setRefreshable',
+    );
     try {
       return super.setRefreshable(refreshable);
     } finally {
@@ -161,7 +183,8 @@ mixin _$HomeStore on _HomeStore, Store {
   @override
   void setDomainMode(bool domainMode) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.setDomainMode');
+      name: '_HomeStore.setDomainMode',
+    );
     try {
       return super.setDomainMode(domainMode);
     } finally {
@@ -172,7 +195,8 @@ mixin _$HomeStore on _HomeStore, Store {
   @override
   void initiateRefresh() {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.initiateRefresh');
+      name: '_HomeStore.initiateRefresh',
+    );
     try {
       return super.initiateRefresh();
     } finally {
@@ -183,7 +207,8 @@ mixin _$HomeStore on _HomeStore, Store {
   @override
   void setProtocolScheme(String protocolScheme) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.setProtocolScheme');
+      name: '_HomeStore.setProtocolScheme',
+    );
     try {
       return super.setProtocolScheme(protocolScheme);
     } finally {
@@ -194,7 +219,8 @@ mixin _$HomeStore on _HomeStore, Store {
   @override
   void setConnectMode(ConnectMode connectMode) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
-        name: '_HomeStore.setConnectMode');
+      name: '_HomeStore.setConnectMode',
+    );
     try {
       return super.setConnectMode(connectMode);
     } finally {

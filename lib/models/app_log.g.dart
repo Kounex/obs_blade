@@ -8,7 +8,7 @@ part of 'app_log.dart';
 
 class AppLogAdapter extends TypeAdapter<AppLog> {
   @override
-  final int typeId = 7;
+  final typeId = 7;
 
   @override
   AppLog read(BinaryReader reader) {
@@ -17,11 +17,11 @@ class AppLogAdapter extends TypeAdapter<AppLog> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return AppLog(
-      fields[0] as int,
+      (fields[0] as num).toInt(),
       fields[1] as LogLevel,
       fields[2] as String,
       fields[3] as String?,
-      fields[4] as bool,
+      fields[4] == null ? false : fields[4] as bool,
     );
   }
 

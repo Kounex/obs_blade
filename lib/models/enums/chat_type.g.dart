@@ -8,7 +8,7 @@ part of 'chat_type.dart';
 
 class ChatTypeAdapter extends TypeAdapter<ChatType> {
   @override
-  final int typeId = 4;
+  final typeId = 4;
 
   @override
   ChatType read(BinaryReader reader) {
@@ -29,13 +29,10 @@ class ChatTypeAdapter extends TypeAdapter<ChatType> {
     switch (obj) {
       case ChatType.Twitch:
         writer.writeByte(0);
-        break;
       case ChatType.YouTube:
         writer.writeByte(1);
-        break;
       case ChatType.Owncast:
         writer.writeByte(2);
-        break;
     }
   }
 

@@ -6,9 +6,8 @@ part of 'scene_item_transform.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SceneItemTransformImpl _$$SceneItemTransformImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SceneItemTransformImpl(
+_SceneItemTransform _$SceneItemTransformFromJson(Map<String, dynamic> json) =>
+    _SceneItemTransform(
       alignment: (json['alignment'] as num?)?.toInt(),
       boundsAlignment: (json['boundsAlignment'] as num?)?.toInt(),
       boundsHeight: (json['boundsHeight'] as num?)?.toDouble(),
@@ -29,8 +28,7 @@ _$SceneItemTransformImpl _$$SceneItemTransformImplFromJson(
       width: (json['width'] as num?)?.toDouble(),
     );
 
-Map<String, dynamic> _$$SceneItemTransformImplToJson(
-        _$SceneItemTransformImpl instance) =>
+Map<String, dynamic> _$SceneItemTransformToJson(_SceneItemTransform instance) =>
     <String, dynamic>{
       'alignment': instance.alignment,
       'boundsAlignment': instance.boundsAlignment,

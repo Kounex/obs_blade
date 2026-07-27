@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import 'models/custom_theme.dart';
 import 'shared/general/hive_builder.dart';
@@ -140,7 +140,7 @@ class App extends StatelessWidget {
             .transparent, //(sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
       ),
 
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: brightness != null && brightness == Brightness.light
             ? Colors.black
             : Colors.white,

@@ -8,7 +8,7 @@ part of 'scene_item_type.dart';
 
 class SceneItemTypeAdapter extends TypeAdapter<SceneItemType> {
   @override
-  final int typeId = 5;
+  final typeId = 5;
 
   @override
   SceneItemType read(BinaryReader reader) {
@@ -27,10 +27,8 @@ class SceneItemTypeAdapter extends TypeAdapter<SceneItemType> {
     switch (obj) {
       case SceneItemType.Source:
         writer.writeByte(0);
-        break;
       case SceneItemType.Audio:
         writer.writeByte(1);
-        break;
     }
   }
 

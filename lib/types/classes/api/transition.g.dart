@@ -6,17 +6,16 @@ part of 'transition.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$TransitionImpl _$$TransitionImplFromJson(Map<String, dynamic> json) =>
-    _$TransitionImpl(
-      transitionName: json['transitionName'] as String,
-      transitionKind: json['transitionKind'] as String,
-      transitionFixed: json['transitionFixed'] as bool,
-      transitionDuration: (json['transitionDuration'] as num?)?.toInt(),
-      transitionConfigurable: json['transitionConfigurable'] as bool,
-      transitionSettings: json['transitionSettings'],
-    );
+_Transition _$TransitionFromJson(Map<String, dynamic> json) => _Transition(
+  transitionName: json['transitionName'] as String,
+  transitionKind: json['transitionKind'] as String,
+  transitionFixed: json['transitionFixed'] as bool,
+  transitionDuration: (json['transitionDuration'] as num?)?.toInt(),
+  transitionConfigurable: json['transitionConfigurable'] as bool,
+  transitionSettings: json['transitionSettings'],
+);
 
-Map<String, dynamic> _$$TransitionImplToJson(_$TransitionImpl instance) =>
+Map<String, dynamic> _$TransitionToJson(_Transition instance) =>
     <String, dynamic>{
       'transitionName': instance.transitionName,
       'transitionKind': instance.transitionKind,

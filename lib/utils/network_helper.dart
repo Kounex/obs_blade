@@ -51,17 +51,36 @@ class NetworkHelper {
   /// [HomeView] otherwise
   static IOWebSocketChannel establishWebSocket(Connection connection,
       [Duration pingInterval = const Duration(seconds: 3)]) {
-    String protocol =
-        connection.isDomain == null || !connection.isDomain! ? 'ws://' : '';
-
-    /// Clear the map for a new connection
     NetworkHelper._requestBodyByUUID = {};
     NetworkHelper._requestBatchByUUID = {};
 
     return IOWebSocketChannel.connect(
-      Uri.parse(
-          '$protocol${connection.host}${connection.port != null ? (":${connection.port}") : ""}'),
+      NetworkHelper.websocketUri(connection),
       pingInterval: pingInterval,
+    );
+  }
+
+  /// Builds a WebSocket [Uri] for OBS.
+  ///
+  /// - Plain IP / hostname (typical LAN): `ws://host:port` (default port 4455).
+  /// - Domain mode may store a scheme in [Connection.host] (`ws://…` / `wss://…`);
+  ///   that scheme is kept and [Connection.port] is applied when set.
+  static Uri websocketUri(Connection connection) {
+    final rawHost = connection.host.trim();
+    final port = connection.port;
+
+    if (rawHost.contains('://')) {
+      final parsed = Uri.parse(rawHost);
+      if (port != null && port > 0) {
+        return parsed.replace(port: port);
+      }
+      return parsed;
+    }
+
+    return Uri(
+      scheme: 'ws',
+      host: rawHost,
+      port: port ?? 4455,
     );
   }
 

@@ -8,7 +8,7 @@ part of 'past_stream_data.dart';
 
 class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
   @override
-  final int typeId = 1;
+  final typeId = 1;
 
   @override
   PastStreamData read(BinaryReader reader) {
@@ -20,20 +20,20 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..kbitsPerSecList = (fields[0] as List).cast<int>()
       ..fpsList = (fields[1] as List).cast<double>()
       ..cpuUsageList = (fields[2] as List).cast<double>()
-      ..memoryUsageList = (fields[17] as List).cast<double>()
-      ..listEntryDateMS = (fields[18] as List).cast<int>()
-      ..strain = fields[3] as double?
-      ..totalTime = fields[4] as int?
-      ..numTotalFrames = fields[5] as int?
-      ..numDroppedFrames = fields[6] as int?
-      ..renderTotalFrames = fields[7] as int?
-      ..renderSkippedFrames = fields[8] as int?
-      ..outputTotalFrames = fields[9] as int?
-      ..outputSkippedFrames = fields[10] as int?
-      ..averageFrameTime = fields[11] as double?
+      ..strain = (fields[3] as num?)?.toDouble()
+      ..totalTime = (fields[4] as num?)?.toInt()
+      ..numTotalFrames = (fields[5] as num?)?.toInt()
+      ..numDroppedFrames = (fields[6] as num?)?.toInt()
+      ..renderTotalFrames = (fields[7] as num?)?.toInt()
+      ..renderSkippedFrames = (fields[8] as num?)?.toInt()
+      ..outputTotalFrames = (fields[9] as num?)?.toInt()
+      ..outputSkippedFrames = (fields[10] as num?)?.toInt()
+      ..averageFrameTime = (fields[11] as num?)?.toDouble()
       ..name = fields[13] as String?
       ..starred = fields[14] as bool?
-      ..notes = fields[15] as String?;
+      ..notes = fields[15] as String?
+      ..memoryUsageList = (fields[17] as List).cast<double>()
+      ..listEntryDateMS = (fields[18] as List).cast<int>();
   }
 
   @override
@@ -46,10 +46,6 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..write(obj.fpsList)
       ..writeByte(2)
       ..write(obj.cpuUsageList)
-      ..writeByte(17)
-      ..write(obj.memoryUsageList)
-      ..writeByte(18)
-      ..write(obj.listEntryDateMS)
       ..writeByte(3)
       ..write(obj.strain)
       ..writeByte(4)
@@ -73,7 +69,11 @@ class PastStreamDataAdapter extends TypeAdapter<PastStreamData> {
       ..writeByte(14)
       ..write(obj.starred)
       ..writeByte(15)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(17)
+      ..write(obj.memoryUsageList)
+      ..writeByte(18)
+      ..write(obj.listEntryDateMS);
   }
 
   @override

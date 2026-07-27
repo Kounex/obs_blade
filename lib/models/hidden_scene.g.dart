@@ -8,7 +8,7 @@ part of 'hidden_scene.dart';
 
 class HiddenSceneAdapter extends TypeAdapter<HiddenScene> {
   @override
-  final int typeId = 6;
+  final typeId = 6;
 
   @override
   HiddenScene read(BinaryReader reader) {

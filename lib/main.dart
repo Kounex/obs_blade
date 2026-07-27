@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/models/hotkey.dart';
@@ -74,7 +74,10 @@ void _initializeStores() {
   /// View stores designated for specific views
   GetIt.instance.registerLazySingleton<IntroStore>(() => IntroStore());
   GetIt.instance.registerLazySingleton<HomeStore>(() => HomeStore());
-  GetIt.instance.registerLazySingleton<DashboardStore>(() => DashboardStore());
+  GetIt.instance.registerLazySingleton<DashboardStore>(
+    () => DashboardStore(),
+    dispose: (store) => store.disposeListeners(),
+  );
   GetIt.instance
       .registerLazySingleton<StatisticsStore>(() => StatisticsStore());
   GetIt.instance.registerLazySingleton<LogsStore>(() => LogsStore());

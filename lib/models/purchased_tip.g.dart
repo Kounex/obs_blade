@@ -8,7 +8,7 @@ part of 'purchased_tip.dart';
 
 class PurchasedTipAdapter extends TypeAdapter<PurchasedTip> {
   @override
-  final int typeId = 9;
+  final typeId = 9;
 
   @override
   PurchasedTip read(BinaryReader reader) {
@@ -17,7 +17,7 @@ class PurchasedTipAdapter extends TypeAdapter<PurchasedTip> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PurchasedTip(
-      fields[0] as int,
+      (fields[0] as num).toInt(),
       fields[1] as String,
       fields[2] as String,
       fields[3] as String,

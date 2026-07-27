@@ -12,13 +12,16 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   Computed<bool>? _$isFilterSortActiveComputed;
 
   @override
-  bool get isFilterSortActive => (_$isFilterSortActiveComputed ??=
-          Computed<bool>(() => super.isFilterSortActive,
-              name: '_StatisticsStore.isFilterSortActive'))
-      .value;
+  bool get isFilterSortActive =>
+      (_$isFilterSortActiveComputed ??= Computed<bool>(
+        () => super.isFilterSortActive,
+        name: '_StatisticsStore.isFilterSortActive',
+      )).value;
 
-  late final _$filterTypeAtom =
-      Atom(name: '_StatisticsStore.filterType', context: context);
+  late final _$filterTypeAtom = Atom(
+    name: '_StatisticsStore.filterType',
+    context: context,
+  );
 
   @override
   FilterType get filterType {
@@ -33,8 +36,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$filterOrderAtom =
-      Atom(name: '_StatisticsStore.filterOrder', context: context);
+  late final _$filterOrderAtom = Atom(
+    name: '_StatisticsStore.filterOrder',
+    context: context,
+  );
 
   @override
   Order get filterOrder {
@@ -49,8 +54,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$amountStatisticEntriesAtom =
-      Atom(name: '_StatisticsStore.amountStatisticEntries', context: context);
+  late final _$amountStatisticEntriesAtom = Atom(
+    name: '_StatisticsStore.amountStatisticEntries',
+    context: context,
+  );
 
   @override
   AmountStatisticEntries get amountStatisticEntries {
@@ -60,14 +67,19 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
 
   @override
   set amountStatisticEntries(AmountStatisticEntries value) {
-    _$amountStatisticEntriesAtom
-        .reportWrite(value, super.amountStatisticEntries, () {
-      super.amountStatisticEntries = value;
-    });
+    _$amountStatisticEntriesAtom.reportWrite(
+      value,
+      super.amountStatisticEntries,
+      () {
+        super.amountStatisticEntries = value;
+      },
+    );
   }
 
-  late final _$filterNameAtom =
-      Atom(name: '_StatisticsStore.filterName', context: context);
+  late final _$filterNameAtom = Atom(
+    name: '_StatisticsStore.filterName',
+    context: context,
+  );
 
   @override
   String get filterName {
@@ -82,8 +94,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$showOnlyFavoritesAtom =
-      Atom(name: '_StatisticsStore.showOnlyFavorites', context: context);
+  late final _$showOnlyFavoritesAtom = Atom(
+    name: '_StatisticsStore.showOnlyFavorites',
+    context: context,
+  );
 
   @override
   bool? get showOnlyFavorites {
@@ -98,8 +112,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$fromDateAtom =
-      Atom(name: '_StatisticsStore.fromDate', context: context);
+  late final _$fromDateAtom = Atom(
+    name: '_StatisticsStore.fromDate',
+    context: context,
+  );
 
   @override
   DateTime? get fromDate {
@@ -114,8 +130,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$toDateAtom =
-      Atom(name: '_StatisticsStore.toDate', context: context);
+  late final _$toDateAtom = Atom(
+    name: '_StatisticsStore.toDate',
+    context: context,
+  );
 
   @override
   DateTime? get toDate {
@@ -130,8 +148,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$excludeUnnamedStatsAtom =
-      Atom(name: '_StatisticsStore.excludeUnnamedStats', context: context);
+  late final _$excludeUnnamedStatsAtom = Atom(
+    name: '_StatisticsStore.excludeUnnamedStats',
+    context: context,
+  );
 
   @override
   bool? get excludeUnnamedStats {
@@ -146,8 +166,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$statTypeAtom =
-      Atom(name: '_StatisticsStore.statType', context: context);
+  late final _$statTypeAtom = Atom(
+    name: '_StatisticsStore.statType',
+    context: context,
+  );
 
   @override
   StatType get statType {
@@ -162,8 +184,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$durationFilterAtom =
-      Atom(name: '_StatisticsStore.durationFilter', context: context);
+  late final _$durationFilterAtom = Atom(
+    name: '_StatisticsStore.durationFilter',
+    context: context,
+  );
 
   @override
   DurationFilter? get durationFilter {
@@ -178,8 +202,10 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$durationFilterAmountAtom =
-      Atom(name: '_StatisticsStore.durationFilterAmount', context: context);
+  late final _$durationFilterAmountAtom = Atom(
+    name: '_StatisticsStore.durationFilterAmount',
+    context: context,
+  );
 
   @override
   int? get durationFilterAmount {
@@ -189,14 +215,19 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
 
   @override
   set durationFilterAmount(int? value) {
-    _$durationFilterAmountAtom.reportWrite(value, super.durationFilterAmount,
-        () {
-      super.durationFilterAmount = value;
-    });
+    _$durationFilterAmountAtom.reportWrite(
+      value,
+      super.durationFilterAmount,
+      () {
+        super.durationFilterAmount = value;
+      },
+    );
   }
 
-  late final _$durationFilterTimeUnitAtom =
-      Atom(name: '_StatisticsStore.durationFilterTimeUnit', context: context);
+  late final _$durationFilterTimeUnitAtom = Atom(
+    name: '_StatisticsStore.durationFilterTimeUnit',
+    context: context,
+  );
 
   @override
   TimeUnit get durationFilterTimeUnit {
@@ -206,14 +237,19 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
 
   @override
   set durationFilterTimeUnit(TimeUnit value) {
-    _$durationFilterTimeUnitAtom
-        .reportWrite(value, super.durationFilterTimeUnit, () {
-      super.durationFilterTimeUnit = value;
-    });
+    _$durationFilterTimeUnitAtom.reportWrite(
+      value,
+      super.durationFilterTimeUnit,
+      () {
+        super.durationFilterTimeUnit = value;
+      },
+    );
   }
 
-  late final _$triggeredDefaultAtom =
-      Atom(name: '_StatisticsStore.triggeredDefault', context: context);
+  late final _$triggeredDefaultAtom = Atom(
+    name: '_StatisticsStore.triggeredDefault',
+    context: context,
+  );
 
   @override
   bool get triggeredDefault {
@@ -228,13 +264,16 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
     });
   }
 
-  late final _$_StatisticsStoreActionController =
-      ActionController(name: '_StatisticsStore', context: context);
+  late final _$_StatisticsStoreActionController = ActionController(
+    name: '_StatisticsStore',
+    context: context,
+  );
 
   @override
   void setDefaults() {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setDefaults');
+      name: '_StatisticsStore.setDefaults',
+    );
     try {
       return super.setDefaults();
     } finally {
@@ -245,7 +284,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setFilterType(FilterType filterType) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setFilterType');
+      name: '_StatisticsStore.setFilterType',
+    );
     try {
       return super.setFilterType(filterType);
     } finally {
@@ -256,7 +296,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void toggleFilterOrder() {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.toggleFilterOrder');
+      name: '_StatisticsStore.toggleFilterOrder',
+    );
     try {
       return super.toggleFilterOrder();
     } finally {
@@ -266,9 +307,11 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
 
   @override
   void setAmountStatisticEntries(
-      AmountStatisticEntries amountStatisticEntries) {
+    AmountStatisticEntries amountStatisticEntries,
+  ) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setAmountStatisticEntries');
+      name: '_StatisticsStore.setAmountStatisticEntries',
+    );
     try {
       return super.setAmountStatisticEntries(amountStatisticEntries);
     } finally {
@@ -279,7 +322,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setFilterName(String filterName) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setFilterName');
+      name: '_StatisticsStore.setFilterName',
+    );
     try {
       return super.setFilterName(filterName);
     } finally {
@@ -290,7 +334,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setShowOnlyFavorites(bool? showOnlyFavorites) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setShowOnlyFavorites');
+      name: '_StatisticsStore.setShowOnlyFavorites',
+    );
     try {
       return super.setShowOnlyFavorites(showOnlyFavorites);
     } finally {
@@ -301,7 +346,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setFromDate(DateTime? fromDate) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setFromDate');
+      name: '_StatisticsStore.setFromDate',
+    );
     try {
       return super.setFromDate(fromDate);
     } finally {
@@ -312,7 +358,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setToDate(DateTime? toDate) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setToDate');
+      name: '_StatisticsStore.setToDate',
+    );
     try {
       return super.setToDate(toDate);
     } finally {
@@ -323,7 +370,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setExcludeUnnamedStats(bool? excludeUnnamedStats) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setExcludeUnnamedStats');
+      name: '_StatisticsStore.setExcludeUnnamedStats',
+    );
     try {
       return super.setExcludeUnnamedStats(excludeUnnamedStats);
     } finally {
@@ -334,7 +382,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setStatType(StatType statType) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setStatType');
+      name: '_StatisticsStore.setStatType',
+    );
     try {
       return super.setStatType(statType);
     } finally {
@@ -345,7 +394,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setDurationFilter(DurationFilter? durationFilter) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setDurationFilter');
+      name: '_StatisticsStore.setDurationFilter',
+    );
     try {
       return super.setDurationFilter(durationFilter);
     } finally {
@@ -356,7 +406,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setDurationFilterAmount(String durationFilterAmount) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setDurationFilterAmount');
+      name: '_StatisticsStore.setDurationFilterAmount',
+    );
     try {
       return super.setDurationFilterAmount(durationFilterAmount);
     } finally {
@@ -367,7 +418,8 @@ mixin _$StatisticsStore on _StatisticsStore, Store {
   @override
   void setDurationFilterTimeUnit(TimeUnit durationFilterTimeUnit) {
     final _$actionInfo = _$_StatisticsStoreActionController.startAction(
-        name: '_StatisticsStore.setDurationFilterTimeUnit');
+      name: '_StatisticsStore.setDurationFilterTimeUnit',
+    );
     try {
       return super.setDurationFilterTimeUnit(durationFilterTimeUnit);
     } finally {

@@ -4,7 +4,7 @@ part 'filter.freezed.dart';
 part 'filter.g.dart';
 
 @freezed
-class Filter with _$Filter {
+abstract class Filter with _$Filter {
   const factory Filter({
     required bool filterEnabled,
     required int filterIndex,

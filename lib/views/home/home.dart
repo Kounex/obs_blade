@@ -127,27 +127,27 @@ class _HomeViewState extends State<HomeView> {
           );
         }
 
-        /// If the error for the connection attempt results in an 'Authentication' error,
-        /// it is due to providing a wrong password (or none at all) and we don't want to
-        /// display an overlay for that - we trigger the validation of the password field
-        /// in our [ConnectForm]
-        else if ([
-          WebSocketCloseCode.DontClose,
-          WebSocketCloseCode.AuthenticationFailed
-        ].every((closeCode) => closeCode != networkStore.connectionClodeCode)) {
+        /// Auth failures are shown on the password field in ConnectForm —
+        /// no generic overlay.
+        else if (networkStore.lastConnectionResult?.isAuthenticationFailure ==
+                true ||
+            networkStore.connectionClodeCode ==
+                WebSocketCloseCode.AuthenticationFailed) {
+          OverlayHandler.closeAnyOverlay(immediately: true);
+        } else {
+          final message = networkStore.lastConnectionResult?.userMessage ??
+              'Couldn\'t connect to a WebSocket.';
           OverlayHandler.showStatusOverlay(
             context: context,
             replaceIfActive: true,
-            content: const Align(
+            content: Align(
               alignment: Alignment.center,
               child: BaseResult(
                 icon: BaseResultIcon.Negative,
-                text: 'Couldn\'t connect to a WebSocket.',
+                text: message,
               ),
             ),
           );
-        } else {
-          OverlayHandler.closeAnyOverlay(immediately: true);
         }
       }
     }));

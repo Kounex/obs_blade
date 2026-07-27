@@ -8,7 +8,7 @@ part of 'hotkey.dart';
 
 class HotkeyAdapter extends TypeAdapter<Hotkey> {
   @override
-  final int typeId = 11;
+  final typeId = 11;
 
   @override
   Hotkey read(BinaryReader reader) {
@@ -16,9 +16,7 @@ class HotkeyAdapter extends TypeAdapter<Hotkey> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Hotkey(
-      fields[0] as String,
-    );
+    return Hotkey(fields[0] as String);
   }
 
   @override

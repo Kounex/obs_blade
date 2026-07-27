@@ -6,13 +6,12 @@ part of 'scene.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SceneImpl _$$SceneImplFromJson(Map<String, dynamic> json) => _$SceneImpl(
-      sceneName: json['sceneName'] as String,
-      sceneIndex: (json['sceneIndex'] as num).toInt(),
-    );
+_Scene _$SceneFromJson(Map<String, dynamic> json) => _Scene(
+  sceneName: json['sceneName'] as String,
+  sceneIndex: (json['sceneIndex'] as num).toInt(),
+);
 
-Map<String, dynamic> _$$SceneImplToJson(_$SceneImpl instance) =>
-    <String, dynamic>{
-      'sceneName': instance.sceneName,
-      'sceneIndex': instance.sceneIndex,
-    };
+Map<String, dynamic> _$SceneToJson(_Scene instance) => <String, dynamic>{
+  'sceneName': instance.sceneName,
+  'sceneIndex': instance.sceneIndex,
+};

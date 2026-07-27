@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/types/classes/api/record_stats.dart';
 import 'package:obs_blade/types/interfaces/past_stats_data.dart';
 

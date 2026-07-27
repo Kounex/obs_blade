@@ -8,7 +8,7 @@ part of 'past_record_data.dart';
 
 class PastRecordDataAdapter extends TypeAdapter<PastRecordData> {
   @override
-  final int typeId = 10;
+  final typeId = 10;
 
   @override
   PastRecordData read(BinaryReader reader) {
@@ -22,12 +22,12 @@ class PastRecordDataAdapter extends TypeAdapter<PastRecordData> {
       ..cpuUsageList = (fields[2] as List).cast<double>()
       ..memoryUsageList = (fields[3] as List).cast<double>()
       ..listEntryDateMS = (fields[4] as List).cast<int>()
-      ..totalTime = fields[5] as int?
-      ..renderTotalFrames = fields[6] as int?
-      ..renderSkippedFrames = fields[7] as int?
-      ..outputTotalFrames = fields[8] as int?
-      ..outputSkippedFrames = fields[9] as int?
-      ..averageFrameTime = fields[10] as double?
+      ..totalTime = (fields[5] as num?)?.toInt()
+      ..renderTotalFrames = (fields[6] as num?)?.toInt()
+      ..renderSkippedFrames = (fields[7] as num?)?.toInt()
+      ..outputTotalFrames = (fields[8] as num?)?.toInt()
+      ..outputSkippedFrames = (fields[9] as num?)?.toInt()
+      ..averageFrameTime = (fields[10] as num?)?.toDouble()
       ..name = fields[11] as String?
       ..starred = fields[12] as bool?
       ..notes = fields[13] as String?;

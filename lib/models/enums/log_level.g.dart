@@ -8,7 +8,7 @@ part of 'log_level.dart';
 
 class LogLevelAdapter extends TypeAdapter<LogLevel> {
   @override
-  final int typeId = 8;
+  final typeId = 8;
 
   @override
   LogLevel read(BinaryReader reader) {
@@ -29,13 +29,10 @@ class LogLevelAdapter extends TypeAdapter<LogLevel> {
     switch (obj) {
       case LogLevel.Info:
         writer.writeByte(0);
-        break;
       case LogLevel.Warning:
         writer.writeByte(1);
-        break;
       case LogLevel.Error:
         writer.writeByte(2);
-        break;
     }
   }
 

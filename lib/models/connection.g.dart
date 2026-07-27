@@ -8,7 +8,7 @@ part of 'connection.dart';
 
 class ConnectionAdapter extends TypeAdapter<Connection> {
   @override
-  final int typeId = 0;
+  final typeId = 0;
 
   @override
   Connection read(BinaryReader reader) {
@@ -17,11 +17,11 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Connection(
-      fields[1] as String,
-      fields[3] as int?,
-      fields[4] as String?,
-      fields[5] as bool?,
-    )
+        fields[1] as String,
+        (fields[3] as num?)?.toInt(),
+        fields[4] as String?,
+        fields[5] as bool?,
+      )
       ..name = fields[0] as String?
       ..ssid = fields[2] as String?;
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';

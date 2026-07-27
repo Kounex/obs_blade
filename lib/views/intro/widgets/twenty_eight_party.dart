@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/general/base/constrained_box.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 

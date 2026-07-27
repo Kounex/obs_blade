@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
@@ -106,6 +106,7 @@ class _DashboardViewState extends State<DashboardView> {
     /// Disable [Wakelock] - does not need to check whether this is active
     /// since calling disable is idempotent
     WakelockPlus.disable();
+    GetIt.instance<DashboardStore>().disposeListeners();
     super.dispose();
   }
 

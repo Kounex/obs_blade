@@ -24,7 +24,7 @@ class ConnectHostInput extends StatefulWidget {
     required this.hostDomain,
     required this.manual,
     required this.domainMode,
-    this.protocolScheme = 'wss://',
+    this.protocolScheme = 'ws://',
     this.showHelp = true,
     this.onChangeMode,
     this.onChangeProtocolScheme,
@@ -102,12 +102,12 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                         alignment: Alignment.center,
                         items: const [
                           DropdownMenuItem(
-                            value: 'wss://',
-                            child: Text('wss://'),
-                          ),
-                          DropdownMenuItem(
                             value: 'ws://',
                             child: Text('ws://'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'wss://',
+                            child: Text('wss://'),
                           ),
                           DropdownMenuItem(
                             value: '',
@@ -119,7 +119,7 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                           this
                               .widget
                               .onChangeProtocolScheme
-                              ?.call(scheme ?? 'wss://');
+                              ?.call(scheme ?? 'ws://');
                           _inputFocusNode.requestFocus();
                         },
                       ),

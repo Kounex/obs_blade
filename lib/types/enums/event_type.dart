@@ -17,11 +17,10 @@ enum EventType {
   /// The profile list has changed.
   ProfileListChanged,
 
-  /// Note: This event is not fired when the scenes are reordered
-  ScenesChanged,
-
-  /// Indicates a scene change
-  SwitchScenes,
+  /// The scene list has changed.
+  ///
+  /// Note: This event is not fired when the scenes are reordered.
+  SceneListChanged,
 
   /// A scene transition has started.
   SceneTransitionStarted,

@@ -4,7 +4,7 @@ part 'input_channel.freezed.dart';
 part 'input_channel.g.dart';
 
 @freezed
-class InputChannel with _$InputChannel {
+abstract class InputChannel with _$InputChannel {
   const factory InputChannel({
     required double? current,
     required double? average,

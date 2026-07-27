@@ -6,33 +6,34 @@ part of 'scene_item.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SceneItemImpl _$$SceneItemImplFromJson(Map<String, dynamic> json) =>
-    _$SceneItemImpl(
-      inputKind: json['inputKind'] as String?,
-      isGroup: json['isGroup'] as bool?,
-      sceneItemBlendMode: json['sceneItemBlendMode'] as String?,
-      sceneItemEnabled: json['sceneItemEnabled'] as bool?,
-      sceneItemId: (json['sceneItemId'] as num?)?.toInt(),
-      sceneItemIndex: (json['sceneItemIndex'] as num?)?.toInt(),
-      sceneItemLocked: json['sceneItemLocked'] as bool?,
-      sceneItemTransform: json['sceneItemTransform'] == null
-          ? null
-          : SceneItemTransform.fromJson(
-              json['sceneItemTransform'] as Map<String, dynamic>),
-      sourceName: json['sourceName'] as String?,
-      sourceType: json['sourceType'] as String?,
-      filters: (json['filters'] as List<dynamic>?)
-              ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const [],
-      parentGroupName: json['parentGroupName'] as String?,
-      groupChildren: (json['groupChildren'] as List<dynamic>?)
-          ?.map((e) => SceneItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      displayGroup: json['displayGroup'] as bool? ?? false,
-    );
+_SceneItem _$SceneItemFromJson(Map<String, dynamic> json) => _SceneItem(
+  inputKind: json['inputKind'] as String?,
+  isGroup: json['isGroup'] as bool?,
+  sceneItemBlendMode: json['sceneItemBlendMode'] as String?,
+  sceneItemEnabled: json['sceneItemEnabled'] as bool?,
+  sceneItemId: (json['sceneItemId'] as num?)?.toInt(),
+  sceneItemIndex: (json['sceneItemIndex'] as num?)?.toInt(),
+  sceneItemLocked: json['sceneItemLocked'] as bool?,
+  sceneItemTransform: json['sceneItemTransform'] == null
+      ? null
+      : SceneItemTransform.fromJson(
+          json['sceneItemTransform'] as Map<String, dynamic>,
+        ),
+  sourceName: json['sourceName'] as String?,
+  sourceType: json['sourceType'] as String?,
+  filters:
+      (json['filters'] as List<dynamic>?)
+          ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  parentGroupName: json['parentGroupName'] as String?,
+  groupChildren: (json['groupChildren'] as List<dynamic>?)
+      ?.map((e) => SceneItem.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  displayGroup: json['displayGroup'] as bool? ?? false,
+);
 
-Map<String, dynamic> _$$SceneItemImplToJson(_$SceneItemImpl instance) =>
+Map<String, dynamic> _$SceneItemToJson(_SceneItem instance) =>
     <String, dynamic>{
       'inputKind': instance.inputKind,
       'isGroup': instance.isGroup,

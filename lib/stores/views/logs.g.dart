@@ -9,8 +9,10 @@ part of 'logs.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$LogsStore on _LogsStore, Store {
-  late final _$logLevelAtom =
-      Atom(name: '_LogsStore.logLevel', context: context);
+  late final _$logLevelAtom = Atom(
+    name: '_LogsStore.logLevel',
+    context: context,
+  );
 
   @override
   LogLevel? get logLevel {
@@ -25,8 +27,10 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  late final _$fromDateAtom =
-      Atom(name: '_LogsStore.fromDate', context: context);
+  late final _$fromDateAtom = Atom(
+    name: '_LogsStore.fromDate',
+    context: context,
+  );
 
   @override
   DateTime? get fromDate {
@@ -56,8 +60,10 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  late final _$amountLogEntriesAtom =
-      Atom(name: '_LogsStore.amountLogEntries', context: context);
+  late final _$amountLogEntriesAtom = Atom(
+    name: '_LogsStore.amountLogEntries',
+    context: context,
+  );
 
   @override
   AmountLogEntries? get amountLogEntries {
@@ -72,8 +78,10 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  late final _$filterOrderAtom =
-      Atom(name: '_LogsStore.filterOrder', context: context);
+  late final _$filterOrderAtom = Atom(
+    name: '_LogsStore.filterOrder',
+    context: context,
+  );
 
   @override
   Order get filterOrder {
@@ -88,13 +96,16 @@ mixin _$LogsStore on _LogsStore, Store {
     });
   }
 
-  late final _$_LogsStoreActionController =
-      ActionController(name: '_LogsStore', context: context);
+  late final _$_LogsStoreActionController = ActionController(
+    name: '_LogsStore',
+    context: context,
+  );
 
   @override
   void setLogLevel(LogLevel? logLevel) {
     final _$actionInfo = _$_LogsStoreActionController.startAction(
-        name: '_LogsStore.setLogLevel');
+      name: '_LogsStore.setLogLevel',
+    );
     try {
       return super.setLogLevel(logLevel);
     } finally {
@@ -105,7 +116,8 @@ mixin _$LogsStore on _LogsStore, Store {
   @override
   void setFromDate(DateTime? fromDate) {
     final _$actionInfo = _$_LogsStoreActionController.startAction(
-        name: '_LogsStore.setFromDate');
+      name: '_LogsStore.setFromDate',
+    );
     try {
       return super.setFromDate(fromDate);
     } finally {
@@ -115,8 +127,9 @@ mixin _$LogsStore on _LogsStore, Store {
 
   @override
   void setToDate(DateTime? toDate) {
-    final _$actionInfo =
-        _$_LogsStoreActionController.startAction(name: '_LogsStore.setToDate');
+    final _$actionInfo = _$_LogsStoreActionController.startAction(
+      name: '_LogsStore.setToDate',
+    );
     try {
       return super.setToDate(toDate);
     } finally {
@@ -127,7 +140,8 @@ mixin _$LogsStore on _LogsStore, Store {
   @override
   void setAmountLogEntries(AmountLogEntries? amountLogEntries) {
     final _$actionInfo = _$_LogsStoreActionController.startAction(
-        name: '_LogsStore.setAmountLogEntries');
+      name: '_LogsStore.setAmountLogEntries',
+    );
     try {
       return super.setAmountLogEntries(amountLogEntries);
     } finally {
@@ -138,7 +152,8 @@ mixin _$LogsStore on _LogsStore, Store {
   @override
   void toggleFilterOrder() {
     final _$actionInfo = _$_LogsStoreActionController.startAction(
-        name: '_LogsStore.toggleFilterOrder');
+      name: '_LogsStore.toggleFilterOrder',
+    );
     try {
       return super.toggleFilterOrder();
     } finally {

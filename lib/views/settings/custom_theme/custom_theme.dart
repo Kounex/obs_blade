@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import '../../../shared/general/base/adaptive_switch.dart';
 import '../../../shared/general/base/card.dart';

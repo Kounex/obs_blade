@@ -102,8 +102,13 @@ class FAQView extends StatelessWidget {
                     title:
                         'In most cases you should be able to connect to OBS if it\'s listed in autodiscover. If you try to connect to OBS manually because it\'s not listed in autodiscover, there is usually an underlying problem (check the list above). Additionally check that:',
                     entries: [
-                      'The correct password is used (if set in the OBS WebSocket settings)',
-                      'The host (device running OBS) is reachable with the given IP address. The internal IP address can only be used when both devices are in the same network and the previous points are covered',
+                      'Tools → WebSocket Server Settings → Enable WebSocket Server is checked',
+                      'The correct password is used (copy it from Show Connect Info — OBS generates one by default)',
+                      'You are using OBS Studio 28+ (built-in WebSocket v5). Legacy 4.x plugins are not supported',
+                      'On Windows: set the PC network to Private and allow OBS through the firewall (port 4455 by default)',
+                      'Nothing else is bound to the WebSocket port (some camera plugins also use 4455)',
+                      'For Domain / remote mode prefer ws:// on the LAN; use wss:// only behind a TLS reverse proxy',
+                      'The host is reachable with the given IP / hostname on the same network',
                     ],
                   ),
                 ),

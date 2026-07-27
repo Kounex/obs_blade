@@ -35,7 +35,7 @@ abstract class _HomeStore with Store {
   @observable
   bool domainMode = false;
   @observable
-  String protocolScheme = 'wss://';
+  String protocolScheme = 'ws://';
 
   Connection typedInConnection = Connection('', 4455, '');
 

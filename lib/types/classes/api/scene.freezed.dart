@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,181 +9,276 @@ part of 'scene.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-Scene _$SceneFromJson(Map<String, dynamic> json) {
-  return _Scene.fromJson(json);
-}
 
 /// @nodoc
 mixin _$Scene {
-  /// Name of the currently active scene
-  String get sceneName => throw _privateConstructorUsedError;
 
-  /// Ordered list of the current scene's source items
-  int get sceneIndex => throw _privateConstructorUsedError;
+/// Name of the currently active scene
+ String get sceneName;/// Ordered list of the current scene's source items
+ int get sceneIndex;
+/// Create a copy of Scene
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SceneCopyWith<Scene> get copyWith => _$SceneCopyWithImpl<Scene>(this as Scene, _$identity);
 
   /// Serializes this Scene to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  Map<String, dynamic> toJson();
 
-  /// Create a copy of Scene
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  $SceneCopyWith<Scene> get copyWith => throw _privateConstructorUsedError;
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Scene&&(identical(other.sceneName, sceneName) || other.sceneName == sceneName)&&(identical(other.sceneIndex, sceneIndex) || other.sceneIndex == sceneIndex));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sceneName,sceneIndex);
+
+@override
+String toString() {
+  return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $SceneCopyWith<$Res> {
-  factory $SceneCopyWith(Scene value, $Res Function(Scene) then) =
-      _$SceneCopyWithImpl<$Res, Scene>;
-  @useResult
-  $Res call({String sceneName, int sceneIndex});
-}
+abstract mixin class $SceneCopyWith<$Res>  {
+  factory $SceneCopyWith(Scene value, $Res Function(Scene) _then) = _$SceneCopyWithImpl;
+@useResult
+$Res call({
+ String sceneName, int sceneIndex
+});
 
+
+
+
+}
 /// @nodoc
-class _$SceneCopyWithImpl<$Res, $Val extends Scene>
+class _$SceneCopyWithImpl<$Res>
     implements $SceneCopyWith<$Res> {
-  _$SceneCopyWithImpl(this._value, this._then);
+  _$SceneCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Scene _self;
+  final $Res Function(Scene) _then;
 
-  /// Create a copy of Scene
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? sceneName = null,
-    Object? sceneIndex = null,
-  }) {
-    return _then(_value.copyWith(
-      sceneName: null == sceneName
-          ? _value.sceneName
-          : sceneName // ignore: cast_nullable_to_non_nullable
-              as String,
-      sceneIndex: null == sceneIndex
-          ? _value.sceneIndex
-          : sceneIndex // ignore: cast_nullable_to_non_nullable
-              as int,
-    ) as $Val);
-  }
+/// Create a copy of Scene
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? sceneName = null,Object? sceneIndex = null,}) {
+  return _then(_self.copyWith(
+sceneName: null == sceneName ? _self.sceneName : sceneName // ignore: cast_nullable_to_non_nullable
+as String,sceneIndex: null == sceneIndex ? _self.sceneIndex : sceneIndex // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
 }
 
-/// @nodoc
-abstract class _$$SceneImplCopyWith<$Res> implements $SceneCopyWith<$Res> {
-  factory _$$SceneImplCopyWith(
-          _$SceneImpl value, $Res Function(_$SceneImpl) then) =
-      __$$SceneImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({String sceneName, int sceneIndex});
 }
 
-/// @nodoc
-class __$$SceneImplCopyWithImpl<$Res>
-    extends _$SceneCopyWithImpl<$Res, _$SceneImpl>
-    implements _$$SceneImplCopyWith<$Res> {
-  __$$SceneImplCopyWithImpl(
-      _$SceneImpl _value, $Res Function(_$SceneImpl) _then)
-      : super(_value, _then);
 
-  /// Create a copy of Scene
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? sceneName = null,
-    Object? sceneIndex = null,
-  }) {
-    return _then(_$SceneImpl(
-      sceneName: null == sceneName
-          ? _value.sceneName
-          : sceneName // ignore: cast_nullable_to_non_nullable
-              as String,
-      sceneIndex: null == sceneIndex
-          ? _value.sceneIndex
-          : sceneIndex // ignore: cast_nullable_to_non_nullable
-              as int,
-    ));
-  }
+/// Adds pattern-matching-related methods to [Scene].
+extension ScenePatterns on Scene {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Scene value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Scene() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Scene value)  $default,){
+final _that = this;
+switch (_that) {
+case _Scene():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Scene value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Scene() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String sceneName,  int sceneIndex)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Scene() when $default != null:
+return $default(_that.sceneName,_that.sceneIndex);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String sceneName,  int sceneIndex)  $default,) {final _that = this;
+switch (_that) {
+case _Scene():
+return $default(_that.sceneName,_that.sceneIndex);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String sceneName,  int sceneIndex)?  $default,) {final _that = this;
+switch (_that) {
+case _Scene() when $default != null:
+return $default(_that.sceneName,_that.sceneIndex);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$SceneImpl implements _Scene {
-  const _$SceneImpl({required this.sceneName, required this.sceneIndex});
 
-  factory _$SceneImpl.fromJson(Map<String, dynamic> json) =>
-      _$$SceneImplFromJson(json);
+class _Scene implements Scene {
+  const _Scene({required this.sceneName, required this.sceneIndex});
+  factory _Scene.fromJson(Map<String, dynamic> json) => _$SceneFromJson(json);
 
-  /// Name of the currently active scene
-  @override
-  final String sceneName;
+/// Name of the currently active scene
+@override final  String sceneName;
+/// Ordered list of the current scene's source items
+@override final  int sceneIndex;
 
-  /// Ordered list of the current scene's source items
-  @override
-  final int sceneIndex;
+/// Create a copy of Scene
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SceneCopyWith<_Scene> get copyWith => __$SceneCopyWithImpl<_Scene>(this, _$identity);
 
-  @override
-  String toString() {
-    return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$SceneImpl &&
-            (identical(other.sceneName, sceneName) ||
-                other.sceneName == sceneName) &&
-            (identical(other.sceneIndex, sceneIndex) ||
-                other.sceneIndex == sceneIndex));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, sceneName, sceneIndex);
-
-  /// Create a copy of Scene
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$SceneImplCopyWith<_$SceneImpl> get copyWith =>
-      __$$SceneImplCopyWithImpl<_$SceneImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$SceneImplToJson(
-      this,
-    );
-  }
+@override
+Map<String, dynamic> toJson() {
+  return _$SceneToJson(this, );
 }
 
-abstract class _Scene implements Scene {
-  const factory _Scene(
-      {required final String sceneName,
-      required final int sceneIndex}) = _$SceneImpl;
-
-  factory _Scene.fromJson(Map<String, dynamic> json) = _$SceneImpl.fromJson;
-
-  /// Name of the currently active scene
-  @override
-  String get sceneName;
-
-  /// Ordered list of the current scene's source items
-  @override
-  int get sceneIndex;
-
-  /// Create a copy of Scene
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  _$$SceneImplCopyWith<_$SceneImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Scene&&(identical(other.sceneName, sceneName) || other.sceneName == sceneName)&&(identical(other.sceneIndex, sceneIndex) || other.sceneIndex == sceneIndex));
 }
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sceneName,sceneIndex);
+
+@override
+String toString() {
+  return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$SceneCopyWith<$Res> implements $SceneCopyWith<$Res> {
+  factory _$SceneCopyWith(_Scene value, $Res Function(_Scene) _then) = __$SceneCopyWithImpl;
+@override @useResult
+$Res call({
+ String sceneName, int sceneIndex
+});
+
+
+
+
+}
+/// @nodoc
+class __$SceneCopyWithImpl<$Res>
+    implements _$SceneCopyWith<$Res> {
+  __$SceneCopyWithImpl(this._self, this._then);
+
+  final _Scene _self;
+  final $Res Function(_Scene) _then;
+
+/// Create a copy of Scene
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? sceneName = null,Object? sceneIndex = null,}) {
+  return _then(_Scene(
+sceneName: null == sceneName ? _self.sceneName : sceneName // ignore: cast_nullable_to_non_nullable
+as String,sceneIndex: null == sceneIndex ? _self.sceneIndex : sceneIndex // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+// dart format on

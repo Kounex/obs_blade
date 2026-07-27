@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/stores/views/home.dart';

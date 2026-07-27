@@ -42,7 +42,10 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
   SessionInvalidated,
 
   /// A requested feature is not supported due to hardware/software limitations.
-  UnsupportedFeature;
+  UnsupportedFeature,
+
+  /// App-internal: handshake did not finish before the client timeout.
+  HandshakeTimeout;
 
   @override
   int get identifier => const {
@@ -59,6 +62,7 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
         WebSocketCloseCode.UnsupportedRpcVersion: 4010,
         WebSocketCloseCode.SessionInvalidated: 4011,
         WebSocketCloseCode.UnsupportedFeature: 4012,
+        WebSocketCloseCode.HandshakeTimeout: 4999,
       }[this]!;
 
   @override
@@ -89,5 +93,15 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
             'The websocket session has been invalidated by the obs-websocket server.\n\nNote: This is the code used by the Kick button in the UI Session List. If you receive this code, you must not automatically reconnect.',
         WebSocketCloseCode.UnsupportedFeature:
             'A requested feature is not supported due to hardware/software limitations.',
+        WebSocketCloseCode.HandshakeTimeout:
+            'The OBS WebSocket handshake did not complete before the client timeout.',
       }[this]!;
+
+  static WebSocketCloseCode fromIdentifier(int? code) {
+    if (code == null) return WebSocketCloseCode.UnknownReason;
+    return WebSocketCloseCode.values.firstWhere(
+      (c) => c.identifier == code,
+      orElse: () => WebSocketCloseCode.UnknownReason,
+    );
+  }
 }

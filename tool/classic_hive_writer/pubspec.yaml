@@ -1,0 +1,7 @@
+name: classic_hive_writer
+description: Writes OBS Blade foundation Hive boxes using classic hive 2.2.3 only.
+publish_to: none
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+dependencies:
+  hive: 2.2.3

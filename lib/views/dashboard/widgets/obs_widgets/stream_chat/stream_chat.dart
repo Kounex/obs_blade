@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
+import 'package:obs_blade/utils/youtube_video_id.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/enums/chat_type.dart';
@@ -31,24 +32,13 @@ class StreamChat extends StatefulWidget {
 
 class _StreamChatState extends State<StreamChat>
     with AutomaticKeepAliveClientMixin {
-  late WebViewController _webController;
+  WebViewController? _webController;
+  String? _loadedChatUrl;
 
-  void _initializeWebController(Box<dynamic> settingsBox, ChatType chatType) {
-    _webController = WebViewController()
-      ..loadRequest(
-        Uri.parse(_urlForChatType(chatType, settingsBox)),
-      )
-      ..enableZoom(false)
-      ..setUserAgent(
-          'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1')
-      ..setBackgroundColor(Colors.transparent)
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+  static const _mobileSafariUserAgent =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1';
 
-    _webController.setNavigationDelegate(
-      NavigationDelegate.fromPlatformCreationParams(
-        const PlatformNavigationDelegateCreationParams(),
-        onProgress: (progress) {
-          _webController.runJavaScript('''
+  static const _consentBannerScript = '''
             if (document.body !== undefined) {
               let observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
@@ -66,29 +56,32 @@ class _StreamChatState extends State<StreamChat>
                 characterData: true
               });
             }
-          ''');
-        },
-        // onPageFinished: (url) {
-        //   _webController.runJavaScript('''
-        //     let observer = new MutationObserver((mutations) => {
-        //       mutations.forEach((mutation) => {
-        //         if(document.getElementsByClassName('consent-banner').length > 0) {
-        //           [...document.getElementsByClassName('consent-banner')].forEach((element) => element.remove());
-        //           observer.disconnect();
-        //         }
-        //       });
-        //     });
+          ''';
 
-        //     observer.observe(document.body, {
-        //       characterDataOldValue: true,
-        //       subtree: true,
-        //       childList: true,
-        //       characterData: true
-        //     });
-        //   ''');
-        // },
+  WebViewController _createWebController() {
+    final controller = WebViewController()
+      ..enableZoom(false)
+      ..setUserAgent(_mobileSafariUserAgent)
+      ..setBackgroundColor(Colors.transparent)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+
+    controller.setNavigationDelegate(
+      NavigationDelegate.fromPlatformCreationParams(
+        const PlatformNavigationDelegateCreationParams(),
+        onProgress: (progress) {
+          controller.runJavaScript(_consentBannerScript);
+        },
       ),
     );
+    return controller;
+  }
+
+  /// Create once; [loadRequest] only when the resolved chat URL changes.
+  void _syncWebController(String url) {
+    _webController ??= _createWebController();
+    if (_loadedChatUrl == url) return;
+    _loadedChatUrl = url;
+    _webController!.loadRequest(Uri.parse(url));
   }
 
   @override
@@ -101,11 +94,17 @@ class _StreamChatState extends State<StreamChat>
     }
     if (chatType == ChatType.YouTube &&
         (settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)) != null) {
-      return 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YouTubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)].split(RegExp(r'[/?&]'))[0]}';
+      final stored = settingsBox.get(SettingsKeys.YouTubeUsernames.name)
+          [settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)];
+      final videoId = extractYouTubeVideoId(stored is String ? stored : null);
+      if (videoId == null) return 'about:blank';
+      return 'https://www.youtube.com/live_chat?v=$videoId';
     }
     if (chatType == ChatType.Owncast &&
         (settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)) != null) {
-      return '${settingsBox.get(SettingsKeys.OwncastUsernames.name)[settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)]}/embed/chat/readwrite';
+      final base = settingsBox.get(SettingsKeys.OwncastUsernames.name)
+          [settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)] as String;
+      return '${base.replaceAll(RegExp(r'/+$'), '')}/embed/chat/readwrite';
     }
     return 'about:blank';
   }
@@ -154,6 +153,8 @@ class _StreamChatState extends State<StreamChat>
               SettingsKeys.SelectedTwitchUsername,
               SettingsKeys.SelectedYouTubeUsername,
               SettingsKeys.SelectedOwncastUsername,
+              SettingsKeys.YouTubeUsernames,
+              SettingsKeys.OwncastUsernames,
             ],
             builder: (context, settingsBox, child) {
               ChatType chatType = settingsBox.get(
@@ -161,7 +162,10 @@ class _StreamChatState extends State<StreamChat>
                 defaultValue: ChatType.Twitch,
               );
 
-              _initializeWebController(settingsBox, chatType);
+              final chatActive = anyChatActive(chatType, settingsBox);
+              if (chatActive) {
+                _syncWebController(_urlForChatType(chatType, settingsBox));
+              }
 
               return Stack(
                 alignment: Alignment.center,
@@ -169,7 +173,7 @@ class _StreamChatState extends State<StreamChat>
                   /// Only add the [WebView] to the widget tree if we have an
                   /// actual chat to display because otherwise the [WebView]
                   /// will still eat up performance
-                  if (anyChatActive(chatType, settingsBox))
+                  if (chatActive && _webController != null)
 
                     /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
                     /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
@@ -201,46 +205,10 @@ class _StreamChatState extends State<StreamChat>
                                       SettingsKeys.SelectedOwncastUsername.name)
                                   .toString(),
                         ),
-                        controller: _webController,
+                        controller: _webController!,
                       ),
-                      // InAppWebView(
-                      //   key: Key(
-                      //     chatType.toString() +
-                      //         settingsBox
-                      //             .get(SettingsKeys.SelectedTwitchUsername.name)
-                      //             .toString() +
-                      //         settingsBox
-                      //             .get(SettingsKeys.SelectedYouTubeUsername.name)
-                      //             .toString(),
-                      //   ),
-                      //   initialUrlRequest: URLRequest(
-                      //     url: Uri.parse(chatType == ChatType.Twitch &&
-                      //             settingsBox.get(SettingsKeys
-                      //                     .SelectedTwitchUsername.name) !=
-                      //                 null
-                      //         ? 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat'
-                      //         : chatType == ChatType.YouTube &&
-                      //                 settingsBox.get(SettingsKeys
-                      //                         .SelectedYouTubeUsername.name) !=
-                      //                     null
-                      //             ? 'https://www.youtube.com/live_chat?&v=${settingsBox.get(SettingsKeys.YouTubeUsernames.name)[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)].split(RegExp(r'[/?&]'))[0]}'
-                      //             : 'about:blank'),
-                      //   ),
-                      //   initialOptions: InAppWebViewGroupOptions(
-                      //     crossPlatform: InAppWebViewOptions(
-                      //       transparentBackground: true,
-                      //       supportZoom: false,
-                      //       javaScriptCanOpenWindowsAutomatically: false,
-                      //       userAgent:
-                      //           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15',
-                      //     ),
-                      //   ),
-                      //   onWebViewCreated: (webController) {
-                      //     _webController = webController;
-                      //   },
-                      // ),
                     ),
-                  if (!anyChatActive(chatType, settingsBox))
+                  if (!chatActive)
                     Positioned(
                       top: 48.0,
                       child: SizedBox(

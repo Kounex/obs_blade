@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive_flutter/adapters.dart';
+import 'package:hive_ce_flutter/adapters.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/stores/shared/network.dart';

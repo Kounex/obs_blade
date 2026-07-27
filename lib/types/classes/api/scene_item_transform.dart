@@ -4,7 +4,7 @@ part 'scene_item_transform.freezed.dart';
 part 'scene_item_transform.g.dart';
 
 @freezed
-class SceneItemTransform with _$SceneItemTransform {
+abstract class SceneItemTransform with _$SceneItemTransform {
   const factory SceneItemTransform({
     required int? alignment,
     required int? boundsAlignment,

@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 import '../../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../../../types/enums/settings_keys.dart';
+import '../../../../../../../utils/youtube_video_id.dart';
 
 class AddEditYouTubeUsernameDialog extends StatefulWidget {
   final Box settingsBox;
@@ -62,14 +63,19 @@ class _AddEditYouTubeUsernameDialogState
   }
 
   String? _youtubeLinkValidation(String? link) {
-    if (link == null || link.isEmpty) return 'Channel ID is required!';
-    // if (link.contains('/watch?v=')) return 'Not a valid live stream link!';
+    if (link == null || link.isEmpty) {
+      return 'Livestream video ID or link is required!';
+    }
+    if (extractYouTubeVideoId(link) == null) {
+      return 'Could not find a YouTube video ID in that value';
+    }
     return null;
   }
 
   void _handleUsername() {
     String username = _usernameController.text.trim();
-    String youtubeLink = _youtubeLinkController.text.trim();
+    // Persist a bare video id when possible so older/brittle consumers stay safe.
+    final videoId = extractYouTubeVideoId(_youtubeLinkController.text)!;
 
     Map<String, String> youtubeUsernames = Map<String, String>.from(
       (this.widget.settingsBox.get(
@@ -80,7 +86,7 @@ class _AddEditYouTubeUsernameDialogState
     if (this.widget.username != null) {
       youtubeUsernames.remove(this.widget.username);
     }
-    youtubeUsernames.putIfAbsent(username, () => youtubeLink);
+    youtubeUsernames.putIfAbsent(username, () => videoId);
 
     this.widget.settingsBox.put(
           SettingsKeys.YouTubeUsernames.name,
@@ -109,11 +115,12 @@ class _AddEditYouTubeUsernameDialogState
           ),
           const SizedBox(height: 8.0),
           const Text(
-              'For YouTube you also need to provide the Channel ID of the livestream - Usually at the end of the livestream link, for example:\n\nm-i_0DcfF1s'),
+            'For YouTube, provide the livestream video ID or a full watch / live / live_chat link. Example ID:\n\nm-i_0DcfF1s',
+          ),
           const SizedBox(height: 12.0),
           BaseAdaptiveTextField(
             controller: _youtubeLinkController,
-            placeholder: 'YouTube livestream link',
+            placeholder: 'Video ID or YouTube link',
           ),
         ],
       ),

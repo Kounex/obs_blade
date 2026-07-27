@@ -9,8 +9,10 @@ part of 'network.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$NetworkStore on _NetworkStore, Store {
-  late final _$activeSessionAtom =
-      Atom(name: '_NetworkStore.activeSession', context: context);
+  late final _$activeSessionAtom = Atom(
+    name: '_NetworkStore.activeSession',
+    context: context,
+  );
 
   @override
   Session? get activeSession {
@@ -25,8 +27,10 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  late final _$connectionInProgressAtom =
-      Atom(name: '_NetworkStore.connectionInProgress', context: context);
+  late final _$connectionInProgressAtom = Atom(
+    name: '_NetworkStore.connectionInProgress',
+    context: context,
+  );
 
   @override
   bool get connectionInProgress {
@@ -36,14 +40,19 @@ mixin _$NetworkStore on _NetworkStore, Store {
 
   @override
   set connectionInProgress(bool value) {
-    _$connectionInProgressAtom.reportWrite(value, super.connectionInProgress,
-        () {
-      super.connectionInProgress = value;
-    });
+    _$connectionInProgressAtom.reportWrite(
+      value,
+      super.connectionInProgress,
+      () {
+        super.connectionInProgress = value;
+      },
+    );
   }
 
-  late final _$connectionClodeCodeAtom =
-      Atom(name: '_NetworkStore.connectionClodeCode', context: context);
+  late final _$connectionClodeCodeAtom = Atom(
+    name: '_NetworkStore.connectionClodeCode',
+    context: context,
+  );
 
   @override
   WebSocketCloseCode? get connectionClodeCode {
@@ -58,8 +67,32 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  late final _$obsTerminatedAtom =
-      Atom(name: '_NetworkStore.obsTerminated', context: context);
+  late final _$lastConnectionResultAtom = Atom(
+    name: '_NetworkStore.lastConnectionResult',
+    context: context,
+  );
+
+  @override
+  ConnectionAttemptResult? get lastConnectionResult {
+    _$lastConnectionResultAtom.reportRead();
+    return super.lastConnectionResult;
+  }
+
+  @override
+  set lastConnectionResult(ConnectionAttemptResult? value) {
+    _$lastConnectionResultAtom.reportWrite(
+      value,
+      super.lastConnectionResult,
+      () {
+        super.lastConnectionResult = value;
+      },
+    );
+  }
+
+  late final _$obsTerminatedAtom = Atom(
+    name: '_NetworkStore.obsTerminated',
+    context: context,
+  );
 
   @override
   bool get obsTerminated {
@@ -74,23 +107,36 @@ mixin _$NetworkStore on _NetworkStore, Store {
     });
   }
 
-  late final _$setOBSWebSocketAsyncAction =
-      AsyncAction('_NetworkStore.setOBSWebSocket', context: context);
+  late final _$setOBSWebSocketAsyncAction = AsyncAction(
+    '_NetworkStore.setOBSWebSocket',
+    context: context,
+  );
 
   @override
-  Future<WebSocketCloseCode> setOBSWebSocket(Connection connection,
-      {bool reconnect = false, Duration timeout = const Duration(seconds: 3)}) {
-    return _$setOBSWebSocketAsyncAction.run(() => super
-        .setOBSWebSocket(connection, reconnect: reconnect, timeout: timeout));
+  Future<WebSocketCloseCode> setOBSWebSocket(
+    Connection connection, {
+    bool reconnect = false,
+    Duration timeout = kObsHandshakeTimeout,
+  }) {
+    return _$setOBSWebSocketAsyncAction.run(
+      () => super.setOBSWebSocket(
+        connection,
+        reconnect: reconnect,
+        timeout: timeout,
+      ),
+    );
   }
 
-  late final _$_NetworkStoreActionController =
-      ActionController(name: '_NetworkStore', context: context);
+  late final _$_NetworkStoreActionController = ActionController(
+    name: '_NetworkStore',
+    context: context,
+  );
 
   @override
   void closeSession({bool manually = true}) {
     final _$actionInfo = _$_NetworkStoreActionController.startAction(
-        name: '_NetworkStore.closeSession');
+      name: '_NetworkStore.closeSession',
+    );
     try {
       return super.closeSession(manually: manually);
     } finally {
@@ -101,7 +147,8 @@ mixin _$NetworkStore on _NetworkStore, Store {
   @override
   void _handleEvent(BaseEvent event) {
     final _$actionInfo = _$_NetworkStoreActionController.startAction(
-        name: '_NetworkStore._handleEvent');
+      name: '_NetworkStore._handleEvent',
+    );
     try {
       return super._handleEvent(event);
     } finally {
@@ -115,6 +162,7 @@ mixin _$NetworkStore on _NetworkStore, Store {
 activeSession: ${activeSession},
 connectionInProgress: ${connectionInProgress},
 connectionClodeCode: ${connectionClodeCode},
+lastConnectionResult: ${lastConnectionResult},
 obsTerminated: ${obsTerminated}
     ''';
   }

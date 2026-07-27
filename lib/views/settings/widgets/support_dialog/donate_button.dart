@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
 

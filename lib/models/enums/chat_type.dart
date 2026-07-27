@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/icons/custom_flutter_icons.dart';
 import '../type_ids.dart';
 import '../../utils/icons/jam_icons.dart';

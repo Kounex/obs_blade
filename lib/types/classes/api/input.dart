@@ -5,7 +5,7 @@ part 'input.freezed.dart';
 part 'input.g.dart';
 
 @freezed
-class Input with _$Input {
+abstract class Input with _$Input {
   const factory Input({
     required String? inputKind,
     required String? inputName,

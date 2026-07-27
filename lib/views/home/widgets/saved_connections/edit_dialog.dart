@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
@@ -78,7 +78,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         ? this.widget.connection.host.contains('://')
             ? '${this.widget.connection.host.split('://')[0]}://'
             : ''
-        : 'wss://';
+        : 'ws://';
   }
 
   String? _nameValidator(String? name) => (name?.trim().isEmpty ?? true)
@@ -171,7 +171,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             onChangeMode: (domainMode) =>
                 setState(() => _isDomain = domainMode ?? false),
             onChangeProtocolScheme: (protocolScheme) =>
-                setState(() => _protocolScheme = protocolScheme ?? 'wss://'),
+                setState(() => _protocolScheme = protocolScheme ?? 'ws://'),
           ),
           BaseAdaptiveTextField(
             controller: _pw,

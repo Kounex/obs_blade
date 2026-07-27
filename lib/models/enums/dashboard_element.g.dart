@@ -8,7 +8,7 @@ part of 'dashboard_element.dart';
 
 class DashboardElementAdapter extends TypeAdapter<DashboardElement> {
   @override
-  final int typeId = 12;
+  final typeId = 12;
 
   @override
   DashboardElement read(BinaryReader reader) {
@@ -43,34 +43,24 @@ class DashboardElementAdapter extends TypeAdapter<DashboardElement> {
     switch (obj) {
       case DashboardElement.ExposedProfile:
         writer.writeByte(0);
-        break;
       case DashboardElement.ExposedControls:
         writer.writeByte(1);
-        break;
       case DashboardElement.SceneButtons:
         writer.writeByte(2);
-        break;
       case DashboardElement.StudioModeTransition:
         writer.writeByte(3);
-        break;
       case DashboardElement.StudioModeConfig:
         writer.writeByte(4);
-        break;
       case DashboardElement.ScenePreview:
         writer.writeByte(5);
-        break;
       case DashboardElement.SceneItems:
         writer.writeByte(6);
-        break;
       case DashboardElement.SceneItemsAudio:
         writer.writeByte(7);
-        break;
       case DashboardElement.StreamChat:
         writer.writeByte(8);
-        break;
       case DashboardElement.OBSStats:
         writer.writeByte(9);
-        break;
     }
   }
 

@@ -4,7 +4,7 @@ part 'scene.freezed.dart';
 part 'scene.g.dart';
 
 @freezed
-class Scene with _$Scene {
+abstract class Scene with _$Scene {
   const factory Scene({
     /// Name of the currently active scene
     required String sceneName,
