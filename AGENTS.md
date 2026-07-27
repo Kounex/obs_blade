@@ -15,7 +15,8 @@ open work, chat Phase 1 pause point, verify commands.
 - **MacBook clone** (`~/development/flutter/obs_blade`): same branch; **simulator/device runs OK**.
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
 - **Do not commit/push** unless the user explicitly asks. Active branch:
-  `chore/flutter-deps-upgrade` (on origin; pull on both machines before editing).
+  `master` (upgrade batch merged 2026-07-27; new work on fresh branches off
+  `master`; pull on both machines before editing).
 
 ## Quick map
 
@@ -61,7 +62,7 @@ native Twitch (needs Dev Console credentials) — see chat audit + handoff.
 - **Local OBS E2E (MacBook):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password 123456` →
   `flutter run -d <sim>` → `… stop`. Details: `docs/local-obs-e2e.md`.
-- Branch: `chore/flutter-deps-upgrade`
+- Branch: `master`
 
 ## Related
 

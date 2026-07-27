@@ -7,7 +7,7 @@ Read this first after `AGENTS.md`. Last updated: **2026-07-27**.
 | | |
 |---|---|
 | Remote | `Kounex/obs_blade` (private) |
-| Branch | `chore/flutter-deps-upgrade` — pushed; sync both machines from this branch |
+| Branch | `master` — upgrade batch (`chore/flutter-deps-upgrade`) **merged 2026-07-27**, branch deleted; new work on fresh branches off `master` |
 | Users | 500k+ live — persistence + release paths are sensitive |
 
 ### Machines
@@ -20,19 +20,21 @@ Read this first after `AGENTS.md`. Last updated: **2026-07-27**.
 Do not commit/push unless the user explicitly asks. Prefer pull before editing so the
 two clones stay aligned.
 
-## What’s already done on this branch
+## What’s in the merged upgrade batch (now on `master`)
 
-Themes of work from 2026-07-25 sessions (committed 2026-07-27 for Mac sync):
+Themes of work from 2026-07-25/27 sessions (merged 2026-07-27):
 
 1. **Hive → Hive CE** — adapters, typeIds **0–12** preserved, persistence tests +
-   classic→CE open proof. Device open of a real long-lived install still deferred
-   to the user before any store ship.
+   classic→CE open proof + **device proof on a real long-lived install**
+   (2026-07-27, see `persistence-risk.md`).
 2. **OBS WebSocket connect harden** — conditional Identify auth, 10s handshake,
    `ConnectionAttemptResult`, `websocketUri`, stream pump ownership, QR `obswss://`.
 3. **DashboardStore WS audit** — event name fixes, lighter scene refresh, scoped
    item updates, `requestStatus` guards. **Do not multi-store-split** unless asked.
 4. **Chat Phase 0** — YouTube video-id parse + WebView lifecycle + dialog
    validation (see below).
+5. **Local OBS E2E loop** (MacBook) + `keyboard_actions` 4.2.1 build fix +
+   iOS toolchain migration (SwiftPM plugins, deployment target 13).
 
 Docs under `docs/` describe each area. Changelog: `docs/changelog-agent.md`.
 
@@ -60,9 +62,12 @@ API-feasible but Phase 4 (gRPC `streamList`, Google OAuth, quotas).
 
 ### Persistence / release
 
-- Before store release: user device-open of an upgraded long-lived install
-  (see `persistence-risk.md`). Classic→CE unit proof exists; device proof doesn’t.
-- Ask before further commit/PR; branch is already on origin for dual-machine sync.
+- ~~Before store release: user device-open of an upgraded long-lived install~~
+  **Done 2026-07-27** (see `persistence-risk.md`): real ~2.5y install upgraded
+  on-device, data intact, CE read+write proven. Remaining before merge:
+  Android build check (deferred by user), version/build-number decision.
+- Ask before further commit/PR; work happens on branches off `master` (pull
+  both machines first).
 
 ### Other parked notes
 

@@ -4,6 +4,19 @@ Running log of upgrade/migration work. Not store release notes.
 
 ## 2026-07-27
 
+- **Merged the upgrade batch to `master`** (fast-forward), deleted
+  `chore/flutter-deps-upgrade` (local + origin). Docs now describe a
+  master-based flow; open before store release: Android build/test,
+  version/build-number bump.
+- **Persistence device proof DONE** (release gate closed): master-era dev
+  build over the App Store app on a real ~2.5y-old iPhone install (worktree
+  `obs_blade_master_check` + 5 throwaway compile shims — master itself
+  untouched), real boxes pulled via `devicectl` (`build/phone_backup/`),
+  simulator rehearsal passed, CE profile build installed, user verified all
+  data, CE write to `app-log.hive` proven. Learnings: debug builds crash on
+  cold home-screen launch (flutter#149214) → use profile/release on device;
+  `devicectl ... process launch --console` broken in this Xcode (error
+  10002) → verify via process list + container pulls.
 - Bumped `keyboard_actions` to `^4.2.1` — 4.2.0 breaks the iOS simulator
   build on Flutter 3.44 (`SemanticsConfiguration.isFocused` now `bool?`;
   fixed upstream in 4.2.1). First real device/sim build of the branch.

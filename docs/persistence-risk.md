@@ -26,27 +26,27 @@ silent/corrupt reads for hundreds of thousands of users.**
 
 ## Before any store release
 
-- Classic→CE fixture open is covered in CI/local tests; still do a **device**
-  open of a long-lived install before shipping. Analyze alone is not enough.
+- ~~Classic→CE fixture open is covered in CI/local tests; still do a **device**
+  open of a long-lived install before shipping.~~ **Done 2026-07-27** — see
+  below.
 - Resume context for the next agent: [`session-handoff.md`](session-handoff.md).
 
-### Device-proof procedure (agreed 2026-07-27)
+### Device proof — DONE (2026-07-27, iPhone 17 Pro Max, real ~2.5y-old install)
 
-1. **Backup (makes it reversible):** Xcode → Devices and Simulators → iPhone
-   → OBS Blade → gear → **Download Container** (`.xcappdata` = full Documents,
-   incl. classic-Hive boxes). Rollback = **Replace Container**, never a plain
-   reinstall.
-2. **Simulator rehearsal (zero phone risk):** run the new build on a
-   simulator, quit, swap its `Documents/*.hive` with the boxes from the
-   downloaded container, relaunch → verify connections, settings, theme, chat
-   usernames, dashboard order, past stream/record stats. This is the
-   real-data classic→CE open.
-3. **Phone upgrade (only after 2 is clean):** upgrade install preserves data
-   only with **same bundle ID + same signing team** as the installed app
-   (different team → iOS forces delete → data loss). Install the new build
-   over the existing app, open, verify, connect to OBS once.
-4. **No downgrade after CE writes:** once the CE build wrote frames, going
-   back to the classic build is untested — use the container backup instead.
+- Master-era dev build installed over the App Store app (same team → data
+  preserved), real classic-Hive boxes pulled via `devicectl` as backup
+  (`build/phone_backup/Documents`, gitignored).
+- **Simulator rehearsal** with those boxes: CE build rendered saved
+  connections/settings correctly.
+- **Phone upgrade** to the CE build: all user data intact (user-verified);
+  `app-log.hive` written by CE (13.7→14.3 kB) — read + write proven.
+- Caveat found: **debug builds crash on cold launch from the home screen**
+  (null registrar → first plugin `register` SIGSEGV,
+  [flutter#149214](https://github.com/flutter/flutter/issues/149214)).
+  Use **profile/release** builds for on-device testing.
+- Downgrade note: CE has now written frames to `app-log.hive`; rolling back
+  to a classic-Hive build should restore `build/phone_backup` first
+  (downgrade formally untested).
 
 ## Red flags
 

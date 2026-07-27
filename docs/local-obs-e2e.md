@@ -80,6 +80,7 @@ app (`ConnectionAttemptResult`), not a generic failure.
 | Port 4455 taken by something else | `lsof -iTCP:4455 -sTCP:LISTEN` (e.g. DroidCam) |
 | Smoke fails with close 4009 | Wrong/missing password, or auth toggled mid-session |
 | App can't connect from simulator | Use `127.0.0.1` (not the LAN IP); grant Local Network permission if iOS asks |
+| App on a **physical device** crashes instantly at launch (SIGSEGV in first plugin's `register`) | Flutter debug-mode cold-launch quirk ([flutter#149214](https://github.com/flutter/flutter/issues/149214)) — install a **profile/release** build for on-device testing |
 | OBS logs | `~/Library/Application Support/obs-studio/logs/` |
 
 ## Files

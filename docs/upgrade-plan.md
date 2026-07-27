@@ -1,18 +1,20 @@
 # Upgrade plan
 
-Goal: modern Flutter + packages on `chore/flutter-deps-upgrade`; ship only with
+Goal: modern Flutter + packages; ship only with
 data-safety checks (see `persistence-risk.md`).
 
-## Status (2026-07-25)
+## Status (2026-07-27 — batch merged to `master`)
 
 | Item | Status |
 |---|---|
-| Flutter on host | **3.44.8** / Dart **3.12.2** (`~/flutter`) |
-| Branch | `chore/flutter-deps-upgrade` |
+| Flutter on host | **3.44.8** / Dart **3.12.2** (NAS `~/flutter`), 3.44.0 (MacBook) |
+| Branch | `chore/flutter-deps-upgrade` **merged to `master` 2026-07-27**, deleted |
 | SDK constraint | `^3.12.0` |
-| Hive → Hive CE | Done + foundation fixtures + open/cold-open tests |
+| Hive → Hive CE | Done + foundation fixtures + open/cold-open tests + **device proof** |
 | Analyze | **0 errors** (deprecation infos remain) |
 | Package majors | Largely bumped (see below) |
+| iOS E2E | Simulator + real OBS + real-device install verified (MacBook) |
+| Android | **Not yet built/tested** — deferred, do before store release |
 
 ## Persistence tests
 
@@ -51,7 +53,8 @@ a future pass, expected to resolve itself as upstream releases catch up.
 ## Open after last session
 
 See [`session-handoff.md`](session-handoff.md). Chat Phase 0 done; Phase 1 (native
-Twitch) needs credentials. All upgrade-branch work still local/uncommitted.
+Twitch) needs credentials. **Before store release:** Android build/test +
+version/build-number bump. Upgrade branch merged to `master` 2026-07-27.
 
 ## Do not run
 
