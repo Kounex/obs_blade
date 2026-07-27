@@ -6,16 +6,16 @@ Read this first after `AGENTS.md`. Last updated: **2026-07-27**.
 
 | | |
 |---|---|
-| Remote | `Kounex/obs_blade` (private) |
+| Remote | `Kounex/obs_blade` (**public** — keep tracked files free of credentials, personal paths, device IDs, LAN addresses) |
 | Branch | `master` — upgrade batch (`chore/flutter-deps-upgrade`) **merged 2026-07-27**, branch deleted; new work on fresh branches off `master` |
 | Users | 500k+ live — persistence + release paths are sensitive |
 
-### Machines
+### Machines (maintainer-specific — external contributors can ignore)
 
 | Host | Path | Role |
 |---|---|---|
-| **NAS** (this scratchpad) | `/home/kounex/agent/obs-blade` | `pub get` / `analyze` / unit tests — Flutter `~/flutter` **3.44.8**. **Never `flutter run`.** |
-| **MacBook** | `~/development/flutter/obs_blade` | Same branch for **simulator / device** work. Flutter via `~/.dotfiles/flutter/sdk` (**3.44.0** as of sync). iPhone 17 Pro sim available. |
+| **Headless** | `~/agent/obs-blade` | `pub get` / `analyze` / unit tests — Flutter `~/flutter` **3.44.8**. **Never `flutter run`.** |
+| **Workstation** | `~/development/flutter/obs_blade` | Same branch for **simulator / device** work. Flutter via `~/.dotfiles/flutter/sdk` (**3.44.0** as of sync). iPhone simulator available. |
 
 Do not commit/push unless the user explicitly asks. Prefer pull before editing so the
 two clones stay aligned.
@@ -33,7 +33,7 @@ Themes of work from 2026-07-25/27 sessions (merged 2026-07-27):
    item updates, `requestStatus` guards. **Do not multi-store-split** unless asked.
 4. **Chat Phase 0** — YouTube video-id parse + WebView lifecycle + dialog
    validation (see below).
-5. **Local OBS E2E loop** (MacBook) + `keyboard_actions` 4.2.1 build fix +
+5. **Local OBS E2E loop** (macOS) + `keyboard_actions` 4.2.1 build fix +
    iOS toolchain migration (SwiftPM plugins, deployment target 13).
 
 Docs under `docs/` describe each area. Changelog: `docs/changelog-agent.md`.
@@ -71,7 +71,7 @@ API-feasible but Phase 4 (gRPC `streamList`, Google OAuth, quotas).
 
 ### Other parked notes
 
-- **Local OBS E2E loop (MacBook)** — real OBS + simulator testing:
+- **Local OBS E2E loop (macOS)** — real OBS + simulator testing:
   [`docs/local-obs-e2e.md`](local-obs-e2e.md) (`tool/obs_local/`).
 - DashboardStore: keep monolith; optional `part` split only if asked.
 - `freezed` may resolve to a `-dev` version (analyzer clash with
@@ -82,16 +82,8 @@ API-feasible but Phase 4 (gRPC `streamList`, Google OAuth, quotas).
 ## Verify quickly
 
 ```bash
-# NAS
-cd /home/kounex/agent/obs-blade
-~/flutter/bin/flutter test test/chat/
-~/flutter/bin/flutter test test/websocket/
-~/flutter/bin/flutter test test/persistence/
-
-# MacBook (login shell so PATH picks up Flutter)
-cd ~/development/flutter/obs_blade
 flutter test test/chat/ test/websocket/ test/persistence/
-# Simulator: flutter devices && flutter run -d <sim-id>
+# Simulator (GUI machine): flutter devices && flutter run -d <sim-id>
 # full analyze is noisy with infos; prefer scoped paths when editing
 ```
 

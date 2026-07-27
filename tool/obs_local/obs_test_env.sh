@@ -1,6 +1,6 @@
 #!/bin/bash
 # obs_test_env.sh — manage the local OBS instance for OBS Blade E2E testing
-# on the MacBook (docs/local-obs-e2e.md).
+# on a macOS dev machine (docs/local-obs-e2e.md).
 #
 #   start   Launch OBS (default profile/collection) unless the WebSocket
 #           server is already reachable; wait for port 4455.

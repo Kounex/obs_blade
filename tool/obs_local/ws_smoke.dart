@@ -2,7 +2,7 @@
 // testing (docs/local-obs-e2e.md).
 //
 // Run from the repo root:
-//   dart run tool/obs_local/ws_smoke.dart [--host 127.0.0.1] [--port 4455] [--password 123456]
+//   dart run tool/obs_local/ws_smoke.dart [--host 127.0.0.1] [--port 4455] [--password <obs-ws-password>]
 //
 // Connects to OBS, performs Hello → Identify → Identified with the same
 // semantics as the app (authentication only when Hello challenges for it,

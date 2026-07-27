@@ -7,13 +7,13 @@ data-safety checks (see `persistence-risk.md`).
 
 | Item | Status |
 |---|---|
-| Flutter on host | **3.44.8** / Dart **3.12.2** (NAS `~/flutter`), 3.44.0 (MacBook) |
+| Flutter on host | **3.44.8** / Dart **3.12.2** (maintainer headless host), 3.44.0 (workstation) |
 | Branch | `chore/flutter-deps-upgrade` **merged to `master` 2026-07-27**, deleted |
 | SDK constraint | `^3.12.0` |
 | Hive → Hive CE | Done + foundation fixtures + open/cold-open tests + **device proof** |
 | Analyze | **0 errors** (deprecation infos remain) |
 | Package majors | Largely bumped (see below) |
-| iOS E2E | Simulator + real OBS + real-device install verified (MacBook) |
+| iOS E2E | Simulator + real OBS + real-device install verified (macOS workstation) |
 | Android | **Not yet built/tested** — deferred, do before store release |
 
 ## Persistence tests
@@ -42,7 +42,7 @@ Committed boxes: `test/persistence/fixtures/boxes/*.hive`
 | network_info_plus ^6 | ^8 |
 | package_info_plus ^8 | ^10 |
 | share_plus ^10 | ^13 |
-| keyboard_actions ^4.2.0 | ^4.2.1 (4.2.0 fails to compile on Flutter 3.44: `SemanticsConfiguration.isFocused` is now `bool?`; fixed upstream in 4.2.1 — surfaced on first MacBook simulator build) |
+| keyboard_actions ^4.2.0 | ^4.2.1 (4.2.0 fails to compile on Flutter 3.44: `SemanticsConfiguration.isFocused` is now `bool?`; fixed upstream in 4.2.1 — surfaced on the first simulator build) |
 | + webview / wakelock / image_picker / path_provider / … | current minors |
 
 **Still watch:** `freezed` resolves to `3.2.6-dev.1` (analyzer clash with
@@ -58,4 +58,5 @@ version/build-number bump. Upgrade branch merged to `master` 2026-07-27.
 
 ## Do not run
 
-- `flutter run` / device E2E on this NAS host.
+- `flutter run` / device E2E on headless clones (GUI-less hosts are for
+  `pub get` / `analyze` / unit tests only).

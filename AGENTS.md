@@ -1,7 +1,12 @@
 # OBS Blade
 
 Flutter remote for OBS Studio via **OBS WebSocket v5** (iOS/Android).  
-Repo: `Kounex/obs_blade` · branches: `master`, `foss`, `legacy`.
+Repo: `Kounex/obs_blade` (**public**) · branches: `master`, `foss`, `legacy`.
+
+> **Docs hygiene (public repo):** no credentials, personal absolute paths,
+> device IDs, or LAN/WAN addresses in tracked files. Write docs and tooling so
+> any contributor's agent can follow them; keep maintainer-specific setup
+> notes clearly marked as such.
 
 ## Start here (next session)
 
@@ -11,12 +16,17 @@ open work, chat Phase 1 pause point, verify commands.
 ## Agent constraints
 
 - **500k+ live users** — treat persistence and release paths carefully.
-- **NAS clone** (`~/agent/obs-blade`): `pub get` / `analyze` / unit tests only — **do not run the app**.
-- **MacBook clone** (`~/development/flutter/obs_blade`): same branch; **simulator/device runs OK**.
-- Keep this file short. Deeper notes live in [`docs/`](docs/).
 - **Do not commit/push** unless the user explicitly asks. Active branch:
   `master` (upgrade batch merged 2026-07-27; new work on fresh branches off
-  `master`; pull on both machines before editing).
+  `master`; pull before editing).
+- Keep this file short. Deeper notes live in [`docs/`](docs/).
+
+### Maintainer's agent setup (Kounex-specific — external contributors can ignore)
+
+- **Headless clone** (`~/agent/obs-blade`): `pub get` / `analyze` / unit tests
+  only — **do not run the app**.
+- **Workstation clone** (`~/development/flutter/obs_blade`): same branch;
+  **simulator/device runs OK**.
 
 ## Quick map
 
@@ -53,15 +63,15 @@ native Twitch (needs Dev Console credentials) — see chat audit + handoff.
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | Session log of agent changes |
-| [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (MacBook) |
+| [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
 
 ## Tooling
 
-- **NAS:** Flutter `~/flutter` (3.44.8) or `./flutterw` — no `flutter run`.
-- **MacBook:** Flutter `~/.dotfiles/flutter/sdk` (source `~/.zshrc` over SSH) — sims OK.
-- **Local OBS E2E (MacBook):** `tool/obs_local/obs_test_env.sh start` →
-  `dart run tool/obs_local/ws_smoke.dart --password 123456` →
-  `flutter run -d <sim>` → `… stop`. Details: `docs/local-obs-e2e.md`.
+- **Maintainer headless host:** Flutter `~/flutter` (3.44.8) or `./flutterw` — no `flutter run`.
+- **Maintainer workstation:** Flutter via `~/.dotfiles/flutter/sdk` — sims OK.
+- **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
+  `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
+  `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.
 - Branch: `master`
 
 ## Related

@@ -4,6 +4,11 @@ Running log of upgrade/migration work. Not store release notes.
 
 ## 2026-07-27
 
+- **Public-repo docs pass:** repo is public — scrubbed tracked files of the
+  local OBS dev password, simulator UDID, username-absolute paths, and
+  machine nicknames; generalized E2E/tooling docs so any contributor's agent
+  can follow them; maintainer-specific machine notes marked as such. Rule
+  recorded in `AGENTS.md` (docs hygiene).
 - **Merged the upgrade batch to `master`** (fast-forward), deleted
   `chore/flutter-deps-upgrade` (local + origin). Docs now describe a
   master-based flow; open before store release: Android build/test,
