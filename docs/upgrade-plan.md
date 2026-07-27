@@ -40,9 +40,13 @@ Committed boxes: `test/persistence/fixtures/boxes/*.hive`
 | network_info_plus ^6 | ^8 |
 | package_info_plus ^8 | ^10 |
 | share_plus ^10 | ^13 |
+| keyboard_actions ^4.2.0 | ^4.2.1 (4.2.0 fails to compile on Flutter 3.44: `SemanticsConfiguration.isFocused` is now `bool?`; fixed upstream in 4.2.1 — surfaced on first MacBook simulator build) |
 | + webview / wakelock / image_picker / path_provider / … | current minors |
 
-**Still watch:** `freezed` resolves to `3.2.6-dev.1` (analyzer clash with `hive_ce_generator`).
+**Still watch:** `freezed` resolves to `3.2.6-dev.1` (analyzer clash with
+`hive_ce_generator`). **Decision (2026-07-27):** accept the `-dev` resolve for
+this batch — dependency resolution follows the dev route for now; re-check on
+a future pass, expected to resolve itself as upstream releases catch up.
 
 ## Open after last session
 

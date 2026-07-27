@@ -4,6 +4,16 @@ Running log of upgrade/migration work. Not store release notes.
 
 ## 2026-07-27
 
+- Bumped `keyboard_actions` to `^4.2.1` — 4.2.0 breaks the iOS simulator
+  build on Flutter 3.44 (`SemanticsConfiguration.isFocused` now `bool?`;
+  fixed upstream in 4.2.1). First real device/sim build of the branch.
+- Added local OBS ↔ simulator E2E loop on the MacBook
+  (`docs/local-obs-e2e.md`): `tool/obs_local/obs_test_env.sh`
+  (start/stop/status for the real OBS instance, reuses running OBS, minimizes
+  window) + `tool/obs_local/ws_smoke.dart` (standalone Hello → Identify →
+  Identified + GetVersion/GetSceneList/GetInputList probe mirroring
+  `AuthenticationHelper` semantics; no new deps). Tests run against the
+  existing `Untitled` profile/scene collection per user direction.
 - Committed + pushed `chore/flutter-deps-upgrade` so MacBook
   (`~/development/flutter/obs_blade`) can mirror NAS for simulator testing.
 - Folded MacBook-only order-list bottom padding (`kBottomNavigationBarHeight`)

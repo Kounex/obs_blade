@@ -76,7 +76,7 @@ dependencies:
   #     path: modal_bottom_sheet
   fl_chart: ^1.0.0
   smooth_page_indicator: ^2.0.0
-  keyboard_actions: ^4.2.0
+  keyboard_actions: ^4.2.1
   expandable: ^5.0.1
   flutter_slidable: ^4.0.0
   confetti: ^0.8.0

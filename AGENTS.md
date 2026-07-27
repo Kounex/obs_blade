@@ -52,11 +52,15 @@ native Twitch (needs Dev Console credentials) — see chat audit + handoff.
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | Session log of agent changes |
+| [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (MacBook) |
 
 ## Tooling
 
 - **NAS:** Flutter `~/flutter` (3.44.8) or `./flutterw` — no `flutter run`.
 - **MacBook:** Flutter `~/.dotfiles/flutter/sdk` (source `~/.zshrc` over SSH) — sims OK.
+- **Local OBS E2E (MacBook):** `tool/obs_local/obs_test_env.sh start` →
+  `dart run tool/obs_local/ws_smoke.dart --password 123456` →
+  `flutter run -d <sim>` → `… stop`. Details: `docs/local-obs-e2e.md`.
 - Branch: `chore/flutter-deps-upgrade`
 
 ## Related

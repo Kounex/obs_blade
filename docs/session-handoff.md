@@ -66,6 +66,8 @@ API-feasible but Phase 4 (gRPC `streamList`, Google OAuth, quotas).
 
 ### Other parked notes
 
+- **Local OBS E2E loop (MacBook)** — real OBS + simulator testing:
+  [`docs/local-obs-e2e.md`](local-obs-e2e.md) (`tool/obs_local/`).
 - DashboardStore: keep monolith; optional `part` split only if asked.
 - `freezed` may resolve to a `-dev` version (analyzer clash with
   `hive_ce_generator`) — see `upgrade-plan.md`.
