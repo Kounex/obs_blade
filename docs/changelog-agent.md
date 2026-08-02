@@ -2,6 +2,36 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-07-27 (redesign branch)
+
+- **"On Air" visual overhaul on branch `redesign`** (not committed/pushed — user
+  reviews first). Full audit (15-agent swarm → `docs/redesign/audit-digest.md`),
+  design spec (`docs/redesign/design-system.md`), session notes
+  (`docs/redesign/session-notes.md`).
+- New design module `lib/shared/design/`: motion/spacing/radius tokens,
+  `AppStatusColors` ThemeExtension, app text theme, `Pressable`,
+  `StaggeredEntrance`, `AnimatedResultIcon`, `CountUpText`.
+- `lib/app.dart` theme factory modernized (real textTheme, pageTransitionsTheme,
+  dialog/snackBar/chip sub-themes, status extension) — custom-theme hex→slot
+  semantics and all persistence contracts unchanged; zero functional change rule.
+- 11-agent restyle: shared UI kit, tab transition, intro cinematic, home,
+  dashboard (on-air status cluster replaces `stream_rec_timers.dart`, audio
+  mixer gradient meters, chat chrome), statistics (chart draw-in + gradients,
+  staggered lists, hero entry→detail), settings (support dialog skeleton +
+  icon tiles), custom theme editor (preview cards + 8th appBar bubble), data
+  mgmt/logs/customisation (mock previews replace PLACEHOLDERs).
+- Verify: `flutter analyze` 143 issues / **0 errors** (master baseline 269);
+  `flutter test test/chat test/websocket test/persistence` 38/38; debug build on
+  iPhone simulator (release/profile unsupported on this sim image).
+- **Visual-QA round:** screenshot harness (`integration_test/screenshot_walk_test.dart`
+  + `tool/visual_qa/capture_screenshots.sh`, `--no-uninstall` permanently after a
+  sim-data wipe incident — see `docs/redesign/session-notes.md`); 37-shot walk
+  incl. live dashboard via local OBS; 6-agent visual inspection (~90 polish
+  findings); 8-agent fix swarm (overflow root causes, surface derivation, tab-bar
+  unification, copy pass, subpage headers, intro slide frames, Connect button
+  wrap, …). Post-fix: analyze 138 / 0 errors, tests 38/38, re-shoot for
+  spot-check.
+
 ## 2026-07-27
 
 - **Public-repo docs pass:** repo is public — scrubbed tracked files of the

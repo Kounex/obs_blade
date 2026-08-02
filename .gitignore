@@ -51,3 +51,6 @@ app.*.map.json
 
 # Flutter Version Manager (FVM)
 .fvm/
+# Non-public docs (business/infra strategy) — this repo is public.
+# See docs/session-handoff.md for the cross-machine sync procedure.
+docs/private/

@@ -1,90 +1,88 @@
-# Session handoff (for the next agent)
+# Session handoff
 
-Read this first after `AGENTS.md`. Last updated: **2026-07-27**.
+**Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
+
+Read this first after `AGENTS.md`. Last reset: **2026-08-02**.
+
+## Handoff hygiene (read before editing this file)
+
+- **This is a baton, not a history log.** It holds only what the *next*
+  session needs to pick up work right now — current branch, immediate open
+  threads, pointers to the docs with real depth. If you're about to narrate
+  *what happened and why*, that belongs in `changelog-agent.md` (history) or
+  a dedicated `docs/*.md` (architecture/design/strategy) — leave only a
+  pointer here, not the content itself.
+- **Clear and rewrite this file at every handoff**, don't accumulate on top
+  of the previous version. A stale "still open" note here caused real
+  confusion once already: this file kept saying a release blocker was open
+  well after it had actually been resolved on the other machine, because
+  nobody reset it — they just left the old narrative in place and it quietly
+  went stale.
+- **`git fetch --all` before trusting anything here or in `AGENTS.md`** —
+  diff your branch against its remote counterpart and skim recent log. This
+  file is only as current as whoever last updated it remembered to make it.
+- **Non-public docs live in `docs/private/`** (gitignored — this repo is
+  public). Git will never sync it. If you create or edit anything there,
+  copy it to the other machine immediately:
+  `scp docs/private/*.md macbook:~/development/flutter/obs_blade/docs/private/`
+  (or NAS-ward: `scp docs/private/*.md nas:~/agent/obs-blade/docs/private/`).
+  Same goes for any other file that's deliberately outside git — don't let
+  state exist on only one machine.
 
 ## Workspace facts
 
 | | |
 |---|---|
-| Remote | `Kounex/obs_blade` (**public** — keep tracked files free of credentials, personal paths, device IDs, LAN addresses) |
-| Branch | `master` — upgrade batch (`chore/flutter-deps-upgrade`) **merged 2026-07-27**, branch deleted; new work on fresh branches off `master` |
+| Remote | `Kounex/obs_blade` (**public**) |
+| Branch | `redesign` (off `master`; `master` is current through the public-repo hygiene pass) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 
-### Machines (maintainer-specific — external contributors can ignore)
+### Machines
 
 | Host | Path | Role |
 |---|---|---|
-| **Headless** | `~/agent/obs-blade` | `pub get` / `analyze` / unit tests — Flutter `~/flutter` **3.44.8**. **Never `flutter run`.** |
-| **Workstation** | `~/development/flutter/obs_blade` | Same branch for **simulator / device** work. Flutter via `~/.dotfiles/flutter/sdk` (**3.44.0** as of sync). iPhone simulator available. |
+| **Headless** (NAS) | `~/agent/obs-blade` | `pub get` / `analyze` / unit tests only. **Never `flutter run`.** |
+| **Workstation** (MacBook) | `~/development/flutter/obs_blade` | Same branch — simulator/device runs, integration tests, visual-QA screenshots. The heavy lifter for anything needing a running app. |
 
-Do not commit/push unless the user explicitly asks. Prefer pull before editing so the
-two clones stay aligned.
+Do not commit/push unless the user explicitly asks.
 
-## What’s in the merged upgrade batch (now on `master`)
+## Right now
 
-Themes of work from 2026-07-25/27 sessions (merged 2026-07-27):
-
-1. **Hive → Hive CE** — adapters, typeIds **0–12** preserved, persistence tests +
-   classic→CE open proof + **device proof on a real long-lived install**
-   (2026-07-27, see `persistence-risk.md`).
-2. **OBS WebSocket connect harden** — conditional Identify auth, 10s handshake,
-   `ConnectionAttemptResult`, `websocketUri`, stream pump ownership, QR `obswss://`.
-3. **DashboardStore WS audit** — event name fixes, lighter scene refresh, scoped
-   item updates, `requestStatus` guards. **Do not multi-store-split** unless asked.
-4. **Chat Phase 0** — YouTube video-id parse + WebView lifecycle + dialog
-   validation (see below).
-5. **Local OBS E2E loop** (macOS) + `keyboard_actions` 4.2.1 build fix +
-   iOS toolchain migration (SwiftPM plugins, deployment target 13).
-
-Docs under `docs/` describe each area. Changelog: `docs/changelog-agent.md`.
-
-## Open / next work (priority)
-
-### Chat — Phase 1 (paused here)
-
-**Context:** Stream chat is still a WebView (Twitch popout / YT live_chat /
-Owncast official embed). Full audit + YouTube API visibility:
-[`docs/chat-webview-audit.md`](chat-webview-audit.md).
-
-**Phase 0 done:**
-- `lib/utils/youtube_video_id.dart` + `test/chat/youtube_video_id_test.dart`
-- `stream_chat.dart` — controller once; reload only when URL changes
-- YouTube add/edit dialog validates/persists bare video ids
-- Owncast base URL trailing-slash normalize
-
-**Recommended next (needs user):** Twitch Developer app credentials
-(client id + redirect URI) → native chat UI shell + OAuth
-(`user:read:chat` / `user:write:chat`) → EventSub receive + Helix send + emotes.
-Keep YouTube/Owncast on WebView until Twitch native sticks. YouTube native is
-API-feasible but Phase 4 (gRPC `streamList`, Google OAuth, quotas).
-
-**Do not** start more JS injection into platform embeds.
-
-### Persistence / release
-
-- ~~Before store release: user device-open of an upgraded long-lived install~~
-  **Done 2026-07-27** (see `persistence-risk.md`): real ~2.5y install upgraded
-  on-device, data intact, CE read+write proven. Remaining before merge:
-  Android build check (deferred by user), version/build-number decision.
-- Ask before further commit/PR; work happens on branches off `master` (pull
-  both machines first).
-
-### Other parked notes
-
-- **Local OBS E2E loop (macOS)** — real OBS + simulator testing:
-  [`docs/local-obs-e2e.md`](local-obs-e2e.md) (`tool/obs_local/`).
-- DashboardStore: keep monolith; optional `part` split only if asked.
-- `freezed` may resolve to a `-dev` version (analyzer clash with
-  `hive_ce_generator`) — see `upgrade-plan.md`.
-- Odd path: `lib/.../stream_chat/chat_username_bar.dart/` is a **directory**
-  named `*.dart`.
+- **`redesign` branch: "On Air" visual overhaul — not committed/pushed yet,
+  user reviews first.** Verification passing: `flutter analyze` 138
+  issues/0 errors (master baseline 269), `flutter test test/chat
+  test/websocket test/persistence` 38/38. Visual-QA round 2 complete with
+  re-shoot verification. Full detail: [`redesign/session-notes.md`](redesign/session-notes.md)
+  · design spec: [`redesign/design-system.md`](redesign/design-system.md) ·
+  audit: [`redesign/audit-digest.md`](redesign/audit-digest.md).
+- **Redesign follow-ups**, from session-notes.md: a motion pass on device
+  for the connect-overlay success morph + confetti (not verifiable from
+  static screenshots); `DashboardElementsOrder` (typeId 12) wiring is still
+  dormant, needs maintainer sign-off before the dashboard actually reads it.
+- **Chat Phase 1 (native Twitch)** — still paused, needs Twitch Developer
+  app credentials (client id + redirect URI) from the user. Unchanged since
+  Phase 0 (see `chat-webview-audit.md`).
+- **Twitch developer application for the paid-tier OAuth broker** — separate
+  from the chat item above, see `private/backend-architecture.md` component
+  #4/#5. Identified as the longest-lead-time item for the paid backend work;
+  **not yet actually started** — worth kicking off independent of build order.
+- **NAS is currently synced to this branch via a git bundle, not a normal
+  fetch** — `redesign` isn't pushed to origin yet. If it still isn't by the
+  next session, re-bundle from the workstation rather than assuming a plain
+  `git fetch` will see it.
 
 ## Verify quickly
 
 ```bash
+# Headless (NAS)
+cd ~/agent/obs-blade
+~/flutter/bin/flutter test test/chat/ test/websocket/ test/persistence/
+
+# Workstation (MacBook, login shell so PATH picks up Flutter)
+cd ~/development/flutter/obs_blade
 flutter test test/chat/ test/websocket/ test/persistence/
-# Simulator (GUI machine): flutter devices && flutter run -d <sim-id>
-# full analyze is noisy with infos; prefer scoped paths when editing
+# Simulator: flutter devices && flutter run -d <sim-id>
+# Visual-QA: tool/visual_qa/capture_screenshots.sh (keeps --no-uninstall)
 ```
 
 ## Doc map
@@ -92,10 +90,14 @@ flutter test test/chat/ test/websocket/ test/persistence/
 | Doc | Topic |
 |---|---|
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
-| [`changelog-agent.md`](changelog-agent.md) | What agents changed |
+| [`changelog-agent.md`](changelog-agent.md) | History of agent changes (not this file) |
 | [`chat-webview-audit.md`](chat-webview-audit.md) | Chat strategy + Phase 0/1+ |
 | [`obs-websocket-architecture.md`](obs-websocket-architecture.md) | OBS WS v5 model |
 | [`websocket-connect-audit.md`](websocket-connect-audit.md) | Connect gaps (mostly fixed) |
 | [`dashboard-store-websocket-audit.md`](dashboard-store-websocket-audit.md) | DashboardStore event handling |
 | [`persistence-risk.md`](persistence-risk.md) / [`hive-ce-source-audit.md`](hive-ce-source-audit.md) | Hive CE safety |
 | [`upgrade-plan.md`](upgrade-plan.md) | Flutter/package bump status |
+| [`local-obs-e2e.md`](local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
+| [`redesign/`](redesign/) | "On Air" redesign: design system, audit digest, session notes |
+| [`private/monetization-strategy.md`](private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored.** |
+| [`private/backend-architecture.md`](private/backend-architecture.md) | Infra plan for paid backend features. **Gitignored.** |
