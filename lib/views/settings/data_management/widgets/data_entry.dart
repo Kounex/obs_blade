@@ -1,6 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/clean_list_tile.dart';
@@ -14,6 +14,11 @@ class DataEntry extends StatelessWidget {
   final String? additionalConfirmationText;
   final VoidCallback? onClear;
 
+  /// Paints the clear action as the solid destructive pill - used inside
+  /// the Danger Zone. Per-category clears get the lighter outlined
+  /// treatment so the Danger Zone stands out.
+  final bool danger;
+
   const DataEntry({
     super.key,
     required this.title,
@@ -21,6 +26,7 @@ class DataEntry extends StatelessWidget {
     this.customConfirmationText,
     this.additionalConfirmationText,
     this.onClear,
+    this.danger = false,
   });
 
   @override
@@ -30,7 +36,8 @@ class DataEntry extends StatelessWidget {
       description: this.description,
       trailing: BaseButton(
         text: 'Clear',
-        isDestructive: true,
+        secondary: !this.danger,
+        color: Theme.of(context).extension<AppStatusColors>()!.recording,
         onPressed: () => ModalHandler.showBaseDialog(
           context: context,
           dialogWidget: ConfirmationDialog(

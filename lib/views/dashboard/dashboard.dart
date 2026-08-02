@@ -72,9 +72,30 @@ class _DashboardViewState extends State<DashboardView> {
     when(
       (_) =>
           GetIt.instance<NetworkStore>().activeSession!.connection.name == null,
-      () => SchedulerBinding.instance.addPostFrameCallback(
-        (_) => _saveConnectionDialog(context),
-      ),
+      () {
+        /// Don't fire the dialog mid route transition - wait until the
+        /// push animation has completed (fall back to the next frame if
+        /// there is no route animation at all)
+        void showSaveDialog() =>
+            SchedulerBinding.instance.addPostFrameCallback(
+              (_) => _saveConnectionDialog(context),
+            );
+
+        Animation<double>? routeAnimation = ModalRoute.of(context)?.animation;
+        if (routeAnimation == null ||
+            routeAnimation.status == AnimationStatus.completed) {
+          showSaveDialog();
+        } else {
+          void listener(AnimationStatus status) {
+            if (status == AnimationStatus.completed) {
+              routeAnimation.removeStatusListener(listener);
+              showSaveDialog();
+            }
+          }
+
+          routeAnimation.addStatusListener(listener);
+        }
+      },
     );
 
     when(
@@ -110,13 +131,13 @@ class _DashboardViewState extends State<DashboardView> {
     super.dispose();
   }
 
-  _saveConnectionDialog(BuildContext context) {
+  void _saveConnectionDialog(BuildContext context) {
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: ConfirmationDialog(
         title: 'Save Connection',
         body:
-            'Do you want to save this connection? You can do it later as well!\n\n(Click on the icon on the top right of the screen and select "Save / Edit Connection"',
+            'Do you want to save this connection? You can do it later as well!\n\n(Tap the icon at the top right and select “Save / Edit Connection”)',
         onOk: (_) {
           Future.delayed(
             ModalHandler.transitionDelayDuration,

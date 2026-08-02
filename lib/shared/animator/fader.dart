@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class Fader extends StatefulWidget {
@@ -21,33 +23,49 @@ class Fader extends StatefulWidget {
 }
 
 class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+  late final AnimationController _controller;
+  late final Animation<double> _animation;
+
+  Timer? _forwardTimer;
+  Timer? _reverseTimer;
 
   @override
   void initState() {
+    super.initState();
     _controller =
         AnimationController(vsync: this, duration: this.widget.duration);
     _animation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: this.widget.curve));
-    super.initState();
+
+    /// Timers start here (not in [build]) so rebuilds can't reschedule the
+    /// animation - it plays exactly once per widget lifecycle and is
+    /// properly canceled (mounted-guarded) on dispose
+    _forwardTimer = Timer(this.widget.delay, () {
+      if (this.mounted) {
+        _controller.forward();
+      }
+    });
+    if (this.widget.showDuration != null) {
+      _reverseTimer = Timer(this.widget.showDuration!, () {
+        if (this.mounted) {
+          _controller.reverse();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _forwardTimer?.cancel();
+    _reverseTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(this.widget.delay, () => _controller.forward());
-
-    if (this.widget.showDuration != null) {
-      Future.delayed(this.widget.showDuration!, () => _controller.reverse());
-    }
     return FadeTransition(
       opacity: _animation,
       child: this.widget.child,

@@ -9,10 +9,7 @@ import 'blacksmith_content/blacksmith_content.dart';
 import 'support_header.dart';
 import 'tips_content.dart';
 
-enum SupportType {
-  Blacksmith,
-  Tips,
-}
+enum SupportType { Blacksmith, Tips }
 
 class SupportDialog extends StatefulWidget {
   final String title;
@@ -48,11 +45,7 @@ class _SupportDialogState extends State<SupportDialog> {
     if (!available) {
       _error =
           'Connection to the App Store is not possible. Make sure you have a working internet connection.\n\nFeel free to let me know if this problem persists!';
-      GeneralHelper.advLog(
-        _error,
-        includeInLogs: true,
-        level: LogLevel.Error,
-      );
+      GeneralHelper.advLog(_error, includeInLogs: true, level: LogLevel.Error);
     }
     Set<String> inAppPurchasesIDs = {};
     switch (this.widget.type) {
@@ -64,8 +57,8 @@ class _SupportDialogState extends State<SupportDialog> {
         break;
     }
 
-    ProductDetailsResponse productDetailsResponse =
-        await InAppPurchase.instance.queryProductDetails(inAppPurchasesIDs);
+    ProductDetailsResponse productDetailsResponse = await InAppPurchase.instance
+        .queryProductDetails(inAppPurchasesIDs);
 
     return productDetailsResponse.productDetails;
   }
@@ -74,26 +67,20 @@ class _SupportDialogState extends State<SupportDialog> {
   Widget build(BuildContext context) {
     return CustomCupertinoDialog(
       paddingTop: 10.0,
-      title: SupportHeader(
-        title: this.widget.title,
-        icon: this.widget.icon,
-      ),
+      title: SupportHeader(title: this.widget.title, icon: this.widget.icon),
       content: FutureBuilder<List<ProductDetails>>(
         future: _inAppPurchases,
         builder: (context, inAppPurchasesSnapshot) {
-          // if (inAppPurchasesSnapshot.connectionState == ConnectionState.done) {
           List<ProductDetails>? inAppPurchasesDetails =
               inAppPurchasesSnapshot.connectionState == ConnectionState.done
-                  ? (inAppPurchasesSnapshot.data ?? [])
-                  : inAppPurchasesSnapshot.data;
+              ? (inAppPurchasesSnapshot.data ?? [])
+              : inAppPurchasesSnapshot.data;
           return DefaultTextStyle(
             style: Theme.of(context).textTheme.bodyMedium!,
             child: SingleChildScrollView(
               child: () {
                 if (this.widget.type == SupportType.Tips) {
-                  return TipsContent(
-                    tipsDetails: inAppPurchasesDetails,
-                  );
+                  return TipsContent(tipsDetails: inAppPurchasesDetails);
                 } else {
                   return BlacksmithContent(
                     blacksmithDetails: inAppPurchasesDetails,
@@ -102,14 +89,6 @@ class _SupportDialogState extends State<SupportDialog> {
               }(),
             ),
           );
-          // }
-          // return Container(
-          //   height: 172.0,
-          //   alignment: Alignment.center,
-          //   child: BaseProgressIndicator(
-          //     text: 'Fetching...',
-          //   ),
-          // );
         },
       ),
     );

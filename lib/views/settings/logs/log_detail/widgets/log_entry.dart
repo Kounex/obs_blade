@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../../models/app_log.dart';
 import '../../../../../models/enums/log_level.dart';
-import '../../../../../shared/animator/status_dot.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/card.dart';
 import '../../../../../shared/general/column_separated.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../types/extensions/list.dart';
+import '../../../../../utils/styling_helper.dart';
+import '../../widgets/level_dot.dart';
 
 class LogEntry extends StatelessWidget {
   final String dateFormatted;
@@ -16,6 +18,8 @@ class LogEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
     List<List<AppLog>> groupedLogs = [];
 
     List<AppLog> temp = [];
@@ -46,25 +50,19 @@ class LogEntry extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Theme.of(context)
-                              .textTheme
-                              .bodyLarge!
-                              .color!
-                              .withOpacity(0.5),
-                        ),
-                      ),
+                  Text(
+                    dateFormatted,
+                    style: textTheme.titleSmall?.copyWith(
+                      fontFeatures: kTabularFigures,
                     ),
-                    child: Text(dateFormatted),
                   ),
-                  const SizedBox(height: 4.0),
+                  const SizedBox(height: AppSpacing.xs),
                   FittedBox(
                     child: Text(
                       '${this.logs.length} entries',
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: textTheme.bodySmall?.copyWith(
+                        fontFeatures: kTabularFigures,
+                      ),
                     ),
                   ),
                 ],
@@ -75,21 +73,14 @@ class LogEntry extends StatelessWidget {
                 child: Row(
                   children: [
                     for (LogLevel level in LogLevel.values) ...[
-                      if (groupedLogs.any(
-                          (logs) => logs.any((log) => log.level == level))) ...[
-                        const SizedBox(width: 12.0),
-                        SizedBox(
-                          width: 48.0,
-                          child: StatusDot(
-                            text: level.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge!
-                                .copyWith(fontSize: 12.0),
-                            verticalSpacing: 6.0,
-                            color: level.color,
-                            direction: Axis.vertical,
-                          ),
+                      if (groupedLogs.any((logs) =>
+                          logs.any((log) => log.level == level))) ...[
+                        const SizedBox(width: AppSpacing.md),
+                        LevelDot(level: level, size: 8.0),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          level.name,
+                          style: textTheme.bodySmall,
                         ),
                       ],
                     ],
@@ -107,7 +98,13 @@ class LogEntry extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 84.0,
-                      child: Text(levelLogs.first.level.prefix),
+                      child: Text(
+                        levelLogs.first.level.prefix,
+                        style: textTheme.labelSmall?.copyWith(
+                          color:
+                              logLevelColor(context, levelLogs.first.level),
+                        ),
+                      ),
                     ),
                     Expanded(
                       child: Container(
@@ -116,8 +113,11 @@ class LogEntry extends StatelessWidget {
                         decoration: BoxDecoration(
                           border: Border(
                             left: BorderSide(
-                              color: levelLogs.first.level.color,
-                              width: 1.0,
+                              color: logLevelColor(
+                                context,
+                                levelLogs.first.level,
+                              ).withOpacity(0.9),
+                              width: 2.5,
                             ),
                           ),
                         ),
@@ -129,10 +129,6 @@ class LogEntry extends StatelessWidget {
                               (log, index) => Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Text(
-                                  //   (index + 1).toString(),
-                                  // ),
-                                  // SizedBox(width: 12.0),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -140,12 +136,9 @@ class LogEntry extends StatelessWidget {
                                       children: [
                                         Text(log.entry),
                                         if (log.stackTrace != null)
-                                          Text(
-                                            log.stackTrace!,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
-                                          )
+                                          _StackTrace(
+                                            stackTrace: log.stackTrace!,
+                                          ),
                                       ],
                                     ),
                                   )
@@ -161,6 +154,84 @@ class LogEntry extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Collapsible monospace stack trace - stays out of the way until asked for
+class _StackTrace extends StatefulWidget {
+  final String stackTrace;
+
+  const _StackTrace({required this.stackTrace});
+
+  @override
+  State<_StackTrace> createState() => _StackTraceState();
+}
+
+class _StackTraceState extends State<_StackTrace> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle? monoStyle =
+        Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 11.0,
+              fontFamily:
+                  StylingHelper.isApple(context) ? 'Menlo' : 'monospace',
+            );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedRotation(
+                  turns: _expanded ? 0.25 : 0.0,
+                  duration: AppMotion.fast,
+                  curve: AppMotion.standard,
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 14.0,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  'Stack trace',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          duration: AppMotion.medium,
+          sizeCurve: AppMotion.standard,
+          crossFadeState: _expanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: Text(
+              this.widget.stackTrace,
+              style: monoStyle,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

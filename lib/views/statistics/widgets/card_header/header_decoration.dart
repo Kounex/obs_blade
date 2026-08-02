@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
 
 class IconClipper extends CustomClipper<Path> {
@@ -28,7 +29,7 @@ class IconClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }
 
-class HeaderDecoration extends StatelessWidget {
+class HeaderDecoration extends StatefulWidget {
   final IconData? icon;
   final double iconSize;
 
@@ -51,24 +52,63 @@ class HeaderDecoration extends StatelessWidget {
   });
 
   @override
+  State<HeaderDecoration> createState() => _HeaderDecorationState();
+}
+
+class _HeaderDecorationState extends State<HeaderDecoration>
+    with SingleTickerProviderStateMixin {
+  /// One-shot entrance for the decorative watermark icon (fade + settle) -
+  /// no perpetual drift on a static screen
+  late final AnimationController _entranceController;
+  late final Animation<double> _entrance;
+
+  @override
+  void initState() {
+    super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: AppMotion.slow,
+    );
+    _entrance = CurvedAnimation(
+      parent: _entranceController,
+      curve: AppMotion.emphasized,
+    );
+    _entranceController.forward();
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Transform.translate(
       offset: Offset(
-        this.iconXOffset,
-        this.iconYOffset,
+        this.widget.iconXOffset,
+        this.widget.iconYOffset,
       ),
       child: ClipPath(
         clipper: IconClipper(
-          xCut: this.iconXCut,
-          yCut: this.iconYCut,
-          borderRadius: this.iconCornerRadius,
+          xCut: this.widget.iconXCut,
+          yCut: this.widget.iconYCut,
+          borderRadius: this.widget.iconCornerRadius,
         ),
         clipBehavior: Clip.antiAlias,
-        child: Transform.rotate(
-          angle: -0.0,
+        child: AnimatedBuilder(
+          animation: _entrance,
+          builder: (context, child) => Opacity(
+            opacity: _entrance.value,
+            child: Transform.translate(
+              offset: Offset(0.0, 6.0 * (1.0 - _entrance.value)),
+              child: child,
+            ),
+          ),
           child: Icon(
-            this.icon ?? CupertinoIcons.chart_pie_fill,
-            size: this.iconSize,
+            this.widget.icon ?? CupertinoIcons.chart_pie_fill,
+            size: this.widget.iconSize,
+            color: IconTheme.of(context).color?.withValues(alpha: 0.20),
           ),
         ),
       ),

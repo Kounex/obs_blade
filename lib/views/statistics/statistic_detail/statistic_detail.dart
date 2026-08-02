@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 
 import '../../../models/past_stream_data.dart';
+import '../../../shared/design/design.dart';
 import '../../../shared/dialogs/confirmation.dart';
 import '../../../shared/dialogs/input.dart';
 import '../../../shared/general/app_bar_actions.dart';
 import '../../../shared/general/base/card.dart';
-import '../../../shared/general/formatted_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../types/extensions/int.dart';
+import '../../../types/extensions/list.dart';
 import '../../../types/interfaces/past_stats_data.dart';
 import '../../../utils/modal_handler.dart';
 import '../../../utils/styling_helper.dart';
 import '../../dashboard/widgets/obs_widgets/stats/stats_container.dart';
 import '../widgets/stats_entry/stats_entry.dart';
+import 'widgets/stat_tile.dart';
 import 'widgets/stats_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {
@@ -155,47 +157,53 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
               constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
               child: Column(
                 children: [
-                  BaseCard(
-                    child: StatsEntry(
-                      pastStatsData: pastStatsData,
-                      usedInDetail: true,
+                  StaggeredEntrance(
+                    child: BaseCard(
+                      child: StatsEntry(
+                        pastStatsData: pastStatsData,
+                        usedInDetail: true,
+                      ),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(
-                      top: 12,
-                      left: 16.0,
-                      right: 16.0,
-                      bottom: 30.0,
+                      top: AppSpacing.md,
+                      left: AppSpacing.lg,
+                      right: AppSpacing.lg,
+                      bottom: AppSpacing.xxl,
                     ),
                     child: Wrap(
                       alignment: WrapAlignment.center,
-                      runSpacing: 30.0,
-                      spacing: 30.0,
+                      runSpacing: AppSpacing.xl,
+                      spacing: AppSpacing.xl,
                       children: streamCharts
-                          .map(
-                            (streamChart) => ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: StylingHelper.max_width_mobile /
-                                    (MediaQuery.sizeOf(context).width <
-                                            StylingHelper.max_width_mobile
-                                        ? 1
-                                        : 2),
-                              ),
-                              child: BaseCard(
-                                topPadding: 0,
-                                rightPadding: 0,
-                                bottomPadding: 0,
-                                leftPadding: 0,
-                                paddingChild: const EdgeInsets.all(0),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0) +
-                                      const EdgeInsets.only(
-                                        top: 4.0,
-                                        left: 20.0,
-                                        right: 24.0,
-                                      ),
-                                  child: streamChart,
+                          .mapIndexed(
+                            (streamChart, index) => StaggeredEntrance(
+                              index: index + 1,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: StylingHelper.max_width_mobile /
+                                      (MediaQuery.sizeOf(context).width <
+                                              StylingHelper.max_width_mobile
+                                          ? 1
+                                          : 2),
+                                ),
+                                child: BaseCard(
+                                  topPadding: 0,
+                                  rightPadding: 0,
+                                  bottomPadding: 0,
+                                  leftPadding: 0,
+                                  paddingChild: const EdgeInsets.all(0),
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.all(AppSpacing.md) +
+                                            const EdgeInsets.only(
+                                              top: AppSpacing.xs,
+                                              left: 20.0,
+                                              right: AppSpacing.xl,
+                                            ),
+                                    child: streamChart,
+                                  ),
                                 ),
                               ),
                             ),
@@ -203,70 +211,75 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                           .toList(),
                     ),
                   ),
-                  StatsContainer(
-                    title: 'Some numbers',
-                    children: [
-                      FormattedText(
-                        label: 'Session Time',
-                        text: pastStatsData.totalTime!
-                            .secondsToFormattedDurationString(),
-                        width: 100.0,
-                      ),
-                      FormattedText(
-                        label: 'Average FPS',
-                        text: (pastStatsData.fpsList.reduce((a, b) => a + b) /
-                                pastStatsData.fpsList.length)
-                            .toStringAsFixed(2),
-                        width: 75.0,
-                      ),
-                      FormattedText(
-                        label: 'Average CPU Usage',
-                        text: (pastStatsData.cpuUsageList
-                                    .reduce((a, b) => a + b) /
-                                pastStatsData.cpuUsageList.length)
-                            .toStringAsFixed(2),
-                        unit: '%',
-                        width: 115.0,
-                      ),
-                      FormattedText(
-                        label: 'Average kbit/s',
-                        text: (pastStatsData.kbitsPerSecList
-                                    .reduce((a, b) => a + b) /
-                                pastStatsData.kbitsPerSecList.length)
-                            .toStringAsFixed(2),
-                        width: 85.0,
-                      ),
-                      FormattedText(
-                        label: 'Average Memory Usage',
-                        text: ((pastStatsData.memoryUsageList
+                  StaggeredEntrance(
+                    index: streamCharts.length + 1,
+                    child: StatsContainer(
+                      title: 'Some numbers',
+                      child: Wrap(
+                        spacing: AppSpacing.xxl,
+                        runSpacing: AppSpacing.xl,
+                        children: [
+                          StatTile(
+                            label: 'Session Time',
+                            value: pastStatsData.totalTime!
+                                .secondsToFormattedDurationString(),
+                          ),
+                          StatTile(
+                            label: 'Average FPS',
+                            value: (pastStatsData.fpsList
                                         .reduce((a, b) => a + b) /
-                                    pastStatsData.memoryUsageList.length) /
-                                1000)
-                            .toStringAsFixed(2),
-                        unit: ' GB',
-                        width: 140.0,
+                                    pastStatsData.fpsList.length)
+                                .toStringAsFixed(2),
+                            valueColor: Colors.greenAccent,
+                          ),
+                          StatTile(
+                            label: 'Average CPU Usage',
+                            value: (pastStatsData.cpuUsageList
+                                        .reduce((a, b) => a + b) /
+                                    pastStatsData.cpuUsageList.length)
+                                .toStringAsFixed(2),
+                            unit: '%',
+                            valueColor: Colors.blueAccent,
+                          ),
+                          StatTile(
+                            label: 'Average kbit/s',
+                            value: (pastStatsData.kbitsPerSecList
+                                        .reduce((a, b) => a + b) /
+                                    pastStatsData.kbitsPerSecList.length)
+                                .toStringAsFixed(2),
+                            valueColor: Colors.orangeAccent,
+                          ),
+                          StatTile(
+                            label: 'Average Memory Usage',
+                            value: ((pastStatsData.memoryUsageList
+                                            .reduce((a, b) => a + b) /
+                                        pastStatsData.memoryUsageList.length) /
+                                    1000)
+                                .toStringAsFixed(2),
+                            unit: ' GB',
+                            valueColor: Colors.redAccent,
+                          ),
+                          StatTile(
+                            label: 'Total Output Frames',
+                            value: pastStatsData.outputTotalFrames.toString(),
+                          ),
+                          StatTile(
+                            label: 'Skipped Output Frames',
+                            value:
+                                pastStatsData.outputSkippedFrames.toString(),
+                          ),
+                          StatTile(
+                            label: 'Total Render Frames',
+                            value: pastStatsData.renderTotalFrames.toString(),
+                          ),
+                          StatTile(
+                            label: 'Skipped Render Frames',
+                            value:
+                                pastStatsData.renderSkippedFrames.toString(),
+                          ),
+                        ],
                       ),
-                      FormattedText(
-                        label: 'Total Output Frames',
-                        text: pastStatsData.outputTotalFrames.toString(),
-                        width: 120.0,
-                      ),
-                      FormattedText(
-                        label: 'Skipped Output Frames',
-                        text: pastStatsData.outputSkippedFrames.toString(),
-                        width: 140.0,
-                      ),
-                      FormattedText(
-                        label: 'Total Render Frames',
-                        text: pastStatsData.renderTotalFrames.toString(),
-                        width: 120.0,
-                      ),
-                      FormattedText(
-                        label: 'Skipped Render Frames',
-                        text: pastStatsData.renderSkippedFrames.toString(),
-                        width: 140.0,
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
 import '../../../../../models/custom_theme.dart';
-import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../utils/built_in_themes.dart';
@@ -44,44 +43,35 @@ class _ThemeLoaderState extends State<ThemeLoader> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const BaseDivider(),
-        const SizedBox(height: 12.0),
-        ThemeRow(
-          useDivider: false,
-          titleWidget: SizedBox(
-            width: 192.0,
-            child: CupertinoDropdown<CustomTheme>(
-              value: _selectedTheme,
-              items: _availableThemes
-                  .map(
-                    (theme) => DropdownMenuItem<CustomTheme>(
-                      value: theme,
-                      child: Text(theme.name ?? 'OBS Blade Base'),
-                    ),
-                  )
-                  .toList(),
-              selectedItemBuilder: (context) => _availableThemes
-                  .map(
-                    (theme) => Text(
-                      theme.name ?? 'OBS Blade Base',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
-                  .toList(),
-              onChanged: (theme) => setState(() => _selectedTheme = theme!),
-            ),
-          ),
-          description:
-              'Load the configuration from another theme if you want to work with existing color settings',
-          buttonText: 'Load',
-          onButtonPressed: () => this.widget.onLoadTheme?.call(_selectedTheme),
+    return ThemeRow(
+      useDivider: false,
+      titleWidget: SizedBox(
+        width: 192.0,
+        child: CupertinoDropdown<CustomTheme>(
+          value: _selectedTheme,
+          items: _availableThemes
+              .map(
+                (theme) => DropdownMenuItem<CustomTheme>(
+                  value: theme,
+                  child: Text(theme.name ?? 'OBS Blade Base'),
+                ),
+              )
+              .toList(),
+          selectedItemBuilder: (context) => _availableThemes
+              .map(
+                (theme) => Text(
+                  theme.name ?? 'OBS Blade Base',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+              .toList(),
+          onChanged: (theme) => setState(() => _selectedTheme = theme!),
         ),
-        const SizedBox(height: 12.0),
-        const BaseDivider(),
-      ],
+      ),
+      description:
+          'Load the configuration from another theme if you want to work with existing color settings',
+      buttonText: 'Load',
+      onButtonPressed: () => this.widget.onLoadTheme?.call(_selectedTheme),
     );
   }
 }

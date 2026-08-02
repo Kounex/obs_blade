@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
+import '../../../shared/design/design.dart';
 import '../../../shared/general/base/adaptive_switch.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/clean_list_tile.dart';
@@ -84,57 +86,77 @@ class _CustomThemeViewState extends State<CustomThemeView> {
             );
           }
 
-          return TransculentCupertinoNavBarWrapper(
-            previousTitle: 'Settings',
-            title: 'Custom Theme',
-            listViewChildren: [
-              BaseCard(
-                bottomPadding: 12.0,
-                child: CleanListTile(
-                  title: 'Use Custom Theme',
-                  description:
-                      'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
-                  trailing: BaseAdaptiveSwitch(
-                    value: settingsBox.get(SettingsKeys.CustomTheme.name,
-                        defaultValue: false),
-                    onChanged: (customTheme) {
-                      settingsBox.put(
-                        SettingsKeys.CustomTheme.name,
-                        customTheme,
-                      );
-                      if ((settingsBox.get(
+          /// Explicit [AnimatedTheme] on the activation surface: the
+          /// MaterialApp subtree is not keyed, so its implicit crossfade
+          /// already plays app-wide - this re-wraps the editor itself so
+          /// the screen the user activates the theme on visibly morphs at
+          /// the design system's theme-change duration ([AppMotion.slow])
+          /// instead of the shorter framework default.
+          return AnimatedTheme(
+            data: Theme.of(context),
+            duration: AppMotion.slow,
+            curve: AppMotion.standard,
+            child: TransculentCupertinoNavBarWrapper(
+              previousTitle: 'Settings',
+              title: 'Custom Theme',
+              listViewChildren: [
+                StaggeredEntrance(
+                  index: 0,
+                  child: BaseCard(
+                    bottomPadding: 12.0,
+                    child: CleanListTile(
+                      title: 'Use Custom Theme',
+                      description:
+                          'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
+                      trailing: BaseAdaptiveSwitch(
+                        value: settingsBox.get(SettingsKeys.CustomTheme.name,
+                            defaultValue: false),
+                        onChanged: (customTheme) {
+                          settingsBox.put(
+                            SettingsKeys.CustomTheme.name,
+                            customTheme,
+                          );
+                          if ((settingsBox.get(
+                                  SettingsKeys.ActiveCustomThemeUUID.name,
+                                  defaultValue: '') as String)
+                              .isEmpty) {
+                            settingsBox.put(
                               SettingsKeys.ActiveCustomThemeUUID.name,
-                              defaultValue: '') as String)
-                          .isEmpty) {
-                        settingsBox.put(
-                          SettingsKeys.ActiveCustomThemeUUID.name,
-                          BuiltInThemes.themes.first.uuid,
-                        );
-                      }
-                    },
+                              BuiltInThemes.themes.first.uuid,
+                            );
+                          }
+                        },
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const BaseCard(
-                title: 'Predefined Themes',
-                bottomPadding: 12.0,
-                paddingChild: EdgeInsets.all(0),
-                child: CustomThemeList(
-                  predefinedThemes: true,
+                const StaggeredEntrance(
+                  index: 1,
+                  child: BaseCard(
+                    title: 'Predefined Themes',
+                    bottomPadding: 12.0,
+                    paddingChild: EdgeInsets.all(0),
+                    child: CustomThemeList(
+                      predefinedThemes: true,
+                    ),
+                  ),
                 ),
-              ),
-              BaseCard(
-                title: 'Your Themes',
-                trailingTitleWidget: ThemedCupertinoButton(
-                  text: 'Add Theme',
-                  padding: const EdgeInsets.all(0),
-                  onPressed: () => _openAddTheme(context),
+                StaggeredEntrance(
+                  index: 2,
+                  child: BaseCard(
+                    title: 'Your Themes',
+                    trailingTitleWidget: ThemedCupertinoButton(
+                      text: 'Add Theme',
+                      padding: const EdgeInsets.all(0),
+                      onPressed: () => _openAddTheme(context),
+                    ),
+                    bottomPadding: 12.0,
+                    paddingChild: const EdgeInsets.all(0),
+                    child: const CustomThemeList(),
+                  ),
                 ),
-                bottomPadding: 12.0,
-                paddingChild: const EdgeInsets.all(0),
-                child: const CustomThemeList(),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

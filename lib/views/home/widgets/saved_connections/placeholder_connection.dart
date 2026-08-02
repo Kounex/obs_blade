@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/general/base/card.dart';
-import '../../../../shared/overlay/base_result.dart';
 
 class PlaceholderConnection extends StatelessWidget {
   final double height;
@@ -26,11 +25,26 @@ class PlaceholderConnection extends StatelessWidget {
             padding: const EdgeInsets.only(left: 24.0, right: 24.0),
             child: SizedBox(
               height: this.height,
-              child: const BaseResult(
-                icon: BaseResultIcon.Missing,
-                iconSize: 42.0,
-                text:
-                    'No saved connections yet...\nNo worries though, once you successfully connected to an OBS instance you can save one for later! :)',
+
+              /// Same layout contract as [BaseResult] (glyph + centered
+              /// description) but with a connection metaphor instead of
+              /// the "missing" question mark
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    CupertinoIcons.link,
+                    size: 42.0,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 14.0),
+                    child: Text(
+                      'No saved connections yet...\nNo worries though, once you successfully connected to an OBS instance you can save one for later! :)',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/design/design.dart';
 import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
@@ -10,6 +11,8 @@ class OBSWidgetsMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -19,11 +22,24 @@ class OBSWidgetsMobile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Material(
-                color: Theme.of(context)
-                    .cupertinoOverrideTheme!
-                    .barBackgroundColor,
-                child: const TabBar(
-                  tabs: [
+                color: theme.cupertinoOverrideTheme!.barBackgroundColor,
+                child: TabBar(
+                  labelColor: theme.colorScheme.secondary,
+                  unselectedLabelColor: theme.textTheme.bodySmall!.color,
+                  labelStyle: theme.textTheme.titleSmall!
+                      .copyWith(fontWeight: FontWeight.w600),
+                  unselectedLabelStyle: theme.textTheme.titleSmall,
+                  indicator: UnderlineTabIndicator(
+                    borderSide: BorderSide(
+                      width: 3.0,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    insets:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.label,
+                  dividerColor: Colors.transparent,
+                  tabs: const [
                     Tab(
                       child: Text('Chat'),
                     ),
@@ -31,7 +47,6 @@ class OBSWidgetsMobile extends StatelessWidget {
                       child: Text('Stats'),
                     )
                   ],
-                  dividerColor: Colors.transparent,
                 ),
               ),
               const SizedBox(
@@ -40,16 +55,18 @@ class OBSWidgetsMobile extends StatelessWidget {
                   physics: NeverScrollableScrollPhysics(),
                   children: [
                     Padding(
-                      padding:
-                          EdgeInsets.only(top: 12.0, left: 8.0, right: 8.0),
+                      padding: EdgeInsets.only(
+                          top: AppSpacing.md,
+                          left: AppSpacing.sm,
+                          right: AppSpacing.sm),
                       child: StreamChat(),
                     ),
                     Padding(
-                      padding: EdgeInsets.only(top: 12.0),
+                      padding: EdgeInsets.only(top: AppSpacing.md),
                       child: Stats(
                         pageIndicatorPadding: EdgeInsets.only(
-                          top: 12.0,
-                          bottom: 12.0,
+                          top: AppSpacing.md,
+                          bottom: AppSpacing.md,
                         ),
                       ),
                     ),

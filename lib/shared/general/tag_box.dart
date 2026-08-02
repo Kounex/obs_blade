@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 class TagBox extends StatelessWidget {
@@ -44,7 +45,8 @@ class TagBox extends StatelessWidget {
     );
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: AppMotion.medium,
+      curve: AppMotion.standard,
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
         color: this.color,

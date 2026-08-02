@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
 import 'models/custom_theme.dart';
+import 'shared/design/design.dart';
 import 'shared/general/hive_builder.dart';
 import 'types/enums/hive_keys.dart';
 import 'types/enums/settings_keys.dart';
@@ -76,6 +77,29 @@ class App extends StatelessWidget {
             ? ThemeData.light()
             : ThemeData.dark());
 
+    final TextTheme appTextTheme = buildAppTextTheme(baseThemeData.textTheme);
+
+    /// One label family for every text field (BaseAdaptiveTextField and
+    /// plain TextFormField alike): same size/color everywhere, only the
+    /// field state shifts the color (focus = highlight, error and
+    /// disabled stay distinguishable)
+    TextStyle statefulLabelStyle(TextStyle base) =>
+        WidgetStateTextStyle.resolveWith(
+          (Set<WidgetState> states) {
+            if (states.contains(WidgetState.disabled)) {
+              return base.copyWith(color: baseThemeData.disabledColor);
+            }
+            if (states.contains(WidgetState.error)) {
+              return base.copyWith(color: baseThemeData.colorScheme.error);
+            }
+            if (states.contains(WidgetState.focused)) {
+              return base.copyWith(
+                  color: hightlightColor ?? StylingHelper.highlight_color);
+            }
+            return base;
+          },
+        );
+
     return baseThemeData.copyWith(
       scaffoldBackgroundColor: scaffoldBackgroundColor ??
           (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
@@ -114,10 +138,60 @@ class App extends StatelessWidget {
             : Colors.white,
       ),
 
-      textTheme: baseThemeData.textTheme.copyWith(
-        bodySmall: TextStyle(
-          color: Colors.grey[500]!,
+      textTheme: appTextTheme,
+
+      /// Consistent label/hint rendering for every field: 15pt inline
+      /// label shrinking to a 12pt floating label, callout-grey family
+      inputDecorationTheme: InputDecorationThemeData(
+        hintStyle: appTextTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
+        labelStyle: statefulLabelStyle(
+            appTextTheme.bodyMedium!.copyWith(color: Colors.grey[500])),
+        floatingLabelStyle: statefulLabelStyle(
+            appTextTheme.labelMedium!.copyWith(color: Colors.grey[500])),
+      ),
+
+      /// Cupertino slide transitions on all platforms - that IS the
+      /// app's feel (all in-tab pushes are CupertinoPageRoute already)
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+
+      /// Semantic status colors (live / recording / warning / reachability) -
+      /// constant across custom themes, they are signal colors, not brand
+      extensions: const [AppStatusColors.standard],
+
+      /// Sub-themes which used to leak stock colors - derived from the
+      /// active card/highlight slots instead
+      dialogTheme: DialogThemeData(
+        backgroundColor: cardColor ?? StylingHelper.primary_color,
+        elevation: 0.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: StylingHelper.lightenDarkenColor(
+            cardColor ?? StylingHelper.primary_color, 8),
+        actionTextColor: hightlightColor ?? StylingHelper.highlight_color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+      ),
+      chipTheme: baseThemeData.chipTheme.copyWith(
+        backgroundColor: StylingHelper.lightenDarkenColor(
+            cardColor ?? StylingHelper.primary_color, 8),
+        selectedColor: (hightlightColor ?? StylingHelper.highlight_color)
+            .withValues(alpha: 0.24),
+        checkmarkColor: hightlightColor ?? StylingHelper.highlight_color,
+        side: BorderSide.none,
       ),
 
       sliderTheme: SliderThemeData(

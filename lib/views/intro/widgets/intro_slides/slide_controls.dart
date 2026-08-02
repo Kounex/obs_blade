@@ -5,6 +5,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/shared/general/base/button.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -72,95 +74,87 @@ class _SlideControlsState extends State<SlideControls> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Observer(builder: (context) {
-          return SizedBox(
-            height: 52.0,
-            width: 52.0,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                ThemedCupertinoButton(
-                  padding: const EdgeInsets.all(0),
-                  onPressed: introStore.currentPage > 0
-                      ? () {
-                          introStore.setLockedOnSlide(false);
-                          this.widget.pageController.previousPage(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeIn,
-                              );
-                        }
-                      : null,
-                  text: 'Back',
-                ),
-                // if (introStore.lockedOnSlide && introStore.currentPage != 0)
-                //   BaseProgressIndicator(
-                //     size: 52.0,
-                //     countdownInSeconds: introStore.slideLockSeconds,
-                //     onCountdownDone: () => introStore.setLockedOnSlide(false),
-                //   )
-              ],
-            ),
-          );
-        }),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Observer(builder: (context) {
+              return ThemedCupertinoButton(
+                padding: const EdgeInsets.all(0),
+                onPressed: introStore.currentPage > 0
+                    ? () {
+                        introStore.setLockedOnSlide(false);
+                        this.widget.pageController.previousPage(
+                              duration: AppMotion.medium,
+                              curve: AppMotion.standard,
+                            );
+                      }
+                    : null,
+                text: 'Back',
+              );
+            }),
+          ),
+        ),
         SmoothPageIndicator(
           controller: this.widget.pageController,
-          effect: ScrollingDotsEffect(
-            activeDotColor: Theme.of(context)
-                .switchTheme
-                .trackColor!
-                .resolve({MaterialState.selected})!,
-            dotHeight: 12.0,
-            dotWidth: 12.0,
+          effect: ExpandingDotsEffect(
+            dotColor: Theme.of(context).dividerColor,
+            activeDotColor: Theme.of(context).colorScheme.secondary,
+            dotHeight: 8.0,
+            dotWidth: 8.0,
+            expansionFactor: 3.0,
           ),
           count: this.widget.amountChildren,
         ),
-        Observer(builder: (context) {
-          return SizedBox(
-            height: 52.0,
-            width: 52.0,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                ThemedCupertinoButton(
-                  padding: const EdgeInsets.all(0),
-                  onPressed: !introStore.lockedOnSlide
-                      ? () {
-                          if (introStore.currentPage <
-                              this.widget.amountChildren - 1) {
-                            this.widget.pageController.nextPage(
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeIn,
-                                );
-                          } else {
-                            Hive.box(HiveKeys.Settings.name).put(
-                              SettingsKeys.HasUserSeenIntro202208.name,
-                              true,
-                            );
-                            Navigator.of(context).pushReplacementNamed(
-                              this.widget.manually
-                                  ? SettingsTabRoutingKeys.Landing.route
-                                  : AppRoutingKeys.Tabs.route,
-                            );
-                          }
-                        }
-                      : null,
-                  text: introStore.currentPage < this.widget.amountChildren - 1
-                      ? 'Next'
-                      : 'Start',
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Observer(builder: (context) {
+              return SizedBox(
+                height: 52.0,
+                child: AnimatedSwitcher(
+                  duration: AppMotion.medium,
+
+                  /// While the per-slide lock is running the countdown ring
+                  /// takes the place of the (locked) primary CTA
+                  child: introStore.lockedOnSlide
+                      ? BaseProgressIndicator(
+                          size: 52.0,
+                          countdownInSeconds: introStore.slideLockSeconds,
+                          onCountdownDone: () {
+                            introStore.setLockedOnSlide(false);
+                            this.widget.onSlideLockWaited();
+                          },
+                        )
+                      : BaseButton(
+                          onPressed: () {
+                            if (introStore.currentPage <
+                                this.widget.amountChildren - 1) {
+                              this.widget.pageController.nextPage(
+                                    duration: AppMotion.medium,
+                                    curve: AppMotion.standard,
+                                  );
+                            } else {
+                              Hive.box(HiveKeys.Settings.name).put(
+                                SettingsKeys.HasUserSeenIntro202208.name,
+                                true,
+                              );
+                              Navigator.of(context).pushReplacementNamed(
+                                this.widget.manually
+                                    ? SettingsTabRoutingKeys.Landing.route
+                                    : AppRoutingKeys.Tabs.route,
+                              );
+                            }
+                          },
+                          text: introStore.currentPage <
+                                  this.widget.amountChildren - 1
+                              ? 'Next'
+                              : 'Start',
+                        ),
                 ),
-                if (introStore.lockedOnSlide)
-                  BaseProgressIndicator(
-                    size: 52.0,
-                    countdownInSeconds: introStore.slideLockSeconds,
-                    onCountdownDone: () {
-                      introStore.setLockedOnSlide(false);
-                      this.widget.onSlideLockWaited();
-                    },
-                  )
-              ],
-            ),
-          );
-        }),
+              );
+            }),
+          ),
+        ),
       ],
     );
   }

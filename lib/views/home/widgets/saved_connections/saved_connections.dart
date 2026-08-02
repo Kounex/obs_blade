@@ -3,6 +3,7 @@ import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
 
 import '../../../../models/connection.dart';
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
 import 'connection_box.dart';
@@ -20,19 +21,35 @@ class SavedConnections extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 12.0, left: 24.0),
+
+          /// Aligns with the card content edge above (16 card margin +
+          /// 24 title inset = 40)
+          padding: const EdgeInsets.only(
+            top: AppSpacing.md,
+            left: AppSpacing.xl + AppSpacing.lg,
+          ),
+
+          /// Section header: caption scale, uppercase, theme-aware grey
           child: Text(
-            'Saved Connections',
-            style: Theme.of(context).textTheme.headlineSmall,
+            'Saved Connections'.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
           ),
         ),
-        const SizedBox(height: 4),
-        const BaseDivider(),
+        const SizedBox(height: AppSpacing.xs),
+
+        /// Inset to the caption edge instead of full-bleed (iOS grouped
+        /// separator convention)
+        const Padding(
+          padding: EdgeInsets.only(left: AppSpacing.xl + AppSpacing.lg),
+          child: BaseDivider(),
+        ),
         Flexible(
           fit: FlexFit.loose,
           child: Padding(
             padding: const EdgeInsets.only(
-              top: 18.0,
+              top: AppSpacing.lg,
             ),
             child: HiveBuilder<Connection>(
               hiveKey: HiveKeys.SavedConnections,
@@ -57,9 +74,11 @@ class SavedConnections extends StatelessWidget {
                                   itemCount: savedConnectionsBox.values.length,
                                   itemBuilder: (context, index) => Padding(
                                     padding: const EdgeInsets.only(
-                                        left: 18.0, right: 18.0),
-                                    child: ConnectionBox(
-                                      connection: savedConnections[index],
+                                        left: AppSpacing.lg,
+                                        right: AppSpacing.lg),
+                                    child: _animatedConnectionBox(
+                                      savedConnections[index],
+                                      index,
                                       width: width,
                                       height: height,
                                     ),
@@ -70,15 +89,16 @@ class SavedConnections extends StatelessWidget {
                                 child: Wrap(
                                   spacing: 32.0,
                                   runSpacing: 32.0,
-                                  children: savedConnectionsBox.values
-                                      .map(
-                                        (savedConnection) => ConnectionBox(
-                                          connection: savedConnection,
-                                          width: width,
-                                          height: height,
-                                        ),
-                                      )
-                                      .toList(),
+                                  children: [
+                                    for (final (index, savedConnection)
+                                        in savedConnectionsBox.values.indexed)
+                                      _animatedConnectionBox(
+                                        savedConnection,
+                                        index,
+                                        width: width,
+                                        height: height,
+                                      ),
+                                  ],
                                 ),
                               )),
                   );
@@ -147,4 +167,27 @@ class SavedConnections extends StatelessWidget {
       ],
     );
   }
+
+  /// One-shot staggered entrance + crossfade when the reachable-first
+  /// re-sort swaps which connection sits at a slot. Keyed by Hive identity
+  /// so pure reachability flag updates (dot color/text) don't animate and
+  /// MobX/setState rebuilds don't replay the entrance.
+  Widget _animatedConnectionBox(
+    Connection connection,
+    int index, {
+    required double width,
+    required double height,
+  }) =>
+      StaggeredEntrance(
+        index: index,
+        child: AnimatedSwitcher(
+          duration: AppMotion.medium,
+          child: ConnectionBox(
+            key: ValueKey<dynamic>(connection.key),
+            connection: connection,
+            width: width,
+            height: height,
+          ),
+        ),
+      );
 }

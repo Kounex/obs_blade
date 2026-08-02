@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -9,10 +10,12 @@ import 'package:obs_blade/shared/general/connect_host_input.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 
 import '../../../../../models/connection.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/home.dart';
+import '../../../../../utils/styling_helper.dart';
 import '../../../../../utils/validation_helper.dart';
 
 class ConnectForm extends StatefulWidget {
@@ -59,6 +62,31 @@ class _ConnectFormState extends State<ConnectForm> {
     _port = TextEditingController(
         text: this.widget.connection?.port?.toString() ?? '');
     _pw = TextEditingController(text: this.widget.connection?.pw);
+  }
+
+  void _connect() {
+    HomeStore homeStore = GetIt.instance<HomeStore>();
+    NetworkStore networkStore = GetIt.instance<NetworkStore>();
+
+    CustomValidationTextEditingController host =
+        homeStore.domainMode ? _hostDomain : _hostIP;
+    if (_formKey.currentState!.validate() && host.isValid) {
+      FocusScope.of(context).unfocus();
+      homeStore.typedInConnection.host = host.text;
+      networkStore
+          .setOBSWebSocket(
+            Connection(
+              (this.widget.manual && homeStore.domainMode
+                      ? homeStore.protocolScheme
+                      : '') +
+                  host.text,
+              int.tryParse(_port.text),
+              _pw.text,
+              this.widget.manual ? homeStore.domainMode : false,
+            ),
+          )
+          .then((clodeCode) => _clodeCode.add(clodeCode));
+    }
   }
 
   @override
@@ -154,6 +182,7 @@ class _ConnectFormState extends State<ConnectForm> {
                     ? homeStore.typedInConnection.pw = pw
                     : null,
                 obscureText: _obscurePW,
+                obscuringCharacter: '●',
                 decoration: InputDecoration(
                   errorText: snapshot.hasData &&
                           snapshot.data! ==
@@ -172,7 +201,7 @@ class _ConnectFormState extends State<ConnectForm> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 32.0),
+            padding: const EdgeInsets.only(top: AppSpacing.xl),
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
@@ -195,30 +224,44 @@ class _ConnectFormState extends State<ConnectForm> {
                     //   ),
                     //   const SizedBox(width: 24.0),
                     // ],
-                    BaseButton(
-                      text: 'Connect',
-                      onPressed: () {
-                        CustomValidationTextEditingController host =
-                            homeStore.domainMode ? _hostDomain : _hostIP;
-                        if (_formKey.currentState!.validate() && host.isValid) {
-                          FocusScope.of(context).unfocus();
-                          homeStore.typedInConnection.host = host.text;
-                          networkStore
-                              .setOBSWebSocket(
-                                Connection(
-                                  (this.widget.manual && homeStore.domainMode
-                                          ? homeStore.protocolScheme
-                                          : '') +
-                                      host.text,
-                                  int.tryParse(_port.text),
-                                  _pw.text,
-                                  this.widget.manual
-                                      ? homeStore.domainMode
-                                      : false,
-                                ),
-                              )
-                              .then((clodeCode) => _clodeCode.add(clodeCode));
-                        }
+                    Observer(
+                      builder: (context) {
+                        final bool connecting =
+                            networkStore.connectionInProgress;
+
+                        /// Physical press feedback (ripples are disabled
+                        /// app-wide); the button keeps owning the tap so
+                        /// [Pressable.onTap] never double-fires. The child
+                        /// morphs to an in-button progress state (visual
+                        /// only - driven by [NetworkStore.connectionInProgress])
+                        return Pressable(
+                          onTap: _connect,
+                          child: BaseButton(
+                            onPressed: _connect,
+                            child: AnimatedSwitcher(
+                              duration: AppMotion.fast,
+                              child: connecting
+                                  ? SizedBox(
+                                      key: const ValueKey('connecting'),
+                                      width: 20.0,
+                                      height: 20.0,
+                                      child: CupertinoActivityIndicator(
+                                        color: StylingHelper
+                                            .surroundingAwareAccent(
+                                          surroundingColor: Theme.of(context)
+                                              .buttonTheme
+                                              .colorScheme!
+                                              .secondary,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Connect',
+                                      key: ValueKey('idle'),
+                                    ),
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ],

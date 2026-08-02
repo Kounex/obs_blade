@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/column_separated.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';
@@ -26,13 +26,23 @@ class CustomThemeList extends StatelessWidget {
         return themes.isNotEmpty
             ? ColumnSeparated(
                 useSymmetricOutsidePadding: true,
-                additionalPaddingSeparator: const EdgeInsets.only(left: 64.0),
-                children: themes.map(
-                  (theme) => ThemeEntry(
-                    customTheme: theme,
-                    isEditable: !this.predefinedThemes,
-                  ),
-                ),
+
+                /// Same 24pt inset as the BaseCard header divider (and the
+                /// card title), so every divider in the card spans the same
+                /// width instead of mixing full-width and deeply indented
+                /// separators.
+                additionalPaddingSeparator:
+                    const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                children: [
+                  for (final (index, theme) in themes.indexed)
+                    StaggeredEntrance(
+                      index: index,
+                      child: ThemeEntry(
+                        customTheme: theme,
+                        isEditable: !this.predefinedThemes,
+                      ),
+                    ),
+                ],
               )
             : Align(
                 child: Padding(

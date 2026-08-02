@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../../utils/modal_handler.dart';
@@ -32,8 +33,13 @@ class TextFieldDate extends StatelessWidget {
 
     return CupertinoTextField(
       controller: _controller,
-      clearButtonMode: OverlayVisibilityMode.always,
+
+      /// Only offer clearing once a date is actually selected
+      clearButtonMode: this.selectedDate != null
+          ? OverlayVisibilityMode.always
+          : OverlayVisibilityMode.never,
       placeholder: this.placeholder,
+      style: Theme.of(context).textTheme.bodyMedium,
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../stores/views/home.dart';
+import '../../../../utils/styling_helper.dart';
 import 'refresher_app_bar.dart';
 
 class ScrollRefreshIcon extends StatefulWidget {
@@ -32,10 +34,10 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: AppMotion.fast,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(curve: Curves.bounceInOut, parent: _animController),
+      CurvedAnimation(curve: AppMotion.spring, parent: _animController),
     );
   }
 
@@ -62,6 +64,10 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     HomeStore homeStore = GetIt.instance<HomeStore>();
     double barStretchOffset = MediaQuery.sizeOf(context).height / 15;
 
+    /// Themed indicator (was hardcoded white/black which clashed with
+    /// custom themes): highlight-colored pill with a contrast-aware arrow
+    final Color indicatorColor = Theme.of(context).colorScheme.secondary;
+
     if (this.widget.currentBarHeight - this.widget.expandedBarHeight >=
             barStretchOffset &&
         !_animController.isAnimating &&
@@ -85,8 +91,8 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
           child: Container(
             width: 32.0,
             height: 32.0,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: indicatorColor,
               shape: BoxShape.circle,
             ),
             child: AnimatedBuilder(
@@ -95,9 +101,11 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
                 scale: _scaleAnimation,
                 child: child,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_downward,
-                color: Colors.black,
+                color: StylingHelper.surroundingAwareAccent(
+                  surroundingColor: indicatorColor,
+                ),
               ),
             ),
           ),

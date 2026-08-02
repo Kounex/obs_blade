@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/stores/shared/network.dart';
@@ -13,6 +13,8 @@ import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/filter_list/dynamic_input.dart';
+
+import '../../animated_toggle_icon.dart';
 
 class FilterList extends StatefulWidget {
   final SceneItem sceneItem;
@@ -90,10 +92,10 @@ class _FilterListState extends State<FilterList> {
                     sceneItem.sourceName!,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: AppSpacing.md),
                   const Text(
                       'List of filters which are attached to the selected scene item.'),
-                  const SizedBox(height: 24.0),
+                  const SizedBox(height: AppSpacing.xl),
                   const BaseDivider(),
                 ],
               ),
@@ -116,8 +118,9 @@ class _FilterListState extends State<FilterList> {
                             vertical: 12.0,
                           ),
                           titleStyle: Theme.of(context).textTheme.bodyLarge,
-                          trailingTitleWidget: IconButton(
-                            onPressed: () => NetworkHelper.makeRequest(
+                          trailingTitleWidget: Pressable(
+                            haptic: true,
+                            onTap: () => NetworkHelper.makeRequest(
                               GetIt.instance<NetworkStore>()
                                   .activeSession!
                                   .socket,
@@ -128,23 +131,29 @@ class _FilterListState extends State<FilterList> {
                                 'filterEnabled': !filter.filterEnabled,
                               },
                             ),
-                            icon: Icon(
-                              filter.filterEnabled
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                              color: filter.filterEnabled
-                                  ? Theme.of(context)
-                                      .buttonTheme
-                                      .colorScheme!
-                                      .primary
-                                  : CupertinoColors.destructiveRed,
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              child: AnimatedToggleIcon(
+                                icon: filter.filterEnabled
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: filter.filterEnabled
+                                    ? Theme.of(context)
+                                        .buttonTheme
+                                        .colorScheme!
+                                        .primary
+                                    : Theme.of(context)
+                                        .extension<AppStatusColors>()!
+                                        .recording,
+                              ),
                             ),
                           ),
                           child: Column(
                             children: filter.filterSettings.entries
                                 .map(
                                   (filterSetting) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    padding: const EdgeInsets.only(
+                                        bottom: AppSpacing.sm),
                                     child: DynamicInput(
                                       label: filterSetting.key,
                                       value: filterSetting.value,

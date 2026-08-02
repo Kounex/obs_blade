@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class CleanListTile extends StatelessWidget {
   final String title;
@@ -23,12 +24,9 @@ class CleanListTile extends StatelessWidget {
             children: [
               Text(
                 this.title,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge!
-                    .copyWith(fontSize: 16),
+                style: Theme.of(context).textTheme.labelLarge,
               ),
-              const SizedBox(height: 4.0),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 this.description,
                 style: Theme.of(context).textTheme.bodySmall,
@@ -37,7 +35,7 @@ class CleanListTile extends StatelessWidget {
           ),
         ),
         if (this.trailing != null) ...[
-          const SizedBox(width: 32.0),
+          const SizedBox(width: AppSpacing.xxl),
           this.trailing!,
         ],
       ],

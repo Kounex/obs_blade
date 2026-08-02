@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 import '../../../../../models/hidden_scene.dart';
 import '../../../../../shared/general/hive_builder.dart';
@@ -81,32 +82,39 @@ class SceneButtons extends StatelessWidget {
                 (hiddenScene) => scene.sceneName != hiddenScene.sceneName));
           }
 
-          final List<Widget>? sceneButtons = visibleScenes?.map((scene) {
+          final List<Widget>? sceneButtons =
+              visibleScenes?.indexed.map((entry) {
+            final int index = entry.$1;
+            final Scene scene = entry.$2;
+
             HiddenScene? hiddenScene;
             try {
               hiddenScene = hiddenScenes.firstWhere(
                   (element) => element.sceneName == scene.sceneName);
             } catch (e) {}
 
-            return SceneButton(
-              scene: scene,
-              height: size,
-              width: size,
-              visible: hiddenScene == null,
-              onVisibilityTap: () {
-                if (hiddenScene != null) {
-                  hiddenScene!.delete();
-                } else {
-                  hiddenScene = HiddenScene(
-                    scene.sceneName,
-                    networkStore.activeSession!.connection.name,
-                    networkStore.activeSession!.connection.host,
-                  );
+            return StaggeredEntrance(
+              index: index,
+              child: SceneButton(
+                scene: scene,
+                height: size,
+                width: size,
+                visible: hiddenScene == null,
+                onVisibilityTap: () {
+                  if (hiddenScene != null) {
+                    hiddenScene!.delete();
+                  } else {
+                    hiddenScene = HiddenScene(
+                      scene.sceneName,
+                      networkStore.activeSession!.connection.name,
+                      networkStore.activeSession!.connection.host,
+                    );
 
-                  Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
-                      .add(hiddenScene!);
-                }
-              },
+                    Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
+                        .add(hiddenScene!);
+                  }
+                },
+              ),
             );
           }).toList();
 

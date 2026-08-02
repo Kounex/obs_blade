@@ -31,13 +31,12 @@ class RefresherAppBar extends StatelessWidget {
       toolbarHeight: kRefresherAppBarHeight,
       expandedHeight: this.expandedHeight,
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: CupertinoDynamicColor.withBrightness(
-                color: Color(0x4C000000),
-                darkColor: Color(0x29FFFFFF),
-              ),
+              /// Theme hairline (same convention as [BaseDivider]) instead of
+              /// a hardcoded dynamic color - stays correct on custom themes
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
               width: 0.0,
               style: BorderStyle.solid,
             ),
@@ -92,6 +91,31 @@ class RefresherAppBar extends StatelessWidget {
                       : Image.asset(
                           StylingHelper.brightnessAwareOBSLogo(context),
                         ),
+
+                  /// Subtle top scrim so status-bar icons stay legible
+                  /// over the (white) logo when the bar is stretched
+                  Positioned(
+                    top: 0.0,
+                    left: 0.0,
+                    right: 0.0,
+                    height: kRefresherAppBarHeight,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context)
+                                .scaffoldBackgroundColor
+                                .withValues(alpha: 0.9),
+                            Theme.of(context)
+                                .scaffoldBackgroundColor
+                                .withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             },

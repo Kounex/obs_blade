@@ -5,6 +5,7 @@ import 'package:mobx/mobx.dart' as mob_x;
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 
 import '../../models/enums/log_level.dart';
+import '../../shared/design/design.dart';
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/themed/cupertino_scaffold.dart';
@@ -199,14 +200,29 @@ class _HomeViewState extends State<HomeView> {
           /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
           /// for the first group and [BouncingScrollPhysics] for the second
           // physics: StylingHelper.platformAwareScrollPhysics,
-          slivers: const [
-            RefresherAppBar(
-              expandedHeight: 200.0,
+          slivers: [
+            const RefresherAppBar(
+              expandedHeight: 160.0,
             ),
             CustomSliverList(
-              children: [
-                ConnectBox(),
-                SavedConnections(),
+
+              /// Bottom rest position must clear the translucent tab bar:
+              /// keeps the shared default clearance (2x bar height) and
+              /// adds the full safe-area inset + margin instead of half
+              /// the inset, so the last card never rests behind the bar's
+              /// blur. Top side (pull-to-refresh) is untouched.
+              customBottomPadding: 2 * kBottomNavigationBarHeight +
+                  MediaQuery.paddingOf(context).bottom +
+                  AppSpacing.xl,
+              children: const [
+                StaggeredEntrance(
+                  index: 0,
+                  child: ConnectBox(),
+                ),
+                StaggeredEntrance(
+                  index: 2,
+                  child: SavedConnections(),
+                ),
               ],
             ),
           ],

@@ -42,24 +42,21 @@ class EnumerationEntry extends StatelessWidget {
                   '${this.order.toString()}.',
                   style: TextStyle(fontSize: enumerationSize),
                 )
-              : Transform.scale(
-                  scale: 3.0,
-                  origin: const Offset(1, 1),
-                  child: Text(
-                    '·',
-                    style: TextStyle(fontSize: enumerationSize),
-                  ),
+              : Text(
+                  '•',
+                  style: TextStyle(fontSize: enumerationSize),
                 ),
         ),
         Flexible(
           child: this.text != null
               ? Text(
                   this.text!,
-                  style: const TextStyle(
-                    fontFeatures: [
-                      FontFeature.tabularFigures(),
-                    ],
-                  ),
+                  style:
+                      Theme.of(context).textTheme.bodyMedium!.copyWith(
+                            fontFeatures: const [
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
                 )
               : this.customEntry!,
         ),

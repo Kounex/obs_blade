@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
@@ -27,7 +28,8 @@ class ChatUsernameBar extends StatelessWidget {
         SettingsKeys.SelectedOwncastUsername,
       ],
       builder: (context, settingsBox, child) => Padding(
-        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        padding: const EdgeInsets.only(
+            left: AppSpacing.sm, right: AppSpacing.sm),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -42,6 +44,7 @@ class ChatUsernameBar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ChatTypeDropdown(settingsBox: settingsBox),
+                    const SizedBox(height: AppSpacing.xs),
                     UsernameDropdown(
                       settingsBox: settingsBox,
                     ),
@@ -49,7 +52,7 @@ class ChatUsernameBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12.0),
+            const SizedBox(width: AppSpacing.md),
             UsernameActionRow(
               settingsBox: settingsBox,
             ),

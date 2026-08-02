@@ -145,7 +145,7 @@ class _ColorSliderState extends State<ColorSlider> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Container(
-                    height: 6.0,
+                    height: 8.0,
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: const BorderRadius.all(

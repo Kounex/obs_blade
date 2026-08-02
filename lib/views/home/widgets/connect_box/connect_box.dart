@@ -26,11 +26,12 @@ class ConnectBox extends StatelessWidget {
             case ConnectMode.Autodiscover:
               return const AutoDiscovery();
             case ConnectMode.QR:
+
+              /// Horizontal inset lives inside [QuickConnect] so its
+              /// divider runs full-bleed like the other connect cards
               return const Padding(
                 padding: EdgeInsets.only(
                   top: 20.0,
-                  left: 24.0,
-                  right: 24.0,
                   bottom: 18.0,
                 ),
                 child: QuickConnect(),

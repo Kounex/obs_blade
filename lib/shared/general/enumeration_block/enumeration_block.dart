@@ -40,7 +40,10 @@ class EnumerationBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (this.title != null) ...[
-          Text(this.title!),
+          Text(
+            this.title!,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           const SizedBox(height: 6.0),
         ],
         ...usedEntries,

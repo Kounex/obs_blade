@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../models/app_log.dart';
 import '../../../../models/enums/log_level.dart';
+import '../../../../shared/design/design.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/card.dart';
@@ -19,6 +20,7 @@ import '../../../../shared/overlay/base_result.dart';
 import '../../../../stores/views/logs.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/extensions/int.dart';
+import '../../../../types/extensions/list.dart';
 import '../../../../utils/general_helper.dart';
 import '../../../../utils/modal_handler.dart';
 import 'widgets/log_entry.dart';
@@ -162,32 +164,35 @@ class LogDetailView extends StatelessWidget {
               ),
               listViewChildren: [
                 const SizedBox(height: 12.0),
-                Center(
-                  child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: kBaseCardMaxWidth),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16.0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: 102.0,
-                          child: CupertinoDropdown<LogLevel>(
-                            value: logsStore.logLevel,
-                            items: [
-                              const DropdownMenuItem(
-                                value: null,
-                                child: Text('All'),
-                              ),
-                              ...LogLevel.values.map(
-                                (logLevel) => DropdownMenuItem(
-                                  value: logLevel,
-                                  child: Text(logLevel.name),
+                StaggeredEntrance(
+                  index: 0,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16.0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: 102.0,
+                            child: CupertinoDropdown<LogLevel>(
+                              value: logsStore.logLevel,
+                              items: [
+                                const DropdownMenuItem(
+                                  value: null,
+                                  child: Text('All'),
                                 ),
-                              ),
-                            ],
-                            onChanged: (logLevel) =>
-                                logsStore.setLogLevel(logLevel),
+                                ...LogLevel.values.map(
+                                  (logLevel) => DropdownMenuItem(
+                                    value: logLevel,
+                                    child: Text(logLevel.name),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (logLevel) =>
+                                  logsStore.setLogLevel(logLevel),
+                            ),
                           ),
                         ),
                       ),
@@ -195,10 +200,13 @@ class LogDetailView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4.0),
-                ...mergedLogs.entries.map(
-                  (mergedLog) => LogEntry(
-                    dateFormatted: mergedLog.key,
-                    logs: mergedLog.value,
+                ...mergedLogs.entries.mapIndexed(
+                  (mergedLog, index) => StaggeredEntrance(
+                    index: index + 1,
+                    child: LogEntry(
+                      dateFormatted: mergedLog.key,
+                      logs: mergedLog.value,
+                    ),
                   ),
                 ),
                 if (mergedLogs.entries.isEmpty)

@@ -6,6 +6,7 @@ import 'package:obs_blade/stores/shared/network.dart';
 
 import '../../../../../models/connection.dart';
 import '../../../../../shared/animator/fader.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/question_mark_tooltip.dart';
@@ -54,23 +55,27 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
       // mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        const Padding(
-          padding: EdgeInsets.only(top: 18.0, right: 18.0, left: 18.0),
+        Padding(
+          padding: const EdgeInsets.only(
+              top: AppSpacing.lg, right: AppSpacing.lg, left: AppSpacing.lg),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Flexible(
-                child: Text('Port for autodiscovery: '),
+                child: Text(
+                  'Port for autodiscovery: ',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ),
-              SizedBox(width: 10.0),
-              QuestionMarkTooltip(
+              const SizedBox(width: 10.0),
+              const QuestionMarkTooltip(
                   message:
                       'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> WebSocket Server Settings'),
             ],
           ),
         ),
         Container(
-          padding: const EdgeInsets.only(bottom: 24.0),
+          padding: const EdgeInsets.only(bottom: AppSpacing.xl),
           width: 65.0,
           child: Form(
             key: _formKey,
@@ -105,20 +110,23 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  return Fader(
-                    child: Column(
-                      children: snapshot.data!
-                          .expand(
-                            (availableObsConnection) => [
-                              SessionTile(
-                                connection: availableObsConnection,
-                              ),
-                              const BaseDivider(),
-                            ],
-                          )
-                          .toList()
-                        ..removeLast(),
-                    ),
+                  /// One-shot stagger per discovered session (replays on each
+                  /// pull-to-refresh result set - same lifecycle as the Fader
+                  /// it replaces)
+                  return Column(
+                    children: [
+                      for (final (index, availableObsConnection)
+                          in snapshot.data!.indexed) ...[
+                        StaggeredEntrance(
+                          index: index,
+                          child: SessionTile(
+                            connection: availableObsConnection,
+                          ),
+                        ),
+                        if (index < snapshot.data!.length - 1)
+                          const BaseDivider(),
+                      ],
+                    ],
                   );
                 }
                 return ResultEntry(

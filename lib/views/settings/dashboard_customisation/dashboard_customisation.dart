@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
 
+import '../../../shared/design/design.dart';
 import '../../../shared/general/base/adaptive_switch.dart';
 import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
@@ -25,21 +26,27 @@ class DashboardCustomisationView extends StatelessWidget {
           previousTitle: 'Settings',
           title: 'Customisation',
           listViewChildren: [
-            const ActionBlock(
-              dense: true,
-              description: 'Change the order of the elements on the Dashboard.',
-              blockEntries: [
-                BlockEntry(
-                  leading: CupertinoIcons.rectangle_3_offgrid_fill,
-                  leadingSize: 28.0,
-                  title: 'Elements Order',
-                  navigateTo:
-                      SettingsTabRoutingKeys.DashboardCustomisationOrder,
-                ),
-              ],
+            const StaggeredEntrance(
+              index: 0,
+              child: ActionBlock(
+                dense: true,
+                description:
+                    'Change the order of the elements on the Dashboard.',
+                blockEntries: [
+                  BlockEntry(
+                    leading: CupertinoIcons.rectangle_3_offgrid_fill,
+                    leadingSize: 28.0,
+                    title: 'Elements Order',
+                    navigateTo:
+                        SettingsTabRoutingKeys.DashboardCustomisationOrder,
+                  ),
+                ],
+              ),
             ),
-            ActionBlock(
-              title: 'Features',
+            StaggeredEntrance(
+              index: 1,
+              child: ActionBlock(
+                title: 'Features',
               blockEntries: [
                 BlockEntry(
                   leading: CupertinoIcons.profile_circled,
@@ -186,6 +193,7 @@ class DashboardCustomisationView extends StatelessWidget {
                   ),
                 ),
               ],
+              ),
             ),
           ],
         ),

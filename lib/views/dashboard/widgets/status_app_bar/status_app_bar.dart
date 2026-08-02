@@ -1,20 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
-import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
-import '../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import 'general_actions.dart';
-import 'stream_rec_timers.dart';
+import 'on_air_status_cluster.dart';
 
 class StatusAppBar extends StatelessWidget {
   const StatusAppBar({
@@ -25,21 +23,27 @@ class StatusAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
+    /// Highlight color used for nav bar actions (same source
+    /// [ThemedCupertinoButton] reads)
+    final Color actionColor =
+        Theme.of(context).cupertinoOverrideTheme!.primaryColor ??
+            CupertinoColors.activeBlue;
+
     return TransculentSliverAppBar(
       pinned: true,
       elevation: 0,
-      toolbarHeight: kTextTabBarHeight + 24.0,
+      toolbarHeight: kTextTabBarHeight,
       backgroundColor: !StylingHelper.isApple(context)
-          ? Theme.of(context).appBarTheme.backgroundColor!.withOpacity(1.0)
+          ? Theme.of(context).appBarTheme.backgroundColor!.withValues(alpha: 1.0)
           : null,
       bottom: const PreferredSize(
-        preferredSize: Size.fromHeight(24.0),
+        preferredSize: Size.fromHeight(44.0),
         child: Column(
           children: [
             BaseDivider(),
             Padding(
               padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
-              child: StreamRecTimers(),
+              child: OnAirStatusCluster(),
             ),
           ],
         ),
@@ -49,11 +53,9 @@ class StatusAppBar extends StatelessWidget {
         children: <Widget>[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              ThemedCupertinoButton(
-                text: 'Close',
-                onPressed: () => ModalHandler.showBaseDialog(
+              Pressable(
+                onTap: () => ModalHandler.showBaseDialog(
                   context: context,
                   dialogWidget: ConfirmationDialog(
                     title: 'Close Connection',
@@ -70,53 +72,29 @@ class StatusAppBar extends StatelessWidget {
                     },
                   ),
                 ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: AppRadius.pill,
+                    color: actionColor.withValues(alpha: 0.14),
+                  ),
+                  child: Text(
+                    'Close',
+                    style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                          color: actionColor,
+                        ),
+                  ),
+                ),
               ),
               const GeneralActions(),
             ],
           ),
-          Column(
-            children: <Widget>[
-              Text(
-                'Dashboard',
-                style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 2.0, bottom: 2.0),
-                child: Observer(builder: (context) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      StatusDot(
-                        key: Key(dashboardStore.isLive.toString()),
-                        size: 10.0,
-                        color: dashboardStore.isLive
-                            ? CupertinoColors.activeGreen
-                            : CupertinoColors.destructiveRed,
-                        text: dashboardStore.isLive ? 'Live' : 'Not Live',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(width: 8.0),
-                      StatusDot(
-                        key: Key(
-                            '${dashboardStore.isRecording.toString()}+${dashboardStore.isRecordingPaused.toString()}'),
-                        size: 10.0,
-                        color: dashboardStore.isRecording
-                            ? dashboardStore.isRecordingPaused
-                                ? CupertinoColors.activeOrange
-                                : CupertinoColors.activeGreen
-                            : CupertinoColors.destructiveRed,
-                        text: dashboardStore.isRecording
-                            ? dashboardStore.isRecordingPaused
-                                ? 'Paused Recording'
-                                : 'Recording'
-                            : 'Not Recording',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ],
+          Text(
+            'Dashboard',
+            style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
           ),
         ],
       ),

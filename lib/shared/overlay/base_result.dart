@@ -1,13 +1,23 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../design/animated_result_icon.dart';
+
 enum BaseResultIcon { Positive, Negative, Missing }
 
 extension BaseResultIconFunctions on BaseResultIcon {
+  /// Static fallback glyphs - kept in sync with the stroke-drawn
+  /// [AnimatedResultIcon] painter (check / cross / question mark)
   IconData get data => const {
         BaseResultIcon.Positive: CupertinoIcons.check_mark_circled,
         BaseResultIcon.Negative: CupertinoIcons.clear_circled,
-        BaseResultIcon.Missing: Icons.search_off,
+        BaseResultIcon.Missing: CupertinoIcons.question_circle,
+      }[this]!;
+
+  AnimatedResultType get animatedType => const {
+        BaseResultIcon.Positive: AnimatedResultType.positive,
+        BaseResultIcon.Negative: AnimatedResultType.negative,
+        BaseResultIcon.Missing: AnimatedResultType.missing,
       }[this]!;
 }
 
@@ -32,8 +42,8 @@ class BaseResult extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          this.icon.data,
+        AnimatedResultIcon(
+          type: this.icon.animatedType,
           size: this.iconSize,
           color: this.iconColor,
         ),

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/animator/fader.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/constrained_box.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
-import 'package:obs_blade/shared/general/themed/cupertino_button.dart';
 import 'package:obs_blade/stores/views/intro.dart';
 
 import '../../../shared/general/social_block.dart';
 import '../../../shared/general/themed/rich_text.dart';
 import '../../../utils/styling_helper.dart';
+import '../intro.dart';
+import 'intro_primary_button.dart';
 
 class GettingStarted extends StatelessWidget {
   const GettingStarted({
@@ -20,16 +21,13 @@ class GettingStarted extends StatelessWidget {
     return BaseConstrainedBox(
       hasBasePadding: true,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          const Spacer(flex: 1),
-          Flexible(
-            flex: 12,
+          Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Fader(
-                  duration: const Duration(milliseconds: 1000),
-                  curve: Curves.easeIn,
+                StaggeredEntrance(
+                  index: 0,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 500),
                     child: Image.asset(
@@ -37,16 +35,12 @@ class GettingStarted extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32.0),
-                Fader(
-                  duration: const Duration(milliseconds: 1000),
-                  delay: const Duration(milliseconds: 500),
-                  curve: Curves.easeIn,
+                const SizedBox(height: AppSpacing.xxl),
+                StaggeredEntrance(
+                  index: 1,
                   child: ThemedRichText(
                     textAlign: TextAlign.center,
-                    textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                          fontSize: 18,
-                        ),
+                    textStyle: Theme.of(context).textTheme.bodyLarge,
                     textSpans: [
                       const TextSpan(
                         text: 'An unofficial, ',
@@ -59,12 +53,8 @@ class GettingStarted extends StatelessWidget {
                             SocialEntry(
                               linkText: 'open source',
                               link: 'https://github.com/Kounex/obs_blade',
-                              textStyle: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall!
-                                  .copyWith(
-                                    fontSize: 18,
-                                  ),
+                              textStyle:
+                                  Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
                         ),
@@ -82,12 +72,8 @@ class GettingStarted extends StatelessWidget {
                               linkText: 'WebSocket',
                               link:
                                   'https://github.com/obsproject/obs-websocket',
-                              textStyle: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall!
-                                  .copyWith(
-                                    fontSize: 18,
-                                  ),
+                              textStyle:
+                                  Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
                         ),
@@ -101,16 +87,21 @@ class GettingStarted extends StatelessWidget {
               ],
             ),
           ),
-          Flexible(
-            flex: 2,
-            child: Fader(
-              duration: const Duration(milliseconds: 1000),
-              delay: const Duration(milliseconds: 1000),
-              curve: Curves.easeIn,
+
+          /// Bottom-anchored CTA cluster - same anchoring as the intro
+          /// slides' control row (safe area + base padding)
+          StaggeredEntrance(
+            index: 2,
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom +
+                    kIntroControlsBottomPadding,
+              ),
               child: Column(
                 children: [
                   const BaseDivider(),
-                  ThemedCupertinoButton(
+                  const SizedBox(height: AppSpacing.lg),
+                  IntroPrimaryButton(
                     text: 'Start',
                     onPressed: () => GetIt.instance<IntroStore>()
                         .setStage(IntroStage.VersionSelection),

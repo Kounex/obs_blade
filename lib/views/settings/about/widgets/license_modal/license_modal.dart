@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
@@ -16,6 +17,10 @@ class LicenseModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return TransculentCupertinoNavBarWrapper(
       title: 'Credits',
+
+      /// Empty leading suppresses the auto-implied back chevron - the
+      /// 'Done' action is the single dismiss control
+      leading: const SizedBox.shrink(),
       actions: ThemedCupertinoButton(
         padding: const EdgeInsets.all(0),
         text: 'Done',
@@ -24,8 +29,8 @@ class LicenseModal extends StatelessWidget {
       customBody: Column(
         children: [
           Align(
-            child: Transform.translate(
-              offset: const Offset(0, -24),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: SizedBox(
                 width: 256.0,
                 child:

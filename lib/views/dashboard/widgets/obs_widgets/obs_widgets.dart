@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
 import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
@@ -18,7 +19,7 @@ class OBSWidgets extends StatelessWidget {
         Flexible(
           child: BaseCard(
             title: 'Chat',
-            rightPadding: 12.0,
+            rightPadding: AppSpacing.md,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 750.0,
@@ -31,7 +32,7 @@ class OBSWidgets extends StatelessWidget {
         Flexible(
           child: BaseCard(
             title: 'Stats',
-            leftPadding: 12.0,
+            leftPadding: AppSpacing.md,
             paddingChild: EdgeInsets.all(0),
             child: SizedBox(
               height: 650.0,

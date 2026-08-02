@@ -1,5 +1,6 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class CustomExpansionTile extends StatefulWidget {
   final IconData? leadingIcon;
@@ -43,8 +44,8 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
 
   @override
   void initState() {
-    _animController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200));
+    _animController =
+        AnimationController(vsync: this, duration: AppMotion.medium);
 
     _startExpandAnimation = () {
       _expandController.toggle();
@@ -60,11 +61,12 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
   @override
   void didChangeDependencies() {
     _rotation = Tween<double>(begin: 0.0, end: 0.5).animate(
-        CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+        CurvedAnimation(parent: _animController, curve: AppMotion.standard));
     _color = ColorTween(
       begin: Theme.of(context).iconTheme.color,
       end: Theme.of(context).colorScheme.secondary,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    ).animate(
+        CurvedAnimation(parent: _animController, curve: AppMotion.standard));
     super.didChangeDependencies();
   }
 
@@ -108,33 +110,25 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
             child: Row(
               children: [
                 if (this.widget.leadingIcon != null) ...[
-                  AnimatedBuilder(
-                    animation: _animController,
-                    builder: (context, _) => Icon(
-                      this.widget.leadingIcon,
-                      color: _color.value,
-                    ),
-                  ),
+                  Icon(this.widget.leadingIcon),
                   const SizedBox(width: 24.0),
                 ],
                 Expanded(
                   child: this.widget.customHeader ??
-                      AnimatedBuilder(
-                        animation: _animController,
-                        builder: (context, _) => Text(
-                          this.widget.headerText!,
-                          style: (this.widget.headerTextStyle ??
-                                  Theme.of(context).textTheme.titleMedium)!
-                              .copyWith(
-                            color: _color.value,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ],
-                          ),
+                      Text(
+                        this.widget.headerText!,
+                        style: (this.widget.headerTextStyle ??
+                                Theme.of(context).textTheme.titleMedium)!
+                            .copyWith(
+                          fontFeatures: const [
+                            FontFeature.tabularFigures(),
+                          ],
                         ),
                       ),
                 ),
                 this.widget.trailing ?? const SizedBox(),
+
+                /// Only the chevron picks up the accent tint while expanding
                 AnimatedBuilder(
                   animation: _animController,
                   builder: (context, _) => RotationTransition(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/views/intro/widgets/back_so_selection_wrapper.dart';
 
 import '../../stores/views/intro.dart';
@@ -12,7 +13,9 @@ import 'widgets/intro_slides/intro_slides.dart';
 import 'widgets/twenty_eight_party.dart';
 import 'widgets/version_selection.dart';
 
-const double kIntroControlsBottomPadding = 24.0;
+/// Single source for the bottom padding of the intro control cluster
+/// (used by the intro slides and their controls)
+const double kIntroControlsBottomPadding = AppSpacing.xl;
 
 class IntroView extends StatefulWidget {
   final bool manually;
@@ -66,14 +69,22 @@ class _IntroViewState extends State<IntroView> {
           color: Theme.of(context).colorScheme.background,
           child: Observer(builder: (context) {
             return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 1000),
-              switchInCurve: Curves.easeOutSine,
-              switchOutCurve: Curves.easeOut,
+
+              /// Overlapping crossfade (fadeThrough): the incoming stage
+              /// fades + settles in while the outgoing one fades away -
+              /// no dead black gap between stages
+              duration: AppMotion.slow,
+              switchInCurve: AppMotion.standard,
+              switchOutCurve: AppMotion.exit,
               transitionBuilder: (child, animation) {
                 return FadeTransition(
-                    opacity: animation
-                        .drive(CurveTween(curve: const Interval(0.7, 1.0))),
-                    child: child);
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.98, end: 1.0)
+                        .animate(animation),
+                    child: child,
+                  ),
+                );
               },
               child: () {
                 switch (GetIt.instance<IntroStore>().stage) {

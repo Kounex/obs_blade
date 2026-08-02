@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/design/design.dart';
 import 'header_decoration.dart';
 
 class CardHeader extends StatelessWidget {
@@ -28,7 +29,10 @@ class CardHeader extends StatelessWidget {
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: 8.0, left: 14.0),
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.sm,
+                  left: AppSpacing.lg,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -37,14 +41,25 @@ class CardHeader extends StatelessWidget {
                       this.title,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                    const SizedBox(
-                      width: 108.0,
-                      child: Divider(height: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: Container(
+                        width: 48.0,
+                        height: 4.0,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withValues(alpha: 0.7),
+                          borderRadius: AppRadius.pill,
+                        ),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(
-                        top: 4.0,
-                        bottom: 12.0,
+                        bottom: AppSpacing.md,
                       ),
                       child: Text(
                         this.description,

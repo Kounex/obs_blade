@@ -1,5 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class SelectableBox extends StatelessWidget {
   final Duration boxAnimation;
@@ -50,7 +51,7 @@ class SelectableBox extends StatelessWidget {
                   ? this.colorSelected ??
                       Theme.of(context).buttonTheme.colorScheme!.secondary
                   : this.colorUnselected ?? Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12.0),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: this.child ??
                 Padding(
@@ -72,9 +73,13 @@ class SelectableBox extends StatelessWidget {
                 color: (this.selectedStateBoxBorder ?? this.selected)
                     ? this.colorSelected ??
                         Theme.of(context).buttonTheme.colorScheme!.secondary
-                    : this.colorUnselected ?? Theme.of(context).cardColor,
+
+                    /// Inactive state gets a visible hairline (theme
+                    /// divider at low opacity, same as [BaseDivider])
+                    /// instead of painting the fill color again
+                    : Theme.of(context).dividerColor.withValues(alpha: 0.4),
               ),
-              borderRadius: BorderRadius.circular(12.0),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
         ],

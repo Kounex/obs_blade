@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../../utils/modal_handler.dart';
+import '../design/design.dart';
 import '../dialogs/info.dart';
 
 class QuestionMarkTooltip extends StatelessWidget {
@@ -13,7 +15,7 @@ class QuestionMarkTooltip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
         onTap: () => ModalHandler.showBaseDialog(
               context: context,
               barrierDismissible: true,
@@ -21,19 +23,14 @@ class QuestionMarkTooltip extends StatelessWidget {
                 body: this.message,
               ),
             ),
-        child: const Icon(
-          CupertinoIcons.question_circle_fill,
+
+        /// Padding widens the hit area to a >= 44pt tap target
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Icon(
+            CupertinoIcons.question_circle,
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ));
-    // return CustomTooltip(
-    //   message: this.message,
-    //   padding: EdgeInsets.all(12.0),
-    //   margin: EdgeInsets.all(32.0),
-    //   preferBelow: false,
-    //   verticalOffset: 2.0,
-    //   waitDuration: Duration(milliseconds: 0),
-    //   showDuration: Duration(seconds: 5),
-    //   immediately: true,
-    //   child: Icon(StylingHelper.question),
-    // );
   }
 }

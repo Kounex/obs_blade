@@ -8,6 +8,7 @@ import 'package:obs_blade/utils/styling_helper.dart';
 import '../../../../models/connection.dart';
 import '../../../../models/hidden_scene.dart';
 import '../../../../models/hidden_scene_item.dart';
+import '../../../../shared/design/design.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../shared/general/connect_host_input.dart';
@@ -189,9 +190,11 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                         right: Radius.circular(5.0),
                       ),
                     ),
-                    child: GestureDetector(
+
+                    /// Dead GestureDetector tap -> physical [Pressable]
+                    /// feedback (same toggle callback)
+                    child: Pressable(
                       onTap: () => setState(() => _obscurePW = !_obscurePW),
-                      behavior: HitTestBehavior.opaque,
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Icon(

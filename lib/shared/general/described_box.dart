@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class DescribedBox extends StatelessWidget {
   final String? label;
@@ -26,11 +27,11 @@ class DescribedBox extends StatelessWidget {
       children: [
         AnimatedContainer(
           width: this.width,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInCubic,
+          duration: AppMotion.medium,
+          curve: AppMotion.standard,
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: this.borderColor ?? Theme.of(context).primaryColor,
             ),

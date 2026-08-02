@@ -55,7 +55,7 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
               color: Theme.of(context).cardColor,
               border: Border.symmetric(
                 horizontal: BorderSide(
-                  color: StylingHelper.light_divider_color.withOpacity(0.4),
+                  color: StylingHelper.light_divider_color.withValues(alpha: 0.4),
                 ),
               ),
             ),

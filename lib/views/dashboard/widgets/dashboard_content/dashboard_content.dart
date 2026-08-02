@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/divider.dart';
 import '../../../../shared/general/custom_sliver_list.dart';
 import '../../../../shared/general/responsive_widget_wrapper.dart';
@@ -76,7 +77,7 @@ class DashboardContent extends StatelessWidget {
           ),
         ),
         Container(
-          padding: const EdgeInsets.only(left: 8.0),
+          padding: const EdgeInsets.only(left: AppSpacing.lg),
           alignment: Alignment.centerLeft,
           child: Text(
             'Widgets',
@@ -86,7 +87,10 @@ class DashboardContent extends StatelessWidget {
         const ResponsiveWidgetWrapper(
           mobileWidget: Column(
             children: [
-              SizedBox(height: 8.0),
+              Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: BaseDivider(),
+              ),
               OBSWidgetsMobile(),
             ],
           ),

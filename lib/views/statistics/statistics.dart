@@ -8,12 +8,14 @@ import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/shared/general/column_separated.dart';
 
 import '../../models/past_stream_data.dart';
+import '../../shared/design/design.dart';
 import '../../shared/general/base/card.dart';
 import '../../shared/general/hive_builder.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/views/statistics.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/order.dart';
+import '../../types/extensions/list.dart';
 import '../../types/interfaces/past_stats_data.dart';
 import 'widgets/card_header/card_header.dart';
 import 'widgets/card_header/sort_filter_panel/sort_filter_panel.dart';
@@ -251,13 +253,13 @@ class _StatisticsViewState extends State<StatisticsView> {
                     return Column(
                       children: [
                         BaseCard(
-                          bottomPadding: 12.0,
+                          bottomPadding: AppSpacing.lg,
                           titlePadding: const EdgeInsets.all(0),
                           titleWidget: const CardHeader(
                             headerDecorationIcon: CupertinoIcons.time_solid,
-                            title: 'Latest\nStats.',
+                            title: 'Latest Stats',
                             description:
-                                'The most freshest statistic of your latest streaming and recording session',
+                                'The freshest statistics from your latest streaming and recording sessions',
                           ),
                           paddingChild: const EdgeInsets.all(0),
                           child: latestRecordStreamStat.isNotEmpty &&
@@ -269,22 +271,28 @@ class _StatisticsViewState extends State<StatisticsView> {
                                   children: latestRecordStreamStat
                                       .where((pastStatsData) =>
                                           pastStatsData != null)
-                                      .map(
-                                        (pastStatsData) => StatsEntry(
-                                          pastStatsData: pastStatsData!,
+                                      .mapIndexed(
+                                        (pastStatsData, index) =>
+                                            StaggeredEntrance(
+                                          index: index,
+                                          child: StatsEntry(
+                                            pastStatsData: pastStatsData!,
+                                          ),
                                         ),
                                       )
                                       .toList(),
                                 )
                               : const StatsEntryPlaceholder(
+                                  icon: CupertinoIcons.time_solid,
                                   text:
-                                      'You haven\'t streamed or recorded using this app? Or have you deleted all statistic entries?! Whatever it is, you should start streaming / recording!',
+                                      'Nothing here yet - stream or record something great and your latest stats will land right here.',
                                 ),
                         ),
                         BaseCard(
+                          bottomPadding: AppSpacing.lg,
                           titlePadding: const EdgeInsets.all(0),
                           titleWidget: const CardHeader(
-                            title: 'Previous\nStats.',
+                            title: 'Previous Stats',
                             description:
                                 'All previous streaming / recording sessions',
                             additionalCardWidgets: [
@@ -311,19 +319,27 @@ class _StatisticsViewState extends State<StatisticsView> {
                                             latestStat == pastStatsData),
                                   ),
                               );
-                              return sortedFilteredPastStatsData.isNotEmpty
-                                  ? PaginatedStatistics(
-                                      sortedFilteredPastStatsData:
-                                          sortedFilteredPastStatsData,
-                                    )
-                                  : StatsEntryPlaceholder(
-                                      text: latestRecordStreamStat
-                                              .where((latestStat) =>
-                                                  latestStat != null)
-                                              .isEmpty
-                                          ? 'Can\'t find statistics for your previous streams / recordings. Go ahead - stream or record some good stuff!'
-                                          : 'No additional statistics to the ones listed above found or none found which match your filters! Stream / record more or change your filters!',
-                                    );
+                              return AnimatedSwitcher(
+                                duration: AppMotion.medium,
+                                switchInCurve: AppMotion.standard,
+                                switchOutCurve: AppMotion.exit,
+                                child: sortedFilteredPastStatsData.isNotEmpty
+                                    ? PaginatedStatistics(
+                                        key: const ValueKey('paginated-stats'),
+                                        sortedFilteredPastStatsData:
+                                            sortedFilteredPastStatsData,
+                                      )
+                                    : StatsEntryPlaceholder(
+                                        key: const ValueKey('stats-empty'),
+                                        icon: CupertinoIcons.tray,
+                                        text: latestRecordStreamStat
+                                                .where((latestStat) =>
+                                                    latestStat != null)
+                                                .isEmpty
+                                            ? 'No previous sessions yet - stream or record some good stuff and it will show up here.'
+                                            : 'Nothing matches your filters right now - adjust them or stream / record some more good stuff.',
+                                      ),
+                              );
                             },
                           ),
                         ),

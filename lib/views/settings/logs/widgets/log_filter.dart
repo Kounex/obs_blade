@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/animator/order_button.dart';
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../shared/general/date_range/date_range.dart';
@@ -19,6 +20,16 @@ class LogFilter extends StatelessWidget {
     LogsStore logsStore = GetIt.instance<LogsStore>();
 
     return BaseCard(
+      above: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+        child: Text(
+          'FILTER',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+        ),
+      ),
+      topPadding: 8.0,
       bottomPadding: 12.0,
       child: Observer(
         builder: (context) {

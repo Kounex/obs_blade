@@ -16,13 +16,19 @@ class ResultEntry extends StatelessWidget {
       child: Fader(
         child: ThemedRichText(
           textAlign: TextAlign.center,
+
+          /// Callout scale for the explanatory copy - readable line height
+          /// for multi-line error states
+          textStyle:
+              Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
           textSpans: [
             TextSpan(text: this.result),
-            const TextSpan(
+            TextSpan(
               text: '\n\nPull down to try again!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
             ),
           ],
         ),

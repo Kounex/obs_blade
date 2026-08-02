@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
@@ -35,7 +36,7 @@ class ProfileSceneCollection extends StatelessWidget {
                     const Expanded(
                       child: ProfileControl(),
                     ),
-                    const SizedBox(width: 24.0),
+                    const SizedBox(width: AppSpacing.xl),
                   ],
                   Expanded(
                     child: settingsBox.get(

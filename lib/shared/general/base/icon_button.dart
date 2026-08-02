@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class BaseIconButton extends StatelessWidget {
   final IconData? icon;
@@ -24,7 +25,7 @@ class BaseIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: this.onTap,
       child: Container(
         height: this.buttonSize,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../../shared/design/design.dart';
+import '../../../../../../shared/general/base/divider.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../placeholder_scene_item.dart';
@@ -39,20 +41,9 @@ class _AudioInputsState extends State<AudioInputs>
           child: ListView(
             controller: _controller,
             physics: const ClampingScrollPhysics(),
-            padding: const EdgeInsets.only(top: 24.0),
+            padding: const EdgeInsets.only(top: AppSpacing.xl),
             children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12.0),
-                child: Align(
-                  child: Text(
-                    'Global',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ),
+              const _AudioSectionHeader(label: 'Global'),
               Column(
                 children: dashboardStore.globalInputs.isNotEmpty
                     ? dashboardStore.globalInputs
@@ -66,22 +57,14 @@ class _AudioInputsState extends State<AudioInputs>
                     : [
                         const PlaceholderSceneItem(
                             text: 'No Global Audio source available...'),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: AppSpacing.md),
                       ],
               ),
-              const Divider(),
               const Padding(
-                padding: EdgeInsets.only(top: 8.0, bottom: 12.0),
-                child: Align(
-                  child: Text(
-                    'Scene',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: BaseDivider(),
               ),
+              const _AudioSectionHeader(label: 'Scene'),
               Column(
                 children: dashboardStore.currentInputs.isNotEmpty
                     ? dashboardStore.currentInputs
@@ -99,6 +82,34 @@ class _AudioInputsState extends State<AudioInputs>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Caption-style section header (uppercase, letterspaced, theme-aware grey)
+/// replacing the old bold + underlined centered labels
+class _AudioSectionHeader extends StatelessWidget {
+  final String label;
+
+  const _AudioSectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: AppSpacing.md,
+        right: AppSpacing.md,
+        bottom: AppSpacing.sm,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          this.label.toUpperCase(),
+          style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                color: Theme.of(context).textTheme.bodySmall!.color,
+              ),
         ),
       ),
     );

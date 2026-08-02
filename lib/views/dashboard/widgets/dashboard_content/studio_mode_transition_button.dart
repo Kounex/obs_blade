@@ -27,56 +27,63 @@ class StudioModeTransitionButton extends StatelessWidget {
       ],
       builder: (context, settingsBox, child) {
         return Observer(
-          builder: (context) => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: CurvedAnimation(
-                parent: animation,
-                curve: const Interval(
-                  0.4,
-                  1.0,
-                  curve: Curves.easeInQuad,
-                ),
-                reverseCurve: Curves.easeOutQuad,
-              ),
-              child: SizeTransition(
-                sizeFactor: CurvedAnimation(
+          builder: (context) {
+            /// Read outside the `&&` below: when the Hive flag short-circuits,
+            /// the observable would not be tracked in this pass and MobX
+            /// would log a "no observables" warning for this [Observer]
+            final bool studioMode = dashboardStore.studioMode;
+
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: CurvedAnimation(
                   parent: animation,
-                  curve: Curves.easeInQuad,
+                  curve: const Interval(
+                    0.4,
+                    1.0,
+                    curve: Curves.easeInQuad,
+                  ),
                   reverseCurve: Curves.easeOutQuad,
                 ),
-                child: child,
+                child: SizeTransition(
+                  sizeFactor: CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInQuad,
+                    reverseCurve: Curves.easeOutQuad,
+                  ),
+                  child: child,
+                ),
               ),
-            ),
-            child: (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
-                        defaultValue: false) &&
-                    dashboardStore.studioMode)
-                ? Align(
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: 128.0,
-                      child: BaseButton(
-                        text: 'Transition',
-                        secondary: true,
-                        onPressed: () {
-                          dashboardStore.setActiveSceneName(
-                              dashboardStore.studioModePreviewSceneName!);
-                          NetworkHelper.makeRequest(
-                            GetIt.instance<NetworkStore>()
-                                .activeSession!
-                                .socket,
-                            RequestType.SetCurrentProgramScene,
-                            {
-                              'sceneName':
-                                  dashboardStore.studioModePreviewSceneName
-                            },
-                          );
-                        },
+              child: (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
+                          defaultValue: false) &&
+                      studioMode)
+                  ? Align(
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        width: 128.0,
+                        child: BaseButton(
+                          text: 'Transition',
+                          secondary: true,
+                          onPressed: () {
+                            dashboardStore.setActiveSceneName(
+                                dashboardStore.studioModePreviewSceneName!);
+                            NetworkHelper.makeRequest(
+                              GetIt.instance<NetworkStore>()
+                                  .activeSession!
+                                  .socket,
+                              RequestType.SetCurrentProgramScene,
+                              {
+                                'sceneName':
+                                    dashboardStore.studioModePreviewSceneName
+                              },
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  )
-                : const SizedBox(),
-          ),
+                    )
+                  : const SizedBox(),
+            );
+          },
         );
       },
     );

@@ -1,16 +1,26 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/chat_preview.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/profiles_preview.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_audio_preview.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_buttons_preview.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_items_preview.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_preview_mock.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/stats_preview.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/studio_mode_config_preview.dart';
+import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/studio_mode_transition_preview.dart';
 
 import '../../../../../models/enums/dashboard_element.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import 'controls_preview.dart';
 import 'element_body.dart';
+import 'mock_parts.dart';
 
 class PreviewConfig {
   final DashboardElement element;
@@ -71,20 +81,44 @@ class ElementList extends StatelessWidget {
           visible: true,
         ),
         PreviewConfig(
+          element: DashboardElement.StudioModeTransition,
+          widget: const StudioModeTransitionPreview(),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
+          element: DashboardElement.StudioModeConfig,
+          widget: const StudioModeConfigPreview(),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
+          element: DashboardElement.ScenePreview,
+          widget: const ScenePreviewMock(),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
           element: DashboardElement.SceneItems,
-          widget: const Text('PLACEHOLDER'),
+          widget: const SceneItemsPreview(),
           canBeNotVisible: false,
           visible: true,
         ),
         PreviewConfig(
           element: DashboardElement.SceneItemsAudio,
-          widget: const Text('PLACEHOLDER'),
+          widget: const SceneAudioPreview(),
           canBeNotVisible: false,
           visible: true,
         ),
         PreviewConfig(
-          element: DashboardElement.SceneItems,
-          widget: const Text('PLACEHOLDER'),
+          element: DashboardElement.StreamChat,
+          widget: const ChatPreview(),
+          canBeNotVisible: false,
+          visible: true,
+        ),
+        PreviewConfig(
+          element: DashboardElement.OBSStats,
+          widget: const StatsPreview(),
           canBeNotVisible: false,
           visible: true,
         ),
@@ -112,17 +146,24 @@ class ElementList extends StatelessWidget {
           proxyDecorator: (child, index, animation) => AnimatedBuilder(
             animation: animation,
             builder: (BuildContext context, Widget? child) {
-              final double animValue =
-                  Curves.easeInOut.transform(animation.value);
-              final double elevation = lerpDouble(0, 6, animValue)!;
-              return Material(
-                elevation: elevation,
-                type: MaterialType.transparency,
-                child: child,
+              /// Spring-ish lift: slight overshoot while picking up, settling
+              /// into a scaled, elevated card while dragging
+              final double springValue =
+                  AppMotion.spring.transform(animation.value);
+              final double elevation =
+                  lerpDouble(0, 8, clampDouble(springValue, 0.0, 1.0))!;
+              return Transform.scale(
+                scale: 1.0 + 0.02 * springValue,
+                child: Material(
+                  elevation: elevation,
+                  type: MaterialType.transparency,
+                  child: child,
+                ),
               );
             },
             child: child,
           ),
+          onReorderStart: (_) => HapticFeedback.lightImpact(),
           itemBuilder: (context, index) => ElementBody(
             key: ValueKey(elements[index]),
             index: index,
@@ -130,7 +171,7 @@ class ElementList extends StatelessWidget {
               (config) => config.element == elements[index],
               orElse: () => PreviewConfig(
                 element: elements[index],
-                widget: const Text('Missing!'),
+                widget: const GenericMockPreview(),
                 canBeNotVisible: false,
                 visible: true,
               ),

@@ -1,16 +1,51 @@
 import 'package:flutter/material.dart';
 
 import '../../../../models/enums/log_level.dart';
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../shared/general/enumeration_block/enumeration_block.dart';
 import '../../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../../shared/general/themed/rich_text.dart';
+import 'level_dot.dart';
 
 class LogExplanation extends StatelessWidget {
   const LogExplanation({
     super.key,
   });
+
+  EnumerationEntry _levelEntry(
+    BuildContext context, {
+    required LogLevel level,
+    required String description,
+  }) =>
+      EnumerationEntry(
+        customEntry: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: LevelDot(level: level, size: 8.0),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: ThemedRichText(
+                textSpans: [
+                  TextSpan(
+                    text: level.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: logLevelColor(context, level),
+                    ),
+                  ),
+                  TextSpan(
+                    text: description,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -33,59 +68,23 @@ class LogExplanation extends StatelessWidget {
             const SizedBox(height: 4.0),
             EnumerationBlock(
               customEntries: [
-                EnumerationEntry(
-                  customEntry: ThemedRichText(
-                    textSpans: [
-                      TextSpan(
-                        text: 'Info',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: LogLevel.Info.color,
-                          // decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const TextSpan(
-                        text:
-                            ': triggered by used packages or manually by myself to provide helpful informations',
-                      ),
-                    ],
-                  ),
+                _levelEntry(
+                  context,
+                  level: LogLevel.Info,
+                  description:
+                      ': triggered by used packages or manually by myself to provide helpful informations',
                 ),
-                EnumerationEntry(
-                  customEntry: ThemedRichText(
-                    textSpans: [
-                      TextSpan(
-                        text: 'Warning',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: LogLevel.Warning.color,
-                          // decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const TextSpan(
-                        text:
-                            ': triggered manually by me to log important informations / events',
-                      ),
-                    ],
-                  ),
+                _levelEntry(
+                  context,
+                  level: LogLevel.Warning,
+                  description:
+                      ': triggered manually by me to log important informations / events',
                 ),
-                EnumerationEntry(
-                  customEntry: ThemedRichText(
-                    textSpans: [
-                      TextSpan(
-                        text: 'Error',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: LogLevel.Error.color,
-                          // decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      const TextSpan(
-                        text:
-                            ': triggered by different kind of exceptions and (mostly) unintended events',
-                      ),
-                    ],
-                  ),
+                _levelEntry(
+                  context,
+                  level: LogLevel.Error,
+                  description:
+                      ': triggered by different kind of exceptions and (mostly) unintended events',
                 ),
               ],
             ),

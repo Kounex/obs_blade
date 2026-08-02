@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'stores/shared/tabs.dart';
@@ -111,20 +112,23 @@ class _TabBaseState extends State<TabBase> {
               tabsStore.setActiveTab(Tabs.Home);
             }
           },
-          child: IndexedStack(
-            index: tabsStore.activeTab.index,
-            children: _tabViews
-                .map(
-                  (tab, tabView) => MapEntry(
-                    tab,
-                    Offstage(
-                      offstage: tab != tabsStore.activeTab,
-                      child: tabView,
+          child: _TabSwitchTransition(
+            activeTab: tabsStore.activeTab,
+            child: IndexedStack(
+              index: tabsStore.activeTab.index,
+              children: _tabViews
+                  .map(
+                    (tab, tabView) => MapEntry(
+                      tab,
+                      Offstage(
+                        offstage: tab != tabsStore.activeTab,
+                        child: tabView,
+                      ),
                     ),
-                  ),
-                )
-                .values
-                .toList(),
+                  )
+                  .values
+                  .toList(),
+            ),
           ),
         );
       }),
@@ -136,6 +140,7 @@ class _TabBaseState extends State<TabBase> {
               : null,
           activeColor: Theme.of(context).colorScheme.secondary,
           currentIndex: tabsStore.activeTab.index,
+          iconSize: 24.0,
 
           /// Used the standard implementation for [border] as seen
           /// in [CupertinoTabBar] but adjusted the [darkColor] property
@@ -178,6 +183,80 @@ class _TabBaseState extends State<TabBase> {
               )
               .toList(),
         ),
+      ),
+    );
+  }
+}
+
+/// "On Air" tab switch transition: 200ms fade + subtle scale of the tab
+/// body whenever the active tab changes.
+///
+/// Implemented as a one-shot entrance animation around the persistent
+/// [IndexedStack] rather than an [AnimatedSwitcher] keyed by tab: during a
+/// switcher's crossfade both the outgoing and the incoming body would be
+/// mounted at the same time, duplicating the per-tab [Navigator]
+/// [GlobalKey]s (and tearing down every tab's navigation stack). This way
+/// all tab navigators, their scroll positions and pushed routes stay fully
+/// alive and untouched.
+class _TabSwitchTransition extends StatefulWidget {
+  final Tabs activeTab;
+  final Widget child;
+
+  const _TabSwitchTransition({
+    required this.activeTab,
+    required this.child,
+  });
+
+  @override
+  State<_TabSwitchTransition> createState() => _TabSwitchTransitionState();
+}
+
+class _TabSwitchTransitionState extends State<_TabSwitchTransition>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+
+      /// Design system mandates 200ms for tab switches
+      /// (`docs/redesign/design-system.md` - motion language)
+      duration: const Duration(milliseconds: 200),
+      value: 1.0,
+    );
+    CurvedAnimation curved = CurvedAnimation(
+      parent: _controller,
+      curve: AppMotion.standard,
+    );
+    _opacity = curved;
+    _scale = Tween<double>(begin: 0.98, end: 1.0).animate(curved);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TabSwitchTransition oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activeTab != widget.activeTab) {
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: ScaleTransition(
+        scale: _scale,
+        child: widget.child,
       ),
     );
   }

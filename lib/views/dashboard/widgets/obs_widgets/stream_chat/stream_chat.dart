@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -6,12 +9,13 @@ import 'package:obs_blade/utils/youtube_video_id.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/enums/chat_type.dart';
-import '../../../../../shared/general/base/card.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/hive_builder.dart';
-import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/styling_helper.dart';
+import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
 
 class StreamChat extends StatefulWidget {
@@ -34,6 +38,14 @@ class _StreamChatState extends State<StreamChat>
     with AutomaticKeepAliveClientMixin {
   WebViewController? _webController;
   String? _loadedChatUrl;
+
+  /// Branded loading surface covering the [WebView] until the page reports
+  /// back as loaded - hides the white flash of the keyed reload
+  bool _isChatLoading = false;
+
+  /// Safety net so the loading surface can't get stuck if the page never
+  /// reaches 100% progress (long polling chat pages)
+  Timer? _loadingFallback;
 
   static const _mobileSafariUserAgent =
       'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1';
@@ -70,10 +82,21 @@ class _StreamChatState extends State<StreamChat>
         const PlatformNavigationDelegateCreationParams(),
         onProgress: (progress) {
           controller.runJavaScript(_consentBannerScript);
+          if (progress >= 100) {
+            _finishChatLoading();
+          }
         },
       ),
     );
     return controller;
+  }
+
+  void _finishChatLoading() {
+    if (!this.mounted || !_isChatLoading) return;
+    setState(() {
+      _isChatLoading = false;
+      _loadingFallback?.cancel();
+    });
   }
 
   /// Create once; [loadRequest] only when the resolved chat URL changes.
@@ -82,6 +105,22 @@ class _StreamChatState extends State<StreamChat>
     if (_loadedChatUrl == url) return;
     _loadedChatUrl = url;
     _webController!.loadRequest(Uri.parse(url));
+
+    /// Plain assignment - called from `build` before the loading overlay is
+    /// constructed, so it is reflected in the current frame already
+    _isChatLoading = true;
+    _loadingFallback?.cancel();
+    _loadingFallback = Timer(const Duration(seconds: 8), () {
+      if (this.mounted && _isChatLoading) {
+        setState(() => _isChatLoading = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _loadingFallback?.cancel();
+    super.dispose();
   }
 
   @override
@@ -127,9 +166,9 @@ class _StreamChatState extends State<StreamChat>
     Widget usernameBar = Padding(
       padding: EdgeInsets.only(
         top: 0,
-        left: this.widget.usernameRowPadding ? 4.0 : 0.0,
-        right: this.widget.usernameRowPadding ? 4.0 : 0.0,
-        bottom: 12.0,
+        left: this.widget.usernameRowPadding ? AppSpacing.xs : 0.0,
+        right: this.widget.usernameRowPadding ? AppSpacing.xs : 0.0,
+        bottom: AppSpacing.md,
       ),
       child: const ChatUsernameBar(),
     );
@@ -173,8 +212,7 @@ class _StreamChatState extends State<StreamChat>
                   /// Only add the [WebView] to the widget tree if we have an
                   /// actual chat to display because otherwise the [WebView]
                   /// will still eat up performance
-                  if (chatActive && _webController != null)
-
+                  if (chatActive && _webController != null) ...[
                     /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
                     /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
                     /// in the region where the Twitch chat is. The Listener is used to determine
@@ -208,20 +246,21 @@ class _StreamChatState extends State<StreamChat>
                         controller: _webController!,
                       ),
                     ),
+
+                    /// Crossfading branded surface hiding the flash of the
+                    /// keyed [WebView] reload until the page has loaded -
+                    /// purely visual, touches always fall through to the
+                    /// [WebView] (and its pointer band) as before
+                    AnimatedOpacity(
+                      opacity: _isChatLoading ? 1.0 : 0.0,
+                      duration: AppMotion.medium,
+                      curve: AppMotion.standard,
+                      child: _ChatLoadingState(chatType: chatType),
+                    ),
+                  ],
                   if (!chatActive)
-                    Positioned(
-                      top: 48.0,
-                      child: SizedBox(
-                        height: 185,
-                        width: 225,
-                        child: BaseCard(
-                          child: BaseResult(
-                            icon: BaseResultIcon.Negative,
-                            text:
-                                'No ${chatType.text} username selected, so no ones chat can be displayed.',
-                          ),
-                        ),
-                      ),
+                    StaggeredEntrance(
+                      child: _ChatEmptyState(chatType: chatType),
                     ),
                 ],
               );
@@ -230,6 +269,117 @@ class _StreamChatState extends State<StreamChat>
         ),
         if (this.widget.usernameRowBeneath) usernameBar,
       ],
+    );
+  }
+}
+
+/// Circular platform glyph in its brand color, shared by the empty and
+/// loading chat states
+class _ChatBrandIcon extends StatelessWidget {
+  final ChatType chatType;
+  final Color color;
+
+  const _ChatBrandIcon({required this.chatType, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 64.0,
+      width: 64.0,
+      decoration: BoxDecoration(
+        color: this.color.withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        this.chatType.icon,
+        color: this.color,
+        size: 28.0,
+      ),
+    );
+  }
+}
+
+/// Shown while no username is selected for the active platform
+class _ChatEmptyState extends StatelessWidget {
+  final ChatType chatType;
+
+  const _ChatEmptyState({required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color brandColor = this.chatType.brandColor ??
+        Theme.of(context).colorScheme.secondary;
+
+    /// Top-aligned (instead of centered in the fixed-height chat viewport)
+    /// so the state sits inside the actually visible area of the dashboard
+    /// scroll view
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          top: AppSpacing.xl,
+          left: AppSpacing.xl,
+          right: AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ChatBrandIcon(chatType: this.chatType, color: brandColor),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              '${this.chatType.text} Chat',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Opaque branded surface crossfading out once the embedded chat page has
+/// loaded - masks the reload flash of the keyed [WebView]
+class _ChatLoadingState extends StatelessWidget {
+  final ChatType chatType;
+
+  const _ChatLoadingState({required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color brandColor = this.chatType.brandColor ??
+        Theme.of(context).colorScheme.secondary;
+
+    return Container(
+      color: Theme.of(context).cardColor,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ChatBrandIcon(chatType: this.chatType, color: brandColor),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            '${this.chatType.text} chat is loading…',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          StylingHelper.isApple(context)
+              ? const CupertinoActivityIndicator(radius: 10.0)
+              : SizedBox(
+                  height: 18.0,
+                  width: 18.0,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: brandColor,
+                  ),
+                ),
+        ],
+      ),
     );
   }
 }

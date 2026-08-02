@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../stores/views/home.dart';
 
@@ -25,9 +26,22 @@ class SwitcherCard extends StatelessWidget {
 
     return BaseCard(
       paddingChild: this.paddingChild,
-      topPadding: 32.0,
+      topPadding: AppSpacing.xxl,
       titleWidget: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
+        duration: AppMotion.medium,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 0.25),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: AppMotion.standard,
+            )),
+            child: child,
+          ),
+        ),
         child: Align(
           key: ValueKey(this.title),
           alignment: Alignment.centerLeft,
@@ -39,10 +53,10 @@ class SwitcherCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 12.0),
+          const SizedBox(height: AppSpacing.md),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: CupertinoSlidingSegmentedControl<ConnectMode>(
               groupValue: homeStore.connectMode,
               children: const {
@@ -54,17 +68,17 @@ class SwitcherCard extends StatelessWidget {
               onValueChanged: (mode) => homeStore.setConnectMode(mode!),
             ),
           ),
-          const SizedBox(height: 12.0),
+          const SizedBox(height: AppSpacing.md),
           const BaseDivider(),
           AnimatedSwitcher(
             key: ValueKey(this.title),
-            duration: const Duration(milliseconds: 200),
+            duration: AppMotion.medium,
             transitionBuilder: (child, animation) => FadeTransition(
               opacity: animation,
               child: SizeTransition(
                 sizeFactor: animation.drive(
                   Tween(begin: 0.75, end: 1.0).chain(
-                    CurveTween(curve: Curves.easeOut),
+                    CurveTween(curve: AppMotion.standard),
                   ),
                 ),
                 child: child,

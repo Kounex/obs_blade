@@ -17,7 +17,7 @@ class DashboardCustomisationOrderView extends StatelessWidget {
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
         previousTitle: 'Customisation',
-        title: 'Order',
+        title: 'Elements Order',
         actions: ThemedCupertinoButton(
           text: 'Reset',
           padding: const EdgeInsets.all(0),

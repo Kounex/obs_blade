@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/formatted_text.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/card.dart';
 
 class StatsContainer extends StatelessWidget {
   final String title;
   final Widget? trailing;
+
+  /// Optional widget placed in front of the title (e.g. a live [StatusDot])
+  final Widget? titleLeading;
 
   final List<FormattedText>? children;
   final Widget? child;
@@ -18,6 +22,7 @@ class StatsContainer extends StatelessWidget {
     this.children,
     this.child,
     this.trailing,
+    this.titleLeading,
     this.wrapWithDescribedBox = false,
   })  : assert(child != null || children != null),
         super();
@@ -28,14 +33,24 @@ class StatsContainer extends StatelessWidget {
       topPadding: 0.0,
       bottomPadding: 0.0,
       titlePadding: const EdgeInsets.symmetric(
-        horizontal: 18.0,
-        vertical: 12.0,
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
       ),
-      titleWidget:
+      titleWidget: Row(
+        children: [
+          if (this.titleLeading != null) ...[
+            this.titleLeading!,
+            const SizedBox(width: AppSpacing.sm),
+          ],
           Text(this.title, style: Theme.of(context).textTheme.titleLarge),
+        ],
+      ),
       trailingTitleWidget: this.trailing,
       paddingChild: const EdgeInsets.only(
-          top: 18.0, right: 18.0, left: 18.0, bottom: 24.0),
+          top: AppSpacing.lg,
+          right: AppSpacing.lg,
+          left: AppSpacing.lg,
+          bottom: AppSpacing.xl),
       centerChild: false,
       child: this.child ??
           LayoutBuilder(
@@ -46,12 +61,13 @@ class StatsContainer extends StatelessWidget {
                           .reduce((value, current) =>
                               value.width >= current.width ? value : current)
                           .width +
-                      24.0);
+                      AppSpacing.xl);
               double generalWidth =
-                  (constraints.maxWidth - (amountInRow - 1) * 24) / amountInRow;
+                  (constraints.maxWidth - (amountInRow - 1) * AppSpacing.xl) /
+                      amountInRow;
               return Wrap(
-                spacing: 24.0,
-                runSpacing: 24.0,
+                spacing: AppSpacing.xl,
+                runSpacing: AppSpacing.xl,
                 children: this
                     .children!
                     .map(

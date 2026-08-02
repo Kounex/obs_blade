@@ -68,7 +68,7 @@ class _DynamicInputState extends State<DynamicInput> {
         Expanded(
           child: Text(
             this.widget.label,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.titleSmall,
           ),
         ),
         Container(

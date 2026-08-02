@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -10,6 +9,7 @@ import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
 
 import '../../../../../models/hidden_scene_item.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/classes/api/scene_item.dart';
@@ -118,6 +118,10 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
           hiddenSceneItem = null;
         }
 
+        final Color actionColor = hiddenSceneItem != null
+            ? Theme.of(context).extension<AppStatusColors>()!.recording
+            : Theme.of(context).buttonTheme.colorScheme!.primary;
+
         return Observer(
           builder: (context) => Offstage(
             offstage: _isItemHidden(
@@ -130,9 +134,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                 extentRatio: 0.3,
                 children: [
                   CustomSlidableAction(
-                    backgroundColor: hiddenSceneItem != null
-                        ? CupertinoColors.destructiveRed
-                        : Theme.of(context).buttonTheme.colorScheme!.primary,
+                    backgroundColor: Colors.transparent,
                     autoClose: false,
                     onPressed: (_) {
                       if (hiddenSceneItem != null) {
@@ -154,30 +156,45 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                         hiddenSceneItemsBox.add(hiddenSceneItem!);
                       }
                     },
-                    child: Transform.translate(
-                      offset: const Offset(-18.0, 0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Icon(
-                              hiddenSceneItem != null
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              size: 18.0,
-                            ),
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: AppSpacing.md,
+                        top: AppSpacing.sm,
+                        bottom: AppSpacing.sm,
+                        right: AppSpacing.sm,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: actionColor.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: actionColor.withValues(alpha: 0.45),
                           ),
-                          const SizedBox(height: 2.0),
-                          Flexible(
-                            child: Text(
-                              hiddenSceneItem != null ? 'Hidden' : 'Visible',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .copyWith(fontSize: 12.0),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Icon(
+                                hiddenSceneItem != null
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                size: 18.0,
+                                color: actionColor,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2.0),
+                            Flexible(
+                              child: Text(
+                                hiddenSceneItem != null ? 'Hidden' : 'Visible',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium!
+                                    .copyWith(color: actionColor),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

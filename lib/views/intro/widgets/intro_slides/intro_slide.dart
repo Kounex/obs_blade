@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
-import '../../../../shared/animator/fader.dart';
 import '../../intro.dart';
 
 class IntroSlide extends StatelessWidget {
@@ -15,68 +15,49 @@ class IntroSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Fader(
-      duration: const Duration(milliseconds: 750),
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: 24.0,
-          right: 24.0,
-          bottom: kIntroControlsBottomPadding,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 24.0),
-                child: Image.asset(this.imagePath),
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: AppSpacing.xl,
+        right: AppSpacing.xl,
+        bottom: kIntroControlsBottomPadding,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+              child: StaggeredEntrance(
+                index: 0,
+
+                /// Framed screenshot - rounded corners + hairline border,
+                /// hugging the image (width-driven, so no dead bands
+                /// above / below the screenshot)
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .dividerColor
+                          .withOpacity(0.4),
+                    ),
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  child: Image.asset(
+                    this.imagePath,
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                  ),
+                ),
               ),
             ),
-            this.child,
-          ],
-        ),
+          ),
+          StaggeredEntrance(
+            index: 1,
+            child: this.child,
+          ),
+        ],
       ),
     );
-    // return Fader(
-    //   duration: const Duration(milliseconds: 750),
-    //   child: Padding(
-    //     padding: EdgeInsets.only(
-    //       top: MediaQuery.paddingOf(context).top + 32.0,
-    //       left: 24.0,
-    //       right: 24.0,
-    //       bottom: MediaQuery.paddingOf(context).bottom +
-    //           kIntroControlsBottomPadding,
-    //     ),
-    //     child: Column(
-    //       mainAxisAlignment: MainAxisAlignment.center,
-    //       children: [
-    //         SizedBox(
-    //           height: MediaQuery.sizeOf(context).height / 3,
-    //           child: Image.asset(this.imagePath),
-    //         ),
-    //         SizedBox(
-    //           height: 275.0,
-    //           child: BaseCard(
-    //             backgroundColor: Colors.transparent,
-    //             paddingChild: const EdgeInsets.all(0),
-    //             centerChild: false,
-    //             child: Column(
-    //               children: [
-    //                 const Divider(),
-    //                 const SizedBox(height: 32.0),
-    //                 ThemedRichText(
-    //                   textSpans: this.slideTextSpans,
-    //                   textAlign: TextAlign.justify,
-    //                   textStyle: Theme.of(context).textTheme.headline6,
-    //                 ),
-    //                 if (this.additionalChild != null) this.additionalChild!,
-    //               ],
-    //             ),
-    //           ),
-    //         ),
-    //       ],
-    //     ),
-    //   ),
-    // );
   }
 }

@@ -67,9 +67,8 @@ class AppBarActions extends StatelessWidget {
                         child: Text(
                           action.title,
                           style: action.onAction == null
-                              ? TextStyle(
-                                  color: CupertinoColors.systemBlue
-                                      .withOpacity(0.3),
+                              ? const TextStyle(
+                                  color: CupertinoColors.inactiveGray,
                                 )
                               : null,
                         ),

@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../design/app_motion.dart';
+
 class FullOverlay extends StatefulWidget {
   final Widget content;
   final Duration animationDuration;
@@ -24,6 +26,7 @@ class FullOverlayState extends State<FullOverlay>
   late AnimationController _controller;
   late Animation<double> _blur;
   late Animation<double> _opacity;
+  late Animation<double> _scale;
 
   late Timer _closeTimer;
 
@@ -36,6 +39,8 @@ class FullOverlayState extends State<FullOverlay>
         .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
     _opacity = Tween<double>(begin: 0.0, end: 1.0)
         .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+    _scale = Tween<double>(begin: 0.96, end: 1.0)
+        .animate(CurvedAnimation(curve: AppMotion.spring, parent: _controller));
 
     _controller.forward();
     _closeTimer = Timer(this.widget.showDuration, () => this.closeOverlay());
@@ -88,18 +93,22 @@ class FullOverlayState extends State<FullOverlay>
                         sigmaX: _blur.value, sigmaY: _blur.value),
                     child: FadeTransition(
                       opacity: _opacity,
-                      child: Container(
-                        height: 150.0,
-                        width: 150.0,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.black87
-                              : Colors.white70,
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(12.0),
+                      child: ScaleTransition(
+                        scale: _scale,
+                        child: Container(
+                          height: 150.0,
+                          width: 150.0,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.black87
+                                    : Colors.white70,
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(12.0),
+                            ),
                           ),
+                          child: child,
                         ),
-                        child: child,
                       ),
                     ),
                   );

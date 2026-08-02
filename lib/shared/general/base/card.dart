@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/constrained_box.dart';
 
 import '../../../models/custom_theme.dart';
@@ -56,11 +57,11 @@ class BaseCard extends StatelessWidget {
     this.titleStyle,
     this.titleWidget,
     this.trailingTitleWidget,
-    this.paddingChild = const EdgeInsets.all(18.0),
-    this.topPadding = 18.0,
-    this.rightPadding = 16.0,
-    this.bottomPadding = 18.0,
-    this.leftPadding = 16.0,
+    this.paddingChild = const EdgeInsets.all(AppSpacing.lg),
+    this.topPadding = AppSpacing.lg,
+    this.rightPadding = AppSpacing.lg,
+    this.bottomPadding = AppSpacing.lg,
+    this.leftPadding = AppSpacing.lg,
     this.titlePadding =
         const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
     this.titleCrossAlignment = CrossAxisAlignment.center,
@@ -70,6 +71,13 @@ class BaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     CustomTheme? customTheme = StylingHelper.currentCustomTheme();
+
+    final Color cardColor = this.backgroundColor ?? Theme.of(context).cardColor;
+
+    /// The divider sits directly under the title - inset it to the
+    /// title's own horizontal content inset instead of full-bleed
+    final EdgeInsets resolvedTitlePadding =
+        this.titlePadding.resolve(Directionality.of(context));
 
     Widget card = Padding(
       padding: EdgeInsets.only(
@@ -89,7 +97,7 @@ class BaseCard extends StatelessWidget {
           side: this.paintBorder
               ? BorderSide(
                   color: this.borderColor ??
-                      (Theme.of(context).cardColor.computeLuminance() <= 0.2
+                      (cardColor.computeLuminance() <= 0.2
                           ? Colors.white
                           : Colors.black),
                 )
@@ -99,9 +107,18 @@ class BaseCard extends StatelessWidget {
                           .hexToColor()
                           .withOpacity(0.6),
                     )
-                  : BorderSide.none,
+
+                  /// Derived hairline (top-luminance step) so raised
+                  /// surfaces separate from the scaffold without a
+                  /// hardcoded color
+                  : BorderSide(
+                      color: (cardColor.computeLuminance() <= 0.2
+                              ? Colors.white
+                              : Colors.black)
+                          .withOpacity(0.1),
+                    ),
         ),
-        color: this.backgroundColor ?? Theme.of(context).cardColor,
+        color: cardColor,
         elevation: this.elevation,
         margin: const EdgeInsets.all(0),
         child: Column(
@@ -131,7 +148,13 @@ class BaseCard extends StatelessWidget {
                 ),
               ),
             if (this.titleWidget != null || this.title != null)
-              const BaseDivider(),
+              Padding(
+                padding: EdgeInsets.only(
+                  left: resolvedTitlePadding.left,
+                  right: resolvedTitlePadding.right,
+                ),
+                child: const BaseDivider(),
+              ),
             Padding(
               padding: this.paddingChild,
               child: this.child,

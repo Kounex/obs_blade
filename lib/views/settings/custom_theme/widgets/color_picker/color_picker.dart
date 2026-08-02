@@ -2,10 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
+import '../../../../../types/extensions/color.dart';
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/validation_helper.dart';
@@ -188,6 +190,36 @@ class _ColorPickerState extends State<ColorPicker> {
     setState(() {});
   }
 
+  /// Quick swatches are derived from the currently active app theme so the
+  /// user can pick "what they already see" - tapping one goes through the
+  /// exact same code path as typing a valid hex value (alpha channel is
+  /// preserved when [ColorPicker.useAlpha] is on), the `onSave` hex-string
+  /// contract is untouched.
+  void _applySwatch(Color color) {
+    String hex = color.toHex();
+    if (this.widget.useAlpha) {
+      hex = _latestValidHexValue.substring(0, 2) + hex;
+    }
+    _hexController.text = hex;
+    _latestValidHexValue = hex;
+    _setHSLColor();
+    setState(() {});
+  }
+
+  List<Color> _themeSwatches(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return [
+      theme.cardColor,
+      theme.scaffoldBackgroundColor,
+      theme.appBarTheme.backgroundColor ?? theme.cardColor,
+      theme.colorScheme.secondary,
+      theme.buttonTheme.colorScheme!.secondary,
+      theme.dividerColor,
+      Colors.black,
+      Colors.white,
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -201,7 +233,8 @@ class _ColorPickerState extends State<ColorPicker> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: ThemedCupertinoButton(
-                  padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg),
                   text: 'Reset',
                   isDestructive: true,
                   onPressed: () => ModalHandler.showBaseDialog(
@@ -218,12 +251,14 @@ class _ColorPickerState extends State<ColorPicker> {
               ),
             ),
             ThemedCupertinoButton(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               text: 'Cancel',
               onPressed: () => Navigator.of(context).pop(false),
             ),
             ThemedCupertinoButton(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               text: 'Save',
               onPressed: () {
                 if (_hexController.isValid &&
@@ -246,7 +281,8 @@ class _ColorPickerState extends State<ColorPicker> {
         ),
         const BaseDivider(),
         Padding(
-          padding: const EdgeInsets.only(top: 12.0, left: 12.0, bottom: 4.0),
+          padding: const EdgeInsets.only(
+              top: AppSpacing.md, left: AppSpacing.md, bottom: AppSpacing.xs),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -260,7 +296,10 @@ class _ColorPickerState extends State<ColorPicker> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 12.0),
+          padding: const EdgeInsets.only(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: AppSpacing.md),
           child: Text(
             this.widget.description,
             style: Theme.of(context).textTheme.bodySmall,
@@ -270,46 +309,85 @@ class _ColorPickerState extends State<ColorPicker> {
         Flexible(
           child: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: CupertinoSlidingSegmentedControl<PickerType>(
-                    groupValue: _pickerType,
-                    children: {
-                      PickerType.RGB: SizedBox(
-                        width: 64.0,
-                        child: Text(
-                          PickerType.RGB.name,
-                          textAlign: TextAlign.center,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Center(
+                    child: CupertinoSlidingSegmentedControl<PickerType>(
+                      groupValue: _pickerType,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xs, horizontal: 2.0),
+                      children: {
+                        PickerType.RGB: SizedBox(
+                          width: 96.0,
+                          child: Text(
+                            PickerType.RGB.name,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                      ),
-                      PickerType.HSL: SizedBox(
-                        width: 64.0,
-                        child: Text(
-                          PickerType.HSL.name,
-                          textAlign: TextAlign.center,
+                        PickerType.HSL: SizedBox(
+                          width: 96.0,
+                          child: Text(
+                            PickerType.HSL.name,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                      ),
-                    },
-                    onValueChanged: (pickerType) {
-                      _setHSLColor();
-                      setState(() => _pickerType = pickerType!);
-                    },
+                      },
+                      onValueChanged: (pickerType) {
+                        _setHSLColor();
+                        setState(() => _pickerType = pickerType!);
+                      },
+                    ),
                   ),
                 ),
                 const BaseDivider(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  padding: const EdgeInsets.only(
+                      top: AppSpacing.md,
+                      left: AppSpacing.md,
+                      right: AppSpacing.md),
+                  child: Text(
+                    'FROM CURRENT THEME',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color:
+                            Theme.of(context).textTheme.bodySmall?.color),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Wrap(
+                    spacing: AppSpacing.md,
+                    runSpacing: AppSpacing.md,
+                    children: [
+                      for (final Color swatch in _themeSwatches(context))
+                        Pressable(
+                          onTap: () => _applySwatch(swatch),
+                          child: ColorBubble(
+                            color: swatch,
+                            size: 32.0,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const BaseDivider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(right: 24.0),
+                            padding: const EdgeInsets.only(
+                                right: AppSpacing.xl),
                             child: Text(
                               'Hex:',
-                              style: Theme.of(context).textTheme.titleMedium,
+                              style:
+                                  Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
                           SizedBox(
@@ -318,17 +396,33 @@ class _ColorPickerState extends State<ColorPicker> {
                             child: StatefulBuilder(
                               builder: (context, setInnerState) {
                                 return Padding(
-                                  padding: const EdgeInsets.only(top: 24.0),
+                                  padding: const EdgeInsets.only(
+                                      top: AppSpacing.xl),
                                   child: TextFormField(
                                     controller: _hexController,
                                     focusNode: _hexFocusNode,
                                     decoration: InputDecoration(
                                       isDense: true,
+                                      filled: true,
+                                      fillColor: Theme.of(context)
+                                          .scaffoldBackgroundColor
+                                          .withValues(alpha: 0.5),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.md,
+                                        vertical: AppSpacing.md,
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.sm),
+                                        borderSide: BorderSide.none,
+                                      ),
                                       counterText: '',
                                       suffixText:
                                           '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
-                                      suffixStyle:
-                                          Theme.of(context).textTheme.bodySmall,
+                                      suffixStyle: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall,
                                     ),
                                     validator: (color) =>
                                         ValidationHelper.colorHexValidator(
@@ -362,10 +456,11 @@ class _ColorPickerState extends State<ColorPicker> {
                         ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
+                        padding:
+                            const EdgeInsets.only(right: AppSpacing.md),
                         child: ColorBubble(
                           color: _latestValidHexValue.hexToColor(),
-                          size: 38.0,
+                          size: 48.0,
                         ),
                       ),
                     ],
@@ -373,111 +468,129 @@ class _ColorPickerState extends State<ColorPicker> {
                 ),
                 const BaseDivider(),
                 Padding(
-                  padding:
-                      const EdgeInsets.only(top: 12.0, left: 24.0, right: 16.0),
-                  child: Column(
-                    children: [
-                      if (_pickerType == PickerType.RGB) ...[
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _rController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.R,
-                          value: _getColorSliderValue(ColorType.R),
-                          activeColor: CupertinoColors.destructiveRed,
-                          onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal,
-                            ColorType.R,
-                          ),
-                        ),
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _gController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.G,
-                          value: _getColorSliderValue(ColorType.G),
-                          activeColor: Colors.green,
-                          onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal,
-                            ColorType.G,
-                          ),
-                        ),
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _bController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.B,
-                          value: _getColorSliderValue(ColorType.B),
-                          activeColor: Colors.blue,
-                          onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal,
-                            ColorType.B,
-                          ),
-                        ),
-                      ],
-                      if (_pickerType == PickerType.HSL) ...[
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _hController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.H,
-                          value: _getColorSliderValue(ColorType.H),
-                          saturation: _saturation,
-                          lightness: _lightness,
-                          onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal,
-                            ColorType.H,
-                          ),
-                        ),
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _sController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.S,
-                          value: _getColorSliderValue(ColorType.S),
-                          hue: _hue,
-                          lightness: _lightness,
-                          onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal,
-                            ColorType.S,
-                          ),
-                        ),
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _lController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.L,
-                          value: _getColorSliderValue(ColorType.L),
-                          hue: _hue,
-                          saturation: _saturation,
-                          onChanged: (colorVal) => _onColorSlideChange(
-                            colorVal,
-                            ColorType.L,
-                          ),
-                        ),
-                      ],
-                      if (this.widget.useAlpha)
-                        ColorSlider(
-                          controller: this.widget.editableColorValues
-                              ? _aController
-                              : null,
-                          pickerType: _pickerType,
-                          colorType: ColorType.A,
-                          value: _getColorSliderValue(ColorType.A),
-                          activeColor: Colors.white,
-                          onChanged: (colorVal) =>
-                              _onColorSlideChange(colorVal, ColorType.A),
-                        ),
-                    ],
+                  padding: const EdgeInsets.only(
+                      top: AppSpacing.md,
+                      left: AppSpacing.xl,
+                      right: AppSpacing.lg),
+                  child: AnimatedSwitcher(
+                    duration: AppMotion.fast,
+                    switchInCurve: AppMotion.standard,
+                    switchOutCurve: AppMotion.exit,
+                    child: KeyedSubtree(
+                      key: ValueKey(_pickerType),
+                      child: Column(
+                        children: [
+                          if (_pickerType == PickerType.RGB) ...[
+                            ColorSlider(
+                              controller: this.widget.editableColorValues
+                                  ? _rController
+                                  : null,
+                              pickerType: _pickerType,
+                              colorType: ColorType.R,
+                              value: _getColorSliderValue(ColorType.R),
+                              activeColor: CupertinoColors.destructiveRed,
+                              onChanged: (colorVal) => _onColorSlideChange(
+                                colorVal,
+                                ColorType.R,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            ColorSlider(
+                              controller: this.widget.editableColorValues
+                                  ? _gController
+                                  : null,
+                              pickerType: _pickerType,
+                              colorType: ColorType.G,
+                              value: _getColorSliderValue(ColorType.G),
+                              activeColor: Colors.green,
+                              onChanged: (colorVal) => _onColorSlideChange(
+                                colorVal,
+                                ColorType.G,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            ColorSlider(
+                              controller: this.widget.editableColorValues
+                                  ? _bController
+                                  : null,
+                              pickerType: _pickerType,
+                              colorType: ColorType.B,
+                              value: _getColorSliderValue(ColorType.B),
+                              activeColor: Colors.blue,
+                              onChanged: (colorVal) => _onColorSlideChange(
+                                colorVal,
+                                ColorType.B,
+                              ),
+                            ),
+                          ],
+                          if (_pickerType == PickerType.HSL) ...[
+                            ColorSlider(
+                              controller: this.widget.editableColorValues
+                                  ? _hController
+                                  : null,
+                              pickerType: _pickerType,
+                              colorType: ColorType.H,
+                              value: _getColorSliderValue(ColorType.H),
+                              saturation: _saturation,
+                              lightness: _lightness,
+                              onChanged: (colorVal) => _onColorSlideChange(
+                                colorVal,
+                                ColorType.H,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            ColorSlider(
+                              controller: this.widget.editableColorValues
+                                  ? _sController
+                                  : null,
+                              pickerType: _pickerType,
+                              colorType: ColorType.S,
+                              value: _getColorSliderValue(ColorType.S),
+                              hue: _hue,
+                              lightness: _lightness,
+                              onChanged: (colorVal) => _onColorSlideChange(
+                                colorVal,
+                                ColorType.S,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            ColorSlider(
+                              controller: this.widget.editableColorValues
+                                  ? _lController
+                                  : null,
+                              pickerType: _pickerType,
+                              colorType: ColorType.L,
+                              value: _getColorSliderValue(ColorType.L),
+                              hue: _hue,
+                              saturation: _saturation,
+                              onChanged: (colorVal) => _onColorSlideChange(
+                                colorVal,
+                                ColorType.L,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12.0),
+                if (this.widget.useAlpha)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: AppSpacing.xl, right: AppSpacing.lg),
+                    child: ColorSlider(
+                      controller: this.widget.editableColorValues
+                          ? _aController
+                          : null,
+                      pickerType: _pickerType,
+                      colorType: ColorType.A,
+                      value: _getColorSliderValue(ColorType.A),
+                      activeColor: Colors.white,
+                      onChanged: (colorVal) =>
+                          _onColorSlideChange(colorVal, ColorType.A),
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.md),
               ],
             ),
           ),

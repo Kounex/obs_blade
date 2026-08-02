@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 class BaseButton extends StatelessWidget {
@@ -64,23 +65,26 @@ class BaseButton extends StatelessWidget {
       ),
     );
 
-    return this.icon != null
-        ? ElevatedButton.icon(
-            style: style,
-            icon: this.icon!,
-            label: this.child ??
-                FittedBox(
-                  child: Text(this.text!),
-                ),
-            onPressed: onPressed,
-          )
-        : ElevatedButton(
-            style: style,
-            onPressed: this.onPressed,
-            child: this.child ??
-                FittedBox(
-                  child: Text(this.text!),
-                ),
-          );
+    return Pressable(
+      onTap: this.onPressed,
+      child: this.icon != null
+          ? ElevatedButton.icon(
+              style: style,
+              icon: this.icon!,
+              label: this.child ??
+                  FittedBox(
+                    child: Text(this.text!),
+                  ),
+              onPressed: onPressed,
+            )
+          : ElevatedButton(
+              style: style,
+              onPressed: this.onPressed,
+              child: this.child ??
+                  FittedBox(
+                    child: Text(this.text!),
+                  ),
+            ),
+    );
   }
 }

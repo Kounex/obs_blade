@@ -3,17 +3,19 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 
 import '../../../../models/purchased_tip.dart';
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/extensions/list.dart';
 import 'donate_button.dart';
+import 'support_skeleton.dart';
 
 List<String> kTipAwesomeness = [
   'Nice',
   'Awesome',
   'Incredible',
   'Unbelieveable',
-  'You-Gotta-Be-Kidding-Me'
+  'You-Gotta-Be-Kidding-Me',
 ];
 
 class TipsContent extends StatelessWidget {
@@ -32,16 +34,22 @@ class TipsContent extends StatelessWidget {
 
   String _sumTipped(Iterable<PurchasedTip> tips) {
     if (tips.isNotEmpty) {
-      bool startsWithCurrencySymbol =
-          tips.first.price.startsWith(tips.first.currencySymbol);
-      double sumTips = double.parse(tips
-          .fold<double>(
+      bool startsWithCurrencySymbol = tips.first.price.startsWith(
+        tips.first.currencySymbol,
+      );
+      double sumTips = double.parse(
+        tips
+            .fold<double>(
               0.0,
-              (sum, tip) => sum += double.parse(tip.price
-                  .replaceAll(tip.currencySymbol, '')
-                  .replaceAll(',', '.')
-                  .trim()))
-          .toStringAsFixed(2));
+              (sum, tip) => sum += double.parse(
+                tip.price
+                    .replaceAll(tip.currencySymbol, '')
+                    .replaceAll(',', '.')
+                    .trim(),
+              ),
+            )
+            .toStringAsFixed(2),
+      );
 
       String sumTipsFormatted =
           (sumTips.toInt().toDouble() == sumTips ? sumTips.toInt() : sumTips)
@@ -62,44 +70,53 @@ class TipsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isLoading = this.tipsDetails == null;
+
     return Column(
       children: [
         const Text(
           'If you enjoy OBS Blade and want to support the development, leaving a tip would mean a lot to me!',
         ),
         // const SizedBox(height: 12.0),
-        const BaseDivider(
-          height: 24.0,
-        ),
+        const BaseDivider(height: 24.0),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0),
-            child: Column(
-              children: [
-                if (this.tipsDetails == null || this.tipsDetails!.isEmpty)
-                  ...kTipAwesomeness.take(this.amountTips).map(
-                        (tipAwesomeness) => DonateButton(
-                          text: '$tipAwesomeness Tip',
-                          errorText: this.tipsDetails != null
-                              ? 'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!'
-                              : null,
-                        ),
-                      ),
-                if (this.tipsDetails != null && this.tipsDetails!.isNotEmpty)
-                  ...(this.tipsDetails!
-                        ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice)))
-                      .mapIndexed(
-                        (tip, index) => DonateButton(
-                          // text: '${kTipAwesomeness[index]} Tip',
-                          text: '${kTipAwesomeness[index]} Tip',
-                          price: tip.price,
-                          purchaseParam: PurchaseParam(productDetails: tip),
-                        ),
-                      )
-                      .toList(),
-              ],
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+          child: AnimatedSwitcher(
+            duration: AppMotion.medium,
+            child: isLoading
+                /// Skeleton placeholder rows while the store answers -
+                /// replaced by the priced (or error) buttons once done
+                ? const SupportSkeleton(key: ValueKey('loading'), rows: 3)
+                : Column(
+                    key: const ValueKey('loaded'),
+                    children: [
+                      if (this.tipsDetails!.isEmpty)
+                        ...kTipAwesomeness
+                            .take(this.amountTips)
+                            .map(
+                              (tipAwesomeness) => DonateButton(
+                                text: '$tipAwesomeness Tip',
+                                errorText:
+                                    'Could not retrieve App Store information! Please check your internet connection and try again. If this problem persists, please reach out to me, thanks!',
+                              ),
+                            ),
+                      if (this.tipsDetails!.isNotEmpty)
+                        ...(this.tipsDetails!..sort(
+                              (a, b) => a.rawPrice.compareTo(b.rawPrice),
+                            ))
+                            .mapIndexed(
+                              (tip, index) => DonateButton(
+                                // text: '${kTipAwesomeness[index]} Tip',
+                                text: '${kTipAwesomeness[index]} Tip',
+                                price: tip.price,
+                                purchaseParam: PurchaseParam(
+                                  productDetails: tip,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                    ],
+                  ),
           ),
         ),
         HiveBuilder<PurchasedTip>(
@@ -109,7 +126,8 @@ class TipsContent extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(top: 12.0),
                 child: Text(
-                    'You tipped ${_sumTipped(purchasedTipBox.values)} so far\nYou are awesome :)'),
+                  'You tipped ${_sumTipped(purchasedTipBox.values)} so far\nYou are awesome :)',
+                ),
               );
             }
             return Container();

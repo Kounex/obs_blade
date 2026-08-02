@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/divider.dart';
 import '../../../../stores/views/statistics.dart';
 import '../../../../types/interfaces/past_stats_data.dart';
@@ -39,23 +40,59 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
         if (_page > amountPages) {
           _page = amountPages;
         }
+
+        final int pageStart =
+            (_page - 1) * statisticsStore.amountStatisticEntries.number;
+        final List<PastStatsData> visibleEntries =
+            this.widget.sortedFilteredPastStatsData.sublist(
+                  pageStart,
+                  pageStart +
+                      min(
+                          this.widget.sortedFilteredPastStatsData.length -
+                              pageStart,
+                          statisticsStore.amountStatisticEntries.number),
+                );
+
+        /// Identity signature of what is currently shown - changes whenever
+        /// the page, the sorting or the filtering changes (the entries are
+        /// the same object instances across rebuilds), so unrelated Observer
+        /// rebuilds don't retrigger the crossfade
+        final int pageSignature =
+            Object.hash(_page, Object.hashAll(visibleEntries));
+
         return Column(
           children: [
-            ListView.separated(
-              padding: const EdgeInsets.all(0),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) => StatsEntry(
-                  pastStatsData: this.widget.sortedFilteredPastStatsData[
-                      ((_page - 1) *
-                              statisticsStore.amountStatisticEntries.number) +
-                          index]),
-              separatorBuilder: (context, index) => const BaseDivider(),
-              itemCount: min(
-                  this.widget.sortedFilteredPastStatsData.length -
-                      ((_page - 1) *
-                          statisticsStore.amountStatisticEntries.number),
-                  statisticsStore.amountStatisticEntries.number),
+            AnimatedSwitcher(
+              duration: AppMotion.medium,
+              switchInCurve: AppMotion.standard,
+              switchOutCurve: AppMotion.exit,
+              /// The outgoing page may share entries (and therefore Hero
+              /// tags) with the incoming one - disable its Heroes while it
+              /// fades out so a tap-to-detail during the crossfade can
+              /// never hit duplicate Hero tags
+              layoutBuilder: (currentChild, previousChildren) => Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  ...previousChildren.map(
+                    (child) => HeroMode(enabled: false, child: child),
+                  ),
+                  ?currentChild,
+                ],
+              ),
+              child: ListView.separated(
+                key: ValueKey(pageSignature),
+                padding: const EdgeInsets.all(0),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) => StaggeredEntrance(
+                  index: index,
+                  child: StatsEntry(
+                    pastStatsData: visibleEntries[index],
+                  ),
+                ),
+                separatorBuilder: (context, index) => const BaseDivider(),
+                itemCount: visibleEntries.length,
+              ),
             ),
             const BaseDivider(),
             PaginationControl(

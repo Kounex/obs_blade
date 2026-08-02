@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
+import '../../utils/styling_helper.dart';
 import 'keyboard_number_header.dart';
 
 class CupertinoNumberTextField extends StatefulWidget {
@@ -79,6 +81,18 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
               FontFeature.tabularFigures(),
             ],
           ),
+
+          /// Raised card surface + hairline, same family as the other
+          /// text fields (stock decoration renders pure black in dark)
+          decoration: BoxDecoration(
+            color: StylingHelper.lightenDarkenColor(
+                Theme.of(context).cardColor, 8),
+            border: Border.all(
+              color: Theme.of(context).dividerColor,
+              width: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
           maxLength: this.widget.maxLength,
           inputFormatters: [
             NegativeIntFormatter(
@@ -89,23 +103,15 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
               TextInputType.numberWithOptions(
                 signed: this.widget.negativeAllowed,
               ),
+
+          /// Suffix sits inside the same fill as plain text (no separate
+          /// grey block)
           suffix: this.widget.suffix != null
-              ? Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[
-                        Theme.of(context).brightness == Brightness.light
-                            ? 300
-                            : 900],
-                    borderRadius: const BorderRadius.horizontal(
-                      right: Radius.circular(5.0),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(9.0),
-                    child: Text(
-                      this.widget.suffix!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Text(
+                    this.widget.suffix!,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 )
               : const SizedBox(),

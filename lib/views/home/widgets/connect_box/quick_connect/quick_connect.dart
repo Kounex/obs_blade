@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/views/home/widgets/connect_box/quick_connect/qr_scan.dart';
@@ -18,11 +20,26 @@ class QuickConnect extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          const Text(
-              'Scan the "Connect QR" of the WebSocket plugin to connect to OBS instantly.\n\nThis feature only works when connecting to an OBS instance which is in the same network as this device!'),
-          const SizedBox(height: 20.0),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Column(
+              children: [
+                const Text(
+                    'Scan the “Connect QR” of the WebSocket plugin to connect to OBS instantly.'),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'This feature only works when connecting to an OBS instance which is in the same network as this device!',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          /// Full-bleed divider - same rule as the autodiscovery and
+          /// manual connect cards
           const BaseDivider(),
-          const SizedBox(height: 18.0),
+          const SizedBox(height: AppSpacing.lg),
           BaseButton(
             onPressed: () =>
                 ModalHandler.showBaseCupertinoBottomSheet<Connection?>(

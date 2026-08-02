@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';
@@ -47,8 +48,7 @@ class ThemeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return Pressable(
       onTap: this.onSave != null
           ? () => ModalHandler.showBaseBottomSheet(
                 context: context,
@@ -73,7 +73,8 @@ class ThemeRow extends StatelessWidget {
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: this.useDivider ? const BaseDivider() : Container(),
                 ),
                 Text(
@@ -83,7 +84,7 @@ class ThemeRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 32.0),
+          const SizedBox(width: AppSpacing.xxl),
           SizedBox(
             width: 75.0,
             child: this.onActiveChanged != null
@@ -118,12 +119,16 @@ class ThemeRow extends StatelessWidget {
                           size: 32.0,
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(top: 12.0),
+                          padding: const EdgeInsets.only(top: AppSpacing.md),
                           child: FittedBox(
                             child: Text(
                               this.colorHex != null
                                   ? '#${this.colorHex}'
                                   : 'Transparent',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(letterSpacing: 0.5),
                             ),
                           ),
                         ),

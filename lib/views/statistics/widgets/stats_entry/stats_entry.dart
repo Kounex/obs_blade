@@ -2,12 +2,24 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/tag_box.dart';
 import 'package:obs_blade/types/extensions/int.dart';
 
 import '../../../../types/interfaces/past_stats_data.dart';
 import '../../../../utils/routing_helper.dart';
 import 'stats_date_chip.dart';
+
+/// Unique (per box) Hero tag for the entry -> detail shared element
+/// transition - prefixed by stat type since stream and record entries live
+/// in different boxes and their Hive keys may collide
+String statsEntryHeroTag(PastStatsData pastStatsData) {
+  final Object hiveKey = pastStatsData is PastStreamData
+      ? pastStatsData.key
+      : (pastStatsData as PastRecordData).key;
+  return 'stats-entry-${pastStatsData is PastStreamData ? 'stream' : 'record'}-'
+      '$hiveKey';
+}
 
 class StatsEntry extends StatelessWidget {
   final PastStatsData pastStatsData;
@@ -21,21 +33,39 @@ class StatsEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final bool isStarred =
+        this.pastStatsData.starred != null && this.pastStatsData.starred!;
+
+    Widget entry = Padding(
       padding: EdgeInsets.symmetric(vertical: !this.usedInDetail ? 8.0 : 0),
       child: Stack(
         children: [
-          this.pastStatsData.starred != null && this.pastStatsData.starred!
-              ? const Positioned(
-                  top: 4,
-                  right: 12,
-                  child: Icon(
-                    Icons.star,
-                    color: Colors.amber,
-                    size: 28.0,
-                  ),
-                )
-              : const SizedBox(),
+          Positioned(
+            top: 4,
+            right: 12,
+            child: AnimatedSwitcher(
+              duration: AppMotion.medium,
+              switchInCurve: AppMotion.spring,
+              switchOutCurve: AppMotion.exit,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: animation,
+                  child: child,
+                ),
+              ),
+              child: isStarred
+                  ? Icon(
+                      Icons.star,
+                      key: const ValueKey('starred'),
+                      color: Theme.of(context)
+                          .extension<AppStatusColors>()!
+                          .warning,
+                      size: 28.0,
+                    )
+                  : const SizedBox(key: ValueKey('unstarred')),
+            ),
+          ),
           Row(
             children: [
               Expanded(
@@ -94,13 +124,6 @@ class StatsEntry extends StatelessWidget {
                       ],
                     ),
                   ),
-                  onTap: !this.usedInDetail
-                      ? () => Navigator.pushNamed(
-                            context,
-                            StaticticsTabRoutingKeys.Detail.route,
-                            arguments: this.pastStatsData,
-                          )
-                      : null,
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Column(
@@ -140,6 +163,27 @@ class StatsEntry extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+
+    if (!this.usedInDetail) {
+      entry = Pressable(
+        onTap: () => Navigator.pushNamed(
+          context,
+          StaticticsTabRoutingKeys.Detail.route,
+          arguments: this.pastStatsData,
+        ),
+        child: entry,
+      );
+    }
+
+    /// The transparent [Material] keeps text styling intact while the Hero
+    /// is in flight between the list and the detail route
+    return Hero(
+      tag: statsEntryHeroTag(this.pastStatsData),
+      child: Material(
+        type: MaterialType.transparency,
+        child: entry,
       ),
     );
   }

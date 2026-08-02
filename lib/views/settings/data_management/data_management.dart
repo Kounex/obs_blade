@@ -9,6 +9,7 @@ import '../../../models/enums/log_level.dart';
 import '../../../models/hidden_scene.dart';
 import '../../../models/hidden_scene_item.dart';
 import '../../../models/past_stream_data.dart';
+import '../../../shared/design/design.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/shared/tabs.dart';
 import '../../../types/enums/hive_keys.dart';
@@ -59,8 +60,11 @@ class DataManagementView extends StatelessWidget {
         previousTitle: 'Settings',
         title: 'Data Management',
         listViewChildren: [
-          DataBlock(
-            dataEntries: [
+          StaggeredEntrance(
+            index: 0,
+            child: DataBlock(
+              caption: 'Categories',
+              dataEntries: [
               DataEntry(
                 title: 'Saved Connections',
                 description:
@@ -211,12 +215,18 @@ class DataManagementView extends StatelessWidget {
                     'All log entries found under "Logs" in the settings tab. You can delete them selectively in the logs view!',
                 onClear: () => Hive.box<AppLog>(HiveKeys.AppLog.name).clear(),
               ),
-            ],
+              ],
+            ),
           ),
-          DataBlock(
-            dataEntries: [
+          StaggeredEntrance(
+            index: 1,
+            child: DataBlock(
+              caption: 'Danger Zone',
+              danger: true,
+              dataEntries: [
               DataEntry(
                 title: 'All Data',
+                danger: true,
                 description:
                     'All the data the app persisted so far including settings set like custom theme, wakelock etc. or any saved connections and so on.',
                 customConfirmationText:
@@ -225,7 +235,8 @@ class DataManagementView extends StatelessWidget {
                     'It seems you are sure about this, right? Well, go ahead... just want to make sure it\'s actually intended! :)',
                 onClear: () => _deleteAll(context),
               ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

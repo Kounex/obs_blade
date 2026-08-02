@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 import 'text_field_date.dart';
 
@@ -48,7 +49,7 @@ class DateRange extends StatelessWidget {
             updateDateTime: this.updateFromDate,
           ),
         ),
-        const SizedBox(width: 12.0),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: TextFieldDate(
             placeholder: this.placeholderTo,

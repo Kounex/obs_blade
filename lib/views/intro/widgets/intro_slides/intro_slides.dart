@@ -3,16 +3,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/constrained_box.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 
 import '../../../../shared/general/social_block.dart';
 import '../../../../shared/general/themed/rich_text.dart';
 import '../../../../stores/views/intro.dart';
+import '../../intro.dart';
 import 'intro_slide.dart';
 import 'slide_controls.dart';
-
-const double kIntroControlsBottomPadding = 12.0;
 
 class IntroSlides extends StatefulWidget {
   final bool manually;
@@ -89,10 +89,9 @@ class _IntroSlidesState extends State<IntroSlides> {
                 bottomPadding: 0,
                 socialInfos: [
                   SocialEntry(
+                    linkText: 'obs-websocket on GitHub',
                     link: 'https://github.com/obsproject/obs-websocket',
-                    textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                          fontSize: 16,
-                        ),
+                    textStyle: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
               ),
@@ -110,37 +109,35 @@ class _IntroSlidesState extends State<IntroSlides> {
                     linkText: 'here',
                     link:
                         'https://github.com/obsproject/obs-websocket/releases',
-                    textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                          fontSize: 16,
-                        ),
+                    textStyle: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
               ),
             ),
           ],
           textAlign: TextAlign.left,
-          textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                fontSize: 16,
-              ),
+          textStyle: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_download.png',
         child: ThemedRichText(
-          textSpans: const [
-            TextSpan(
+          textSpans: [
+            const TextSpan(
               text:
                   'Scroll down to "Assets" and download the correct installer (for your operating system)\n\n',
             ),
             TextSpan(
               text: 'IMPORTANT: Download version 5.X and above!',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color:
+                    Theme.of(context).extension<AppStatusColors>()!.warning,
+              ),
             ),
           ],
           textAlign: TextAlign.left,
-          textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                fontSize: 16,
-              ),
+          textStyle: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
       IntroSlide(
@@ -153,9 +150,7 @@ class _IntroSlidesState extends State<IntroSlides> {
             ),
           ],
           textAlign: TextAlign.left,
-          textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                fontSize: 16,
-              ),
+          textStyle: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
     ];
@@ -180,7 +175,7 @@ class _IntroSlidesState extends State<IntroSlides> {
               ),
             ),
             const BaseDivider(),
-            const SizedBox(height: 12.0),
+            const SizedBox(height: AppSpacing.md),
             Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.paddingOf(context).bottom +

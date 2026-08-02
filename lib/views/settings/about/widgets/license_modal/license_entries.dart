@@ -65,7 +65,11 @@ class _LicenseEntriesState extends State<LicenseEntries> {
           LicenseData(),
           (LicenseData prev, LicenseEntry license) => prev..addLicense(license),
         )
-        .then((LicenseData licenseData) => licenseData..sortPackages());
+        .then((LicenseData licenseData) => licenseData..sortPackages())
+
+        /// Guard against a never-completing registry stream so the modal
+        /// lands on the error state instead of a perpetual spinner
+        .timeout(const Duration(seconds: 10));
     super.initState();
   }
 
@@ -85,7 +89,20 @@ class _LicenseEntriesState extends State<LicenseEntries> {
     return FutureBuilder<LicenseData>(
       future: _licenses,
       builder: (context, snapshot) {
+        /// The registry future can also complete with an error / timeout or
+        /// with zero packages - both used to render nothing (blank area or
+        /// a spinner that never resolved), so they get explicit states now
+        if (snapshot.hasError) {
+          return const _LicenseStateMessage(
+            text: 'The license information could not be loaded.',
+          );
+        }
         if (snapshot.hasData) {
+          if (snapshot.data!.packages.isEmpty) {
+            return const _LicenseStateMessage(
+              text: 'No license information available.',
+            );
+          }
           return Scrollbar(
             child: ListView.builder(
               shrinkWrap: true,
@@ -117,6 +134,27 @@ class _LicenseEntriesState extends State<LicenseEntries> {
           child: BaseProgressIndicator(text: 'Fetching...'),
         );
       },
+    );
+  }
+}
+
+/// Centered terminal-state note (error / empty) for the license list so the
+/// modal never renders a blank area
+class _LicenseStateMessage extends StatelessWidget {
+  final String text;
+
+  const _LicenseStateMessage({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Text(
+        this.text,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
     );
   }
 }

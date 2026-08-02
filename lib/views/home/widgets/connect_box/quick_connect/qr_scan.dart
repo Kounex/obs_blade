@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
 import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
@@ -9,6 +9,7 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 import '../../../../../models/connection.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
@@ -116,6 +117,36 @@ class _QRScanState extends State<QRScan> {
 
   @override
   Widget build(BuildContext context) {
+    final AppStatusColors statusColors =
+        Theme.of(context).extension<AppStatusColors>()!;
+
+    /// Keyed scan-state surface - crossfades between camera init / waiting /
+    /// found / wrong-code (visual only; the 1s pop and 3s reset timings and
+    /// the scan-lock logic are untouched)
+    Widget scanState;
+    if (_controller == null || !_permission) {
+      scanState = const SizedBox(key: ValueKey('initialising'));
+    } else if (_qrScanState == null) {
+      scanState = BaseProgressIndicator(
+        key: const ValueKey('waiting'),
+        text: 'Waiting for QR code...',
+      );
+    } else if (_qrScanState!) {
+      scanState = BaseResult(
+        key: const ValueKey('found'),
+        icon: BaseResultIcon.Positive,
+        iconColor: statusColors.reachable,
+        text: 'Quick connect QR code found!',
+      );
+    } else {
+      scanState = BaseResult(
+        key: const ValueKey('wrong'),
+        icon: BaseResultIcon.Negative,
+        iconColor: statusColors.unreachable,
+        text: 'Wrong QR code!',
+      );
+    }
+
     return TransculentCupertinoNavBarWrapper(
       leading: Transform.scale(
         scale: 0.8,
@@ -141,8 +172,11 @@ class _QRScanState extends State<QRScan> {
                 ),
                 QRView(
                   key: _key,
+                  /// Branded reticle: theme highlight + card-contract radius
+                  /// (was the library default red, square)
                   overlay: QrScannerOverlayShape(
-                    borderRadius: 0,
+                    borderColor: Theme.of(context).colorScheme.secondary,
+                    borderRadius: AppRadius.md,
                   ),
                   formatsAllowed: const [BarcodeFormat.qrcode],
                   onQRViewCreated: (controller) {
@@ -175,23 +209,10 @@ class _QRScanState extends State<QRScan> {
           SafeArea(
             child: SizedBox(
               height: MediaQuery.sizeOf(context).height / 5,
-              child: _controller != null && _permission
-                  ? _qrScanState == null
-                      ? BaseProgressIndicator(
-                          text: 'Waiting for QR code...',
-                        )
-                      : _qrScanState!
-                          ? const BaseResult(
-                              icon: BaseResultIcon.Positive,
-                              iconColor: CupertinoColors.activeGreen,
-                              text: 'Quick connect QR code found!',
-                            )
-                          : const BaseResult(
-                              icon: BaseResultIcon.Negative,
-                              iconColor: CupertinoColors.destructiveRed,
-                              text: 'Wrong QR code!',
-                            )
-                  : const SizedBox(),
+              child: AnimatedSwitcher(
+                duration: AppMotion.medium,
+                child: scanState,
+              ),
             ),
           ),
         ],

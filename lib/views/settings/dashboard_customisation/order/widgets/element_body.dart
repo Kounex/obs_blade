@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
@@ -17,8 +18,10 @@ class ElementBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
+    return AnimatedOpacity(
       opacity: this.config.canBeNotVisible && !this.config.visible ? 0.6 : 1.0,
+      duration: AppMotion.medium,
+      curve: AppMotion.standard,
       child: BaseCard(
         titleWidget: Row(
           children: [
@@ -46,9 +49,12 @@ class ElementBody extends StatelessWidget {
                       body:
                           'Some of the elements on the dashboard are only visible if you activated them in the previous screen.\n\nCurrently this element is ${!this.config.visible ? "not " : ""}visible in the dashboard.'),
                 ),
-                icon: Icon(this.config.visible
-                    ? Icons.visibility
-                    : Icons.visibility_off),
+                icon: Icon(
+                  this.config.visible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
               )
             : null,
         paddingChild: const EdgeInsets.all(0),

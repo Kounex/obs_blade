@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/icon_button.dart';
 
 import '../../types/enums/order.dart';
@@ -27,16 +28,16 @@ class _OrderButtonState extends State<OrderButton>
     super.initState();
 
     _controllerUp = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
+        vsync: this, duration: AppMotion.medium);
 
     _controllerDown = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 250));
+        vsync: this, duration: AppMotion.medium);
 
     _halfTurnUp = Tween<double>(begin: 0.0, end: 0.5).animate(
-        CurvedAnimation(parent: _controllerUp, curve: Curves.easeOutCubic));
+        CurvedAnimation(parent: _controllerUp, curve: AppMotion.standard));
 
     _halfTurnDown = Tween<double>(begin: 0.0, end: 0.5).animate(
-        CurvedAnimation(parent: _controllerDown, curve: Curves.easeOutCubic));
+        CurvedAnimation(parent: _controllerDown, curve: AppMotion.standard));
 
     if (this.widget.order == Order.Ascending) {
       _controllerUp.animateTo(_controllerUp.upperBound,
@@ -90,7 +91,7 @@ class _OrderButtonState extends State<OrderButton>
         child: AnimatedBuilder(
           animation: _controllerDown,
           child: const Icon(
-            CupertinoIcons.down_arrow,
+            CupertinoIcons.arrow_up_arrow_down,
             size: 22.0,
           ),
           builder: (context, child) => RotationTransition(
