@@ -10,17 +10,6 @@ import '../../../../types/interfaces/past_stats_data.dart';
 import '../../../../utils/routing_helper.dart';
 import 'stats_date_chip.dart';
 
-/// Unique (per box) Hero tag for the entry -> detail shared element
-/// transition - prefixed by stat type since stream and record entries live
-/// in different boxes and their Hive keys may collide
-String statsEntryHeroTag(PastStatsData pastStatsData) {
-  final Object hiveKey = pastStatsData is PastStreamData
-      ? pastStatsData.key
-      : (pastStatsData as PastRecordData).key;
-  return 'stats-entry-${pastStatsData is PastStreamData ? 'stream' : 'record'}-'
-      '$hiveKey';
-}
-
 class StatsEntry extends StatelessWidget {
   final PastStatsData pastStatsData;
   final bool usedInDetail;
@@ -177,14 +166,6 @@ class StatsEntry extends StatelessWidget {
       );
     }
 
-    /// The transparent [Material] keeps text styling intact while the Hero
-    /// is in flight between the list and the detail route
-    return Hero(
-      tag: statsEntryHeroTag(this.pastStatsData),
-      child: Material(
-        type: MaterialType.transparency,
-        child: entry,
-      ),
-    );
+    return entry;
   }
 }

@@ -66,19 +66,6 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
               duration: AppMotion.medium,
               switchInCurve: AppMotion.standard,
               switchOutCurve: AppMotion.exit,
-              /// The outgoing page may share entries (and therefore Hero
-              /// tags) with the incoming one - disable its Heroes while it
-              /// fades out so a tap-to-detail during the crossfade can
-              /// never hit duplicate Hero tags
-              layoutBuilder: (currentChild, previousChildren) => Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  ...previousChildren.map(
-                    (child) => HeroMode(enabled: false, child: child),
-                  ),
-                  ?currentChild,
-                ],
-              ),
               child: ListView.separated(
                 key: ValueKey(pageSignature),
                 padding: const EdgeInsets.all(0),

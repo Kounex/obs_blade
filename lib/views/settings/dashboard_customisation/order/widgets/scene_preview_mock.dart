@@ -2,10 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
-import 'mock_parts.dart';
 
-/// Minimal mock of the Scene Preview element: a dark 16:9 frame with a play
-/// glyph, like the screenshot surface in the dashboard
+/// Compact stand-in for [ScenePreview]: same 16:9 frame language (dark
+/// surface, hairline, radius) without mounting the live WebSocket preview.
 class ScenePreviewMock extends StatelessWidget {
   const ScenePreviewMock({super.key});
 
@@ -16,24 +15,15 @@ class ScenePreviewMock extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.black,
-          border: Border.all(color: Theme.of(context).dividerColor),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        child: const Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(
-              CupertinoIcons.play_rectangle,
-              size: 28.0,
-              color: Colors.white54,
-            ),
-            Positioned(
-              left: AppSpacing.sm,
-              right: AppSpacing.sm,
-              bottom: AppSpacing.sm,
-              child: MockBar(height: 5.0, color: Colors.white24),
-            ),
-          ],
+        child: Icon(
+          CupertinoIcons.play_rectangle,
+          size: 28.0,
+          color: Colors.white.withValues(alpha: 0.45),
         ),
       ),
     );

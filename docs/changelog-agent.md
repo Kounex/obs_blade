@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-03 (redesign finish batch)
+
+- Stats entry→detail **Hero removed** (plain push); `HeroMode` workaround in
+  paginated list gone with it.
+- **Unified onboarding:** GettingStarted → WS setup + light app-tour slides;
+  deleted OBS version fork (`version_selection`, `twenty_eight_party`,
+  `back_so_selection_wrapper`). Screenshot walk updated.
+- **Reorder previews** tightened to reuse real leaf widgets (`BaseCheckbox`,
+  `BaseDropdown`, `BaseButton`, `StatTile`, scene-item/audio chrome).
+- **`DashboardElementsOrder` wired** into live `DashboardContent` via
+  `dashboard_element_layout.dart` — compose-when-adjacent (mobile tabs /
+  tablet side-by-side for Scene Items↔Audio and Chat↔Stats).
+- **Phone + tablet product rule** documented in `AGENTS.md` + design-system
+  § Responsive layouts; order screen hint; Force Tablet Mode noted for QA.
+- Verify: persistence/chat/websocket tests **38/38**; analyze 0 errors on
+  touched paths. Not committed/pushed — user review first.
+
 ## 2026-07-27 (redesign branch)
 
 - **"On Air" visual overhaul on branch `redesign`** (not committed/pushed — user

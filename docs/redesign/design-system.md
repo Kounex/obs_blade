@@ -4,12 +4,14 @@ Branch: `redesign` · 2026-07-27 · Source audit: `docs/redesign/audit-digest.md
 
 ## Concept
 
-**"On Air" — a broadcast control room in your pocket.** OBS Blade is a mission-control
-tool for streamers; the redesign leans into that identity: layered studio-dark surfaces,
-signal-precise accents, glassy translucent bars, and physics-feeling motion everywhere.
-We *evolve* the existing signature (flat 12-radius cards, hairline dividers, blurred
-translucent bars, red/blue accent split) into a deliberate system — we do not reskin
-into something unrecognizable. 500k users must feel an upgrade, not a new app.
+**"On Air" — a broadcast control room in your hand.** OBS Blade is a mission-control
+tool for streamers on **phone and tablet**; the redesign leans into that identity:
+layered studio-dark surfaces, signal-precise accents, glassy translucent bars, and
+physics-feeling motion everywhere. We *evolve* the existing signature (flat 12-radius
+cards, hairline dividers, blurred translucent bars, red/blue accent split) into a
+deliberate system — we do not reskin into something unrecognizable. 500k users must
+feel an upgrade, not a new app. Large-screen layouts (side-by-side scene/audio and
+chat/stats) are first-party — not a stretched phone UI.
 
 **Zero functional change.** Every capability, flow, Hive key, timing contract, and
 customisation in the audit digest §6 is preserved. This is a visual/motion overhaul only.
@@ -39,7 +41,7 @@ customisation in the audit digest §6 is preserved. This is a visual/motion over
 
 **`app_spacing.dart`** — 4px grid: `xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32.
 Section labels get `lg` top rhythm. Existing layout constants (640 max width, 700
-breakpoint) stay.
+breakpoint) stay — see **Responsive layouts** below.
 
 **`app_radius.dart`** — `sm` 8, `md` 12 (BaseCard contract), `lg` 16, `xl` 20, `pill`.
 
@@ -57,6 +59,24 @@ stays, accent red `#FF4654` stays, highlight systemBlue stays. New `AppStatusCol
 `ThemeExtension`: live/stream green, recording red, warning amber, reachable states —
 replaces ~69 hardcoded status colors (theme-aware derivation: on custom themes, status
 colors stay constant, they're semantic not brand).
+
+## Responsive layouts
+
+OBS Blade is a **first-party phone and tablet** app. Prefer great UI on both; never
+“ship phone and hope tablet stretches.”
+
+| Mechanism | Where | Rule |
+|---|---|---|
+| Breakpoint | `StylingHelper.max_width_mobile` **700** | Width **>** 700 → tablet composition |
+| Override | Settings → **Force Tablet Mode** (`EnforceTabletMode`) | Forces tablet branch even on narrow widths (QA + power users) |
+| Swap widget | `ResponsiveWidgetWrapper` | Pass `mobileWidget` + `tabletWidget`; respects breakpoint + Force Tablet Mode |
+| Content column | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **640** | Keeps readable measure on very wide screens |
+
+**Composition patterns (dashboard):**
+- **Phone:** adjacent Scene Items + Audio (and Chat + Stats) compose into one **tabbed** block to save scroll. Separating them in Elements Order stacks them independently.
+- **Tablet / large:** the same adjacent pairs compose into **side-by-side** cards (not stacked full-width tabs). Separated pairs still stack in list order.
+
+When editing dashboard layout or the order feature, route through `ResponsiveWidgetWrapper` — do not collapse tablet to the mobile tab UI. Intro may portrait-lock phones only; tablets keep landscape.
 
 ## Motion language
 
@@ -98,8 +118,8 @@ colors stay constant, they're semantic not brand).
   BaseCard/BaseIconButton/FormattedText (keep APIs; FormattedText gains animated value
   change); Pressable adopted; BaseResult animated; FullOverlay spring; fix `Fader`
   build side-effect; dialogs entrance motion.
-- **Intro**: cinematic stages (no dead gap), staggered copy, primary/tertiary CTA
-  hierarchy, version cards as hero selection, multi-burst confetti.
+- **Intro**: cinematic stages (no dead gap), staggered copy, primary CTA
+  hierarchy, unified WS-setup + light app-tour slides (no OBS version fork).
 - **Home**: branded stretchy app bar (themed refresh indicator), connection cards with
   press-scale + ambient reachability + connect-progress button, staggered entrances,
   animated re-sort.
@@ -129,4 +149,5 @@ colors stay constant, they're semantic not brand).
 `./flutterw analyze` clean for touched files (infos OK pre-existing),
 `./flutterw test test/chat test/websocket test/persistence` green, plus a manual
 simulator pass on: intro, connect flow, dashboard (studio mode, hide mode), statistics
-detail, custom theme forge + activate, settings toggles.
+detail, custom theme forge + activate, settings toggles — **and** one wide / Force
+Tablet Mode check that Scene Items/Audio and Chat/Stats stay side-by-side when adjacent.

@@ -104,7 +104,7 @@ class GettingStarted extends StatelessWidget {
                   IntroPrimaryButton(
                     text: 'Start',
                     onPressed: () => GetIt.instance<IntroStore>()
-                        .setStage(IntroStage.VersionSelection),
+                        .setStage(IntroStage.AppSlides),
                   ),
                 ],
               ),

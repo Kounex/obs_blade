@@ -2,38 +2,66 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
-import 'mock_parts.dart';
 
-/// Minimal mock of the Scene Items panel: rows with a visibility eye and a
-/// source name
+/// Row chrome matching [SceneItemTile]: type icon + name + eye toggle,
+/// using the same Cupertino glyphs as the live list (no GetIt / scene data).
 class SceneItemsPreview extends StatelessWidget {
   const SceneItemsPreview({super.key});
 
   @override
   Widget build(BuildContext context) {
     final Color? iconColor = Theme.of(context).iconTheme.color;
-    final Color disabledColor = Theme.of(context).disabledColor;
+    final Color? muted = Theme.of(context).textTheme.bodySmall?.color;
 
-    Widget row({required IconData icon, Color? color, double endGap = 0.0}) =>
+    Widget row({
+      required IconData typeIcon,
+      required String name,
+      required bool visible,
+    }) =>
         Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Row(
             children: [
-              Icon(icon, size: 14.0, color: color ?? iconColor),
-              const SizedBox(width: AppSpacing.sm),
-              const Expanded(child: MockBar(height: 7.0)),
-              SizedBox(width: endGap),
+              Icon(typeIcon, size: 18.0, color: iconColor),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              Icon(
+                visible ? CupertinoIcons.eye_solid : CupertinoIcons.eye_slash,
+                size: 18.0,
+                color: visible ? iconColor : muted,
+              ),
             ],
           ),
         );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        row(icon: CupertinoIcons.eye, endGap: 32.0),
-        row(icon: CupertinoIcons.eye_slash, color: disabledColor, endGap: 72.0),
-        row(icon: CupertinoIcons.eye, endGap: 8.0),
-      ],
+    return IgnorePointer(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          row(
+            typeIcon: CupertinoIcons.photo_on_rectangle,
+            name: 'Camera',
+            visible: true,
+          ),
+          row(
+            typeIcon: CupertinoIcons.folder_solid,
+            name: 'Overlays',
+            visible: false,
+          ),
+          row(
+            typeIcon: CupertinoIcons.photo_on_rectangle,
+            name: 'Gameplay',
+            visible: true,
+          ),
+        ],
+      ),
     );
   }
 }

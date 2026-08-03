@@ -1,7 +1,8 @@
 /// Spacing tokens (4px grid) for the "On Air" design system.
 ///
 /// Section labels get [AppSpacing.lg] top rhythm. Existing layout constants
-/// (640 max width, 700 breakpoint) stay as they are.
+/// (640 max width, 700 breakpoint) stay — see docs/redesign/design-system.md
+/// § Responsive layouts.
 class AppSpacing {
   AppSpacing._();
 

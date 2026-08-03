@@ -4,9 +4,7 @@ part 'intro.g.dart';
 
 enum IntroStage {
   GettingStarted,
-  VersionSelection,
-  TwentyEightParty,
-  InstallationSlides,
+  AppSlides,
 }
 
 class IntroStore = _IntroStore with _$IntroStore;

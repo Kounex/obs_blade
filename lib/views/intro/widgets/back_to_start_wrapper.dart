@@ -6,10 +6,11 @@ import 'package:obs_blade/stores/views/intro.dart';
 
 import '../../../shared/general/themed/cupertino_button.dart';
 
-class BackToSelectionWrapper extends StatelessWidget {
+/// Back affordance from the intro slides to the Getting Started stage
+class BackToStartWrapper extends StatelessWidget {
   final Widget? child;
 
-  const BackToSelectionWrapper({
+  const BackToStartWrapper({
     super.key,
     this.child,
   });
@@ -35,11 +36,11 @@ class BackToSelectionWrapper extends StatelessWidget {
                           .cupertinoOverrideTheme!
                           .primaryColor,
                     ),
-                    const Text('Version Selection')
+                    const Text('Getting Started'),
                   ],
                 ),
                 onPressed: () => GetIt.instance<IntroStore>()
-                    .setStage(IntroStage.VersionSelection),
+                    .setStage(IntroStage.GettingStarted),
               ),
             ),
           ),

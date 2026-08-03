@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-02**.
+Read this first after `AGENTS.md`. Last reset: **2026-08-03**.
 
 ## Handoff hygiene (read before editing this file)
 
@@ -36,6 +36,7 @@ Read this first after `AGENTS.md`. Last reset: **2026-08-02**.
 | Remote | `Kounex/obs_blade` (**public**) |
 | Branch | `redesign` (off `master`; `master` is current through the public-repo hygiene pass) |
 | Users | 500k+ live — persistence + release paths are sensitive |
+| Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
 
 ### Machines
 
@@ -48,28 +49,21 @@ Do not commit/push unless the user explicitly asks.
 
 ## Right now
 
-- **`redesign` branch: "On Air" visual overhaul — not committed/pushed yet,
-  user reviews first.** Verification passing: `flutter analyze` 138
-  issues/0 errors (master baseline 269), `flutter test test/chat
-  test/websocket test/persistence` 38/38. Visual-QA round 2 complete with
-  re-shoot verification. Full detail: [`redesign/session-notes.md`](redesign/session-notes.md)
-  · design spec: [`redesign/design-system.md`](redesign/design-system.md) ·
-  audit: [`redesign/audit-digest.md`](redesign/audit-digest.md).
-- **Redesign follow-ups**, from session-notes.md: a motion pass on device
-  for the connect-overlay success morph + confetti (not verifiable from
-  static screenshots); `DashboardElementsOrder` (typeId 12) wiring is still
-  dormant, needs maintainer sign-off before the dashboard actually reads it.
-- **Chat Phase 1 (native Twitch)** — still paused, needs Twitch Developer
-  app credentials (client id + redirect URI) from the user. Unchanged since
-  Phase 0 (see `chat-webview-audit.md`).
-- **Twitch developer application for the paid-tier OAuth broker** — separate
-  from the chat item above, see `private/backend-architecture.md` component
-  #4/#5. Identified as the longest-lead-time item for the paid backend work;
-  **not yet actually started** — worth kicking off independent of build order.
-- **NAS is currently synced to this branch via a git bundle, not a normal
-  fetch** — `redesign` isn't pushed to origin yet. If it still isn't by the
-  next session, re-bundle from the workstation rather than assuming a plain
-  `git fetch` will see it.
+- **Redesign finish batch (2026-08-03) landed on NAS `redesign` working tree —
+  not committed/pushed yet; user reviews first.** Includes: stats entry→detail
+  Hero removed; unified onboarding (GettingStarted → WS setup + app-tour
+  slides; version fork deleted); reorder previews reuse real leaf widgets;
+  `DashboardElementsOrder` wired into live dashboard with
+  compose-when-adjacent (mobile tabs / tablet row); phone+tablet product rule
+  documented. Verify: `flutter test test/chat test/websocket test/persistence`
+  38/38. MacBook: visual smoke (intro path, reorder → dashboard, Force Tablet
+  Mode side-by-side).
+- **Still open after this batch:** connect-overlay success morph + confetti
+  motion pass on device; Twitch Developer Console app registrations deferred
+  (Chat Phase 1 + paid OAuth broker) — see `private/backend-architecture.md`.
+- **NAS may still need a git bundle from the workstation** if `redesign` isn't
+  on origin yet — don't assume a plain `git fetch` sees the latest redesign
+  commits from the other machine.
 
 ## Verify quickly
 
@@ -83,6 +77,7 @@ cd ~/development/flutter/obs_blade
 flutter test test/chat/ test/websocket/ test/persistence/
 # Simulator: flutter devices && flutter run -d <sim-id>
 # Visual-QA: tool/visual_qa/capture_screenshots.sh (keeps --no-uninstall)
+# Tablet smoke: Settings → Force Tablet Mode, confirm adjacent pairs side-by-side
 ```
 
 ## Doc map

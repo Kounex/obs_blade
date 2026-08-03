@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
@@ -7,9 +8,9 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/constrained_box.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 
-import '../../../../shared/general/social_block.dart';
 import '../../../../shared/general/themed/rich_text.dart';
 import '../../../../stores/views/intro.dart';
+import '../../../../utils/styling_helper.dart';
 import '../../intro.dart';
 import 'intro_slide.dart';
 import 'slide_controls.dart';
@@ -27,14 +28,10 @@ class _IntroSlidesState extends State<IntroSlides> {
   final PageController _pageController = PageController();
   late List<Widget> _pageChildren;
 
-  /// Will be used to force the user to stay on a slide for a given time
-  /// before being able to move on. This will ensure they at least see
-  /// a slide for a speciic time and hopefully use this time to take
-  /// a look at the instrcutions / possibilities
-  // Timer? _timerToContinue;
-
-  final List<bool> _pagesLockedPreviously = [false, false, false];
-  final List<bool> _pagesToLockOn = [true, true, true];
+  /// First-time users stay on early slides briefly so they actually read
+  /// the WebSocket setup steps; app-tour slides stay unlocked.
+  final List<bool> _pagesLockedPreviously = [false, false, false, false, false];
+  final List<bool> _pagesToLockOn = [true, true, false, false, false];
 
   final List<ReactionDisposer> _disposers = [];
 
@@ -57,6 +54,7 @@ class _IntroSlidesState extends State<IntroSlides> {
 
   void _checkAndSetSlideLock(IntroStore introStore, int currentPage) {
     if (!this.widget.manually &&
+        currentPage < _pagesToLockOn.length &&
         _pagesToLockOn[currentPage] &&
         !_pagesLockedPreviously[currentPage]) {
       introStore.setLockedOnSlide(true);
@@ -72,85 +70,114 @@ class _IntroSlidesState extends State<IntroSlides> {
     super.dispose();
   }
 
+  Widget _tourIcon(BuildContext context, IconData icon) {
+    final Color accent = Theme.of(context).colorScheme.secondary;
+    return Container(
+      width: 88.0,
+      height: 88.0,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Icon(icon, size: 40.0, color: accent),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final TextStyle bodyStyle = Theme.of(context).textTheme.bodyLarge!;
+
     _pageChildren = [
       IntroSlide(
-        imagePath: 'assets/images/intro/intro_obs_websocket_page.png',
+        imagePath: 'assets/images/intro/intro_obs_websocket_settings.png',
         child: ThemedRichText(
           textSpans: [
-            const TextSpan(
-              text:
-                  'Visit the OBS WebSocket GitHub page to get the plugin to make this app work:\n\n',
-            ),
-            WidgetSpan(
-              child: SocialBlock(
-                topPadding: 0,
-                bottomPadding: 0,
-                socialInfos: [
-                  SocialEntry(
-                    linkText: 'obs-websocket on GitHub',
-                    link: 'https://github.com/obsproject/obs-websocket',
-                    textStyle: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-            const TextSpan(
-              text:
-                  '\n\nClick on the "Releases" link in the Downloads section as seen in the screenshot or ',
-            ),
-            WidgetSpan(
-              child: SocialBlock(
-                topPadding: 0.0,
-                bottomPadding: 0.0,
-                socialInfos: [
-                  SocialEntry(
-                    linkText: 'here',
-                    link:
-                        'https://github.com/obsproject/obs-websocket/releases',
-                    textStyle: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-          ],
-          textAlign: TextAlign.left,
-          textStyle: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ),
-      IntroSlide(
-        imagePath: 'assets/images/intro/intro_obs_websocket_download.png',
-        child: ThemedRichText(
-          textSpans: [
-            const TextSpan(
-              text:
-                  'Scroll down to "Assets" and download the correct installer (for your operating system)\n\n',
-            ),
             TextSpan(
-              text: 'IMPORTANT: Download version 5.X and above!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color:
-                    Theme.of(context).extension<AppStatusColors>()!.warning,
-              ),
+              text: 'WebSocket is built into OBS Studio.\n\n',
+              style: bodyStyle.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const TextSpan(
+              text:
+                  'Open Tools → WebSocket Server Settings and turn the server on. No separate plugin install is required on current OBS versions.',
             ),
           ],
           textAlign: TextAlign.left,
-          textStyle: Theme.of(context).textTheme.bodyLarge,
+          textStyle: bodyStyle,
         ),
       ),
       IntroSlide(
         imagePath: 'assets/images/intro/intro_obs_websocket_settings.png',
         child: ThemedRichText(
-          textSpans: const [
-            TextSpan(
+          textSpans: [
+            const TextSpan(
               text:
-                  'After installing the plugin and restarting OBS, check if Tools -> WebSocket Server Settings is available and use the recommended settings (above) - Enjoy!',
+                  'Use the recommended defaults, set a password, and note the port (usually 4455).\n\n',
+            ),
+            TextSpan(
+              text: 'You\'ll enter those same details when connecting from this app.',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).extension<AppStatusColors>()!.warning,
+              ),
             ),
           ],
           textAlign: TextAlign.left,
-          textStyle: Theme.of(context).textTheme.bodyLarge,
+          textStyle: bodyStyle,
+        ),
+      ),
+      IntroSlide(
+        leading: _tourIcon(context, CupertinoIcons.house_fill),
+        child: ThemedRichText(
+          textSpans: const [
+            TextSpan(
+              text:
+                  'Home is your connection hub.\n\nAdd your OBS host (IP or hostname), port, and password, then connect. Saved connections stay one tap away next time — on phone or tablet.',
+            ),
+          ],
+          textAlign: TextAlign.center,
+          textStyle: bodyStyle,
+        ),
+      ),
+      IntroSlide(
+        leading: _tourIcon(context, CupertinoIcons.square_grid_2x2_fill),
+        child: ThemedRichText(
+          textSpans: const [
+            TextSpan(
+              text:
+                  'The Dashboard is your control room.\n\nSwitch scenes, tweak audio, preview the program, and start or stop stream and recording. On larger screens, Scene Items and Audio sit side by side for faster reach.',
+            ),
+          ],
+          textAlign: TextAlign.center,
+          textStyle: bodyStyle,
+        ),
+      ),
+      IntroSlide(
+        leading: Column(
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 160),
+              child: Image.asset(
+                StylingHelper.brightnessAwareOBSLogo(context),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _tourIcon(context, CupertinoIcons.chart_bar_alt_fill),
+          ],
+        ),
+        child: ThemedRichText(
+          textSpans: [
+            TextSpan(
+              text: 'You\'re ready.\n\n',
+              style: bodyStyle.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const TextSpan(
+              text:
+                  'Statistics keeps past streams and recordings so you can review performance later. Explore Settings anytime to customise the dashboard layout for your setup.',
+            ),
+          ],
+          textAlign: TextAlign.center,
+          textStyle: bodyStyle,
         ),
       ),
     ];

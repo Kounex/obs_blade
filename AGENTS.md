@@ -1,6 +1,8 @@
 # OBS Blade
 
-Flutter remote for OBS Studio via **OBS WebSocket v5** (iOS/Android).
+Flutter remote for OBS Studio via **OBS WebSocket v5** (**iOS/Android — phone and
+tablet / large-screen first-party**). Great UI on both form factors is a product
+requirement, not an afterthought.
 Repo: `Kounex/obs_blade` (**public**) · branches: `master`, `redesign`, `foss`, `legacy`.
 
 > **Docs hygiene (public repo):** no credentials, personal absolute paths,
@@ -49,8 +51,15 @@ trusting anything below to still be current.
 | Stream chat (WebView) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
 | Shared design system (`redesign` branch) | `lib/shared/design/` |
+| Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |
+| Content column max width | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **640** |
 
 **Stack:** MobX + GetIt · **Hive CE** · freezed for nested OBS API objects.
+
+**Layouts:** Use `ResponsiveWidgetWrapper` when mobile and tablet need different
+composition (e.g. tabs vs side-by-side). Don’t phone-optimize the dashboard in a
+way that regresses tablet. Details: [`docs/redesign/design-system.md`](docs/redesign/design-system.md)
+§ Responsive layouts.
 
 **OBS control:** official WebSocket **v5** only — typed subset under
 `lib/types/` (see architecture doc). `DashboardStore` is a large intentional
@@ -90,7 +99,9 @@ native Twitch (needs Dev Console credentials) — see chat audit + handoff.
   `/tmp/obs_shots/`. OBS ws password is read from the local OBS config at
   runtime, never from the repo. **Always keeps `--no-uninstall`** in the
   flutter test call — the default uninstalls the app afterwards and wipes
-  the simulator's data container.
+  the simulator's data container. Phone-width by default; for a large-screen
+  smoke, enable Settings → **Force Tablet Mode** (or use a wide / iPad sim)
+  and re-check dashboard Scene Items/Audio + Chat/Stats side-by-side.
 - Branch: `redesign`
 
 ## Related

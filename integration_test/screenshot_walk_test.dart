@@ -533,48 +533,32 @@ void main() {
 
       await _tryTap(tester, find.text('Start'),
           warnOnMissing: 'intro Start button');
-      // Version selection - select 28.X to show the selected state
-      // (the Pressable cards are translucent hit targets, so the tap warning
-      // is a false positive - silence it for these two taps)
-      await _waitFor(tester, find.text('28.X'), timeoutMs: 10000);
-      await _tryTap(tester, find.text('28.X'),
-          warnIfMissed: false, warnOnMissing: '28.X version card');
-      await _shot(tester, '41_intro_version_selection', settleMs: 900);
-
-      await _tryTap(tester, find.text('Next'),
-          warnOnMissing: 'version selection Next');
-      // Confetti bursts fire at 0.4s / 0.7s / 1.05s - capture while the
-      // particles are still in flight (the back button marks the stage)
-      await _waitFor(tester, find.text('Version Selection'),
-          timeoutMs: 10000);
-      await _shot(tester, '42_intro_party', settleMs: 1600);
-
-      // Back to version selection, then the 27.X install slides
-      await _tryTap(tester, find.text('Version Selection'),
-          warnOnMissing: 'back to Version Selection');
-      await _waitFor(tester, find.text('27.X'), timeoutMs: 10000);
-      await _tryTap(tester, find.text('27.X'),
-          warnIfMissed: false, warnOnMissing: '27.X version card');
-      await _pump(tester, 600);
-      await _tryTap(tester, find.text('Next'),
-          warnOnMissing: 'version selection Next (install)');
-
-      // Install slides force a 5s lock on each "Next" (a countdown ring
-      // replaces the button). Under test load the countdown can take longer
-      // than wall time suggests, so poll for the unlocked button.
+      // Unified slides: first two are WS setup (locked 5s for first-time),
+      // then a light app tour. Poll for the unlocked Next / Start button.
+      await _waitFor(tester, find.text('Getting Started'), timeoutMs: 10000);
       await _waitFor(tester, find.text('Next'));
-      await _shot(tester, '43_intro_install_slide_1', settleMs: 400);
+      await _shot(tester, '41_intro_ws_setup_1', settleMs: 400);
       await _tryTap(tester, find.text('Next'),
           warnOnMissing: 'slide 1 Next');
-      await _pump(tester, 900); // page transition, then lock starts again
+      await _pump(tester, 900);
       await _waitFor(tester, find.text('Next'));
-      await _shot(tester, '44_intro_install_slide_2', settleMs: 400);
+      await _shot(tester, '42_intro_ws_setup_2', settleMs: 400);
       await _tryTap(tester, find.text('Next'),
           warnOnMissing: 'slide 2 Next');
       await _pump(tester, 900);
-      // Last slide: the primary button reads "Start" once unlocked
+      await _waitFor(tester, find.text('Next'));
+      await _shot(tester, '43_intro_tour_home', settleMs: 400);
+      await _tryTap(tester, find.text('Next'),
+          warnOnMissing: 'slide 3 Next');
+      await _pump(tester, 600);
+      await _waitFor(tester, find.text('Next'));
+      await _shot(tester, '44_intro_tour_dashboard', settleMs: 400);
+      await _tryTap(tester, find.text('Next'),
+          warnOnMissing: 'slide 4 Next');
+      await _pump(tester, 600);
+      // Last slide: the primary button reads "Start"
       await _waitFor(tester, find.text('Start'));
-      await _shot(tester, '45_intro_install_slide_3', settleMs: 400);
+      await _shot(tester, '45_intro_tour_ready', settleMs: 400);
 
       // Leave the intro WITHOUT tapping the final "Start" (it would persist
       // HasUserSeenIntro202208). Route replacement mirrors the entry path.

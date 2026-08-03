@@ -5,13 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
-import 'package:obs_blade/views/intro/widgets/back_so_selection_wrapper.dart';
+import 'package:obs_blade/views/intro/widgets/back_to_start_wrapper.dart';
 
 import '../../stores/views/intro.dart';
 import 'widgets/getting_started.dart';
 import 'widgets/intro_slides/intro_slides.dart';
-import 'widgets/twenty_eight_party.dart';
-import 'widgets/version_selection.dart';
 
 /// Single source for the bottom padding of the intro control cluster
 /// (used by the intro slides and their controls)
@@ -33,7 +31,8 @@ class _IntroViewState extends State<IntroView> {
 
     /// Checking whether tablet (screen big enough to display intro slides
     /// correctly in landscape mode) or phone - taken from the
-    /// 'flutter_device_type' package
+    /// 'flutter_device_type' package. Phones lock to portrait; tablets /
+    /// large screens keep full orientation support.
     final double devicePixelRatio = ui.window.devicePixelRatio;
     final ui.Size size = ui.window.physicalSize;
     final double width = size.width;
@@ -90,14 +89,8 @@ class _IntroViewState extends State<IntroView> {
                 switch (GetIt.instance<IntroStore>().stage) {
                   case IntroStage.GettingStarted:
                     return const GettingStarted();
-                  case IntroStage.VersionSelection:
-                    return const VersionSelection();
-                  case IntroStage.TwentyEightParty:
-                    return BackToSelectionWrapper(
-                      child: TwentyEightParty(manually: this.widget.manually),
-                    );
-                  case IntroStage.InstallationSlides:
-                    return BackToSelectionWrapper(
+                  case IntroStage.AppSlides:
+                    return BackToStartWrapper(
                       child: IntroSlides(manually: this.widget.manually),
                     );
                 }

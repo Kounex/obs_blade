@@ -5,13 +5,67 @@ import 'stats/stats.dart';
 import 'stream_chat/stream_chat.dart';
 
 class OBSWidgetsMobile extends StatelessWidget {
+  /// When true, the Stats tab is listed (and shown) before Chat.
+  final bool statsFirst;
+
   const OBSWidgetsMobile({
     super.key,
+    this.statsFirst = false,
   });
 
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
+
+    final List<Widget> tabs = this.statsFirst
+        ? const [
+            Tab(child: Text('Stats')),
+            Tab(child: Text('Chat')),
+          ]
+        : const [
+            Tab(child: Text('Chat')),
+            Tab(child: Text('Stats')),
+          ];
+
+    final List<Widget> views = this.statsFirst
+        ? const [
+            Padding(
+              padding: EdgeInsets.only(top: AppSpacing.md),
+              child: Stats(
+                pageIndicatorPadding: EdgeInsets.only(
+                  top: AppSpacing.md,
+                  bottom: AppSpacing.md,
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(
+                top: AppSpacing.md,
+                left: AppSpacing.sm,
+                right: AppSpacing.sm,
+              ),
+              child: StreamChat(),
+            ),
+          ]
+        : const [
+            Padding(
+              padding: EdgeInsets.only(
+                top: AppSpacing.md,
+                left: AppSpacing.sm,
+                right: AppSpacing.sm,
+              ),
+              child: StreamChat(),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: AppSpacing.md),
+              child: Stats(
+                pageIndicatorPadding: EdgeInsets.only(
+                  top: AppSpacing.md,
+                  bottom: AppSpacing.md,
+                ),
+              ),
+            ),
+          ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,38 +93,14 @@ class OBSWidgetsMobile extends StatelessWidget {
                   ),
                   indicatorSize: TabBarIndicatorSize.label,
                   dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(
-                      child: Text('Chat'),
-                    ),
-                    Tab(
-                      child: Text('Stats'),
-                    )
-                  ],
+                  tabs: tabs,
                 ),
               ),
-              const SizedBox(
+              SizedBox(
                 height: 720.0,
                 child: TabBarView(
-                  physics: NeverScrollableScrollPhysics(),
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(
-                          top: AppSpacing.md,
-                          left: AppSpacing.sm,
-                          right: AppSpacing.sm),
-                      child: StreamChat(),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(top: AppSpacing.md),
-                      child: Stats(
-                        pageIndicatorPadding: EdgeInsets.only(
-                          top: AppSpacing.md,
-                          bottom: AppSpacing.md,
-                        ),
-                      ),
-                    ),
-                  ],
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: views,
                 ),
               )
             ],

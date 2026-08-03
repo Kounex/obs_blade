@@ -7,6 +7,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/element_list.dart';
 
+import '../../../../shared/design/design.dart';
 import '../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class DashboardCustomisationOrderView extends StatelessWidget {
@@ -33,7 +34,24 @@ class DashboardCustomisationOrderView extends StatelessWidget {
             ),
           ),
         ),
-        customBody: const ElementList(),
+        customBody: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                0,
+              ),
+              child: Text(
+                'On phones, adjacent Scene Items & Audio (and Chat & Stats) stay in one tabbed block. On larger screens they stay side by side. Separate them in this list to stack them independently.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+            const Expanded(child: ElementList()),
+          ],
+        ),
       ),
     );
   }
