@@ -26,8 +26,8 @@ trusting anything below to still be current.
   are only as current as whoever last updated them remembered to make them.
   Diff your branch against its remote counterpart and skim recent log first.
 - **Do not commit/push** unless the user explicitly asks. Active branch:
-  `redesign` (off `master`; pull/fetch before editing — see the handoff doc
-  for exactly how current each machine's clone is).
+  `master` (includes "On Air" redesign; pull/fetch before editing — see the
+  handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
 
 ### Maintainer's agent setup (Kounex-specific — external contributors can ignore)
@@ -50,7 +50,7 @@ trusting anything below to still be current.
 | Persisted models | `lib/models/` + `TypeIDs` |
 | Stream chat (WebView) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
-| Shared design system (`redesign` branch) | `lib/shared/design/` |
+| Shared design system ("On Air") | `lib/shared/design/` |
 | Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |
 | Content column max width | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **640** |
 
@@ -82,7 +82,7 @@ native Twitch (needs Dev Console credentials) — see chat audit + handoff.
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | History of agent changes (not the handoff doc — that's current-state only) |
 | [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
-| [`docs/redesign/`](docs/redesign/) | "On Air" redesign (`redesign` branch): design system, audit digest, session notes |
+| [`docs/redesign/`](docs/redesign/) | "On Air" redesign (now on `master`): design system, audit digest, session notes |
 | [`docs/private/monetization-strategy.md`](docs/private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored — not public.** |
 | [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — Hetzner hosting, build order, open decisions. **Gitignored — not public.** |
 
@@ -102,7 +102,7 @@ native Twitch (needs Dev Console credentials) — see chat audit + handoff.
   the simulator's data container. Phone-width by default; for a large-screen
   smoke, enable Settings → **Force Tablet Mode** (or use a wide / iPad sim)
   and re-check dashboard Scene Items/Audio + Chat/Stats side-by-side.
-- Branch: `redesign`
+- Branch: `master`
 
 ## Related
 
