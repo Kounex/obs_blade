@@ -29,8 +29,9 @@ class DashboardCustomisationOrderView extends StatelessWidget {
               body:
                   'Are you sure you want to reset the order of the dashboard elements?',
               isYesDestructive: true,
-              onOk: (_) => Hive.box(HiveKeys.Settings.name)
-                  .delete(SettingsKeys.DashboardElementsOrder.name),
+              onOk: (_) => Hive.box(
+                HiveKeys.Settings.name,
+              ).delete(SettingsKeys.DashboardElementsOrder.name),
             ),
           ),
         ),
@@ -42,7 +43,7 @@ class DashboardCustomisationOrderView extends StatelessWidget {
                 AppSpacing.lg,
                 AppSpacing.md,
                 AppSpacing.lg,
-                0,
+                AppSpacing.md,
               ),
               child: Text(
                 'On phones, adjacent Scene Items & Audio (and Chat & Stats) stay in one tabbed block. On larger screens they stay side by side. Separate them in this list to stack them independently.',

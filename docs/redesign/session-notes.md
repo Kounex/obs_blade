@@ -98,8 +98,10 @@ design), `StaggeredEntrance` (one-shot, MobX-safe), `AnimatedResultIcon`,
   (`Pressable`), not ink. This is intentional, don't "fix".
 - Landmines from audit §6 were deliberately NOT fixed (filter_list firstWhere,
   resetLazySingleton-in-build, Bright Star hex, de_DE dates, tip-sum parsing).
-- `DashboardElementsOrder` (typeId 12) is still dormant — the order editor got
-  faithful mock previews, but the dashboard still doesn't read it. Wiring it up is
-  a follow-up with maintainer sign-off (default order must equal
-  `DashboardElement.values`).
+- `DashboardElementsOrder` (typeId 12) **wired** in the 2026-08-03 finish batch
+  (`dashboard_element_layout.dart`, compose-when-adjacent). Default order must
+  still equal `DashboardElement.values` for upgrades with no saved order.
 - textColorHex stays dead (persisted field, never consumed).
+- **Parked 2026-08-03:** finish batch accepted on MacBook; stay on `redesign`
+  until a deliberate `master` merge. Soft follow-ups: connect-overlay motion
+  pass; Twitch console registrations (deferred).

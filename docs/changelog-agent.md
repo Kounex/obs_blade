@@ -17,14 +17,17 @@ Running log of upgrade/migration work. Not store release notes.
 - **Phone + tablet product rule** documented in `AGENTS.md` + design-system
   § Responsive layouts; order screen hint; Force Tablet Mode noted for QA.
 - Verify: persistence/chat/websocket tests **38/38**; analyze 0 errors on
-  touched paths. Not committed/pushed — user review first.
+  touched paths. Landed as `23248b7` on `origin/redesign`.
+- **2026-08-03 MacBook close-out:** maintainer accepted the finish batch
+  visually; `redesign` merged into `master`. Soft leftovers: connect-overlay
+  motion pass; Twitch console registrations (deferred).
 
 ## 2026-07-27 (redesign branch)
 
-- **"On Air" visual overhaul on branch `redesign`** (not committed/pushed — user
-  reviews first). Full audit (15-agent swarm → `docs/redesign/audit-digest.md`),
-  design spec (`docs/redesign/design-system.md`), session notes
-  (`docs/redesign/session-notes.md`).
+- **"On Air" visual overhaul on branch `redesign`** (later pushed; tip through
+  finish batch is `23248b7`). Full audit (15-agent swarm →
+  `docs/redesign/audit-digest.md`), design spec (`docs/redesign/design-system.md`),
+  session notes (`docs/redesign/session-notes.md`).
 - New design module `lib/shared/design/`: motion/spacing/radius tokens,
   `AppStatusColors` ThemeExtension, app text theme, `Pressable`,
   `StaggeredEntrance`, `AnimatedResultIcon`, `CountUpText`.

@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-03**.
+Read this first after `AGENTS.md`. Last reset: **2026-08-03** (`redesign` → `master`).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -34,7 +34,7 @@ Read this first after `AGENTS.md`. Last reset: **2026-08-03**.
 | | |
 |---|---|
 | Remote | `Kounex/obs_blade` (**public**) |
-| Branch | `redesign` (off `master`; `master` is current through the public-repo hygiene pass) |
+| Branch | **`master`** (includes "On Air" redesign; `redesign` branch retained as history) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 | Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
 
@@ -49,27 +49,22 @@ Do not commit/push unless the user explicitly asks.
 
 ## Right now
 
-- **Redesign finish batch (2026-08-03) landed on NAS `redesign` working tree —
-  not committed/pushed yet; user reviews first.** Includes: stats entry→detail
-  Hero removed; unified onboarding (GettingStarted → WS setup + app-tour
-  slides; version fork deleted); reorder previews reuse real leaf widgets;
-  `DashboardElementsOrder` wired into live dashboard with
-  compose-when-adjacent (mobile tabs / tablet row); phone+tablet product rule
-  documented. Verify: `flutter test test/chat test/websocket test/persistence`
-  38/38. MacBook: visual smoke (intro path, reorder → dashboard, Force Tablet
-  Mode side-by-side).
-- **Still open after this batch:** connect-overlay success morph + confetti
-  motion pass on device; Twitch Developer Console app registrations deferred
-  (Chat Phase 1 + paid OAuth broker) — see `private/backend-architecture.md`.
-- **NAS may still need a git bundle from the workstation** if `redesign` isn't
-  on origin yet — don't assume a plain `git fetch` sees the latest redesign
-  commits from the other machine.
+- **"On Air" redesign chapter closed** — merged into `master` (visual review
+  accepted on MacBook). Design system lives under `lib/shared/design/`;
+  depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
+- **Next work is open** — pick up whatever is next (store cut, Twitch, paid
+  backend, opportunistic polish). Soft leftovers from redesign: connect-overlay
+  success morph + confetti motion pass on device; Twitch Developer Console
+  app registrations deferred (Chat Phase 1 + paid OAuth broker) — see
+  `private/backend-architecture.md`.
+- **Before a store release:** Android build/test, version/build-number bump
+  (see earlier master notes in changelog).
 
 ## Verify quickly
 
 ```bash
 # Headless (NAS)
-cd ~/agent/obs-blade
+cd ~/agent/obs-blade && git checkout master && git pull
 ~/flutter/bin/flutter test test/chat/ test/websocket/ test/persistence/
 
 # Workstation (MacBook, login shell so PATH picks up Flutter)
