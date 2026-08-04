@@ -53,10 +53,10 @@ Do not commit/push unless the user explicitly asks.
   accepted on MacBook). Design system lives under `lib/shared/design/`;
   depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
 - **Next work is open** — pick up whatever is next (store cut, Twitch, paid
-  backend, opportunistic polish). Soft leftovers from redesign: connect-overlay
-  success morph + confetti motion pass on device; Twitch Developer Console
+  backend, opportunistic polish). Soft leftovers: Twitch Developer Console
   app registrations deferred (Chat Phase 1 + paid OAuth broker) — see
-  `private/backend-architecture.md`.
+  `private/backend-architecture.md`. Connect-overlay success morph is wired
+  (Connecting… → check → Dashboard) — verified on device/sim 2026-08-04.
 - **Before a store release:** Android build/test, version/build-number bump
   (see earlier master notes in changelog).
 
