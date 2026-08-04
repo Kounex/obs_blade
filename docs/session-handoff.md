@@ -56,7 +56,10 @@ source of truth; never leave work local-only when handing over.
   depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
 - **Next work is open** — pick up whatever is next (store cut, Twitch, paid
   backend, opportunistic polish). Chat Twitch app "OBS Blade Chat"
-  registered 2026-08-04 — **Chat Phase 1 unblocked, in design**; backend
+  registered 2026-08-04 — **Chat Phase 1 planned** (OAuth device-code grant
+  + read-only native chat): spec `docs/superpowers/specs/2026-08-04-twitch-native-chat-phase1-design.md`,
+  plan `docs/superpowers/plans/2026-08-04-twitch-native-chat-phase1.md`
+  (execution approach pending user choice); backend
   app (OAuth broker) registration still deferred — see
   `private/backend-architecture.md`. Connect-overlay success morph is wired
   (Connecting… → check → Dashboard) — verified on device/sim 2026-08-04.
