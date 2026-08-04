@@ -45,7 +45,8 @@ Read this first after `AGENTS.md`. Last reset: **2026-08-03** (`redesign` → `m
 | **Headless** (NAS) | `~/agent/obs-blade` | `pub get` / `analyze` / unit tests only. **Never `flutter run`.** |
 | **Workstation** (MacBook) | `~/development/flutter/obs_blade` | Same branch — simulator/device runs, integration tests, visual-QA screenshots. The heavy lifter for anything needing a running app. |
 
-Do not commit/push unless the user explicitly asks.
+Commit per verified unit proactively (small, logically-scoped commits);
+push only when the user explicitly asks.
 
 ## Right now
 

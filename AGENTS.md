@@ -25,7 +25,9 @@ trusting anything below to still be current.
 - **`git fetch --all` before trusting this file or the handoff doc** — both
   are only as current as whoever last updated them remembered to make them.
   Diff your branch against its remote counterpart and skim recent log first.
-- **Do not commit/push** unless the user explicitly asks. Active branch:
+- **Commit per verified unit** — after each finished, tested/analyzed piece
+  of work, commit it as a small, logically-scoped commit without waiting to
+  be asked. **Push only when the user explicitly asks.** Active branch:
   `master` (includes "On Air" redesign; pull/fetch before editing — see the
   handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
