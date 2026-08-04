@@ -120,12 +120,9 @@ class _HomeViewState extends State<HomeView> {
         if ((networkStore.connectionClodeCode ??
                 WebSocketCloseCode.UnknownReason) ==
             WebSocketCloseCode.DontClose) {
-          OverlayHandler.closeAnyOverlay(immediately: true);
-          Navigator.pushReplacementNamed(
-            context,
-            HomeTabRoutingKeys.Dashboard.route,
-            arguments: ModalRoute.of(context)!.settings.arguments,
-          );
+          // Success morph: Connecting… → check draw → Dashboard.
+          // Fire-and-forget — reaction must stay sync.
+          this._completeSuccessfulConnect();
         }
 
         /// Auth failures are shown on the password field in ConnectForm —
@@ -141,17 +138,47 @@ class _HomeViewState extends State<HomeView> {
           OverlayHandler.showStatusOverlay(
             context: context,
             replaceIfActive: true,
-            content: Align(
-              alignment: Alignment.center,
-              child: BaseResult(
-                icon: BaseResultIcon.Negative,
-                text: message,
-              ),
+            content: BaseResult(
+              icon: BaseResultIcon.Negative,
+              text: message,
             ),
           );
         }
       }
     }));
+  }
+
+  /// Replaces the connecting spinner with [BaseResult] Positive (stroke-drawn
+  /// check + FullOverlay spring), holds long enough to read, then routes.
+  Future<void> _completeSuccessfulConnect() async {
+    // Entrance (FullOverlay) + glyph draw (~450ms) + short beat.
+    const hold = Duration(milliseconds: 900);
+
+    // Drop the spinner immediately so the success card springs in as the morph.
+    await OverlayHandler.closeAnyOverlay(immediately: true);
+    if (!this.mounted) return;
+
+    await OverlayHandler.showStatusOverlay(
+      context: context,
+      delayDuration: Duration.zero,
+      showDuration: hold,
+      content: const BaseResult(
+        icon: BaseResultIcon.Positive,
+        text: 'Connected',
+      ),
+    );
+
+    await Future<void>.delayed(hold);
+    if (!this.mounted) return;
+
+    await OverlayHandler.closeAnyOverlay(immediately: true);
+    if (!this.mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      HomeTabRoutingKeys.Dashboard.route,
+      arguments: ModalRoute.of(context)!.settings.arguments,
+    );
   }
 
   @override

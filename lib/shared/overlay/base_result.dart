@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../design/animated_result_icon.dart';
+import '../design/app_spacing.dart';
 
 enum BaseResultIcon { Positive, Negative, Missing }
 
@@ -40,6 +41,7 @@ class BaseResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         AnimatedResultIcon(
@@ -49,7 +51,12 @@ class BaseResult extends StatelessWidget {
         ),
         if (this.text != null)
           Padding(
-            padding: const EdgeInsets.only(top: 14.0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              14.0,
+              AppSpacing.sm,
+              AppSpacing.sm,
+            ),
             child: Text(
               this.text!,
               textAlign: TextAlign.center,

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../design/app_spacing.dart';
+
 class BaseProgressIndicator extends StatefulWidget {
   final double size;
   final double strokeWidth;
@@ -110,6 +112,7 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
@@ -123,7 +126,12 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
         ),
         if (this.widget.text != null)
           Padding(
-            padding: const EdgeInsets.only(top: 14.0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.sm,
+              14.0,
+              AppSpacing.sm,
+              AppSpacing.sm,
+            ),
             child: Text(
               this.widget.text!,
               textAlign: TextAlign.center,
