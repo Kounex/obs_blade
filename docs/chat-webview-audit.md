@@ -101,7 +101,7 @@ so full URL / bare id storage both work.
   no DOM dependency for the important path.  
 **Cons:** OAuth UX, App Store privacy strings, Twitch app review of scopes;
   must map username → `broadcaster_id`.  
-**Blocked on:** Twitch Developer Console client id/secret + redirect URI for the app.
+**Unblocked 2026-08-04:** "OBS Blade Chat" app registered (public client, redirect `http://localhost:14777/twitch-auth-callback`); Client ID in `private/backend-architecture.md`.
 
 ### C — Full native all platforms
 
@@ -120,17 +120,19 @@ Skip — wrong dependency / ToS treadmill.
 | Phase | Work | Status |
 |---|---|---|
 | 0 | Fix YT id parse + WebView lifecycle | **Done** (2026-07-25) |
-| 1 | Native chat UI shell + Twitch OAuth | Needs Twitch app credentials |
+| 1 | Native chat UI shell + Twitch OAuth | Credentials ready (app registered 2026-08-04) — in design |
 | 2 | EventSub receive + Helix send + basic emotes | Pending 1 |
 | 3 | Polish; keep YT/Owncast WebView | Pending 2 |
 | 4 | YouTube native (optional) | Feasible per visibility check |
 
 ## Next session
 
-Paused after Phase 0. Resume from [`session-handoff.md`](session-handoff.md).
+Phase 1 unblocked 2026-08-04 — "OBS Blade Chat" Twitch app registered
+(public client, redirect `http://localhost:14777/twitch-auth-callback`;
+Client ID recorded in `private/backend-architecture.md`). Resume from
+[`session-handoff.md`](session-handoff.md).
 
-**Blocked for Phase 1:** Twitch Developer Console **client id** + mobile **redirect
-URI**. Do not stub fake OAuth. Keep YT/Owncast on WebView; no further embed JS
+Do not stub fake OAuth. Keep YT/Owncast on WebView; no further embed JS
 hacks.
 
 ## Related

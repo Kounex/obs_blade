@@ -55,8 +55,9 @@ source of truth; never leave work local-only when handing over.
   accepted on MacBook). Design system lives under `lib/shared/design/`;
   depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
 - **Next work is open** — pick up whatever is next (store cut, Twitch, paid
-  backend, opportunistic polish). Soft leftovers: Twitch Developer Console
-  app registrations deferred (Chat Phase 1 + paid OAuth broker) — see
+  backend, opportunistic polish). Chat Twitch app "OBS Blade Chat"
+  registered 2026-08-04 — **Chat Phase 1 unblocked, in design**; backend
+  app (OAuth broker) registration still deferred — see
   `private/backend-architecture.md`. Connect-overlay success morph is wired
   (Connecting… → check → Dashboard) — verified on device/sim 2026-08-04.
 - **Before a store release:** Android build/test, version/build-number bump
