@@ -69,12 +69,48 @@ abstract class _NetworkStore with Store {
 
     try {
       final authCompleter = Completer<ConnectionAttemptResult>();
+      final startedAt = DateTime.now();
 
-      this.activeSession =
-          Session(NetworkHelper.establishWebSocket(connection), connection);
+      this.activeSession = Session(
+        NetworkHelper.establishWebSocket(
+          connection,
+          connectTimeout: timeout,
+        ),
+        connection,
+      );
 
       this.activeSession!.socketStream =
           this.activeSession!.socket.stream.asBroadcastStream();
+
+      GeneralHelper.advLog(
+        'Handshake: connecting to ${connection.host}'
+        '${connection.port != null ? ":${connection.port}" : ""}',
+        includeInLogs: true,
+      );
+
+      // TCP/WS upgrade — stay on [connecting] until ready so unreachable
+      // hosts don't get the "did not greet" message.
+      try {
+        await this.activeSession!.socket.ready;
+      } catch (e) {
+        GeneralHelper.advLog(
+          'Handshake: could not open WebSocket | $e',
+          level: LogLevel.Error,
+          includeInLogs: true,
+        );
+        this.lastConnectionResult = ConnectionAttemptResult(
+          closeCode: WebSocketCloseCode.HandshakeTimeout,
+          stage: ConnectionStage.connecting,
+          detail: e.toString(),
+        );
+        this.connectionClodeCode = this.lastConnectionResult!.closeCode;
+        this.activeSession?.socket.sink.close();
+        if (!reconnect) {
+          this.activeSession = null;
+        }
+        this.connectionInProgress = false;
+        return this.connectionClodeCode!;
+      }
 
       _handshakeStage = ConnectionStage.waitingHello;
       _authSubscription =
@@ -86,10 +122,14 @@ abstract class _NetworkStore with Store {
         includeInLogs: true,
       );
 
+      final remaining = timeout - DateTime.now().difference(startedAt);
+      final helloBudget =
+          remaining.isNegative ? Duration.zero : remaining;
+
       this.lastConnectionResult = await Future.any([
         authCompleter.future,
         Future.delayed(
-          timeout,
+          helloBudget,
           () => ConnectionAttemptResult(
             closeCode: WebSocketCloseCode.HandshakeTimeout,
             stage: _handshakeStage,

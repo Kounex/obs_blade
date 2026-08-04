@@ -91,6 +91,15 @@ void main() {
         stage: ConnectionStage.waitingHello,
       );
       expect(result.userMessage, contains('WebSocket enabled'));
+      expect(result.userMessage, contains('did not greet'));
+    });
+
+    test('timeout waiting Identify', () {
+      const result = ConnectionAttemptResult(
+        closeCode: WebSocketCloseCode.HandshakeTimeout,
+        stage: ConnectionStage.waitingIdentified,
+      );
+      expect(result.userMessage, contains('Identify'));
     });
   });
 

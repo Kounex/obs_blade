@@ -48,15 +48,23 @@ class NetworkHelper {
   /// to check for [closeStatus] or [closeResult] whether the connection is
   /// alive or not. Mainly used in [DashboardStore] where a [Timer] is periodically
   /// checking this to be able to reconnect if possible or navigate back to
-  /// [HomeView] otherwise
-  static IOWebSocketChannel establishWebSocket(Connection connection,
-      [Duration pingInterval = const Duration(seconds: 3)]) {
+  /// [HomeView] otherwise.
+  ///
+  /// [connectTimeout] bounds the TCP/WebSocket upgrade. The channel is returned
+  /// immediately; await [IOWebSocketChannel.ready] (and treat failure as
+  /// unreachable) before assuming the peer is OBS.
+  static IOWebSocketChannel establishWebSocket(
+    Connection connection, {
+    Duration pingInterval = const Duration(seconds: 3),
+    Duration? connectTimeout,
+  }) {
     NetworkHelper._requestBodyByUUID = {};
     NetworkHelper._requestBatchByUUID = {};
 
     return IOWebSocketChannel.connect(
       NetworkHelper.websocketUri(connection),
       pingInterval: pingInterval,
+      connectTimeout: connectTimeout,
     );
   }
 
@@ -272,7 +280,8 @@ class NetworkHelper {
     try {
       IOWebSocketChannel channel = NetworkHelper.establishWebSocket(
         connectionScan.connection,
-        const Duration(milliseconds: 500),
+        pingInterval: const Duration(milliseconds: 500),
+        connectTimeout: timeout,
       );
 
       int? res = await Future.delayed(timeout, () => channel.closeCode);
