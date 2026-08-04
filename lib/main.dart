@@ -29,6 +29,7 @@ import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
 import 'stores/views/logs.dart';
 import 'stores/views/statistics.dart';
+import 'stores/views/twitch_chat.dart';
 import 'types/enums/hive_keys.dart';
 import 'utils/general_helper.dart';
 
@@ -82,6 +83,12 @@ void _initializeStores() {
   GetIt.instance
       .registerLazySingleton<StatisticsStore>(() => StatisticsStore());
   GetIt.instance.registerLazySingleton<LogsStore>(() => LogsStore());
+  GetIt.instance.registerLazySingleton<TwitchChatStore>(
+    /// Fire-and-forget [init] — cold-start token validation must not
+    /// block store creation.
+    () => TwitchChatStore()..init(),
+    dispose: (store) => store.dispose(),
+  );
 }
 
 Future<void> _initializeHive() async {
