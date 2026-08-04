@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/design/design.dart';
@@ -10,6 +11,9 @@ import 'connection_box.dart';
 import 'placeholder_connection.dart';
 
 class SavedConnections extends StatelessWidget {
+  static const double _cardHeight = 172.0;
+  static const double _cardWidth = 268.0;
+
   const SavedConnections({
     super.key,
   });
@@ -21,7 +25,6 @@ class SavedConnections extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-
           /// Aligns with the card content edge above (16 card margin +
           /// 24 title inset = 40)
           padding: const EdgeInsets.only(
@@ -32,8 +35,10 @@ class SavedConnections extends StatelessWidget {
           /// Section header: caption scale, uppercase, theme-aware grey
           child: Text(
             'Saved Connections'.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall!.copyWith(
+            style: Theme.of(context).textTheme.labelMedium!.copyWith(
                   color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
                 ),
           ),
         ),
@@ -54,112 +59,46 @@ class SavedConnections extends StatelessWidget {
             child: HiveBuilder<Connection>(
               hiveKey: HiveKeys.SavedConnections,
               builder: (context, savedConnectionsBox, child) {
-                double height = 180.0;
-                double width = 250.0;
-
                 if (savedConnectionsBox.values.isEmpty) {
-                  return PlaceholderConnection(
-                    height: height,
-                    width: width,
+                  return const PlaceholderConnection(
+                    height: _cardHeight,
+                    width: _cardWidth,
                   );
-                } else {
-                  return ReachableBuilder(
-                    savedConnectionsBuilder: ((savedConnections) =>
-                        MediaQuery.sizeOf(context).width < width * 2.5
-                            ? SizedBox(
-                                height: height,
-                                child: PageView.builder(
-                                  controller:
-                                      PageController(viewportFraction: 0.75),
-                                  itemCount: savedConnectionsBox.values.length,
-                                  itemBuilder: (context, index) => Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: AppSpacing.lg,
-                                        right: AppSpacing.lg),
-                                    child: _animatedConnectionBox(
-                                      savedConnections[index],
-                                      index,
-                                      width: width,
-                                      height: height,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : Center(
-                                child: Wrap(
-                                  spacing: 32.0,
-                                  runSpacing: 32.0,
-                                  children: [
-                                    for (final (index, savedConnection)
-                                        in savedConnectionsBox.values.indexed)
-                                      _animatedConnectionBox(
-                                        savedConnection,
-                                        index,
-                                        width: width,
-                                        height: height,
-                                      ),
-                                  ],
-                                ),
-                              )),
-                  );
-                  // return Observer(
-                  //   builder: (context) => FutureBuilder<List<Connection>>(
-                  //     future:
-                  //         GetIt.instance<HomeStore>().autodiscoverConnections,
-                  //     builder: (context, snapshot) {
-                  //       List<Connection> savedConnections =
-                  //           savedConnectionsBox.values.toList();
-
-                  //       for (var connection in savedConnections) {
-                  //         connection.reachable = snapshot.hasData &&
-                  //             snapshot.data!.any((discoverConnection) =>
-                  //                 discoverConnection.host == connection.host &&
-                  //                 discoverConnection.port == connection.port);
-                  //       }
-                  //       savedConnections
-                  //           .sort((c1, c2) => c1.reachable != c2.reachable
-                  //               ? c1.reachable!
-                  //                   ? 0
-                  //                   : 1
-                  //               : c1.name!.compareTo(c2.name!));
-
-                  //       return MediaQuery.sizeOf(context).width < width * 2.5
-                  //           ? SizedBox(
-                  //               height: height,
-                  //               child: PageView.builder(
-                  //                 controller:
-                  //                     PageController(viewportFraction: 0.75),
-                  //                 itemCount: savedConnectionsBox.values.length,
-                  //                 itemBuilder: (context, index) => Padding(
-                  //                   padding: const EdgeInsets.only(
-                  //                       left: 18.0, right: 18.0),
-                  //                   child: ConnectionBox(
-                  //                     connection: savedConnections[index],
-                  //                     width: width,
-                  //                     height: height,
-                  //                   ),
-                  //                 ),
-                  //               ),
-                  //             )
-                  //           : Center(
-                  //               child: Wrap(
-                  //                 spacing: 32.0,
-                  //                 runSpacing: 32.0,
-                  //                 children: savedConnectionsBox.values
-                  //                     .map(
-                  //                       (savedConnection) => ConnectionBox(
-                  //                         connection: savedConnection,
-                  //                         width: width,
-                  //                         height: height,
-                  //                       ),
-                  //                     )
-                  //                     .toList(),
-                  //               ),
-                  //             );
-                  //     },
-                  //   ),
-                  // );
                 }
+
+                return ReachableBuilder(
+                  savedConnectionsBuilder: (savedConnections) {
+                    final useCarousel =
+                        MediaQuery.sizeOf(context).width < _cardWidth * 2.5;
+
+                    if (useCarousel) {
+                      return _ConnectionCarousel(
+                        connections: savedConnections,
+                        height: _cardHeight,
+                        width: _cardWidth,
+                      );
+                    }
+
+                    return SizedBox(
+                      height: _cardHeight,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
+                        itemCount: savedConnections.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(width: AppSpacing.lg),
+                        itemBuilder: (context, index) => _animatedConnectionBox(
+                          savedConnections[index],
+                          index,
+                          width: _cardWidth,
+                          height: _cardHeight,
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ),
@@ -167,27 +106,125 @@ class SavedConnections extends StatelessWidget {
       ],
     );
   }
+}
 
-  /// One-shot staggered entrance + crossfade when the reachable-first
-  /// re-sort swaps which connection sits at a slot. Keyed by Hive identity
-  /// so pure reachability flag updates (dot color/text) don't animate and
-  /// MobX/setState rebuilds don't replay the entrance.
-  Widget _animatedConnectionBox(
-    Connection connection,
-    int index, {
-    required double width,
-    required double height,
-  }) =>
-      StaggeredEntrance(
-        index: index,
-        child: AnimatedSwitcher(
-          duration: AppMotion.medium,
-          child: ConnectionBox(
-            key: ValueKey<dynamic>(connection.key),
-            connection: connection,
-            width: width,
-            height: height,
+class _ConnectionCarousel extends StatefulWidget {
+  final List<Connection> connections;
+  final double height;
+  final double width;
+
+  const _ConnectionCarousel({
+    required this.connections,
+    required this.height,
+    required this.width,
+  });
+
+  @override
+  State<_ConnectionCarousel> createState() => _ConnectionCarouselState();
+}
+
+class _ConnectionCarouselState extends State<_ConnectionCarousel> {
+  late final PageController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    this._controller = PageController(viewportFraction: 0.68);
+  }
+
+  @override
+  void dispose() {
+    this._controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = this.widget.connections.length;
+    final muted = Theme.of(context).textTheme.bodySmall?.color;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: this.widget.height + AppSpacing.sm,
+          child: PageView.builder(
+            controller: this._controller,
+            itemCount: count,
+            itemBuilder: (context, index) {
+              return AnimatedBuilder(
+                animation: this._controller,
+                builder: (context, child) {
+                  double scale = 1.0;
+                  if (this._controller.position.haveDimensions) {
+                    final page = this._controller.page ??
+                        this._controller.initialPage.toDouble();
+                    final distance = (page - index).abs();
+                    scale = (1.0 - (distance * 0.06)).clamp(0.94, 1.0);
+                  }
+                  return Center(
+                    child: Transform.scale(
+                      scale: scale,
+                      alignment: Alignment.center,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  child: _animatedConnectionBox(
+                    this.widget.connections[index],
+                    index,
+                    width: this.widget.width,
+                    height: this.widget.height,
+                  ),
+                ),
+              );
+            },
           ),
         ),
-      );
+        if (count > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: SmoothPageIndicator(
+              controller: this._controller,
+              count: count,
+              effect: ExpandingDotsEffect(
+                dotHeight: 6.0,
+                dotWidth: 6.0,
+                expansionFactor: 3.0,
+                spacing: 6.0,
+                activeDotColor: Theme.of(context).colorScheme.secondary,
+                dotColor: (muted ?? Colors.grey).withValues(alpha: 0.35),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
+
+/// One-shot staggered entrance + crossfade when the reachable-first
+/// re-sort swaps which connection sits at a slot. Keyed by Hive identity
+/// so pure reachability flag updates (dot color/text) don't animate and
+/// MobX/setState rebuilds don't replay the entrance.
+Widget _animatedConnectionBox(
+  Connection connection,
+  int index, {
+  required double width,
+  required double height,
+}) =>
+    StaggeredEntrance(
+      index: index,
+      child: AnimatedSwitcher(
+        duration: AppMotion.medium,
+        child: ConnectionBox(
+          key: ValueKey<dynamic>(connection.key),
+          connection: connection,
+          width: width,
+          height: height,
+        ),
+      ),
+    );

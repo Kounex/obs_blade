@@ -21,18 +21,34 @@ class ConnectionBox extends StatelessWidget {
   final double height;
   final double width;
 
-  const ConnectionBox(
-      {super.key,
-      required this.connection,
-      this.height = 200.0,
-      this.width = 250.0});
+  const ConnectionBox({
+    super.key,
+    required this.connection,
+    this.height = 172.0,
+    this.width = 268.0,
+  });
+
+  String get _displayName {
+    final name = this.connection.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return this.connection.host;
+  }
+
+  String get _endpoint =>
+      '${this.connection.host}${this.connection.port != null ? ':${this.connection.port}' : ''}';
+
+  bool get _hasPassword {
+    final pw = this.connection.pw;
+    return pw != null && pw.isNotEmpty;
+  }
 
   void _connect(BuildContext context) {
-    NetworkStore networkStore = GetIt.instance<NetworkStore>();
+    final networkStore = GetIt.instance<NetworkStore>();
 
     FocusScope.of(context).unfocus();
     networkStore.setOBSWebSocket(this.connection).then((closeCode) {
-      if (closeCode == WebSocketCloseCode.AuthenticationFailed) {
+      if (closeCode == WebSocketCloseCode.AuthenticationFailed &&
+          context.mounted) {
         OverlayHandler.showStatusOverlay(
           context: context,
           content: const BaseResult(
@@ -42,6 +58,15 @@ class ConnectionBox extends StatelessWidget {
         );
       }
     });
+  }
+
+  void _edit(BuildContext context) {
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: EditConnectionDialog(
+        connection: this.connection,
+      ),
+    );
   }
 
   @override
@@ -55,6 +80,12 @@ class ConnectionBox extends StatelessWidget {
             ? statusColors.reachable
             : statusColors.unreachable;
 
+    final String reachabilityLabel = this.connection.reachable == null
+        ? 'Checking'
+        : this.connection.reachable!
+            ? 'Online'
+            : 'Offline';
+
     return SizedBox(
       width: this.width,
       child: BaseCard(
@@ -62,133 +93,176 @@ class ConnectionBox extends StatelessWidget {
         rightPadding: 0.0,
         bottomPadding: 0.0,
         leftPadding: 0.0,
-        paddingChild: const EdgeInsets.all(0),
+        paddingChild: EdgeInsets.zero,
         child: SizedBox(
           height: this.height,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Column(
-                children: [
-                  if (this.connection.name != null)
-                    Text(
-                      this.connection.name!,
-                      style: Theme.of(context).textTheme.titleLarge,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        this._displayName,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  // Text(
-                  //   '(${this.connection.ssid})',
-                  //   style: Theme.of(context).textTheme.bodySmall,
-                  // ),
-                  Text(
-                    '${this.connection.host}${this.connection.port != null ? (":${this.connection.port}") : ""}',
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      fontFeatures: const [
-                        FontFeature.tabularFigures(),
+                    const SizedBox(width: AppSpacing.sm),
+                    _ReachabilityPill(
+                      color: reachabilityColor,
+                      label: reachabilityLabel,
+                    ),
+                    Pressable(
+                      onTap: () => this._edit(context),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.sm),
+                        child: Icon(
+                          CupertinoIcons.pencil,
+                          size: 18.0,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 1.0),
+                          child: Icon(
+                            this._hasPassword
+                                ? CupertinoIcons.lock_fill
+                                : CupertinoIcons.lock_slash,
+                            size: 14.0,
+                            color:
+                                Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            this._endpoint,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall!
+                                .copyWith(
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ],
-              ),
-              Center(
-                /// Ambient reachability: color morphs between states instead
-                /// of hard swapping (semantic colors via [AppStatusColors])
-                child: TweenAnimationBuilder<Color?>(
-                  tween: ColorTween(end: reachabilityColor),
-                  duration: AppMotion.medium,
-                  curve: AppMotion.standard,
-                  builder: (context, color, child) => StatusDot(
-                    size: 10.0,
-                    color: color ?? reachabilityColor,
-                    text: this.connection.reachable == null
-                        ? 'Checking...'
-                        : this.connection.reachable!
-                            ? 'Reachable'
-                            : 'Not reachable',
-                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(width: AppSpacing.xl),
-                    Expanded(
-                      child: Observer(
-                        builder: (context) {
-                          final bool connecting = GetIt.instance<NetworkStore>()
-                              .connectionInProgress;
+                Observer(
+                  builder: (context) {
+                    final bool connecting =
+                        GetIt.instance<NetworkStore>().connectionInProgress;
 
-                          /// Physical press feedback (ripples are disabled
-                          /// app-wide); the button keeps owning the tap so
-                          /// [Pressable.onTap] never double-fires
-                          return Pressable(
-                            onTap: () => _connect(context),
-                            child: BaseButton(
-                              /// Reduced padding + scale-down fit so
-                              /// 'Connect' never wraps in the narrow slot
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.md),
-                              onPressed: () => _connect(context),
-                              child: AnimatedSwitcher(
-                                duration: AppMotion.fast,
-                                child: connecting
-                                    ? SizedBox(
-                                        key: const ValueKey('connecting'),
-                                        width: 20.0,
-                                        height: 20.0,
-                                        child: CupertinoActivityIndicator(
-                                          color: StylingHelper
-                                              .surroundingAwareAccent(
-                                            surroundingColor: Theme.of(context)
-                                                .buttonTheme
-                                                .colorScheme!
-                                                .secondary,
-                                          ),
-                                        ),
-                                      )
-                                    : const FittedBox(
-                                        key: ValueKey('idle'),
-                                        fit: BoxFit.scaleDown,
-                                        child: Text('Connect'),
-                                      ),
+                    return BaseButton(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      onPressed:
+                          connecting ? null : () => this._connect(context),
+                      child: AnimatedSwitcher(
+                        duration: AppMotion.fast,
+                        child: connecting
+                            ? SizedBox(
+                                key: const ValueKey('connecting'),
+                                width: 20.0,
+                                height: 20.0,
+                                child: CupertinoActivityIndicator(
+                                  color:
+                                      StylingHelper.surroundingAwareAccent(
+                                    surroundingColor: Theme.of(context)
+                                        .buttonTheme
+                                        .colorScheme!
+                                        .secondary,
+                                  ),
+                                ),
+                              )
+                            : const Text(
+                                key: ValueKey('idle'),
+                                'Connect',
                               ),
-                            ),
-                          );
-                        },
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.xl),
-                    Expanded(
-                      child: Pressable(
-                        onTap: () => ModalHandler.showBaseDialog(
-                          context: context,
-                          dialogWidget: EditConnectionDialog(
-                            connection: this.connection,
-                          ),
-                        ),
-                        child: BaseButton(
-                          text: 'Edit',
-                          secondary: true,
-                          onPressed: () => ModalHandler.showBaseDialog(
-                            context: context,
-                            dialogWidget: EditConnectionDialog(
-                              connection: this.connection,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.xl),
-                  ],
+                    );
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ReachabilityPill extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _ReachabilityPill({
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<Color?>(
+      tween: ColorTween(end: this.color),
+      duration: AppMotion.medium,
+      curve: AppMotion.standard,
+      builder: (context, color, child) {
+        final resolved = color ?? this.color;
+        return Container(
+          margin: const EdgeInsets.only(top: AppSpacing.xs),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: AppSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: resolved.withValues(alpha: 0.16),
+            borderRadius: AppRadius.pill,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              StatusDot(
+                size: 6.0,
+                color: resolved,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                this.label,
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: resolved,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
