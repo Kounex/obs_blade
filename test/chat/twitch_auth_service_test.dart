@@ -164,4 +164,119 @@ void main() {
       );
     });
   });
+
+  group('refreshToken', () {
+    test('parses the refreshed token pair without a client secret', () async {
+      final client = MockClient((request) async {
+        expect(request.bodyFields['grant_type'], 'refresh_token');
+        expect(request.bodyFields['refresh_token'], 'old-refresh');
+        expect(request.bodyFields['client_id'], kTwitchClientId);
+        expect(request.bodyFields.containsKey('client_secret'), isFalse);
+        return http.Response(
+          json.encode({
+            'access_token': 'access-new',
+            'refresh_token': 'refresh-new',
+            'expires_in': 14400,
+            'scope': ['user:read:chat'],
+          }),
+          200,
+        );
+      });
+
+      final token = await serviceWith(client).refreshToken('old-refresh');
+
+      expect(token.accessToken, 'access-new');
+      expect(token.refreshToken, 'refresh-new');
+    });
+
+    test('throws on 400 (revoked/expired refresh token)', () {
+      final client = MockClient((request) async => http.Response(
+          json.encode({'message': 'Invalid refresh token'}), 400));
+
+      expect(
+        serviceWith(client).refreshToken('old-refresh'),
+        throwsA(isA<TwitchAuthException>()),
+      );
+    });
+  });
+
+  group('validate', () {
+    test('true on 200, sends the OAuth (not Bearer) prefix', () async {
+      String? seenAuth;
+      final client = MockClient((request) async {
+        seenAuth = request.headers['Authorization'];
+        return http.Response(json.encode({'login': 'kounex'}), 200);
+      });
+
+      final valid = await serviceWith(client).validate('access-1');
+
+      expect(valid, isTrue);
+      expect(seenAuth, 'OAuth access-1');
+    });
+
+    test('false on 401', () async {
+      final client =
+          MockClient((request) async => http.Response('{}', 401));
+
+      expect(await serviceWith(client).validate('access-1'), isFalse);
+    });
+  });
+
+  group('fetchOwnUser', () {
+    test('parses data[0] of the helix users response', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(), 'https://api.twitch.tv/helix/users');
+        expect(request.headers['Authorization'], 'Bearer access-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response(
+          json.encode({
+            'data': [
+              {
+                'id': '1234',
+                'login': 'kounex',
+                'display_name': 'Kounex',
+                'profile_image_url': 'https://example.com/p.png',
+              }
+            ],
+          }),
+          200,
+        );
+      });
+
+      final user = await serviceWith(client).fetchOwnUser('access-1');
+
+      expect(user.id, '1234');
+      expect(user.login, 'kounex');
+      expect(user.displayName, 'Kounex');
+    });
+
+    test('throws when data is empty', () {
+      final client = MockClient(
+          (request) async => http.Response(json.encode({'data': []}), 200));
+
+      expect(
+        serviceWith(client).fetchOwnUser('access-1'),
+        throwsA(isA<TwitchAuthException>()),
+      );
+    });
+  });
+
+  group('revoke', () {
+    test('posts client id + token and never throws', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(), 'https://id.twitch.tv/oauth2/revoke');
+        expect(request.bodyFields['client_id'], kTwitchClientId);
+        expect(request.bodyFields['token'], 'access-1');
+        return http.Response('', 200);
+      });
+
+      await serviceWith(client).revoke('access-1');
+    });
+
+    test('swallows network errors (best effort)', () async {
+      final client = MockClient((request) async => throw Exception('down'));
+
+      await serviceWith(client).revoke('access-1');
+    });
+  });
 }

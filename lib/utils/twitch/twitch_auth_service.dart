@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 
 /// Public client id of the "OBS Blade Chat" Twitch developer application
 /// (not a secret — Twitch treats client ids as embeddable).
@@ -14,8 +15,7 @@ const List<String> kTwitchChatScopes = <String>['user:read:chat'];
 
 const String _kIdBase = 'https://id.twitch.tv/oauth2';
 
-/// Base for Helix calls (token validation, chat) — used from Task 3 on.
-// ignore: unused_element
+/// Base for Helix calls (token validation, chat)
 const String _kHelixBase = 'https://api.twitch.tv/helix';
 
 /// Terminal auth-flow failure the UI can surface via [message].
@@ -121,6 +121,71 @@ class TwitchAuthService {
       }
     }
     throw const TwitchAuthException('Device code expired');
+  }
+
+  /// Exchange a refresh token for a new token pair. DCF-issued refresh
+  /// tokens do not require a client secret.
+  Future<TwitchToken> refreshToken(String refreshToken) async {
+    final response = await this._client.post(
+      Uri.parse('$_kIdBase/token'),
+      body: {
+        'client_id': kTwitchClientId,
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+      },
+    );
+    if (response.statusCode != 200) {
+      throw TwitchAuthException(
+        'Token refresh failed (${response.statusCode})',
+        response.body,
+      );
+    }
+    return TwitchToken.fromJson(
+      json.decode(response.body) as Map<String, Object?>,
+    );
+  }
+
+  /// Twitch's validate endpoint — note the required `OAuth` prefix
+  /// (not `Bearer`, unlike every other endpoint).
+  Future<bool> validate(String accessToken) async {
+    final response = await this._client.get(
+      Uri.parse('$_kIdBase/validate'),
+      headers: {'Authorization': 'OAuth $accessToken'},
+    );
+    return response.statusCode == 200;
+  }
+
+  /// `GET /helix/users` without a filter returns the token's own user.
+  Future<TwitchUser> fetchOwnUser(String accessToken) async {
+    final response = await this._client.get(
+      Uri.parse('$_kHelixBase/users'),
+      headers: TwitchAuthService.helixHeaders(accessToken),
+    );
+    if (response.statusCode != 200) {
+      throw TwitchAuthException(
+        'Fetching the Twitch user failed (${response.statusCode})',
+        response.body,
+      );
+    }
+    final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
+    if (data is! List || data.isEmpty) {
+      throw const TwitchAuthException(
+          'Fetching the Twitch user returned no data');
+    }
+    return TwitchUser.fromJson(data.first as Map<String, Object?>);
+  }
+
+  /// Revoke a token (logout hygiene). Best effort — must never block a
+  /// local logout because the network is down.
+  Future<void> revoke(String accessToken) async {
+    try {
+      await this._client.post(
+        Uri.parse('$_kIdBase/revoke'),
+        body: {'client_id': kTwitchClientId, 'token': accessToken},
+      );
+    } catch (_) {
+      // best effort
+    }
   }
 
   /// RFC 8628 puts the code in `error`; Twitch historically uses `message`.
