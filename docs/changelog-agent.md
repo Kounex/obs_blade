@@ -2,6 +2,48 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-04 (native Twitch chat Phase 1)
+
+- **Native read-only Twitch chat in the existing dashboard chat slot** —
+  full Phase 1 landed on `master` (spec/plan under `docs/superpowers/`).
+  Log in via OAuth **device-code grant** (DCF) — chosen over implicit/PKCE
+  redirect flows so no localhost callback server or custom URL scheme is
+  needed on mobile; dialog shows the code, user authorizes on
+  twitch.tv/activate, polling completes login. Chat arrives over **EventSub
+  WebSocket** (`channel.chat.message`), rendered natively with inline emotes
+  + cheermotes and author colors. Read-only by design: no chat scope
+  requested, no Helix send. **WebView fallback retained** for the logged-out
+  state, YouTube, and Owncast — the chat slot swaps native ↔ WebView based
+  on login state.
+- **Files:** `lib/models/twitch_auth.dart` (Hive, typeId 13);
+  `lib/utils/twitch/twitch_auth_service.dart` (device-code request, token
+  polling/refresh/validate/revoke, own-user fetch) +
+  `twitch_eventsub_service.dart` (EventSub WS: reconnect, watchdog,
+  keepalive); `lib/stores/views/twitch_chat.dart` (GetIt `TwitchChatStore`:
+  login state, token lifecycle, bounded message buffer); DTOs under
+  `lib/types/classes/twitch/` (device code, token, user, EventSub envelope,
+  `channel_chat_message` — freezed); UI
+  `lib/views/dashboard/widgets/obs_widgets/stream_chat/` (`stream_chat.dart`
+  slot switch, `native_twitch_chat_view.dart`, `twitch_chat_message_row.dart`,
+  `twitch_device_code_dialog.dart`) + `username_action_row.dart`
+  connect/logout actions; `http` added as the single new dependency; tests
+  under `test/chat/` + `test/persistence/twitch_auth_persistence_test.dart`
+  with `docs/fixtures/twitch/` message fixtures.
+- **Client ID:** `t3muhu36do5wemeeilzl57v48gwcmh` (public — no secret in
+  DCF), hardcoded once in `lib/utils/twitch/twitch_auth_service.dart`.
+- **Robustness fixes during execution:** EventSub subscription POST failures
+  are routed to `onRevoked` (token treated as dead → clean logout state
+  instead of a stuck "connecting" WS); cold-start token validation is
+  offline-safe (network errors keep the stored session, only a definitive
+  401 logs the user out).
+- **Verify:** `flutter test test/chat/ test/websocket/ test/persistence/`
+  87/87; `flutter analyze` 0 errors (only the 6 pre-existing warnings:
+  `input.dart` ×2, `translucent_sliver_app_bar.dart` ×2, `statistics.dart`
+  ×2); build_runner clean (no drift). Manual dogfood on a real Twitch
+  account pending (maintainer) — incl. the open point whether the WebView
+  fallback re-renders after logout given `_syncWebController`'s
+  unchanged-URL early-return (`stream_chat.dart`).
+
 ## 2026-08-03 (redesign finish batch)
 
 - Stats entry→detail **Hero removed** (plain push); `HeroMode` workaround in

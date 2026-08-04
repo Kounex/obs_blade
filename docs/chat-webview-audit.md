@@ -120,7 +120,7 @@ Skip — wrong dependency / ToS treadmill.
 | Phase | Work | Status |
 |---|---|---|
 | 0 | Fix YT id parse + WebView lifecycle | **Done** (2026-07-25) |
-| 1 | Native chat UI shell + Twitch OAuth | Credentials ready (app registered 2026-08-04) — in design |
+| 1 | Native chat UI shell + Twitch OAuth | **Done** (read-only native chat, DCF + EventSub) |
 | 2 | EventSub receive + Helix send + basic emotes | Pending 1 |
 | 3 | Polish; keep YT/Owncast WebView | Pending 2 |
 | 4 | YouTube native (optional) | Feasible per visibility check |

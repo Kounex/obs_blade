@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-03** (`redesign` → `master`).
+Read this first after `AGENTS.md`. Last reset: **2026-08-04** (native Twitch chat Phase 1).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,15 +54,31 @@ source of truth; never leave work local-only when handing over.
 - **"On Air" redesign chapter closed** — merged into `master` (visual review
   accepted on MacBook). Design system lives under `lib/shared/design/`;
   depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
-- **Next work is open** — pick up whatever is next (store cut, Twitch, paid
-  backend, opportunistic polish). Chat Twitch app "OBS Blade Chat"
-  registered 2026-08-04 — **Chat Phase 1 planned** (OAuth device-code grant
-  + read-only native chat): spec `docs/superpowers/specs/2026-08-04-twitch-native-chat-phase1-design.md`,
-  plan `docs/superpowers/plans/2026-08-04-twitch-native-chat-phase1.md`
-  (execution approach pending user choice); backend
-  app (OAuth broker) registration still deferred — see
-  `private/backend-architecture.md`. Connect-overlay success morph is wired
-  (Connecting… → check → Dashboard) — verified on device/sim 2026-08-04.
+- **Native Twitch chat Phase 1 implemented** (2026-08-04, on `master`) —
+  Twitch app "OBS Blade Chat" registered 2026-08-04; OAuth device-code login
+  + read-only EventSub chat rendered natively in the existing dashboard
+  chat slot; WebView fallback retained (logged-out state, YouTube, Owncast).
+  History in [`changelog-agent.md`](changelog-agent.md); spec/plan under
+  `docs/superpowers/`. **Phase 2 = send / emote picker / badges.**
+- **Pending: maintainer dogfood of Phase 1** (workstation + real Twitch
+  account — not automatable): `flutter run -d <sim-id>` → Dashboard chat →
+  Twitch → **Connect Twitch** → device-code dialog → authorize on
+  twitch.tv/activate → chat connects; post from a second account (emotes +
+  author colors render); scroll up → "New messages ↓" pill → tap jumps to
+  bottom; log out via the username-bar icon; background/foreground → chat
+  recovers; Settings → Force Tablet Mode smoke; optional
+  `tool/visual_qa/capture_screenshots.sh`. **Open verification point:**
+  after logout the slot switches back to the legacy WebView, but
+  `_syncWebController`
+  (`lib/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart:107-111`)
+  early-returns on an unchanged URL, so no `loadRequest` is re-issued on
+  remount — confirm the WebView fallback actually renders after logout;
+  fix only if confirmed blank.
+- **Next work is open** — pick up whatever is next (store cut, Twitch chat
+  Phase 2, paid backend, opportunistic polish). Backend app (OAuth broker)
+  registration still deferred — see `private/backend-architecture.md`.
+  Connect-overlay success morph is wired (Connecting… → check → Dashboard) —
+  verified on device/sim 2026-08-04.
 - **Before a store release:** Android build/test, version/build-number bump
   (see earlier master notes in changelog).
 
