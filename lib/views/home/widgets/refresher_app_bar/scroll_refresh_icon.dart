@@ -82,30 +82,33 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
       homeStore.setRefreshable(false);
       _animController.animateTo(0.0);
     }
-    return Padding(
-      padding: EdgeInsets.only(top: this.widget.expandedBarHeight / 2),
-      child: Align(
-        child: Opacity(
-          opacity: _getRefreshOpacity(
-              barStretchOffset, this.widget.currentBarHeight),
-          child: Container(
-            width: 32.0,
-            height: 32.0,
-            decoration: BoxDecoration(
-              color: indicatorColor,
-              shape: BoxShape.circle,
+    return Transform.translate(
+      /// [FlexibleSpaceBar] parks the title at the bottom — lift the
+      /// indicator to the vertical midpoint of the expanded bar.
+      offset: Offset(
+        0.0,
+        -((this.widget.expandedBarHeight / 2.0) - 16.0),
+      ),
+      child: Opacity(
+        opacity: _getRefreshOpacity(
+            barStretchOffset, this.widget.currentBarHeight),
+        child: Container(
+          width: 32.0,
+          height: 32.0,
+          decoration: BoxDecoration(
+            color: indicatorColor,
+            shape: BoxShape.circle,
+          ),
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) => ScaleTransition(
+              scale: _scaleAnimation,
+              child: child,
             ),
-            child: AnimatedBuilder(
-              animation: _animController,
-              builder: (context, child) => ScaleTransition(
-                scale: _scaleAnimation,
-                child: child,
-              ),
-              child: Icon(
-                Icons.arrow_downward,
-                color: StylingHelper.surroundingAwareAccent(
-                  surroundingColor: indicatorColor,
-                ),
+            child: Icon(
+              Icons.arrow_downward,
+              color: StylingHelper.surroundingAwareAccent(
+                surroundingColor: indicatorColor,
               ),
             ),
           ),

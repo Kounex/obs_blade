@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../models/custom_theme.dart';
 import '../../../../shared/animator/fader.dart';
+import '../../../../shared/design/app_spacing.dart';
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
@@ -80,17 +81,31 @@ class RefresherAppBar extends StatelessWidget {
                   StylingHelper.currentCustomTheme(settingsBox);
 
               return Stack(
-                alignment: Alignment.center,
+                fit: StackFit.expand,
                 children: [
                   Container(
                     color: customTheme?.logoAppBarColorHex?.hexToColor() ??
                         Colors.transparent,
                   ),
-                  customTheme?.customLogo != null
-                      ? Image.memory(base64Decode(customTheme!.customLogo!))
-                      : Image.asset(
-                          StylingHelper.brightnessAwareOBSLogo(context),
-                        ),
+                  /// Inset from notch + bottom edge, then contain so the
+                  /// logo stays large without overflowing the bar.
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.xl,
+                      MediaQuery.paddingOf(context).top * 0.45,
+                      AppSpacing.xl,
+                      AppSpacing.xs,
+                    ),
+                    child: customTheme?.customLogo != null
+                        ? Image.memory(
+                            base64Decode(customTheme!.customLogo!),
+                            fit: BoxFit.contain,
+                          )
+                        : Image.asset(
+                            StylingHelper.brightnessAwareOBSLogo(context),
+                            fit: BoxFit.contain,
+                          ),
+                  ),
 
                   /// Subtle top scrim so status-bar icons stay legible
                   /// over the (white) logo when the bar is stretched

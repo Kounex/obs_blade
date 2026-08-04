@@ -229,7 +229,7 @@ class _HomeViewState extends State<HomeView> {
           // physics: StylingHelper.platformAwareScrollPhysics,
           slivers: [
             const RefresherAppBar(
-              expandedHeight: 160.0,
+              expandedHeight: 192.0,
             ),
             CustomSliverList(
 
