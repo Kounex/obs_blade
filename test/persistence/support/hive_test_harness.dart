@@ -14,6 +14,7 @@ import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/models/purchased_tip.dart';
+import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/type_ids.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 
@@ -65,6 +66,9 @@ class HiveTestHarness {
     if (!Hive.isAdapterRegistered(TypeIDs.DashboardElement)) {
       Hive.registerAdapter<DashboardElement>(DashboardElementAdapter());
     }
+    if (!Hive.isAdapterRegistered(TypeIDs.TwitchAuth)) {
+      Hive.registerAdapter<TwitchAuth>(TwitchAuthAdapter());
+    }
   }
 
   Future<void> init() async {
@@ -90,6 +94,7 @@ class HiveTestHarness {
     await Hive.openBox<PurchasedTip>(HiveKeys.PurchasedTip.name);
     await Hive.openBox<Hotkey>(HiveKeys.Hotkey.name);
     await Hive.openBox(HiveKeys.Settings.name);
+    await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
   }
 
   /// Writes [data] into the production box names (clears existing entries).

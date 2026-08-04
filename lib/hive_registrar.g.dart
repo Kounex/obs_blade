@@ -16,6 +16,7 @@ import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/models/purchased_tip.dart';
+import 'package:obs_blade/models/twitch_auth.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
@@ -32,6 +33,7 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(PastStreamDataAdapter());
     registerAdapter(PurchasedTipAdapter());
     registerAdapter(SceneItemTypeAdapter());
+    registerAdapter(TwitchAuthAdapter());
   }
 }
 
@@ -50,5 +52,6 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(PastStreamDataAdapter());
     registerAdapter(PurchasedTipAdapter());
     registerAdapter(SceneItemTypeAdapter());
+    registerAdapter(TwitchAuthAdapter());
   }
 }

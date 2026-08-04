@@ -9,6 +9,7 @@ import '../../../models/enums/log_level.dart';
 import '../../../models/hidden_scene.dart';
 import '../../../models/hidden_scene_item.dart';
 import '../../../models/past_stream_data.dart';
+import '../../../models/twitch_auth.dart';
 import '../../../shared/design/design.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/shared/tabs.dart';
@@ -155,6 +156,7 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.SelectedTwitchUsername.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.TwitchUsernames.name);
+                  Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
 
                   Hive.box<AppLog>(HiveKeys.AppLog.name).add(
                     AppLog(

@@ -12,4 +12,5 @@ class TypeIDs {
   static const int PastRecordData = 10;
   static const int Hotkey = 11;
   static const int DashboardElement = 12;
+  static const int TwitchAuth = 13;
 }

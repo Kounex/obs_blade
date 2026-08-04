@@ -29,6 +29,9 @@ enum HiveKeys {
   /// Returns the box containing app settings - refer to [SettingsKeys]
   /// to see which key-value pairs are available
   Settings,
+
+  /// Returns the single [TwitchAuth] record (key: TwitchAuth.kBoxKey)
+  TwitchAuth,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -43,5 +46,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.PurchasedTip: 'purchased-tip',
         HiveKeys.Hotkey: 'hotkey',
         HiveKeys.Settings: 'settings',
+        HiveKeys.TwitchAuth: 'twitch-auth',
       }[this]!;
 }
