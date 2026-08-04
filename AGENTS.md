@@ -27,7 +27,9 @@ trusting anything below to still be current.
   Diff your branch against its remote counterpart and skim recent log first.
 - **Commit per verified unit** — after each finished, tested/analyzed piece
   of work, commit it as a small, logically-scoped commit without waiting to
-  be asked. **Push only when the user explicitly asks.** Active branch:
+  be asked. **Push when the user asks, and always at wrap-up/handoff** —
+  the remote is the source of truth; never leave work local-only when
+  handing over. Active branch:
   `master` (includes "On Air" redesign; pull/fetch before editing — see the
   handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
