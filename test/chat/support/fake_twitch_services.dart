@@ -15,6 +15,10 @@ class FakeTwitchAuthService extends TwitchAuthService {
   Object? validateThrows;
   TwitchAuthException? failPollWith;
 
+  /// When set, [refreshToken] throws this instead of returning a fresh
+  /// token (e.g. a transient Twitch 5xx or a definitive 401).
+  TwitchAuthException? failRefreshWith;
+
   /// When set, [pollForToken] parks on this completer instead of returning
   /// immediately — lets a test resolve the poll at a chosen moment.
   Completer<TwitchToken>? pollGate;
@@ -65,7 +69,10 @@ class FakeTwitchAuthService extends TwitchAuthService {
   }
 
   @override
-  Future<TwitchToken> refreshToken(String refreshToken) async => token;
+  Future<TwitchToken> refreshToken(String refreshToken) async {
+    if (this.failRefreshWith != null) throw this.failRefreshWith!;
+    return token;
+  }
 
   @override
   Future<void> revoke(String accessToken) async {

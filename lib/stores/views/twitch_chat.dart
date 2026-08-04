@@ -165,6 +165,10 @@ abstract class _TwitchChatStore with Store {
         isCancelled: () => this._loginCancelled || flow != this._loginFlow,
       );
 
+      // A superseded flow must not write state — its stale continuation
+      // resumes here before the next isCancelled check would run.
+      if (flow != this._loginFlow) return;
+
       this.authState = TwitchAuthState.loggingIn;
       final user = await this._authService.fetchOwnUser(token.accessToken);
       await this._persistAuth(token, user);
@@ -199,6 +203,8 @@ abstract class _TwitchChatStore with Store {
 
   @action
   Future<void> logout() async {
+    // Supersede any in-flight login flow so its stale continuations bail.
+    this._loginFlow++;
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     await this._disconnectChat();
     this.messages.clear();
@@ -231,7 +237,18 @@ abstract class _TwitchChatStore with Store {
         userId: this.user!.id,
       );
     } on TwitchAuthException catch (e) {
-      await this._handleInvalidAuth(e.message);
+      // Wipe the stored session only on a definitive auth failure: a
+      // 401/403 on refresh means the refresh token is dead, and a null
+      // status is our own pre-flight "Not logged in" throw. Anything else
+      // (e.g. a 5xx during a Twitch incident) is transient — keep the
+      // session and surface a generic connection failure instead.
+      if (e.statusCode == null || e.statusCode == 401 || e.statusCode == 403) {
+        await this._handleInvalidAuth(e.message);
+      } else {
+        GeneralHelper.advLog('Twitch chat connect failed — $e');
+        this.chatConnection = TwitchChatConnectionState.failed;
+        this.chatError = 'Could not connect to Twitch chat';
+      }
     } catch (e) {
       GeneralHelper.advLog('Twitch chat connect failed — $e');
       this.chatConnection = TwitchChatConnectionState.failed;

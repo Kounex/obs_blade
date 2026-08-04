@@ -194,6 +194,31 @@ void main() {
       expect(store.user?.login, 'kounex');
       expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
     });
+
+    test('a superseded flow\'s stale poll success cannot clobber the new flow',
+        () async {
+      // Login A: the poll parks on a gate the test controls.
+      final gateA = Completer<TwitchToken>();
+      authService.pollGate = gateA;
+      final loginA = store.startLogin();
+      await pumpEventQueue();
+
+      // The user restarts — login B supersedes A and succeeds.
+      authService.pollGate = null;
+      await store.startLogin();
+      expect(store.authState, TwitchAuthState.loggedIn);
+
+      // A's stale poll now RESOLVES successfully — its continuation must
+      // bail instead of re-persisting and reconnecting (a reconnect would
+      // dispose B's live EventSub session first).
+      gateA.complete(FakeTwitchAuthService.token);
+      await loginA;
+      await pumpEventQueue();
+
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(store.user?.login, 'kounex');
+      expect(eventSubService.disposeCalled, isFalse);
+    });
   });
 
   group('logout', () {
@@ -208,6 +233,75 @@ void main() {
       expect(authBox().get(TwitchAuth.kBoxKey), isNull);
       expect(authService.revokedToken, 'access-1');
       expect(eventSubService.disposeCalled, isTrue);
+    });
+
+    test('supersedes an in-flight login flow', () async {
+      // Login A parks mid-poll while the user logs out from another path.
+      final gateA = Completer<TwitchToken>();
+      authService.pollGate = gateA;
+      final loginA = store.startLogin();
+      await pumpEventQueue();
+      expect(store.authState, TwitchAuthState.awaitingAuthorization);
+
+      await store.logout();
+      expect(store.authState, TwitchAuthState.loggedOut);
+
+      // A's stale poll now resolves — its continuation must not revive
+      // the login after the logout.
+      gateA.complete(FakeTwitchAuthService.token);
+      await loginA;
+      await pumpEventQueue();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(store.user, isNull);
+      expect(authBox().get(TwitchAuth.kBoxKey), isNull);
+      expect(eventSubService.connectCalled, isFalse);
+    });
+  });
+
+  group('connectChat', () {
+    TwitchAuth recordInsideRefreshWindow() => TwitchAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          // Inside the 5-minute refresh window → connectChat refreshes
+          // the token before connecting.
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 60 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        );
+
+    test('a 5xx on token refresh keeps the session and fails the connection',
+        () async {
+      authService.failRefreshWith = const TwitchAuthException(
+        'Token refresh failed (500)',
+        statusCode: 500,
+      );
+      await authBox().put(TwitchAuth.kBoxKey, recordInsideRefreshWindow());
+
+      await store.init();
+
+      expect(store.chatConnection, TwitchChatConnectionState.failed);
+      expect(store.chatError, 'Could not connect to Twitch chat');
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(authBox().get(TwitchAuth.kBoxKey)?.accessToken, 'access-1');
+      expect(eventSubService.connectCalled, isFalse);
+    });
+
+    test('a 401 on token refresh wipes the session', () async {
+      authService.failRefreshWith = const TwitchAuthException(
+        'Token refresh failed (401)',
+        statusCode: 401,
+      );
+      await authBox().put(TwitchAuth.kBoxKey, recordInsideRefreshWindow());
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(store.authError, 'Token refresh failed (401)');
+      expect(authBox().get(TwitchAuth.kBoxKey), isNull);
+      expect(store.chatConnection, TwitchChatConnectionState.disconnected);
+      expect(eventSubService.connectCalled, isFalse);
     });
   });
 

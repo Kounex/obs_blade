@@ -23,7 +23,12 @@ class TwitchAuthException implements Exception {
   final String message;
   final Object? cause;
 
-  const TwitchAuthException(this.message, [this.cause]);
+  /// HTTP status of the failing response, when the failure came from an
+  /// HTTP call — `null` for local/pre-flight failures. Lets callers tell a
+  /// definitive 401/403 (dead credentials) from a transient Twitch 5xx.
+  final int? statusCode;
+
+  const TwitchAuthException(this.message, {this.cause, this.statusCode});
 
   @override
   String toString() =>
@@ -62,7 +67,8 @@ class TwitchAuthService {
     if (response.statusCode != 200) {
       throw TwitchAuthException(
         'Device code request failed (${response.statusCode})',
-        response.body,
+        cause: response.body,
+        statusCode: response.statusCode,
       );
     }
     return TwitchDeviceCode.fromJson(
@@ -110,13 +116,20 @@ class TwitchAuthService {
           interval += 5;
           break;
         case 'access_denied':
-          throw const TwitchAuthException('Authorization denied on Twitch');
+          throw TwitchAuthException(
+            'Authorization denied on Twitch',
+            statusCode: response.statusCode,
+          );
         case 'expired_token':
-          throw const TwitchAuthException('Device code expired');
+          throw TwitchAuthException(
+            'Device code expired',
+            statusCode: response.statusCode,
+          );
         default:
           throw TwitchAuthException(
             'Token polling failed (${response.statusCode})',
-            response.body,
+            cause: response.body,
+            statusCode: response.statusCode,
           );
       }
     }
@@ -137,7 +150,8 @@ class TwitchAuthService {
     if (response.statusCode != 200) {
       throw TwitchAuthException(
         'Token refresh failed (${response.statusCode})',
-        response.body,
+        cause: response.body,
+        statusCode: response.statusCode,
       );
     }
     return TwitchToken.fromJson(
@@ -160,7 +174,8 @@ class TwitchAuthService {
     if (response.statusCode == 401) return false;
     throw TwitchAuthException(
       'Token validation failed (status ${response.statusCode})',
-      response.body,
+      cause: response.body,
+      statusCode: response.statusCode,
     );
   }
 
@@ -173,7 +188,8 @@ class TwitchAuthService {
     if (response.statusCode != 200) {
       throw TwitchAuthException(
         'Fetching the Twitch user failed (${response.statusCode})',
-        response.body,
+        cause: response.body,
+        statusCode: response.statusCode,
       );
     }
     final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
