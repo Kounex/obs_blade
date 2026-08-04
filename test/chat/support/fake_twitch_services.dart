@@ -9,8 +9,15 @@ import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 
 class FakeTwitchAuthService extends TwitchAuthService {
   bool validateResult = true;
-  bool validateThrows = false;
+
+  /// When set, [validate] throws this error (e.g. a [SocketException] for
+  /// offline or a [TwitchAuthException] for a Twitch 5xx).
+  Object? validateThrows;
   TwitchAuthException? failPollWith;
+
+  /// When set, [pollForToken] parks on this completer instead of returning
+  /// immediately — lets a test resolve the poll at a chosen moment.
+  Completer<TwitchToken>? pollGate;
   String? revokedToken;
 
   static const token = TwitchToken(
@@ -44,6 +51,7 @@ class FakeTwitchAuthService extends TwitchAuthService {
   }) async {
     if (isCancelled()) throw const TwitchAuthException('Login cancelled');
     if (this.failPollWith != null) throw this.failPollWith!;
+    if (this.pollGate != null) return this.pollGate!.future;
     return token;
   }
 
@@ -52,7 +60,7 @@ class FakeTwitchAuthService extends TwitchAuthService {
 
   @override
   Future<bool> validate(String accessToken) async {
-    if (this.validateThrows) throw const SocketException('Network unreachable');
+    if (this.validateThrows != null) throw this.validateThrows!;
     return this.validateResult;
   }
 

@@ -220,6 +220,20 @@ void main() {
 
       expect(await serviceWith(client).validate('access-1'), isFalse);
     });
+
+    test('throws on other statuses (e.g. 500 during a Twitch incident)', () {
+      final client =
+          MockClient((request) async => http.Response('oops', 500));
+
+      expect(
+        serviceWith(client).validate('access-1'),
+        throwsA(isA<TwitchAuthException>().having(
+          (e) => e.message,
+          'message',
+          'Token validation failed (status 500)',
+        )),
+      );
+    });
   });
 
   group('fetchOwnUser', () {

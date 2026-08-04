@@ -49,6 +49,10 @@ abstract class _TwitchChatStore with Store {
   StreamSubscription<BoxEvent>? _authBoxSub;
   bool _loginCancelled = false;
 
+  /// Identifies the active login flow — a superseded flow's stale
+  /// continuations (e.g. a poll still mid-sleep) must not touch state.
+  int _loginFlow = 0;
+
   _TwitchChatStore({
     TwitchAuthService? authService,
     TwitchEventSubService Function(
@@ -142,6 +146,7 @@ abstract class _TwitchChatStore with Store {
   @action
   Future<void> startLogin() async {
     this._loginCancelled = false;
+    final flow = ++this._loginFlow;
     this._ensureAuthBoxWatcher();
     this.authError = null;
     this.pendingUserCode = null;
@@ -157,7 +162,7 @@ abstract class _TwitchChatStore with Store {
       final token = await this._authService.pollForToken(
         deviceCode,
         onPending: () {},
-        isCancelled: () => this._loginCancelled,
+        isCancelled: () => this._loginCancelled || flow != this._loginFlow,
       );
 
       this.authState = TwitchAuthState.loggingIn;
@@ -169,6 +174,8 @@ abstract class _TwitchChatStore with Store {
       this.authState = TwitchAuthState.loggedIn;
       await this.connectChat();
     } on TwitchAuthException catch (e) {
+      // A superseded flow must not clobber the new flow's state.
+      if (flow != this._loginFlow) return;
       this.pendingUserCode = null;
       if (this._loginCancelled) {
         this.authState = TwitchAuthState.loggedOut;
@@ -177,6 +184,7 @@ abstract class _TwitchChatStore with Store {
         this.authError = e.message;
       }
     } catch (e) {
+      if (flow != this._loginFlow) return;
       GeneralHelper.advLog('Twitch login failed unexpectedly — $e');
       this.pendingUserCode = null;
       this.authState = TwitchAuthState.error;

@@ -31,6 +31,7 @@ class DataManagementView extends StatelessWidget {
     await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
     await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
     await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
+    await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
 
     /// Since the Hive-SettingsBox also contains the information whether the user
     /// purchased Blacksmith or not, we save the current value before clearing the whole box

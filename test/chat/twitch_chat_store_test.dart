@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 
@@ -89,7 +91,31 @@ void main() {
     });
 
     test('validate throwing (offline) keeps the record, stays logged out', () async {
-      authService.validateThrows = true;
+      authService.validateThrows = const SocketException('Network unreachable');
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          expiresAtMs:
+              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(store.isLoggedIn, isFalse);
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+      expect(eventSubService.connectCalled, isFalse);
+    });
+
+    test('validate throwing a Twitch 5xx keeps the record, stays logged out', () async {
+      authService.validateThrows =
+          const TwitchAuthException('Token validation failed (status 500)');
       await authBox().put(
         TwitchAuth.kBoxKey,
         TwitchAuth(
@@ -144,6 +170,29 @@ void main() {
 
       expect(store.authState, TwitchAuthState.loggedOut);
       expect(store.authError, isNull);
+    });
+
+    test('a superseded login flow cannot clobber the new flow', () async {
+      // Login A: the poll parks on a gate the test controls.
+      final gateA = Completer<TwitchToken>();
+      authService.pollGate = gateA;
+      final loginA = store.startLogin();
+      await pumpEventQueue();
+
+      // The user cancels A and immediately restarts — login B succeeds.
+      store.cancelLogin();
+      authService.pollGate = null;
+      await store.startLogin();
+      expect(store.authState, TwitchAuthState.loggedIn);
+
+      // A's stale poll now throws — it must not touch B's state.
+      gateA.completeError(const TwitchAuthException('Login cancelled'));
+      await loginA;
+      await pumpEventQueue();
+
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(store.user?.login, 'kounex');
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
     });
   });
 

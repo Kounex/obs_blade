@@ -28,7 +28,7 @@ Running log of upgrade/migration work. Not store release notes.
   `twitch_device_code_dialog.dart`) + `username_action_row.dart`
   connect/logout actions; `http` added as the single new dependency; tests
   under `test/chat/` + `test/persistence/twitch_auth_persistence_test.dart`
-  with `docs/fixtures/twitch/` message fixtures.
+  with `test/chat/fixtures/twitch/` message fixtures.
 - **Client ID:** `t3muhu36do5wemeeilzl57v48gwcmh` (public — no secret in
   DCF), hardcoded once in `lib/utils/twitch/twitch_auth_service.dart`.
 - **Robustness fixes during execution:** EventSub subscription POST failures

@@ -147,12 +147,21 @@ class TwitchAuthService {
 
   /// Twitch's validate endpoint — note the required `OAuth` prefix
   /// (not `Bearer`, unlike every other endpoint).
+  ///
+  /// Tri-state: `true` on 200, `false` only on a definitive 401. Any other
+  /// status (e.g. a 5xx during a Twitch incident) throws so callers keep
+  /// the stored session instead of destructively logging the user out.
   Future<bool> validate(String accessToken) async {
     final response = await this._client.get(
       Uri.parse('$_kIdBase/validate'),
       headers: {'Authorization': 'OAuth $accessToken'},
     );
-    return response.statusCode == 200;
+    if (response.statusCode == 200) return true;
+    if (response.statusCode == 401) return false;
+    throw TwitchAuthException(
+      'Token validation failed (status ${response.statusCode})',
+      response.body,
+    );
   }
 
   /// `GET /helix/users` without a filter returns the token's own user.
