@@ -17,6 +17,7 @@ import '../persistence/support/hive_test_harness.dart';
 
 class FakeTwitchAuthService extends TwitchAuthService {
   bool validateResult = true;
+  bool validateThrows = false;
   TwitchAuthException? failPollWith;
   String? revokedToken;
 
@@ -58,7 +59,10 @@ class FakeTwitchAuthService extends TwitchAuthService {
   Future<TwitchUser> fetchOwnUser(String accessToken) async => user;
 
   @override
-  Future<bool> validate(String accessToken) async => this.validateResult;
+  Future<bool> validate(String accessToken) async {
+    if (this.validateThrows) throw const SocketException('Network unreachable');
+    return this.validateResult;
+  }
 
   @override
   Future<TwitchToken> refreshToken(String refreshToken) async => token;
@@ -171,6 +175,29 @@ void main() {
 
       expect(store.authState, TwitchAuthState.loggedOut);
       expect(authBox().get(TwitchAuth.kBoxKey), isNull);
+    });
+
+    test('validate throwing (offline) keeps the record, stays logged out', () async {
+      authService.validateThrows = true;
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          expiresAtMs:
+              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(store.isLoggedIn, isFalse);
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+      expect(eventSubService.connectCalled, isFalse);
     });
   });
 

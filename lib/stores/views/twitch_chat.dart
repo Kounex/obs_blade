@@ -119,7 +119,13 @@ abstract class _TwitchChatStore with Store {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     if (auth == null) return;
 
-    final valid = await this._authService.validate(auth.accessToken);
+    late final bool valid;
+    try {
+      valid = await this._authService.validate(auth.accessToken);
+    } catch (e) {
+      GeneralHelper.advLog('Twitch token validation failed (offline?) — $e');
+      return;
+    }
     if (!valid) {
       await this._handleInvalidAuth('Twitch session expired — please log in again');
       return;
