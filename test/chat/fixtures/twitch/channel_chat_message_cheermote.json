@@ -1,0 +1,23 @@
+{
+  "broadcaster_user_id": "1971641",
+  "broadcaster_user_login": "streamer",
+  "broadcaster_user_name": "streamer",
+  "chatter_user_id": "777",
+  "chatter_user_login": "cheerer",
+  "chatter_user_name": "cheerer",
+  "message_id": "66666666-7777-8888-9999-000000000000",
+  "message": {
+    "text": "This is a bad message… pogchamp",
+    "fragments": [
+      { "type": "text", "text": "This is a bad message… ", "cheermote": null, "emote": null, "mention": null },
+      { "type": "cheermote", "text": "pogchamp", "emote": null, "mention": null,
+        "cheermote": { "prefix": "pogchamp", "bits": 1000, "tier": 1 } }
+    ]
+  },
+  "color": "#FF0000",
+  "badges": [],
+  "message_type": "text",
+  "cheer": { "bits": 1000 },
+  "reply": null,
+  "channel_points_custom_reward_id": null
+}

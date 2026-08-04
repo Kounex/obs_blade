@@ -1,0 +1,24 @@
+{
+  "broadcaster_user_id": "1971641",
+  "broadcaster_user_login": "streamer",
+  "broadcaster_user_name": "streamer",
+  "chatter_user_id": "555",
+  "chatter_user_login": "emoter",
+  "chatter_user_name": "emoter",
+  "message_id": "11111111-2222-3333-4444-555555555555",
+  "message": {
+    "text": "Hello Kappa world",
+    "fragments": [
+      { "type": "text", "text": "Hello ", "cheermote": null, "emote": null, "mention": null },
+      { "type": "emote", "text": "Kappa", "cheermote": null, "mention": null,
+        "emote": { "id": "25", "emote_set_id": "0", "owner_id": "0", "format": ["static"] } },
+      { "type": "text", "text": " world", "cheermote": null, "emote": null, "mention": null }
+    ]
+  },
+  "color": null,
+  "badges": [],
+  "message_type": "text",
+  "cheer": null,
+  "reply": null,
+  "channel_points_custom_reward_id": null
+}

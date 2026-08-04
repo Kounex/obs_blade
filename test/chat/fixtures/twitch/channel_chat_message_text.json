@@ -1,0 +1,35 @@
+{
+  "broadcaster_user_id": "1971641",
+  "broadcaster_user_login": "streamer",
+  "broadcaster_user_name": "streamer",
+  "chatter_user_id": "4145994",
+  "chatter_user_login": "viewer32",
+  "chatter_user_name": "viewer32",
+  "message_id": "cc106a89-1814-919d-454c-f4f2f970aae7",
+  "message": {
+    "text": "Hi chat",
+    "fragments": [
+      {
+        "type": "text",
+        "text": "Hi chat",
+        "cheermote": null,
+        "emote": null,
+        "mention": null
+      }
+    ]
+  },
+  "color": "#00FF7F",
+  "badges": [
+    { "set_id": "moderator", "id": "1", "info": "" },
+    { "set_id": "subscriber", "id": "12", "info": "16" }
+  ],
+  "message_type": "text",
+  "cheer": null,
+  "reply": null,
+  "channel_points_custom_reward_id": null,
+  "source_broadcaster_user_id": null,
+  "source_broadcaster_user_login": null,
+  "source_broadcaster_user_name": null,
+  "source_message_id": null,
+  "source_badges": null
+}
