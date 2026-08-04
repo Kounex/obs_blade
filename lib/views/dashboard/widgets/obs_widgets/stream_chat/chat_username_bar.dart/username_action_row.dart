@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/shared/dialogs/confirmation.dart';
+import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 
@@ -9,6 +13,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../twitch_device_code_dialog.dart';
 import 'delete_username_dialog.dart';
 import 'dialogs/add_edit_twitch_username.dart';
 
@@ -45,6 +50,41 @@ class UsernameActionRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          if (chatType == ChatType.Twitch) ...[
+            Observer(
+              builder: (_) {
+                final loggedIn = GetIt.instance<TwitchChatStore>().isLoggedIn;
+                return _UsernameAction(
+                  icon: loggedIn
+                      ? CupertinoIcons.checkmark_circle_fill
+                      : CupertinoIcons.link,
+                  tooltip: loggedIn ? 'Twitch connected' : 'Connect Twitch',
+                  onPressed: () {
+                    if (loggedIn) {
+                      ModalHandler.showBaseDialog(
+                        context: context,
+                        dialogWidget: ConfirmationDialog(
+                          title: 'Disconnect Twitch?',
+                          body:
+                              'You will be logged out of your Twitch account. The classic WebView chat will be used instead.',
+                          okText: 'Disconnect',
+                          isYesDestructive: true,
+                          onOk: (_) =>
+                              GetIt.instance<TwitchChatStore>().logout(),
+                        ),
+                      );
+                    } else {
+                      startTwitchLogin(context);
+                    }
+                  },
+                );
+              },
+            ),
+            const SizedBox(
+              height: 20.0,
+              child: VerticalDivider(width: 1.0, thickness: 0.0),
+            ),
+          ],
           _UsernameAction(
             icon: CupertinoIcons.person_add,
             tooltip: 'Add',

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
@@ -12,11 +13,14 @@ import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
+import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/styling_helper.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
+import 'native_twitch_chat_view.dart';
+import 'twitch_device_code_dialog.dart';
 
 class StreamChat extends StatefulWidget {
   final bool usernameRowPadding;
@@ -206,68 +210,100 @@ class _StreamChatState extends State<StreamChat>
                 _syncWebController(_urlForChatType(chatType, settingsBox));
               }
 
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  /// Only add the [WebView] to the widget tree if we have an
-                  /// actual chat to display because otherwise the [WebView]
-                  /// will still eat up performance
-                  if (chatActive && _webController != null) ...[
-                    /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
-                    /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
-                    /// in the region where the Twitch chat is. The Listener is used to determine
-                    /// where the user is trying to scroll and if it's where the Twitch chat is,
-                    /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
-                    /// the scroll
-                    Listener(
-                      onPointerDown: (onPointerDown) =>
-                          dashboardStore.setPointerOnChat(
-                              onPointerDown.localPosition.dy > 150.0 &&
-                                  onPointerDown.localPosition.dy < 450.0),
-                      onPointerUp: (_) =>
-                          dashboardStore.setPointerOnChat(false),
-                      onPointerCancel: (_) =>
-                          dashboardStore.setPointerOnChat(false),
-                      child: WebViewWidget(
-                        key: Key(
-                          chatType.toString() +
-                              settingsBox
-                                  .get(SettingsKeys.SelectedTwitchUsername.name)
-                                  .toString() +
-                              settingsBox
-                                  .get(
-                                      SettingsKeys.SelectedYouTubeUsername.name)
-                                  .toString() +
-                              settingsBox
-                                  .get(
-                                      SettingsKeys.SelectedOwncastUsername.name)
-                                  .toString(),
-                        ),
-                        controller: _webController!,
-                      ),
-                    ),
+              /// Native Twitch chat takes over the slot once logged in;
+              /// logged-out Twitch / YouTube / Owncast keep the WebView path
+              if (chatType == ChatType.Twitch) {
+                return Observer(
+                  builder: (_) {
+                    if (GetIt.instance<TwitchChatStore>().isLoggedIn) {
+                      return const NativeTwitchChatView();
+                    }
+                    return this._buildLegacyChatStack(
+                      context,
+                      settingsBox,
+                      chatType,
+                      chatActive,
+                      dashboardStore,
+                    );
+                  },
+                );
+              }
 
-                    /// Crossfading branded surface hiding the flash of the
-                    /// keyed [WebView] reload until the page has loaded -
-                    /// purely visual, touches always fall through to the
-                    /// [WebView] (and its pointer band) as before
-                    AnimatedOpacity(
-                      opacity: _isChatLoading ? 1.0 : 0.0,
-                      duration: AppMotion.medium,
-                      curve: AppMotion.standard,
-                      child: _ChatLoadingState(chatType: chatType),
-                    ),
-                  ],
-                  if (!chatActive)
-                    StaggeredEntrance(
-                      child: _ChatEmptyState(chatType: chatType),
-                    ),
-                ],
-              );
+              return this._buildLegacyChatStack(
+                  context, settingsBox, chatType, chatActive, dashboardStore);
             },
           ),
         ),
         if (this.widget.usernameRowBeneath) usernameBar,
+      ],
+    );
+  }
+
+  /// The pre-native chat slot: WebView embed + loading/empty states.
+  /// Verbatim the behavior before native Twitch chat existed.
+  Widget _buildLegacyChatStack(
+    BuildContext context,
+    Box<dynamic> settingsBox,
+    ChatType chatType,
+    bool chatActive,
+    DashboardStore dashboardStore,
+  ) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        /// Only add the [WebView] to the widget tree if we have an
+        /// actual chat to display because otherwise the [WebView]
+        /// will still eat up performance
+        if (chatActive && _webController != null) ...[
+          /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
+          /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
+          /// in the region where the Twitch chat is. The Listener is used to determine
+          /// where the user is trying to scroll and if it's where the Twitch chat is,
+          /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
+          /// the scroll
+          Listener(
+            onPointerDown: (onPointerDown) =>
+                dashboardStore.setPointerOnChat(
+                    onPointerDown.localPosition.dy > 150.0 &&
+                        onPointerDown.localPosition.dy < 450.0),
+            onPointerUp: (_) =>
+                dashboardStore.setPointerOnChat(false),
+            onPointerCancel: (_) =>
+                dashboardStore.setPointerOnChat(false),
+            child: WebViewWidget(
+              key: Key(
+                chatType.toString() +
+                    settingsBox
+                        .get(SettingsKeys.SelectedTwitchUsername.name)
+                        .toString() +
+                    settingsBox
+                        .get(
+                            SettingsKeys.SelectedYouTubeUsername.name)
+                        .toString() +
+                    settingsBox
+                        .get(
+                            SettingsKeys.SelectedOwncastUsername.name)
+                        .toString(),
+              ),
+              controller: _webController!,
+            ),
+          ),
+
+          /// Crossfading branded surface hiding the flash of the
+          /// keyed [WebView] reload until the page has loaded -
+          /// purely visual, touches always fall through to the
+          /// [WebView] (and its pointer band) as before
+          AnimatedOpacity(
+            opacity: _isChatLoading ? 1.0 : 0.0,
+            duration: AppMotion.medium,
+            curve: AppMotion.standard,
+            child: _ChatLoadingState(chatType: chatType),
+          ),
+        ],
+        if (!chatActive)
+          StaggeredEntrance(
+            child: _ChatEmptyState(chatType: chatType),
+          ),
       ],
     );
   }
@@ -336,6 +372,34 @@ class _ChatEmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (this.chatType == ChatType.Twitch) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Observer(
+                builder: (_) => GetIt.instance<TwitchChatStore>().isLoggedIn
+                    ? const SizedBox.shrink()
+                    : Pressable(
+                        haptic: true,
+                        onTap: () => startTwitchLogin(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            color: brandColor,
+                            borderRadius: AppRadius.pill,
+                          ),
+                          child: Text(
+                            'Connect Twitch',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: Colors.white),
+                          ),
+                        ),
+                      ),
+              ),
+            ],
           ],
         ),
       ),
