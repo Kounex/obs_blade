@@ -149,6 +149,19 @@ void main() {
     expect(messages.single.message.text, 'Hi chat');
   });
 
+  test('subscription POST throwing routes to onRevoked instead of escaping', () async {
+    final client = MockClient(
+        (request) async => throw http.ClientException('connection refused'));
+
+    final service = serviceWith(client);
+    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    expect(revocations, hasLength(1));
+    expect(revocations.single, startsWith('subscription_failed:'));
+  });
+
   test('session_reconnect opens a new socket at the reconnect url without resubscribing', () async {
     var subscriptionPosts = 0;
     final client = MockClient((request) async {

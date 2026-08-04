@@ -170,25 +170,33 @@ class TwitchEventSubService {
     final sessionId = this._sessionId;
     if (token == null || userId == null || sessionId == null) return;
 
-    final response = await this._client.post(
-      Uri.parse(_subscriptionsUrl),
-      headers: {
-        ...TwitchAuthService.helixHeaders(token),
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'type': 'channel.chat.message',
-        'version': '1',
-        'condition': {'broadcaster_user_id': userId, 'user_id': userId},
-        'transport': {'method': 'websocket', 'session_id': sessionId},
-      }),
-    );
+    /// The socket-level failure path (DNS/socket/timeout) must not escape
+    /// this unawaited future — surface it like a failed subscription.
+    try {
+      final response = await this._client.post(
+        Uri.parse(_subscriptionsUrl),
+        headers: {
+          ...TwitchAuthService.helixHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'type': 'channel.chat.message',
+          'version': '1',
+          'condition': {'broadcaster_user_id': userId, 'user_id': userId},
+          'transport': {'method': 'websocket', 'session_id': sessionId},
+        }),
+      );
 
-    if (response.statusCode == 202) {
-      final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
-      this._subscriptionId = (data as List).first['id'] as String?;
-    } else {
-      this.onRevoked('subscription_failed:${response.statusCode}');
+      if (response.statusCode == 202) {
+        final data =
+            (json.decode(response.body) as Map<String, dynamic>)['data'];
+        this._subscriptionId = (data as List).first['id'] as String?;
+      } else {
+        this.onRevoked('subscription_failed:${response.statusCode}');
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Twitch EventSub: subscription POST failed — $e');
+      this.onRevoked('subscription_failed:$e');
     }
   }
 
