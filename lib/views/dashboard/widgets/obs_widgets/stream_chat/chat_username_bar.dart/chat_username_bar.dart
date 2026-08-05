@@ -6,6 +6,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
+import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
 import 'twitch_account_control.dart';
@@ -98,7 +99,14 @@ class ChatUsernameBar extends StatelessWidget {
                       const SizedBox(height: AppSpacing.sm),
                     ],
                     if (nativeMode)
-                      const TwitchAccountControl()
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          NativeChatOptionsButton(chatType: chatType),
+                          const SizedBox(width: AppSpacing.sm),
+                          const TwitchAccountControl(),
+                        ],
+                      )
                     else
                       UsernameActionRow(
                         settingsBox: settingsBox,
