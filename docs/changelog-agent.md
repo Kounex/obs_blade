@@ -2,6 +2,44 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-05 — Native chat send input (dock, write scope, Helix send)
+
+- Native chat now **writes**: a send dock sits at the bottom of
+  `NativeChatWindow` through its new optional `input` slot (rendered below
+  the content with a `BaseDivider` hairline); wired in `stream_chat.dart`'s
+  native branch inside the Observer (`onSend: twitchStore.sendChatMessage`,
+  `onRelogin: startTwitchLogin`).
+- New generic `NativeChatInput` (`stream_chat/native_chat_input.dart`):
+  pill `TextField` + circular send button, hard 500 `maxLength` with no
+  counter chrome, spinner while in flight, field clears on success, failed
+  sends keep the text. Deliberately Twitch-free (plain params — the same
+  reuse seam as the window for a future native engine). `canSend == false`
+  swaps the field for a read-only lock strip ("Logged in read-only" /
+  "Re-login to chat"); send failures surface as a transient inline error
+  line above the dock.
+- **Silent scope upgrade:** `kTwitchChatScopes` is now
+  `['user:read:chat', 'user:write:chat']`. Nobody is logged out — stored
+  sessions keep working read-only; `TwitchChatStore.canWriteChat` (plain
+  non-reactive getter over the persisted `TwitchAuth.scopes`) gates the
+  dock, and pre-upgrade logins get the lock strip with the re-login path.
+- New `TwitchMessageService` (injectable `http.Client`, POST
+  `$kTwitchHelixBase/chat/messages`, adds its own `Content-Type:
+  application/json`) returning freezed `TwitchSendResult {messageId,
+  isSent, dropReason}`; the guarded `TwitchChatStore.sendChatMessage`
+  action (`@observable sendingChat` / `sendChatError`, `messageService`
+  constructor seam) never throws — guards: not logged in / no write scope
+  / empty message / already in flight. Twitch `drop_reason`s map to user
+  copy via `_dropReasonText` (AutoMod blocked/held, duplicate,
+  rate-limited, fallback "Message not delivered").
+- **No optimistic insert by design** — the sent message renders via the
+  existing EventSub echo; 200-but-dropped sends surface as the inline dock
+  error, never a silent no-op.
+- Spec/plan under `docs/superpowers/` (`2026-08-05-chat-send-input*`),
+  commits `fdd539c..89fa18f`. Gates: **164/164** tests (+3 service, +7
+  store, +8 dock, +1 window slot), analyze 0 errors + the 6 pre-existing
+  warnings. **Maintainer dogfood pending** — checklist in
+  `session-handoff.md`.
+
 ## 2026-08-05 — Native chat window (pane, status row, connection sheet)
 
 - New `NativeChatWindow` (`stream_chat/native_chat_window.dart`) wraps the

@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native chat window — container, status row, connection sheet — shipped + dogfooded).
+Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native chat send input shipped — chat now reads AND writes; maintainer dogfood pending).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -73,10 +73,7 @@ source of truth; never leave work local-only when handing over.
   future native YouTube engine. Dogfood passed after one fix round; gates
   145/145 + analyze clean. History in
   [`changelog-agent.md`](changelog-agent.md); spec/plan under
-  `docs/superpowers/` (`2026-08-05-chat-container-ui*`). **Next chat
-  items:** availability/entitlement gate for native chat (plugs into the
-  seam, brings auto-switch-on-login), chat send input (dock slot reserved
-  by this window; needs `user:write:chat` scope decision), 7TV/BTTV.
+  `docs/superpowers/` (`2026-08-05-chat-container-ui*`).
 - **Native Twitch chat Phase 2: role badges + visibility toggles on
   `master`** (2026-08-05) — `ChatMessageEvent.badges` modeled; session-scoped
   `TwitchBadgeStore` (GetIt) caches the Helix global + per-channel badge
@@ -91,6 +88,38 @@ source of truth; never leave work local-only when handing over.
   text scale (the new 44pt options button densifies the right column);
   badge pop-in timing on a live channel (a beat after messages —
   intended); badge↔username spacing read (uniform `xs/2`).
+- **Native chat send input on `master`** (2026-08-05) — native chat now
+  reads AND writes: `NativeChatInput` dock (pill field + circular send,
+  hard 500-char cap, spinner in flight, clears on success, failed sends
+  keep the text, inline error line above the dock) in `NativeChatWindow`'s
+  new `input` slot. **Silent scope upgrade** (`kTwitchChatScopes` +
+  `user:write:chat`): nobody kicked out — pre-upgrade sessions get a
+  read-only lock strip with "Re-login to chat"; `canWriteChat` gates on
+  the persisted token scopes. Helix `TwitchMessageService` + guarded
+  `sendChatMessage` (never throws); no optimistic insert — the sent
+  message renders via the EventSub echo; 200-but-dropped surfaces inline
+  (`drop_reason` → user copy). Widget is Twitch-free by design (reuse
+  seam, same as the window). Gates: 164/164, analyze 0 errors + 6
+  pre-existing warnings. Commits `fdd539c..89fa18f`; spec/plan
+  `2026-08-05-chat-send-input*`. **Maintainer dogfood pending** — needs a
+  fresh login (so the token carries the write scope), then:
+  - Dock renders at the pane bottom (pill field + circular send).
+  - Send a message → appears in your chat on twitch.tv; the EventSub echo
+    renders it in-app with emotes parsed.
+  - Spinner shows in flight; field clears on success.
+  - Offline send (airplane mode) → inline error line, text kept; resend
+    works after reconnect.
+  - 500-char cap: a long paste is capped, no counter chrome.
+  - Tablet mode: dock inside the Chat card; keyboard focus doesn't fight
+    the pane clip.
+  - WebView engine: unchanged.
+  - Read-only path: pre-upgrade session (or temporarily revert
+    `kTwitchChatScopes`) → lock strip; "Re-login to chat" → device flow →
+    dock becomes the field.
+
+  **Next chat items:** availability/entitlement gate (plugs into
+  `nativeChatAvailableFor`, brings auto-switch-on-login), 7TV/BTTV
+  rendering, replies/announce as future send polish.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
@@ -101,8 +130,8 @@ source of truth; never leave work local-only when handing over.
   URL, `stream_chat.dart:108-112`, so no `loadRequest` is re-issued on
   remount; fix only if the fallback renders blank).
 - **Phase 2 input from dogfood (capture when planning):** (a) mobile chat
-  window/container — **shipped 2026-08-05** (`NativeChatWindow`; the send
-  input field will dock at its bottom edge); (b) badges — **shipped
+  window/container — **shipped 2026-08-05** (`NativeChatWindow`; send
+  input docked at its bottom edge the same day); (b) badges — **shipped
   2026-08-05** (role icons next to names + per-category visibility toggles
   in the native chat options sheet); (c) 7TV/BTTV/FFZ emotes render as
   plain text today (graceful fallback, nothing breaks) — rendering them
