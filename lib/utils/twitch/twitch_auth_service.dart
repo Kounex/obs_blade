@@ -15,8 +15,8 @@ const List<String> kTwitchChatScopes = <String>['user:read:chat'];
 
 const String _kIdBase = 'https://id.twitch.tv/oauth2';
 
-/// Base for Helix calls (token validation, chat)
-const String _kHelixBase = 'https://api.twitch.tv/helix';
+/// Base for Helix calls (user info, chat badges)
+const String kTwitchHelixBase = 'https://api.twitch.tv/helix';
 
 /// Terminal auth-flow failure the UI can surface via [message].
 class TwitchAuthException implements Exception {
@@ -182,7 +182,7 @@ class TwitchAuthService {
   /// `GET /helix/users` without a filter returns the token's own user.
   Future<TwitchUser> fetchOwnUser(String accessToken) async {
     final response = await this._client.get(
-      Uri.parse('$_kHelixBase/users'),
+      Uri.parse('$kTwitchHelixBase/users'),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) {
