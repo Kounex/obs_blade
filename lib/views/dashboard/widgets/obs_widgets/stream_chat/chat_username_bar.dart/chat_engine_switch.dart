@@ -3,6 +3,7 @@ import 'package:hive_ce/hive.dart';
 
 import '../../../../../../models/enums/chat_engine.dart';
 import '../../../../../../models/enums/chat_type.dart';
+import '../../../../../../shared/design/design.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 
 /// Manual WebView <-> Native engine toggle for the stream chat. Renders
@@ -35,9 +36,18 @@ class ChatEngineSwitch extends StatelessWidget {
       width: double.infinity,
       child: CupertinoSlidingSegmentedControl<ChatEngine>(
         groupValue: engine,
+
+        /// Vertical segment padding brings the control near the 44pt touch
+        /// target of the neighboring bar controls
         children: const {
-          ChatEngine.webView: Text('WebView'),
-          ChatEngine.native: Text('Native'),
+          ChatEngine.webView: Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Text('WebView'),
+          ),
+          ChatEngine.native: Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Text('Native'),
+          ),
         },
         onValueChanged: (selected) {
           if (selected != null) {

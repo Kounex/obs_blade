@@ -71,7 +71,7 @@ class ChatUsernameBar extends StatelessWidget {
                     children: [
                       ChatTypeDropdown(settingsBox: settingsBox),
                       if (!nativeMode) ...[
-                        const SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.sm),
                         UsernameDropdown(
                           settingsBox: settingsBox,
                         ),
@@ -91,7 +91,7 @@ class ChatUsernameBar extends StatelessWidget {
                         settingsBox: settingsBox,
                         chatType: chatType,
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: AppSpacing.sm),
                     ],
                     if (nativeMode)
                       const TwitchAccountControl()

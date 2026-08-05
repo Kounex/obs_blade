@@ -403,7 +403,7 @@ class _ChatEmptyState extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.sm,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
                     color: brandColor,

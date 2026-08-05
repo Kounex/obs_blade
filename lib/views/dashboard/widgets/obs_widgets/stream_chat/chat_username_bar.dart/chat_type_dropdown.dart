@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
@@ -18,6 +19,11 @@ class ChatTypeDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      /// 44pt touch target ([kMinInteractiveDimensionCupertino]) - finger
+      /// friendly next to the other bar controls; the button centers inside
+      constraints: const BoxConstraints(
+          minHeight: kMinInteractiveDimensionCupertino),
+      alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
         borderRadius: BorderRadius.circular(AppRadius.md),

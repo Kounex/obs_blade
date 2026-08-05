@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
@@ -43,6 +44,12 @@ class UsernameDropdown extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 100.0),
         child: Container(
+          /// 44pt touch target ([kMinInteractiveDimensionCupertino]) - finger
+          /// friendly next to the other bar controls; the button centers
+          /// inside
+          constraints: const BoxConstraints(
+              minHeight: kMinInteractiveDimensionCupertino),
+          alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
             color:
                 StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
