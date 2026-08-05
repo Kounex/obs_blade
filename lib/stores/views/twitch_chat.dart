@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
@@ -44,6 +46,7 @@ abstract class _TwitchChatStore with Store {
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
   ) _eventSubFactory;
+  final TwitchBadgeStore Function() _badgeStoreResolver;
 
   TwitchEventSubService? _eventSub;
   StreamSubscription<BoxEvent>? _authBoxSub;
@@ -60,6 +63,7 @@ abstract class _TwitchChatStore with Store {
       void Function(TwitchEventSubState),
       void Function(String),
     )? eventSubFactory,
+    TwitchBadgeStore Function()? badgeStoreResolver,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onStateChanged, onRevoked) =>
@@ -67,7 +71,9 @@ abstract class _TwitchChatStore with Store {
                   onChatMessage: onChatMessage,
                   onStateChanged: onStateChanged,
                   onRevoked: onRevoked,
-                ));
+                )),
+        _badgeStoreResolver = badgeStoreResolver ??
+            (() => GetIt.instance<TwitchBadgeStore>());
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -208,6 +214,11 @@ abstract class _TwitchChatStore with Store {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     await this._disconnectChat();
     this.messages.clear();
+    try {
+      this._badgeStoreResolver().clear();
+    } catch (e) {
+      GeneralHelper.advLog('Twitch badge catalog clear failed — $e');
+    }
     this.user = null;
     this.authState = TwitchAuthState.loggedOut;
     await this._authBox.delete(TwitchAuth.kBoxKey);
@@ -236,6 +247,21 @@ abstract class _TwitchChatStore with Store {
         accessToken: token,
         userId: this.user!.id,
       );
+
+      /// Badge catalogs are nice-to-have — a fetch problem must never
+      /// affect chat, so this is fire-and-forget with logged failures.
+      try {
+        unawaited(
+          this
+              ._badgeStoreResolver()
+              .fetch(accessToken: token, broadcasterId: this.user!.id)
+              .catchError((Object e) {
+            GeneralHelper.advLog('Twitch badge fetch failed — $e');
+          }),
+        );
+      } catch (e) {
+        GeneralHelper.advLog('Twitch badge fetch could not start — $e');
+      }
     } on TwitchAuthException catch (e) {
       // Wipe the stored session only on a definitive auth failure: a
       // 401/403 on refresh means the refresh token is dead, and a null

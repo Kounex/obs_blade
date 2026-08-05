@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
@@ -18,6 +19,8 @@ void main() {
   late HiveTestHarness harness;
   late FakeTwitchAuthService authService;
   late FakeTwitchEventSubService eventSubService;
+  late FakeTwitchBadgeService badgeService;
+  late TwitchBadgeStore badgeStore;
   late TwitchChatStore store;
 
   Box<TwitchAuth> authBox() => Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -29,9 +32,12 @@ void main() {
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
     authService = FakeTwitchAuthService();
     eventSubService = FakeTwitchEventSubService();
+    badgeService = FakeTwitchBadgeService();
+    badgeStore = TwitchBadgeStore(service: badgeService);
     store = TwitchChatStore(
       authService: authService,
       eventSubFactory: (_, __, ___) => eventSubService,
+      badgeStoreResolver: () => badgeStore,
     );
   });
 
@@ -341,6 +347,61 @@ void main() {
       expect(store.messages, hasLength(500));
       expect(store.messages.first.messageId, '5');
       expect(store.messages.last.messageId, '504');
+    });
+  });
+
+  group('badge catalog wiring', () {
+    Future<void> seedValidAuth() => authBox().put(
+          TwitchAuth.kBoxKey,
+          TwitchAuth(
+            accessToken: 'access-1',
+            refreshToken: 'refresh-1',
+            expiresAtMs:
+                DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+            scopes: const ['user:read:chat'],
+            userId: 'user-1',
+          ),
+        );
+
+    test('connectChat fetches badges for the logged-in user', () async {
+      await seedValidAuth();
+      store.authState = TwitchAuthState.loggedIn;
+      store.user = FakeTwitchAuthService.user;
+
+      await store.connectChat();
+
+      expect(badgeService.globalCalls, 1);
+      expect(badgeService.channelCalls, 1);
+      expect(badgeService.lastAccessToken, 'access-1');
+      expect(badgeService.lastBroadcasterId, 'user-1');
+    });
+
+    test('a failing badge fetch does not affect the chat connection',
+        () async {
+      badgeService.globalThrows =
+          const TwitchAuthException('down', statusCode: 500);
+      badgeService.channelThrows =
+          const TwitchAuthException('down', statusCode: 500);
+      await seedValidAuth();
+      store.authState = TwitchAuthState.loggedIn;
+      store.user = FakeTwitchAuthService.user;
+
+      await store.connectChat();
+
+      expect(store.chatConnection,
+          isNot(TwitchChatConnectionState.failed));
+      expect(store.chatError, isNull);
+    });
+
+    test('logout clears the badge catalog', () async {
+      badgeService.globalSets = [FakeTwitchBadgeService.moderatorSet];
+      await badgeStore.fetch(accessToken: 'access-1', broadcasterId: 'user-1');
+      expect(badgeStore.globalBadges, isNotEmpty);
+
+      await store.logout();
+
+      expect(badgeStore.globalBadges, isEmpty);
+      expect(badgeStore.channelBadges, isEmpty);
     });
   });
 }
