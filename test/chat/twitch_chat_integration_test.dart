@@ -13,6 +13,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_username_bar.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/twitch_account_control.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
@@ -190,6 +191,85 @@ void main() {
     await tester.tap(find.text('Kounex'));
     await tester.pumpAndSettle();
     expect(find.text('Disconnect Twitch?'), findsOneWidget);
+  });
+
+  testWidgets(
+      'native account control offers connect while logged out and starts login on tap',
+      (tester) async {
+    await tester.pumpWidget(wrap(const TwitchAccountControl()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connect Twitch'), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsNothing);
+
+    await tester.tap(find.text('Connect Twitch'));
+    await tester.pump();
+    expect(find.byType(TwitchDeviceCodeDialog), findsOneWidget);
+
+    /// Same teardown dance as the slot login test above: the tap-driven
+    /// login chain persists the token (Hive write in this FakeAsync zone)
+    /// and starts the store's auth-box watcher — unmount, dispose and
+    /// close Hive from inside the zone or harness.close() hangs.
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(() => store.dispose());
+    await tester.pump();
+
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
+  });
+
+  testWidgets(
+      'native account control shows the connected account and disconnects on confirm',
+      (tester) async {
+    store.authState = TwitchAuthState.loggedIn;
+    store.user = FakeTwitchAuthService.user;
+
+    await tester.pumpWidget(wrap(const TwitchAccountControl()));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
+    expect(find.text('Kounex'), findsOneWidget);
+
+    await tester.tap(find.text('Kounex'));
+    await tester.pumpAndSettle();
+    expect(find.text('Disconnect Twitch?'), findsOneWidget);
+
+    await tester.tap(find.text('Disconnect'));
+    await tester.pumpAndSettle();
+    expect(find.text('Disconnect Twitch?'), findsNothing);
+
+    /// logout() awaits the chat disconnect, the TwitchAuth box delete and
+    /// the (faked) revoke — real I/O window, then the zone resumes the
+    /// continuations
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pump();
+    expect(store.authState, TwitchAuthState.loggedOut);
+
+    /// The tap-driven box delete ran in the test's FakeAsync zone and
+    /// Hive's write-queue Completers only dispatch through the zone they
+    /// were created in - a real-zone harness.close() in tearDown would
+    /// hang. Same close-inside-the-zone dance as the login test above.
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(() => store.dispose());
+    await tester.pump();
+
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
   });
 
   testWidgets('tapping the code copies it and confirms inline',
