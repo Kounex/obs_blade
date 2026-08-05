@@ -25,7 +25,7 @@ Every task implicitly includes these:
 - **Commit per task** with `git add <specific files>` (never `-A`). **Do NOT push** — push happens at wrap-up/handoff.
 - **Hive-in-widget-test rules** (proven patterns in `test/chat/twitch_chat_integration_test.dart`):
   - Hive writes in test setup go through `await tester.runAsync(() async { ... })` — the test body's FakeAsync zone never completes real I/O.
-  - After a tap-driven Hive write (e.g. tapping the engine switch), assert the in-memory value immediately (Hive applies puts to its in-memory keystore synchronously), then drain with `await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100))); await tester.pump();` (×2) so `harness.close()` in tearDown finds no pending write.
+  - After a tap-driven Hive write (e.g. tapping the engine switch), assert the in-memory value immediately (Hive applies puts to its in-memory keystore synchronously) and finish the UI assertions, then **close Hive from inside the test's FakeAsync zone** using the dance copied from the 'connect button starts the login' integration test: `var closed = false; unawaited(harness.close().then((_) => closed = true));` then loop `await tester.pump();` + `await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));` up to 10× until `closed`, `await tester.pump(); expect(closed, isTrue);`. When the test involved a store/login flow, unmount + `await tester.runAsync(() => store.dispose());` first. tearDown's `harness.close()` is then a no-op. Draining with runAsync/pump windows alone does NOT work: hive_ce write-queue Completers dispatch only through the zone they were created in, so a real-zone `harness.close()` hangs forever (verified empirically in Task 2 — even 8 drain rounds leave it stuck).
   - Tests that run the real login flow (token persist + auth-box watcher starts) must unmount the chat UI, dispose the store via `runAsync`, and close Hive from inside the zone (copy the dance from the existing 'connect button starts the login' test).
   - Never `pumpAndSettle` while a spinner is animating (device-code dialog, native view connecting state).
 
@@ -316,6 +316,7 @@ git commit -m "feat(chat): add ChatEngine enum + SelectedChatEngine setting (typ
 Create `test/chat/chat_engine_switch_test.dart`:
 
 ```dart
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -401,15 +402,26 @@ void main() {
     expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
         ChatEngine.webView);
 
-    /// Drain the tap-driven Hive writes (their continuations are bound to
-    /// the test's FakeAsync zone) so tearDown's harness.close() finds no
-    /// pending write
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    /// The taps ran their Hive writes in the test's FakeAsync zone, and
+    /// the Completers Hive created for its write queue only dispatch
+    /// their listeners through the zone they were created in - a
+    /// real-zone harness.close() in tearDown would await one of them
+    /// forever (proven: even 8 pump/runAsync drain rounds leave it
+    /// stuck). So close Hive from inside the zone instead: each pump
+    /// drains the zone's queue, each runAsync is a real-time window for
+    /// the next file op of the close (handles close sequentially - hence
+    /// several rounds). tearDown's harness.close() is then a no-op.
+    /// Same dance as the 'connect button starts the login' integration
+    /// test.
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
     await tester.pump();
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    await tester.pump();
+    expect(closed, isTrue);
   });
 }
 ```
@@ -577,10 +589,23 @@ Append these two tests inside `main()`, after the existing 'username bar shows t
     await tester.pump();
     expect(store.authState, TwitchAuthState.loggedOut);
 
-    /// Drain the zone-captured Hive delete so tearDown's close is clean
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    /// The tap-driven box delete ran in the test's FakeAsync zone and
+    /// Hive's write-queue Completers only dispatch through the zone they
+    /// were created in - a real-zone harness.close() in tearDown would
+    /// hang. Same close-inside-the-zone dance as the login test above.
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(() => store.dispose());
     await tester.pump();
+
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
   });
 ```
 
@@ -864,20 +889,33 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_u
     await tester.tap(find.text('Native'));
     await tester.pump();
 
-    /// Hive applies puts to its in-memory keystore synchronously
+    /// Hive applies puts to its in-memory keystore synchronously; the box
+    /// watch event reaches the HiveBuilder through the zone's microtasks,
+    /// so pumps alone drive the rebuild (no real I/O window needed)
     expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
         ChatEngine.native);
 
-    /// Flush the zone-bound write + let the HiveBuilder rebuild swap the
-    /// controls
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.byType(UsernameDropdown), findsNothing);
     expect(find.byType(UsernameActionRow), findsNothing);
     expect(find.byType(TwitchAccountControl), findsOneWidget);
+
+    /// Close Hive from inside the test's FakeAsync zone (zone-bound write
+    /// Completers hang a real-zone close) - same dance as the login test,
+    /// minus the store dispose: no login flow ran here
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
   });
 ```
 
