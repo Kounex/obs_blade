@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,10 +7,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog.dart';
-import 'package:obs_blade/shared/overlay/base_result.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/overlay_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -74,15 +74,45 @@ class TwitchDeviceCodeDialog extends StatelessWidget {
 }
 
 /// The code the user enters at twitch.tv/activate + the button to get there
-class _CodeEntryState extends StatelessWidget {
+class _CodeEntryState extends StatefulWidget {
   final TwitchChatStore store;
 
   const _CodeEntryState({required this.store});
 
   @override
+  State<_CodeEntryState> createState() => _CodeEntryStateState();
+}
+
+class _CodeEntryStateState extends State<_CodeEntryState> {
+  /// How long the "copied" confirmation stays before reverting
+  static const Duration _copiedFeedbackDuration = Duration(seconds: 2);
+
+  bool _copied = false;
+  Timer? _copiedTimer;
+
+  @override
+  void dispose() {
+    this._copiedTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Copies the code and confirms it inline — the full-screen status
+  /// overlay is too easy to miss while the user's eyes are on the dialog
+  void _copyCode(String code) {
+    Clipboard.setData(ClipboardData(text: code));
+    this._copiedTimer?.cancel();
+    this.setState(() => this._copied = true);
+    this._copiedTimer = Timer(_copiedFeedbackDuration, () {
+      if (this.mounted) {
+        this.setState(() => this._copied = false);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final code = this.store.pendingUserCode ?? '…';
-    final uri = Uri.parse(this.store.pendingVerificationUri ??
+    final code = this.widget.store.pendingUserCode ?? '…';
+    final uri = Uri.parse(this.widget.store.pendingVerificationUri ??
         'https://www.twitch.tv/activate');
 
     return Column(
@@ -96,16 +126,7 @@ class _CodeEntryState extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         Pressable(
           haptic: true,
-          onTap: () {
-            Clipboard.setData(ClipboardData(text: code));
-            OverlayHandler.showStatusOverlay(
-              context: context,
-              content: const BaseResult(
-                icon: BaseResultIcon.Positive,
-                text: 'Code copied',
-              ),
-            );
-          },
+          onTap: () => this._copyCode(code),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -115,7 +136,7 @@ class _CodeEntryState extends StatelessWidget {
               color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: SelectableText(
+            child: Text(
               code,
               style: Theme.of(context)
                   .textTheme
@@ -125,10 +146,30 @@ class _CodeEntryState extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          'Tap the code to copy it',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        if (this._copied)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                CupertinoIcons.checkmark_circle_fill,
+                size: 14.0,
+                color: CupertinoColors.activeGreen,
+              ),
+              const SizedBox(width: AppSpacing.xs / 2),
+              Text(
+                'Copied to clipboard',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: CupertinoColors.activeGreen),
+              ),
+            ],
+          )
+        else
+          Text(
+            'Tap the code to copy it',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         const SizedBox(height: AppSpacing.lg),
         Pressable(
           haptic: true,

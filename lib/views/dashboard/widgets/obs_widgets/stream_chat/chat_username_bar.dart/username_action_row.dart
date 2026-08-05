@@ -53,12 +53,18 @@ class UsernameActionRow extends StatelessWidget {
           if (chatType == ChatType.Twitch) ...[
             Observer(
               builder: (_) {
-                final loggedIn = GetIt.instance<TwitchChatStore>().isLoggedIn;
+                final store = GetIt.instance<TwitchChatStore>();
+                final loggedIn = store.isLoggedIn;
+                final displayName =
+                    store.user?.displayName ?? store.user?.login;
                 return _UsernameAction(
                   icon: loggedIn
                       ? CupertinoIcons.checkmark_circle_fill
                       : CupertinoIcons.link,
-                  tooltip: loggedIn ? 'Twitch connected' : 'Connect Twitch',
+                  label: loggedIn ? displayName : null,
+                  tooltip: loggedIn
+                      ? 'Connected as ${displayName ?? 'Twitch'} — tap to disconnect'
+                      : 'Connect Twitch',
                   onPressed: () {
                     if (loggedIn) {
                       ModalHandler.showBaseDialog(
@@ -66,7 +72,7 @@ class UsernameActionRow extends StatelessWidget {
                         dialogWidget: ConfirmationDialog(
                           title: 'Disconnect Twitch?',
                           body:
-                              'You will be logged out of your Twitch account. The classic WebView chat will be used instead.',
+                              'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account. The classic WebView chat will be used instead.',
                           okText: 'Disconnect',
                           isYesDestructive: true,
                           onOk: (_) =>
@@ -153,10 +159,13 @@ class UsernameActionRow extends StatelessWidget {
 
 /// One segment of the username action control - icon button with [Pressable]
 /// feedback; keeps the enabled / destructive color semantics of the old
-/// text buttons
+/// text buttons. An optional [label] turns it into a chip (e.g. the
+/// connected Twitch account, which reads as tappable instead of a bare
+/// status icon).
 class _UsernameAction extends StatelessWidget {
   final IconData icon;
   final String tooltip;
+  final String? label;
   final bool isDestructive;
 
   final void Function()? onPressed;
@@ -164,12 +173,17 @@ class _UsernameAction extends StatelessWidget {
   const _UsernameAction({
     required this.icon,
     required this.tooltip,
+    this.label,
     this.isDestructive = false,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final enabledColor = this.isDestructive
+        ? CupertinoColors.destructiveRed
+        : Theme.of(context).cupertinoOverrideTheme!.primaryColor;
+
     return Tooltip(
       message: this.tooltip,
       child: Pressable(
@@ -180,14 +194,31 @@ class _UsernameAction extends StatelessWidget {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          child: Icon(
-            this.icon,
-            size: 18.0,
-            color: this.onPressed != null
-                ? this.isDestructive
-                    ? CupertinoColors.destructiveRed
-                    : Theme.of(context).cupertinoOverrideTheme!.primaryColor
-                : Theme.of(context).disabledColor.withValues(alpha: 0.3),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                this.icon,
+                size: 18.0,
+                color: this.onPressed != null
+                    ? enabledColor
+                    : Theme.of(context).disabledColor.withValues(alpha: 0.3),
+              ),
+              if (this.label != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 96.0),
+                  child: Text(
+                    this.label!,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: enabledColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),

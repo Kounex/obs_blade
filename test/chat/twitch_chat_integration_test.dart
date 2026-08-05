@@ -171,4 +171,46 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byIcon(CupertinoIcons.link), findsNothing);
   });
+
+  testWidgets('username bar shows the connected account and offers disconnect',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+    });
+    store.authState = TwitchAuthState.loggedIn;
+    store.user = FakeTwitchAuthService.user;
+
+    await tester.pumpWidget(wrap(const ChatUsernameBar()));
+    await tester.pumpAndSettle();
+
+    /// Account chip instead of a bare status icon — reads as tappable
+    expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
+    expect(find.text('Kounex'), findsOneWidget);
+
+    await tester.tap(find.text('Kounex'));
+    await tester.pumpAndSettle();
+    expect(find.text('Disconnect Twitch?'), findsOneWidget);
+  });
+
+  testWidgets('tapping the code copies it and confirms inline',
+      (tester) async {
+    store.authState = TwitchAuthState.awaitingAuthorization;
+    store.pendingUserCode = 'ABCD-EFGH';
+    store.pendingVerificationUri = 'https://www.twitch.tv/activate';
+
+    await tester.pumpWidget(wrap(const TwitchDeviceCodeDialog()));
+    await tester.pump();
+
+    expect(find.text('Tap the code to copy it'), findsOneWidget);
+
+    await tester.tap(find.text('ABCD-EFGH'));
+    await tester.pump();
+    expect(find.text('Copied to clipboard'), findsOneWidget);
+
+    /// Feedback reverts once its window elapsed
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    expect(find.text('Copied to clipboard'), findsNothing);
+    expect(find.text('Tap the code to copy it'), findsOneWidget);
+  });
 }
