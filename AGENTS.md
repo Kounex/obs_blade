@@ -52,7 +52,7 @@ trusting anything below to still be current.
 | Dashboard state | `lib/stores/views/dashboard.dart` |
 | Protocol DTOs | `lib/types/classes/stream/` |
 | Persisted models | `lib/models/` + `TypeIDs` |
-| Stream chat (WebView) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
+| Stream chat (WebView + native Twitch) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
 | Shared design system ("On Air") | `lib/shared/design/` |
 | Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |
@@ -69,8 +69,11 @@ way that regresses tablet. Details: [`docs/redesign/design-system.md`](docs/rede
 `lib/types/` (see architecture doc). `DashboardStore` is a large intentional
 monolith; don't split it unless asked.
 
-**Chat:** WebView embeds today; Phase 0 hardened (parse + lifecycle). Next is
-native Twitch (needs Dev Console credentials) — see chat audit + handoff.
+**Chat:** Twitch has a native engine (device-code login + EventSub chat,
+read-only) next to the WebView embeds; a manual WebView↔Native switch lives in
+the chat bar (`SelectedChatEngine`, default WebView; availability seam:
+`nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). Next:
+availability gate, badges — see chat audit + handoff.
 
 ## Docs index
 

@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-04** (native Twitch chat Phase 1).
+Read this first after `AGENTS.md`. Last reset: **2026-08-04** (chat engine switch — on top of native Twitch chat Phase 1).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,12 +54,17 @@ source of truth; never leave work local-only when handing over.
 - **"On Air" redesign chapter closed** — merged into `master` (visual review
   accepted on MacBook). Design system lives under `lib/shared/design/`;
   depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
-- **Native Twitch chat Phase 1 implemented** (2026-08-04, on `master`) —
-  Twitch app "OBS Blade Chat" registered 2026-08-04; OAuth device-code login
-  + read-only EventSub chat rendered natively in the existing dashboard
-  chat slot; WebView fallback retained (logged-out state, YouTube, Owncast).
-  History in [`changelog-agent.md`](changelog-agent.md); spec/plan under
-  `docs/superpowers/`. **Phase 2 = send / emote picker / badges.**
+- **Native Twitch chat Phase 1 + chat engine switch on `master`**
+  (2026-08-04) — Twitch app "OBS Blade Chat" registered 2026-08-04; OAuth
+  device-code login + read-only EventSub chat rendered natively next to the
+  WebView embeds. The chat control section is organized around a manual
+  WebView↔Native engine switch (persisted `SelectedChatEngine`, default
+  WebView — existing installs unchanged; availability seam
+  `nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). History
+  in [`changelog-agent.md`](changelog-agent.md); specs/plans under
+  `docs/superpowers/`. **Next chat items:** availability/entitlement gate
+  for native chat (plugs into the seam, brings auto-switch-on-login),
+  badges/role toggles, chat container UI (prelude to send input), 7TV/BTTV.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
@@ -67,7 +72,7 @@ source of truth; never leave work local-only when handing over.
   tappable account chip (icon + display name) in the username bar.
   **Still open: logout path itself untested** — incl. the post-logout
   WebView-fallback check (`_syncWebController` early-returns on unchanged
-  URL, `stream_chat.dart:107-111`, so no `loadRequest` is re-issued on
+  URL, `stream_chat.dart:108-112`, so no `loadRequest` is re-issued on
   remount; fix only if the fallback renders blank).
 - **Phase 2 input from dogfood (capture when planning):** (a) mobile chat
   needs a proper "window/container" UI — the Phase 2 send input field will

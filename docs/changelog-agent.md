@@ -2,6 +2,30 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-04 (chat engine switch)
+
+- **Chat engine switch (control-section redesign)** — spec
+  `docs/superpowers/specs/2026-08-04-chat-engine-switch-design.md`, plan
+  `docs/superpowers/plans/2026-08-04-chat-engine-switch.md`.
+  - Persisted `ChatEngine` enum (`webView`/`native`, Hive typeId 14) +
+    `SettingsKeys.SelectedChatEngine`; default WebView, so existing installs
+    are unchanged.
+  - `nativeChatAvailableFor(ChatType)` seam in
+    `lib/models/enums/chat_engine.dart` — the future
+    availability/entitlement gate for native chat plugs in there.
+  - Username bar restructured: platform dropdown owns the left column
+    (username dropdown only in WebView mode); right column =
+    `ChatEngineSwitch` (Twitch only) + mode actions (`UsernameActionRow` for
+    WebView — account chip removed; `TwitchAccountControl` for native — chip
+    + disconnect dialog when logged in, "Connect Twitch" pill when logged
+    out).
+  - Slot: native view iff Twitch + native engine + logged in; native +
+    logged out → connect empty state (pill relocated there); WebView engine
+    → legacy stack regardless of login, empty state back to the username
+    prompt only.
+  - Disconnect dialog copy no longer claims the WebView takes over after
+    logout.
+
 ## 2026-08-04 (native Twitch chat Phase 1)
 
 - **Native read-only Twitch chat in the existing dashboard chat slot** —
