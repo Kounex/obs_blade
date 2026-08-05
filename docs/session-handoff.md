@@ -118,6 +118,9 @@ source of truth; never leave work local-only when handing over.
   - Read-only path: pre-upgrade session (or temporarily revert
     `kTwitchChatScopes`) → lock strip; "Re-login to chat" → device flow →
     dock becomes the field.
+  - Cancel the re-login dialog mid-upgrade (logged in via lock strip →
+    "Re-login to chat" → dismiss) → still logged in, chat still connected,
+    dock unchanged.
 
   **Next chat items:** availability/entitlement gate (plugs into
   `nativeChatAvailableFor`, brings auto-switch-on-login), 7TV/BTTV

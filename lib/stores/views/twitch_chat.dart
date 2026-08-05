@@ -217,7 +217,13 @@ abstract class _TwitchChatStore with Store {
       if (flow != this._loginFlow) return;
       this.pendingUserCode = null;
       if (this._loginCancelled) {
-        this.authState = TwitchAuthState.loggedOut;
+        // Cancelling an upgrade re-login while a session is live must not
+        // misreport it: the persisted auth and the EventSub connection
+        // were never torn down, so the store is still logged in.
+        this.authState = this.user != null &&
+                this._authBox.get(TwitchAuth.kBoxKey) != null
+            ? TwitchAuthState.loggedIn
+            : TwitchAuthState.loggedOut;
       } else {
         this.authState = TwitchAuthState.error;
         this.authError = e.message;

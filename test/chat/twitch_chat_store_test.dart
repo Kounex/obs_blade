@@ -181,6 +181,24 @@ void main() {
       expect(store.authError, isNull);
     });
 
+    test('cancelling a re-login upgrade keeps the live session', () async {
+      await store.startLogin();
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(store.user?.login, 'kounex');
+
+      // Scope-upgrade re-login while logged in, cancelled mid-flow: the
+      // persisted auth + live EventSub session were never torn down.
+      final relogin = store.startLogin();
+      store.cancelLogin();
+      await relogin;
+
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(store.user?.login, 'kounex');
+      expect(store.authError, isNull);
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+      expect(eventSubService.disposeCalled, isFalse);
+    });
+
     test('a superseded login flow cannot clobber the new flow', () async {
       // Login A: the poll parks on a gate the test controls.
       final gateA = Completer<TwitchToken>();

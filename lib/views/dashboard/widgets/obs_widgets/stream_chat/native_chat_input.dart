@@ -21,7 +21,8 @@ class NativeChatInput extends StatefulWidget {
   /// Brand accent (send button, hint action)
   final Color accentColor;
 
-  /// Delivers the trimmed message; the field clears when it completes true
+  /// Delivers the trimmed message; the field clears when it completes
+  /// true. Must not throw — return false on failure.
   final Future<bool> Function(String text) onSend;
 
   /// Starts the re-login flow from the read-only strip
