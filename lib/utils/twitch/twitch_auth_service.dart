@@ -10,8 +10,12 @@ import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 /// (not a secret — Twitch treats client ids as embeddable).
 const String kTwitchClientId = 't3muhu36do5wemeeilzl57v48gwcmh';
 
-/// Phase 1 is read-only — `user:write:chat` gets added in Phase 2.
-const List<String> kTwitchChatScopes = <String>['user:read:chat'];
+/// Chat scopes requested in the device flow — read incoming chat and send
+/// messages as the authenticated user.
+const List<String> kTwitchChatScopes = <String>[
+  'user:read:chat',
+  'user:write:chat',
+];
 
 const String _kIdBase = 'https://id.twitch.tv/oauth2';
 
