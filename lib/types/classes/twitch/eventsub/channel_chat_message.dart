@@ -7,8 +7,8 @@ part 'channel_chat_message.g.dart';
 String twitchEmoteUrl(String emoteId) =>
     'https://static-cdn.jtvnw.net/emoticons/v2/$emoteId/default/dark/2.0';
 
-/// `channel.chat.message` event payload. Badges/cheer/reply are parsed by
-/// Twitch's schema but intentionally not modeled in Phase 1.
+/// `channel.chat.message` event payload. Cheer/reply are parsed by
+/// Twitch's schema but intentionally not modeled.
 @Freezed(fromJson: true, toJson: false)
 abstract class ChatMessageEvent with _$ChatMessageEvent {
   // ignore: invalid_annotation_target
@@ -21,6 +21,7 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     required String messageId,
     required ChatMessageText message,
     String? color,
+    @Default(<ChatMessageBadge>[]) List<ChatMessageBadge> badges,
   }) = _ChatMessageEvent;
 
   factory ChatMessageEvent.fromJson(Map<String, Object?> json) =>
@@ -58,4 +59,21 @@ abstract class ChatFragmentEmote with _$ChatFragmentEmote {
 
   factory ChatFragmentEmote.fromJson(Map<String, Object?> json) =>
       _$ChatFragmentEmoteFromJson(json);
+}
+
+/// One entry of the payload's `badges` array: the exact lookup key for
+/// the badge catalogs is (`setId`, `id`); `info` is set-specific metadata
+/// (e.g. subscriber tenure months) and often empty.
+@Freezed(fromJson: true, toJson: false)
+abstract class ChatMessageBadge with _$ChatMessageBadge {
+  // ignore: invalid_annotation_target
+  @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+  const factory ChatMessageBadge({
+    required String setId,
+    required String id,
+    @Default('') String info,
+  }) = _ChatMessageBadge;
+
+  factory ChatMessageBadge.fromJson(Map<String, Object?> json) =>
+      _$ChatMessageBadgeFromJson(json);
 }

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatMessageEvent {
 
- String get broadcasterUserId; String get chatterUserId; String get chatterUserLogin; String get chatterUserName; String get messageId; ChatMessageText get message; String? get color;
+ String get broadcasterUserId; String get chatterUserId; String get chatterUserLogin; String get chatterUserName; String get messageId; ChatMessageText get message; String? get color; List<ChatMessageBadge> get badges;
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $ChatMessageEventCopyWith<ChatMessageEvent> get copyWith => _$ChatMessageEventCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other.badges, badges));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color);
+int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(badges));
 
 @override
 String toString() {
-  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color)';
+  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $ChatMessageEventCopyWith<$Res>  {
   factory $ChatMessageEventCopyWith(ChatMessageEvent value, $Res Function(ChatMessageEvent) _then) = _$ChatMessageEventCopyWithImpl;
 @useResult
 $Res call({
- String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color
+ String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges
 });
 
 
@@ -63,7 +63,7 @@ class _$ChatMessageEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,}) {
   return _then(_self.copyWith(
 broadcasterUserId: null == broadcasterUserId ? _self.broadcasterUserId : broadcasterUserId // ignore: cast_nullable_to_non_nullable
 as String,chatterUserId: null == chatterUserId ? _self.chatterUserId : chatterUserId // ignore: cast_nullable_to_non_nullable
@@ -72,7 +72,8 @@ as String,chatterUserName: null == chatterUserName ? _self.chatterUserName : cha
 as String,messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as ChatMessageText,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,badges: null == badges ? _self.badges : badges // ignore: cast_nullable_to_non_nullable
+as List<ChatMessageBadge>,
   ));
 }
 /// Create a copy of ChatMessageEvent
@@ -166,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent() when $default != null:
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges);case _:
   return orElse();
 
 }
@@ -187,10 +188,10 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent():
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -207,10 +208,10 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent() when $default != null:
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges);case _:
   return null;
 
 }
@@ -222,7 +223,7 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 
 @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
 class _ChatMessageEvent implements ChatMessageEvent {
-  const _ChatMessageEvent({required this.broadcasterUserId, required this.chatterUserId, required this.chatterUserLogin, required this.chatterUserName, required this.messageId, required this.message, this.color});
+  const _ChatMessageEvent({required this.broadcasterUserId, required this.chatterUserId, required this.chatterUserLogin, required this.chatterUserName, required this.messageId, required this.message, this.color, final  List<ChatMessageBadge> badges = const <ChatMessageBadge>[]}): _badges = badges;
   factory _ChatMessageEvent.fromJson(Map<String, dynamic> json) => _$ChatMessageEventFromJson(json);
 
 @override final  String broadcasterUserId;
@@ -232,6 +233,13 @@ class _ChatMessageEvent implements ChatMessageEvent {
 @override final  String messageId;
 @override final  ChatMessageText message;
 @override final  String? color;
+ final  List<ChatMessageBadge> _badges;
+@override@JsonKey() List<ChatMessageBadge> get badges {
+  if (_badges is EqualUnmodifiableListView) return _badges;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_badges);
+}
+
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +251,16 @@ _$ChatMessageEventCopyWith<_ChatMessageEvent> get copyWith => __$ChatMessageEven
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other._badges, _badges));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color);
+int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(_badges));
 
 @override
 String toString() {
-  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color)';
+  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges)';
 }
 
 
@@ -263,7 +271,7 @@ abstract mixin class _$ChatMessageEventCopyWith<$Res> implements $ChatMessageEve
   factory _$ChatMessageEventCopyWith(_ChatMessageEvent value, $Res Function(_ChatMessageEvent) _then) = __$ChatMessageEventCopyWithImpl;
 @override @useResult
 $Res call({
- String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color
+ String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges
 });
 
 
@@ -280,7 +288,7 @@ class __$ChatMessageEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,}) {
   return _then(_ChatMessageEvent(
 broadcasterUserId: null == broadcasterUserId ? _self.broadcasterUserId : broadcasterUserId // ignore: cast_nullable_to_non_nullable
 as String,chatterUserId: null == chatterUserId ? _self.chatterUserId : chatterUserId // ignore: cast_nullable_to_non_nullable
@@ -289,7 +297,8 @@ as String,chatterUserName: null == chatterUserName ? _self.chatterUserName : cha
 as String,messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as ChatMessageText,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,badges: null == badges ? _self._badges : badges // ignore: cast_nullable_to_non_nullable
+as List<ChatMessageBadge>,
   ));
 }
 
@@ -1111,6 +1120,270 @@ class __$ChatFragmentEmoteCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,}) {
   return _then(_ChatFragmentEmote(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ChatMessageBadge {
+
+ String get setId; String get id; String get info;
+/// Create a copy of ChatMessageBadge
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatMessageBadgeCopyWith<ChatMessageBadge> get copyWith => _$ChatMessageBadgeCopyWithImpl<ChatMessageBadge>(this as ChatMessageBadge, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageBadge&&(identical(other.setId, setId) || other.setId == setId)&&(identical(other.id, id) || other.id == id)&&(identical(other.info, info) || other.info == info));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,setId,id,info);
+
+@override
+String toString() {
+  return 'ChatMessageBadge(setId: $setId, id: $id, info: $info)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatMessageBadgeCopyWith<$Res>  {
+  factory $ChatMessageBadgeCopyWith(ChatMessageBadge value, $Res Function(ChatMessageBadge) _then) = _$ChatMessageBadgeCopyWithImpl;
+@useResult
+$Res call({
+ String setId, String id, String info
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatMessageBadgeCopyWithImpl<$Res>
+    implements $ChatMessageBadgeCopyWith<$Res> {
+  _$ChatMessageBadgeCopyWithImpl(this._self, this._then);
+
+  final ChatMessageBadge _self;
+  final $Res Function(ChatMessageBadge) _then;
+
+/// Create a copy of ChatMessageBadge
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? setId = null,Object? id = null,Object? info = null,}) {
+  return _then(_self.copyWith(
+setId: null == setId ? _self.setId : setId // ignore: cast_nullable_to_non_nullable
+as String,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,info: null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ChatMessageBadge].
+extension ChatMessageBadgePatterns on ChatMessageBadge {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ChatMessageBadge value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ChatMessageBadge() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ChatMessageBadge value)  $default,){
+final _that = this;
+switch (_that) {
+case _ChatMessageBadge():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ChatMessageBadge value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ChatMessageBadge() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String setId,  String id,  String info)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ChatMessageBadge() when $default != null:
+return $default(_that.setId,_that.id,_that.info);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String setId,  String id,  String info)  $default,) {final _that = this;
+switch (_that) {
+case _ChatMessageBadge():
+return $default(_that.setId,_that.id,_that.info);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String setId,  String id,  String info)?  $default,) {final _that = this;
+switch (_that) {
+case _ChatMessageBadge() when $default != null:
+return $default(_that.setId,_that.id,_that.info);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+class _ChatMessageBadge implements ChatMessageBadge {
+  const _ChatMessageBadge({required this.setId, required this.id, this.info = ''});
+  factory _ChatMessageBadge.fromJson(Map<String, dynamic> json) => _$ChatMessageBadgeFromJson(json);
+
+@override final  String setId;
+@override final  String id;
+@override@JsonKey() final  String info;
+
+/// Create a copy of ChatMessageBadge
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ChatMessageBadgeCopyWith<_ChatMessageBadge> get copyWith => __$ChatMessageBadgeCopyWithImpl<_ChatMessageBadge>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageBadge&&(identical(other.setId, setId) || other.setId == setId)&&(identical(other.id, id) || other.id == id)&&(identical(other.info, info) || other.info == info));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,setId,id,info);
+
+@override
+String toString() {
+  return 'ChatMessageBadge(setId: $setId, id: $id, info: $info)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ChatMessageBadgeCopyWith<$Res> implements $ChatMessageBadgeCopyWith<$Res> {
+  factory _$ChatMessageBadgeCopyWith(_ChatMessageBadge value, $Res Function(_ChatMessageBadge) _then) = __$ChatMessageBadgeCopyWithImpl;
+@override @useResult
+$Res call({
+ String setId, String id, String info
+});
+
+
+
+
+}
+/// @nodoc
+class __$ChatMessageBadgeCopyWithImpl<$Res>
+    implements _$ChatMessageBadgeCopyWith<$Res> {
+  __$ChatMessageBadgeCopyWithImpl(this._self, this._then);
+
+  final _ChatMessageBadge _self;
+  final $Res Function(_ChatMessageBadge) _then;
+
+/// Create a copy of ChatMessageBadge
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? setId = null,Object? id = null,Object? info = null,}) {
+  return _then(_ChatMessageBadge(
+setId: null == setId ? _self.setId : setId // ignore: cast_nullable_to_non_nullable
+as String,id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,info: null == info ? _self.info : info // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

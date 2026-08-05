@@ -95,5 +95,36 @@ void main() {
       expect(event.message.fragments[1].text, 'pogchamp');
       expect(event.message.fragments[1].emote, isNull);
     });
+
+    test('parses badges (real docs payload)', () {
+      final event = eventFromFixture('channel_chat_message_text.json');
+
+      expect(event.badges, hasLength(2));
+      expect(event.badges[0].setId, 'moderator');
+      expect(event.badges[0].id, '1');
+      expect(event.badges[0].info, '');
+      expect(event.badges[1].setId, 'subscriber');
+      expect(event.badges[1].id, '12');
+      expect(event.badges[1].info, '16');
+    });
+
+    test('missing badges key parses as empty', () {
+      final event = ChatMessageEvent.fromJson(
+        json.decode('''
+        {
+          "broadcaster_user_id": "1",
+          "broadcaster_user_login": "streamer",
+          "broadcaster_user_name": "streamer",
+          "chatter_user_id": "2",
+          "chatter_user_login": "viewer",
+          "chatter_user_name": "viewer",
+          "message_id": "m1",
+          "message": { "text": "hi", "fragments": [] }
+        }
+        ''') as Map<String, Object?>,
+      );
+
+      expect(event.badges, isEmpty);
+    });
   });
 }

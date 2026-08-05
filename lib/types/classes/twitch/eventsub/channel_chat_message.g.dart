@@ -17,6 +17,11 @@ _ChatMessageEvent _$ChatMessageEventFromJson(Map<String, dynamic> json) =>
         json['message'] as Map<String, dynamic>,
       ),
       color: json['color'] as String?,
+      badges:
+          (json['badges'] as List<dynamic>?)
+              ?.map((e) => ChatMessageBadge.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <ChatMessageBadge>[],
     );
 
 _ChatMessageText _$ChatMessageTextFromJson(Map<String, dynamic> json) =>
@@ -42,3 +47,10 @@ _ChatMessageFragment _$ChatMessageFragmentFromJson(Map<String, dynamic> json) =>
 
 _ChatFragmentEmote _$ChatFragmentEmoteFromJson(Map<String, dynamic> json) =>
     _ChatFragmentEmote(id: json['id'] as String);
+
+_ChatMessageBadge _$ChatMessageBadgeFromJson(Map<String, dynamic> json) =>
+    _ChatMessageBadge(
+      setId: json['set_id'] as String,
+      id: json['id'] as String,
+      info: json['info'] as String? ?? '',
+    );
