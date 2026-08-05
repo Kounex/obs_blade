@@ -21,8 +21,9 @@ import 'username_dropdown.dart';
 /// the classic behavior, unchanged.
 ///
 /// Native mode (Twitch only, see [nativeChatAvailableFor]): the engine
-/// switch plus the account control (login/logout, connected account) -
-/// never the username controls.
+/// switch plus the native controls (options sheet button + account
+/// control: login/logout, connected account) - never the username
+/// controls.
 class ChatUsernameBar extends StatelessWidget {
   const ChatUsernameBar({
     super.key,

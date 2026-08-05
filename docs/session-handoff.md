@@ -75,7 +75,10 @@ source of truth; never leave work local-only when handing over.
   persisted `twitch-chat-badge-*` Settings-box keys, live re-filtering).
   Gates green: 133/133 tests, analyze 0 errors + 6 pre-existing warnings.
   History in [`changelog-agent.md`](changelog-agent.md); spec/plan under
-  `docs/superpowers/`.
+  `docs/superpowers/`. **Dogfood:** native bar on a narrow phone + larger
+  text scale (the new 44pt options button densifies the right column);
+  badge pop-in timing on a live channel (a beat after messages —
+  intended); badge↔username spacing read (uniform `xs/2`).
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
