@@ -3,11 +3,13 @@ import 'dart:io';
 
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_badge_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 
 class FakeTwitchAuthService extends TwitchAuthService {
   bool validateResult = true;
@@ -25,6 +27,9 @@ class FakeTwitchAuthService extends TwitchAuthService {
   /// immediately — lets a test resolve the poll at a chosen moment.
   Completer<TwitchToken>? pollGate;
   String? revokedToken;
+
+  /// Scopes the returned [TwitchToken] carries (default: read-only).
+  List<String> tokenScopes = const ['user:read:chat'];
 
   static const token = TwitchToken(
     accessToken: 'access-1',
@@ -58,7 +63,12 @@ class FakeTwitchAuthService extends TwitchAuthService {
     if (isCancelled()) throw const TwitchAuthException('Login cancelled');
     if (this.failPollWith != null) throw this.failPollWith!;
     if (this.pollGate != null) return this.pollGate!.future;
-    return token;
+    return TwitchToken(
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+      expiresIn: token.expiresIn,
+      scope: this.tokenScopes,
+    );
   }
 
   @override
@@ -73,7 +83,12 @@ class FakeTwitchAuthService extends TwitchAuthService {
   @override
   Future<TwitchToken> refreshToken(String refreshToken) async {
     if (this.failRefreshWith != null) throw this.failRefreshWith!;
-    return token;
+    return TwitchToken(
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+      expiresIn: token.expiresIn,
+      scope: this.tokenScopes,
+    );
   }
 
   @override
@@ -185,5 +200,35 @@ class FakeTwitchBadgeService extends TwitchBadgeService {
     this.lastBroadcasterId = broadcasterId;
     if (this.channelThrows != null) throw this.channelThrows!;
     return this.channelSets;
+  }
+}
+
+class FakeTwitchMessageService extends TwitchMessageService {
+  TwitchSendResult result = const TwitchSendResult(
+    messageId: 'msg-1',
+    isSent: true,
+  );
+
+  /// When set, [sendChatMessage] throws this error.
+  Object? sendThrows;
+
+  /// When set, [sendChatMessage] parks on this completer — lets a test
+  /// resolve the send at a chosen moment (in-flight tests).
+  Completer<TwitchSendResult>? sendGate;
+
+  int calls = 0;
+  String? lastMessage;
+
+  @override
+  Future<TwitchSendResult> sendChatMessage({
+    required String accessToken,
+    required String userId,
+    required String message,
+  }) async {
+    this.calls++;
+    this.lastMessage = message;
+    if (this.sendThrows != null) throw this.sendThrows!;
+    if (this.sendGate != null) return this.sendGate!.future;
+    return this.result;
   }
 }

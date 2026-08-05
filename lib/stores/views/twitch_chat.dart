@@ -12,6 +12,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 
 part 'twitch_chat.g.dart';
 
@@ -47,6 +48,7 @@ abstract class _TwitchChatStore with Store {
     void Function(String) onRevoked,
   ) _eventSubFactory;
   final TwitchBadgeStore Function() _badgeStoreResolver;
+  final TwitchMessageService _messageService;
 
   TwitchEventSubService? _eventSub;
   StreamSubscription<BoxEvent>? _authBoxSub;
@@ -64,6 +66,7 @@ abstract class _TwitchChatStore with Store {
       void Function(String),
     )? eventSubFactory,
     TwitchBadgeStore Function()? badgeStoreResolver,
+    TwitchMessageService? messageService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onStateChanged, onRevoked) =>
@@ -73,7 +76,8 @@ abstract class _TwitchChatStore with Store {
                   onRevoked: onRevoked,
                 )),
         _badgeStoreResolver = badgeStoreResolver ??
-            (() => GetIt.instance<TwitchBadgeStore>());
+            (() => GetIt.instance<TwitchBadgeStore>()),
+        _messageService = messageService ?? TwitchMessageService();
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -105,11 +109,30 @@ abstract class _TwitchChatStore with Store {
   @observable
   DateTime? chatConnectedAt;
 
+  /// A send is in flight — drives the dock's disabled/spinner state and
+  /// guards against concurrent sends.
+  @observable
+  bool sendingChat = false;
+
+  /// Transient send failure for the dock's error line; cleared on the next
+  /// attempt.
+  @observable
+  String? sendChatError;
+
   final ObservableList<ChatMessageEvent> messages =
       ObservableList<ChatMessageEvent>();
 
   @computed
   bool get isLoggedIn => this.authState == TwitchAuthState.loggedIn;
+
+  /// Whether the persisted token carries the write scope. Deliberately a
+  /// plain getter (not reactive): scopes change only at login/logout, and
+  /// those transitions flip [user]/[authState], which rebuild observers.
+  bool get canWriteChat =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'user:write:chat',
+          ) ??
+      false;
 
   /// Registers the box watcher (idempotent) so external wipes — e.g.
   /// data management clearing the Twitch box — reset the feature even
@@ -288,6 +311,49 @@ abstract class _TwitchChatStore with Store {
       this.chatConnectedAt = null;
     }
   }
+
+  /// Send a chat message as the logged-in user into their own channel.
+  /// Returns whether it was delivered — never throws; failures surface in
+  /// [sendChatError]. The sent message renders via the EventSub echo.
+  @action
+  Future<bool> sendChatMessage(String text) async {
+    final trimmed = text.trim();
+    if (this.authState != TwitchAuthState.loggedIn ||
+        !this.canWriteChat ||
+        trimmed.isEmpty ||
+        this.sendingChat) {
+      return false;
+    }
+    this.sendingChat = true;
+    this.sendChatError = null;
+
+    try {
+      final token = await this._validAccessToken();
+      final result = await this._messageService.sendChatMessage(
+        accessToken: token,
+        userId: this.user!.id,
+        message: trimmed,
+      );
+      if (result.isSent) return true;
+      this.sendChatError = _dropReasonText(result.dropReason);
+      return false;
+    } catch (e) {
+      GeneralHelper.advLog('Twitch chat send failed — $e');
+      this.sendChatError = 'Could not send — try again';
+      return false;
+    } finally {
+      this.sendingChat = false;
+    }
+  }
+
+  /// Human text for Helix `drop_reason` values (200-but-dropped sends).
+  static String _dropReasonText(String? reason) => switch (reason) {
+        'automod_blocked' || 'automod_held' => 'Message held by AutoMod',
+        'duplicate' => 'Duplicate message',
+        'rate_limited' => 'Sending too fast — slow down',
+        null => 'Message not delivered',
+        _ => 'Message not delivered ($reason)',
+      };
 
   Future<String> _validAccessToken() async {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);

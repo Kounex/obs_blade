@@ -162,6 +162,42 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$sendingChatAtom = Atom(
+    name: '_TwitchChatStore.sendingChat',
+    context: context,
+  );
+
+  @override
+  bool get sendingChat {
+    _$sendingChatAtom.reportRead();
+    return super.sendingChat;
+  }
+
+  @override
+  set sendingChat(bool value) {
+    _$sendingChatAtom.reportWrite(value, super.sendingChat, () {
+      super.sendingChat = value;
+    });
+  }
+
+  late final _$sendChatErrorAtom = Atom(
+    name: '_TwitchChatStore.sendChatError',
+    context: context,
+  );
+
+  @override
+  String? get sendChatError {
+    _$sendChatErrorAtom.reportRead();
+    return super.sendChatError;
+  }
+
+  @override
+  set sendChatError(String? value) {
+    _$sendChatErrorAtom.reportWrite(value, super.sendChatError, () {
+      super.sendChatError = value;
+    });
+  }
+
   late final _$initAsyncAction = AsyncAction(
     '_TwitchChatStore.init',
     context: context,
@@ -200,6 +236,16 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   @override
   Future<void> connectChat() {
     return _$connectChatAsyncAction.run(() => super.connectChat());
+  }
+
+  late final _$sendChatMessageAsyncAction = AsyncAction(
+    '_TwitchChatStore.sendChatMessage',
+    context: context,
+  );
+
+  @override
+  Future<bool> sendChatMessage(String text) {
+    return _$sendChatMessageAsyncAction.run(() => super.sendChatMessage(text));
   }
 
   late final _$_TwitchChatStoreActionController = ActionController(
@@ -254,6 +300,8 @@ user: ${user},
 chatConnection: ${chatConnection},
 chatError: ${chatError},
 chatConnectedAt: ${chatConnectedAt},
+sendingChat: ${sendingChat},
+sendChatError: ${sendChatError},
 isLoggedIn: ${isLoggedIn}
     ''';
   }

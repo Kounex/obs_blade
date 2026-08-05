@@ -7,6 +7,7 @@ import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
@@ -459,6 +460,94 @@ void main() {
       emitRevoked('subscription_failed:500');
       expect(store.chatConnection, TwitchChatConnectionState.failed);
       expect(store.chatConnectedAt, isNull);
+    });
+  });
+
+  group('sendChatMessage', () {
+    late FakeTwitchMessageService messageService;
+
+    Future<void> login({List<String>? scopes}) async {
+      authService.tokenScopes =
+          scopes ?? const ['user:read:chat', 'user:write:chat'];
+      messageService = FakeTwitchMessageService();
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___) => eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        messageService: messageService,
+      );
+      await store.startLogin();
+    }
+
+    test('canWriteChat reflects the persisted scopes', () async {
+      await login(scopes: const ['user:read:chat']);
+      expect(store.canWriteChat, isFalse);
+
+      await login();
+      expect(store.canWriteChat, isTrue);
+    });
+
+    test('sends trimmed text, returns true, clears state', () async {
+      await login();
+
+      expect(await store.sendChatMessage('  hello chat  '), isTrue);
+      expect(messageService.lastMessage, 'hello chat');
+      expect(store.sendingChat, isFalse);
+      expect(store.sendChatError, isNull);
+    });
+
+    test('returns false without write scope and never calls the service',
+        () async {
+      await login(scopes: const ['user:read:chat']);
+
+      expect(await store.sendChatMessage('hi'), isFalse);
+      expect(messageService.calls, 0);
+    });
+
+    test('returns false for empty text and never calls the service',
+        () async {
+      await login();
+
+      expect(await store.sendChatMessage('   '), isFalse);
+      expect(messageService.calls, 0);
+    });
+
+    test('returns false while a send is in flight', () async {
+      await login();
+      messageService.sendGate = Completer<TwitchSendResult>();
+
+      final first = store.sendChatMessage('one');
+      expect(await store.sendChatMessage('two'), isFalse);
+      expect(messageService.calls, 1);
+
+      messageService.sendGate!.complete(
+        const TwitchSendResult(messageId: 'msg-1', isSent: true),
+      );
+      expect(await first, isTrue);
+      expect(store.sendingChat, isFalse);
+    });
+
+    test('dropped message maps the reason and returns false', () async {
+      await login();
+      messageService.result = const TwitchSendResult(
+        messageId: '',
+        isSent: false,
+        dropReason: 'automod_blocked',
+      );
+
+      expect(await store.sendChatMessage('spam'), isFalse);
+      expect(store.sendChatError, 'Message held by AutoMod');
+      expect(store.sendingChat, isFalse);
+    });
+
+    test('exception maps to the generic error and returns false', () async {
+      await login();
+      messageService.sendThrows =
+          const TwitchAuthException('nope', statusCode: 401);
+
+      expect(await store.sendChatMessage('hi'), isFalse);
+      expect(store.sendChatError, 'Could not send — try again');
+      expect(store.sendingChat, isFalse);
     });
   });
 }
