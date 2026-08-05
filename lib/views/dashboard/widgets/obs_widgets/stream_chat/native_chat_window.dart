@@ -38,7 +38,8 @@ String formatChatUptime(Duration uptime) {
 /// content, with a slim status row on top. The row shows the connection
 /// state and is always tappable — it opens a connection sheet (account +
 /// uptime when healthy, diagnostics + actions when degraded, connect
-/// action when offline).
+/// action when offline). An optional [input] dock sits at the pane's
+/// bottom edge (hairline-separated).
 ///
 /// Deliberately generic: everything Twitch-specific arrives as plain
 /// params, so a future native engine (e.g. YouTube) reuses the window with
@@ -64,11 +65,16 @@ class NativeChatWindow extends StatelessWidget {
   /// The engine's content (message view or connect prompt)
   final Widget child;
 
+  /// Optional dock rendered below the content (input field, read-only
+  /// hint) — the reserved bottom slot of the pane.
+  final Widget? input;
+
   const NativeChatWindow({
     super.key,
     required this.chatType,
     required this.status,
     required this.child,
+    this.input,
     this.statusDetail,
     this.accountLabel,
     this.connectedAt,
@@ -165,6 +171,10 @@ class NativeChatWindow extends StatelessWidget {
           ),
           const BaseDivider(),
           Expanded(child: this.child),
+          if (this.input != null) ...[
+            const BaseDivider(),
+            this.input!,
+          ],
         ],
       ),
     );

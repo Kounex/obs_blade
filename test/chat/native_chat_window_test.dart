@@ -180,4 +180,21 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
   });
+
+  testWidgets('renders the input slot below the content when provided',
+      (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        NativeChatWindow(
+          chatType: ChatType.Twitch,
+          status: NativeChatConnectionStatus.live,
+          input: const Text('dock'),
+          child: const Center(child: Text('chat content')),
+        ),
+      ),
+    );
+
+    expect(find.text('chat content'), findsOneWidget);
+    expect(find.text('dock'), findsOneWidget);
+  });
 }
