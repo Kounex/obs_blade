@@ -12,16 +12,38 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../models/enums/chat_engine.dart';
 import '../../../../../shared/design/design.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
+import 'native_chat_window.dart';
 import 'native_twitch_chat_view.dart';
 import 'twitch_device_code_dialog.dart';
+
+/// Maps the Twitch store's connection state (+ login) onto the chat
+/// window's platform-agnostic status.
+NativeChatConnectionStatus twitchChatWindowStatus(
+  TwitchChatConnectionState state,
+  bool isLoggedIn,
+) {
+  if (!isLoggedIn) return NativeChatConnectionStatus.offline;
+  return switch (state) {
+    TwitchChatConnectionState.live => NativeChatConnectionStatus.live,
+    TwitchChatConnectionState.connecting =>
+      NativeChatConnectionStatus.connecting,
+    TwitchChatConnectionState.reconnecting =>
+      NativeChatConnectionStatus.reconnecting,
+    TwitchChatConnectionState.failed => NativeChatConnectionStatus.failed,
+    TwitchChatConnectionState.disconnected =>
+      NativeChatConnectionStatus.offline,
+  };
+}
 
 class StreamChat extends StatefulWidget {
   final bool usernameRowPadding;
@@ -224,20 +246,48 @@ class _StreamChatState extends State<StreamChat>
               }
 
               /// Native Twitch chat takes over the slot when the native
-              /// engine is selected and the user is logged in; logged out
-              /// it shows the connect prompt instead. The WebView engine
-              /// keeps the legacy path regardless of the login state.
+              /// engine is selected, wrapped in the chat window (pane +
+              /// status row + connection sheet). Logged out, the content is
+              /// the connect prompt. The WebView engine keeps the legacy
+              /// path regardless of the login state.
               if (nativeEngine) {
                 return Observer(
                   builder: (_) {
-                    if (GetIt.instance<TwitchChatStore>().isLoggedIn) {
-                      return const NativeTwitchChatView();
-                    }
-                    return StaggeredEntrance(
-                      child: _ChatEmptyState(
-                        chatType: chatType,
-                        nativeConnectPrompt: true,
+                    final twitchStore = GetIt.instance<TwitchChatStore>();
+                    final loggedIn = twitchStore.isLoggedIn;
+                    final displayName = twitchStore.user?.displayName ??
+                        twitchStore.user?.login;
+
+                    return NativeChatWindow(
+                      chatType: chatType,
+                      status: twitchChatWindowStatus(
+                        twitchStore.chatConnection,
+                        loggedIn,
                       ),
+                      statusDetail: twitchStore.chatError,
+                      accountLabel: displayName,
+                      connectedAt: twitchStore.chatConnectedAt,
+                      onRetry: twitchStore.connectChat,
+                      onConnect: () => startTwitchLogin(context),
+                      onLogout: () => ModalHandler.showBaseDialog(
+                        context: context,
+                        dialogWidget: ConfirmationDialog(
+                          title: 'Disconnect Twitch?',
+                          body:
+                              'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
+                          okText: 'Disconnect',
+                          isYesDestructive: true,
+                          onOk: (_) => twitchStore.logout(),
+                        ),
+                      ),
+                      child: loggedIn
+                          ? const NativeTwitchChatView()
+                          : StaggeredEntrance(
+                              child: _ChatEmptyState(
+                                chatType: chatType,
+                                nativeConnectPrompt: true,
+                              ),
+                            ),
                     );
                   },
                 );
