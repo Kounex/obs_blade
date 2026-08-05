@@ -27,7 +27,7 @@ NativeChatWindow buildWindow({
     );
 
 void main() {
-  testWidgets('renders platform label, child and per-status labels',
+  testWidgets('renders window label, child and per-status labels',
       (tester) async {
     for (final (status, label) in [
       (NativeChatConnectionStatus.offline, 'offline'),

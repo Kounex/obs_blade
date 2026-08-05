@@ -35,10 +35,10 @@ String formatChatUptime(Duration uptime) {
 
 /// Window chrome for the native chat engines: an inset pane (same visual
 /// idiom as the chat bar's control containers) wrapping the engine's
-/// content, with a slim status row on top. The row shows platform +
-/// connection state and is always tappable — it opens a connection sheet
-/// (account + uptime when healthy, diagnostics + actions when degraded,
-/// connect action when offline).
+/// content, with a slim status row on top. The row shows the connection
+/// state and is always tappable — it opens a connection sheet (account +
+/// uptime when healthy, diagnostics + actions when degraded, connect
+/// action when offline).
 ///
 /// Deliberately generic: everything Twitch-specific arrives as plain
 /// params, so a future native engine (e.g. YouTube) reuses the window with
