@@ -1282,7 +1282,11 @@ In `test/chat/twitch_chat_integration_test.dart`:
       find.text('Connect your Twitch account to see your chat natively.'),
       findsOneWidget,
     );
-    expect(find.text('Connect Twitch'), findsOneWidget);
+
+    /// Two "Connect Twitch" affordances by design in this tree: the
+    /// username bar's account-control pill (Task 4) and the slot prompt's
+    /// pill - both call startTwitchLogin
+    expect(find.text('Connect Twitch'), findsNWidgets(2));
   });
 ```
 
@@ -1297,7 +1301,16 @@ In `test/chat/twitch_chat_integration_test.dart`:
     });
 ```
 
-(the pill it taps now lives in the native connect prompt; the rest of the test — login, auto-close, teardown dance — is unchanged.)
+and its tap line becomes:
+
+```dart
+    /// `.last` = the slot prompt's pill (the username bar's account-control
+    /// pill comes first in tree order; both invoke the same
+    /// startTwitchLogin, so the tested flow is identical)
+    await tester.tap(find.text('Connect Twitch').last);
+```
+
+(With the engine set to native, the pill moves to the native connect prompt — and the Task 4 bar renders its own "Connect Twitch" pill in this tree, hence the disambiguation. The rest of the test — login, auto-close, teardown dance — is unchanged.)
 
 **Add** these two tests after them:
 
@@ -1359,7 +1372,7 @@ In `test/chat/twitch_chat_integration_test.dart`:
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
-Expected: FAIL — the two new tests fail (logged-in currently takes over the slot; the connect prompt copy doesn't exist), and the replaced connect-prompt test fails (current copy is the username prompt + pill without `nativeConnectPrompt`).
+Expected: FAIL — the two new tests fail (logged-in currently takes over the slot; the connect prompt copy doesn't exist), and the replaced connect-prompt test fails (current copy is the username prompt + pill without `nativeConnectPrompt`). The connect-button test may already pass at RED (the legacy empty-state pill it taps still exists pre-change) — it guards the login flow, not the new behavior.
 
 - [ ] **Step 3: Implement the engine-aware slot**
 
