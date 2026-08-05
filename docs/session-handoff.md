@@ -60,20 +60,28 @@ source of truth; never leave work local-only when handing over.
   chat slot; WebView fallback retained (logged-out state, YouTube, Owncast).
   History in [`changelog-agent.md`](changelog-agent.md); spec/plan under
   `docs/superpowers/`. **Phase 2 = send / emote picker / badges.**
-- **Pending: maintainer dogfood of Phase 1** (workstation + real Twitch
-  account — not automatable): `flutter run -d <sim-id>` → Dashboard chat →
-  Twitch → **Connect Twitch** → device-code dialog → authorize on
-  twitch.tv/activate → chat connects; post from a second account (emotes +
-  author colors render); scroll up → "New messages ↓" pill → tap jumps to
-  bottom; log out via the username-bar icon; background/foreground → chat
-  recovers; Settings → Force Tablet Mode smoke; optional
-  `tool/visual_qa/capture_screenshots.sh`. **Open verification point:**
-  after logout the slot switches back to the legacy WebView, but
-  `_syncWebController`
-  (`lib/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart:107-111`)
-  early-returns on an unchanged URL, so no `loadRequest` is re-issued on
-  remount — confirm the WebView fallback actually renders after logout;
-  fix only if confirmed blank.
+- **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
+  emotes, author colors, background recovery (observe long-term), Force
+  Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
+  inline "Copied to clipboard" feedback in the code dialog; logout is now a
+  tappable account chip (icon + display name) in the username bar.
+  **Still open: logout path itself untested** — incl. the post-logout
+  WebView-fallback check (`_syncWebController` early-returns on unchanged
+  URL, `stream_chat.dart:107-111`, so no `loadRequest` is re-issued on
+  remount; fix only if the fallback renders blank).
+- **Phase 2 input from dogfood (capture when planning):** (a) mobile chat
+  needs a proper "window/container" UI — the Phase 2 send input field will
+  live there anyway; (b) badges: users want role icons next to names
+  (mod/VIP/subscriber/founder/bits/…), ideally per-category toggles —
+  mechanics: EventSub `channel.chat.message` payload already carries a
+  `badges` array (set_id/id, currently unmodeled), image URLs come from
+  Helix *Get Channel Chat Badges* + *Get Global Chat Badges* (work with our
+  user token), so it is a DTO extension + badge-image cache + settings
+  toggles; (c) 7TV/BTTV/FFZ emotes render as plain text today (graceful
+  fallback, nothing breaks) — rendering them needs the third-party 7TV API,
+  a product decision; (d) earlier review notes: revocation toast on forced
+  logout, message dedup by `messageId`, revoked-refresh-token (Twitch 400)
+  is kept-record mid-session and only wiped on next cold-start validate.
 - **Next work is open** — pick up whatever is next (store cut, Twitch chat
   Phase 2, paid backend, opportunistic polish). Backend app (OAuth broker)
   registration still deferred — see `private/backend-architecture.md`.
