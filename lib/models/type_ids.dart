@@ -13,4 +13,5 @@ class TypeIDs {
   static const int Hotkey = 11;
   static const int DashboardElement = 12;
   static const int TwitchAuth = 13;
+  static const int ChatEngine = 14;
 }

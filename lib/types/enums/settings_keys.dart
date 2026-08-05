@@ -35,6 +35,9 @@ enum SettingsKeys {
   /// [ChatType]: enum which can be peristed with Hive as well
   SelectedChatType,
 
+  /// [ChatEngine]: enum which can be peristed with Hive as well
+  SelectedChatEngine,
+
   /// [List<String>]: All entered twitch usernames by the user
   TwitchUsernames,
 
@@ -178,6 +181,7 @@ enum SettingsKeys {
         SettingsKeys.ReduceSmearing: 'reduce-smearing',
         SettingsKeys.EnforceTabletMode: 'enforce-tablet-mode',
         SettingsKeys.SelectedChatType: 'selected-chat-type',
+        SettingsKeys.SelectedChatEngine: 'selected-chat-engine',
         SettingsKeys.TwitchUsernames: 'twitch-usernames',
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
         SettingsKeys.YouTubeUsernames: 'youtube-usernames',

@@ -4,6 +4,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/app_log.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/models/custom_theme.dart';
+import 'package:obs_blade/models/enums/chat_engine.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
@@ -41,6 +42,9 @@ class HiveTestHarness {
     }
     if (!Hive.isAdapterRegistered(TypeIDs.ChatType)) {
       Hive.registerAdapter<ChatType>(ChatTypeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(TypeIDs.ChatEngine)) {
+      Hive.registerAdapter<ChatEngine>(ChatEngineAdapter());
     }
     if (!Hive.isAdapterRegistered(TypeIDs.SceneItemType)) {
       Hive.registerAdapter<SceneItemType>(SceneItemTypeAdapter());

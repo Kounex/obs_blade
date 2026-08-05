@@ -6,6 +6,7 @@ import 'package:hive_ce/hive_ce.dart';
 import 'package:obs_blade/models/app_log.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/models/custom_theme.dart';
+import 'package:obs_blade/models/enums/chat_engine.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/models/enums/log_level.dart';
@@ -21,6 +22,7 @@ import 'package:obs_blade/models/twitch_auth.dart';
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
     registerAdapter(AppLogAdapter());
+    registerAdapter(ChatEngineAdapter());
     registerAdapter(ChatTypeAdapter());
     registerAdapter(ConnectionAdapter());
     registerAdapter(CustomThemeAdapter());
@@ -40,6 +42,7 @@ extension HiveRegistrar on HiveInterface {
 extension IsolatedHiveRegistrar on IsolatedHiveInterface {
   void registerAdapters() {
     registerAdapter(AppLogAdapter());
+    registerAdapter(ChatEngineAdapter());
     registerAdapter(ChatTypeAdapter());
     registerAdapter(ConnectionAdapter());
     registerAdapter(CustomThemeAdapter());

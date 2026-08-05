@@ -13,6 +13,7 @@ import 'app.dart';
 import 'models/app_log.dart';
 import 'models/connection.dart';
 import 'models/custom_theme.dart';
+import 'models/enums/chat_engine.dart';
 import 'models/enums/chat_type.dart';
 import 'models/enums/log_level.dart';
 import 'models/enums/scene_item_type.dart';
@@ -108,6 +109,7 @@ Future<void> _initializeHive() async {
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
+  Hive.registerAdapter(ChatEngineAdapter());
   Hive.registerAdapter(SceneItemTypeAdapter());
   Hive.registerAdapter(LogLevelAdapter());
   Hive.registerAdapter(DashboardElementAdapter());
