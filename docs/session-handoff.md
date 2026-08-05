@@ -101,7 +101,9 @@ source of truth; never leave work local-only when handing over.
   (`drop_reason` → user copy). Widget is Twitch-free by design (reuse
   seam, same as the window). Gates: 164/164, analyze 0 errors + 6
   pre-existing warnings. Commits `fdd539c..89fa18f`; spec/plan
-  `2026-08-05-chat-send-input*`. **Maintainer dogfood pending** — needs a
+  `2026-08-05-chat-send-input*`; history in
+  [`changelog-agent.md`](changelog-agent.md). **Maintainer dogfood
+  pending** — needs a
   fresh login (so the token carries the write scope), then:
   - Dock renders at the pane bottom (pill field + circular send).
   - Send a message → appears in your chat on twitch.tv; the EventSub echo

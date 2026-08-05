@@ -69,12 +69,16 @@ way that regresses tablet. Details: [`docs/redesign/design-system.md`](docs/rede
 `lib/types/` (see architecture doc). `DashboardStore` is a large intentional
 monolith; don't split it unless asked.
 
-**Chat:** Twitch has a native engine (device-code login + EventSub chat,
-read-only) next to the WebView embeds; a manual WebView↔Native switch lives in
-the chat bar (`SelectedChatEngine`, default WebView; availability seam:
-`nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). Role badges +
-per-category toggles ship via `TwitchBadgeStore` + the native chat options
-sheet (per-platform seam). Next: availability gate, container UI, send input —
+**Chat:** Twitch has a native engine (device-code login + EventSub chat +
+Helix send input — reads AND writes) next to the WebView embeds; a manual
+WebView↔Native switch lives in the chat bar (`SelectedChatEngine`, default
+WebView; availability seam: `nativeChatAvailableFor` in
+`lib/models/enums/chat_engine.dart`). The native side renders in
+`NativeChatWindow` (optional `input` slot docks the generic, Twitch-free
+`NativeChatInput`; silent `user:write:chat` scope upgrade — pre-upgrade
+sessions get a read-only lock strip). Role badges + per-category toggles
+ship via `TwitchBadgeStore` + the native chat options sheet (per-platform
+seam). Next: availability/entitlement gate, 7TV/BTTV, replies/announce —
 see chat audit + handoff.
 
 ## Docs index
