@@ -1346,34 +1346,37 @@ class TwitchChatMessageRow extends StatelessWidget {
     ];
   }
 
+  /// Badge-less rows never change — an Observer that tracks nothing
+  /// spams flutter_mobx's "No observables" warning, so only rows with
+  /// badges observe the catalog (arrivals/changes rebuild them;
+  /// toggle changes come from the HiveBuilder above the list).
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs / 2),
-
-      /// Rebuilds when the badge catalog arrives/changes; toggle changes
-      /// come from the HiveBuilder above the list.
-      child: Observer(
-        builder: (context) => Text.rich(
-          TextSpan(
-            style: Theme.of(context).textTheme.bodyMedium,
-            children: [
-              ...this._badgeSpans(),
-              TextSpan(
-                text: this.event.chatterUserName,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: this._authorColor(context),
-                ),
-              ),
-              const TextSpan(text: ': '),
-              ...this._messageSpans(),
-            ],
-          ),
-        ),
-      ),
+      child: this.event.badges.isEmpty
+          ? this._richText(context)
+          : Observer(builder: this._richText),
     );
   }
+
+  Text _richText(BuildContext context) => Text.rich(
+        TextSpan(
+          style: Theme.of(context).textTheme.bodyMedium,
+          children: [
+            ...this._badgeSpans(),
+            TextSpan(
+              text: this.event.chatterUserName,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: this._authorColor(context),
+              ),
+            ),
+            const TextSpan(text: ': '),
+            ...this._messageSpans(),
+          ],
+        ),
+      );
 }
 ```
 
