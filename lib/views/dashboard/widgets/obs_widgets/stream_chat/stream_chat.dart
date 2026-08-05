@@ -22,6 +22,7 @@ import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
+import 'native_chat_input.dart';
 import 'native_chat_window.dart';
 import 'native_twitch_chat_view.dart';
 import 'twitch_device_code_dialog.dart';
@@ -288,6 +289,17 @@ class _StreamChatState extends State<StreamChat>
                                 nativeConnectPrompt: true,
                               ),
                             ),
+                      input: loggedIn
+                          ? NativeChatInput(
+                              canSend: twitchStore.canWriteChat,
+                              inFlight: twitchStore.sendingChat,
+                              errorText: twitchStore.sendChatError,
+                              accentColor: chatType.brandColor ??
+                                  Theme.of(context).colorScheme.secondary,
+                              onSend: twitchStore.sendChatMessage,
+                              onRelogin: () => startTwitchLogin(context),
+                            )
+                          : null,
                     );
                   },
                 );
