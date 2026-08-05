@@ -10,6 +10,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
@@ -402,6 +403,62 @@ void main() {
 
       expect(badgeStore.globalBadges, isEmpty);
       expect(badgeStore.channelBadges, isEmpty);
+    });
+  });
+
+  group('chatConnectedAt', () {
+    late void Function(TwitchEventSubState) emitState;
+    late void Function(String) emitRevoked;
+
+    /// A fresh store whose factory captures the callbacks the store hands
+    /// to its EventSub service, so the test can drive state/revocation.
+    Future<void> loginWithCapturedCallbacks() async {
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (onChatMessage, onStateChanged, onRevoked) {
+          emitState = onStateChanged;
+          emitRevoked = onRevoked;
+          return eventSubService;
+        },
+        badgeStoreResolver: () => badgeStore,
+      );
+      await store.startLogin();
+    }
+
+    test('stamped on live, kept on repeated live, re-stamped after reconnect',
+        () async {
+      await loginWithCapturedCallbacks();
+      expect(store.chatConnectedAt, isNull);
+
+      emitState(TwitchEventSubState.connected);
+      final first = store.chatConnectedAt;
+      expect(first, isNotNull);
+
+      emitState(TwitchEventSubState.connected);
+      expect(store.chatConnectedAt, same(first));
+
+      emitState(TwitchEventSubState.reconnecting);
+      emitState(TwitchEventSubState.connected);
+      expect(store.chatConnectedAt, isNot(same(first)));
+    });
+
+    test('cleared on disconnect', () async {
+      await loginWithCapturedCallbacks();
+      emitState(TwitchEventSubState.connected);
+      expect(store.chatConnectedAt, isNotNull);
+
+      emitState(TwitchEventSubState.disconnected);
+      expect(store.chatConnectedAt, isNull);
+    });
+
+    test('cleared on subscription failure', () async {
+      await loginWithCapturedCallbacks();
+      emitState(TwitchEventSubState.connected);
+      expect(store.chatConnectedAt, isNotNull);
+
+      emitRevoked('subscription_failed:500');
+      expect(store.chatConnection, TwitchChatConnectionState.failed);
+      expect(store.chatConnectedAt, isNull);
     });
   });
 }

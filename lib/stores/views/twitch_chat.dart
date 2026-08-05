@@ -100,6 +100,11 @@ abstract class _TwitchChatStore with Store {
   @observable
   String? chatError;
 
+  /// When the current chat session went live — drives the connection
+  /// sheet's uptime line. In-memory only.
+  @observable
+  DateTime? chatConnectedAt;
+
   final ObservableList<ChatMessageEvent> messages =
       ObservableList<ChatMessageEvent>();
 
@@ -274,11 +279,13 @@ abstract class _TwitchChatStore with Store {
         GeneralHelper.advLog('Twitch chat connect failed — $e');
         this.chatConnection = TwitchChatConnectionState.failed;
         this.chatError = 'Could not connect to Twitch chat';
+        this.chatConnectedAt = null;
       }
     } catch (e) {
       GeneralHelper.advLog('Twitch chat connect failed — $e');
       this.chatConnection = TwitchChatConnectionState.failed;
       this.chatError = 'Could not connect to Twitch chat';
+      this.chatConnectedAt = null;
     }
   }
 
@@ -332,6 +339,9 @@ abstract class _TwitchChatStore with Store {
     runInAction(() {
       switch (state) {
         case TwitchEventSubState.connected:
+          if (this.chatConnection != TwitchChatConnectionState.live) {
+            this.chatConnectedAt = DateTime.now();
+          }
           this.chatConnection = TwitchChatConnectionState.live;
           break;
         case TwitchEventSubState.connecting:
@@ -342,6 +352,7 @@ abstract class _TwitchChatStore with Store {
           break;
         case TwitchEventSubState.disconnected:
           this.chatConnection = TwitchChatConnectionState.disconnected;
+          this.chatConnectedAt = null;
           break;
       }
     });
@@ -357,6 +368,7 @@ abstract class _TwitchChatStore with Store {
       runInAction(() {
         this.chatConnection = TwitchChatConnectionState.failed;
         this.chatError = 'Twitch chat subscription failed ($reason)';
+        this.chatConnectedAt = null;
       });
     }
   }
@@ -386,6 +398,7 @@ abstract class _TwitchChatStore with Store {
     await eventSub?.dispose();
     runInAction(() {
       this.chatConnection = TwitchChatConnectionState.disconnected;
+      this.chatConnectedAt = null;
     });
   }
 

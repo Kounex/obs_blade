@@ -144,6 +144,24 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$chatConnectedAtAtom = Atom(
+    name: '_TwitchChatStore.chatConnectedAt',
+    context: context,
+  );
+
+  @override
+  DateTime? get chatConnectedAt {
+    _$chatConnectedAtAtom.reportRead();
+    return super.chatConnectedAt;
+  }
+
+  @override
+  set chatConnectedAt(DateTime? value) {
+    _$chatConnectedAtAtom.reportWrite(value, super.chatConnectedAt, () {
+      super.chatConnectedAt = value;
+    });
+  }
+
   late final _$initAsyncAction = AsyncAction(
     '_TwitchChatStore.init',
     context: context,
@@ -235,6 +253,7 @@ pendingVerificationUri: ${pendingVerificationUri},
 user: ${user},
 chatConnection: ${chatConnection},
 chatError: ${chatError},
+chatConnectedAt: ${chatConnectedAt},
 isLoggedIn: ${isLoggedIn}
     ''';
   }
