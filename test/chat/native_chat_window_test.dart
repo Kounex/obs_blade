@@ -37,7 +37,7 @@ void main() {
       (NativeChatConnectionStatus.failed, 'failed'),
     ]) {
       await tester.pumpWidget(wrap(buildWindow(status: status)));
-      expect(find.text('Twitch'), findsOneWidget);
+      expect(find.text('Stream Chat'), findsOneWidget);
       expect(find.text(label), findsOneWidget);
       expect(find.text('chat content'), findsOneWidget);
     }
@@ -56,7 +56,8 @@ void main() {
     );
 
     await tester.tap(find.text('connected'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Twitch chat'), findsOneWidget);
     expect(find.text('Connected as Kounex'), findsOneWidget);
@@ -64,6 +65,17 @@ void main() {
       find.textContaining(RegExp(r'Connected for \d+:\d{2}')),
       findsOneWidget,
     );
+
+    final before =
+        tester.widget<Text>(find.textContaining('Connected for')).data!;
+    await tester.pump(const Duration(seconds: 2));
+    final after =
+        tester.widget<Text>(find.textContaining('Connected for')).data!;
+    expect(after, isNot(equals(before)));
+
+    await tester.tapAt(const Offset(400, 100));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
   testWidgets('failed: sheet shows the error and fires retry + logout',
@@ -139,5 +151,33 @@ void main() {
         '1:02:05',
       );
     });
+  });
+
+  testWidgets('live sheet uptime ticks while open', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        buildWindow(
+          status: NativeChatConnectionStatus.live,
+          accountLabel: 'Kounex',
+          connectedAt: DateTime.now().subtract(const Duration(seconds: 90)),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('connected'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final before =
+        tester.widget<Text>(find.textContaining('Connected for')).data!;
+    await tester.pump(const Duration(seconds: 2));
+    final after =
+        tester.widget<Text>(find.textContaining('Connected for')).data!;
+
+    expect(after, isNot(equals(before)));
+
+    await tester.tapAt(const Offset(400, 100));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
   });
 }

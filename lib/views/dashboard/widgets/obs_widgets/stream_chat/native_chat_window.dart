@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -6,7 +8,6 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
-import 'chat_type_brand.dart';
 
 /// Platform-agnostic connection state of a native chat engine, rendered by
 /// [NativeChatWindow]'s status row. Each native engine maps its own store
@@ -97,13 +98,11 @@ class NativeChatWindow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (String statusLabel, Color statusColor) = this._statusMeta(context);
-    final Color brandColor = this.chatType.brandColor ??
-        Theme.of(context).colorScheme.secondary;
 
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -139,10 +138,8 @@ class NativeChatWindow extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(this.chatType.icon, size: 14.0, color: brandColor),
-                  const SizedBox(width: AppSpacing.xs),
                   Text(
-                    this.chatType.text,
+                    'Stream Chat',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const Spacer(),
@@ -302,10 +299,7 @@ class _NativeChatConnectionSheet extends StatelessWidget {
             ),
             if (this.connectedAt != null) ...[
               const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Connected for ${formatChatUptime(DateTime.now().difference(this.connectedAt!))}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              _UptimeLine(connectedAt: this.connectedAt!),
             ],
           ],
           if (degraded) ...[
@@ -348,4 +342,52 @@ class _NativeChatConnectionSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Ticking "Connected for m:ss" line for the live sheet — recomputes the
+/// uptime once per second while the sheet is open.
+class _UptimeLine extends StatefulWidget {
+  final DateTime connectedAt;
+
+  const _UptimeLine({required this.connectedAt});
+
+  @override
+  State<_UptimeLine> createState() => _UptimeLineState();
+}
+
+class _UptimeLineState extends State<_UptimeLine> {
+  late final Timer _ticker;
+
+  /// Uptime captured when the sheet opens — each tick advances it by a
+  /// second, so the line also moves under fake test clocks
+  /// (`DateTime.now()` is not zone-aware) and is immune to wall-clock jumps.
+  late Duration _uptime =
+      DateTime.now().difference(this.widget.connectedAt);
+
+  @override
+  void initState() {
+    super.initState();
+    this._ticker = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) {
+        if (this.mounted) {
+          this.setState(() {
+            this._uptime += const Duration(seconds: 1);
+          });
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    this._ticker.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Text(
+        'Connected for ${formatChatUptime(this._uptime)}',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
 }
