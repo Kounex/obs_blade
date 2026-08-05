@@ -58,7 +58,11 @@ class ChatUsernameBar extends StatelessWidget {
               const EdgeInsets.only(left: AppSpacing.sm, right: AppSpacing.sm),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
+
+            /// Top-aligned so the platform dropdown (and the engine switch)
+            /// keep their position when the mode swap adds/removes the
+            /// controls below them
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Flexible(
                 child: ConstrainedBox(
