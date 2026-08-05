@@ -1,14 +1,27 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../../models/enums/chat_engine.dart';
+import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
+import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
+import 'twitch_account_control.dart';
 import 'username_action_row.dart';
 import 'username_dropdown.dart';
 
+/// Chat control section. The platform dropdown is the single major
+/// control; everything else hangs off the selected chat engine
+/// ([SettingsKeys.SelectedChatEngine]):
+///
+/// WebView mode (default): username dropdown + add/edit/delete actions -
+/// the classic behavior, unchanged.
+///
+/// Native mode (Twitch only, see [nativeChatAvailableFor]): the engine
+/// switch plus the account control (login/logout, connected account) -
+/// never the username controls.
 class ChatUsernameBar extends StatelessWidget {
   const ChatUsernameBar({
     super.key,
@@ -20,6 +33,7 @@ class ChatUsernameBar extends StatelessWidget {
       hiveKey: HiveKeys.Settings,
       rebuildKeys: const [
         SettingsKeys.SelectedChatType,
+        SettingsKeys.SelectedChatEngine,
         SettingsKeys.TwitchUsernames,
         SettingsKeys.SelectedTwitchUsername,
         SettingsKeys.YouTubeUsernames,
@@ -27,38 +41,71 @@ class ChatUsernameBar extends StatelessWidget {
         SettingsKeys.OwncastUsernames,
         SettingsKeys.SelectedOwncastUsername,
       ],
-      builder: (context, settingsBox, child) => Padding(
-        padding: const EdgeInsets.only(
-            left: AppSpacing.sm, right: AppSpacing.sm),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Flexible(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 256.0,
+      builder: (context, settingsBox, child) {
+        final ChatType chatType = settingsBox.get(
+          SettingsKeys.SelectedChatType.name,
+          defaultValue: ChatType.Twitch,
+        );
+        final ChatEngine engine = settingsBox.get(
+          SettingsKeys.SelectedChatEngine.name,
+          defaultValue: ChatEngine.webView,
+        );
+        final bool nativeMode =
+            nativeChatAvailableFor(chatType) && engine == ChatEngine.native;
+
+        return Padding(
+          padding:
+              const EdgeInsets.only(left: AppSpacing.sm, right: AppSpacing.sm),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 256.0,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ChatTypeDropdown(settingsBox: settingsBox),
+                      if (!nativeMode) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        UsernameDropdown(
+                          settingsBox: settingsBox,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Flexible(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ChatTypeDropdown(settingsBox: settingsBox),
-                    const SizedBox(height: AppSpacing.xs),
-                    UsernameDropdown(
-                      settingsBox: settingsBox,
-                    ),
+                    if (nativeChatAvailableFor(chatType)) ...[
+                      ChatEngineSwitch(
+                        settingsBox: settingsBox,
+                        chatType: chatType,
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                    ],
+                    if (nativeMode)
+                      const TwitchAccountControl()
+                    else
+                      UsernameActionRow(
+                        settingsBox: settingsBox,
+                      ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            UsernameActionRow(
-              settingsBox: settingsBox,
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

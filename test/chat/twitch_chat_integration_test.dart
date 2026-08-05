@@ -14,6 +14,9 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_username_bar.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/twitch_account_control.dart';
+import 'package:obs_blade/models/enums/chat_engine.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/username_action_row.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/username_dropdown.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
@@ -156,27 +159,40 @@ void main() {
     expect(closed, isTrue);
   });
 
-  testWidgets('username bar shows the Twitch account action only for Twitch',
+  testWidgets(
+      'username bar shows the engine switch and connect pill only for Twitch in native mode',
       (tester) async {
     await tester.runAsync(() async {
-      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
     });
 
     await tester.pumpWidget(wrap(const ChatUsernameBar()));
     await tester.pumpAndSettle();
-    expect(find.byIcon(CupertinoIcons.link), findsOneWidget);
+    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsOneWidget);
+    expect(find.text('Connect Twitch'), findsOneWidget);
 
     await tester.runAsync(() async {
-      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.YouTube);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.YouTube);
     });
     await tester.pumpAndSettle();
-    expect(find.byIcon(CupertinoIcons.link), findsNothing);
+    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsNothing);
+    expect(find.text('Connect Twitch'), findsNothing);
   });
 
-  testWidgets('username bar shows the connected account and offers disconnect',
+  testWidgets(
+      'username bar shows the connected account in native mode and offers disconnect',
       (tester) async {
     await tester.runAsync(() async {
-      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
     });
     store.authState = TwitchAuthState.loggedIn;
     store.user = FakeTwitchAuthService.user;
@@ -191,6 +207,59 @@ void main() {
     await tester.tap(find.text('Kounex'));
     await tester.pumpAndSettle();
     expect(find.text('Disconnect Twitch?'), findsOneWidget);
+  });
+
+  testWidgets('switching engines swaps the bar controls and persists the key',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.TwitchUsernames.name, <String>['someuser']);
+      await settingsBox()
+          .put(SettingsKeys.SelectedTwitchUsername.name, 'someuser');
+    });
+
+    await tester.pumpWidget(wrap(const ChatUsernameBar()));
+    await tester.pumpAndSettle();
+
+    /// WebView engine by default: username controls, no account control,
+    /// and no persisted key yet
+    expect(find.byType(UsernameDropdown), findsOneWidget);
+    expect(find.byType(UsernameActionRow), findsOneWidget);
+    expect(find.byType(TwitchAccountControl), findsNothing);
+    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name), isNull);
+
+    await tester.tap(find.text('Native'));
+    await tester.pump();
+
+    /// Hive applies puts to its in-memory keystore synchronously; the box
+    /// watch event reaches the HiveBuilder through the zone's microtasks,
+    /// so pumps alone drive the rebuild (no real I/O window needed)
+    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
+        ChatEngine.native);
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(UsernameDropdown), findsNothing);
+    expect(find.byType(UsernameActionRow), findsNothing);
+    expect(find.byType(TwitchAccountControl), findsOneWidget);
+
+    /// Close Hive from inside the test's FakeAsync zone (zone-bound write
+    /// Completers hang a real-zone close) - same dance as the login test,
+    /// minus the store dispose: no login flow ran here
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
   });
 
   testWidgets(

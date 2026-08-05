@@ -1,10 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
-import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 
@@ -13,10 +9,12 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
-import '../twitch_device_code_dialog.dart';
 import 'delete_username_dialog.dart';
 import 'dialogs/add_edit_twitch_username.dart';
 
+/// WebView-mode username actions (add / edit / delete) for the selected
+/// chat platform. The Twitch account chip used to live here - it moved to
+/// `twitch_account_control.dart`, which owns the native engine mode.
 class UsernameActionRow extends StatelessWidget {
   final Box settingsBox;
 
@@ -50,47 +48,6 @@ class UsernameActionRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (chatType == ChatType.Twitch) ...[
-            Observer(
-              builder: (_) {
-                final store = GetIt.instance<TwitchChatStore>();
-                final loggedIn = store.isLoggedIn;
-                final displayName =
-                    store.user?.displayName ?? store.user?.login;
-                return _UsernameAction(
-                  icon: loggedIn
-                      ? CupertinoIcons.checkmark_circle_fill
-                      : CupertinoIcons.link,
-                  label: loggedIn ? displayName : null,
-                  tooltip: loggedIn
-                      ? 'Connected as ${displayName ?? 'Twitch'} — tap to disconnect'
-                      : 'Connect Twitch',
-                  onPressed: () {
-                    if (loggedIn) {
-                      ModalHandler.showBaseDialog(
-                        context: context,
-                        dialogWidget: ConfirmationDialog(
-                          title: 'Disconnect Twitch?',
-                          body:
-                              'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account. The classic WebView chat will be used instead.',
-                          okText: 'Disconnect',
-                          isYesDestructive: true,
-                          onOk: (_) =>
-                              GetIt.instance<TwitchChatStore>().logout(),
-                        ),
-                      );
-                    } else {
-                      startTwitchLogin(context);
-                    }
-                  },
-                );
-              },
-            ),
-            const SizedBox(
-              height: 20.0,
-              child: VerticalDivider(width: 1.0, thickness: 0.0),
-            ),
-          ],
           _UsernameAction(
             icon: CupertinoIcons.person_add,
             tooltip: 'Add',
@@ -159,13 +116,10 @@ class UsernameActionRow extends StatelessWidget {
 
 /// One segment of the username action control - icon button with [Pressable]
 /// feedback; keeps the enabled / destructive color semantics of the old
-/// text buttons. An optional [label] turns it into a chip (e.g. the
-/// connected Twitch account, which reads as tappable instead of a bare
-/// status icon).
+/// text buttons.
 class _UsernameAction extends StatelessWidget {
   final IconData icon;
   final String tooltip;
-  final String? label;
   final bool isDestructive;
 
   final void Function()? onPressed;
@@ -173,7 +127,6 @@ class _UsernameAction extends StatelessWidget {
   const _UsernameAction({
     required this.icon,
     required this.tooltip,
-    this.label,
     this.isDestructive = false,
     this.onPressed,
   });
@@ -194,31 +147,12 @@ class _UsernameAction extends StatelessWidget {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                this.icon,
-                size: 18.0,
-                color: this.onPressed != null
-                    ? enabledColor
-                    : Theme.of(context).disabledColor.withValues(alpha: 0.3),
-              ),
-              if (this.label != null) ...[
-                const SizedBox(width: AppSpacing.xs),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 96.0),
-                  child: Text(
-                    this.label!,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: enabledColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ),
-              ],
-            ],
+          child: Icon(
+            this.icon,
+            size: 18.0,
+            color: this.onPressed != null
+                ? enabledColor
+                : Theme.of(context).disabledColor.withValues(alpha: 0.3),
           ),
         ),
       ),
