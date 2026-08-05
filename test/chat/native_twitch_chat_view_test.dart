@@ -5,9 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
@@ -42,8 +44,22 @@ ChatMessageEvent textEvent(String id, String author, String text) =>
       ),
     );
 
+ChatMessageEvent badgeEvent() => ChatMessageEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: '1',
+      chatterUserLogin: 'modder',
+      chatterUserName: 'Modder',
+      messageId: '1',
+      message: ChatMessageText(
+        text: 'secured',
+        fragments: [ChatMessageFragment(type: 'text', text: 'secured')],
+      ),
+      badges: const [ChatMessageBadge(setId: 'moderator', id: '1')],
+    );
+
 void main() {
   late TwitchChatStore store;
+  late TwitchBadgeStore badgeStore;
   late Directory tempDir;
   late HiveTestHarness harness;
 
@@ -52,12 +68,15 @@ void main() {
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
+    await Hive.openBox(HiveKeys.Settings.name);
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
       eventSubFactory: (_, __, ___) => FakeTwitchEventSubService(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
+    badgeStore = TwitchBadgeStore(service: FakeTwitchBadgeService());
+    GetIt.instance.registerSingleton<TwitchBadgeStore>(badgeStore);
   });
 
   tearDown(() async {
@@ -71,7 +90,10 @@ void main() {
   group('TwitchChatMessageRow', () {
     testWidgets('renders author and text', (tester) async {
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(event: textEvent('1', 'Viewer32', 'Hi chat'))),
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        )),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
@@ -98,7 +120,12 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(wrap(TwitchChatMessageRow(event: event)));
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: event,
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        )),
+      );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
       final widgetSpan = collectWidgetSpans(richText.text).single;
@@ -107,6 +134,69 @@ void main() {
         (image.image as NetworkImage).url,
         'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark/2.0',
       );
+    });
+
+    testWidgets('renders the badge image before the author', (tester) async {
+      badgeStore.globalBadges['moderator'] = {
+        '1': FakeTwitchBadgeService.moderatorSet.versions.single,
+      };
+
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: badgeEvent(),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        )),
+      );
+
+      final richText = tester.widget<RichText>(find.byType(RichText));
+
+      /// `toPlainText` renders a WidgetSpan as the object replacement
+      /// character — the badge sits before the author.
+      expect(richText.text.toPlainText(), '\u{FFFC}Modder: secured');
+      final badgeSpan = collectWidgetSpans(richText.text).single;
+      final image = (badgeSpan.child as Padding).child as Image;
+      expect(
+        (image.image as NetworkImage).url,
+        'https://badges.example/mod/2x.png',
+      );
+    });
+
+    testWidgets('a disabled badge category is hidden', (tester) async {
+      badgeStore.globalBadges['moderator'] = {
+        '1': FakeTwitchBadgeService.moderatorSet.versions.single,
+      };
+
+      /// Real file I/O never completes inside the test body's FakeAsync
+      /// zone — runAsync escapes it (same pattern as the retry test below)
+      await tester.runAsync(() async {
+        await Hive.box(HiveKeys.Settings.name)
+            .put(SettingsKeys.TwitchChatBadgeModerator.name, false);
+      });
+
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: badgeEvent(),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        )),
+      );
+
+      final richText = tester.widget<RichText>(find.byType(RichText));
+      expect(richText.text.toPlainText(), 'Modder: secured');
+      expect(collectWidgetSpans(richText.text), isEmpty);
+    });
+
+    testWidgets('unknown badges are skipped', (tester) async {
+      /// Catalog deliberately left empty
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: badgeEvent(),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        )),
+      );
+
+      final richText = tester.widget<RichText>(find.byType(RichText));
+      expect(richText.text.toPlainText(), 'Modder: secured');
+      expect(collectWidgetSpans(richText.text), isEmpty);
     });
   });
 

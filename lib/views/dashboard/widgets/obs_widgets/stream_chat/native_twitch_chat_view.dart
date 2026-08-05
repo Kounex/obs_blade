@@ -4,7 +4,10 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'twitch_chat_message_row.dart';
@@ -164,54 +167,70 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         }
         this._lastRenderedCount = messageCount;
 
-        return Stack(
-          children: [
-            ListView.builder(
-              controller: this._scrollController,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.xs,
+        /// Toggle changes re-filter badges in place; row-level Observers
+        /// pick up badge catalog arrivals.
+        return HiveBuilder<dynamic>(
+          hiveKey: HiveKeys.Settings,
+          rebuildKeys: const [
+            SettingsKeys.TwitchChatBadgeBroadcaster,
+            SettingsKeys.TwitchChatBadgeModerator,
+            SettingsKeys.TwitchChatBadgeVip,
+            SettingsKeys.TwitchChatBadgeSubscriber,
+            SettingsKeys.TwitchChatBadgeFounder,
+            SettingsKeys.TwitchChatBadgeBits,
+            SettingsKeys.TwitchChatBadgeOther,
+          ],
+          builder: (context, settingsBox, child) => Stack(
+            children: [
+              ListView.builder(
+                controller: this._scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
+                itemCount: messageCount,
+                itemBuilder: (context, index) => TwitchChatMessageRow(
+                  event: this._store.messages[index],
+                  settingsBox: settingsBox,
+                ),
               ),
-              itemCount: messageCount,
-              itemBuilder: (context, index) =>
-                  TwitchChatMessageRow(event: this._store.messages[index]),
-            ),
-            if (this._unreadWhileScrolledUp)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: AppSpacing.sm,
-                child: Center(
-                  child: Pressable(
-                    haptic: true,
-                    onTap: () {
-                      setState(() {
-                        this._pinnedToBottom = true;
-                        this._unreadWhileScrolledUp = false;
-                      });
-                      this._scrollToBottom();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.secondary,
-                        borderRadius: AppRadius.pill,
-                      ),
-                      child: Text(
-                        'New messages ↓',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.white),
+              if (this._unreadWhileScrolledUp)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: AppSpacing.sm,
+                  child: Center(
+                    child: Pressable(
+                      haptic: true,
+                      onTap: () {
+                        setState(() {
+                          this._pinnedToBottom = true;
+                          this._unreadWhileScrolledUp = false;
+                        });
+                        this._scrollToBottom();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.secondary,
+                          borderRadius: AppRadius.pill,
+                        ),
+                        child: Text(
+                          'New messages ↓',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
       },
     );
