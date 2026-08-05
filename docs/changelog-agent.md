@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-05 — Native Twitch chat: role badges + visibility toggles
+
+- `ChatMessageEvent` now models the payload's `badges` array
+  (`ChatMessageBadge`: setId/id/info).
+- New `TwitchBadgeStore` (GetIt, session-scoped, in-memory) caches the Helix
+  global + per-channel badge catalogs, fetched by the new
+  `TwitchBadgeService` with the existing user token (no new scope);
+  `TwitchChatStore.connectChat()` kicks the fetch off fire-and-forget,
+  `logout()` clears it.
+- `TwitchChatMessageRow` renders badge images before the username
+  (render-time lookup, channel catalog > global), skipped silently when
+  unknown.
+- New "Native chat options" sheet (44pt button in the native bar) with
+  per-platform sections — Twitch today: 7 badge visibility toggles
+  (broadcaster, moderator, VIP, subscriber, founder, bits, other),
+  default-on, persisted as plain Settings-box bool keys
+  (`twitch-chat-badge-*`), live re-filtering.
+
 ## 2026-08-04 (chat engine switch)
 
 - **Chat engine switch (control-section redesign)** — spec

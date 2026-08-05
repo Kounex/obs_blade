@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-04** (chat engine switch — on top of native Twitch chat Phase 1).
+Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native Twitch chat role badges + visibility toggles shipped).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -64,7 +64,18 @@ source of truth; never leave work local-only when handing over.
   in [`changelog-agent.md`](changelog-agent.md); specs/plans under
   `docs/superpowers/`. **Next chat items:** availability/entitlement gate
   for native chat (plugs into the seam, brings auto-switch-on-login),
-  badges/role toggles, chat container UI (prelude to send input), 7TV/BTTV.
+  chat container UI (prelude to send input), 7TV/BTTV.
+- **Native Twitch chat Phase 2: role badges + visibility toggles on
+  `master`** (2026-08-05) — `ChatMessageEvent.badges` modeled; session-scoped
+  `TwitchBadgeStore` (GetIt) caches the Helix global + per-channel badge
+  catalogs (fetched fire-and-forget on chat connect, cleared on logout);
+  native rows render badge images before the username (channel catalog >
+  global, unknown skipped silently); new native chat options sheet
+  (per-platform seam) with 7 Twitch badge visibility toggles (default-on,
+  persisted `twitch-chat-badge-*` Settings-box keys, live re-filtering).
+  Gates green: 133/133 tests, analyze 0 errors + 6 pre-existing warnings.
+  History in [`changelog-agent.md`](changelog-agent.md); spec/plan under
+  `docs/superpowers/`.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
@@ -76,13 +87,9 @@ source of truth; never leave work local-only when handing over.
   remount; fix only if the fallback renders blank).
 - **Phase 2 input from dogfood (capture when planning):** (a) mobile chat
   needs a proper "window/container" UI — the Phase 2 send input field will
-  live there anyway; (b) badges: users want role icons next to names
-  (mod/VIP/subscriber/founder/bits/…), ideally per-category toggles —
-  mechanics: EventSub `channel.chat.message` payload already carries a
-  `badges` array (set_id/id, currently unmodeled), image URLs come from
-  Helix *Get Channel Chat Badges* + *Get Global Chat Badges* (work with our
-  user token), so it is a DTO extension + badge-image cache + settings
-  toggles; (c) 7TV/BTTV/FFZ emotes render as plain text today (graceful
+  live there anyway; (b) badges — **shipped 2026-08-05** (role icons next
+  to names + per-category visibility toggles in the native chat options
+  sheet); (c) 7TV/BTTV/FFZ emotes render as plain text today (graceful
   fallback, nothing breaks) — rendering them needs the third-party 7TV API,
   a product decision; (d) earlier review notes: revocation toast on forced
   logout, message dedup by `messageId`, revoked-refresh-token (Twitch 400)

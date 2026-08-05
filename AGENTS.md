@@ -72,8 +72,10 @@ monolith; don't split it unless asked.
 **Chat:** Twitch has a native engine (device-code login + EventSub chat,
 read-only) next to the WebView embeds; a manual WebView↔Native switch lives in
 the chat bar (`SelectedChatEngine`, default WebView; availability seam:
-`nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). Next:
-availability gate, badges — see chat audit + handoff.
+`nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). Role badges +
+per-category toggles ship via `TwitchBadgeStore` + the native chat options
+sheet (per-platform seam). Next: availability gate, container UI, send input —
+see chat audit + handoff.
 
 ## Docs index
 
