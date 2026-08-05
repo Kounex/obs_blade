@@ -75,7 +75,10 @@ void main() {
     /// Hive writes need real I/O — the test body's FakeAsync zone never
     /// completes them (and a pending write hangs Hive.close() in tearDown)
     await tester.runAsync(() async {
-      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
     });
     store.authState = TwitchAuthState.loggedIn;
     store.chatConnection = TwitchChatConnectionState.live;
@@ -86,29 +89,47 @@ void main() {
     expect(find.byType(NativeTwitchChatView), findsOneWidget);
   });
 
-  testWidgets('slot keeps the empty state + connect button when logged out',
+  testWidgets(
+      'slot shows the native connect prompt when logged out in native mode',
       (tester) async {
     await tester.runAsync(() async {
-      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
     });
 
     await tester.pumpWidget(wrap(const StreamChat()));
     await tester.pumpAndSettle();
 
     expect(find.byType(NativeTwitchChatView), findsNothing);
-    expect(find.text('Connect Twitch'), findsOneWidget);
+    expect(
+      find.text('Connect your Twitch account to see your chat natively.'),
+      findsOneWidget,
+    );
+
+    /// Two "Connect Twitch" affordances by design in this tree: the
+    /// username bar's account-control pill (Task 4) and the slot prompt's
+    /// pill - both call startTwitchLogin
+    expect(find.text('Connect Twitch'), findsNWidgets(2));
   });
 
   testWidgets('connect button starts the login and the dialog auto-closes',
       (tester) async {
     await tester.runAsync(() async {
-      await settingsBox().put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
     });
 
     await tester.pumpWidget(wrap(const StreamChat()));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Connect Twitch'));
+    /// `.last` = the slot prompt's pill (the username bar's account-control
+    /// pill comes first in tree order; both invoke the same
+    /// startTwitchLogin, so the tested flow is identical)
+    await tester.tap(find.text('Connect Twitch').last);
     await tester.pump();
     expect(find.byType(TwitchDeviceCodeDialog), findsOneWidget);
 
@@ -157,6 +178,59 @@ void main() {
     }
     await tester.pump();
     expect(closed, isTrue);
+  });
+
+  testWidgets(
+      'slot keeps the legacy WebView path when logged in but the engine is WebView',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+    });
+    store.authState = TwitchAuthState.loggedIn;
+    store.chatConnection = TwitchChatConnectionState.live;
+
+    await tester.pumpWidget(wrap(const StreamChat()));
+    await tester.pumpAndSettle();
+
+    /// Being logged in no longer takes over the slot by itself — the
+    /// WebView engine keeps the legacy path (here: its empty state, since
+    /// no username is selected and a real WebView can't mount in tests)
+    expect(find.byType(NativeTwitchChatView), findsNothing);
+    expect(
+      find.text('No Twitch username selected, so no one\'s chat can be displayed.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'native engine with a selected username still shows the connect prompt when logged out',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox()
+          .put(SettingsKeys.TwitchUsernames.name, <String>['someuser']);
+      await settingsBox()
+          .put(SettingsKeys.SelectedTwitchUsername.name, 'someuser');
+    });
+
+    await tester.pumpWidget(wrap(const StreamChat()));
+    await tester.pumpAndSettle();
+
+    /// The native branch wins before the legacy stack - no WebView gets
+    /// built for the selected username while logged out
+    expect(find.byType(NativeTwitchChatView), findsNothing);
+    expect(
+      find.text('Connect your Twitch account to see your chat natively.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('No Twitch username selected, so no one\'s chat can be displayed.'),
+      findsNothing,
+    );
   });
 
   testWidgets(

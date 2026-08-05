@@ -10,6 +10,7 @@ import 'package:obs_blade/utils/youtube_video_id.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/enums/chat_type.dart';
+import '../../../../../models/enums/chat_engine.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
@@ -193,6 +194,7 @@ class _StreamChatState extends State<StreamChat>
             hiveKey: HiveKeys.Settings,
             rebuildKeys: const [
               SettingsKeys.SelectedChatType,
+              SettingsKeys.SelectedChatEngine,
               SettingsKeys.SelectedTwitchUsername,
               SettingsKeys.SelectedYouTubeUsername,
               SettingsKeys.SelectedOwncastUsername,
@@ -206,24 +208,36 @@ class _StreamChatState extends State<StreamChat>
               );
 
               final chatActive = anyChatActive(chatType, settingsBox);
-              if (chatActive) {
+
+              /// A native engine exists only where
+              /// [nativeChatAvailableFor] says so (Twitch today)
+              final nativeEngine = nativeChatAvailableFor(chatType) &&
+                  settingsBox.get(
+                        SettingsKeys.SelectedChatEngine.name,
+                        defaultValue: ChatEngine.webView,
+                      ) ==
+                      ChatEngine.native;
+
+              /// No WebView warm-up while the native engine owns the slot
+              if (chatActive && !nativeEngine) {
                 _syncWebController(_urlForChatType(chatType, settingsBox));
               }
 
-              /// Native Twitch chat takes over the slot once logged in;
-              /// logged-out Twitch / YouTube / Owncast keep the WebView path
-              if (chatType == ChatType.Twitch) {
+              /// Native Twitch chat takes over the slot when the native
+              /// engine is selected and the user is logged in; logged out
+              /// it shows the connect prompt instead. The WebView engine
+              /// keeps the legacy path regardless of the login state.
+              if (nativeEngine) {
                 return Observer(
                   builder: (_) {
                     if (GetIt.instance<TwitchChatStore>().isLoggedIn) {
                       return const NativeTwitchChatView();
                     }
-                    return this._buildLegacyChatStack(
-                      context,
-                      settingsBox,
-                      chatType,
-                      chatActive,
-                      dashboardStore,
+                    return StaggeredEntrance(
+                      child: _ChatEmptyState(
+                        chatType: chatType,
+                        nativeConnectPrompt: true,
+                      ),
                     );
                   },
                 );
@@ -335,11 +349,18 @@ class _ChatBrandIcon extends StatelessWidget {
   }
 }
 
-/// Shown while no username is selected for the active platform
+/// Shown while no username is selected for the active platform - or, with
+/// [nativeConnectPrompt], while the native Twitch engine is selected but
+/// no account is connected (then the "Connect Twitch" pill lives here -
+/// it belongs to native mode exclusively)
 class _ChatEmptyState extends StatelessWidget {
   final ChatType chatType;
+  final bool nativeConnectPrompt;
 
-  const _ChatEmptyState({required this.chatType});
+  const _ChatEmptyState({
+    required this.chatType,
+    this.nativeConnectPrompt = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -368,36 +389,34 @@ class _ChatEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.',
+              this.nativeConnectPrompt
+                  ? 'Connect your Twitch account to see your chat natively.'
+                  : 'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            if (this.chatType == ChatType.Twitch) ...[
+            if (this.nativeConnectPrompt) ...[
               const SizedBox(height: AppSpacing.lg),
-              Observer(
-                builder: (_) => GetIt.instance<TwitchChatStore>().isLoggedIn
-                    ? const SizedBox.shrink()
-                    : Pressable(
-                        haptic: true,
-                        onTap: () => startTwitchLogin(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.lg,
-                            vertical: AppSpacing.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: brandColor,
-                            borderRadius: AppRadius.pill,
-                          ),
-                          child: Text(
-                            'Connect Twitch',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.white),
-                          ),
-                        ),
-                      ),
+              Pressable(
+                haptic: true,
+                onTap: () => startTwitchLogin(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: brandColor,
+                    borderRadius: AppRadius.pill,
+                  ),
+                  child: Text(
+                    'Connect Twitch',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.white),
+                  ),
+                ),
               ),
             ],
           ],
