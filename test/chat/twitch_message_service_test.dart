@@ -44,7 +44,7 @@ void main() {
     expect(result.dropReason, isNull);
   });
 
-  test('parses a dropped result with its reason', () async {
+  test('parses a dropped result with its reason object', () async {
     final client = MockClient(
       (request) async => http.Response(
         json.encode({
@@ -52,7 +52,10 @@ void main() {
             {
               'message_id': '',
               'is_sent': false,
-              'drop_reason': 'automod_blocked',
+              'drop_reason': {
+                'code': 'automod_blocked',
+                'message': 'Your message was blocked by AutoMod.',
+              },
             },
           ],
         }),
@@ -68,7 +71,8 @@ void main() {
     );
 
     expect(result.isSent, isFalse);
-    expect(result.dropReason, 'automod_blocked');
+    expect(result.dropReason?.code, 'automod_blocked');
+    expect(result.dropReason?.message, 'Your message was blocked by AutoMod.');
   });
 
   test('throws TwitchAuthException with status on non-200', () {

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TwitchSendResult {
 
- String get messageId; bool get isSent; String? get dropReason;
+ String get messageId; bool get isSent; TwitchDropReason? get dropReason;
 /// Create a copy of TwitchSendResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,11 +46,11 @@ abstract mixin class $TwitchSendResultCopyWith<$Res>  {
   factory $TwitchSendResultCopyWith(TwitchSendResult value, $Res Function(TwitchSendResult) _then) = _$TwitchSendResultCopyWithImpl;
 @useResult
 $Res call({
- String messageId, bool isSent, String? dropReason
+ String messageId, bool isSent, TwitchDropReason? dropReason
 });
 
 
-
+$TwitchDropReasonCopyWith<$Res>? get dropReason;
 
 }
 /// @nodoc
@@ -68,10 +68,22 @@ class _$TwitchSendResultCopyWithImpl<$Res>
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,isSent: null == isSent ? _self.isSent : isSent // ignore: cast_nullable_to_non_nullable
 as bool,dropReason: freezed == dropReason ? _self.dropReason : dropReason // ignore: cast_nullable_to_non_nullable
-as String?,
+as TwitchDropReason?,
   ));
 }
+/// Create a copy of TwitchSendResult
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TwitchDropReasonCopyWith<$Res>? get dropReason {
+    if (_self.dropReason == null) {
+    return null;
+  }
 
+  return $TwitchDropReasonCopyWith<$Res>(_self.dropReason!, (value) {
+    return _then(_self.copyWith(dropReason: value));
+  });
+}
 }
 
 
@@ -153,7 +165,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  bool isSent,  String? dropReason)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  bool isSent,  TwitchDropReason? dropReason)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TwitchSendResult() when $default != null:
 return $default(_that.messageId,_that.isSent,_that.dropReason);case _:
@@ -174,7 +186,7 @@ return $default(_that.messageId,_that.isSent,_that.dropReason);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  bool isSent,  String? dropReason)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  bool isSent,  TwitchDropReason? dropReason)  $default,) {final _that = this;
 switch (_that) {
 case _TwitchSendResult():
 return $default(_that.messageId,_that.isSent,_that.dropReason);case _:
@@ -194,7 +206,7 @@ return $default(_that.messageId,_that.isSent,_that.dropReason);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  bool isSent,  String? dropReason)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  bool isSent,  TwitchDropReason? dropReason)?  $default,) {final _that = this;
 switch (_that) {
 case _TwitchSendResult() when $default != null:
 return $default(_that.messageId,_that.isSent,_that.dropReason);case _:
@@ -214,7 +226,7 @@ class _TwitchSendResult implements TwitchSendResult {
 
 @override final  String messageId;
 @override final  bool isSent;
-@override final  String? dropReason;
+@override final  TwitchDropReason? dropReason;
 
 /// Create a copy of TwitchSendResult
 /// with the given fields replaced by the non-null parameter values.
@@ -246,11 +258,11 @@ abstract mixin class _$TwitchSendResultCopyWith<$Res> implements $TwitchSendResu
   factory _$TwitchSendResultCopyWith(_TwitchSendResult value, $Res Function(_TwitchSendResult) _then) = __$TwitchSendResultCopyWithImpl;
 @override @useResult
 $Res call({
- String messageId, bool isSent, String? dropReason
+ String messageId, bool isSent, TwitchDropReason? dropReason
 });
 
 
-
+@override $TwitchDropReasonCopyWith<$Res>? get dropReason;
 
 }
 /// @nodoc
@@ -268,11 +280,23 @@ class __$TwitchSendResultCopyWithImpl<$Res>
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,isSent: null == isSent ? _self.isSent : isSent // ignore: cast_nullable_to_non_nullable
 as bool,dropReason: freezed == dropReason ? _self.dropReason : dropReason // ignore: cast_nullable_to_non_nullable
-as String?,
+as TwitchDropReason?,
   ));
 }
 
+/// Create a copy of TwitchSendResult
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TwitchDropReasonCopyWith<$Res>? get dropReason {
+    if (_self.dropReason == null) {
+    return null;
+  }
 
+  return $TwitchDropReasonCopyWith<$Res>(_self.dropReason!, (value) {
+    return _then(_self.copyWith(dropReason: value));
+  });
+}
 }
 
 // dart format on

@@ -7,6 +7,7 @@ import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -532,12 +533,54 @@ void main() {
       messageService.result = const TwitchSendResult(
         messageId: '',
         isSent: false,
-        dropReason: 'automod_blocked',
+        dropReason: TwitchDropReason(code: 'automod_blocked'),
       );
 
       expect(await store.sendChatMessage('spam'), isFalse);
       expect(store.sendChatError, 'Message held by AutoMod');
       expect(store.sendingChat, isFalse);
+    });
+
+    test('dropped without a reason maps to the generic text', () async {
+      await login();
+      messageService.result = const TwitchSendResult(
+        messageId: '',
+        isSent: false,
+      );
+
+      expect(await store.sendChatMessage('spam'), isFalse);
+      expect(store.sendChatError, 'Message not delivered');
+    });
+
+    test('dropped with an unknown code surfaces Twitch\'s own message',
+        () async {
+      await login();
+      messageService.result = const TwitchSendResult(
+        messageId: '',
+        isSent: false,
+        dropReason: TwitchDropReason(
+          code: 'channel_settings_block',
+          message: 'Your message was blocked by the channel settings.',
+        ),
+      );
+
+      expect(await store.sendChatMessage('spam'), isFalse);
+      expect(store.sendChatError,
+          'Your message was blocked by the channel settings.');
+    });
+
+    test('dropped with an unknown code and no message shows the code',
+        () async {
+      await login();
+      messageService.result = const TwitchSendResult(
+        messageId: '',
+        isSent: false,
+        dropReason: TwitchDropReason(code: 'channel_settings_block'),
+      );
+
+      expect(await store.sendChatMessage('spam'), isFalse);
+      expect(store.sendChatError,
+          'Message not delivered (channel_settings_block)');
     });
 
     test('exception maps to the generic error and returns false', () async {

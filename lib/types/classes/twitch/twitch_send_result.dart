@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'twitch_drop_reason.dart';
+
 part 'twitch_send_result.freezed.dart';
 part 'twitch_send_result.g.dart';
 
@@ -12,7 +14,7 @@ abstract class TwitchSendResult with _$TwitchSendResult {
   const factory TwitchSendResult({
     required String messageId,
     required bool isSent,
-    String? dropReason,
+    TwitchDropReason? dropReason,
   }) = _TwitchSendResult;
 
   factory TwitchSendResult.fromJson(Map<String, Object?> json) =>

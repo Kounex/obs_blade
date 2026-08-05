@@ -6,6 +6,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -346,14 +347,20 @@ abstract class _TwitchChatStore with Store {
     }
   }
 
-  /// Human text for Helix `drop_reason` values (200-but-dropped sends).
-  static String _dropReasonText(String? reason) => switch (reason) {
-        'automod_blocked' || 'automod_held' => 'Message held by AutoMod',
-        'duplicate' => 'Duplicate message',
-        'rate_limited' => 'Sending too fast — slow down',
-        null => 'Message not delivered',
-        _ => 'Message not delivered ($reason)',
-      };
+  /// Human text for Helix `drop_reason` objects (200-but-dropped sends).
+  /// Twitch's code list is open-ended (observed: `channel_settings_block`)
+  /// — unknown codes surface Twitch's own message when it carries one.
+  static String _dropReasonText(TwitchDropReason? dropReason) {
+    if (dropReason == null) return 'Message not delivered';
+    return switch (dropReason.code) {
+      'automod_blocked' || 'automod_held' => 'Message held by AutoMod',
+      'duplicate' => 'Duplicate message',
+      'rate_limited' => 'Sending too fast — slow down',
+      _ => (dropReason.message?.isNotEmpty ?? false)
+          ? dropReason.message!
+          : 'Message not delivered (${dropReason.code})',
+    };
+  }
 
   Future<String> _validAccessToken() async {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);

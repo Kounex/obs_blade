@@ -47,8 +47,11 @@ has write scope).
 - Body: `broadcaster_id` (the chat room — our own channel id),
   `sender_id` (same user id), `message` (string, ≤500 chars).
 - 200 response: `{data: [{message_id, is_sent, drop_reason}]}` —
-  `is_sent: false` means Twitch accepted but dropped the message
-  (`drop_reason` machine string).
+  `is_sent: false` means Twitch accepted but dropped the message;
+  `drop_reason` is then an OBJECT `{code, message}` (`code` machine
+  string, `message` Twitch's own human text), `null` when sent.
+  (Corrected post-review — this spec originally claimed a plain machine
+  string; modeling it as `String?` made every real drop throw at parse.)
 - Non-200: 400 (invalid/missing fields, message too long), 401 (token
   invalid/missing scope), 403 (sender banned from the channel — impossible
   in own channel, but Twitch incidents happen), 429 (rate limited), 5xx.
