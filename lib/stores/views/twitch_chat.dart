@@ -354,8 +354,9 @@ abstract class _TwitchChatStore with Store {
   }
 
   /// Human text for Helix `drop_reason` objects (200-but-dropped sends).
-  /// Twitch's code list is open-ended (observed: `channel_settings_block`)
-  /// — unknown codes surface Twitch's own message when it carries one.
+  /// Twitch's code list is open-ended (documented example:
+  /// `channel_settings_block`) — unknown codes surface Twitch's own
+  /// message when it carries one.
   static String _dropReasonText(TwitchDropReason? dropReason) {
     if (dropReason == null) return 'Message not delivered';
     return switch (dropReason.code) {
