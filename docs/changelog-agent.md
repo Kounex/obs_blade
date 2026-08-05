@@ -2,6 +2,32 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-05 — Native chat window (pane, status row, connection sheet)
+
+- New `NativeChatWindow` (`stream_chat/native_chat_window.dart`) wraps the
+  native engine everywhere it renders (mobile tab slot, standalone card,
+  tablet card, streaming mode): inset pane (plain `cardColor` + hairline —
+  the `BaseCard` surface; dogfood found the lightened control idiom read
+  brighter than normal cards on a large pane), slim status row ("Stream
+  Chat" label + state: connected / connecting… / reconnecting… / failed /
+  offline), always tappable.
+- Tapping the row opens a connection sheet: healthy → account + live-
+  ticking uptime (`_UptimeLine`, 1s `Timer.periodic` accumulating from a
+  captured base — `DateTime.now()` recompute is untestable under
+  flutter_test fake-async); degraded → last error + Retry + Log out (same
+  `ConfirmationDialog` as the account chip); offline → Connect.
+- Reusable by construction: the window takes plain params (`ChatType`
+  branding, generic `NativeChatConnectionStatus`, strings, callbacks) — no
+  Twitch store types. Twitch mapping (`twitchChatWindowStatus`) lives at
+  the `stream_chat.dart` call site; logged out always maps to `offline`.
+- `TwitchChatStore` gains `@observable DateTime? chatConnectedAt`
+  (in-memory; stamped on transition into `live`, kept during
+  `reconnecting`, cleared on disconnect/failed) feeding the uptime line.
+- Spec/plan under `docs/superpowers/` (`2026-08-05-chat-container-ui*`).
+  Dogfood passed 2026-08-05 after one fix round (pane color, "Stream Chat"
+  label, ticking uptime). Gates: 145/145 tests, analyze 0 errors + 6
+  pre-existing warnings.
+
 ## 2026-08-05 — Native Twitch chat: role badges + visibility toggles
 
 - `ChatMessageEvent` now models the payload's `badges` array

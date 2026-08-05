@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native Twitch chat role badges + visibility toggles shipped).
+Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native chat window — container, status row, connection sheet — shipped + dogfooded).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -62,9 +62,21 @@ source of truth; never leave work local-only when handing over.
   WebView — existing installs unchanged; availability seam
   `nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). History
   in [`changelog-agent.md`](changelog-agent.md); specs/plans under
-  `docs/superpowers/`. **Next chat items:** availability/entitlement gate
-  for native chat (plugs into the seam, brings auto-switch-on-login),
-  chat container UI (prelude to send input), 7TV/BTTV.
+  `docs/superpowers/`.
+- **Native chat window (container UI) on `master`** (2026-08-05) — the
+  native engine now renders inside `NativeChatWindow` everywhere it appears
+  (mobile tab slot, standalone card, tablet card, streaming mode): inset
+  pane, always-tappable status row ("Stream Chat" + connection state), and
+  a connection sheet (healthy: account + ticking uptime; degraded: error +
+  Retry/Log out; offline: Connect). `TwitchChatStore.chatConnectedAt`
+  (in-memory) feeds uptime. Generic params only — the reuse seam for a
+  future native YouTube engine. Dogfood passed after one fix round; gates
+  145/145 + analyze clean. History in
+  [`changelog-agent.md`](changelog-agent.md); spec/plan under
+  `docs/superpowers/` (`2026-08-05-chat-container-ui*`). **Next chat
+  items:** availability/entitlement gate for native chat (plugs into the
+  seam, brings auto-switch-on-login), chat send input (dock slot reserved
+  by this window; needs `user:write:chat` scope decision), 7TV/BTTV.
 - **Native Twitch chat Phase 2: role badges + visibility toggles on
   `master`** (2026-08-05) — `ChatMessageEvent.badges` modeled; session-scoped
   `TwitchBadgeStore` (GetIt) caches the Helix global + per-channel badge
@@ -89,14 +101,15 @@ source of truth; never leave work local-only when handing over.
   URL, `stream_chat.dart:108-112`, so no `loadRequest` is re-issued on
   remount; fix only if the fallback renders blank).
 - **Phase 2 input from dogfood (capture when planning):** (a) mobile chat
-  needs a proper "window/container" UI — the Phase 2 send input field will
-  live there anyway; (b) badges — **shipped 2026-08-05** (role icons next
-  to names + per-category visibility toggles in the native chat options
-  sheet); (c) 7TV/BTTV/FFZ emotes render as plain text today (graceful
-  fallback, nothing breaks) — rendering them needs the third-party 7TV API,
-  a product decision; (d) earlier review notes: revocation toast on forced
-  logout, message dedup by `messageId`, revoked-refresh-token (Twitch 400)
-  is kept-record mid-session and only wiped on next cold-start validate.
+  window/container — **shipped 2026-08-05** (`NativeChatWindow`; the send
+  input field will dock at its bottom edge); (b) badges — **shipped
+  2026-08-05** (role icons next to names + per-category visibility toggles
+  in the native chat options sheet); (c) 7TV/BTTV/FFZ emotes render as
+  plain text today (graceful fallback, nothing breaks) — rendering them
+  needs the third-party 7TV API, a product decision; (d) earlier review
+  notes: revocation toast on forced logout, message dedup by `messageId`,
+  revoked-refresh-token (Twitch 400) is kept-record mid-session and only
+  wiped on next cold-start validate.
 - **Next work is open** — pick up whatever is next (store cut, Twitch chat
   Phase 2, paid backend, opportunistic polish). Backend app (OAuth broker)
   registration still deferred — see `private/backend-architecture.md`.
