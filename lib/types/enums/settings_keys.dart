@@ -60,6 +60,35 @@ enum SettingsKeys {
   /// [String]: The currently selected owncast username to use for the owncast chat
   SelectedOwncastUsername,
 
+  /// [bool]: Show the broadcaster badge in the native Twitch chat.
+  /// Active by default
+  TwitchChatBadgeBroadcaster,
+
+  /// [bool]: Show the moderator badge in the native Twitch chat.
+  /// Active by default
+  TwitchChatBadgeModerator,
+
+  /// [bool]: Show the VIP badge in the native Twitch chat.
+  /// Active by default
+  TwitchChatBadgeVip,
+
+  /// [bool]: Show the subscriber badge in the native Twitch chat.
+  /// Active by default
+  TwitchChatBadgeSubscriber,
+
+  /// [bool]: Show the founder badge in the native Twitch chat.
+  /// Active by default
+  TwitchChatBadgeFounder,
+
+  /// [bool]: Show bits (cheer) badges in the native Twitch chat.
+  /// Active by default
+  TwitchChatBadgeBits,
+
+  /// [bool]: Show all badges not covered by the dedicated toggles
+  /// (sub-gifter, staff, partner, premium, event badges, ...).
+  /// Active by default
+  TwitchChatBadgeOther,
+
   /// [bool]: If user wants to use his custom theme
   CustomTheme,
 
@@ -188,6 +217,14 @@ enum SettingsKeys {
         SettingsKeys.SelectedYouTubeUsername: 'selected-youtube-username',
         SettingsKeys.OwncastUsernames: 'owncast-usernames',
         SettingsKeys.SelectedOwncastUsername: 'selected-owncast-username',
+        SettingsKeys.TwitchChatBadgeBroadcaster:
+            'twitch-chat-badge-broadcaster',
+        SettingsKeys.TwitchChatBadgeModerator: 'twitch-chat-badge-moderator',
+        SettingsKeys.TwitchChatBadgeVip: 'twitch-chat-badge-vip',
+        SettingsKeys.TwitchChatBadgeSubscriber: 'twitch-chat-badge-subscriber',
+        SettingsKeys.TwitchChatBadgeFounder: 'twitch-chat-badge-founder',
+        SettingsKeys.TwitchChatBadgeBits: 'twitch-chat-badge-bits',
+        SettingsKeys.TwitchChatBadgeOther: 'twitch-chat-badge-other',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',
