@@ -16,7 +16,8 @@ class TwitchChatMessageRow extends StatelessWidget {
   final ChatMessageEvent event;
 
   /// Settings box — the badge visibility toggles
-  /// ([settingsKeyForBadgeSetId]), read with default-on.
+  /// ([settingsKeyForBadgeSetId]) plus the third-party emote toggle
+  /// ([SettingsKeys.TwitchChatThirdPartyEmotes]), read with default-on.
   final Box settingsBox;
 
   const TwitchChatMessageRow({

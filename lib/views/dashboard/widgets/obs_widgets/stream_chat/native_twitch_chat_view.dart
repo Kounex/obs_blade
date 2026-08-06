@@ -176,8 +176,10 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         }
         this._lastRenderedCount = messageCount;
 
-        /// Toggle changes re-filter badges in place; row-level Observers
-        /// pick up badge catalog arrivals.
+        /// Toggle changes re-filter badges and re-render emote tokens in
+        /// place; row-level Observers pick up badge catalog arrivals
+        /// (emote catalog arrivals ride the outer Observer's
+        /// catalogVersion read above).
         return HiveBuilder<dynamic>(
           hiveKey: HiveKeys.Settings,
           rebuildKeys: const [

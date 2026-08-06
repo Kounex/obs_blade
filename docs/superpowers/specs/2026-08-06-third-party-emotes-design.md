@@ -161,8 +161,10 @@ additionally get tokenized:
 - Channel **404s are expected** (no 7TV/BTTV presence) → empty map, no
   error log. Other non-200s and network failures degrade per endpoint —
   one failing endpoint never blocks the other three.
-- No dedicated retry loop: `fetch` runs on every chat connect, so the
-  EventSub reconnect cycle naturally refetches (same as badges).
+- No dedicated retry loop: `fetch` runs on chat connect (login / manual
+  retry). Internal EventSub reconnects do NOT refetch — a catalog that
+  failed at connect stays absent for the session (same posture as
+  badges).
 - Offline at connect → no third-party emotes this session (text fallback,
   today's behavior).
 - Image load failure at render time → `errorBuilder` shows the text token.
