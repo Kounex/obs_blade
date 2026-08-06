@@ -54,8 +54,9 @@ class NativeChatOptionsButton extends StatelessWidget {
 }
 
 /// Options for the native chat engines, one section per platform — today
-/// only Twitch (badge visibility). Future native platforms add their
-/// section to the body switch; the bar entry point stays this one.
+/// only Twitch (third-party emotes + badge visibility). Future native
+/// platforms add their section to the body switch; the bar entry point
+/// stays this one.
 class NativeChatOptionsSheet extends StatelessWidget {
   final ChatType chatType;
 
@@ -86,7 +87,7 @@ class NativeChatOptionsSheet extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           switch (this.chatType) {
-            ChatType.Twitch => const _TwitchBadgeOptions(),
+            ChatType.Twitch => const _TwitchOptions(),
             _ => const SizedBox.shrink(),
           },
         ],
@@ -95,11 +96,12 @@ class NativeChatOptionsSheet extends StatelessWidget {
   }
 }
 
-/// Twitch section of [NativeChatOptionsSheet]: the badge visibility
-/// toggles, default-on, persisted straight to the Settings box (the
-/// message list re-filters live via its own HiveBuilder).
-class _TwitchBadgeOptions extends StatelessWidget {
-  const _TwitchBadgeOptions();
+/// Twitch section of [NativeChatOptionsSheet]: third-party emote and
+/// badge visibility toggles, default-on, persisted straight to the
+/// Settings box (the message list re-renders live via its own
+/// HiveBuilder).
+class _TwitchOptions extends StatelessWidget {
+  const _TwitchOptions();
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +109,32 @@ class _TwitchBadgeOptions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Twitch — emotes',
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        HiveBuilder<dynamic>(
+          hiveKey: HiveKeys.Settings,
+          rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
+          builder: (context, settingsBox, child) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Third-party emotes (7TV/BTTV)'),
+            trailing: BaseAdaptiveSwitch(
+              value: settingsBox.get(
+                SettingsKeys.TwitchChatThirdPartyEmotes.name,
+                defaultValue: true,
+              ),
+              onChanged: (value) => settingsBox.put(
+                SettingsKeys.TwitchChatThirdPartyEmotes.name,
+                value,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'Twitch — badge visibility',
           style: Theme.of(context)

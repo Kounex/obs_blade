@@ -35,13 +35,15 @@ void main() {
     }
   });
 
-  testWidgets('shows all badge toggles, on by default', (tester) async {
+  testWidgets('shows the emote + badge toggles, on by default',
+      (tester) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
     expect(find.text('Native chat options'), findsOneWidget);
     for (final label in [
+      'Third-party emotes (7TV/BTTV)',
       'Broadcaster',
       'Moderator',
       'VIP',
@@ -55,7 +57,7 @@ void main() {
     final switches = tester
         .widgetList<BaseAdaptiveSwitch>(find.byType(BaseAdaptiveSwitch))
         .toList();
-    expect(switches, hasLength(7));
+    expect(switches, hasLength(8));
     expect(switches.every((s) => s.value), isTrue);
   });
 
@@ -89,6 +91,50 @@ void main() {
     /// file op of the close. tearDown's harness.close() is then a no-op.
     /// Same dance as chat_engine_switch_test.dart's
     /// 'tapping a segment persists the engine'.
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
+  });
+
+  testWidgets('toggling the emote switch writes the settings box',
+      (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
+    );
+
+    final emoteSwitch = find.descendant(
+      of: find.widgetWithText(ListTile, 'Third-party emotes (7TV/BTTV)'),
+      matching: find.byType(BaseAdaptiveSwitch),
+    );
+    expect(
+      settingsBox().get(SettingsKeys.TwitchChatThirdPartyEmotes.name),
+      isNull,
+    );
+
+    await tester.tap(emoteSwitch);
+    await tester.pump();
+    expect(
+      settingsBox().get(SettingsKeys.TwitchChatThirdPartyEmotes.name),
+      isFalse,
+    );
+
+    await tester.tap(emoteSwitch);
+    await tester.pump();
+    expect(
+      settingsBox().get(SettingsKeys.TwitchChatThirdPartyEmotes.name),
+      isTrue,
+    );
+
+    /// Same FakeAsync-zone dance as 'toggling a switch writes the
+    /// settings box': the taps ran their Hive writes in the test's
+    /// FakeAsync zone — close Hive from inside the zone so tearDown's
+    /// harness.close() doesn't await a zone-parked Completer forever.
     var closed = false;
     unawaited(harness.close().then((_) => closed = true));
     for (var i = 0; i < 10 && !closed; i++) {
