@@ -448,7 +448,13 @@ void main() {
     final first = store.fetch(accessToken: 'token-1', userId: 'user-1');
 
     service.fetchGate = null;
-    service.emotes = [FakeTwitchEmoteService.channelEmote];
+
+    /// The newer fetch belongs to a different account (user-2) — its
+    /// emote must be owned by user-2 to land in the channel section
+    /// (grouping rule: ownerId == fetch userId).
+    service.emotes = const [
+      TwitchUserEmote(id: '25', name: 'Kappa', ownerId: 'user-2'),
+    ];
     await store.fetch(accessToken: 'token-2', userId: 'user-2');
 
     gate.complete([FakeTwitchEmoteService.globalEmote]);
