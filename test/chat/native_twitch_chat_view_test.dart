@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
@@ -60,6 +61,7 @@ ChatMessageEvent badgeEvent() => ChatMessageEvent(
 void main() {
   late TwitchChatStore store;
   late TwitchBadgeStore badgeStore;
+  late ThirdPartyEmoteStore emoteStore;
   late Directory tempDir;
   late HiveTestHarness harness;
 
@@ -77,6 +79,8 @@ void main() {
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     badgeStore = TwitchBadgeStore(service: FakeTwitchBadgeService());
     GetIt.instance.registerSingleton<TwitchBadgeStore>(badgeStore);
+    emoteStore = ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService());
+    GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(emoteStore);
   });
 
   tearDown(() async {

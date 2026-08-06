@@ -3,12 +3,15 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 
 /// One chat line: role badges + colored author name + message text with
-/// inline emotes. Cheermote/mention fragments fall back to plain text.
+/// inline emotes (first-party fragments and third-party 7TV/BTTV tokens).
+/// Cheermote/mention fragments fall back to plain text.
 class TwitchChatMessageRow extends StatelessWidget {
   final ChatMessageEvent event;
 
@@ -85,7 +88,39 @@ class TwitchChatMessageRow extends StatelessWidget {
             ),
           )
         else
-          TextSpan(text: fragment.text),
+          ...this._textSpans(fragment.text),
+    ];
+  }
+
+  /// Third-party emotes (7TV/BTTV) arrive as plain text — split on
+  /// spaces and swap known tokens for inline images, preserving spacing
+  /// exactly. Unknown tokens (and the toggle-off case) stay text.
+  List<InlineSpan> _textSpans(String text) {
+    if (!this.settingsBox.get(
+      SettingsKeys.TwitchChatThirdPartyEmotes.name,
+      defaultValue: true,
+    )) {
+      return [TextSpan(text: text)];
+    }
+    final emoteStore = GetIt.instance<ThirdPartyEmoteStore>();
+    final tokens = text.split(' ');
+    return [
+      for (var i = 0; i < tokens.length; i++) ...[
+        if (i > 0) const TextSpan(text: ' '),
+        if (emoteStore.emoteImageUrl(tokens[i]) case final imageUrl?)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Image.network(
+              imageUrl,
+              height: _emoteSize,
+              width: _emoteSize,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Text(tokens[i]),
+            ),
+          )
+        else
+          TextSpan(text: tokens[i]),
+      ],
     ];
   }
 

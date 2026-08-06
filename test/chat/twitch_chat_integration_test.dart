@@ -9,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -55,6 +56,8 @@ void main() {
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<DashboardStore>(DashboardStore());
+    GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
+        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
   });
 
   tearDown(() async {
