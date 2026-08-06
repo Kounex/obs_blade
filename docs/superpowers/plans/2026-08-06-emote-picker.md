@@ -1822,7 +1822,7 @@ Add a dated entry to the top of `docs/changelog-agent.md` (match the existing he
 - Dock seams: `NativeChatInput` takes an optional external
   controller/focusNode (never disposed by the dock) + a `leading` slot —
   still Twitch-free.
-- Picker sheet: search + Channel/Global/Third-party sections (44pt cells,
+- Picker sheet: search + Channel/Global/Third-party sections (56pt cells,
   2x images, errorBuilder → code text), tap inserts `code + space` at the
   cursor and refocuses the dock; third-party section follows the existing
   7TV/BTTV toggle.
