@@ -117,8 +117,20 @@ source of truth; never leave work local-only when handing over.
   watchdog (~30s) and recover on its own once WAN returns.
 
   **Next chat items:** availability/entitlement gate (plugs into
-  `nativeChatAvailableFor`, brings auto-switch-on-login), 7TV/BTTV
-  rendering, replies/announce as future send polish.
+  `nativeChatAvailableFor`, brings auto-switch-on-login), replies/announce
+  as future send polish.
+- **Third-party emotes (7TV/BTTV) on `master`** (2026-08-06) —
+  service/store/row/toggle per spec
+  `docs/superpowers/specs/2026-08-06-third-party-emotes-design.md` + plan
+  `docs/superpowers/plans/2026-08-06-third-party-emotes.md`. **Maintainer
+  dogfood pending:**
+  - 7TV/BTTV-heavy channel: emotes render inline, animated; pop-in a beat
+    after messages (intended).
+  - Options toggle off → plain text; back on → images (live re-render).
+  - Channel without 7TV/BTTV presence: text only, no errors in logs.
+  - Send a 7TV code from the native input → the EventSub echo renders it
+    as the emote.
+  - Tablet mode + WebView engine unchanged.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
@@ -132,9 +144,9 @@ source of truth; never leave work local-only when handing over.
   window/container — **shipped 2026-08-05** (`NativeChatWindow`; send
   input docked at its bottom edge the same day); (b) badges — **shipped
   2026-08-05** (role icons next to names + per-category visibility toggles
-  in the native chat options sheet); (c) 7TV/BTTV/FFZ emotes render as
-  plain text today (graceful fallback, nothing breaks) — rendering them
-  needs the third-party 7TV API, a product decision; (d) earlier review
+  in the native chat options sheet); (c) 7TV/BTTV emotes — **shipped on
+  `master` (2026-08-06)**: product decision made: 7TV + BTTV, master
+  toggle default-on; (d) earlier review
   notes: revocation toast on forced logout, message dedup by `messageId`,
   revoked-refresh-token (Twitch 400) is kept-record mid-session and only
   wiped on next cold-start validate.

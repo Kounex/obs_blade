@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-06 — Native chat: third-party emotes (7TV/BTTV)
+
+- `ThirdPartyEmoteService` (7TV v3 + BTTV v3 — public, no auth): global +
+  channel catalogs; 404 → empty map (no provider presence), other
+  non-200 → `ThirdPartyEmoteException`; malformed entries skipped.
+- `ThirdPartyEmoteStore` (GetIt, session-scoped, MobX): one merged
+  catalog, precedence channel > global / 7TV > BTTV on ties, generation
+  guard against superseded fetches, `catalogVersion` as the pop-in
+  rebuild signal; cleared on logout.
+- `TwitchChatStore`: fire-and-forget fetch on connect, gated by the new
+  default-on `twitch-chat-third-party-emotes` Settings key (off → no
+  third-party contact at all); clear on logout.
+- Rows tokenize text fragments (exact, case-sensitive, space-split) and
+  swap known tokens for 20px inline images (`Image.network`, animated
+  WebP/GIF; errorBuilder → text). Toggle in the native chat options
+  sheet ("Twitch — emotes" section).
+- Tests: service parsing (9), store (7), wiring (3), row (7), view
+  pop-in/toggle (2), sheet (2). Gates: chat + websocket + persistence
+  suites green, analyze clean.
+
 ## 2026-08-05 — Native chat send input (dock, write scope, Helix send)
 
 - Native chat now **writes**: a send dock sits at the bottom of
