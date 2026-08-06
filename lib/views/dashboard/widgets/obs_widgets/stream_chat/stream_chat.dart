@@ -22,6 +22,7 @@ import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
+import 'chat_emote_picker.dart';
 import 'native_chat_input.dart';
 import 'native_chat_window.dart';
 import 'native_twitch_chat_view.dart';
@@ -74,6 +75,13 @@ class _StreamChatState extends State<StreamChat>
   /// Safety net so the loading surface can't get stuck if the page never
   /// reaches 100% progress (long polling chat pages)
   Timer? _loadingFallback;
+
+  /// Dock controller/focus for the native input — owned here so the emote
+  /// picker (the dock's leading slot) can insert codes at the cursor and
+  /// refocus after its sheet closes.
+  final TextEditingController _chatInputController =
+      TextEditingController();
+  final FocusNode _chatInputFocusNode = FocusNode();
 
   static const _mobileSafariUserAgent =
       'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1';
@@ -147,6 +155,8 @@ class _StreamChatState extends State<StreamChat>
 
   @override
   void dispose() {
+    this._chatInputController.dispose();
+    this._chatInputFocusNode.dispose();
     _loadingFallback?.cancel();
     super.dispose();
   }
@@ -291,6 +301,16 @@ class _StreamChatState extends State<StreamChat>
                             ),
                       input: loggedIn
                           ? NativeChatInput(
+                              controller: this._chatInputController,
+                              focusNode: this._chatInputFocusNode,
+                              leading: ChatEmotePickerButton(
+                                controller: this._chatInputController,
+                                focusNode: this._chatInputFocusNode,
+                                canReadEmotes: twitchStore.canReadEmotes,
+                                accentColor: chatType.brandColor ??
+                                    Theme.of(context).colorScheme.secondary,
+                                onRelogin: () => startTwitchLogin(context),
+                              ),
                               canSend: twitchStore.canWriteChat,
                               inFlight: twitchStore.sendingChat,
                               errorText: twitchStore.sendChatError,
