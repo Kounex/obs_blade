@@ -1321,7 +1321,7 @@ Append to the `NativeTwitchChatView` group in `test/chat/native_twitch_chat_view
 ```dart
     testWidgets('rows pick up third-party emotes when the catalog lands',
         (tester) async {
-      store.chatConnection = TwitchChatConnectionState.connected;
+      store.chatConnection = TwitchChatConnectionState.live;
       store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
 
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
@@ -1348,7 +1348,7 @@ Append to the `NativeTwitchChatView` group in `test/chat/native_twitch_chat_view
     testWidgets('turning the toggle off re-renders rows as text',
         (tester) async {
       emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
-      store.chatConnection = TwitchChatConnectionState.connected;
+      store.chatConnection = TwitchChatConnectionState.live;
       store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
 
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
