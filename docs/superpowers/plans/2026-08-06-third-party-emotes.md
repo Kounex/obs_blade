@@ -39,7 +39,7 @@
   - `class ThirdPartyEmoteException implements Exception { final String message; final int? statusCode; const ThirdPartyEmoteException(this.message, {this.statusCode}); }`
   - `class ThirdPartyEmoteService { ThirdPartyEmoteService({http.Client? client}); Future<Map<String, ThirdPartyEmote>> fetchSevenTvGlobal(); Future<Map<String, ThirdPartyEmote>> fetchSevenTvChannel(String broadcasterId); }` (BTTV methods land in Task 2.)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/chat/third_party_emote_service_test.dart`:
 
@@ -145,12 +145,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: FAIL — compile error, `third_party_emote_service.dart` does not exist.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `lib/types/classes/twitch/third_party_emote.dart`:
 
@@ -264,12 +264,12 @@ class ThirdPartyEmoteService {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/types/classes/twitch/third_party_emote.dart lib/utils/twitch/third_party_emote_service.dart test/chat/third_party_emote_service_test.dart
@@ -290,7 +290,7 @@ git commit -m "feat(chat): 7TV emote service + shared third-party emote shape"
   - `Future<Map<String, ThirdPartyEmote>> fetchBttvGlobal()`
   - `Future<Map<String, ThirdPartyEmote>> fetchBttvChannel(String broadcasterId)` (channel + shared emotes merged; shared wins ties)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `test/chat/third_party_emote_service_test.dart` (inside `main()`, after the 7TV groups):
 
@@ -383,12 +383,12 @@ group('fetchBttvChannel', () {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: FAIL — compile error, `fetchBttvGlobal`/`fetchBttvChannel` are not defined.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add to `ThirdPartyEmoteService` in `lib/utils/twitch/third_party_emote_service.dart` (after `fetchSevenTvChannel`):
 
@@ -437,12 +437,12 @@ Map<String, ThirdPartyEmote> _parseBttvEmotes(Object? emotes) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: PASS (9 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/utils/twitch/third_party_emote_service.dart test/chat/third_party_emote_service_test.dart
@@ -464,7 +464,7 @@ git commit -m "feat(chat): BTTV endpoints in the third-party emote service"
   - `class ThirdPartyEmoteStore` (MobX) — `ObservableMap<String, ThirdPartyEmote> emotes`, `@observable int catalogVersion`, `String? emoteImageUrl(String token)`, `Future<void> fetch({required String broadcasterId})`, `void clear()`, constructor `ThirdPartyEmoteStore({ThirdPartyEmoteService? service})`.
   - `class FakeThirdPartyEmoteService extends ThirdPartyEmoteService` with settable result maps `sevenTvGlobal`/`sevenTvChannel`/`bttvGlobal`/`bttvChannel`, error fields `sevenTvGlobalThrows`/`bttvChannelThrows`, gate `sevenTvGlobalGate`, counters `sevenTvGlobalCalls`/`sevenTvChannelCalls`/`bttvGlobalCalls`/`bttvChannelCalls`, `String? lastBroadcasterId`, and static emotes `peepo`/`peepoChannelOverride`/`monka`/`monkaSevenTv` — used by Tasks 4-6.
 
-- [ ] **Step 1: Add the fake service**
+- [x] **Step 1: Add the fake service**
 
 Append to `test/chat/support/fake_twitch_services.dart` (and add these imports at the top: `import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';` + `import 'package:obs_blade/utils/twitch/third_party_emote_service.dart';`):
 
@@ -544,7 +544,7 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
 }
 ```
 
-- [ ] **Step 2: Write the failing store tests**
+- [x] **Step 2: Write the failing store tests**
 
 Create `test/chat/third_party_emote_store_test.dart`:
 
@@ -676,12 +676,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_store_test.dart`
 Expected: FAIL — compile error, `third_party_emotes.dart` does not exist.
 
-- [ ] **Step 4: Write the store implementation**
+- [x] **Step 4: Write the store implementation**
 
 Create `lib/stores/views/third_party_emotes.dart`:
 
@@ -774,17 +774,17 @@ abstract class _ThirdPartyEmoteStore with Store {
 }
 ```
 
-- [ ] **Step 5: Run MobX codegen**
+- [x] **Step 5: Run MobX codegen**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Expected: succeeds; `lib/stores/views/third_party_emotes.g.dart` generated. Commit the generated file as-is (never hand-edit).
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_store_test.dart`
 Expected: PASS (7 tests).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add lib/stores/views/third_party_emotes.dart lib/stores/views/third_party_emotes.g.dart test/chat/support/fake_twitch_services.dart test/chat/third_party_emote_store_test.dart
@@ -807,7 +807,7 @@ git commit -m "feat(chat): session-scoped ThirdPartyEmoteStore with merge preced
   - `SettingsKeys.TwitchChatThirdPartyEmotes` (`'twitch-chat-third-party-emotes'`) — used by Tasks 5-7.
   - `TwitchChatStore({..., ThirdPartyEmoteStore Function()? emoteStoreResolver})` — same injection style as `badgeStoreResolver`.
 
-- [ ] **Step 1: Add the settings key**
+- [x] **Step 1: Add the settings key**
 
 In `lib/types/enums/settings_keys.dart`, after the `TwitchChatBadgeOther` enum value (~line 90):
 
@@ -825,7 +825,7 @@ And in the `name` getter map, after `SettingsKeys.TwitchChatBadgeOther: 'twitch-
             'twitch-chat-third-party-emotes',
 ```
 
-- [ ] **Step 2: Write the failing wiring tests**
+- [x] **Step 2: Write the failing wiring tests**
 
 In `test/chat/twitch_chat_store_test.dart`, add imports at the top:
 
@@ -893,12 +893,12 @@ group('third-party emote wiring', () {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error, `emoteStoreResolver` is not a parameter of `TwitchChatStore`.
 
-- [ ] **Step 4: Wire the store**
+- [x] **Step 4: Wire the store**
 
 In `lib/stores/views/twitch_chat.dart`:
 
@@ -976,12 +976,12 @@ f) In `lib/main.dart`, register the singleton right after the `TwitchBadgeStore`
       () => ThirdPartyEmoteStore());
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: PASS (whole file, incl. the 3 new wiring tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/types/enums/settings_keys.dart lib/stores/views/twitch_chat.dart lib/main.dart test/chat/twitch_chat_store_test.dart
@@ -1002,7 +1002,7 @@ git commit -m "feat(chat): fetch/clear third-party emotes on chat connect/logout
 - Consumes: `ThirdPartyEmoteStore.emoteImageUrl(String)` (Task 3), `SettingsKeys.TwitchChatThirdPartyEmotes` (Task 4).
 - Produces: `_textSpans(String)` in the row — text fragments are tokenized; known tokens become 20px `WidgetSpan` images, everything else stays text. Task 6 relies on this being non-reactive (no per-row Observer).
 
-- [ ] **Step 1: Register the emote store in existing harnesses**
+- [x] **Step 1: Register the emote store in existing harnesses**
 
 Rows will call `GetIt.instance<ThirdPartyEmoteStore>()` for every text fragment (toggle default-on) — every test that renders a row must register it, exactly like the badge store.
 
@@ -1020,7 +1020,7 @@ b) `test/chat/twitch_chat_integration_test.dart` — import `third_party_emotes.
         ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
 ```
 
-- [ ] **Step 2: Write the failing row tests**
+- [x] **Step 2: Write the failing row tests**
 
 Create `test/chat/third_party_emote_row_test.dart`:
 
@@ -1207,12 +1207,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_row_test.dart`
 Expected: FAIL — no `WidgetSpan` images render yet (lookup is wired but `_messageSpans` never resolves tokens), so the image assertions fail.
 
-- [ ] **Step 4: Implement tokenization in the row**
+- [x] **Step 4: Implement tokenization in the row**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart`:
 
@@ -1290,12 +1290,12 @@ c) Replace `_messageSpans()` and add `_textSpans()`:
   }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/`
 Expected: PASS — the new row tests plus every existing chat test (the harness registrations from Step 1 keep the old row/view/integration tests green).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart test/chat/third_party_emote_row_test.dart test/chat/native_twitch_chat_view_test.dart test/chat/twitch_chat_integration_test.dart
@@ -1314,7 +1314,7 @@ git commit -m "feat(chat): render 7TV/BTTV tokens as inline images in native cha
 - Consumes: `ThirdPartyEmoteStore.catalogVersion` + `emotes` (Task 3), `SettingsKeys.TwitchChatThirdPartyEmotes` (Task 4), non-reactive row lookup (Task 5).
 - Produces: the view's outer `Observer` tracks `catalogVersion` (one rebuild wave on catalog arrival); `HiveBuilder.rebuildKeys` includes the emote toggle key (live re-render).
 
-- [ ] **Step 1: Write the failing view tests**
+- [x] **Step 1: Write the failing view tests**
 
 Append to the `NativeTwitchChatView` group in `test/chat/native_twitch_chat_view_test.dart`:
 
@@ -1375,12 +1375,12 @@ Append to the `NativeTwitchChatView` group in `test/chat/native_twitch_chat_view
     });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — the pop-in test still shows plain text after `catalogVersion++` (nothing tracks it), and the toggle test still shows the image after the box write (the key isn't in `rebuildKeys`).
 
-- [ ] **Step 3: Wire the view**
+- [x] **Step 3: Wire the view**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart`:
 
@@ -1408,12 +1408,12 @@ c) In the `HiveBuilder`'s `rebuildKeys` list (~line 174-182), add:
             SettingsKeys.TwitchChatThirdPartyEmotes,
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: PASS (whole file, incl. the 2 new tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart test/chat/native_twitch_chat_view_test.dart
@@ -1432,7 +1432,7 @@ git commit -m "feat(chat): pop-in rebuild on emote catalog arrival + live third-
 - Consumes: `SettingsKeys.TwitchChatThirdPartyEmotes` (Task 4).
 - Produces: "Third-party emotes (7TV/BTTV)" switch in the Twitch section, default-on, persisted to the Settings box.
 
-- [ ] **Step 1: Update + write the failing tests**
+- [x] **Step 1: Update + write the failing tests**
 
 In `test/chat/native_chat_options_sheet_test.dart`, replace the existing `'shows all badge toggles, on by default'` test with:
 
@@ -1512,12 +1512,12 @@ And add a new test after `'toggling a switch writes the settings box'`:
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_options_sheet_test.dart`
 Expected: FAIL — label not found / 7 switches instead of 8.
 
-- [ ] **Step 3: Add the toggle to the sheet**
+- [x] **Step 3: Add the toggle to the sheet**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart`:
 
@@ -1617,12 +1617,12 @@ class _TwitchOptions extends StatelessWidget {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_options_sheet_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart test/chat/native_chat_options_sheet_test.dart
@@ -1638,7 +1638,7 @@ git commit -m "feat(chat): third-party emotes toggle in the native chat options 
 - Modify: `docs/session-handoff.md` (current-state bullets; keep the baton style)
 - Modify: `AGENTS.md` (chat paragraph)
 
-- [ ] **Step 1: Run the full gates**
+- [x] **Step 1: Run the full gates**
 
 Run:
 
@@ -1649,7 +1649,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
 
 Expected: all tests PASS; analyze reports 0 errors (the 6 pre-existing warnings are tolerated — no new ones).
 
-- [ ] **Step 2: Changelog entry**
+- [x] **Step 2: Changelog entry**
 
 Add a dated entry to `docs/changelog-agent.md` (match the heading style of the existing 2026-08-05 entries):
 
@@ -1675,7 +1675,7 @@ Add a dated entry to `docs/changelog-agent.md` (match the heading style of the e
   suites green, analyze clean.
 ```
 
-- [ ] **Step 3: Handoff update**
+- [x] **Step 3: Handoff update**
 
 In `docs/session-handoff.md` (baton style — short bullets, no narrative):
 
@@ -1688,11 +1688,11 @@ In `docs/session-handoff.md` (baton style — short bullets, no narrative):
   - Send a 7TV code from the native input → the EventSub echo renders it as the emote.
   - Tablet mode + WebView engine unchanged.
 
-- [ ] **Step 4: AGENTS.md refresh**
+- [x] **Step 4: AGENTS.md refresh**
 
 In `AGENTS.md`'s Chat paragraph: move 7TV/BTTV from "Next:" to shipped — e.g. append "third-party (7TV/BTTV) emotes render inline via `ThirdPartyEmoteStore` (toggle in the native chat options sheet)" to the shipped description and shorten "Next:" to "availability/entitlement gate, replies/announce — see chat audit + handoff".
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/changelog-agent.md docs/session-handoff.md AGENTS.md

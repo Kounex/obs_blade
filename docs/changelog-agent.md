@@ -19,8 +19,9 @@ Running log of upgrade/migration work. Not store release notes.
   WebP/GIF; errorBuilder → text). Toggle in the native chat options
   sheet ("Twitch — emotes" section).
 - Tests: service parsing (9), store (7), wiring (3), row (7), view
-  pop-in/toggle (2), sheet (2). Gates: chat + websocket + persistence
-  suites green, analyze clean.
+  pop-in/toggle (2), sheet (1 new + 1 updated). Gates: chat + websocket +
+  persistence suites green, analyze 0 errors (6 pre-existing warnings,
+  none new).
 
 ## 2026-08-05 — Native chat send input (dock, write scope, Helix send)
 
