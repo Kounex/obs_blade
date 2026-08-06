@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native chat send input shipped — chat now reads AND writes; maintainer dogfood deferred to a later session).
+Read this first after `AGENTS.md`. Last reset: **2026-08-06** (send-input maintainer dogfood passed; chat-only reconnect simulation still open — see the send-input bullet).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -105,25 +105,16 @@ source of truth; never leave work local-only when handing over.
   Twitch-free by design (reuse seam, same as the window). Gates: 168/168,
   analyze 0 errors + 6 pre-existing warnings. Commits `fdd539c..3f0cc56`;
   spec/plan `2026-08-05-chat-send-input*`; history in
-  [`changelog-agent.md`](changelog-agent.md). **Maintainer dogfood
-  deferred** (test later — checklist kept here) — needs a
-  fresh login (so the token carries the write scope), then:
-  - Dock renders at the pane bottom (pill field + circular send).
-  - Send a message → appears in your chat on twitch.tv; the EventSub echo
-    renders it in-app with emotes parsed.
-  - Spinner shows in flight; field clears on success.
-  - Offline send (airplane mode) → inline error line, text kept; resend
-    works after reconnect.
-  - 500-char cap: a long paste is capped, no counter chrome.
-  - Tablet mode: dock inside the Chat card; keyboard focus doesn't fight
-    the pane clip.
-  - WebView engine: unchanged.
-  - Read-only path: pre-upgrade session (or temporarily revert
-    `kTwitchChatScopes`) → lock strip; "Re-login to chat" → device flow →
-    dock becomes the field.
-  - Cancel the re-login dialog mid-upgrade (logged in via lock strip →
-    "Re-login to chat" → dismiss) → still logged in, chat still connected,
-    dock unchanged.
+  [`changelog-agent.md`](changelog-agent.md). **Maintainer dogfood passed
+  2026-08-06** (send + EventSub echo + spinner/clear + cancelled-upgrade
+  path all accepted). One scenario still open: chat-only reconnect could
+  not be triggered — airplane mode kills LAN+WAN together so the
+  dashboard's own reconnect state appears first, and revoking app access
+  on the Twitch profile correctly logs out immediately (token invalid →
+  nothing to reconnect). Maintainer to simulate separately: kill WAN
+  (pull router uplink / DNS-block `eventsub.wss.twitch.tv`) while LAN to
+  OBS stays up → chat should enter `reconnecting` via the keepalive
+  watchdog (~30s) and recover on its own once WAN returns.
 
   **Next chat items:** availability/entitlement gate (plugs into
   `nativeChatAvailableFor`, brings auto-switch-on-login), 7TV/BTTV
