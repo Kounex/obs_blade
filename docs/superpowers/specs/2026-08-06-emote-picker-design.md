@@ -29,9 +29,12 @@ architecture end-to-end.
    philosophy (`user:write:chat` upgrade precedent). Hiding the button would
    make the feature undiscoverable for the entire existing user base (they
    hold read+write tokens without `user:read:emotes`).
-3. **Third-party sections (7TV/BTTV) included** in the picker, read from the
-   existing `ThirdPartyEmoteStore`, shown only when the third-party toggle
-   is on. Tapping inserts the code; the echo renders it inline via the
+3. **One combined third-party section ("Third-party (7TV/BTTV)")** in the
+   picker, read from the existing `ThirdPartyEmoteStore`, shown only when
+   the third-party toggle is on. The store's merged map deliberately drops
+   provider attribution (merge precedence already applied), so a single
+   alpha-sorted section is the honest presentation — not separate 7TV/BTTV
+   sections. Tapping inserts the code; the echo renders it inline via the
    existing row tokenization.
 4. **Search field included** (client-side filter over already-loaded
    catalogs). A broadcaster can have hundreds of usable emotes; a grid
@@ -160,16 +163,19 @@ composed in `stream_chat.dart`'s native branch:
   `NativeChatOptionsButton`, emote/smiley icon, `Pressable(haptic: true)`,
   Tooltip). Rendered only when `loggedIn` (the dock itself already only
   renders then).
-- `ChatEmotePickerSheet` via `ModalHandler.showBaseBottomSheet`:
+- `ChatEmotePickerSheet` via `ModalHandler.showBaseBottomSheet` (the dock's
+  field is unfocused on open so the sheet never fights an open keyboard
+  for vertical space; refocused only after an insert):
   - **Search field** on top (autofocus off — the dock's keyboard context
     transfers to the sheet); filters all sections client-side,
     case-insensitive `contains` on the emote code.
-  - **Grid sections** in order: Channel → Global → 7TV → BTTV (a section
-    renders only when non-empty after filtering; third-party sections only
-    when the third-party toggle is on and catalogs loaded). Section
-    headers styled like the options sheet's section labels.
+  - **Grid sections** in order: Channel → Global → Third-party (7TV/BTTV)
+    (a section renders only when non-empty after filtering; the
+    third-party section only when the third-party toggle is on and
+    catalogs loaded). Section headers styled like the options sheet's
+    section labels.
   - First `GridView` in the app: `SliverGridDelegateWithMaxCrossAxisExtent`
-    (~64pt cells so columns adapt phone↔tablet), 44pt+ tap targets
+    (~56pt cells so columns adapt phone↔tablet), 44pt+ tap targets
     (`kMinInteractiveDimensionCupertino` precedent), `Image.network` 2x
     with `errorBuilder` → emote code text (same fallback policy as rows).
   - **Tap** → insert `code + ' '` at the controller's cursor (`selection`
