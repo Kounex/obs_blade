@@ -1211,14 +1211,21 @@ void main() {
   testWidgets('button opens the sheet and refocuses after an insert',
       (tester) async {
     seedCatalogs();
+
+    /// The focus node must be attached to the tree — requestFocus on a
+    /// detached node only defers (hasFocus stays false). Real usage hands
+    /// the dock's attached node; here a Focus wrapper attaches it.
     final focusNode = FocusNode();
     await tester.pumpWidget(
-      wrap(ChatEmotePickerButton(
-        controller: controller,
+      wrap(Focus(
         focusNode: focusNode,
-        canReadEmotes: true,
-        accentColor: Colors.purple,
-        onRelogin: () {},
+        child: ChatEmotePickerButton(
+          controller: controller,
+          focusNode: focusNode,
+          canReadEmotes: true,
+          accentColor: Colors.purple,
+          onRelogin: () {},
+        ),
       )),
     );
 
