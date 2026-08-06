@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
+import 'package:obs_blade/utils/twitch/third_party_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_badge_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
@@ -230,5 +232,79 @@ class FakeTwitchMessageService extends TwitchMessageService {
     if (this.sendThrows != null) throw this.sendThrows!;
     if (this.sendGate != null) return this.sendGate!.future;
     return this.result;
+  }
+}
+
+class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
+  Map<String, ThirdPartyEmote> sevenTvGlobal = const {};
+  Map<String, ThirdPartyEmote> sevenTvChannel = const {};
+  Map<String, ThirdPartyEmote> bttvGlobal = const {};
+  Map<String, ThirdPartyEmote> bttvChannel = const {};
+
+  /// When set, the matching fetch throws this error.
+  Object? sevenTvGlobalThrows;
+  Object? bttvChannelThrows;
+
+  /// When set, [fetchSevenTvGlobal] parks on this completer — lets a test
+  /// resolve the fetch at a chosen moment (stale-fetch tests).
+  Completer<Map<String, ThirdPartyEmote>>? sevenTvGlobalGate;
+
+  String? lastBroadcasterId;
+  int sevenTvGlobalCalls = 0;
+  int sevenTvChannelCalls = 0;
+  int bttvGlobalCalls = 0;
+  int bttvChannelCalls = 0;
+
+  static const peepo = ThirdPartyEmote(
+    name: 'peepoHappy',
+    imageUrl: 'https://cdn.7tv.app/emote/peepo/2x.webp',
+  );
+
+  /// Same name as [peepo], different image — proves channel > global.
+  static const peepoChannelOverride = ThirdPartyEmote(
+    name: 'peepoHappy',
+    imageUrl: 'https://cdn.7tv.app/emote/peepo-override/2x.webp',
+  );
+
+  static const monka = ThirdPartyEmote(
+    name: 'monkaS',
+    imageUrl: 'https://cdn.betterttv.net/emote/monka/2x',
+  );
+
+  /// Same name as [monka], 7TV image — proves 7TV > BTTV same-scope ties.
+  static const monkaSevenTv = ThirdPartyEmote(
+    name: 'monkaS',
+    imageUrl: 'https://cdn.7tv.app/emote/monka-7tv/2x.webp',
+  );
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchSevenTvGlobal() async {
+    this.sevenTvGlobalCalls++;
+    if (this.sevenTvGlobalThrows != null) throw this.sevenTvGlobalThrows!;
+    if (this.sevenTvGlobalGate != null) return this.sevenTvGlobalGate!.future;
+    return this.sevenTvGlobal;
+  }
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchSevenTvChannel(
+      String broadcasterId) async {
+    this.sevenTvChannelCalls++;
+    this.lastBroadcasterId = broadcasterId;
+    return this.sevenTvChannel;
+  }
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchBttvGlobal() async {
+    this.bttvGlobalCalls++;
+    return this.bttvGlobal;
+  }
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchBttvChannel(
+      String broadcasterId) async {
+    this.bttvChannelCalls++;
+    this.lastBroadcasterId = broadcasterId;
+    if (this.bttvChannelThrows != null) throw this.bttvChannelThrows!;
+    return this.bttvChannel;
   }
 }
