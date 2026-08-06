@@ -261,5 +261,60 @@ void main() {
       await tester.pump();
       expect(store.chatConnection, TwitchChatConnectionState.connecting);
     });
+
+    testWidgets('rows pick up third-party emotes when the catalog lands',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+
+      RichText richText = tester.widget<RichText>(find.descendant(
+        of: find.byType(TwitchChatMessageRow),
+        matching: find.byType(RichText),
+      ));
+      expect(richText.text.toPlainText(), 'Viewer: hi peepoHappy');
+
+      /// Catalog lands after the rows are already built — the view's
+      /// Observer tracks catalogVersion, so rows rebuild once (pop-in).
+      emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+      emoteStore.catalogVersion++;
+      await tester.pump();
+
+      richText = tester.widget<RichText>(find.descendant(
+        of: find.byType(TwitchChatMessageRow),
+        matching: find.byType(RichText),
+      ));
+      expect(richText.text.toPlainText(), 'Viewer: hi \u{FFFC}');
+    });
+
+    testWidgets('turning the toggle off re-renders rows as text',
+        (tester) async {
+      emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+
+      RichText richText = tester.widget<RichText>(find.descendant(
+        of: find.byType(TwitchChatMessageRow),
+        matching: find.byType(RichText),
+      ));
+      expect(richText.text.toPlainText(), 'Viewer: hi \u{FFFC}');
+
+      /// Real file I/O never completes inside the test body's FakeAsync
+      /// zone — runAsync escapes it (same pattern as the badge tests).
+      await tester.runAsync(() async {
+        await Hive.box(HiveKeys.Settings.name)
+            .put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
+      });
+      await tester.pump();
+
+      richText = tester.widget<RichText>(find.descendant(
+        of: find.byType(TwitchChatMessageRow),
+        matching: find.byType(RichText),
+      ));
+      expect(richText.text.toPlainText(), 'Viewer: hi peepoHappy');
+    });
   });
 }

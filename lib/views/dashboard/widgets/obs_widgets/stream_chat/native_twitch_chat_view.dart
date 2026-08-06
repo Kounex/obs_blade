@@ -5,6 +5,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -72,6 +73,14 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
       builder: (_) {
         final connection = this._store.chatConnection;
         final messageCount = this._store.messages.length;
+
+        /// Tracked so the visible list rebuilds once when third-party
+        /// emote catalogs land (pop-in) — rows resolve tokens
+        /// non-reactively at build time, so this read is the only
+        /// rebuild trigger.
+        // ignore: unused_local_variable
+        final emoteCatalogVersion =
+            GetIt.instance<ThirdPartyEmoteStore>().catalogVersion;
 
         if (connection == TwitchChatConnectionState.connecting &&
             messageCount == 0) {
@@ -179,6 +188,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.TwitchChatBadgeFounder,
             SettingsKeys.TwitchChatBadgeBits,
             SettingsKeys.TwitchChatBadgeOther,
+            SettingsKeys.TwitchChatThirdPartyEmotes,
           ],
           builder: (context, settingsBox, child) => Stack(
             children: [
