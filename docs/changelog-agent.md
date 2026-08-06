@@ -28,16 +28,24 @@ Running log of upgrade/migration work. Not store release notes.
   isSent, dropReason}`; the guarded `TwitchChatStore.sendChatMessage`
   action (`@observable sendingChat` / `sendChatError`, `messageService`
   constructor seam) never throws — guards: not logged in / no write scope
-  / empty message / already in flight. Twitch `drop_reason`s map to user
-  copy via `_dropReasonText` (AutoMod blocked/held, duplicate,
-  rate-limited, fallback "Message not delivered").
+  / empty message / already in flight.
+- **Post-review fixes** (final whole-branch review caught what the suite
+  couldn't): `drop_reason` is a Twitch **object** `{code, message}`, not
+  the string the spec's "verified facts" claimed (spec corrected) — new
+  `TwitchDropReason` DTO; `_dropReasonText` maps on `code` (AutoMod
+  blocked/held, duplicate, rate-limited; unknown codes surface Twitch's
+  own `message`, else "Message not delivered ($code)"). And cancelling the
+  re-login dialog **mid-upgrade** now restores `loggedIn` when the stored
+  session + user are intact — previously the UI claimed logged-out while
+  the EventSub session kept streaming invisibly.
 - **No optimistic insert by design** — the sent message renders via the
   existing EventSub echo; 200-but-dropped sends surface as the inline dock
   error, never a silent no-op.
 - Spec/plan under `docs/superpowers/` (`2026-08-05-chat-send-input*`),
-  commits `fdd539c..89fa18f`. Gates: **164/164** tests (+3 service, +7
-  store, +8 dock, +1 window slot), analyze 0 errors + the 6 pre-existing
-  warnings. **Maintainer dogfood pending** — checklist in
+  commits `fdd539c..3f0cc56` (incl. docs + post-review fixes). Gates:
+  **168/168** tests (+3 service, +7 store, +8 dock, +1 window slot, +4
+  fix-wave), analyze 0 errors + the 6 pre-existing warnings. **Maintainer
+  dogfood deferred** (test later) — checklist kept in
   `session-handoff.md`.
 
 ## 2026-08-05 — Native chat window (pane, status row, connection sheet)

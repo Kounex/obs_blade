@@ -2,7 +2,7 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native chat send input shipped — chat now reads AND writes; maintainer dogfood pending).
+Read this first after `AGENTS.md`. Last reset: **2026-08-05** (native chat send input shipped — chat now reads AND writes; maintainer dogfood deferred to a later session).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -98,12 +98,15 @@ source of truth; never leave work local-only when handing over.
   the persisted token scopes. Helix `TwitchMessageService` + guarded
   `sendChatMessage` (never throws); no optimistic insert — the sent
   message renders via the EventSub echo; 200-but-dropped surfaces inline
-  (`drop_reason` → user copy). Widget is Twitch-free by design (reuse
-  seam, same as the window). Gates: 164/164, analyze 0 errors + 6
-  pre-existing warnings. Commits `fdd539c..89fa18f`; spec/plan
-  `2026-08-05-chat-send-input*`; history in
+  (`drop_reason.code` → user copy, unknown codes show Twitch's own
+  message — the DTO models it as the object it actually is after a
+  post-review fix; a second fix keeps a cancelled re-login **upgrade**
+  from claiming logged-out while the live session streams on). Widget is
+  Twitch-free by design (reuse seam, same as the window). Gates: 168/168,
+  analyze 0 errors + 6 pre-existing warnings. Commits `fdd539c..3f0cc56`;
+  spec/plan `2026-08-05-chat-send-input*`; history in
   [`changelog-agent.md`](changelog-agent.md). **Maintainer dogfood
-  pending** — needs a
+  deferred** (test later — checklist kept here) — needs a
   fresh login (so the token carries the write scope), then:
   - Dock renders at the pane bottom (pill field + circular send).
   - Send a message → appears in your chat on twitch.tv; the EventSub echo
@@ -144,8 +147,9 @@ source of truth; never leave work local-only when handing over.
   notes: revocation toast on forced logout, message dedup by `messageId`,
   revoked-refresh-token (Twitch 400) is kept-record mid-session and only
   wiped on next cold-start validate.
-- **Next work is open** — pick up whatever is next (store cut, Twitch chat
-  Phase 2, paid backend, opportunistic polish). Backend app (OAuth broker)
+- **Next work is open** — pick up whatever is next (store cut, native chat
+  availability/entitlement gate, 7TV/BTTV rendering, paid backend,
+  opportunistic polish). Backend app (OAuth broker)
   registration still deferred — see `private/backend-architecture.md`.
   Connect-overlay success morph is wired (Connecting… → check → Dashboard) —
   verified on device/sim 2026-08-04.
