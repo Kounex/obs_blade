@@ -117,6 +117,11 @@ class ChatEmotePickerSheet extends StatefulWidget {
 class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
   String _query = '';
 
+  /// Set on the first insert — a second tap landing inside the sheet's exit
+  /// animation must not re-insert and re-pop (the double pop trips a
+  /// navigator assert in debug builds).
+  bool _inserted = false;
+
   /// (code, imageUrl) pairs of one section.
   List<(String, String)> _filtered(
     Iterable<(String, String)> entries,
@@ -128,6 +133,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
       ];
 
   void _insert(String code) {
+    if (_inserted) return;
+    _inserted = true;
     final controller = this.widget.controller;
     final insert = '$code ';
     final selection = controller.selection;
