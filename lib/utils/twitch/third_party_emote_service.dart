@@ -46,6 +46,49 @@ class ThirdPartyEmoteService {
     return this._parseSevenTvEmotes(emoteSet['emotes']);
   }
 
+  /// BTTV global emotes.
+  Future<Map<String, ThirdPartyEmote>> fetchBttvGlobal() async {
+    final body = await this._get(
+        Uri.parse('https://api.betterttv.net/3/cached/emotes/global'));
+    return this._parseBttvEmotes(body);
+  }
+
+  /// BTTV emotes of the channel with [broadcasterId] — its own channel
+  /// emotes plus the shared emotes enabled there (shared wins name ties).
+  Future<Map<String, ThirdPartyEmote>> fetchBttvChannel(
+      String broadcasterId) async {
+    final body = await this._get(Uri.parse(
+        'https://api.betterttv.net/3/cached/users/twitch/$broadcasterId'));
+    if (body is! Map<String, Object?>) return const {};
+    return {
+      ...this._parseBttvEmotes(body['channelEmotes']),
+      ...this._parseBttvEmotes(body['sharedEmotes']),
+    };
+  }
+
+  /// BTTV shape: flat `{ id, code }` entries; the CDN serves the animated
+  /// variant when the emote has one.
+  Map<String, ThirdPartyEmote> _parseBttvEmotes(Object? emotes) {
+    if (emotes is! List) return const {};
+    final parsed = <String, ThirdPartyEmote>{};
+    for (final emote in emotes) {
+      if (emote is! Map<String, Object?>) continue;
+      final id = emote['id'];
+      final code = emote['code'];
+      if (id is! String ||
+          id.isEmpty ||
+          code is! String ||
+          code.isEmpty) {
+        continue;
+      }
+      parsed[code] = ThirdPartyEmote(
+        name: code,
+        imageUrl: 'https://cdn.betterttv.net/emote/$id/2x',
+      );
+    }
+    return parsed;
+  }
+
   /// 404 → null (channel without a presence — expected, not an error).
   /// Other non-200 → [ThirdPartyEmoteException].
   Future<Object?> _get(Uri uri) async {

@@ -96,4 +96,91 @@ void main() {
       );
     });
   });
+
+  group('fetchBttvGlobal', () {
+    test('parses the flat id/code array into cdn urls', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(),
+            'https://api.betterttv.net/3/cached/emotes/global');
+        return http.Response(
+          json.encode([
+            {
+              'id': '54fa8f',
+              'code': ':tf:',
+              'imageType': 'png',
+              'animated': false,
+            },
+            {
+              'id': '55b6f4',
+              'code': 'monkaS',
+              'imageType': 'gif',
+              'animated': true,
+            },
+            {'code': 'broken-no-id'},
+          ]),
+          200,
+        );
+      });
+
+      final emotes =
+          await ThirdPartyEmoteService(client: client).fetchBttvGlobal();
+
+      expect(emotes, hasLength(2));
+      expect(emotes['monkaS']?.imageUrl,
+          'https://cdn.betterttv.net/emote/55b6f4/2x');
+    });
+  });
+
+  group('fetchBttvChannel', () {
+    test('merges channel + shared emotes, shared wins ties', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(),
+            'https://api.betterttv.net/3/cached/users/twitch/user-1');
+        return http.Response(
+          json.encode({
+            'channelEmotes': [
+              {'id': 'chan1', 'code': 'xqcL', 'imageType': 'png'},
+              {'id': 'tie-channel', 'code': 'TieEmote', 'imageType': 'png'},
+            ],
+            'sharedEmotes': [
+              {'id': 'shared1', 'code': 'SourPls', 'imageType': 'gif'},
+              {'id': 'tie-shared', 'code': 'TieEmote', 'imageType': 'gif'},
+            ],
+          }),
+          200,
+        );
+      });
+
+      final emotes = await ThirdPartyEmoteService(client: client)
+          .fetchBttvChannel('user-1');
+
+      expect(emotes, hasLength(3));
+      expect(emotes['xqcL']?.imageUrl,
+          'https://cdn.betterttv.net/emote/chan1/2x');
+      expect(emotes['SourPls']?.imageUrl,
+          'https://cdn.betterttv.net/emote/shared1/2x');
+      expect(emotes['TieEmote']?.imageUrl,
+          'https://cdn.betterttv.net/emote/tie-shared/2x');
+    });
+
+    test('404 returns an empty map (channel without BTTV presence)',
+        () async {
+      final client = MockClient((request) async => http.Response('', 404));
+
+      final emotes = await ThirdPartyEmoteService(client: client)
+          .fetchBttvChannel('user-1');
+
+      expect(emotes, isEmpty);
+    });
+
+    test('other non-200 throws ThirdPartyEmoteException with status', () {
+      final client = MockClient((request) async => http.Response('nope', 502));
+
+      expect(
+        ThirdPartyEmoteService(client: client).fetchBttvGlobal(),
+        throwsA(isA<ThirdPartyEmoteException>()
+            .having((e) => e.statusCode, 'statusCode', 502)),
+      );
+    });
+  });
 }
