@@ -150,6 +150,12 @@ source of truth; never leave work local-only when handing over.
     existing upgrade guard).
   - Third-party toggle off → third-party section hidden in the picker.
   - Tablet mode + WebView engine unchanged.
+  - Final-review additions: rapid double-tap two cells in debug (no
+    navigator assert post-guard `de1fb36`, single pop, double insert);
+    account switch A→B (only B's catalog, no residue); small
+    phone/landscape + keyboard up (grid tail clip watch); large-catalog
+    account (first-open jank / image-fetch burst watch); pre-upgrade token
+    + third-party toggle off (CTA stacked over empty state reads OK).
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
