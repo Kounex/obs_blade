@@ -151,7 +151,7 @@ source of truth; never leave work local-only when handing over.
   revoked-refresh-token (Twitch 400) is kept-record mid-session and only
   wiped on next cold-start validate.
 - **Next work is open** — pick up whatever is next (store cut, native chat
-  availability/entitlement gate, 7TV/BTTV rendering, paid backend,
+  availability/entitlement gate, paid backend,
   opportunistic polish). Backend app (OAuth broker)
   registration still deferred — see `private/backend-architecture.md`.
   Connect-overlay success morph is wired (Connecting… → check → Dashboard) —

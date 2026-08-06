@@ -440,7 +440,7 @@ Map<String, ThirdPartyEmote> _parseBttvEmotes(Object? emotes) {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
-Expected: PASS (10 tests).
+Expected: PASS (9 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -1670,7 +1670,7 @@ Add a dated entry to `docs/changelog-agent.md` (match the heading style of the e
   swap known tokens for 20px inline images (`Image.network`, animated
   WebP/GIF; errorBuilder → text). Toggle in the native chat options
   sheet ("Twitch — emotes" section).
-- Tests: service parsing (10), store (7), wiring (3), row (7), view
+- Tests: service parsing (9), store (7), wiring (3), row (7), view
   pop-in/toggle (2), sheet (2). Gates: chat + websocket + persistence
   suites green, analyze clean.
 ```
