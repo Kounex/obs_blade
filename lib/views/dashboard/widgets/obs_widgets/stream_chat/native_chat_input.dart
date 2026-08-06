@@ -7,7 +7,9 @@ import '../../../../../utils/styling_helper.dart';
 /// Chat input dock of the native chat window: pill text field + circular
 /// send button when the account may write ([canSend]), or a read-only hint
 /// strip when the token predates the write scope. Generic by params — no
-/// Twitch types — so a future native engine reuses it as-is.
+/// Twitch types — so a future native engine reuses it as-is. Optional
+/// [controller]/[focusNode]/[leading] seams let the caller compose extras
+/// (e.g. an emote picker) without the dock knowing about them.
 class NativeChatInput extends StatefulWidget {
   /// Whether the account's token carries write scope
   final bool canSend;
@@ -17,6 +19,18 @@ class NativeChatInput extends StatefulWidget {
 
   /// Transient send error, shown above the dock
   final String? errorText;
+
+  /// External controller for outside text insertion (e.g. an emote
+  /// picker). Ownership stays with the caller — never disposed here.
+  final TextEditingController? controller;
+
+  /// External focus node — lets the caller refocus the field (e.g. after
+  /// a picker sheet closes). Ownership stays with the caller.
+  final FocusNode? focusNode;
+
+  /// Optional widget rendered left of the text field (e.g. a picker
+  /// toggle). Only shown in the send-ready state, not on the lock strip.
+  final Widget? leading;
 
   /// Brand accent (send button, hint action)
   final Color accentColor;
@@ -36,6 +50,9 @@ class NativeChatInput extends StatefulWidget {
     required this.onSend,
     required this.onRelogin,
     this.errorText,
+    this.controller,
+    this.focusNode,
+    this.leading,
   });
 
   @override
@@ -43,11 +60,13 @@ class NativeChatInput extends StatefulWidget {
 }
 
 class _NativeChatInputState extends State<NativeChatInput> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller =
+      this.widget.controller ?? TextEditingController();
 
   @override
   void dispose() {
-    this._controller.dispose();
+    /// Only the internally created controller is ours to dispose.
+    if (this.widget.controller == null) this._controller.dispose();
     super.dispose();
   }
 
@@ -137,9 +156,14 @@ class _NativeChatInputState extends State<NativeChatInput> {
           ],
           Row(
             children: [
+              if (this.widget.leading != null) ...[
+                this.widget.leading!,
+                const SizedBox(width: AppSpacing.sm),
+              ],
               Expanded(
                 child: TextField(
                   controller: this._controller,
+                  focusNode: this.widget.focusNode,
                   enabled: !this.widget.inFlight,
                   maxLength: 500,
                   textInputAction: TextInputAction.send,

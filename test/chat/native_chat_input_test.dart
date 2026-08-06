@@ -8,10 +8,16 @@ NativeChatInput buildInput({
   bool canSend = true,
   bool inFlight = false,
   String? errorText,
+  TextEditingController? controller,
+  FocusNode? focusNode,
+  Widget? leading,
   Future<bool> Function(String)? onSend,
   VoidCallback? onRelogin,
 }) =>
     NativeChatInput(
+      controller: controller,
+      focusNode: focusNode,
+      leading: leading,
       canSend: canSend,
       inFlight: inFlight,
       errorText: errorText,
@@ -131,5 +137,51 @@ void main() {
   testWidgets('field is hard-capped at 500 chars', (tester) async {
     await tester.pumpWidget(wrap(buildInput()));
     expect(tester.widget<TextField>(find.byType(TextField)).maxLength, 500);
+  });
+
+  testWidgets('uses an external controller and never disposes it',
+      (tester) async {
+    final controller = TextEditingController(text: 'hello');
+    await tester.pumpWidget(wrap(buildInput(controller: controller)));
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller,
+      same(controller),
+    );
+
+    /// Unmount the dock — an external controller must survive (an
+    /// internal one is disposed with the state).
+    await tester
+        .pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
+    expect(() => controller.text = 'still alive', returnsNormally);
+  });
+
+  testWidgets('clear-on-success works with an external controller',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(wrap(buildInput(controller: controller)));
+
+    await tester.enterText(find.byType(TextField), 'picker inserted');
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pump();
+
+    expect(controller.text, isEmpty);
+  });
+
+  testWidgets('renders the leading slot left of the field', (tester) async {
+    await tester.pumpWidget(wrap(buildInput(leading: const Text('PICK'))));
+
+    expect(find.text('PICK'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('uses an external focus node', (tester) async {
+    final node = FocusNode();
+    await tester.pumpWidget(wrap(buildInput(focusNode: node)));
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).focusNode,
+      same(node),
+    );
   });
 }
