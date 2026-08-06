@@ -2,6 +2,28 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-06 — Native chat: emote picker (first-party + 7TV/BTTV)
+
+- `TwitchEmoteService`: Helix Get User Emotes (first paginated endpoint in
+  the app — `after`-cursor loop, hard cap 50 pages); freezed
+  `TwitchUserEmote` keeps `emoteType`/`emoteSetId` raw.
+- `TwitchEmoteStore` (GetIt, session-scoped, MobX): channel/global split
+  by owner, alpha-sorted, generation guard, `catalogVersion` pop-in +
+  `isLoading` spinner signal; cleared on logout.
+- New `user:read:emotes` scope (silent upgrade — pre-upgrade tokens skip
+  the fetch and see a re-login CTA in the sheet, same philosophy as the
+  write-scope lock strip). `canReadEmotes` mirrors `canWriteChat`.
+- Dock seams: `NativeChatInput` takes an optional external
+  controller/focusNode (never disposed by the dock) + a `leading` slot —
+  still Twitch-free.
+- Picker sheet: search + Channel/Global/Third-party sections (56pt cells,
+  2x images, errorBuilder → code text), tap inserts `code + space` at the
+  cursor and refocuses the dock; third-party section follows the existing
+  7TV/BTTV toggle.
+- Tests: service (4), store (5), wiring (3), dock (4 new), picker sheet +
+  button (9). Gates: chat + websocket + persistence suites green, analyze
+  0 errors (6 pre-existing warnings, none new).
+
 ## 2026-08-06 — Native chat: third-party emotes (7TV/BTTV)
 
 - `ThirdPartyEmoteService` (7TV v3 + BTTV v3 — public, no auth): global +

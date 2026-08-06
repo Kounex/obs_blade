@@ -131,6 +131,25 @@ source of truth; never leave work local-only when handing over.
   - Send a 7TV code from the native input → the EventSub echo renders it
     as the emote.
   - Tablet mode + WebView engine unchanged.
+- **Emote picker on `master`** (2026-08-06) — button in the native dock
+  opens a bottom sheet (search; Channel/Global + combined third-party
+  sections); tap inserts at the cursor. New scope `user:read:emotes`
+  (silent upgrade; CTA for pre-upgrade sessions). Spec
+  `docs/superpowers/specs/2026-08-06-emote-picker-design.md` + plan
+  `docs/superpowers/plans/2026-08-06-emote-picker.md`. **Maintainer
+  dogfood pending:**
+  - Fresh login (to pick up the new scope) → picker shows Channel + Global
+    sections; globals present (dogfood verifies Get User Emotes includes
+    Twitch globals — if missing, the spec's Get Global Emotes fallback
+    kicks in).
+  - Insert mid-text and at the end; echo renders the emote inline
+    (first-party + 7TV/BTTV).
+  - Search filter; sheet open while catalogs land (pop-in); keyboard
+    behavior after insert (field refocused).
+  - Pre-upgrade token: CTA path (cancel re-login → session intact —
+    existing upgrade guard).
+  - Third-party toggle off → third-party section hidden in the picker.
+  - Tablet mode + WebView engine unchanged.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):

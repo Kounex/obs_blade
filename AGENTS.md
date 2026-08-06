@@ -79,9 +79,11 @@ WebView; availability seam: `nativeChatAvailableFor` in
 sessions get a read-only lock strip). Role badges + per-category toggles
 ship via `TwitchBadgeStore` + the native chat options sheet (per-platform
 seam); third-party (7TV/BTTV) emotes render inline via
-`ThirdPartyEmoteStore` (toggle in the native chat options sheet). Next:
-availability/entitlement gate, replies/announce — see chat audit +
-handoff.
+`ThirdPartyEmoteStore` (toggle in the native chat options sheet); an emote
+picker (first-party Get User Emotes via `TwitchEmoteStore` + the
+third-party catalogs) docks in the native input (`user:read:emotes` silent
+upgrade). Next: availability/entitlement gate, replies/announce — see chat
+audit + handoff.
 
 ## Docs index
 

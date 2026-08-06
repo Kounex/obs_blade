@@ -205,8 +205,8 @@ network):
 
 - FFZ (provider seam is additive if ever wanted).
 - Zero-width overlay compositing (renders as a normal emote).
-- Emote autocomplete / picker in the send input (future send polish,
-  alongside replies/announce).
+- Emote autocomplete in the send input (future send polish, alongside
+  replies/announce; the picker shipped separately on 2026-08-06).
 - Disk caching of emote images (memory image cache only).
 - Per-provider toggles (single master toggle; YAGNI).
 - WebView engines (Twitch's embed renders third-party emotes itself) and
