@@ -7,6 +7,7 @@ import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
+import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
@@ -666,6 +667,57 @@ void main() {
       await store.logout();
 
       expect(emoteStore.emotes, isEmpty);
+    });
+  });
+
+  group('first-party emote wiring', () {
+    late FakeTwitchEmoteService userEmoteService;
+    late TwitchEmoteStore userEmoteStore;
+
+    setUp(() {
+      userEmoteService = FakeTwitchEmoteService();
+      userEmoteStore = TwitchEmoteStore(service: userEmoteService);
+    });
+
+    Future<void> logIn({List<String>? scopes}) async {
+      authService.tokenScopes = scopes ??
+          const ['user:read:chat', 'user:write:chat', 'user:read:emotes'];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___) => eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        userEmoteStoreResolver: () => userEmoteStore,
+      );
+      await store.startLogin();
+    }
+
+    test('connect fetches the user emote catalog when scoped', () async {
+      await logIn();
+
+      expect(store.canReadEmotes, isTrue);
+      expect(userEmoteService.calls, 1);
+      expect(userEmoteService.lastUserId, FakeTwitchAuthService.user.id);
+      expect(
+          userEmoteService.lastBroadcasterId, FakeTwitchAuthService.user.id);
+      expect(userEmoteService.lastAccessToken,
+          FakeTwitchAuthService.token.accessToken);
+    });
+
+    test('a pre-upgrade token skips the fetch', () async {
+      await logIn(scopes: const ['user:read:chat', 'user:write:chat']);
+
+      expect(store.canReadEmotes, isFalse);
+      expect(userEmoteService.calls, 0);
+    });
+
+    test('logout clears the catalog', () async {
+      await logIn();
+      userEmoteStore.channelEmotes.add(FakeTwitchEmoteService.channelEmote);
+
+      await store.logout();
+
+      expect(userEmoteStore.channelEmotes, isEmpty);
+      expect(userEmoteStore.globalEmotes, isEmpty);
     });
   });
 }

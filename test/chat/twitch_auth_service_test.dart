@@ -23,7 +23,8 @@ void main() {
       final client = MockClient((request) async {
         expect(request.url.toString(), 'https://id.twitch.tv/oauth2/device');
         expect(request.bodyFields['client_id'], kTwitchClientId);
-        expect(request.bodyFields['scopes'], 'user:read:chat user:write:chat');
+        expect(request.bodyFields['scopes'],
+            'user:read:chat user:write:chat user:read:emotes');
         return http.Response(
           json.encode({
             'device_code': 'dev-code-123',

@@ -6,6 +6,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
+import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
@@ -52,6 +53,7 @@ abstract class _TwitchChatStore with Store {
   ) _eventSubFactory;
   final TwitchBadgeStore Function() _badgeStoreResolver;
   final ThirdPartyEmoteStore Function() _emoteStoreResolver;
+  final TwitchEmoteStore Function() _userEmoteStoreResolver;
   final TwitchMessageService _messageService;
 
   TwitchEventSubService? _eventSub;
@@ -71,6 +73,7 @@ abstract class _TwitchChatStore with Store {
     )? eventSubFactory,
     TwitchBadgeStore Function()? badgeStoreResolver,
     ThirdPartyEmoteStore Function()? emoteStoreResolver,
+    TwitchEmoteStore Function()? userEmoteStoreResolver,
     TwitchMessageService? messageService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
@@ -84,6 +87,8 @@ abstract class _TwitchChatStore with Store {
             (() => GetIt.instance<TwitchBadgeStore>()),
         _emoteStoreResolver = emoteStoreResolver ??
             (() => GetIt.instance<ThirdPartyEmoteStore>()),
+        _userEmoteStoreResolver = userEmoteStoreResolver ??
+            (() => GetIt.instance<TwitchEmoteStore>()),
         _messageService = messageService ?? TwitchMessageService();
 
   Box<TwitchAuth> get _authBox =>
@@ -138,6 +143,15 @@ abstract class _TwitchChatStore with Store {
   bool get canWriteChat =>
       this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
             'user:write:chat',
+          ) ??
+      false;
+
+  /// Whether the persisted token carries the read-emotes scope (emote
+  /// picker). Same deliberately plain (non-reactive) pattern as
+  /// [canWriteChat].
+  bool get canReadEmotes =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'user:read:emotes',
           ) ??
       false;
 
@@ -265,6 +279,11 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Third-party emote catalog clear failed — $e');
     }
+    try {
+      this._userEmoteStoreResolver().clear();
+    } catch (e) {
+      GeneralHelper.advLog('Twitch user emote catalog clear failed — $e');
+    }
     this.user = null;
     this.authState = TwitchAuthState.loggedOut;
     await this._authBox.delete(TwitchAuth.kBoxKey);
@@ -330,6 +349,25 @@ abstract class _TwitchChatStore with Store {
         }
       } catch (e) {
         GeneralHelper.advLog('Third-party emote fetch could not start — $e');
+      }
+
+      /// First-party emote catalog (picker) — same nice-to-have,
+      /// fire-and-forget policy as badges. Skipped entirely when the
+      /// persisted token predates the read-emotes scope (pre-upgrade
+      /// session — the picker shows a re-login CTA instead).
+      try {
+        if (this.canReadEmotes) {
+          unawaited(
+            this
+                ._userEmoteStoreResolver()
+                .fetch(accessToken: token, userId: this.user!.id)
+                .catchError((Object e) {
+              GeneralHelper.advLog('Twitch user emote fetch failed — $e');
+            }),
+          );
+        }
+      } catch (e) {
+        GeneralHelper.advLog('Twitch user emote fetch could not start — $e');
       }
     } on TwitchAuthException catch (e) {
       // Wipe the stored session only on a definitive auth failure: a
