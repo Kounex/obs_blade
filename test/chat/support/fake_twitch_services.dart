@@ -7,9 +7,11 @@ import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_user_emote.dart';
 import 'package:obs_blade/utils/twitch/third_party_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_badge_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 
@@ -306,5 +308,59 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
     this.lastBroadcasterId = broadcasterId;
     if (this.bttvChannelThrows != null) throw this.bttvChannelThrows!;
     return this.bttvChannel;
+  }
+}
+
+class FakeTwitchEmoteService extends TwitchEmoteService {
+  List<TwitchUserEmote> emotes = const [];
+
+  /// When set, the fetch throws this error.
+  Object? fetchThrows;
+
+  /// When set, the fetch parks on this completer — lets a test resolve the
+  /// fetch at a chosen moment (stale-fetch tests).
+  Completer<List<TwitchUserEmote>>? fetchGate;
+
+  int calls = 0;
+  String? lastAccessToken;
+  String? lastUserId;
+  String? lastBroadcasterId;
+
+  static const channelEmote = TwitchUserEmote(
+    id: '25',
+    name: 'Kappa',
+    ownerId: 'user-1',
+    emoteType: 'subscriptions',
+    emoteSetId: 'set-1',
+  );
+
+  static const globalEmote = TwitchUserEmote(
+    id: '88',
+    name: 'PogChamp',
+    ownerId: 'twitch',
+  );
+
+  /// Sorts before [channelEmote] alphabetically — proves alpha ordering.
+  static const anotherChannelEmote = TwitchUserEmote(
+    id: '4',
+    name: 'BabyRage',
+    ownerId: 'user-1',
+    emoteType: 'subscriptions',
+    emoteSetId: 'set-1',
+  );
+
+  @override
+  Future<List<TwitchUserEmote>> fetchUserEmotes(
+    String accessToken, {
+    required String userId,
+    required String broadcasterId,
+  }) async {
+    this.calls++;
+    this.lastAccessToken = accessToken;
+    this.lastUserId = userId;
+    this.lastBroadcasterId = broadcasterId;
+    if (this.fetchThrows != null) throw this.fetchThrows!;
+    if (this.fetchGate != null) return this.fetchGate!.future;
+    return this.emotes;
   }
 }
