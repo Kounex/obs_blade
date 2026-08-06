@@ -4,12 +4,14 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
@@ -49,6 +51,7 @@ abstract class _TwitchChatStore with Store {
     void Function(String) onRevoked,
   ) _eventSubFactory;
   final TwitchBadgeStore Function() _badgeStoreResolver;
+  final ThirdPartyEmoteStore Function() _emoteStoreResolver;
   final TwitchMessageService _messageService;
 
   TwitchEventSubService? _eventSub;
@@ -67,6 +70,7 @@ abstract class _TwitchChatStore with Store {
       void Function(String),
     )? eventSubFactory,
     TwitchBadgeStore Function()? badgeStoreResolver,
+    ThirdPartyEmoteStore Function()? emoteStoreResolver,
     TwitchMessageService? messageService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
@@ -78,6 +82,8 @@ abstract class _TwitchChatStore with Store {
                 )),
         _badgeStoreResolver = badgeStoreResolver ??
             (() => GetIt.instance<TwitchBadgeStore>()),
+        _emoteStoreResolver = emoteStoreResolver ??
+            (() => GetIt.instance<ThirdPartyEmoteStore>()),
         _messageService = messageService ?? TwitchMessageService();
 
   Box<TwitchAuth> get _authBox =>
@@ -254,6 +260,11 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Twitch badge catalog clear failed — $e');
     }
+    try {
+      this._emoteStoreResolver().clear();
+    } catch (e) {
+      GeneralHelper.advLog('Third-party emote catalog clear failed — $e');
+    }
     this.user = null;
     this.authState = TwitchAuthState.loggedOut;
     await this._authBox.delete(TwitchAuth.kBoxKey);
@@ -296,6 +307,29 @@ abstract class _TwitchChatStore with Store {
         );
       } catch (e) {
         GeneralHelper.advLog('Twitch badge fetch could not start — $e');
+      }
+
+      /// Third-party emote catalogs (7TV/BTTV) — same nice-to-have,
+      /// fire-and-forget policy as badges. Skipped entirely when the
+      /// user disabled them (no third-party contact at all). The whole
+      /// block is guarded: a missing Settings box or store lookup must
+      /// never break the chat connect.
+      try {
+        if (Hive.box(HiveKeys.Settings.name).get(
+          SettingsKeys.TwitchChatThirdPartyEmotes.name,
+          defaultValue: true,
+        )) {
+          unawaited(
+            this
+                ._emoteStoreResolver()
+                .fetch(broadcasterId: this.user!.id)
+                .catchError((Object e) {
+              GeneralHelper.advLog('Third-party emote fetch failed — $e');
+            }),
+          );
+        }
+      } catch (e) {
+        GeneralHelper.advLog('Third-party emote fetch could not start — $e');
       }
     } on TwitchAuthException catch (e) {
       // Wipe the stored session only on a definitive auth failure: a

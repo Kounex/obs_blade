@@ -8,6 +8,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 
 import 'app.dart';
@@ -87,6 +88,8 @@ void _initializeStores() {
   GetIt.instance.registerLazySingleton<LogsStore>(() => LogsStore());
   GetIt.instance
       .registerLazySingleton<TwitchBadgeStore>(() => TwitchBadgeStore());
+  GetIt.instance.registerLazySingleton<ThirdPartyEmoteStore>(
+      () => ThirdPartyEmoteStore());
   GetIt.instance.registerLazySingleton<TwitchChatStore>(
     /// Fire-and-forget [init] — cold-start token validation must not
     /// block store creation.

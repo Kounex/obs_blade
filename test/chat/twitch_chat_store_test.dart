@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
@@ -11,6 +12,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 
@@ -609,6 +611,61 @@ void main() {
       expect(await store.sendChatMessage('hi'), isFalse);
       expect(store.sendChatError, 'Could not send — try again');
       expect(store.sendingChat, isFalse);
+    });
+  });
+
+  group('third-party emote wiring', () {
+    late FakeThirdPartyEmoteService emoteService;
+    late ThirdPartyEmoteStore emoteStore;
+
+    setUp(() {
+      emoteService = FakeThirdPartyEmoteService();
+      emoteStore = ThirdPartyEmoteStore(service: emoteService);
+    });
+
+    Future<void> logIn() async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___) => eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        emoteStoreResolver: () => emoteStore,
+      );
+      await store.startLogin();
+    }
+
+    test('connect fetches the emote catalogs for the logged-in user',
+        () async {
+      await logIn();
+
+      expect(emoteService.sevenTvGlobalCalls, 1);
+      expect(emoteService.sevenTvChannelCalls, 1);
+      expect(emoteService.bttvGlobalCalls, 1);
+      expect(emoteService.bttvChannelCalls, 1);
+      expect(emoteService.lastBroadcasterId, FakeTwitchAuthService.user.id);
+    });
+
+    test('toggle off at connect skips the fetch', () async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      await Hive.box(HiveKeys.Settings.name)
+          .put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
+
+      await logIn();
+
+      expect(emoteService.sevenTvGlobalCalls, 0);
+      expect(emoteService.sevenTvChannelCalls, 0);
+      expect(emoteService.bttvGlobalCalls, 0);
+      expect(emoteService.bttvChannelCalls, 0);
+    });
+
+    test('logout clears the catalog', () async {
+      await logIn();
+      emoteStore.emotes[FakeThirdPartyEmoteService.peepo.name] =
+          FakeThirdPartyEmoteService.peepo;
+
+      await store.logout();
+
+      expect(emoteStore.emotes, isEmpty);
     });
   });
 }

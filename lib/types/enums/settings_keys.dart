@@ -89,6 +89,11 @@ enum SettingsKeys {
   /// Active by default
   TwitchChatBadgeOther,
 
+  /// [bool]: Render 7TV/BTTV emotes inline in the native Twitch chat
+  /// (fetches the public 7TV/BTTV catalogs on chat connect).
+  /// Active by default
+  TwitchChatThirdPartyEmotes,
+
   /// [bool]: If user wants to use his custom theme
   CustomTheme,
 
@@ -225,6 +230,8 @@ enum SettingsKeys {
         SettingsKeys.TwitchChatBadgeFounder: 'twitch-chat-badge-founder',
         SettingsKeys.TwitchChatBadgeBits: 'twitch-chat-badge-bits',
         SettingsKeys.TwitchChatBadgeOther: 'twitch-chat-badge-other',
+        SettingsKeys.TwitchChatThirdPartyEmotes:
+            'twitch-chat-third-party-emotes',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',
