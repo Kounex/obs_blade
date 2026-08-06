@@ -40,7 +40,7 @@
   - `class TwitchUserEmote { final String id; final String name; final String ownerId; final String emoteType; final String emoteSetId; }` (freezed, fromJson).
   - `class TwitchEmoteService { static const int kMaxPages = 50; TwitchEmoteService({http.Client? client}); Future<List<TwitchUserEmote>> fetchUserEmotes(String accessToken, {required String userId, required String broadcasterId}); }`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/chat/twitch_emote_service_test.dart`:
 
@@ -162,12 +162,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_service_test.dart`
 Expected: FAIL — compile error, `twitch_emote_service.dart` does not exist.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `lib/types/classes/twitch/twitch_user_emote.dart`:
 
@@ -291,13 +291,13 @@ class TwitchEmoteService {
 }
 ```
 
-- [ ] **Step 4: Run codegen + tests**
+- [x] **Step 4: Run codegen + tests**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_service_test.dart`
 Expected: codegen succeeds (`twitch_user_emote.freezed.dart` + `twitch_user_emote.g.dart` generated, committed as-is); tests PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/types/classes/twitch/twitch_user_emote.dart lib/types/classes/twitch/twitch_user_emote.freezed.dart lib/types/classes/twitch/twitch_user_emote.g.dart lib/utils/twitch/twitch_emote_service.dart test/chat/twitch_emote_service_test.dart
@@ -319,7 +319,7 @@ git commit -m "feat(chat): paginated Get User Emotes service + emote DTO"
   - `class TwitchEmoteStore` (MobX) — `ObservableList<TwitchUserEmote> channelEmotes` / `globalEmotes`, `@observable int catalogVersion`, `@observable bool isLoading`, `Future<void> fetch({required String accessToken, required String userId})`, `void clear()`, constructor `TwitchEmoteStore({TwitchEmoteService? service})`.
   - `class FakeTwitchEmoteService extends TwitchEmoteService` — settable `emotes`, error field `fetchThrows`, gate `fetchGate`, counters/records `calls`/`lastAccessToken`/`lastUserId`/`lastBroadcasterId`, static emotes `channelEmote`/`globalEmote`/`anotherChannelEmote` — used by Tasks 3/5.
 
-- [ ] **Step 1: Add the fake service**
+- [x] **Step 1: Add the fake service**
 
 Append to `test/chat/support/fake_twitch_services.dart` (add these imports at the top: `import 'package:obs_blade/types/classes/twitch/twitch_user_emote.dart';` + `import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';`):
 
@@ -379,7 +379,7 @@ class FakeTwitchEmoteService extends TwitchEmoteService {
 }
 ```
 
-- [ ] **Step 2: Write the failing store tests**
+- [x] **Step 2: Write the failing store tests**
 
 Create `test/chat/twitch_emote_store_test.dart`:
 
@@ -482,12 +482,12 @@ void main() {
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_store_test.dart`
 Expected: FAIL — compile error, `twitch_emotes.dart` does not exist.
 
-- [ ] **Step 4: Write the store implementation**
+- [x] **Step 4: Write the store implementation**
 
 Create `lib/stores/views/twitch_emotes.dart`:
 
@@ -597,13 +597,13 @@ abstract class _TwitchEmoteStore with Store {
 }
 ```
 
-- [ ] **Step 5: Run codegen + tests**
+- [x] **Step 5: Run codegen + tests**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_store_test.dart`
 Expected: codegen succeeds (`twitch_emotes.g.dart` generated, committed as-is); tests PASS (5 tests).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/stores/views/twitch_emotes.dart lib/stores/views/twitch_emotes.g.dart test/chat/support/fake_twitch_services.dart test/chat/twitch_emote_store_test.dart
@@ -628,7 +628,7 @@ git commit -m "feat(chat): session-scoped TwitchEmoteStore with channel/global s
   - `bool get canReadEmotes` on `_TwitchChatStore` — used by Tasks 5-6.
   - `TwitchChatStore({..., TwitchEmoteStore Function()? userEmoteStoreResolver})` — same injection style as `badgeStoreResolver`.
 
-- [ ] **Step 1: Update the scopes + the auth-service test expectation**
+- [x] **Step 1: Update the scopes + the auth-service test expectation**
 
 In `lib/utils/twitch/twitch_auth_service.dart` replace the scopes block (lines 13-18) with:
 
@@ -650,7 +650,7 @@ In `test/chat/twitch_auth_service_test.dart:26` replace the expectation with:
             'user:read:chat user:write:chat user:read:emotes');
 ```
 
-- [ ] **Step 2: Write the failing wiring tests**
+- [x] **Step 2: Write the failing wiring tests**
 
 In `test/chat/twitch_chat_store_test.dart`, add the import at the top:
 
@@ -713,12 +713,12 @@ Append this group inside `main()`, after the `third-party emote wiring` group (t
   }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error, `userEmoteStoreResolver` is not a parameter of `TwitchChatStore`.
 
-- [ ] **Step 4: Wire the store**
+- [x] **Step 4: Wire the store**
 
 In `lib/stores/views/twitch_chat.dart`:
 
@@ -802,12 +802,12 @@ g) In `lib/main.dart`, register the singleton right after the `ThirdPartyEmoteSt
       .registerLazySingleton<TwitchEmoteStore>(() => TwitchEmoteStore());
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_auth_service_test.dart`
 Expected: PASS (both whole files, incl. the 3 new wiring tests and the updated scope assertion).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/utils/twitch/twitch_auth_service.dart lib/stores/views/twitch_chat.dart lib/main.dart test/chat/twitch_auth_service_test.dart test/chat/twitch_chat_store_test.dart
@@ -826,7 +826,7 @@ git commit -m "feat(chat): user:read:emotes scope + fetch/clear first-party emot
 - Consumes: nothing new.
 - Produces: `NativeChatInput({..., TextEditingController? controller, FocusNode? focusNode, Widget? leading})` — Task 6 composes the picker into `leading` and passes the shared controller/focusNode. Contract: external controller/focusNode are owned by the caller and **never disposed** by the dock; `leading` renders left of the text field (send-button row only, not the read-only strip).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `test/chat/native_chat_input_test.dart`, extend the `buildInput` helper with optional params:
 
@@ -904,12 +904,12 @@ Append these tests inside `main()`:
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_input_test.dart`
 Expected: FAIL — compile error, `controller`/`focusNode`/`leading` are not parameters of `NativeChatInput`.
 
-- [ ] **Step 3: Add the seams**
+- [x] **Step 3: Add the seams**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart`:
 
@@ -977,12 +977,12 @@ e) In the dock `Row` (line 138-139), render the leading slot before the `Expande
               Expanded(
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_input_test.dart`
 Expected: PASS (whole file, incl. the 4 new tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart test/chat/native_chat_input_test.dart
@@ -1003,7 +1003,7 @@ git commit -m "feat(chat): external controller/focusNode/leading seams in the na
   - `ChatEmotePickerButton({required TextEditingController controller, required FocusNode focusNode, required bool canReadEmotes, required Color accentColor, required VoidCallback onRelogin})` — Task 6 composes it into the dock's `leading` slot.
   - `ChatEmotePickerSheet({required TextEditingController controller, required bool canReadEmotes, required Color accentColor, required VoidCallback onRelogin})` — pops with `true` after an insert, pops with nothing on a bare dismiss or the re-login CTA.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `test/chat/chat_emote_picker_test.dart`:
 
@@ -1243,12 +1243,12 @@ void main() {
 
 Note on the cursor test above (`'hiKappa  there'`): inserting `'Kappa '` at offset 2 of `'hi there'` yields `'hi' + 'Kappa ' + ' there'` — the original space after `hi` remains, so two spaces. Correct as written.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/chat_emote_picker_test.dart`
 Expected: FAIL — compile error, `chat_emote_picker.dart` does not exist.
 
-- [ ] **Step 3: Implement the picker**
+- [x] **Step 3: Implement the picker**
 
 Create `lib/views/dashboard/widgets/obs_widgets/stream_chat/chat_emote_picker.dart`:
 
@@ -1680,12 +1680,12 @@ class _EmoteCell extends StatelessWidget {
 
 Known edge (accepted, documented here): programmatic insertion bypasses the field's 500-char `maxLength` (input-only enforcement) — a code can push the text past 500; the send path is unchanged (Twitch would drop over-limit messages). Matches the spec's "no paste-special-casing".
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/chat_emote_picker_test.dart`
 Expected: PASS (9 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/chat_emote_picker.dart test/chat/chat_emote_picker_test.dart
@@ -1703,7 +1703,7 @@ git commit -m "feat(chat): emote picker button + sheet (search, sections, cursor
 - Consumes: `NativeChatInput`'s `controller`/`focusNode`/`leading` (Task 4), `ChatEmotePickerButton` (Task 5), `TwitchChatStore.canReadEmotes` (Task 3).
 - Produces: the picker visible in the running app. No new APIs.
 
-- [ ] **Step 1: Wire the composition**
+- [x] **Step 1: Wire the composition**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart`:
 
@@ -1764,7 +1764,7 @@ d) In the native branch's `input:` (~line 292-302), pass the seams:
 
 No new tests for the composition itself: the dock/sheet widgets and the store wiring are covered by their own suites; this step is verified by the full chat suite staying green (the integration tests render the native branch) plus analyze.
 
-- [ ] **Step 2: Run the chat suite + analyze**
+- [x] **Step 2: Run the chat suite + analyze**
 
 Run:
 
@@ -1775,7 +1775,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
 
 Expected: all chat tests PASS (existing integration/view tests unaffected — the dock renders the same with the new slots); analyze 0 errors (6 pre-existing warnings tolerated, no new ones).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart
@@ -1792,7 +1792,7 @@ git commit -m "feat(chat): compose the emote picker into the native chat dock"
 - Modify: `AGENTS.md` (chat paragraph)
 - Modify: `docs/superpowers/specs/2026-08-06-third-party-emotes-design.md` (out-of-scope line ~:208)
 
-- [ ] **Step 1: Run the full gates**
+- [x] **Step 1: Run the full gates**
 
 Run:
 
@@ -1803,7 +1803,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
 
 Expected: all tests PASS; analyze reports 0 errors (the 6 pre-existing warnings are tolerated — no new ones).
 
-- [ ] **Step 2: Changelog entry**
+- [x] **Step 2: Changelog entry**
 
 Add a dated entry to the top of `docs/changelog-agent.md` (match the existing heading style):
 
@@ -1831,7 +1831,7 @@ Add a dated entry to the top of `docs/changelog-agent.md` (match the existing he
   0 errors (6 pre-existing warnings, none new).
 ```
 
-- [ ] **Step 3: Handoff update**
+- [x] **Step 3: Handoff update**
 
 In `docs/session-handoff.md` (baton style — short bullets, no narrative):
 
@@ -1843,12 +1843,12 @@ In `docs/session-handoff.md` (baton style — short bullets, no narrative):
   - Third-party toggle off → third-party section hidden in the picker.
   - Tablet mode + WebView engine unchanged.
 
-- [ ] **Step 4: AGENTS.md + spec sync**
+- [x] **Step 4: AGENTS.md + spec sync**
 
 - In `AGENTS.md`'s Chat paragraph: append the picker to the shipped description — e.g. "an emote picker (first-party Get User Emotes via `TwitchEmoteStore` + the third-party catalogs) docks in the native input (`user:read:emotes` silent upgrade)".
 - In `docs/superpowers/specs/2026-08-06-third-party-emotes-design.md` (~line 208, out-of-scope): change "Emote autocomplete / picker in the send input (future send polish, alongside replies/announce)." to "Emote autocomplete in the send input (future send polish, alongside replies/announce; the picker shipped separately on 2026-08-06)."
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/changelog-agent.md docs/session-handoff.md AGENTS.md docs/superpowers/specs/2026-08-06-third-party-emotes-design.md
