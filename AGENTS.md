@@ -82,7 +82,10 @@ seam); third-party (7TV/BTTV) emotes render inline via
 `ThirdPartyEmoteStore` (toggle in the native chat options sheet); an emote
 picker (first-party Get User Emotes via `TwitchEmoteStore` + the
 third-party catalogs) docks in the native input (`user:read:emotes` silent
-upgrade). Next: availability/entitlement gate, replies/announce — see chat
+upgrade); message lifecycle rides the same session
+(`message_delete`/`clear_user_messages`/`clear` → tombstones + `/clear`
+banner, best-effort subs) and scrolled-up chat shows a pause chip. Next:
+availability/entitlement gate, replies/announce — see chat
 audit + handoff.
 
 ## Docs index

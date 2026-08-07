@@ -156,6 +156,22 @@ source of truth; never leave work local-only when handing over.
     phone/landscape + keyboard up (grid tail clip watch); large-catalog
     account (first-open jank / image-fetch burst watch); pre-upgrade token
     + third-party toggle off (CTA stacked over empty state reads OK).
+- **Message lifecycle on `master`** (2026-08-06) — native chat tombstones
+  deleted messages (delete / timeout-ban purge / `/clear` + banner) and
+  shows a "Paused ↓" chip when scrolled up. Spec
+  `docs/superpowers/specs/2026-08-06-chat-message-lifecycle-design.md` +
+  plan `docs/superpowers/plans/2026-08-06-chat-message-lifecycle.md`.
+  **Maintainer dogfood pending:**
+  - Delete a message from twitch.tv mod tools → tombstone in OBS Blade
+    (username stays).
+  - Time out a chatty user → all their visible messages tombstone.
+  - `/clear` → everything tombstones + banner; new messages flow after it;
+    `/clear` on an empty chat does nothing.
+  - Scroll up → "Paused ↓"; new message → flips to "New messages ↓"; tap →
+    resume at bottom.
+  - Degrade path: chat works with no tombstones if the lifecycle
+    subscriptions fail (log lines only).
+  - WebView engine, YouTube/Owncast, tablet unchanged.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):

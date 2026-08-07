@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-06 — Native chat: message lifecycle (deletions + pause)
+
+- `TwitchEventSubService` subscribes to four types now — `channel.chat.message`
+  (mandatory, unchanged semantics) plus `message_delete`,
+  `clear_user_messages`, `clear` (best-effort: POST failures/revocations
+  degrade tombstones, never chat; same `user:read:chat` scope, no auth
+  change).
+- `TwitchChatStore` lifecycle state: plain tombstone id-set + system
+  notices merged by arrival sequence (`lifecycleVersion` rebuild counter,
+  `catalogVersion` pattern); pruned with the 500-cap; wiped on logout.
+- Deleted messages tombstone in place (`<message deleted>`, username +
+  badges kept) — single delete, timeout/ban purge, and `/clear` (which also
+  inserts a "Chat was cleared by a moderator" banner). `/clear` on an empty
+  chat is a no-op.
+- Pause chip: scrolled-up chat now shows an explicit "Paused ↓" chip; new
+  messages flip it to the existing "New messages ↓" pill; tap resumes.
+- Tests: DTO (6), store lifecycle (8), service (3 new + 3 updated), wiring
+  (1), row (1), window (3). Gates: chat + websocket + persistence suites
+  green, analyze 0 errors (6 pre-existing warnings, none new).
+
 ## 2026-08-06 — Native chat: emote picker (first-party + 7TV/BTTV)
 
 - `TwitchEmoteService`: Helix Get User Emotes (first paginated endpoint in
