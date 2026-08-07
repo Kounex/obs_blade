@@ -20,10 +20,16 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// ([SettingsKeys.TwitchChatThirdPartyEmotes]), read with default-on.
   final Box settingsBox;
 
+  /// Moderation tombstone — username/badges stay, the body collapses to
+  /// `<message deleted>` (set by the window from the store's lifecycle
+  /// state).
+  final bool isDeleted;
+
   const TwitchChatMessageRow({
     super.key,
     required this.event,
     required this.settingsBox,
+    this.isDeleted = false,
   });
 
   static const double _emoteSize = 20.0;
@@ -152,7 +158,16 @@ class TwitchChatMessageRow extends StatelessWidget {
               ),
             ),
             const TextSpan(text: ': '),
-            ...this._messageSpans(),
+            if (this.isDeleted)
+              TextSpan(
+                text: '<message deleted>',
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              )
+            else
+              ...this._messageSpans(),
           ],
         ),
       );

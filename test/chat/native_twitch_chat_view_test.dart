@@ -203,6 +203,42 @@ void main() {
       expect(richText.text.toPlainText(), 'Modder: secured');
       expect(collectWidgetSpans(richText.text), isEmpty);
     });
+
+    testWidgets('a deleted message keeps the author, tombstones the body',
+        (tester) async {
+      final event = ChatMessageEvent(
+        broadcasterUserId: 'b1',
+        chatterUserId: '1',
+        chatterUserLogin: 'emoter',
+        chatterUserName: 'Emoter',
+        messageId: '1',
+        message: ChatMessageText(
+          text: 'Hello Kappa',
+          fragments: [
+            ChatMessageFragment(type: 'text', text: 'Hello '),
+            ChatMessageFragment(
+              type: 'emote',
+              text: 'Kappa',
+              emote: ChatFragmentEmote(id: '25'),
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: event,
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          isDeleted: true,
+        )),
+      );
+
+      final richText = tester.widget<RichText>(find.byType(RichText));
+
+      /// Emote parsing is skipped — no inline image spans.
+      expect(richText.text.toPlainText(), 'Emoter: <message deleted>');
+      expect(collectWidgetSpans(richText.text), isEmpty);
+    });
   });
 
   group('NativeTwitchChatView', () {
