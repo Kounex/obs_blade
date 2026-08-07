@@ -412,10 +412,12 @@ tombstones the body' with:
       /// Content stays (emote included) — only the marker is appended.
       expect(richText.text.toPlainText(), 'Emoter: Hello \u{FFFC} —Deleted');
       /// Twitch mod view: content non-italic and dimmed harder than the
-      /// (italic) marker; the emote dims via a matching Opacity.
+      /// (italic) marker; the emote dims via a matching Opacity. The text
+      /// fragment is split for third-party emote tokenization, so the
+      /// first token carries the dimmed style.
       final marker = findTextSpan(richText.text, ' —Deleted');
       expect(marker.style?.fontStyle, FontStyle.italic);
-      final content = findTextSpan(richText.text, 'Hello ');
+      final content = findTextSpan(richText.text, 'Hello');
       expect(content.style?.fontStyle, isNull);
       expect(content.style!.color!.a, lessThan(marker.style!.color!.a));
       final emote = collectWidgetSpans(richText.text).single;
