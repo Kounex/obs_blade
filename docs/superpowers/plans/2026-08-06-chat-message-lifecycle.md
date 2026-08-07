@@ -307,8 +307,8 @@ ChatMessageEvent chatMessage(String id, String chatterId) => ChatMessageEvent(
     );
 ```
 
-Add the import for the notice type at the top of the file (alphabetical,
-after the `channel_chat_message.dart` import):
+Add the import for the notice type at the top of the file (alphabetical —
+`chat_system_notice.dart` sorts before the `eventsub/` imports):
 
 ```dart
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
@@ -388,28 +388,28 @@ Add a new group at the end of `main()`:
       store.appendChatMessageForTest(chatMessage('m2', 'u1'));
       store.applyChatClear();
 
-      expect(
-        store.messagesWithNotices().map((item) => item.runtimeType),
-        [
-          ChatMessageEvent,
-          ChatSystemNotice,
-          ChatMessageEvent,
-          ChatSystemNotice,
-        ],
-      );
+      // runtimeType is the freezed _ChatMessageEvent, so assert with isA.
+      final items = store.messagesWithNotices();
+      expect(items, hasLength(4));
+      expect(items[0], isA<ChatMessageEvent>());
+      expect(items[1], isA<ChatSystemNotice>());
+      expect(items[2], isA<ChatMessageEvent>());
+      expect(items[3], isA<ChatSystemNotice>());
     });
 
     test('cap eviction prunes the tombstone set', () {
-      for (var i = 0; i < TwitchChatStore.kMaxMessages; i++) {
+      // kMaxMessages lives on the private _TwitchChatStore — statics don't
+      // cross the mixin-application alias, so the cap is literal here (same
+      // as the 'message buffer' group above).
+      for (var i = 0; i < 500; i++) {
         store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
       }
       store.applyMessageDelete('m0');
       expect(store.isMessageDeleted('m0'), isTrue);
 
-      store.appendChatMessageForTest(
-          chatMessage('m${TwitchChatStore.kMaxMessages}', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m500', 'u1'));
 
-      expect(store.messages, hasLength(TwitchChatStore.kMaxMessages));
+      expect(store.messages, hasLength(500));
       expect(store.isMessageDeleted('m0'), isFalse);
     });
 
