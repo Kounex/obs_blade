@@ -839,10 +839,11 @@ void main() {
 
     test('logout clears tombstones, notices and the arrival counter', () async {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.applyChatClear();
       store.applyMessageDelete(const ChatMessageDeleteEvent(
           messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyChatClear();
       expect(store.systemNotices, isNotEmpty);
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
 
       await store.logout();
 
