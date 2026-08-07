@@ -63,7 +63,7 @@
   - `enum ChatSystemNoticeKind { chatCleared }`
   - `ChatSystemNotice({required int afterSeq, required ChatSystemNoticeKind kind})` — plain class, no codegen.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `test/chat/twitch_lifecycle_dto_test.dart`:
 
@@ -122,7 +122,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: Write the fixtures**
+- [x] **Step 2: Write the fixtures**
 
 `test/chat/fixtures/twitch/channel_chat_message_delete.json` (Twitch docs
 example shape for `channel.chat.message_delete`):
@@ -164,12 +164,12 @@ Twitch docs example):
 }
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [x] **Step 3: Run the test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: FAIL — compile error, `chat_lifecycle_events.dart` does not exist.
 
-- [ ] **Step 4: Write the DTOs**
+- [x] **Step 4: Write the DTOs**
 
 Create `lib/types/classes/twitch/eventsub/chat_lifecycle_events.dart`
 (mirrors `channel_chat_message.dart`'s freezed-3 form exactly):
@@ -244,7 +244,7 @@ class ChatSystemNotice {
 }
 ```
 
-- [ ] **Step 5: Codegen + run the test to verify it passes**
+- [x] **Step 5: Codegen + run the test to verify it passes**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs
@@ -253,7 +253,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_l
 
 Expected: PASS (6/6).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/types/classes/twitch/eventsub/chat_lifecycle_events.dart \
@@ -288,7 +288,7 @@ git commit -m "feat(chat): lifecycle event DTOs + ChatSystemNotice"
   - `@action void applyClearUserMessages(String targetUserId)`
   - `@action void applyChatClear()`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `test/chat/twitch_chat_store_test.dart`, add this top-level helper above
 `void main()`:
@@ -430,13 +430,13 @@ Add a new group at the end of `main()`:
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile errors (`lifecycleVersion`, `isMessageDeleted`, …
 do not exist).
 
-- [ ] **Step 3: Implement the store changes**
+- [x] **Step 3: Implement the store changes**
 
 In `lib/stores/views/twitch_chat.dart`:
 
@@ -586,7 +586,7 @@ e) Wire the wipe into both clear sites. In `logout()` the line
     });
 ```
 
-- [ ] **Step 4: Codegen + run the tests to verify they pass**
+- [x] **Step 4: Codegen + run the tests to verify they pass**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs
@@ -601,7 +601,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
 
 Expected: all PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/stores/views/twitch_chat.dart lib/stores/views/twitch_chat.g.dart test/chat/twitch_chat_store_test.dart
@@ -623,7 +623,7 @@ git commit -m "feat(chat): store lifecycle state — tombstone set, notices, mer
   - `_subscriptionId` (single) becomes `_subscriptionIds` (list) — private, no consumer change.
   - Behavior: 4 sequential subscription POSTs on a fresh session (message first = mandatory; lifecycle = best-effort); notification dispatch routes all four types; revocations of lifecycle types are logged, not forwarded.
 
-- [ ] **Step 1: Update the existing tests + write the failing new tests**
+- [x] **Step 1: Update the existing tests + write the failing new tests**
 
 In `test/chat/twitch_eventsub_service_test.dart`:
 
@@ -866,13 +866,13 @@ f) Add the new tests at the end of `main()`:
    message-revocation semantics. The `'subscription POST throwing routes to
    onRevoked'` test also stands — the message POST is first and mandatory.)
 
-- [ ] **Step 2: Run the tests to verify the new/changed ones fail**
+- [x] **Step 2: Run the tests to verify the new/changed ones fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_eventsub_service_test.dart`
 Expected: FAIL — compile errors (`onMessageDelete` etc. don't exist) and/or
 behavioral failures (only 1 POST, single dispose DELETE).
 
-- [ ] **Step 3: Implement the service changes**
+- [x] **Step 3: Implement the service changes**
 
 In `lib/utils/twitch/twitch_eventsub_service.dart`:
 
@@ -1120,7 +1120,7 @@ i) Replace the `dispose` method's subscription cleanup with:
   }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_eventsub_service_test.dart
@@ -1130,7 +1130,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
 Expected: service suite PASS (7 existing-updated + 3 new), full suite PASS
 (the new constructor params are optional, so nothing else breaks).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/utils/twitch/twitch_eventsub_service.dart test/chat/twitch_eventsub_service_test.dart
@@ -1151,7 +1151,7 @@ git commit -m "feat(chat): EventSub lifecycle subscriptions + dispatch + revocat
 - Produces: the live path — EventSub lifecycle notifications drive the
   store's tombstone/banner actions.
 
-- [ ] **Step 1: Write the failing wiring test**
+- [x] **Step 1: Write the failing wiring test**
 
 In `test/chat/twitch_chat_store_test.dart`, add the import:
 
@@ -1203,13 +1203,13 @@ Add a new group at the end of `main()`:
   });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error (the factory closure has 6 params, the
 store's typedef has 3).
 
-- [ ] **Step 3: Extend the factory signature + wire the construction site**
+- [x] **Step 3: Extend the factory signature + wire the construction site**
 
 In `lib/stores/views/twitch_chat.dart`:
 
@@ -1274,7 +1274,7 @@ e) The construction site in `connectChat` (~line 306) becomes:
       );
 ```
 
-- [ ] **Step 4: Update the remaining factory call sites (mechanical)**
+- [x] **Step 4: Update the remaining factory call sites (mechanical)**
 
 All `(_, __, ___) =>` discards become `(_, __, ___, ____, _____, ______) =>`
 (adds info-level `unnecessary_underscores` lints — accepted idiom class):
@@ -1294,7 +1294,7 @@ All `(_, __, ___) =>` discards become `(_, __, ___, ____, _____, ______) =>`
 - `test/chat/native_twitch_chat_view_test.dart` — setUp's `eventSubFactory: (_, __, ___) => FakeTwitchEventSubService(),`.
 - `test/chat/twitch_chat_integration_test.dart` — the `eventSubFactory: (_, __, ___) => FakeTwitchEventSubService(),` site.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/
@@ -1304,7 +1304,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
 
 Expected: all PASS; analyze 0 errors + exactly 6 pre-existing warnings.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add lib/stores/views/twitch_chat.dart test/chat/twitch_chat_store_test.dart test/chat/native_twitch_chat_view_test.dart test/chat/twitch_chat_integration_test.dart
@@ -1323,7 +1323,7 @@ git commit -m "feat(chat): wire EventSub lifecycle events into the store"
 - Consumes: nothing from earlier tasks (plain bool param).
 - Produces: `TwitchChatMessageRow({required event, required settingsBox, bool isDeleted = false})` — Task 6 passes `isDeleted`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `test/chat/native_twitch_chat_view_test.dart`, add to the
 `TwitchChatMessageRow` group:
@@ -1366,12 +1366,12 @@ In `test/chat/native_twitch_chat_view_test.dart`, add to the
     });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — compile error (`isDeleted` isn't a parameter).
 
-- [ ] **Step 3: Implement the tombstone branch**
+- [x] **Step 3: Implement the tombstone branch**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart`:
 
@@ -1407,7 +1407,7 @@ b) In `_richText`, replace the tail of the span list (`const TextSpan(text: ': '
               ...this._messageSpans(),
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart
@@ -1416,7 +1416,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
 
 Expected: PASS (existing rows unchanged — `isDeleted` defaults false).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart test/chat/native_twitch_chat_view_test.dart
@@ -1435,7 +1435,7 @@ git commit -m "feat(chat): tombstone branch in the native message row"
 - Consumes: Task 2's `lifecycleVersion`/`systemNotices`/`isMessageDeleted`/`messagesWithNotices`, Task 5's `isDeleted`.
 - Produces: the shipped UX — tombstones + banner in the scroll, two-state pause chip.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `test/chat/native_twitch_chat_view_test.dart`, add to the
 `NativeTwitchChatView` group:
@@ -1519,12 +1519,12 @@ In `test/chat/native_twitch_chat_view_test.dart`, add to the
     });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — no banner text, no `Paused ↓` chip.
 
-- [ ] **Step 3: Implement the window changes**
+- [x] **Step 3: Implement the window changes**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart`:
 
@@ -1663,7 +1663,7 @@ e) Replace the whole `if (this._unreadWhileScrolledUp) Positioned(…)` pill
                 ),
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart
@@ -1674,7 +1674,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
 Expected: PASS everywhere; analyze 0 errors + exactly 6 pre-existing
 warnings.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart test/chat/native_twitch_chat_view_test.dart
@@ -1690,7 +1690,7 @@ git commit -m "feat(chat): merged lifecycle list + two-state pause chip"
 - Modify: `docs/session-handoff.md` (current-state bullet; keep the baton style)
 - Modify: `AGENTS.md` (chat paragraph)
 
-- [ ] **Step 1: Run the full gates**
+- [x] **Step 1: Run the full gates**
 
 ```bash
 FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/ test/websocket/ test/persistence/
@@ -1699,7 +1699,7 @@ FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
 
 Expected: all tests PASS; analyze 0 errors (6 pre-existing warnings, none new).
 
-- [ ] **Step 2: Changelog entry**
+- [x] **Step 2: Changelog entry**
 
 Add a dated entry to the top of `docs/changelog-agent.md`:
 
@@ -1725,7 +1725,7 @@ Add a dated entry to the top of `docs/changelog-agent.md`:
   green, analyze 0 errors (6 pre-existing warnings, none new).
 ```
 
-- [ ] **Step 3: Handoff update**
+- [x] **Step 3: Handoff update**
 
 In `docs/session-handoff.md` (baton style — short bullets, no narrative),
 add a new bullet next to the emote-picker one:
@@ -1747,14 +1747,14 @@ add a new bullet next to the emote-picker one:
     subscriptions fail (log lines only).
   - WebView engine, YouTube/Owncast, tablet unchanged.
 
-- [ ] **Step 4: AGENTS.md chat paragraph**
+- [x] **Step 4: AGENTS.md chat paragraph**
 
 In `AGENTS.md`'s Chat paragraph, append one clause to the shipped
 description — e.g. "message lifecycle rides the same session
 (`message_delete`/`clear_user_messages`/`clear` → tombstones + `/clear`
 banner, best-effort subs) and scrolled-up chat shows a pause chip".
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/changelog-agent.md docs/session-handoff.md AGENTS.md
