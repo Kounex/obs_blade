@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/eventsub_envelope.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
@@ -10,7 +11,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 enum TwitchEventSubState { disconnected, connecting, connected, reconnecting }
 
-/// Dedicated EventSub WebSocket session for `channel.chat.message`.
+/// Dedicated EventSub WebSocket session for chat messages + moderation
+/// lifecycle events (`message_delete`, `clear_user_messages`, `clear`).
 /// Completely separate from the OBS WebSocket — owns its socket, keepalive
 /// watchdog and reconnect backoff. [channelFactory] and [sleep] are
 /// injectable for tests.
@@ -24,11 +26,31 @@ class TwitchEventSubService {
   static const Duration _watchdogWindow = Duration(seconds: 75);
   static const Duration _maxBackoff = Duration(seconds: 30);
 
+  /// Subscription types created on a fresh session, in POST order.
+  /// `channel.chat.message` is mandatory — a failure routes to [onRevoked].
+  /// The three lifecycle types are best-effort: failures are logged and
+  /// degrade tombstones, never chat.
+  static const List<String> _kSubscriptionTypes = <String>[
+    'channel.chat.message',
+    'channel.chat.message_delete',
+    'channel.chat.clear_user_messages',
+    'channel.chat.clear',
+  ];
+  static const String _kMessageType = 'channel.chat.message';
+
   final http.Client _client;
   final WebSocketChannel Function(Uri) _channelFactory;
   final Future<void> Function(Duration) _sleep;
 
   final void Function(ChatMessageEvent event) onChatMessage;
+
+  /// Lifecycle callbacks — optional; a null callback skips parsing for
+  /// that type (tests / non-lifecycle consumers).
+  final void Function(ChatMessageDeleteEvent event)? onMessageDelete;
+  final void Function(ChatClearUserMessagesEvent event)?
+      onClearUserMessages;
+  final void Function(ChatClearEvent event)? onChatClear;
+
   final void Function(TwitchEventSubState state) onStateChanged;
 
   /// Subscription revoked by Twitch (e.g. `authorization_revoked`) or
@@ -42,12 +64,18 @@ class TwitchEventSubService {
   String? _accessToken;
   String? _userId;
   String? _sessionId;
-  String? _subscriptionId;
+
+  /// Ids created on the current session (message + whichever lifecycle
+  /// subscriptions succeeded) — resume check + best-effort cleanup.
+  List<String> _subscriptionIds = <String>[];
   int _reconnectAttempts = 0;
   bool _disposed = false;
 
   TwitchEventSubService({
     required this.onChatMessage,
+    this.onMessageDelete,
+    this.onClearUserMessages,
+    this.onChatClear,
     required this.onStateChanged,
     required this.onRevoked,
     http.Client? client,
@@ -123,7 +151,8 @@ class TwitchEventSubService {
   Future<void> _handleWelcome(Map<String, Object?> payload) async {
     final session = payload['session'] as Map<String, dynamic>;
     final sessionId = session['id'] as String;
-    final resumed = sessionId == this._sessionId && this._subscriptionId != null;
+    final resumed =
+        sessionId == this._sessionId && this._subscriptionIds.isNotEmpty;
     this._sessionId = sessionId;
     this._reconnectAttempts = 0;
     this.onStateChanged(TwitchEventSubState.connected);
@@ -131,20 +160,50 @@ class TwitchEventSubService {
     /// A socket opened from `session_reconnect`'s reconnect_url resumes the
     /// session with subscriptions intact — only subscribe on fresh sessions.
     if (!resumed) {
-      await this._createSubscription();
+      await this._createSubscriptions();
     }
   }
 
   void _handleNotification(EventSubEnvelope envelope) {
-    if (envelope.metadata.subscriptionType != 'channel.chat.message') return;
+    final type = envelope.metadata.subscriptionType;
     try {
-      this.onChatMessage(
-        ChatMessageEvent.fromJson(
-          envelope.payload['event'] as Map<String, Object?>,
-        ),
-      );
+      switch (type) {
+        case 'channel.chat.message':
+          this.onChatMessage(
+            ChatMessageEvent.fromJson(
+              envelope.payload['event'] as Map<String, Object?>,
+            ),
+          );
+        case 'channel.chat.message_delete':
+          final callback = this.onMessageDelete;
+          if (callback != null) {
+            callback(
+              ChatMessageDeleteEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
+            );
+          }
+        case 'channel.chat.clear_user_messages':
+          final callback = this.onClearUserMessages;
+          if (callback != null) {
+            callback(
+              ChatClearUserMessagesEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
+            );
+          }
+        case 'channel.chat.clear':
+          final callback = this.onChatClear;
+          if (callback != null) {
+            callback(
+              ChatClearEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
+            );
+          }
+      }
     } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: could not parse chat event — $e');
+      GeneralHelper.advLog('Twitch EventSub: could not parse $type event — $e');
     }
   }
 
@@ -161,43 +220,74 @@ class TwitchEventSubService {
 
   void _handleRevocation(Map<String, Object?> payload) {
     final subscription = payload['subscription'] as Map<String, dynamic>;
-    this.onRevoked(subscription['status'] as String? ?? 'revoked');
+    final type = subscription['type'] as String?;
+    if (type == null || type == _kMessageType) {
+      /// A missing type is treated as the message subscription — the only
+      /// one whose loss kills chat.
+      this.onRevoked(subscription['status'] as String? ?? 'revoked');
+    } else {
+      GeneralHelper.advLog(
+        'Twitch EventSub: lifecycle subscription $type revoked '
+        '(${subscription['status']}) — tombstones degraded this session',
+      );
+    }
   }
 
-  Future<void> _createSubscription() async {
+  Future<void> _createSubscriptions() async {
     final token = this._accessToken;
     final userId = this._userId;
     final sessionId = this._sessionId;
     if (token == null || userId == null || sessionId == null) return;
 
-    /// The socket-level failure path (DNS/socket/timeout) must not escape
-    /// this unawaited future — surface it like a failed subscription.
-    try {
-      final response = await this._client.post(
-        Uri.parse(_subscriptionsUrl),
-        headers: {
-          ...TwitchAuthService.helixHeaders(token),
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'type': 'channel.chat.message',
-          'version': '1',
-          'condition': {'broadcaster_user_id': userId, 'user_id': userId},
-          'transport': {'method': 'websocket', 'session_id': sessionId},
-        }),
-      );
+    final created = <String>[];
+    for (final type in _kSubscriptionTypes) {
+      final mandatory = type == _kMessageType;
 
-      if (response.statusCode == 202) {
-        final data =
-            (json.decode(response.body) as Map<String, dynamic>)['data'];
-        this._subscriptionId = (data as List).first['id'] as String?;
-      } else {
-        this.onRevoked('subscription_failed:${response.statusCode}');
+      /// The socket-level failure path (DNS/socket/timeout) must not
+      /// escape this unawaited future — surface it like a failed
+      /// subscription.
+      try {
+        final response = await this._client.post(
+          Uri.parse(_subscriptionsUrl),
+          headers: {
+            ...TwitchAuthService.helixHeaders(token),
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'type': type,
+            'version': '1',
+            'condition': {'broadcaster_user_id': userId, 'user_id': userId},
+            'transport': {'method': 'websocket', 'session_id': sessionId},
+          }),
+        );
+
+        if (response.statusCode == 202) {
+          final data =
+              (json.decode(response.body) as Map<String, dynamic>)['data'];
+          final id = (data as List).first['id'] as String?;
+          if (id != null) created.add(id);
+        } else if (mandatory) {
+          this.onRevoked('subscription_failed:${response.statusCode}');
+          return;
+        } else {
+          GeneralHelper.advLog(
+            'Twitch EventSub: lifecycle subscription $type failed '
+            '(${response.statusCode}) — tombstones degraded this session',
+          );
+        }
+      } catch (e) {
+        if (mandatory) {
+          GeneralHelper.advLog(
+              'Twitch EventSub: subscription POST failed — $e');
+          this.onRevoked('subscription_failed:$e');
+          return;
+        }
+        GeneralHelper.advLog(
+          'Twitch EventSub: lifecycle subscription $type failed — $e',
+        );
       }
-    } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: subscription POST failed — $e');
-      this.onRevoked('subscription_failed:$e');
     }
+    this._subscriptionIds = created;
   }
 
   void _handleDisconnect() {
@@ -226,23 +316,25 @@ class TwitchEventSubService {
     this._channel = null;
   }
 
-  /// Tear down the session. Deleting the subscription is best effort —
-  /// Twitch drops it anyway once the session times out.
+  /// Tear down the session. Deleting the subscriptions is best effort —
+  /// Twitch drops them anyway once the session times out.
   Future<void> dispose() async {
     this._disposed = true;
     this._closeSocket();
 
-    final subscriptionId = this._subscriptionId;
+    final subscriptionIds = List<String>.of(this._subscriptionIds);
     final token = this._accessToken;
-    this._subscriptionId = null;
-    if (subscriptionId != null && token != null) {
-      try {
-        await this._client.delete(
-          Uri.parse('$_subscriptionsUrl?id=$subscriptionId'),
-          headers: TwitchAuthService.helixHeaders(token),
-        );
-      } catch (_) {
-        // best effort
+    this._subscriptionIds = <String>[];
+    if (token != null) {
+      for (final id in subscriptionIds) {
+        try {
+          await this._client.delete(
+            Uri.parse('$_subscriptionsUrl?id=$id'),
+            headers: TwitchAuthService.helixHeaders(token),
+          );
+        } catch (_) {
+          // best effort
+        }
       }
     }
   }

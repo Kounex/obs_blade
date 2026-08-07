@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -42,6 +43,9 @@ void main() {
   late List<TwitchEventSubState> states;
   late List<ChatMessageEvent> messages;
   late List<String> revocations;
+  late List<ChatMessageDeleteEvent> deletes;
+  late List<ChatClearUserMessagesEvent> purges;
+  late List<ChatClearEvent> clears;
 
   String welcome(String sessionId) => json.encode({
         'metadata': {
@@ -92,33 +96,45 @@ void main() {
         sleep: (_) async {},
       );
 
+  TwitchEventSubService lifecycleServiceWith(MockClient client) =>
+      TwitchEventSubService(
+        onChatMessage: messages.add,
+        onMessageDelete: deletes.add,
+        onClearUserMessages: purges.add,
+        onChatClear: clears.add,
+        onStateChanged: states.add,
+        onRevoked: revocations.add,
+        client: client,
+        channelFactory: (uri) {
+          final channel = FakeWebSocketChannel();
+          channels.add(channel);
+          return channel;
+        },
+        sleep: (_) async {},
+      );
+
   setUp(() {
     channels = [];
     states = [];
     messages = [];
     revocations = [];
+    deletes = [];
+    purges = [];
+    clears = [];
   });
 
-  test('welcome triggers a subscription with the session id', () async {
+  test('welcome subscribes to message + lifecycle types with the session id',
+      () async {
+    final bodies = <Map<String, dynamic>>[];
     final client = MockClient((request) async {
       expect(request.method, 'POST');
       expect(request.headers['Authorization'], 'Bearer token-1');
       expect(request.headers['Client-Id'], kTwitchClientId);
-      final body = json.decode(request.body) as Map<String, dynamic>;
-      expect(body['type'], 'channel.chat.message');
-      expect(body['version'], '1');
-      expect(body['condition'], {
-        'broadcaster_user_id': 'user-1',
-        'user_id': 'user-1',
-      });
-      expect(body['transport'], {
-        'method': 'websocket',
-        'session_id': 'session-1',
-      });
+      bodies.add(json.decode(request.body) as Map<String, dynamic>);
       return http.Response(
         json.encode({
           'data': [
-            {'id': 'sub-1'}
+            {'id': 'sub-${bodies.length}'}
           ],
         }),
         202,
@@ -131,6 +147,23 @@ void main() {
     await pumpEventQueue();
 
     expect(states, contains(TwitchEventSubState.connected));
+    expect(bodies.map((body) => body['type']), [
+      'channel.chat.message',
+      'channel.chat.message_delete',
+      'channel.chat.clear_user_messages',
+      'channel.chat.clear',
+    ]);
+    for (final body in bodies) {
+      expect(body['version'], '1');
+      expect(body['condition'], {
+        'broadcaster_user_id': 'user-1',
+        'user_id': 'user-1',
+      });
+      expect(body['transport'], {
+        'method': 'websocket',
+        'session_id': 'session-1',
+      });
+    }
   });
 
   test('notification parses into a chat message event', () async {
@@ -174,7 +207,7 @@ void main() {
     await service.connect(accessToken: 'token-1', userId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
-    expect(subscriptionPosts, 1);
+    expect(subscriptionPosts, 4);
 
     channels.single.incoming.add(json.encode({
       'metadata': {
@@ -196,7 +229,7 @@ void main() {
     /// Resumed session: same session id → no new subscription
     channels[1].incoming.add(welcome('session-1'));
     await pumpEventQueue();
-    expect(subscriptionPosts, 1);
+    expect(subscriptionPosts, 4);
   });
 
   test('socket close triggers a reconnect via the injected sleep', () async {
@@ -240,15 +273,22 @@ void main() {
     expect(revocations, ['authorization_revoked']);
   });
 
-  test('dispose deletes the subscription best-effort', () async {
-    String? deletedUrl;
+  test('dispose deletes every created subscription best-effort', () async {
+    final deletedUrls = <String>[];
+    var posts = 0;
     final client = MockClient((request) async {
       if (request.method == 'DELETE') {
-        deletedUrl = request.url.toString();
+        deletedUrls.add(request.url.toString());
         return http.Response('', 204);
       }
+      posts++;
       return http.Response(
-          json.encode({'data': [{'id': 'sub-1'}]}), 202);
+          json.encode({
+            'data': [
+              {'id': 'sub-$posts'}
+            ],
+          }),
+          202);
     });
 
     final service = serviceWith(client);
@@ -257,7 +297,110 @@ void main() {
     await pumpEventQueue();
 
     await service.dispose();
-    expect(deletedUrl,
-        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-1');
+    expect(deletedUrls, [
+      'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-1',
+      'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-2',
+      'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-3',
+      'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-4',
+    ]);
+  });
+
+  test('lifecycle notifications dispatch to their callbacks', () async {
+    final client = MockClient((request) async =>
+        http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
+
+    final service = lifecycleServiceWith(client);
+    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    String lifecycleNotification(String type, Map<String, Object?> event) =>
+        json.encode({
+          'metadata': {
+            'message_id': 'n-$type',
+            'message_type': 'notification',
+            'message_timestamp': '2026-08-06T10:00:00.000Z',
+            'subscription_type': type,
+            'subscription_version': '1',
+          },
+          'payload': {
+            'subscription': {'type': type},
+            'event': event,
+          },
+        });
+
+    channels.single.incoming
+        .add(lifecycleNotification('channel.chat.message_delete', {
+      'broadcaster_user_id': 'b1',
+      'target_user_id': 'u2',
+      'message_id': 'm-9',
+    }));
+    channels.single.incoming
+        .add(lifecycleNotification('channel.chat.clear_user_messages', {
+      'broadcaster_user_id': 'b1',
+      'target_user_id': 'u2',
+    }));
+    channels.single.incoming.add(lifecycleNotification('channel.chat.clear', {
+      'broadcaster_user_id': 'b1',
+    }));
+    await pumpEventQueue();
+
+    expect(deletes.single.messageId, 'm-9');
+    expect(deletes.single.targetUserId, 'u2');
+    expect(purges.single.targetUserId, 'u2');
+    expect(clears.single.broadcasterUserId, 'b1');
+    expect(messages, isEmpty);
+  });
+
+  test('a failing lifecycle POST degrades tombstones, not chat', () async {
+    var posts = 0;
+    final client = MockClient((request) async {
+      posts++;
+      if (posts == 2) return http.Response('Forbidden', 403);
+      return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-$posts'}
+            ],
+          }),
+          202);
+    });
+
+    final service = serviceWith(client);
+    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    expect(posts, 4);
+    expect(revocations, isEmpty);
+    expect(states, contains(TwitchEventSubState.connected));
+  });
+
+  test('a lifecycle revocation is logged, not surfaced', () async {
+    final client = MockClient((request) async =>
+        http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
+
+    final service = serviceWith(client);
+    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+    channels.single.incoming.add(json.encode({
+      'metadata': {
+        'message_id': 'v1',
+        'message_type': 'revocation',
+        'message_timestamp': '2026-08-06T10:00:00.000Z',
+        'subscription_type': 'channel.chat.clear',
+        'subscription_version': '1',
+      },
+      'payload': {
+        'subscription': {
+          'type': 'channel.chat.clear',
+          'status': 'authorization_revoked',
+        },
+      },
+    }));
+    await pumpEventQueue();
+
+    expect(revocations, isEmpty);
   });
 }
