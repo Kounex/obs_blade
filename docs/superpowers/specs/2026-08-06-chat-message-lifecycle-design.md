@@ -83,19 +83,24 @@ machinery, touches every consumer, YAGNI for one flag + one notice type).
 
 ### DTOs — 3 tiny freezed classes (`lib/types/classes/twitch/eventsub/`)
 
-- `ChatMessageDeleteEvent` — `messageId`, `targetUserId` (+ display fields as
-  optional, matching house style).
-- `ChatClearUserMessagesEvent` — `targetUserId` (+ optional display fields).
-- `ChatClearEvent` — broadcaster ids only; no payload fields we consume.
+- `ChatMessageDeleteEvent` — `messageId`, `targetUserId` (both required).
+- `ChatClearUserMessagesEvent` — `targetUserId` (required).
+- `ChatClearEvent` — `broadcasterUserId` (required); no other payload fields
+  we consume.
 - Defensive parsing identical to `ChatMessageEvent` (required ids, tolerate
-  extras).
+  extras). Display/login fields exist in the payloads but are deliberately
+  not modeled — nothing consumes them (YAGNI).
 
 ### Store — `TwitchChatStore`
 
-- New: `ObservableSet<String> deletedMessageIds`; new:
-  `ObservableList<ChatSystemNotice> systemNotices` (`ChatSystemNotice` =
+- New: plain `Set<String> _deletedMessageIds`; new: plain
+  `List<ChatSystemNotice> systemNotices` (`ChatSystemNotice` =
   `(afterSeq, kind)` — one kind for now: `chatCleared`; `afterSeq` explained
-  below).
+  below). Both are **plain containers**: rows render inside the HiveBuilder
+  whose builder runs outside Observer tracking, so UI reactivity rides a
+  public `@observable int lifecycleVersion` counter bumped in the same
+  actions — the exact pattern the emote catalogs (`catalogVersion`) and the
+  picker already use.
 - Arrival ordering: the store already appends in arrival order; a monotonic
   `_arrivalSeq` increments per message appended, and each notice captures the
   current value. Merging uses **arrival sequence, not wall-clock time** —
@@ -108,7 +113,10 @@ machinery, touches every consumer, YAGNI for one flag + one notice type).
   - `applyClearUserMessages(targetUserId)` → scan visible `messages`, add
     every id whose `chatterUserId` matches.
   - `applyChatClear()` → add all current ids + append the banner notice
-    (afterSeq = current arrivalSeq).
+    (afterSeq = current arrivalSeq). **Empty chat = full no-op** (no
+    tombstones, no banner) — nothing was deleted, so nothing is marked;
+    mirrors Twitch showing nothing, and keeps the window's
+    `messages.isEmpty` empty-states correct.
 - Cap pruning: the index-0 eviction at `kMaxMessages` also drops the evicted
   id from `deletedMessageIds` — the set stays bounded by the same 500.
 - Logout/`_disconnectChat` clears the set and the notices alongside
