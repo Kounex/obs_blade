@@ -209,6 +209,21 @@ store actions', replace the `emitDelete` construction with:
 
 (the following `expect(store.isMessageDeleted('m2'), isFalse);` stays.)
 
+g) In `test/chat/twitch_eventsub_service_test.dart`, the Wave B
+lifecycle-dispatch test feeds an inline `message_delete` frame — its
+payload needs the now-required field. In the frame map, after
+`'target_user_id': 'u2',` add:
+
+```dart
+      'user_name': 'Cool_Mod',
+```
+
+and after `expect(deletes.single.targetUserId, 'u2');` add:
+
+```dart
+    expect(deletes.single.userName, 'Cool_Mod');
+```
+
 - [ ] **Step 5: Run the store tests to verify they fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
@@ -283,6 +298,11 @@ f) In `connectChat`'s factory call (~line 342), replace
         (event) => this.applyMessageDelete(event),
 ```
 
+g) Regenerate the MobX action wrapper — the action signature change
+regenerates `lib/stores/views/twitch_chat.g.dart`:
+
+Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+
 - [ ] **Step 7: Run focused tests, then the full gates**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_lifecycle_dto_test.dart test/chat/twitch_eventsub_service_test.dart`
@@ -302,7 +322,9 @@ git add lib/types/classes/twitch/eventsub/chat_lifecycle_events.dart \
   test/chat/fixtures/twitch/channel_chat_message_delete.json \
   test/chat/twitch_lifecycle_dto_test.dart \
   lib/stores/views/twitch_chat.dart \
-  test/chat/twitch_chat_store_test.dart
+  lib/stores/views/twitch_chat.g.dart \
+  test/chat/twitch_chat_store_test.dart \
+  test/chat/twitch_eventsub_service_test.dart
 git commit -m "feat(chat): delete actor name flows DTO -> store (deletedMessageActor)"
 ```
 
