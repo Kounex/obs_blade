@@ -33,8 +33,9 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// Whether the actor reveal line under a deleted message is expanded.
   final bool isDeletedExpanded;
 
-  /// Tap handler for a deleted message with a known actor — toggles the
-  /// reveal line. Null (or no actor) = not tappable.
+  /// Tap handler for a deleted message — toggles the reveal line.
+  /// Tappability is gated on [isDeleted] + [deletedActor]; a null
+  /// callback with an actor yields an inert, tap-swallowing target.
   final VoidCallback? onDeletedTap;
 
   const TwitchChatMessageRow({
@@ -115,9 +116,10 @@ class TwitchChatMessageRow extends StatelessWidget {
   }
 
   /// Body spans for a deleted message — the content stays (Twitch mod
-  /// view) but dims hard: text recolors to half of the marker's dim and
+  /// view) but dims hard: text recolors to half the marker's opacity and
   /// emote images get a matching [Opacity]. Structure, spacing and error
-  /// builders are preserved.
+  /// builders are preserved. Assumes [_messageSpans] results are flat and
+  /// recognizer-less (true today: plain TextSpans + emote WidgetSpans).
   List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
     final color = Theme.of(context)
         .textTheme

@@ -5,7 +5,7 @@ Running log of upgrade/migration work. Not store release notes.
 ## 2026-08-07 — Native chat: deleted content + actor reveal (mod view)
 
 - Deleted messages now match twitch.tv's moderator view: the original
-  content stays (text dimmed to 50% of the marker's dim, emotes at matching
+  content stays (text at half the marker's opacity, emotes at matching
   opacity) with an italic ` —Deleted` marker — replacing Wave B's
   `<message deleted>` tombstone. Uniform across single deletes, timeout/ban
   purges, and `/clear` purges; username + badges untouched.
