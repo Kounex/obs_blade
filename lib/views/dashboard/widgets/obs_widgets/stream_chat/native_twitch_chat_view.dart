@@ -169,7 +169,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         final items = this._store.messagesWithNotices();
 
         /// New-frame bookkeeping: jump to the newest message while pinned,
-        /// flag the unread pill otherwise (post-frame — not during build).
+        /// flag the unread chip otherwise (post-frame — not during build).
         /// Tombstones don't change the count (no unread flag); a /clear
         /// banner does (it counts as new activity).
         if (this._pinnedToBottom) {

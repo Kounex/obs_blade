@@ -39,7 +39,8 @@ Existing app facts (verified in code):
   POST body at `:183`, dedicated session, per-notification try/catch.
 - `TwitchChatStore.messages` is an `ObservableList<ChatMessageEvent>` capped
   at `kMaxMessages = 500` (`twitch_chat.dart:45`, eviction at `:479-481`),
-  deduped by `messageId`, cleared on logout (`:271`).
+  cleared on logout (`:271`). There is NO `messageId` dedup — duplicates
+  double-render (EventSub is at-least-once).
 - `ChatMessageEvent` carries `chatterUserId` and `messageId`
   (`channel_chat_message.dart:17-21`) — both match keys the lifecycle needs.
 - The native window already pauses implicitly: `_pinnedToBottom` flips false
@@ -121,7 +122,9 @@ machinery, touches every consumer, YAGNI for one flag + one notice type).
   id from `deletedMessageIds` — the set stays bounded by the same 500.
 - Logout/`_disconnectChat` clears the set and the notices alongside
   `messages`.
-- Existing dedup by `messageId` untouched.
+- No `messageId` dedup exists today (duplicates double-render); tombstoning
+  is id-based, so duplicate rows all tombstone together — no special casing
+  needed.
 
 ### Rendering
 

@@ -168,7 +168,12 @@ source of truth; never leave work local-only when handing over.
   - `/clear` → everything tombstones + banner; new messages flow after it;
     `/clear` on an empty chat does nothing.
   - Scroll up → "Paused ↓"; new message → flips to "New messages ↓"; tap →
-    resume at bottom.
+    resume at bottom. Watch: the chip may briefly re-appear as "Paused ↓"
+    mid-resume-animation (known transient from the final review — fix only
+    if it reads badly).
+  - Duplicate `/clear` delivery shows two adjacent banners (EventSub is
+    at-least-once, no `message_id` dedup — same class as duplicate chat
+    messages; note if seen live).
   - Degrade path: chat works with no tombstones if the lifecycle
     subscriptions fail (log lines only).
   - WebView engine, YouTube/Owncast, tablet unchanged.
