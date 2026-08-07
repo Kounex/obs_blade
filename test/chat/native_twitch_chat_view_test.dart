@@ -32,6 +32,22 @@ List<WidgetSpan> collectWidgetSpans(InlineSpan span) {
   return spans;
 }
 
+/// Finds the first TextSpan carrying exactly [text] (the row's spans sit
+/// one level down inside `Text.rich`'s wrapper).
+TextSpan findTextSpan(InlineSpan root, String text) {
+  TextSpan? found;
+  void visit(InlineSpan span) {
+    if (span is TextSpan) {
+      if (span.text == text) found ??= span;
+      span.children?.forEach(visit);
+    }
+  }
+
+  visit(root);
+  if (found == null) throw StateError('no TextSpan with text "$text"');
+  return found!;
+}
+
 ChatMessageEvent textEvent(String id, String author, String text) =>
     ChatMessageEvent(
       broadcasterUserId: 'b1',
@@ -204,7 +220,7 @@ void main() {
       expect(collectWidgetSpans(richText.text), isEmpty);
     });
 
-    testWidgets('a deleted message keeps the author, tombstones the body',
+    testWidgets('a deleted message shows dimmed content plus the marker',
         (tester) async {
       final event = ChatMessageEvent(
         broadcasterUserId: 'b1',
@@ -235,9 +251,75 @@ void main() {
 
       final richText = tester.widget<RichText>(find.byType(RichText));
 
-      /// Emote parsing is skipped — no inline image spans.
-      expect(richText.text.toPlainText(), 'Emoter: <message deleted>');
-      expect(collectWidgetSpans(richText.text), isEmpty);
+      /// Content stays (emote included) — only the marker is appended.
+      expect(richText.text.toPlainText(), 'Emoter: Hello \u{FFFC} —Deleted');
+      /// Twitch mod view: content non-italic and dimmed harder than the
+      /// (italic) marker; the emote dims via a matching Opacity. The text
+      /// fragment is split for third-party emote tokenization, so the
+      /// first token carries the dimmed style.
+      final marker = findTextSpan(richText.text, ' —Deleted');
+      expect(marker.style?.fontStyle, FontStyle.italic);
+      final content = findTextSpan(richText.text, 'Hello');
+      expect(content.style?.fontStyle, isNull);
+      expect(content.style!.color!.a, lessThan(marker.style!.color!.a));
+      final emote = collectWidgetSpans(richText.text).single;
+      expect(emote.child, isA<Opacity>());
+      expect((emote.child as Opacity).opacity, 0.5);
+    });
+
+    testWidgets('tapping a deleted row with an actor fires the callback',
+        (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          isDeleted: true,
+          deletedActor: 'Cool_Mod',
+          onDeletedTap: () => tapped = true,
+        )),
+      );
+
+      await tester.tap(find.byType(TwitchChatMessageRow));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('an expanded deleted row reveals who deleted it',
+        (tester) async {
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          isDeleted: true,
+          deletedActor: 'Cool_Mod',
+          isDeletedExpanded: true,
+        )),
+      );
+
+      expect(
+        find.text("Cool_Mod deleted Viewer32's message"),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a purged message (no actor) is not tappable, no reveal',
+        (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          isDeleted: true,
+          isDeletedExpanded: true,
+          onDeletedTap: () => tapped = true,
+        )),
+      );
+
+      expect(find.byType(GestureDetector), findsNothing);
+      expect(find.textContaining('deleted Viewer32'), findsNothing);
+
+      await tester.tap(find.byType(TwitchChatMessageRow));
+      expect(tapped, isFalse);
     });
   });
 
@@ -373,8 +455,8 @@ void main() {
       expect(
         texts,
         containsAll(<String>[
-          'Viewer32: <message deleted>',
-          'Emoter: <message deleted>',
+          'Viewer32: Hi chat —Deleted',
+          'Emoter: Hello Kappa —Deleted',
         ]),
       );
 

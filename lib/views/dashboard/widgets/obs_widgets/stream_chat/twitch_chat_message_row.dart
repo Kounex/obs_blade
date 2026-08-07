@@ -20,16 +20,31 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// ([SettingsKeys.TwitchChatThirdPartyEmotes]), read with default-on.
   final Box settingsBox;
 
-  /// Moderation tombstone — username/badges stay, the body collapses to
-  /// `<message deleted>` (set by the window from the store's lifecycle
-  /// state).
+  /// Moderation tombstone — username/badges stay; the body renders its
+  /// original content dimmed (Twitch mod view) with a ` —Deleted` marker
+  /// (set by the window from the store's lifecycle state).
   final bool isDeleted;
+
+  /// Display name of the moderator who deleted this message — only single
+  /// deletes carry one (purge//clear payloads don't). Non-null together
+  /// with [isDeleted] makes the row tappable ([onDeletedTap]).
+  final String? deletedActor;
+
+  /// Whether the actor reveal line under a deleted message is expanded.
+  final bool isDeletedExpanded;
+
+  /// Tap handler for a deleted message with a known actor — toggles the
+  /// reveal line. Null (or no actor) = not tappable.
+  final VoidCallback? onDeletedTap;
 
   const TwitchChatMessageRow({
     super.key,
     required this.event,
     required this.settingsBox,
     this.isDeleted = false,
+    this.deletedActor,
+    this.isDeletedExpanded = false,
+    this.onDeletedTap,
   });
 
   static const double _emoteSize = 20.0;
@@ -99,6 +114,30 @@ class TwitchChatMessageRow extends StatelessWidget {
     ];
   }
 
+  /// Body spans for a deleted message — the content stays (Twitch mod
+  /// view) but dims hard: text recolors to half of the marker's dim and
+  /// emote images get a matching [Opacity]. Structure, spacing and error
+  /// builders are preserved.
+  List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
+    final color = Theme.of(context)
+        .textTheme
+        .bodySmall
+        ?.color
+        ?.withValues(alpha: 0.5);
+    return [
+      for (final span in this._messageSpans())
+        if (span is TextSpan)
+          TextSpan(text: span.text, style: TextStyle(color: color))
+        else if (span is WidgetSpan)
+          WidgetSpan(
+            alignment: span.alignment,
+            child: Opacity(opacity: 0.5, child: span.child),
+          )
+        else
+          span,
+    ];
+  }
+
   /// Third-party emotes (7TV/BTTV) arrive as plain text — split on
   /// spaces and swap known tokens for inline images, preserving spacing
   /// exactly. Unknown tokens (and the toggle-off case) stay text.
@@ -137,11 +176,34 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// toggle changes come from the HiveBuilder above the list).
   @override
   Widget build(BuildContext context) {
+    final Widget line = this.event.badges.isEmpty
+        ? this._richText(context)
+        : Observer(builder: this._richText);
+    final bool revealable = this.isDeleted && this.deletedActor != null;
+    final Widget body = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        line,
+        if (revealable && this.isDeletedExpanded)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs / 2),
+            child: Text(
+              "${this.deletedActor} deleted ${this.event.chatterUserName}'s message",
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs / 2),
-      child: this.event.badges.isEmpty
-          ? this._richText(context)
-          : Observer(builder: this._richText),
+      child: revealable
+          ? GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: this.onDeletedTap,
+              child: body,
+            )
+          : body,
     );
   }
 
@@ -158,15 +220,16 @@ class TwitchChatMessageRow extends StatelessWidget {
               ),
             ),
             const TextSpan(text: ': '),
-            if (this.isDeleted)
+            if (this.isDeleted) ...[
+              ...this._dimmedMessageSpans(context),
               TextSpan(
-                text: '<message deleted>',
+                text: ' —Deleted',
                 style: TextStyle(
                   fontStyle: FontStyle.italic,
                   color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
-              )
-            else
+              ),
+            ] else
               ...this._messageSpans(),
           ],
         ),
