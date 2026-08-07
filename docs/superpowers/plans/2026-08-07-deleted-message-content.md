@@ -58,7 +58,7 @@
   - `String? deletedMessageActor(String messageId)` on `TwitchChatStore` — actor display name, null for purge/`/clear`/unknown ids. Plain read; reactivity rides `lifecycleVersion`.
   - `void applyMessageDelete(ChatMessageDeleteEvent event)` — replaces the String-typed action (records tombstone + actor in the same idempotent pass).
 
-- [ ] **Step 1: Extend the fixture and write the failing DTO assertion**
+- [x] **Step 1: Extend the fixture and write the failing DTO assertion**
 
 `test/chat/fixtures/twitch/channel_chat_message_delete.json` becomes (adds
 the `user_*` actor fields the real payload carries, per Twitch docs):
@@ -85,12 +85,12 @@ existing 'message_delete parses the documented example payload' test:
       expect(event.userName, 'Cool_Mod');
 ```
 
-- [ ] **Step 2: Run the DTO test to verify it fails**
+- [x] **Step 2: Run the DTO test to verify it fails**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: FAIL — compile error, `userName` isn't a getter on `ChatMessageDeleteEvent`.
 
-- [ ] **Step 3: Add `userName` to the DTO and regenerate**
+- [x] **Step 3: Add `userName` to the DTO and regenerate**
 
 In `lib/types/classes/twitch/eventsub/chat_lifecycle_events.dart`, replace
 the `ChatMessageDeleteEvent` doc comment + factory with:
@@ -121,7 +121,7 @@ Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_run
 Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: PASS (6/6).
 
-- [ ] **Step 4: Write the failing store tests (update 3 call sites + add actor coverage)**
+- [x] **Step 4: Write the failing store tests (update 3 call sites + add actor coverage)**
 
 In `test/chat/twitch_chat_store_test.dart`, `group('lifecycle')`:
 
@@ -230,14 +230,14 @@ and after `expect(deletes.single.targetUserId, 'u2');` add:
     expect(deletes.single.userName, 'Cool_Mod');
 ```
 
-- [ ] **Step 5: Run the store tests to verify they fail**
+- [x] **Step 5: Run the store tests to verify they fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error: `applyMessageDelete` takes a String,
 `deletedMessageActor` isn't defined, too few arguments to
 `ChatMessageDeleteEvent`.
 
-- [ ] **Step 6: Implement the store changes + wiring**
+- [x] **Step 6: Implement the store changes + wiring**
 
 In `lib/stores/views/twitch_chat.dart`:
 
@@ -309,7 +309,7 @@ regenerates `lib/stores/views/twitch_chat.g.dart`:
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
 
-- [ ] **Step 7: Run focused tests, then the full gates**
+- [x] **Step 7: Run focused tests, then the full gates**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_lifecycle_dto_test.dart test/chat/twitch_eventsub_service_test.dart`
 Expected: PASS (all).
@@ -319,7 +319,7 @@ stand; the row hasn't changed yet).
 Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
 Expected: 0 errors + exactly 6 pre-existing warnings.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/types/classes/twitch/eventsub/chat_lifecycle_events.dart \
@@ -350,7 +350,7 @@ git commit -m "feat(chat): delete actor name flows DTO -> store (deletedMessageA
   - `TwitchChatMessageRow({…, this.isDeleted = false, this.deletedActor, this.isDeletedExpanded = false, this.onDeletedTap})`
   - Rendering contract: `isDeleted` → body = dimmed `_messageSpans()` + ` —Deleted` marker; tappable + expandable iff `isDeleted && deletedActor != null`.
 
-- [ ] **Step 1: Write the failing row tests**
+- [x] **Step 1: Write the failing row tests**
 
 In `test/chat/native_twitch_chat_view_test.dart`:
 
@@ -494,13 +494,13 @@ banners between old and new', update the `containsAll` list:
       );
 ```
 
-- [ ] **Step 2: Run the row tests to verify they fail**
+- [x] **Step 2: Run the row tests to verify they fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — compile error: `deletedActor`/`isDeletedExpanded`/
 `onDeletedTap` aren't parameters; `<message deleted>` assertions mismatch.
 
-- [ ] **Step 3: Implement the row changes**
+- [x] **Step 3: Implement the row changes**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart`:
 
@@ -626,7 +626,7 @@ d) Add the dimming helper after `_messageSpans`:
   }
 ```
 
-- [ ] **Step 4: Run focused tests, then the full gates**
+- [x] **Step 4: Run focused tests, then the full gates**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: PASS (all).
@@ -635,7 +635,7 @@ Expected: PASS (full suite).
 Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
 Expected: 0 errors + exactly 6 pre-existing warnings.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart \
@@ -657,7 +657,7 @@ git commit -m "feat(chat): deleted rows show dimmed content + marker, tappable a
   (`deletedActor`, `isDeletedExpanded`, `onDeletedTap`).
 - Produces: nothing consumed by later code (final task).
 
-- [ ] **Step 1: Write the failing window tests**
+- [x] **Step 1: Write the failing window tests**
 
 In `test/chat/native_twitch_chat_view_test.dart`:
 
@@ -723,12 +723,12 @@ b) Add two tests at the end of the `NativeTwitchChatView` group:
     });
 ```
 
-- [ ] **Step 2: Run the window tests to verify they fail**
+- [x] **Step 2: Run the window tests to verify they fail**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — the reveal never appears (window passes no actor/tap yet).
 
-- [ ] **Step 3: Implement the window changes**
+- [x] **Step 3: Implement the window changes**
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart`:
 
@@ -767,7 +767,7 @@ with:
                   );
 ```
 
-- [ ] **Step 4: Run focused tests, then the full gates**
+- [x] **Step 4: Run focused tests, then the full gates**
 
 Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/`
 Expected: PASS (all chat suites).
@@ -776,7 +776,7 @@ Expected: PASS (full suite).
 Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
 Expected: 0 errors + exactly 6 pre-existing warnings.
 
-- [ ] **Step 5: Docs — changelog**
+- [x] **Step 5: Docs — changelog**
 
 At the top of `docs/changelog-agent.md`, after the 2-line header and before
 the `## 2026-08-06 — Native chat: message lifecycle (deletions + pause)`
@@ -802,7 +802,7 @@ entry, insert:
   errors + 6 pre-existing warnings). No scopes, no persistence.
 ```
 
-- [ ] **Step 6: Docs — session handoff**
+- [x] **Step 6: Docs — session handoff**
 
 In `docs/session-handoff.md`, mark the Wave B lifecycle dogfood as passed
 and add the new dogfood bullet right after that entry. Replace
@@ -827,7 +827,7 @@ unchanged.`):
   - Deleted message with emotes → emotes render dimmed.
 ```
 
-- [ ] **Step 7: Docs — AGENTS.md chat paragraph**
+- [x] **Step 7: Docs — AGENTS.md chat paragraph**
 
 In `AGENTS.md`, in the Chat paragraph, replace
 ``(`message_delete`/`clear_user_messages`/`clear` → tombstones + `/clear` banner, best-effort subs)``
@@ -839,7 +839,7 @@ tombstones (dimmed content + ` —Deleted` marker, tap reveals the deleting
 mod) + `/clear` banner, best-effort subs)
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart \
