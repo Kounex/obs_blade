@@ -353,5 +353,82 @@ void main() {
       ));
       expect(richText.text.toPlainText(), 'Viewer: hi peepoHappy');
     });
+
+    testWidgets('/clear tombstones the rows and banners between old and new',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.appendChatMessageForTest(textEvent('1', 'Viewer32', 'Hi chat'));
+      store.appendChatMessageForTest(textEvent('2', 'Emoter', 'Hello Kappa'));
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+
+      store.applyChatClear();
+      await tester.pump();
+
+      expect(find.text('Chat was cleared by a moderator'), findsOneWidget);
+      final texts = tester
+          .widgetList<RichText>(find.byType(RichText))
+          .map((richText) => richText.text.toPlainText());
+      expect(
+        texts,
+        containsAll(<String>[
+          'Viewer32: <message deleted>',
+          'Emoter: <message deleted>',
+        ]),
+      );
+
+      /// The banner sorts after the cleared rows, before newer ones.
+      store.appendChatMessageForTest(textEvent('3', 'Viewer32', 'fresh'));
+      await tester.pump();
+      final bannerY = tester
+          .getTopLeft(find.text('Chat was cleared by a moderator'))
+          .dy;
+      final freshY = tester
+          .getTopLeft(find.textContaining('fresh', findRichText: true))
+          .dy;
+      expect(bannerY, lessThan(freshY));
+    });
+
+    testWidgets('scrolling up shows the paused chip; tapping it resumes',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      for (var i = 0; i < 50; i++) {
+        store.appendChatMessageForTest(textEvent('$i', 'V$i', 'message $i'));
+      }
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+      expect(find.text('Paused ↓'), findsNothing);
+
+      await tester.drag(find.byType(ListView), const Offset(0, 200));
+      await tester.pump();
+      expect(find.text('Paused ↓'), findsOneWidget);
+      expect(find.text('New messages ↓'), findsNothing);
+
+      await tester.tap(find.text('Paused ↓'));
+      await tester.pumpAndSettle();
+      expect(find.text('Paused ↓'), findsNothing);
+    });
+
+    testWidgets('a new message while paused flips the chip to the unread pill',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      for (var i = 0; i < 50; i++) {
+        store.appendChatMessageForTest(textEvent('$i', 'V$i', 'message $i'));
+      }
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+      await tester.drag(find.byType(ListView), const Offset(0, 200));
+      await tester.pump();
+      expect(find.text('Paused ↓'), findsOneWidget);
+
+      store.appendChatMessageForTest(textEvent('50', 'Late', 'new one'));
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('New messages ↓'), findsOneWidget);
+      expect(find.text('Paused ↓'), findsNothing);
+    });
   });
 }

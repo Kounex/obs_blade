@@ -7,6 +7,8 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
+import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
@@ -81,6 +83,13 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         // ignore: unused_local_variable
         final emoteCatalogVersion =
             GetIt.instance<ThirdPartyEmoteStore>().catalogVersion;
+
+        /// Tracked so lifecycle changes (tombstones, /clear banner)
+        /// rebuild the list — the merge/membership reads below are
+        /// non-reactive plain data, so this version read is their only
+        /// rebuild trigger (same pattern as the emote pop-in above).
+        // ignore: unused_local_variable
+        final lifecycleVersion = this._store.lifecycleVersion;
 
         if (connection == TwitchChatConnectionState.connecting &&
             messageCount == 0) {
@@ -157,8 +166,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           );
         }
 
+        final items = this._store.messagesWithNotices();
+
         /// New-frame bookkeeping: jump to the newest message while pinned,
-        /// flag the unread pill otherwise (post-frame — not during build)
+        /// flag the unread pill otherwise (post-frame — not during build).
+        /// Tombstones don't change the count (no unread flag); a /clear
+        /// banner does (it counts as new activity).
         if (this._pinnedToBottom) {
           this._unreadWhileScrolledUp = false;
           SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -167,14 +180,14 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   this._scrollController.position.maxScrollExtent);
             }
           });
-        } else if (messageCount != this._lastRenderedCount) {
+        } else if (items.length != this._lastRenderedCount) {
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (this.mounted) {
               setState(() => this._unreadWhileScrolledUp = true);
             }
           });
         }
-        this._lastRenderedCount = messageCount;
+        this._lastRenderedCount = items.length;
 
         /// Toggle changes re-filter badges and re-render emote tokens in
         /// place; row-level Observers pick up badge catalog arrivals
@@ -200,13 +213,39 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   horizontal: AppSpacing.sm,
                   vertical: AppSpacing.xs,
                 ),
-                itemCount: messageCount,
-                itemBuilder: (context, index) => TwitchChatMessageRow(
-                  event: this._store.messages[index],
-                  settingsBox: settingsBox,
-                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  if (item is ChatSystemNotice) {
+                    return Padding(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                      child: Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                            ),
+                            child: Text(
+                              'Chat was cleared by a moderator',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                    );
+                  }
+                  final event = item as ChatMessageEvent;
+                  return TwitchChatMessageRow(
+                    event: event,
+                    settingsBox: settingsBox,
+                    isDeleted: this._store.isMessageDeleted(event.messageId),
+                  );
+                },
               ),
-              if (this._unreadWhileScrolledUp)
+              if (!this._pinnedToBottom)
                 Positioned(
                   left: 0,
                   right: 0,
@@ -227,15 +266,23 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                           vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.secondary,
+                          color: this._unreadWhileScrolledUp
+                              ? Theme.of(context).colorScheme.secondary
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                           borderRadius: AppRadius.pill,
                         ),
                         child: Text(
-                          'New messages ↓',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: Colors.white),
+                          this._unreadWhileScrolledUp
+                              ? 'New messages ↓'
+                              : 'Paused ↓',
+                          style: this._unreadWhileScrolledUp
+                              ? Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: Colors.white)
+                              : Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
                     ),
