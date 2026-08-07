@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
@@ -55,7 +56,7 @@ void main() {
     badgeStore = TwitchBadgeStore(service: badgeService);
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___) => eventSubService,
+      eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
       badgeStoreResolver: () => badgeStore,
     );
   });
@@ -451,7 +452,8 @@ void main() {
     Future<void> loginWithCapturedCallbacks() async {
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (onChatMessage, onStateChanged, onRevoked) {
+        eventSubFactory:
+            (_, __, ___, ____, onStateChanged, onRevoked) {
           emitState = onStateChanged;
           emitRevoked = onRevoked;
           return eventSubService;
@@ -507,7 +509,7 @@ void main() {
       messageService = FakeTwitchMessageService();
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___) => eventSubService,
+        eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         messageService: messageService,
       );
@@ -641,7 +643,7 @@ void main() {
       await Hive.openBox(HiveKeys.Settings.name);
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___) => eventSubService,
+        eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         emoteStoreResolver: () => emoteStore,
       );
@@ -697,7 +699,7 @@ void main() {
           const ['user:read:chat', 'user:write:chat', 'user:read:emotes'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___) => eventSubService,
+        eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         userEmoteStoreResolver: () => userEmoteStore,
       );
@@ -843,6 +845,46 @@ void main() {
       /// Arrival seq restarted — the merged list has no stale notices.
       store.appendChatMessageForTest(chatMessage('m2', 'u1'));
       expect(store.messagesWithNotices(), hasLength(1));
+    });
+  });
+
+  group('lifecycle wiring', () {
+    late void Function(ChatMessageDeleteEvent) emitDelete;
+    late void Function(ChatClearUserMessagesEvent) emitPurge;
+    late void Function(ChatClearEvent) emitClear;
+
+    /// A fresh store whose factory captures the lifecycle callbacks the
+    /// store hands to its EventSub service (chatConnectedAt-group pattern).
+    Future<void> loginWithCapturedCallbacks() async {
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (onChatMessage, onMessageDelete,
+            onClearUserMessages, onChatClear, onStateChanged, onRevoked) {
+          emitDelete = onMessageDelete;
+          emitPurge = onClearUserMessages;
+          emitClear = onChatClear;
+          return eventSubService;
+        },
+        badgeStoreResolver: () => badgeStore,
+      );
+      await store.startLogin();
+    }
+
+    test('EventSub lifecycle callbacks drive the store actions', () async {
+      await loginWithCapturedCallbacks();
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+
+      emitDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1'));
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.isMessageDeleted('m2'), isFalse);
+
+      emitPurge(const ChatClearUserMessagesEvent(targetUserId: 'u2'));
+      expect(store.isMessageDeleted('m2'), isTrue);
+
+      emitClear(const ChatClearEvent(broadcasterUserId: 'b1'));
+      expect(store.systemNotices, hasLength(1));
     });
   });
 }

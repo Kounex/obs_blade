@@ -9,6 +9,7 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
@@ -49,6 +50,9 @@ abstract class _TwitchChatStore with Store {
   final TwitchAuthService _authService;
   final TwitchEventSubService Function(
     void Function(ChatMessageEvent) onChatMessage,
+    void Function(ChatMessageDeleteEvent) onMessageDelete,
+    void Function(ChatClearUserMessagesEvent) onClearUserMessages,
+    void Function(ChatClearEvent) onChatClear,
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
   ) _eventSubFactory;
@@ -69,6 +73,9 @@ abstract class _TwitchChatStore with Store {
     TwitchAuthService? authService,
     TwitchEventSubService Function(
       void Function(ChatMessageEvent),
+      void Function(ChatMessageDeleteEvent),
+      void Function(ChatClearUserMessagesEvent),
+      void Function(ChatClearEvent),
       void Function(TwitchEventSubState),
       void Function(String),
     )? eventSubFactory,
@@ -78,9 +85,13 @@ abstract class _TwitchChatStore with Store {
     TwitchMessageService? messageService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
-            ((onChatMessage, onStateChanged, onRevoked) =>
+            ((onChatMessage, onMessageDelete, onClearUserMessages, onChatClear,
+                    onStateChanged, onRevoked) =>
                 TwitchEventSubService(
                   onChatMessage: onChatMessage,
+                  onMessageDelete: onMessageDelete,
+                  onClearUserMessages: onClearUserMessages,
+                  onChatClear: onChatClear,
                   onStateChanged: onStateChanged,
                   onRevoked: onRevoked,
                 )),
@@ -328,6 +339,9 @@ abstract class _TwitchChatStore with Store {
       await this._eventSub?.dispose();
       this._eventSub = this._eventSubFactory(
         this._appendMessage,
+        (event) => this.applyMessageDelete(event.messageId),
+        (event) => this.applyClearUserMessages(event.targetUserId),
+        (_) => this.applyChatClear(),
         this._onEventSubState,
         this._onEventSubRevoked,
       );

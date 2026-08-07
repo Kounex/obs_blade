@@ -74,7 +74,8 @@ void main() {
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___) => FakeTwitchEventSubService(),
+      eventSubFactory: (_, __, ___, ____, _____, ______) =>
+          FakeTwitchEventSubService(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     badgeStore = TwitchBadgeStore(service: FakeTwitchBadgeService());
