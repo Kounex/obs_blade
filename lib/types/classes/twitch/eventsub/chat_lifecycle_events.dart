@@ -4,8 +4,8 @@ part 'chat_lifecycle_events.freezed.dart';
 part 'chat_lifecycle_events.g.dart';
 
 /// `channel.chat.message_delete` event — a moderator removed one message.
-/// Display fields in the payload are deliberately not modeled (nothing
-/// consumes them).
+/// [userName] is the deleting moderator's display name (the row's reveal
+/// line consumes it); other display fields are deliberately not modeled.
 @Freezed(fromJson: true, toJson: false)
 abstract class ChatMessageDeleteEvent with _$ChatMessageDeleteEvent {
   // ignore: invalid_annotation_target
@@ -13,6 +13,7 @@ abstract class ChatMessageDeleteEvent with _$ChatMessageDeleteEvent {
   const factory ChatMessageDeleteEvent({
     required String messageId,
     required String targetUserId,
+    required String userName,
   }) = _ChatMessageDeleteEvent;
 
   factory ChatMessageDeleteEvent.fromJson(Map<String, Object?> json) =>

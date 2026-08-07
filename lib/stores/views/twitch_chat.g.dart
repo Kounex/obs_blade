@@ -308,12 +308,12 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
-  void applyMessageDelete(String messageId) {
+  void applyMessageDelete(ChatMessageDeleteEvent event) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore.applyMessageDelete',
     );
     try {
-      return super.applyMessageDelete(messageId);
+      return super.applyMessageDelete(event);
     } finally {
       _$_TwitchChatStoreActionController.endAction(_$actionInfo);
     }

@@ -741,7 +741,8 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       final version = store.lifecycleVersion;
 
-      store.applyMessageDelete('m1');
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
 
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(store.lifecycleVersion, version + 1);
@@ -751,7 +752,8 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       final version = store.lifecycleVersion;
 
-      store.applyMessageDelete('nope');
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'nope', targetUserId: 'u1', userName: 'Cool_Mod'));
 
       expect(store.isMessageDeleted('nope'), isFalse);
       expect(store.lifecycleVersion, version);
@@ -823,28 +825,50 @@ void main() {
       for (var i = 0; i < 500; i++) {
         store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
       }
-      store.applyMessageDelete('m0');
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm0', targetUserId: 'u1', userName: 'Cool_Mod'));
       expect(store.isMessageDeleted('m0'), isTrue);
+      expect(store.deletedMessageActor('m0'), 'Cool_Mod');
 
       store.appendChatMessageForTest(chatMessage('m500', 'u1'));
 
       expect(store.messages, hasLength(500));
       expect(store.isMessageDeleted('m0'), isFalse);
+      expect(store.deletedMessageActor('m0'), isNull);
     });
 
     test('logout clears tombstones, notices and the arrival counter', () async {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.applyChatClear();
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
       expect(store.systemNotices, isNotEmpty);
 
       await store.logout();
 
       expect(store.isMessageDeleted('m1'), isFalse);
+      expect(store.deletedMessageActor('m1'), isNull);
       expect(store.systemNotices, isEmpty);
 
       /// Arrival seq restarted — the merged list has no stale notices.
       store.appendChatMessageForTest(chatMessage('m2', 'u1'));
       expect(store.messagesWithNotices(), hasLength(1));
+    });
+
+    test('deleting records the actor; purge and /clear record none', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+      store.appendChatMessageForTest(chatMessage('m3', 'u3'));
+
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyClearUserMessages('u2');
+      store.applyChatClear();
+
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+      expect(store.deletedMessageActor('m2'), isNull);
+      expect(store.deletedMessageActor('m3'), isNull);
+      expect(store.deletedMessageActor('nope'), isNull);
     });
   });
 
@@ -876,8 +900,9 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m2', 'u2'));
 
       emitDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1'));
+          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
       expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
       expect(store.isMessageDeleted('m2'), isFalse);
 
       emitPurge(const ChatClearUserMessagesEvent(targetUserId: 'u2'));

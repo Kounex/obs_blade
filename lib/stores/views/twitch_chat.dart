@@ -153,6 +153,12 @@ abstract class _TwitchChatStore with Store {
   /// rebuild trigger — same pattern as the emote catalogs.
   final Set<String> _deletedMessageIds = <String>{};
 
+  /// Display name of the moderator who deleted a message, keyed by
+  /// messageId — plain Map, same [lifecycleVersion] reactivity story as
+  /// [_deletedMessageIds]. Only single deletes carry an actor (purge and
+  /// /clear payloads don't), so those ids are absent here.
+  final Map<String, String> _deletedMessageActors = <String, String>{};
+
   /// System banners merged into the scroll by arrival sequence — plain
   /// List, same [lifecycleVersion] reactivity story as [_deletedMessageIds].
   final List<ChatSystemNotice> systemNotices = <ChatSystemNotice>[];
@@ -339,7 +345,7 @@ abstract class _TwitchChatStore with Store {
       await this._eventSub?.dispose();
       this._eventSub = this._eventSubFactory(
         this._appendMessage,
-        (event) => this.applyMessageDelete(event.messageId),
+        (event) => this.applyMessageDelete(event),
         (event) => this.applyClearUserMessages(event.targetUserId),
         (_) => this.applyChatClear(),
         this._onEventSubState,
@@ -516,6 +522,7 @@ abstract class _TwitchChatStore with Store {
     this._arrivalSeq++;
     while (this.messages.length > kMaxMessages) {
       this._deletedMessageIds.remove(this.messages.first.messageId);
+      this._deletedMessageActors.remove(this.messages.first.messageId);
       this.messages.removeAt(0);
     }
   }
@@ -530,6 +537,12 @@ abstract class _TwitchChatStore with Store {
   /// [lifecycleVersion]).
   bool isMessageDeleted(String messageId) =>
       this._deletedMessageIds.contains(messageId);
+
+  /// Display name of the moderator who deleted [messageId] — null for
+  /// purges, /clear, and unknown/untombstoned ids. Plain read (reactivity
+  /// rides [lifecycleVersion]).
+  String? deletedMessageActor(String messageId) =>
+      this._deletedMessageActors[messageId];
 
   /// Visible messages + system notices in arrival order — the window's
   /// single render source. A notice sorts after every message with
@@ -558,10 +571,12 @@ abstract class _TwitchChatStore with Store {
   /// Moderation lifecycle — all idempotent; events for unknown/evicted
   /// ids are no-ops. [lifecycleVersion] bumps only on real mutations.
   @action
-  void applyMessageDelete(String messageId) {
-    final visible =
-        this.messages.any((message) => message.messageId == messageId);
-    if (visible && this._deletedMessageIds.add(messageId)) {
+  void applyMessageDelete(ChatMessageDeleteEvent event) {
+    final visible = this
+        .messages
+        .any((message) => message.messageId == event.messageId);
+    if (visible && this._deletedMessageIds.add(event.messageId)) {
+      this._deletedMessageActors[event.messageId] = event.userName;
       this.lifecycleVersion++;
     }
   }
@@ -597,6 +612,7 @@ abstract class _TwitchChatStore with Store {
 
   /// Lifecycle wipe shared by logout and external session resets.
   void _clearLifecycle() {
+    this._deletedMessageActors.clear();
     this._deletedMessageIds.clear();
     this.systemNotices.clear();
     this._arrivalSeq = 0;

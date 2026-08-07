@@ -333,6 +333,7 @@ void main() {
         .add(lifecycleNotification('channel.chat.message_delete', {
       'broadcaster_user_id': 'b1',
       'target_user_id': 'u2',
+      'user_name': 'Cool_Mod',
       'message_id': 'm-9',
     }));
     channels.single.incoming
@@ -347,6 +348,7 @@ void main() {
 
     expect(deletes.single.messageId, 'm-9');
     expect(deletes.single.targetUserId, 'u2');
+    expect(deletes.single.userName, 'Cool_Mod');
     expect(purges.single.targetUserId, 'u2');
     expect(clears.single.broadcasterUserId, 'b1');
     expect(messages, isEmpty);

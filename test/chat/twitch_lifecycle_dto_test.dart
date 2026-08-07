@@ -15,6 +15,7 @@ void main() {
           fixture('channel_chat_message_delete'));
       expect(event.messageId, 'e860a7a5-58d3-4959-9c5f-0f4dc9b5b0a2');
       expect(event.targetUserId, '7734');
+      expect(event.userName, 'Cool_Mod');
     });
 
     test('clear_user_messages parses the documented example payload', () {
