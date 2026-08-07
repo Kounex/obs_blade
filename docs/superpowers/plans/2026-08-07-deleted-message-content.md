@@ -162,12 +162,18 @@ and at the end, after `expect(store.isMessageDeleted('m0'), isFalse);` add:
       expect(store.deletedMessageActor('m0'), isNull);
 ```
 
-d) In 'logout clears tombstones, notices and the arrival counter', right
-after the `store.applyChatClear();` setup line, add:
+d) In 'logout clears tombstones, notices and the arrival counter', replace
+the setup — `store.appendChatMessageForTest(chatMessage('m1', 'u1'));`
+followed by `store.applyChatClear();` — with (delete BEFORE clear, so the
+actor is genuinely recorded and the post-logout `isNull` proves the wipe):
 
 ```dart
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.applyMessageDelete(const ChatMessageDeleteEvent(
           messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyChatClear();
+      expect(store.systemNotices, isNotEmpty);
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
 ```
 
 and after `expect(store.isMessageDeleted('m1'), isFalse);` add:
