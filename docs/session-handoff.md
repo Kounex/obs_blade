@@ -161,7 +161,7 @@ source of truth; never leave work local-only when handing over.
   shows a "Paused ↓" chip when scrolled up. Spec
   `docs/superpowers/specs/2026-08-06-chat-message-lifecycle-design.md` +
   plan `docs/superpowers/plans/2026-08-06-chat-message-lifecycle.md`.
-  **Maintainer dogfood pending:**
+  **Maintainer dogfood PASSED 2026-08-07.**
   - Delete a message from twitch.tv mod tools → tombstone in OBS Blade
     (username stays).
   - Time out a chatty user → all their visible messages tombstone.
@@ -177,6 +177,19 @@ source of truth; never leave work local-only when handing over.
   - Degrade path: chat works with no tombstones if the lifecycle
     subscriptions fail (log lines only).
   - WebView engine, YouTube/Owncast, tablet unchanged.
+- **Deleted content + actor reveal on `master`** (2026-08-07) — deleted
+  messages show their dimmed content with a ` —Deleted` marker (Twitch mod
+  view); tapping a mod-deleted message reveals who deleted it. Spec
+  `docs/superpowers/specs/2026-08-07-deleted-message-content-design.md` +
+  plan `docs/superpowers/plans/2026-08-07-deleted-message-content.md`.
+  **Maintainer dogfood pending:**
+  - Delete a message from twitch.tv mod tools → content stays, dimmed,
+    marker ` —Deleted`; username/badges untouched.
+  - Tap it → `<mod> deleted <chatter>'s message`; tap again collapses;
+    expansion survives new incoming messages.
+  - Time out a user / `/clear` → content + marker but NO tap reveal
+    (payloads carry no actor).
+  - Deleted message with emotes → emotes render dimmed.
 - **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
   emotes, author colors, background recovery (observe long-term), Force
   Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):

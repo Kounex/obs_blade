@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-07 — Native chat: deleted content + actor reveal (mod view)
+
+- Deleted messages now match twitch.tv's moderator view: the original
+  content stays (text dimmed to 50% of the marker's dim, emotes at matching
+  opacity) with an italic ` —Deleted` marker — replacing Wave B's
+  `<message deleted>` tombstone. Uniform across single deletes, timeout/ban
+  purges, and `/clear` purges; username + badges untouched.
+- Tapping a message deleted via `channel.chat.message_delete` expands an
+  inline reveal `<actor> deleted <chatter>'s message`. The DTO gains
+  `userName` (the deleting moderator; `targetUserName` deliberately
+  unmodeled — the chatter's name comes from the message itself), the store
+  keeps a `_deletedMessageActors` map (pruned at the 500-cap, wiped with
+  lifecycle), and the window owns a session-bounded expansion set.
+  Purge/`/clear` payloads carry no actor — those rows are not tappable.
+- Tests: DTO 1 updated, store 1 new + 5 updated, row 1 rewritten + 3 new,
+  window 2 new + 1 updated (test counts: chat suites all green; analyze 0
+  errors + 6 pre-existing warnings). No scopes, no persistence.
+
 ## 2026-08-06 — Native chat: message lifecycle (deletions + pause)
 
 - `TwitchEventSubService` subscribes to four types now — `channel.chat.message`

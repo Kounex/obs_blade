@@ -83,10 +83,11 @@ seam); third-party (7TV/BTTV) emotes render inline via
 picker (first-party Get User Emotes via `TwitchEmoteStore` + the
 third-party catalogs) docks in the native input (`user:read:emotes` silent
 upgrade); message lifecycle rides the same session
-(`message_delete`/`clear_user_messages`/`clear` → tombstones + `/clear`
-banner, best-effort subs) and scrolled-up chat shows a pause chip. Next:
-availability/entitlement gate, replies/announce — see chat
-audit + handoff.
+(`message_delete`/`clear_user_messages`/`clear` → content-visible
+tombstones (dimmed content + ` —Deleted` marker, tap reveals the deleting
+mod) + `/clear` banner, best-effort subs) and scrolled-up chat shows a
+pause chip. Next: availability/entitlement gate, replies/announce — see
+chat audit + handoff.
 
 ## Docs index
 

@@ -32,6 +32,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   bool _unreadWhileScrolledUp = false;
   int _lastRenderedCount = 0;
 
+  /// Ids of deleted messages whose actor reveal is expanded — toggled by
+  /// tapping the row. Survives lifecycle rebuilds; dead ids (evicted,
+  /// logged out) never render, so the set stays session-bounded.
+  final Set<String> _expandedDeletedIds = <String>{};
+
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
 
   @override
@@ -238,10 +243,23 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     );
                   }
                   final event = item as ChatMessageEvent;
+                  final actor =
+                      this._store.deletedMessageActor(event.messageId);
                   return TwitchChatMessageRow(
                     event: event,
                     settingsBox: settingsBox,
                     isDeleted: this._store.isMessageDeleted(event.messageId),
+                    deletedActor: actor,
+                    isDeletedExpanded:
+                        this._expandedDeletedIds.contains(event.messageId),
+                    onDeletedTap: actor == null
+                        ? null
+                        : () => setState(() {
+                              final id = event.messageId;
+                              if (!this._expandedDeletedIds.remove(id)) {
+                                this._expandedDeletedIds.add(id);
+                              }
+                            }),
                   );
                 },
               ),

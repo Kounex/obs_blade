@@ -9,6 +9,7 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
@@ -511,6 +512,57 @@ void main() {
       await tester.pump();
       expect(find.text('New messages ↓'), findsOneWidget);
       expect(find.text('Paused ↓'), findsNothing);
+    });
+
+    testWidgets('tapping a deleted message reveals and collapses the actor',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.appendChatMessageForTest(textEvent('1', 'Viewer32', 'Hi chat'));
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: '1', targetUserId: '1', userName: 'Cool_Mod'));
+      await tester.pump();
+
+      expect(find.text("Cool_Mod deleted Viewer32's message"), findsNothing);
+
+      await tester.tap(find.byType(TwitchChatMessageRow));
+      await tester.pump();
+      expect(
+          find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
+
+      /// The expansion survives a lifecycle rebuild (new message arrives).
+      store.appendChatMessageForTest(textEvent('2', 'Late', 'fresh'));
+      await tester.pump();
+      expect(
+          find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
+
+      await tester.tap(find.byType(TwitchChatMessageRow).first);
+      await tester.pump();
+      expect(find.text("Cool_Mod deleted Viewer32's message"), findsNothing);
+    });
+
+    testWidgets('a purged message shows content but no tap reveal',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.appendChatMessageForTest(textEvent('1', 'Viewer32', 'Hi chat'));
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+
+      store.applyClearUserMessages('1');
+      await tester.pump();
+
+      expect(
+        find.text('Viewer32: Hi chat —Deleted', findRichText: true),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byType(TwitchChatMessageRow));
+      await tester.pump();
+      expect(find.textContaining('deleted Viewer32'), findsNothing);
     });
   });
 }
