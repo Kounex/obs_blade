@@ -7,6 +7,7 @@ import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
+import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
@@ -133,6 +134,27 @@ abstract class _TwitchChatStore with Store {
 
   final ObservableList<ChatMessageEvent> messages =
       ObservableList<ChatMessageEvent>();
+
+  /// Ids of visible messages tombstoned by moderation (delete / timeout /
+  /// ban / /clear) — plain Set, pruned with the 500-cap. UI reactivity
+  /// rides [lifecycleVersion]: rows build inside the window's HiveBuilder
+  /// (untracked by the outer Observer), so the version read is the only
+  /// rebuild trigger — same pattern as the emote catalogs.
+  final Set<String> _deletedMessageIds = <String>{};
+
+  /// System banners merged into the scroll by arrival sequence — plain
+  /// List, same [lifecycleVersion] reactivity story as [_deletedMessageIds].
+  final List<ChatSystemNotice> systemNotices = <ChatSystemNotice>[];
+
+  /// Bumped on every lifecycle mutation (tombstone / banner) — the
+  /// window's tracked rebuild signal for the two plain containers above.
+  @observable
+  int lifecycleVersion = 0;
+
+  /// Monotonic arrival counter — a message at index i has arrival seq
+  /// [_arrivalSeq] - messages.length + i + 1 (front eviction shifts
+  /// indices, not seqs). Reset on logout/session wipe.
+  int _arrivalSeq = 0;
 
   @computed
   bool get isLoggedIn => this.authState == TwitchAuthState.loggedIn;
@@ -269,6 +291,7 @@ abstract class _TwitchChatStore with Store {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     await this._disconnectChat();
     this.messages.clear();
+    this._clearLifecycle();
     try {
       this._badgeStoreResolver().clear();
     } catch (e) {
@@ -476,7 +499,9 @@ abstract class _TwitchChatStore with Store {
   @action
   void _appendMessage(ChatMessageEvent event) {
     this.messages.add(event);
+    this._arrivalSeq++;
     while (this.messages.length > kMaxMessages) {
+      this._deletedMessageIds.remove(this.messages.first.messageId);
       this.messages.removeAt(0);
     }
   }
@@ -486,6 +511,82 @@ abstract class _TwitchChatStore with Store {
   @action
   void appendChatMessageForTest(ChatMessageEvent event) =>
       this._appendMessage(event);
+
+  /// Whether [messageId] is tombstoned — plain read (reactivity rides
+  /// [lifecycleVersion]).
+  bool isMessageDeleted(String messageId) =>
+      this._deletedMessageIds.contains(messageId);
+
+  /// Visible messages + system notices in arrival order — the window's
+  /// single render source. A notice sorts after every message with
+  /// seq <= afterSeq; front eviction drops old seqs naturally.
+  List<Object> messagesWithNotices() {
+    if (this.systemNotices.isEmpty) return List.of(this.messages);
+    final base = this._arrivalSeq - this.messages.length + 1;
+    final merged = <Object>[];
+    var noticeIndex = 0;
+    for (var i = 0; i < this.messages.length; i++) {
+      final seq = base + i;
+      while (noticeIndex < this.systemNotices.length &&
+          this.systemNotices[noticeIndex].afterSeq < seq) {
+        merged.add(this.systemNotices[noticeIndex]);
+        noticeIndex++;
+      }
+      merged.add(this.messages[i]);
+    }
+    while (noticeIndex < this.systemNotices.length) {
+      merged.add(this.systemNotices[noticeIndex]);
+      noticeIndex++;
+    }
+    return merged;
+  }
+
+  /// Moderation lifecycle — all idempotent; events for unknown/evicted
+  /// ids are no-ops. [lifecycleVersion] bumps only on real mutations.
+  @action
+  void applyMessageDelete(String messageId) {
+    final visible =
+        this.messages.any((message) => message.messageId == messageId);
+    if (visible && this._deletedMessageIds.add(messageId)) {
+      this.lifecycleVersion++;
+    }
+  }
+
+  @action
+  void applyClearUserMessages(String targetUserId) {
+    var changed = false;
+    for (final message in this.messages) {
+      if (message.chatterUserId == targetUserId &&
+          this._deletedMessageIds.add(message.messageId)) {
+        changed = true;
+      }
+    }
+    if (changed) this.lifecycleVersion++;
+  }
+
+  /// `/clear` on an empty chat is a full no-op — nothing was deleted, so
+  /// nothing is marked (and the window's empty-states stay correct).
+  @action
+  void applyChatClear() {
+    if (this.messages.isEmpty) return;
+    for (final message in this.messages) {
+      this._deletedMessageIds.add(message.messageId);
+    }
+    this.systemNotices.add(
+      ChatSystemNotice(
+        afterSeq: this._arrivalSeq,
+        kind: ChatSystemNoticeKind.chatCleared,
+      ),
+    );
+    this.lifecycleVersion++;
+  }
+
+  /// Lifecycle wipe shared by logout and external session resets.
+  void _clearLifecycle() {
+    this._deletedMessageIds.clear();
+    this.systemNotices.clear();
+    this._arrivalSeq = 0;
+  }
 
   void _onEventSubState(TwitchEventSubState state) {
     runInAction(() {
@@ -538,6 +639,7 @@ abstract class _TwitchChatStore with Store {
   void _resetToLoggedOut() {
     runInAction(() {
       this.messages.clear();
+      this._clearLifecycle();
       this.user = null;
       this.authState = TwitchAuthState.loggedOut;
     });

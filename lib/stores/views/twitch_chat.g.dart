@@ -198,6 +198,24 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$lifecycleVersionAtom = Atom(
+    name: '_TwitchChatStore.lifecycleVersion',
+    context: context,
+  );
+
+  @override
+  int get lifecycleVersion {
+    _$lifecycleVersionAtom.reportRead();
+    return super.lifecycleVersion;
+  }
+
+  @override
+  set lifecycleVersion(int value) {
+    _$lifecycleVersionAtom.reportWrite(value, super.lifecycleVersion, () {
+      super.lifecycleVersion = value;
+    });
+  }
+
   late final _$initAsyncAction = AsyncAction(
     '_TwitchChatStore.init',
     context: context,
@@ -290,6 +308,42 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void applyMessageDelete(String messageId) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyMessageDelete',
+    );
+    try {
+      return super.applyMessageDelete(messageId);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void applyClearUserMessages(String targetUserId) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyClearUserMessages',
+    );
+    try {
+      return super.applyClearUserMessages(targetUserId);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void applyChatClear() {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyChatClear',
+    );
+    try {
+      return super.applyChatClear();
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
 authState: ${authState},
@@ -302,6 +356,7 @@ chatError: ${chatError},
 chatConnectedAt: ${chatConnectedAt},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
+lifecycleVersion: ${lifecycleVersion},
 isLoggedIn: ${isLoggedIn}
     ''';
   }

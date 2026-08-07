@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
+import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
@@ -19,6 +20,18 @@ import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
+
+ChatMessageEvent chatMessage(String id, String chatterId) => ChatMessageEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: chatterId,
+      chatterUserLogin: 'user$chatterId',
+      chatterUserName: 'User$chatterId',
+      messageId: id,
+      message: ChatMessageText(
+        text: 'text $id',
+        fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
+      ),
+    );
 
 void main() {
   late Directory tempDir;
@@ -718,6 +731,118 @@ void main() {
 
       expect(userEmoteStore.channelEmotes, isEmpty);
       expect(userEmoteStore.globalEmotes, isEmpty);
+    });
+  });
+
+  group('lifecycle', () {
+    test('deleting a visible message tombstones it and bumps the version', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      final version = store.lifecycleVersion;
+
+      store.applyMessageDelete('m1');
+
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.lifecycleVersion, version + 1);
+    });
+
+    test('deleting an unknown id is a no-op', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      final version = store.lifecycleVersion;
+
+      store.applyMessageDelete('nope');
+
+      expect(store.isMessageDeleted('nope'), isFalse);
+      expect(store.lifecycleVersion, version);
+    });
+
+    test('user purge tombstones only that user and is idempotent', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+      store.appendChatMessageForTest(chatMessage('m3', 'u2'));
+
+      store.applyClearUserMessages('u2');
+
+      expect(store.isMessageDeleted('m1'), isFalse);
+      expect(store.isMessageDeleted('m2'), isTrue);
+      expect(store.isMessageDeleted('m3'), isTrue);
+      final version = store.lifecycleVersion;
+
+      store.applyClearUserMessages('u2');
+      expect(store.lifecycleVersion, version);
+    });
+
+    test('chat clear tombstones everything and banners between old and new', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+
+      store.applyChatClear();
+
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.isMessageDeleted('m2'), isTrue);
+      expect(store.systemNotices.single.kind, ChatSystemNoticeKind.chatCleared);
+
+      store.appendChatMessageForTest(chatMessage('m3', 'u1'));
+      final items = store.messagesWithNotices();
+      expect(items, hasLength(4));
+      expect(items[0], isA<ChatMessageEvent>());
+      expect(items[1], isA<ChatMessageEvent>());
+      expect(items[2], isA<ChatSystemNotice>());
+      expect(items[3], isA<ChatMessageEvent>());
+    });
+
+    test('chat clear on an empty chat is a full no-op', () {
+      final version = store.lifecycleVersion;
+
+      store.applyChatClear();
+
+      expect(store.systemNotices, isEmpty);
+      expect(store.lifecycleVersion, version);
+    });
+
+    test('two clears keep banner order in the merged list', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyChatClear();
+      store.appendChatMessageForTest(chatMessage('m2', 'u1'));
+      store.applyChatClear();
+
+      // runtimeType is the freezed _ChatMessageEvent, so assert with isA.
+      final items = store.messagesWithNotices();
+      expect(items, hasLength(4));
+      expect(items[0], isA<ChatMessageEvent>());
+      expect(items[1], isA<ChatSystemNotice>());
+      expect(items[2], isA<ChatMessageEvent>());
+      expect(items[3], isA<ChatSystemNotice>());
+    });
+
+    test('cap eviction prunes the tombstone set', () {
+      // kMaxMessages lives on the private _TwitchChatStore — statics don't
+      // cross the mixin-application alias, so the cap is literal here (same
+      // as the 'message buffer' group above).
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      store.applyMessageDelete('m0');
+      expect(store.isMessageDeleted('m0'), isTrue);
+
+      store.appendChatMessageForTest(chatMessage('m500', 'u1'));
+
+      expect(store.messages, hasLength(500));
+      expect(store.isMessageDeleted('m0'), isFalse);
+    });
+
+    test('logout clears tombstones, notices and the arrival counter', () async {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyChatClear();
+      expect(store.systemNotices, isNotEmpty);
+
+      await store.logout();
+
+      expect(store.isMessageDeleted('m1'), isFalse);
+      expect(store.systemNotices, isEmpty);
+
+      /// Arrival seq restarted — the merged list has no stale notices.
+      store.appendChatMessageForTest(chatMessage('m2', 'u1'));
+      expect(store.messagesWithNotices(), hasLength(1));
     });
   });
 }
