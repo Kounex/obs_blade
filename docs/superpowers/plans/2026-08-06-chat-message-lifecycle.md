@@ -1528,10 +1528,12 @@ Expected: FAIL — no banner text, no `Paused ↓` chip.
 
 In `lib/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart`:
 
-a) Add the import:
+a) Add the imports (both — the itemBuilder in (d) switches on `ChatSystemNotice`
+   and casts to `ChatMessageEvent`, and Dart imports aren't transitive):
 
 ```dart
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 ```
 
 b) In the Observer builder, right after the existing
