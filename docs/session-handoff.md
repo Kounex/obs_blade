@@ -137,7 +137,7 @@ source of truth; never leave work local-only when handing over.
   (silent upgrade; CTA for pre-upgrade sessions). Spec
   `docs/superpowers/specs/2026-08-06-emote-picker-design.md` + plan
   `docs/superpowers/plans/2026-08-06-emote-picker.md`. **Maintainer
-  dogfood pending:**
+  dogfood PASSED 2026-08-07** (tested together with the lifecycle wave).
   - Fresh login (to pick up the new scope) → picker shows Channel + Global
     sections; globals present (dogfood verifies Get User Emotes includes
     Twitch globals — if missing, the spec's Get Global Emotes fallback
