@@ -280,9 +280,15 @@ void main() {
 
     /// Account chip instead of a bare status icon — reads as tappable
     expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
-    expect(find.text('Kounex'), findsOneWidget);
 
-    await tester.tap(find.text('Kounex'));
+    /// The display name shows twice: the channel dropdown's own-channel row
+    /// and the account chip
+    expect(find.text('Kounex'), findsNWidgets(2));
+
+    await tester.tap(find.descendant(
+      of: find.byType(TwitchAccountControl),
+      matching: find.text('Kounex'),
+    ));
     await tester.pumpAndSettle();
     expect(find.text('Disconnect Twitch?'), findsOneWidget);
   });

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../../models/enums/chat_engine.dart';
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
+import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
+import 'native_channel_dropdown.dart';
 import 'twitch_account_control.dart';
 import 'username_action_row.dart';
 import 'username_dropdown.dart';
@@ -23,7 +27,8 @@ import 'username_dropdown.dart';
 /// Native mode (Twitch only, see [nativeChatAvailableFor]): the engine
 /// switch plus the native controls (options sheet button + account
 /// control: login/logout, connected account) - never the username
-/// controls.
+/// controls. While logged in, the multi-chat channel dropdown
+/// ([NativeChannelDropdown]) takes the username dropdown's slot.
 class ChatUsernameBar extends StatelessWidget {
   const ChatUsernameBar({
     super.key,
@@ -81,7 +86,25 @@ class ChatUsernameBar extends StatelessWidget {
                         UsernameDropdown(
                           settingsBox: settingsBox,
                         ),
-                      ],
+                      ] else
+                        Observer(
+                          builder: (_) => GetIt
+                                  .instance<TwitchChatStore>()
+                                  .isLoggedIn
+
+                              /// Inner Column: [NativeChannelDropdown] roots
+                              /// in a Flexible (like [UsernameDropdown]), so
+                              /// it needs a direct Flex ancestor
+                              ? const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(height: AppSpacing.sm),
+                                    NativeChannelDropdown(),
+                                  ],
+                                )
+                              : const SizedBox.shrink(),
+                        ),
                     ],
                   ),
                 ),
