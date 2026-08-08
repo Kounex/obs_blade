@@ -74,13 +74,27 @@ class TwitchEventSubService {
   Timer? _watchdog;
 
   String? _accessToken;
+
+  /// The session's authenticated user — keepalive of `user_id` in chat
+  /// conditions and BOTH slots of the own-channel `channel.moderate` sub.
   String? _userId;
+
+  /// The channel chat is read from / sent to — `broadcaster_user_id` in
+  /// the chat + lifecycle conditions. Own id in single-chat mode, any
+  /// added channel after a multi-chat [switchChannel].
+  String? _broadcasterId;
   bool _includeModeration = false;
   String? _sessionId;
 
-  /// Ids created on the current session (message + whichever lifecycle
-  /// subscriptions succeeded) — resume check + best-effort cleanup.
+  /// Channel-scoped ids created on the current session (message +
+  /// whichever lifecycle subscriptions succeeded) — resume check, channel
+  /// switch teardown + best-effort cleanup. The moderate sub is tracked
+  /// separately: it is own-channel and never channel-scoped.
   List<String> _subscriptionIds = <String>[];
+
+  /// The own-channel `channel.moderate` v2 subscription id — untouched by
+  /// [switchChannel], deleted on [dispose].
+  String? _moderateSubscriptionId;
   int _reconnectAttempts = 0;
   bool _disposed = false;
 
@@ -102,14 +116,40 @@ class TwitchEventSubService {
   Future<void> connect({
     required String accessToken,
     required String userId,
+    required String broadcasterId,
     bool includeModeration = false,
   }) async {
     this._accessToken = accessToken;
     this._userId = userId;
+    this._broadcasterId = broadcasterId;
     this._includeModeration = includeModeration;
     this._disposed = false;
     this._reconnectAttempts = 0;
     this._openSocket(Uri.parse(_wsUrl));
+  }
+
+  /// Move the chat to another channel ON THE SAME websocket session
+  /// (multi-chat switch): the channel-scoped subscriptions are deleted
+  /// best-effort and re-created with [broadcasterId]; the own-channel
+  /// `channel.moderate` sub is not channel-scoped and stays untouched.
+  Future<void> switchChannel(String broadcasterId) async {
+    final subscriptionIds = List<String>.of(this._subscriptionIds);
+    this._subscriptionIds = <String>[];
+    final token = this._accessToken;
+    if (token != null) {
+      for (final id in subscriptionIds) {
+        try {
+          await this._client.delete(
+            Uri.parse('$_subscriptionsUrl?id=$id'),
+            headers: TwitchAuthService.helixHeaders(token),
+          );
+        } catch (_) {
+          // best effort — Twitch drops them anyway once superseded
+        }
+      }
+    }
+    this._broadcasterId = broadcasterId;
+    await this._createChannelSubscriptions();
   }
 
   void _openSocket(Uri uri) {
@@ -261,19 +301,30 @@ class TwitchEventSubService {
   }
 
   Future<void> _createSubscriptions() async {
+    await this._createChannelSubscriptions();
+    if (this._includeModeration) await this._createModerateSubscription();
+  }
+
+  /// The channel-scoped subs (message + lifecycle) for the CURRENT
+  /// [_broadcasterId] — run on a fresh session and on every
+  /// [switchChannel]. `channel.chat.message` is mandatory — a failure
+  /// routes to [onRevoked]. The three lifecycle types are best-effort:
+  /// failures are logged and degrade tombstones, never chat.
+  Future<void> _createChannelSubscriptions() async {
     final token = this._accessToken;
     final userId = this._userId;
+    final broadcasterId = this._broadcasterId;
     final sessionId = this._sessionId;
-    if (token == null || userId == null || sessionId == null) return;
+    if (token == null ||
+        userId == null ||
+        broadcasterId == null ||
+        sessionId == null) {
+      return;
+    }
 
-    final types = <String>[
-      ..._kSubscriptionTypes,
-      if (this._includeModeration) _kModerateType,
-    ];
     final created = <String>[];
-    for (final type in types) {
+    for (final type in _kSubscriptionTypes) {
       final mandatory = type == _kMessageType;
-      final isModerate = type == _kModerateType;
 
       /// The socket-level failure path (DNS/socket/timeout) must not
       /// escape this unawaited future — surface it like a failed
@@ -287,13 +338,11 @@ class TwitchEventSubService {
           },
           body: json.encode({
             'type': type,
-            'version': isModerate ? '2' : '1',
-            'condition': isModerate
-                ? {
-                    'broadcaster_user_id': userId,
-                    'moderator_user_id': userId,
-                  }
-                : {'broadcaster_user_id': userId, 'user_id': userId},
+            'version': '1',
+            'condition': {
+              'broadcaster_user_id': broadcasterId,
+              'user_id': userId,
+            },
             'transport': {'method': 'websocket', 'session_id': sessionId},
           }),
         );
@@ -325,6 +374,50 @@ class TwitchEventSubService {
       }
     }
     this._subscriptionIds = created;
+  }
+
+  /// `channel.moderate` v2 — own-channel only (both condition slots are
+  /// the session user), created once per session for the deleting-mod
+  /// reveal. Best-effort: failures degrade the reveal, never chat.
+  Future<void> _createModerateSubscription() async {
+    final token = this._accessToken;
+    final userId = this._userId;
+    final sessionId = this._sessionId;
+    if (token == null || userId == null || sessionId == null) return;
+
+    try {
+      final response = await this._client.post(
+        Uri.parse(_subscriptionsUrl),
+        headers: {
+          ...TwitchAuthService.helixHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'type': _kModerateType,
+          'version': '2',
+          'condition': {
+            'broadcaster_user_id': userId,
+            'moderator_user_id': userId,
+          },
+          'transport': {'method': 'websocket', 'session_id': sessionId},
+        }),
+      );
+
+      if (response.statusCode == 202) {
+        final data =
+            (json.decode(response.body) as Map<String, dynamic>)['data'];
+        this._moderateSubscriptionId = (data as List).first['id'] as String?;
+      } else {
+        GeneralHelper.advLog(
+          'Twitch EventSub: lifecycle subscription $_kModerateType failed '
+          '(${response.statusCode}) — tombstones degraded this session',
+        );
+      }
+    } catch (e) {
+      GeneralHelper.advLog(
+        'Twitch EventSub: lifecycle subscription $_kModerateType failed — $e',
+      );
+    }
   }
 
   void _handleDisconnect() {
@@ -359,9 +452,13 @@ class TwitchEventSubService {
     this._disposed = true;
     this._closeSocket();
 
-    final subscriptionIds = List<String>.of(this._subscriptionIds);
+    final subscriptionIds = <String>[
+      ...this._subscriptionIds,
+      if (this._moderateSubscriptionId != null) this._moderateSubscriptionId!,
+    ];
     final token = this._accessToken;
     this._subscriptionIds = <String>[];
+    this._moderateSubscriptionId = null;
     if (token != null) {
       for (final id in subscriptionIds) {
         try {

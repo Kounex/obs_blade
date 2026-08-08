@@ -105,6 +105,14 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
   bool connectCalled = false;
   String? lastAccessToken;
   bool? lastIncludeModeration;
+  String? lastUserId;
+  String? lastBroadcasterId;
+  int switchChannelCalls = 0;
+  String? lastSwitchBroadcasterId;
+
+  /// When set, [switchChannel] throws this error (subscription failure on
+  /// switch — the chat pane's error path).
+  Object? switchChannelThrows;
   bool disposeCalled = false;
 
   FakeTwitchEventSubService()
@@ -118,11 +126,21 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
   Future<void> connect({
     required String accessToken,
     required String userId,
+    required String broadcasterId,
     bool includeModeration = false,
   }) async {
     this.connectCalled = true;
     this.lastAccessToken = accessToken;
+    this.lastUserId = userId;
+    this.lastBroadcasterId = broadcasterId;
     this.lastIncludeModeration = includeModeration;
+  }
+
+  @override
+  Future<void> switchChannel(String broadcasterId) async {
+    this.switchChannelCalls++;
+    this.lastSwitchBroadcasterId = broadcasterId;
+    if (this.switchChannelThrows != null) throw this.switchChannelThrows!;
   }
 
   @override

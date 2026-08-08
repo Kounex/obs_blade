@@ -367,6 +367,7 @@ abstract class _TwitchChatStore with Store {
       await this._eventSub!.connect(
         accessToken: token,
         userId: this.user!.id,
+        broadcasterId: this.user!.id,
         includeModeration: this.canReadModeration,
       );
 

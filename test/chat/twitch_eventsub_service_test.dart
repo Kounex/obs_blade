@@ -163,7 +163,8 @@ void main() {
     });
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -192,7 +193,8 @@ void main() {
         http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
     channels.single.incoming.add(notification());
@@ -208,7 +210,8 @@ void main() {
         (request) async => throw http.ClientException('connection refused'));
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -225,7 +228,8 @@ void main() {
     });
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
     expect(subscriptionPosts, 4);
@@ -258,7 +262,8 @@ void main() {
         http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -274,7 +279,8 @@ void main() {
         http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
     channels.single.incoming.add(json.encode({
@@ -313,7 +319,8 @@ void main() {
     });
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -331,7 +338,8 @@ void main() {
         http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
 
     final service = lifecycleServiceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -390,7 +398,8 @@ void main() {
     });
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -416,7 +425,10 @@ void main() {
 
     final service = serviceWith(client);
     await service.connect(
-        accessToken: 'token-1', userId: 'user-1', includeModeration: true);
+        accessToken: 'token-1',
+        userId: 'user-1',
+        broadcasterId: 'user-1',
+        includeModeration: true);
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -443,7 +455,10 @@ void main() {
 
     final service = moderationServiceWith(client);
     await service.connect(
-        accessToken: 'token-1', userId: 'user-1', includeModeration: true);
+        accessToken: 'token-1',
+        userId: 'user-1',
+        broadcasterId: 'user-1',
+        includeModeration: true);
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -493,7 +508,10 @@ void main() {
 
     final service = serviceWith(client);
     await service.connect(
-        accessToken: 'token-1', userId: 'user-1', includeModeration: true);
+        accessToken: 'token-1',
+        userId: 'user-1',
+        broadcasterId: 'user-1',
+        includeModeration: true);
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
@@ -507,7 +525,8 @@ void main() {
         http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
 
     final service = serviceWith(client);
-    await service.connect(accessToken: 'token-1', userId: 'user-1');
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
     channels.single.incoming.add(json.encode({
@@ -528,5 +547,173 @@ void main() {
     await pumpEventQueue();
 
     expect(revocations, isEmpty);
+  });
+
+  group('multi-channel', () {
+    test('chat conditions carry the broadcaster; moderate stays own-channel',
+        () async {
+      final bodies = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        bodies.add(json.decode(request.body) as Map<String, dynamic>);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-${bodies.length}'}
+            ],
+          }),
+          202,
+        );
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-9',
+          includeModeration: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+
+      for (final body in bodies.sublist(0, 4)) {
+        expect(body['condition'],
+            {'broadcaster_user_id': 'chan-9', 'user_id': 'user-1'});
+      }
+      expect(bodies[4]['condition'],
+          {'broadcaster_user_id': 'user-1', 'moderator_user_id': 'user-1'});
+    });
+
+    test(
+        'switchChannel deletes the channel subs and re-subscribes the new '
+        'broadcaster on the same session', () async {
+      final deletedUrls = <String>[];
+      final bodies = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        if (request.method == 'DELETE') {
+          deletedUrls.add(request.url.toString());
+          return http.Response('', 204);
+        }
+        bodies.add(json.decode(request.body) as Map<String, dynamic>);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-${bodies.length}'}
+            ],
+          }),
+          202,
+        );
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-1',
+          includeModeration: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+      expect(bodies, hasLength(5));
+
+      await service.switchChannel('chan-2');
+
+      /// The moderate sub (sub-5) is own-channel — never channel-scoped,
+      /// so it survives the switch untouched.
+      expect(deletedUrls, [
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-1',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-2',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-3',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-4',
+      ]);
+      expect(bodies, hasLength(9));
+      for (final body in bodies.sublist(5)) {
+        expect(body['condition'],
+            {'broadcaster_user_id': 'chan-2', 'user_id': 'user-1'});
+        expect(body['transport'],
+            {'method': 'websocket', 'session_id': 'session-1'});
+      }
+    });
+
+    test('a fresh session after a switch subscribes with the new broadcaster',
+        () async {
+      final bodies = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        if (request.method == 'DELETE') return http.Response('', 204);
+        bodies.add(json.decode(request.body) as Map<String, dynamic>);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-${bodies.length}'}
+            ],
+          }),
+          202,
+        );
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1', userId: 'user-1', broadcasterId: 'chan-1');
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+      await service.switchChannel('chan-2');
+      expect(bodies, hasLength(8));
+
+      /// Socket dies → reconnect → Twitch hands out a FRESH session id.
+      await channels.single.incoming.close();
+      await pumpEventQueue();
+      expect(channels, hasLength(2));
+      channels[1].incoming.add(welcome('session-3'));
+      await pumpEventQueue();
+
+      expect(bodies, hasLength(12));
+      for (final body in bodies.sublist(8)) {
+        expect(body['condition'],
+            {'broadcaster_user_id': 'chan-2', 'user_id': 'user-1'});
+        expect(body['transport'],
+            {'method': 'websocket', 'session_id': 'session-3'});
+      }
+    });
+
+    test('dispose after a switch deletes current subs and the moderate sub',
+        () async {
+      final deletedUrls = <String>[];
+      final bodies = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        if (request.method == 'DELETE') {
+          deletedUrls.add(request.url.toString());
+          return http.Response('', 204);
+        }
+        bodies.add(json.decode(request.body) as Map<String, dynamic>);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-${bodies.length}'}
+            ],
+          }),
+          202,
+        );
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-1',
+          includeModeration: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+      await service.switchChannel('chan-2');
+      deletedUrls.clear();
+
+      await service.dispose();
+
+      /// sub-1..sub-4 were deleted by the switch; the live ones now are
+      /// the switched channel subs (sub-6..sub-9) + the moderate sub-5.
+      expect(deletedUrls, [
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-6',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-7',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-8',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-9',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-5',
+      ]);
+    });
   });
 }
