@@ -24,7 +24,11 @@ void main() {
         expect(request.url.toString(), 'https://id.twitch.tv/oauth2/device');
         expect(request.bodyFields['client_id'], kTwitchClientId);
         expect(request.bodyFields['scopes'],
-            'user:read:chat user:write:chat user:read:emotes');
+            'user:read:chat user:write:chat user:read:emotes '
+            'moderator:read:blocked_terms moderator:read:chat_settings '
+            'moderator:read:unban_requests moderator:read:banned_users '
+            'moderator:read:chat_messages moderator:read:warnings '
+            'moderator:read:moderators moderator:read:vips');
         return http.Response(
           json.encode({
             'device_code': 'dev-code-123',

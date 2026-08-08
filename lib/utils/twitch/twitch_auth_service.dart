@@ -10,13 +10,29 @@ import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 /// (not a secret — Twitch treats client ids as embeddable).
 const String kTwitchClientId = 't3muhu36do5wemeeilzl57v48gwcmh';
 
+/// Moderation read bundle required by the `channel.moderate` v2
+/// subscription (Twitch demands ALL of them — read variants only, no
+/// moderation powers). Gates `TwitchChatStore.canReadModeration`.
+const List<String> kTwitchModerationScopes = <String>[
+  'moderator:read:blocked_terms',
+  'moderator:read:chat_settings',
+  'moderator:read:unban_requests',
+  'moderator:read:banned_users',
+  'moderator:read:chat_messages',
+  'moderator:read:warnings',
+  'moderator:read:moderators',
+  'moderator:read:vips',
+];
+
 /// Chat scopes requested in the device flow — read incoming chat, send
-/// messages as the authenticated user, and list the emotes they can use
-/// (emote picker).
+/// messages as the authenticated user, list the emotes they can use
+/// (emote picker), and read their own channel's moderation actions
+/// (deleting-mod reveal on native chat tombstones).
 const List<String> kTwitchChatScopes = <String>[
   'user:read:chat',
   'user:write:chat',
   'user:read:emotes',
+  ...kTwitchModerationScopes,
 ];
 
 const String _kIdBase = 'https://id.twitch.tv/oauth2';
