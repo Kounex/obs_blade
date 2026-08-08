@@ -2,6 +2,25 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-08 — Native chat: tombstone fix (real message_delete payload)
+
+- **Bug (dogfood):** deleted messages never tombstoned — no dimming, no
+  ` —Deleted` marker. Root cause: the `ChatMessageDeleteEvent` DTO required
+  `userName` (deleting moderator), a field Twitch's real
+  `channel.chat.message_delete` payload does not carry — the fixture had
+  invented it (documented example carries only `broadcaster_user_*`,
+  `target_user_*`, `message_id`). `fromJson` threw on every real delete,
+  the service's parse catch swallowed it, tombstones never applied.
+- Fix: `userName` is now nullable (kept forward-compatible — actor reveal
+  wiring stays, dormant until Twitch sends the field); the fixture +
+  service test now use the real payload shape; the store only records an
+  actor when present. Failing-test-first: fixture swap reproduced the exact
+  production `TypeError` before the fix.
+- Consequence: tap-to-reveal the deleting mod cannot work off
+  `channel.chat.message_delete` — needs `channel.moderate` (extra mod
+  scopes) if ever wanted. Tombstones (dimmed content + marker) work for
+  everyone as designed.
+
 ## 2026-08-07 — Native chat: deleted content + actor reveal (mod view)
 
 - Deleted messages now match twitch.tv's moderator view: the original

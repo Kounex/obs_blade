@@ -80,15 +80,17 @@ in the SDD ledger `.superpowers/sdd/progress.md` (untracked, per-machine).
   - Message lifecycle (08-06): delete/timeout-purge tombstoning, `/clear`
     banner, scrolled-up "Paused ↓" chip. **Dogfood PASSED 08-07.**
   - Deleted content + actor reveal (08-07): deleted rows keep content
-    dimmed (alpha 0.5) + italic ` —Deleted` marker; tap a mod-deleted row →
-    `<mod> deleted <chatter>'s message`. **DOGFOOD OPEN — the only open
-    checklist:**
+    dimmed (alpha 0.5) + italic ` —Deleted` marker. **Dogfood found a bug
+    (fixed 08-08):** real `message_delete` payloads carry no moderator
+    `user_name` (the fixture had invented it) — the DTO parse threw on
+    every real delete, swallowed by the service catch, so nothing ever
+    tombstoned. `userName` is nullable now; tombstones work. **The tap
+    reveal is dead as designed** — Twitch never sends the deleting mod on
+    this event; reviving it means `channel.moderate` + extra mod scopes
+    (open decision, not scheduled). Re-dogfood:
     - Delete a message from twitch.tv mod tools → content stays, dimmed,
-      marker ` —Deleted`; username/badges untouched.
-    - Tap it → `<mod> deleted <chatter>'s message`; tap again collapses;
-      expansion survives new incoming messages.
-    - Time out a user / `/clear` → content + marker but NO tap reveal
-      (payloads carry no actor).
+      marker ` —Deleted`; username/badges untouched; NO tap target.
+    - Time out a user / `/clear` → content + marker, no tap reveal.
     - Deleted message with emotes → emotes render dimmed.
 
 **Open threads (unblocked, pick up anytime):**

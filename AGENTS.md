@@ -84,8 +84,10 @@ picker (first-party Get User Emotes via `TwitchEmoteStore` + the
 third-party catalogs) docks in the native input (`user:read:emotes` silent
 upgrade); message lifecycle rides the same session
 (`message_delete`/`clear_user_messages`/`clear` → content-visible
-tombstones (dimmed content + ` —Deleted` marker, tap reveals the deleting
-mod) + `/clear` banner, best-effort subs) and scrolled-up chat shows a
+tombstones (dimmed content + ` —Deleted` marker) + `/clear` banner,
+best-effort subs — Twitch's `message_delete` payload carries no deleting
+mod, so actor reveal stays dormant unless `channel.moderate` is ever
+added) and scrolled-up chat shows a
 pause chip. Next: availability/entitlement gate, replies/announce — see
 chat audit + handoff.
 
