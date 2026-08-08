@@ -27,11 +27,17 @@ const List<String> kTwitchModerationScopes = <String>[
 /// Chat scopes requested in the device flow — read incoming chat, send
 /// messages as the authenticated user, list the emotes they can use
 /// (emote picker), and read their own channel's moderation actions
-/// (deleting-mod reveal on native chat tombstones).
+/// (deleting-mod reveal on native chat tombstones). The multi-chat
+/// additions cover channel discovery (followed / moderated channels) and
+/// mod actions (delete / timeout / ban) in channels the user moderates.
 const List<String> kTwitchChatScopes = <String>[
   'user:read:chat',
   'user:write:chat',
   'user:read:emotes',
+  'user:read:follows',
+  'moderator:read:moderated_channels',
+  'moderator:manage:chat_messages',
+  'moderator:manage:banned_users',
   ...kTwitchModerationScopes,
 ];
 

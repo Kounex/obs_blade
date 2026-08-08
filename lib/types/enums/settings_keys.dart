@@ -94,6 +94,15 @@ enum SettingsKeys {
   /// Active by default
   TwitchChatThirdPartyEmotes,
 
+  /// [List<dynamic>]: json maps ([TwitchChannelRef.toJson]) of the
+  /// channels the user added to the native multi-chat. The user's own
+  /// channel is never stored here — it is derived from the Twitch auth.
+  NativeChatChannels,
+
+  /// [String?]: id of the currently selected native chat channel;
+  /// null/missing means the user's own channel (the default)
+  SelectedNativeChatChannelId,
+
   /// [bool]: If user wants to use his custom theme
   CustomTheme,
 
@@ -232,6 +241,9 @@ enum SettingsKeys {
         SettingsKeys.TwitchChatBadgeOther: 'twitch-chat-badge-other',
         SettingsKeys.TwitchChatThirdPartyEmotes:
             'twitch-chat-third-party-emotes',
+        SettingsKeys.NativeChatChannels: 'native-chat-channels',
+        SettingsKeys.SelectedNativeChatChannelId:
+            'selected-native-chat-channel-id',
         SettingsKeys.CustomTheme: 'custom-theme',
         SettingsKeys.ActiveCustomThemeUUID: 'active-custom-theme-uuid',
         SettingsKeys.ForceNonNativeElements: 'force-non-native-elements',
