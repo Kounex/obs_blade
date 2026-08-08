@@ -103,6 +103,7 @@ chat audit + handoff.
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | History of agent changes (not the handoff doc — that's current-state only) |
 | [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
+| [`docs/superpowers/plan-defect-checklist.md`](docs/superpowers/plan-defect-checklist.md) | Running an SDD wave — pre-dispatch plan-verification pass, codegen checklist, named defect probes |
 | [`docs/redesign/`](docs/redesign/) | "On Air" redesign (now on `master`): design system, audit digest, session notes |
 | [`docs/private/monetization-strategy.md`](docs/private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored — not public.** |
 | [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — Hetzner hosting, build order, open decisions. **Gitignored — not public.** |
@@ -123,6 +124,11 @@ chat audit + handoff.
   the simulator's data container. Phone-width by default; for a large-screen
   smoke, enable Settings → **Force Tablet Mode** (or use a wide / iPad sim)
   and re-check dashboard Scene Items/Audio + Chat/Stats side-by-side.
+- **SDD waves:** after plan approval, run the pre-dispatch plan-verification
+  pass (one read-only verifier subagent) before Task 1; paste the defect
+  probes into plan-author/verifier/reviewer prompts per
+  `docs/superpowers/plan-defect-checklist.md`; append new ratified defect
+  classes there at wave wrap-up.
 - Branch: `master`
 
 ## Related
