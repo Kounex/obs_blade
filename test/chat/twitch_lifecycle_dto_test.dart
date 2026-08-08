@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 
 Map<String, Object?> fixture(String name) =>
@@ -49,6 +50,36 @@ void main() {
     test('clear without broadcaster_user_id throws', () {
       expect(
         () => ChatClearEvent.fromJson(const {}),
+        throwsA(isA<TypeError>()),
+      );
+    });
+  });
+
+  group('channel.moderate v2 DTO', () {
+    test('delete action parses the real payload shape', () {
+      final event =
+          ChannelModerateEvent.fromJson(fixture('channel_moderate_delete'));
+      expect(event.action, 'delete');
+      expect(event.moderatorUserName, 'quotrok');
+      expect(event.delete?.messageId, 'ab24e0b0-2260-4bac-94e4-05eedd4ecd0e');
+      expect(event.delete?.userName, 'TwitchDev');
+    });
+
+    test('a non-delete action yields no delete payload', () {
+      final event =
+          ChannelModerateEvent.fromJson(fixture('channel_moderate_timeout'));
+      expect(event.action, 'timeout');
+      expect(event.moderatorUserName, 'quotrok');
+      expect(event.delete, isNull);
+    });
+
+    test('delete without message_id throws', () {
+      expect(
+        () => ChannelModerateEvent.fromJson(const {
+          'action': 'delete',
+          'moderator_user_name': 'quotrok',
+          'delete': <String, Object?>{},
+        }),
         throwsA(isA<TypeError>()),
       );
     });
