@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-08 — Process: tiered SDD (S default) after quota postmortem
+
+- The moderation-actor wave (below) burned a full 5h quota on ~300 LOC:
+  5-task SDD with 12 subagent dispatches, ~300KB of process artifacts
+  (plan/briefs/reports/reviews/diffs), and 4 full-suite gate runs.
+  Postmortem ratified **process tiers** in
+  `docs/superpowers/plan-defect-checklist.md` §0 + the AGENTS.md tooling
+  section: **S (default)** = controller implements directly, no
+  subagents/plan doc; **M** = 1 implementer + 1 end reviewer, prose
+  mini-plan; **L** = full SDD as before, reserved for user-flagged risk
+  (persistence/protocol/release) or genuine multi-day scope.
+- Cross-tier cost rules: gates once at wrap-up (controller re-runs only
+  if HEAD moved after the final reviewer), resume subagents for fix
+  loops instead of fresh dispatches, terse reports (tail-count test
+  output only), secondary model for all dispatches — and if its quota is
+  exhausted, drop a tier rather than running the full pipeline on
+  primary.
+
 ## 2026-08-08 — Native chat: deleting-mod reveal live (channel.moderate v2)
 
 - The tap-to-reveal on deleted messages now works end to end: the EventSub

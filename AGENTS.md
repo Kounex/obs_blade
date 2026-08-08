@@ -126,11 +126,16 @@ chat audit + handoff.
   the simulator's data container. Phone-width by default; for a large-screen
   smoke, enable Settings → **Force Tablet Mode** (or use a wide / iPad sim)
   and re-check dashboard Scene Items/Audio + Chat/Stats side-by-side.
-- **SDD waves:** after plan approval, run the pre-dispatch plan-verification
-  pass (one read-only verifier subagent) before Task 1; paste the defect
-  probes into plan-author/verifier/reviewer prompts per
-  `docs/superpowers/plan-defect-checklist.md`; append new ratified defect
-  classes there at wave wrap-up.
+- **Process tiers (default S):** size the process to the change — S:
+  implement directly in-session (no subagents/plan doc), TDD + gates
+  once at the end; M: 1 implementer subagent + 1 end reviewer, prose
+  mini-plan; L: full SDD per `docs/superpowers/plan-defect-checklist.md`
+  §0 (verifier pass, per-task reviews, defect probes). Upgrade past S
+  only when the user flags risk (persistence/protocol/release paths) or
+  the work is genuinely multi-day. Subagents go on the secondary model;
+  if its quota is exhausted, say so and drop a tier instead of running
+  the full pipeline on primary. Append new ratified defect classes to
+  the checklist at wave wrap-up.
 - Branch: `master`
 
 ## Related
