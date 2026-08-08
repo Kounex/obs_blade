@@ -2,7 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-06** (send-input maintainer dogfood passed; chat-only reconnect simulation still open — see the send-input bullet).
+Read this first after `AGENTS.md`. Last reset: **2026-08-08** (full reset at
+session close-out: all waves pushed, only the deleted-content dogfood open).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -51,172 +52,78 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-- **"On Air" redesign chapter closed** — merged into `master` (visual review
-  accepted on MacBook). Design system lives under `lib/shared/design/`;
-  depth in [`redesign/`](redesign/) + [`changelog-agent.md`](changelog-agent.md).
-- **Native Twitch chat Phase 1 + chat engine switch on `master`**
-  (2026-08-04) — Twitch app "OBS Blade Chat" registered 2026-08-04; OAuth
-  device-code login + read-only EventSub chat rendered natively next to the
-  WebView embeds. The chat control section is organized around a manual
-  WebView↔Native engine switch (persisted `SelectedChatEngine`, default
-  WebView — existing installs unchanged; availability seam
-  `nativeChatAvailableFor` in `lib/models/enums/chat_engine.dart`). History
-  in [`changelog-agent.md`](changelog-agent.md); specs/plans under
-  `docs/superpowers/`.
-- **Native chat window (container UI) on `master`** (2026-08-05) — the
-  native engine now renders inside `NativeChatWindow` everywhere it appears
-  (mobile tab slot, standalone card, tablet card, streaming mode): inset
-  pane, always-tappable status row ("Stream Chat" + connection state), and
-  a connection sheet (healthy: account + ticking uptime; degraded: error +
-  Retry/Log out; offline: Connect). `TwitchChatStore.chatConnectedAt`
-  (in-memory) feeds uptime. Generic params only — the reuse seam for a
-  future native YouTube engine. Dogfood passed after one fix round; gates
-  145/145 + analyze clean. History in
-  [`changelog-agent.md`](changelog-agent.md); spec/plan under
-  `docs/superpowers/` (`2026-08-05-chat-container-ui*`).
-- **Native Twitch chat Phase 2: role badges + visibility toggles on
-  `master`** (2026-08-05) — `ChatMessageEvent.badges` modeled; session-scoped
-  `TwitchBadgeStore` (GetIt) caches the Helix global + per-channel badge
-  catalogs (fetched fire-and-forget on chat connect, cleared on logout);
-  native rows render badge images before the username (channel catalog >
-  global, unknown skipped silently); new native chat options sheet
-  (per-platform seam) with 7 Twitch badge visibility toggles (default-on,
-  persisted `twitch-chat-badge-*` Settings-box keys, live re-filtering).
-  Gates green: 133/133 tests, analyze 0 errors + 6 pre-existing warnings.
-  History in [`changelog-agent.md`](changelog-agent.md); spec/plan under
-  `docs/superpowers/`. **Dogfood:** native bar on a narrow phone + larger
-  text scale (the new 44pt options button densifies the right column);
-  badge pop-in timing on a live channel (a beat after messages —
-  intended); badge↔username spacing read (uniform `xs/2`).
-- **Native chat send input on `master`** (2026-08-05) — native chat now
-  reads AND writes: `NativeChatInput` dock (pill field + circular send,
-  hard 500-char cap, spinner in flight, clears on success, failed sends
-  keep the text, inline error line above the dock) in `NativeChatWindow`'s
-  new `input` slot. **Silent scope upgrade** (`kTwitchChatScopes` +
-  `user:write:chat`): nobody kicked out — pre-upgrade sessions get a
-  read-only lock strip with "Re-login to chat"; `canWriteChat` gates on
-  the persisted token scopes. Helix `TwitchMessageService` + guarded
-  `sendChatMessage` (never throws); no optimistic insert — the sent
-  message renders via the EventSub echo; 200-but-dropped surfaces inline
-  (`drop_reason.code` → user copy, unknown codes show Twitch's own
-  message — the DTO models it as the object it actually is after a
-  post-review fix; a second fix keeps a cancelled re-login **upgrade**
-  from claiming logged-out while the live session streams on). Widget is
-  Twitch-free by design (reuse seam, same as the window). Gates: 168/168,
-  analyze 0 errors + 6 pre-existing warnings. Commits `fdd539c..3f0cc56`;
-  spec/plan `2026-08-05-chat-send-input*`; history in
-  [`changelog-agent.md`](changelog-agent.md). **Maintainer dogfood passed
-  2026-08-06** (send + EventSub echo + spinner/clear + cancelled-upgrade
-  path all accepted). One scenario still open: chat-only reconnect could
-  not be triggered — airplane mode kills LAN+WAN together so the
-  dashboard's own reconnect state appears first, and revoking app access
-  on the Twitch profile correctly logs out immediately (token invalid →
-  nothing to reconnect). Maintainer to simulate separately: kill WAN
-  (pull router uplink / DNS-block `eventsub.wss.twitch.tv`) while LAN to
-  OBS stays up → chat should enter `reconnecting` via the keepalive
-  watchdog (~30s) and recover on its own once WAN returns.
+**Everything is on `master` and pushed** (latest: `350e89d`). Gates at last
+wrap-up: full suite 250/250, analyze 0 errors + exactly 6 pre-existing
+warnings. Depth for every wave below: [`changelog-agent.md`](changelog-agent.md)
++ specs/plans under `docs/superpowers/`; per-task detail incl. commit ranges
+in the SDD ledger `.superpowers/sdd/progress.md` (untracked, per-machine).
 
-  **Next chat items:** availability/entitlement gate (plugs into
-  `nativeChatAvailableFor`, brings auto-switch-on-login), replies/announce
-  as future send polish.
-- **Third-party emotes (7TV/BTTV) on `master`** (2026-08-06) —
-  service/store/row/toggle per spec
-  `docs/superpowers/specs/2026-08-06-third-party-emotes-design.md` + plan
-  `docs/superpowers/plans/2026-08-06-third-party-emotes.md`. **Maintainer
-  dogfood pending:**
-  - 7TV/BTTV-heavy channel: emotes render inline, animated; pop-in a beat
-    after messages (intended).
-  - Options toggle off → plain text; back on → images (live re-render).
-  - Channel without 7TV/BTTV presence: text only, no errors in logs.
-  - Send a 7TV code from the native input → the EventSub echo renders it
-    as the emote.
-  - Tablet mode + WebView engine unchanged.
-- **Emote picker on `master`** (2026-08-06) — button in the native dock
-  opens a bottom sheet (search; Channel/Global + combined third-party
-  sections); tap inserts at the cursor. New scope `user:read:emotes`
-  (silent upgrade; CTA for pre-upgrade sessions). Spec
-  `docs/superpowers/specs/2026-08-06-emote-picker-design.md` + plan
-  `docs/superpowers/plans/2026-08-06-emote-picker.md`. **Maintainer
-  dogfood PASSED 2026-08-07** (tested together with the lifecycle wave).
-  - Fresh login (to pick up the new scope) → picker shows Channel + Global
-    sections; globals present (dogfood verifies Get User Emotes includes
-    Twitch globals — if missing, the spec's Get Global Emotes fallback
-    kicks in).
-  - Insert mid-text and at the end; echo renders the emote inline
-    (first-party + 7TV/BTTV).
-  - Search filter; sheet open while catalogs land (pop-in); keyboard
-    behavior after insert (field refocused).
-  - Pre-upgrade token: CTA path (cancel re-login → session intact —
-    existing upgrade guard).
-  - Third-party toggle off → third-party section hidden in the picker.
-  - Tablet mode + WebView engine unchanged.
-  - Final-review additions: rapid double-tap two cells in debug (no
-    navigator assert post-guard `de1fb36`, single pop, double insert);
-    account switch A→B (only B's catalog, no residue); small
-    phone/landscape + keyboard up (grid tail clip watch); large-catalog
-    account (first-open jank / image-fetch burst watch); pre-upgrade token
-    + third-party toggle off (CTA stacked over empty state reads OK).
-- **Message lifecycle on `master`** (2026-08-06) — native chat tombstones
-  deleted messages (delete / timeout-ban purge / `/clear` + banner) and
-  shows a "Paused ↓" chip when scrolled up. Spec
-  `docs/superpowers/specs/2026-08-06-chat-message-lifecycle-design.md` +
-  plan `docs/superpowers/plans/2026-08-06-chat-message-lifecycle.md`.
-  **Maintainer dogfood PASSED 2026-08-07.**
-  - Delete a message from twitch.tv mod tools → tombstone in OBS Blade
-    (username stays).
-  - Time out a chatty user → all their visible messages tombstone.
-  - `/clear` → everything tombstones + banner; new messages flow after it;
-    `/clear` on an empty chat does nothing.
-  - Scroll up → "Paused ↓"; new message → flips to "New messages ↓"; tap →
-    resume at bottom. Watch: the chip may briefly re-appear as "Paused ↓"
-    mid-resume-animation (known transient from the final review — fix only
-    if it reads badly).
-  - Duplicate `/clear` delivery shows two adjacent banners (EventSub is
-    at-least-once, no `message_id` dedup — same class as duplicate chat
-    messages; note if seen live).
-  - Degrade path: chat works with no tombstones if the lifecycle
-    subscriptions fail (log lines only).
-  - WebView engine, YouTube/Owncast, tablet unchanged.
-- **Deleted content + actor reveal on `master`** (2026-08-07) — deleted
-  messages show their dimmed content with a ` —Deleted` marker (Twitch mod
-  view); tapping a mod-deleted message reveals who deleted it. Spec
-  `docs/superpowers/specs/2026-08-07-deleted-message-content-design.md` +
-  plan `docs/superpowers/plans/2026-08-07-deleted-message-content.md`.
-  **Maintainer dogfood pending:**
-  - Delete a message from twitch.tv mod tools → content stays, dimmed,
-    marker ` —Deleted`; username/badges untouched.
-  - Tap it → `<mod> deleted <chatter>'s message`; tap again collapses;
-    expansion survives new incoming messages.
-  - Time out a user / `/clear` → content + marker but NO tap reveal
-    (payloads carry no actor).
-  - Deleted message with emotes → emotes render dimmed.
-- **Maintainer dogfood 2026-08-04: mostly passed** — connect, messages,
-  emotes, author colors, background recovery (observe long-term), Force
-  Tablet Mode all good. Two UX gaps found + fixed same day (`b3f69d4`):
-  inline "Copied to clipboard" feedback in the code dialog; logout is now a
-  tappable account chip (icon + display name) in the username bar.
-  **Still open: logout path itself untested** — incl. the post-logout
-  WebView-fallback check (`_syncWebController` early-returns on unchanged
-  URL, `stream_chat.dart:108-112`, so no `loadRequest` is re-issued on
-  remount; fix only if the fallback renders blank).
-- **Phase 2 input from dogfood (capture when planning):** (a) mobile chat
-  window/container — **shipped 2026-08-05** (`NativeChatWindow`; send
-  input docked at its bottom edge the same day); (b) badges — **shipped
-  2026-08-05** (role icons next to names + per-category visibility toggles
-  in the native chat options sheet); (c) 7TV/BTTV emotes — **shipped on
-  `master` (2026-08-06)**: product decision made: 7TV + BTTV, master
-  toggle default-on; (d) earlier review
-  notes: revocation toast on forced logout, message dedup by `messageId`,
-  revoked-refresh-token (Twitch 400) is kept-record mid-session and only
-  wiped on next cold-start validate.
-- **Next work is open** — pick up whatever is next (store cut, native chat
-  availability/entitlement gate, paid backend,
-  opportunistic polish). Backend app (OAuth broker)
-  registration still deferred — see `private/backend-architecture.md`.
-  Connect-overlay success morph is wired (Connecting… → check → Dashboard) —
-  verified on device/sim 2026-08-04.
-- **Before a store release:** Android build/test, version/build-number bump
-  (see earlier master notes in changelog).
+- **"On Air" redesign** — closed, merged. Design system: `lib/shared/design/`.
+- **Native Twitch chat program** — all waves shipped:
+  - Phase 1 + engine switch (08-04): OAuth device-code login ("OBS Blade
+    Chat" app), read-only EventSub, manual WebView↔Native switch
+    (`SelectedChatEngine`, default WebView; seam `nativeChatAvailableFor`).
+  - Container UI (08-05): `NativeChatWindow` everywhere (tab slot, cards,
+    streaming mode) + connection sheet; generic params = YouTube reuse seam.
+  - Role badges + per-category toggles (08-05): `TwitchBadgeStore`, native
+    chat options sheet (per-platform seam).
+  - Send input (08-05): reads AND writes — `NativeChatInput` dock, silent
+    `user:write:chat` scope upgrade (pre-upgrade sessions: read-only lock
+    strip), Helix send, no optimistic insert. Dogfood passed 08-06.
+  - Third-party emotes 7TV/BTTV (08-06): `ThirdPartyEmoteStore`, inline
+    animated render, default-on toggle. Formal checklist never run as such —
+    de-facto covered during picker/lifecycle dogfood (inline emotes visible
+    in every session since).
+  - Emote picker (08-06): dock button → bottom sheet (search, Channel/
+    Global + third-party sections), insert at cursor; `user:read:emotes`
+    silent upgrade + CTA. **Dogfood PASSED 08-07.**
+  - Message lifecycle (08-06): delete/timeout-purge tombstoning, `/clear`
+    banner, scrolled-up "Paused ↓" chip. **Dogfood PASSED 08-07.**
+  - Deleted content + actor reveal (08-07): deleted rows keep content
+    dimmed (alpha 0.5) + italic ` —Deleted` marker; tap a mod-deleted row →
+    `<mod> deleted <chatter>'s message`. **DOGFOOD OPEN — the only open
+    checklist:**
+    - Delete a message from twitch.tv mod tools → content stays, dimmed,
+      marker ` —Deleted`; username/badges untouched.
+    - Tap it → `<mod> deleted <chatter>'s message`; tap again collapses;
+      expansion survives new incoming messages.
+    - Time out a user / `/clear` → content + marker but NO tap reveal
+      (payloads carry no actor).
+    - Deleted message with emotes → emotes render dimmed.
+
+**Open threads (unblocked, pick up anytime):**
+
+- Chat-only reconnect simulation (send-input wave): kill WAN only (pull
+  router uplink / DNS-block `eventsub.wss.twitch.tv`) with LAN to OBS up →
+  chat enters `reconnecting` via keepalive watchdog (~30s), recovers on its
+  own. Never successfully triggered.
+- Logout path itself untested (08-04) — incl. post-logout WebView fallback
+  (`_syncWebController` early-return, `stream_chat.dart:108-112`; fix only
+  if the fallback renders blank).
+- Earlier review notes (not yet acted on): revocation toast on forced
+  logout; message dedup by `messageId` (duplicate `/clear` → double banner
+  is the known symptom class); revoked-refresh-token (Twitch 400) kept
+  mid-session, wiped on next cold-start validate.
+- Watch-only: "Paused ↓" chip may briefly re-appear mid-resume-animation
+  (known transient; fix only if it reads badly).
+
+**Next work:**
+
+- **Native chat availability/entitlement gate** — the named next chat item:
+  plugs into `nativeChatAvailableFor` (`lib/models/enums/chat_engine.dart`),
+  brings auto-switch-on-login. Should be the first wave through the new
+  verifier pass (below).
+- Replies/announce — send polish, after the gate.
+- Store cut — Android build/test + version/build-number bump first (see
+  master notes in changelog).
+- Paid backend — OAuth broker registration still deferred; see
+  `private/backend-architecture.md`.
+
+**Process (SDD waves):** after plan approval, run the pre-dispatch
+plan-verification pass before Task 1 — checklist + named defect probes +
+codegen artifact rules in
+[`docs/superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md);
+paste per its §4 wiring; append new ratified defect classes at wrap-up.
 
 ## Verify quickly
 
@@ -246,6 +153,7 @@ flutter test test/chat/ test/websocket/ test/persistence/
 | [`persistence-risk.md`](persistence-risk.md) / [`hive-ce-source-audit.md`](hive-ce-source-audit.md) | Hive CE safety |
 | [`upgrade-plan.md`](upgrade-plan.md) | Flutter/package bump status |
 | [`local-obs-e2e.md`](local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
+| [`superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md) | SDD wave hardening — verifier pass, defect probes, codegen checklist |
 | [`redesign/`](redesign/) | "On Air" redesign: design system, audit digest, session notes |
 | [`private/monetization-strategy.md`](private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored.** |
 | [`private/backend-architecture.md`](private/backend-architecture.md) | Infra plan for paid backend features. **Gitignored.** |
