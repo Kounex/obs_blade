@@ -225,15 +225,20 @@ class FakeTwitchMessageService extends TwitchMessageService {
 
   int calls = 0;
   String? lastMessage;
+  String? lastSenderId;
+  String? lastBroadcasterId;
 
   @override
   Future<TwitchSendResult> sendChatMessage({
     required String accessToken,
-    required String userId,
+    required String senderId,
+    required String broadcasterId,
     required String message,
   }) async {
     this.calls++;
     this.lastMessage = message;
+    this.lastSenderId = senderId;
+    this.lastBroadcasterId = broadcasterId;
     if (this.sendThrows != null) throw this.sendThrows!;
     if (this.sendGate != null) return this.sendGate!.future;
     return this.result;

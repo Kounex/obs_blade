@@ -467,7 +467,8 @@ abstract class _TwitchChatStore with Store {
       final token = await this._validAccessToken();
       final result = await this._messageService.sendChatMessage(
         accessToken: token,
-        userId: this.user!.id,
+        senderId: this.user!.id,
+        broadcasterId: this.user!.id,
         message: trimmed,
       );
       if (result.isSent) return true;

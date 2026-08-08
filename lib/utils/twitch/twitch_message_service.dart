@@ -5,8 +5,9 @@ import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 
 /// Helix `chat/messages` endpoint — sends a chat message as the
-/// authenticated user into their own channel. Requires a user access token
-/// with the `user:write:chat` scope (see `kTwitchChatScopes`).
+/// authenticated user into [broadcasterId]'s channel (their own channel
+/// in single-chat mode, any added channel in multi-chat). Requires a user
+/// access token with the `user:write:chat` scope (see `kTwitchChatScopes`).
 ///
 /// [client] is injectable for tests — no real HTTP in unit tests.
 class TwitchMessageService {
@@ -17,7 +18,8 @@ class TwitchMessageService {
 
   Future<TwitchSendResult> sendChatMessage({
     required String accessToken,
-    required String userId,
+    required String senderId,
+    required String broadcasterId,
     required String message,
   }) async {
     final response = await this._client.post(
@@ -27,8 +29,8 @@ class TwitchMessageService {
         'Content-Type': 'application/json',
       },
       body: json.encode({
-        'broadcaster_id': userId,
-        'sender_id': userId,
+        'broadcaster_id': broadcasterId,
+        'sender_id': senderId,
         'message': message,
       }),
     );

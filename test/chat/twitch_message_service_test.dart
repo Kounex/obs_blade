@@ -35,13 +35,42 @@ void main() {
     final result = await TwitchMessageService(client: client)
         .sendChatMessage(
       accessToken: 'token-1',
-      userId: 'user-1',
+      senderId: 'user-1',
+      broadcasterId: 'user-1',
       message: 'hello chat',
     );
 
     expect(result.isSent, isTrue);
     expect(result.messageId, 'msg-1');
     expect(result.dropReason, isNull);
+  });
+
+  test('sender and broadcaster ids can differ (multi-chat)', () async {
+    final client = MockClient((request) async {
+      expect(json.decode(request.body), {
+        'broadcaster_id': 'chan-9',
+        'sender_id': 'user-1',
+        'message': 'hello other chat',
+      });
+      return http.Response(
+        json.encode({
+          'data': [
+            {'message_id': 'msg-2', 'is_sent': true, 'drop_reason': null},
+          ],
+        }),
+        200,
+      );
+    });
+
+    final result = await TwitchMessageService(client: client)
+        .sendChatMessage(
+      accessToken: 'token-1',
+      senderId: 'user-1',
+      broadcasterId: 'chan-9',
+      message: 'hello other chat',
+    );
+
+    expect(result.isSent, isTrue);
   });
 
   test('parses a dropped result with its reason object', () async {
@@ -66,7 +95,8 @@ void main() {
     final result = await TwitchMessageService(client: client)
         .sendChatMessage(
       accessToken: 'token-1',
-      userId: 'user-1',
+      senderId: 'user-1',
+      broadcasterId: 'user-1',
       message: 'spam',
     );
 
@@ -81,7 +111,8 @@ void main() {
     expect(
       TwitchMessageService(client: client).sendChatMessage(
         accessToken: 'token-1',
-        userId: 'user-1',
+        senderId: 'user-1',
+        broadcasterId: 'user-1',
         message: 'hi',
       ),
       throwsA(
