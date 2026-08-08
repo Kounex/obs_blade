@@ -56,7 +56,8 @@ void main() {
     badgeStore = TwitchBadgeStore(service: badgeService);
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+          eventSubService,
       badgeStoreResolver: () => badgeStore,
     );
   });
@@ -453,7 +454,7 @@ void main() {
       store = TwitchChatStore(
         authService: authService,
         eventSubFactory:
-            (_, __, ___, ____, onStateChanged, onRevoked) {
+            (_, __, ___, ____, ______, onStateChanged, onRevoked) {
           emitState = onStateChanged;
           emitRevoked = onRevoked;
           return eventSubService;
@@ -509,7 +510,8 @@ void main() {
       messageService = FakeTwitchMessageService();
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+            eventSubService,
         badgeStoreResolver: () => badgeStore,
         messageService: messageService,
       );
@@ -643,7 +645,8 @@ void main() {
       await Hive.openBox(HiveKeys.Settings.name);
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+            eventSubService,
         badgeStoreResolver: () => badgeStore,
         emoteStoreResolver: () => emoteStore,
       );
@@ -699,7 +702,8 @@ void main() {
           const ['user:read:chat', 'user:write:chat', 'user:read:emotes'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______) => eventSubService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+            eventSubService,
         badgeStoreResolver: () => badgeStore,
         userEmoteStoreResolver: () => userEmoteStore,
       );
@@ -871,12 +875,64 @@ void main() {
       expect(store.deletedMessageActor('m3'), isNull);
       expect(store.deletedMessageActor('nope'), isNull);
     });
+
+    test('a moderate delete tombstones with the actor and bumps the version',
+        () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      final version = store.lifecycleVersion;
+
+      store.applyModerationDelete('m1', 'Cool_Mod');
+
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+      expect(store.lifecycleVersion, version + 1);
+    });
+
+    test('message_delete first, moderate later — actor lands with a bump',
+        () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyMessageDelete(
+          const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'));
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.deletedMessageActor('m1'), isNull);
+      final version = store.lifecycleVersion;
+
+      store.applyModerationDelete('m1', 'Cool_Mod');
+
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+      expect(store.lifecycleVersion, version + 1);
+    });
+
+    test('moderate first, message_delete later — idempotent single tombstone',
+        () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyModerationDelete('m1', 'Cool_Mod');
+      final version = store.lifecycleVersion;
+
+      store.applyMessageDelete(
+          const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'));
+
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+      expect(store.lifecycleVersion, version);
+    });
+
+    test('a moderate delete for an unknown id is a no-op', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      final version = store.lifecycleVersion;
+
+      store.applyModerationDelete('nope', 'Cool_Mod');
+
+      expect(store.isMessageDeleted('nope'), isFalse);
+      expect(store.lifecycleVersion, version);
+    });
   });
 
   group('lifecycle wiring', () {
     late void Function(ChatMessageDeleteEvent) emitDelete;
     late void Function(ChatClearUserMessagesEvent) emitPurge;
     late void Function(ChatClearEvent) emitClear;
+    late void Function(String, String) emitModerationDelete;
 
     /// A fresh store whose factory captures the lifecycle callbacks the
     /// store hands to its EventSub service (chatConnectedAt-group pattern).
@@ -884,10 +940,12 @@ void main() {
       store = TwitchChatStore(
         authService: authService,
         eventSubFactory: (onChatMessage, onMessageDelete,
-            onClearUserMessages, onChatClear, onStateChanged, onRevoked) {
+            onClearUserMessages, onChatClear, onModerationDelete,
+            onStateChanged, onRevoked) {
           emitDelete = onMessageDelete;
           emitPurge = onClearUserMessages;
           emitClear = onChatClear;
+          emitModerationDelete = onModerationDelete;
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
@@ -911,6 +969,38 @@ void main() {
 
       emitClear(const ChatClearEvent(broadcasterUserId: 'b1'));
       expect(store.systemNotices, hasLength(1));
+    });
+
+    test('the moderate callback drives the actor reveal', () async {
+      await loginWithCapturedCallbacks();
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+
+      emitModerationDelete('m1', 'Cool_Mod');
+
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+    });
+  });
+
+  group('moderation scope gate', () {
+    test('connectChat passes includeModeration: false without the bundle',
+        () async {
+      authService.tokenScopes = const [
+        'user:read:chat',
+        'user:write:chat',
+        'user:read:emotes',
+      ];
+      await store.startLogin();
+
+      expect(eventSubService.lastIncludeModeration, isFalse);
+    });
+
+    test('connectChat passes includeModeration: true with the full bundle',
+        () async {
+      authService.tokenScopes = kTwitchModerationScopes;
+      await store.startLogin();
+
+      expect(eventSubService.lastIncludeModeration, isTrue);
     });
   });
 }

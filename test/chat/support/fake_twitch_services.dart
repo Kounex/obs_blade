@@ -104,6 +104,7 @@ class FakeTwitchAuthService extends TwitchAuthService {
 class FakeTwitchEventSubService extends TwitchEventSubService {
   bool connectCalled = false;
   String? lastAccessToken;
+  bool? lastIncludeModeration;
   bool disposeCalled = false;
 
   FakeTwitchEventSubService()
@@ -117,9 +118,11 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
   Future<void> connect({
     required String accessToken,
     required String userId,
+    bool includeModeration = false,
   }) async {
     this.connectCalled = true;
     this.lastAccessToken = accessToken;
+    this.lastIncludeModeration = includeModeration;
   }
 
   @override

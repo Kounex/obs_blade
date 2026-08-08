@@ -53,6 +53,7 @@ abstract class _TwitchChatStore with Store {
     void Function(ChatMessageDeleteEvent) onMessageDelete,
     void Function(ChatClearUserMessagesEvent) onClearUserMessages,
     void Function(ChatClearEvent) onChatClear,
+    void Function(String messageId, String actorName) onModerationDelete,
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
   ) _eventSubFactory;
@@ -76,6 +77,7 @@ abstract class _TwitchChatStore with Store {
       void Function(ChatMessageDeleteEvent),
       void Function(ChatClearUserMessagesEvent),
       void Function(ChatClearEvent),
+      void Function(String messageId, String actorName),
       void Function(TwitchEventSubState),
       void Function(String),
     )? eventSubFactory,
@@ -86,12 +88,13 @@ abstract class _TwitchChatStore with Store {
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onMessageDelete, onClearUserMessages, onChatClear,
-                    onStateChanged, onRevoked) =>
+                    onModerationDelete, onStateChanged, onRevoked) =>
                 TwitchEventSubService(
                   onChatMessage: onChatMessage,
                   onMessageDelete: onMessageDelete,
                   onClearUserMessages: onClearUserMessages,
                   onChatClear: onChatClear,
+                  onModerationDelete: onModerationDelete,
                   onStateChanged: onStateChanged,
                   onRevoked: onRevoked,
                 )),
@@ -155,10 +158,9 @@ abstract class _TwitchChatStore with Store {
 
   /// Display name of the moderator who deleted a message, keyed by
   /// messageId — plain Map, same [lifecycleVersion] reactivity story as
-  /// [_deletedMessageIds]. Twitch's `message_delete` payload does not
-  /// currently include the deleting moderator (kept forward-compatible on
-  /// the DTO), so entries only ever appear if Twitch adds the field;
-  /// purge and /clear ids are always absent here.
+  /// [_deletedMessageIds]. The actor arrives via `channel.moderate` delete
+  /// actions (only when the token carries the moderation scope bundle);
+  /// purge and /clear ids never have one.
   final Map<String, String> _deletedMessageActors = <String, String>{};
 
   /// System banners merged into the scroll by arrival sequence — plain
@@ -195,6 +197,14 @@ abstract class _TwitchChatStore with Store {
             'user:read:emotes',
           ) ??
       false;
+
+  /// Whether the persisted token carries the full moderation read bundle
+  /// (`channel.moderate` v2 → deleting-mod reveal). Same deliberately
+  /// plain (non-reactive) pattern as [canReadEmotes].
+  bool get canReadModeration {
+    final scopes = this._authBox.get(TwitchAuth.kBoxKey)?.scopes;
+    return scopes != null && kTwitchModerationScopes.every(scopes.contains);
+  }
 
   /// Registers the box watcher (idempotent) so external wipes — e.g.
   /// data management clearing the Twitch box — reset the feature even
@@ -350,12 +360,14 @@ abstract class _TwitchChatStore with Store {
         (event) => this.applyMessageDelete(event),
         (event) => this.applyClearUserMessages(event.targetUserId),
         (_) => this.applyChatClear(),
+        (messageId, actor) => this.applyModerationDelete(messageId, actor),
         this._onEventSubState,
         this._onEventSubRevoked,
       );
       await this._eventSub!.connect(
         accessToken: token,
         userId: this.user!.id,
+        includeModeration: this.canReadModeration,
       );
 
       /// Badge catalogs are nice-to-have — a fetch problem must never
@@ -584,6 +596,22 @@ abstract class _TwitchChatStore with Store {
       }
       this.lifecycleVersion++;
     }
+  }
+
+  /// `channel.moderate` delete — tombstone + actor in one event (a
+  /// superset of `message_delete`). Both orderings converge: the version
+  /// bumps on any real change, so a `message_delete`-first tombstone gains
+  /// its actor (and tap target) when this lands; a moderate-first
+  /// tombstone makes the later `message_delete` a no-op.
+  @action
+  void applyModerationDelete(String messageId, String actorName) {
+    final visible =
+        this.messages.any((message) => message.messageId == messageId);
+    if (!visible) return;
+    final tombstoned = this._deletedMessageIds.add(messageId);
+    final actorNew = this._deletedMessageActors[messageId] != actorName;
+    if (actorNew) this._deletedMessageActors[messageId] = actorName;
+    if (tombstoned || actorNew) this.lifecycleVersion++;
   }
 
   @action

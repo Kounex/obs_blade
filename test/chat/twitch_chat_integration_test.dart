@@ -52,7 +52,7 @@ void main() {
     await Hive.openBox(HiveKeys.Settings.name);
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___, ____, _____, ______) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
           FakeTwitchEventSubService(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
