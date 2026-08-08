@@ -82,6 +82,18 @@ authors and reviewers: treat these as named probes, not vibes.
 need a regen AFTER all annotated source edits, and the `.g.dart` belongs
 in the commit (deleted-content Task 1, 809bffe).
 
+**Cross-task interface drift:** widening a production interface must
+enumerate EVERY implementer/override repo-wide — including test fakes
+owned by a later task's file list — or the interface task updates the
+fakes itself (moderation-actor Task 2 added `includeModeration` to
+`TwitchEventSubService.connect`; the fake lived in Task 4's scope →
+`invalid_override` error between 5bc7f23 and cabcafc, fixed in cabcafc).
+
+**Analyzer output parsing:** this toolchain prints `warning •` lines
+un-indented, so indentation-anchored greps undercount — anchor on the
+severity token or the `N issues found` totals line (moderation-actor
+Task 5 review, a9af493).
+
 **Doc claims:** numbers and behavior statements in changelog/handoff/
 specs drift from the code — spot-check before committing (emote-picker
 Task 7: changelog said 44pt cells, shipped is 56pt, caught pre-dispatch

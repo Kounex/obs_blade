@@ -91,6 +91,9 @@ in the SDD ledger `.superpowers/sdd/progress.md` (untracked, per-machine).
     - Delete as a *different* mod account → reveal shows that mod.
     - Time out a user / `/clear` → content + marker, no tap reveal.
     - Deleted message with emotes → emotes render dimmed.
+    - Shared-chat session delete (`shared_chat_delete`): expected to
+      tombstone WITHOUT a tap reveal (no actor on that notification) —
+      observe once; if it reads broken, decide whether to model it.
 
 **Open threads (unblocked, pick up anytime):**
 
