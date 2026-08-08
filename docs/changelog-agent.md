@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-08 — Native chat: deleting-mod reveal live (channel.moderate v2)
+
+- The tap-to-reveal on deleted messages now works end to end: the EventSub
+  session creates a best-effort `channel.moderate` v2 subscription
+  (condition `moderator_user_id` = self) whose `delete` actions carry the
+  acting moderator — the piece `channel.chat.message_delete` lacks.
+- Login now requests the 8-scope `moderator:read:*` bundle Twitch demands
+  (`kTwitchModerationScopes`); pre-upgrade tokens skip the subscription
+  (`canReadModeration` gate) and keep plain tombstones until re-login.
+- Store merge is order-tolerant with `message_delete` (either event may
+  land first; the version bumps when the actor arrives). The moderate
+  event also tombstones on its own — a failed `message_delete` POST no
+  longer loses single deletes.
+- New `ChannelModerateEvent` DTO is tolerant (only `delete` modeled,
+  fixtures mirror the real twitch-rs v2 envelope). Tests: DTO 3, service
+  3, store 5 + gate 2. Gates: full suite green, analyze 0 errors + 6
+  pre-existing warnings.
+
 ## 2026-08-08 — Native chat: tombstone fix (real message_delete payload)
 
 - **Bug (dogfood):** deleted messages never tombstoned — no dimming, no
