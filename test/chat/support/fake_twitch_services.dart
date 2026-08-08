@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
@@ -11,6 +13,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_user_emote.dart';
 import 'package:obs_blade/utils/twitch/third_party_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_badge_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
@@ -388,5 +391,64 @@ class FakeTwitchEmoteService extends TwitchEmoteService {
     if (this.fetchThrows != null) throw this.fetchThrows!;
     if (this.fetchGate != null) return this.fetchGate!.future;
     return this.emotes;
+  }
+}
+
+class FakeTwitchChannelService extends TwitchChannelService {
+  List<TwitchChannelRef> moderatedChannels = const [];
+  List<TwitchChannelRef> followedChannels = const [];
+  List<TwitchChannelSearchResult> searchResults = const [];
+
+  /// When set, the matching call throws this error (picker section /
+  /// login fetch failure paths).
+  Object? moderatedThrows;
+  Object? followedThrows;
+  Object? searchThrows;
+
+  int moderatedCalls = 0;
+  int followedCalls = 0;
+  int searchCalls = 0;
+  String? lastModeratedUserId;
+  String? lastFollowedUserId;
+  String? lastQuery;
+
+  static TwitchChannelRef channel(String id) => TwitchChannelRef(
+        id: id,
+        login: 'login-$id',
+        displayName: 'Channel $id',
+        addedAt: DateTime.utc(2026, 8, 9),
+      );
+
+  @override
+  Future<List<TwitchChannelRef>> getModeratedChannels({
+    required String accessToken,
+    required String userId,
+  }) async {
+    this.moderatedCalls++;
+    this.lastModeratedUserId = userId;
+    if (this.moderatedThrows != null) throw this.moderatedThrows!;
+    return this.moderatedChannels;
+  }
+
+  @override
+  Future<List<TwitchChannelRef>> getFollowedChannels({
+    required String accessToken,
+    required String userId,
+  }) async {
+    this.followedCalls++;
+    this.lastFollowedUserId = userId;
+    if (this.followedThrows != null) throw this.followedThrows!;
+    return this.followedChannels;
+  }
+
+  @override
+  Future<List<TwitchChannelSearchResult>> searchChannels({
+    required String accessToken,
+    required String query,
+  }) async {
+    this.searchCalls++;
+    this.lastQuery = query;
+    if (this.searchThrows != null) throw this.searchThrows!;
+    return this.searchResults;
   }
 }

@@ -630,6 +630,9 @@ void main() {
         expect(body['transport'],
             {'method': 'websocket', 'session_id': 'session-1'});
       }
+
+      /// A successful re-subscription is the store's back-to-live signal.
+      expect(states.last, TwitchEventSubState.connected);
     });
 
     test('a fresh session after a switch subscribes with the new broadcaster',

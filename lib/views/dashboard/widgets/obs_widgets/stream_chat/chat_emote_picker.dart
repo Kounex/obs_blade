@@ -214,8 +214,10 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                 final emoteStore = GetIt.instance<TwitchEmoteStore>();
                 final thirdPartyStore =
                     GetIt.instance<ThirdPartyEmoteStore>();
-                final broadcasterId =
-                    GetIt.instance<TwitchChatStore>().user?.id ?? '';
+                final chatStore = GetIt.instance<TwitchChatStore>();
+                final broadcasterId = chatStore.user == null
+                    ? ''
+                    : chatStore.effectiveBroadcasterId;
 
                 /// Tracked so catalogs landing while the sheet is open
                 /// pop in once.

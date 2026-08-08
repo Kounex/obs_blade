@@ -149,7 +149,12 @@ class TwitchEventSubService {
       }
     }
     this._broadcasterId = broadcasterId;
-    await this._createChannelSubscriptions();
+    final subscribed = await this._createChannelSubscriptions();
+
+    /// The store shows a connecting state during the switch — the socket
+    /// never left the session, so a successful re-subscription is the live
+    /// signal (a mandatory failure already routed to [onRevoked]).
+    if (subscribed) this.onStateChanged(TwitchEventSubState.connected);
   }
 
   void _openSocket(Uri uri) {
@@ -308,9 +313,10 @@ class TwitchEventSubService {
   /// The channel-scoped subs (message + lifecycle) for the CURRENT
   /// [_broadcasterId] — run on a fresh session and on every
   /// [switchChannel]. `channel.chat.message` is mandatory — a failure
-  /// routes to [onRevoked]. The three lifecycle types are best-effort:
-  /// failures are logged and degrade tombstones, never chat.
-  Future<void> _createChannelSubscriptions() async {
+  /// routes to [onRevoked] and reports false. The three lifecycle types
+  /// are best-effort: failures are logged and degrade tombstones, never
+  /// chat.
+  Future<bool> _createChannelSubscriptions() async {
     final token = this._accessToken;
     final userId = this._userId;
     final broadcasterId = this._broadcasterId;
@@ -319,7 +325,7 @@ class TwitchEventSubService {
         userId == null ||
         broadcasterId == null ||
         sessionId == null) {
-      return;
+      return false;
     }
 
     final created = <String>[];
@@ -354,7 +360,7 @@ class TwitchEventSubService {
           if (id != null) created.add(id);
         } else if (mandatory) {
           this.onRevoked('subscription_failed:${response.statusCode}');
-          return;
+          return false;
         } else {
           GeneralHelper.advLog(
             'Twitch EventSub: lifecycle subscription $type failed '
@@ -366,7 +372,7 @@ class TwitchEventSubService {
           GeneralHelper.advLog(
               'Twitch EventSub: subscription POST failed — $e');
           this.onRevoked('subscription_failed:$e');
-          return;
+          return false;
         }
         GeneralHelper.advLog(
           'Twitch EventSub: lifecycle subscription $type failed — $e',
@@ -374,6 +380,7 @@ class TwitchEventSubService {
       }
     }
     this._subscriptionIds = created;
+    return true;
   }
 
   /// `channel.moderate` v2 — own-channel only (both condition slots are

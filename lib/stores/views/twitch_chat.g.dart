@@ -198,6 +198,24 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$selectedChannelIdAtom = Atom(
+    name: '_TwitchChatStore.selectedChannelId',
+    context: context,
+  );
+
+  @override
+  String? get selectedChannelId {
+    _$selectedChannelIdAtom.reportRead();
+    return super.selectedChannelId;
+  }
+
+  @override
+  set selectedChannelId(String? value) {
+    _$selectedChannelIdAtom.reportWrite(value, super.selectedChannelId, () {
+      super.selectedChannelId = value;
+    });
+  }
+
   late final _$lifecycleVersionAtom = Atom(
     name: '_TwitchChatStore.lifecycleVersion',
     context: context,
@@ -254,6 +272,36 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   @override
   Future<void> connectChat() {
     return _$connectChatAsyncAction.run(() => super.connectChat());
+  }
+
+  late final _$addChannelAsyncAction = AsyncAction(
+    '_TwitchChatStore.addChannel',
+    context: context,
+  );
+
+  @override
+  Future<void> addChannel(TwitchChannelRef ref) {
+    return _$addChannelAsyncAction.run(() => super.addChannel(ref));
+  }
+
+  late final _$removeChannelAsyncAction = AsyncAction(
+    '_TwitchChatStore.removeChannel',
+    context: context,
+  );
+
+  @override
+  Future<void> removeChannel(String id) {
+    return _$removeChannelAsyncAction.run(() => super.removeChannel(id));
+  }
+
+  late final _$selectChannelAsyncAction = AsyncAction(
+    '_TwitchChatStore.selectChannel',
+    context: context,
+  );
+
+  @override
+  Future<void> selectChannel(String? id) {
+    return _$selectChannelAsyncAction.run(() => super.selectChannel(id));
   }
 
   late final _$sendChatMessageAsyncAction = AsyncAction(
@@ -368,6 +416,7 @@ chatError: ${chatError},
 chatConnectedAt: ${chatConnectedAt},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
+selectedChannelId: ${selectedChannelId},
 lifecycleVersion: ${lifecycleVersion},
 isLoggedIn: ${isLoggedIn}
     ''';

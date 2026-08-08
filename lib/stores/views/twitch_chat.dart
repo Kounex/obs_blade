@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -10,6 +11,7 @@ import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
@@ -17,6 +19,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 
@@ -41,6 +44,26 @@ enum TwitchChatConnectionState {
 
 class TwitchChatStore = _TwitchChatStore with _$TwitchChatStore;
 
+/// In-memory per-channel chat snapshot (multi-chat) — swapped in/out of
+/// the live containers on `_TwitchChatStore.selectChannel` so switching
+/// back restores recent history. Dies with the app session; never
+/// persisted (chat content never touches Hive).
+class _ChannelBuffer {
+  final List<ChatMessageEvent> messages;
+  final Set<String> deletedMessageIds;
+  final Map<String, String> deletedMessageActors;
+  final List<ChatSystemNotice> systemNotices;
+  final int arrivalSeq;
+
+  const _ChannelBuffer({
+    required this.messages,
+    required this.deletedMessageIds,
+    required this.deletedMessageActors,
+    required this.systemNotices,
+    required this.arrivalSeq,
+  });
+}
+
 /// Owns the native Twitch chat: device-flow login state, the persisted
 /// [TwitchAuth] record and the EventSub-backed message buffer.
 abstract class _TwitchChatStore with Store {
@@ -61,10 +84,15 @@ abstract class _TwitchChatStore with Store {
   final ThirdPartyEmoteStore Function() _emoteStoreResolver;
   final TwitchEmoteStore Function() _userEmoteStoreResolver;
   final TwitchMessageService _messageService;
+  final TwitchChannelService _channelService;
 
   TwitchEventSubService? _eventSub;
   StreamSubscription<BoxEvent>? _authBoxSub;
   bool _loginCancelled = false;
+
+  /// Whether [_loadChannelsFromSettings] already ran for this instance —
+  /// the settings load is idempotent per store instance.
+  bool _channelsLoaded = false;
 
   /// Identifies the active login flow — a superseded flow's stale
   /// continuations (e.g. a poll still mid-sleep) must not touch state.
@@ -85,6 +113,7 @@ abstract class _TwitchChatStore with Store {
     ThirdPartyEmoteStore Function()? emoteStoreResolver,
     TwitchEmoteStore Function()? userEmoteStoreResolver,
     TwitchMessageService? messageService,
+    TwitchChannelService? channelService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onMessageDelete, onClearUserMessages, onChatClear,
@@ -104,7 +133,8 @@ abstract class _TwitchChatStore with Store {
             (() => GetIt.instance<ThirdPartyEmoteStore>()),
         _userEmoteStoreResolver = userEmoteStoreResolver ??
             (() => GetIt.instance<TwitchEmoteStore>()),
-        _messageService = messageService ?? TwitchMessageService();
+        _messageService = messageService ?? TwitchMessageService(),
+        _channelService = channelService ?? TwitchChannelService();
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -145,6 +175,34 @@ abstract class _TwitchChatStore with Store {
   /// attempt.
   @observable
   String? sendChatError;
+
+  /// Multi-chat: channels the user added (persisted in the settings box as
+  /// json maps, [SettingsKeys.NativeChatChannels]). The user's own channel
+  /// is never in this list — it is derived from [user].
+  final ObservableList<TwitchChannelRef> channels =
+      ObservableList<TwitchChannelRef>();
+
+  /// Multi-chat: the currently viewed channel — null means the user's own
+  /// channel (the default; persisted as
+  /// [SettingsKeys.SelectedNativeChatChannelId]).
+  @observable
+  String? selectedChannelId;
+
+  /// Ids of channels the user moderates (from Get Moderated Channels on
+  /// login) — gates the dropdown shields and the mod action sheet.
+  final ObservableSet<String> moderatedChannelIds = ObservableSet<String>();
+
+  /// Per-channel chat snapshots keyed by broadcaster id (in-memory only).
+  final Map<String, _ChannelBuffer> _channelBuffers =
+      <String, _ChannelBuffer>{};
+
+  /// Recently applied moderation keys (deletes / purges / clears) — local
+  /// mod actions tombstone immediately and the EventSub echo must not
+  /// double-apply (also fixes duplicate `/clear` double-banners). Bounded
+  /// FIFO, oldest keys evicted.
+  static const int _kMaxAppliedModerationKeys = 256;
+  final Set<String> _appliedModerationKeys = <String>{};
+  final Queue<String> _appliedModerationOrder = Queue<String>();
 
   final ObservableList<ChatMessageEvent> messages =
       ObservableList<ChatMessageEvent>();
@@ -206,6 +264,53 @@ abstract class _TwitchChatStore with Store {
     return scopes != null && kTwitchModerationScopes.every(scopes.contains);
   }
 
+  /// Whether the persisted token can list the channels the user moderates
+  /// (multi-chat: moderated picker section + mod gating). Same
+  /// deliberately plain (non-reactive) pattern as [canReadEmotes].
+  bool get canReadModeratedChannels =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:read:moderated_channels',
+          ) ??
+      false;
+
+  /// Whether the persisted token can list followed channels (multi-chat:
+  /// followed picker section). Same deliberately plain pattern.
+  bool get canReadFollows =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'user:read:follows',
+          ) ??
+      false;
+
+  /// Whether the persisted token carries the mod-action manage scopes
+  /// (delete / timeout / ban). Same deliberately plain (non-reactive)
+  /// pattern as [canReadModeration].
+  bool get canModerateChats {
+    final scopes = this._authBox.get(TwitchAuth.kBoxKey)?.scopes;
+    return scopes != null &&
+        scopes.contains('moderator:manage:chat_messages') &&
+        scopes.contains('moderator:manage:banned_users');
+  }
+
+  /// The channel chat is read from / sent to — the selected multi-chat
+  /// channel or the user's own. Only valid while logged in ([user] set).
+  String get effectiveBroadcasterId =>
+      this.selectedChannelId ?? this.user!.id;
+
+  /// Null-safe [effectiveBroadcasterId] for moderation dedup keys — the
+  /// lifecycle apply methods can run without a login (tests, a session
+  /// wipe mid-stream).
+  String get effectiveBroadcasterIdSafe =>
+      this.selectedChannelId ?? this.user?.id ?? '';
+
+  /// Whether mod actions (delete / timeout / ban) are offered in the
+  /// currently selected channel: the token must carry the manage scopes
+  /// and the channel must be the user's own (implicit full mod) or one
+  /// they moderate.
+  bool get canModerateSelectedChannel =>
+      this.canModerateChats &&
+      (this.selectedChannelId == null ||
+          this.moderatedChannelIds.contains(this.selectedChannelId));
+
   /// Registers the box watcher (idempotent) so external wipes — e.g.
   /// data management clearing the Twitch box — reset the feature even
   /// when [init] never ran for this instance (fresh login path).
@@ -225,6 +330,7 @@ abstract class _TwitchChatStore with Store {
   @action
   Future<void> init() async {
     this._ensureAuthBoxWatcher();
+    this._ensureChannelsLoaded();
 
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     if (auth == null) return;
@@ -246,6 +352,7 @@ abstract class _TwitchChatStore with Store {
       displayName: auth.userDisplayName,
     );
     this.authState = TwitchAuthState.loggedIn;
+    this._fetchModeratedChannels();
     await this.connectChat();
   }
 
@@ -282,6 +389,8 @@ abstract class _TwitchChatStore with Store {
       this.pendingUserCode = null;
       this.pendingVerificationUri = null;
       this.authState = TwitchAuthState.loggedIn;
+      this._ensureChannelsLoaded();
+      this._fetchModeratedChannels();
       await this.connectChat();
     } on TwitchAuthException catch (e) {
       // A superseded flow must not clobber the new flow's state.
@@ -338,6 +447,7 @@ abstract class _TwitchChatStore with Store {
     }
     this.user = null;
     this.authState = TwitchAuthState.loggedOut;
+    this._resetMultiChatState();
     await this._authBox.delete(TwitchAuth.kBoxKey);
     if (auth != null) {
       await this._authService.revoke(auth.accessToken);
@@ -367,70 +477,11 @@ abstract class _TwitchChatStore with Store {
       await this._eventSub!.connect(
         accessToken: token,
         userId: this.user!.id,
-        broadcasterId: this.user!.id,
+        broadcasterId: this.effectiveBroadcasterId,
         includeModeration: this.canReadModeration,
       );
 
-      /// Badge catalogs are nice-to-have — a fetch problem must never
-      /// affect chat, so this is fire-and-forget with logged failures.
-      try {
-        unawaited(
-          this
-              ._badgeStoreResolver()
-              .fetch(accessToken: token, broadcasterId: this.user!.id)
-              .catchError((Object e) {
-            GeneralHelper.advLog('Twitch badge fetch failed — $e');
-          }),
-        );
-      } catch (e) {
-        GeneralHelper.advLog('Twitch badge fetch could not start — $e');
-      }
-
-      /// Third-party emote catalogs (7TV/BTTV) — same nice-to-have,
-      /// fire-and-forget policy as badges. Skipped entirely when the
-      /// user disabled them (no third-party contact at all). The whole
-      /// block is guarded: a missing Settings box or store lookup must
-      /// never break the chat connect.
-      try {
-        if (Hive.box(HiveKeys.Settings.name).get(
-          SettingsKeys.TwitchChatThirdPartyEmotes.name,
-          defaultValue: true,
-        )) {
-          unawaited(
-            this
-                ._emoteStoreResolver()
-                .fetch(broadcasterId: this.user!.id)
-                .catchError((Object e) {
-              GeneralHelper.advLog('Third-party emote fetch failed — $e');
-            }),
-          );
-        }
-      } catch (e) {
-        GeneralHelper.advLog('Third-party emote fetch could not start — $e');
-      }
-
-      /// First-party emote catalog (picker) — same nice-to-have,
-      /// fire-and-forget policy as badges. Skipped entirely when the
-      /// persisted token predates the read-emotes scope (pre-upgrade
-      /// session — the picker shows a re-login CTA instead).
-      try {
-        if (this.canReadEmotes) {
-          unawaited(
-            this
-                ._userEmoteStoreResolver()
-                .fetch(
-                  accessToken: token,
-                  userId: this.user!.id,
-                  broadcasterId: this.user!.id,
-                )
-                .catchError((Object e) {
-              GeneralHelper.advLog('Twitch user emote fetch failed — $e');
-            }),
-          );
-        }
-      } catch (e) {
-        GeneralHelper.advLog('Twitch user emote fetch could not start — $e');
-      }
+      this._refetchCatalogs(token, this.effectiveBroadcasterId);
     } on TwitchAuthException catch (e) {
       // Wipe the stored session only on a definitive auth failure: a
       // 401/403 on refresh means the refresh token is dead, and a null
@@ -453,8 +504,277 @@ abstract class _TwitchChatStore with Store {
     }
   }
 
-  /// Send a chat message as the logged-in user into their own channel.
-  /// Returns whether it was delivered — never throws; failures surface in
+  /// Fire-and-forget catalog refetches for [broadcasterId] — badges,
+  /// third-party emotes (when the user left them enabled) and first-party
+  /// user emotes (when scoped). All nice-to-have: a fetch problem must
+  /// never affect chat, so failures are logged, never surfaced. Shared by
+  /// [connectChat] and [selectChannel].
+  void _refetchCatalogs(String token, String broadcasterId) {
+    try {
+      unawaited(
+        this
+            ._badgeStoreResolver()
+            .fetch(accessToken: token, broadcasterId: broadcasterId)
+            .catchError((Object e) {
+          GeneralHelper.advLog('Twitch badge fetch failed — $e');
+        }),
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch badge fetch could not start — $e');
+    }
+
+    /// Third-party emote catalogs (7TV/BTTV) — skipped entirely when the
+    /// user disabled them (no third-party contact at all). The whole block
+    /// is guarded: a missing Settings box or store lookup must never break
+    /// the chat connect.
+    try {
+      if (Hive.box(HiveKeys.Settings.name).get(
+        SettingsKeys.TwitchChatThirdPartyEmotes.name,
+        defaultValue: true,
+      )) {
+        unawaited(
+          this
+              ._emoteStoreResolver()
+              .fetch(broadcasterId: broadcasterId)
+              .catchError((Object e) {
+            GeneralHelper.advLog('Third-party emote fetch failed — $e');
+          }),
+        );
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Third-party emote fetch could not start — $e');
+    }
+
+    /// First-party emote catalog (picker) — skipped entirely when the
+    /// persisted token predates the read-emotes scope (pre-upgrade
+    /// session — the picker shows a re-login CTA instead).
+    try {
+      if (this.canReadEmotes) {
+        unawaited(
+          this
+              ._userEmoteStoreResolver()
+              .fetch(
+                accessToken: token,
+                userId: this.user!.id,
+                broadcasterId: broadcasterId,
+              )
+              .catchError((Object e) {
+            GeneralHelper.advLog('Twitch user emote fetch failed — $e');
+          }),
+        );
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Twitch user emote fetch could not start — $e');
+    }
+  }
+
+  /// Multi-chat: fetch the channels the user moderates (dropdown shields
+  /// + mod gating). Fire-and-forget — mod status is nice-to-have, a
+  /// failure degrades to an empty set (no shields, no mod actions), never
+  /// to a chat error.
+  void _fetchModeratedChannels() {
+    if (!this.canReadModeratedChannels || this.user == null) return;
+    unawaited(() async {
+      try {
+        final token = await this._validAccessToken();
+        final moderated = await this._channelService.getModeratedChannels(
+          accessToken: token,
+          userId: this.user!.id,
+        );
+        runInAction(() {
+          this.moderatedChannelIds
+            ..clear()
+            ..addAll(moderated.map((ref) => ref.id));
+        });
+      } catch (e) {
+        GeneralHelper.advLog('Twitch moderated-channels fetch failed — $e');
+      }
+    }());
+  }
+
+  /// Idempotent settings load (init + fresh login): restores [channels]
+  /// and [selectedChannelId]. Missing keys degrade to empty/null; garbage
+  /// entries are skipped one by one. A persisted selection that no longer
+  /// matches a stored channel falls back to own (null).
+  void _ensureChannelsLoaded() {
+    if (this._channelsLoaded) return;
+    this._channelsLoaded = true;
+    try {
+      final box = Hive.box(HiveKeys.Settings.name);
+      final raw = box.get(
+        SettingsKeys.NativeChatChannels.name,
+        defaultValue: <dynamic>[],
+      );
+      if (raw is List) {
+        for (final entry in raw) {
+          try {
+            if (entry is Map) {
+              this.channels.add(
+                    TwitchChannelRef.fromJson(
+                      Map<String, Object?>.from(entry),
+                    ),
+                  );
+            }
+          } catch (_) {
+            // garbage entry — skipped, the rest still load
+          }
+        }
+      }
+      final selected = box.get(SettingsKeys.SelectedNativeChatChannelId.name);
+      if (selected is String &&
+          this.channels.any((ref) => ref.id == selected)) {
+        this.selectedChannelId = selected;
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Multi-chat settings load failed — $e');
+    }
+  }
+
+  void _persistChannels() {
+    try {
+      Hive.box(HiveKeys.Settings.name).put(
+        SettingsKeys.NativeChatChannels.name,
+        [for (final ref in this.channels) ref.toJson()],
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Multi-chat channel persist failed — $e');
+    }
+  }
+
+  void _persistSelectedChannel() {
+    try {
+      final box = Hive.box(HiveKeys.Settings.name);
+      if (this.selectedChannelId == null) {
+        box.delete(SettingsKeys.SelectedNativeChatChannelId.name);
+      } else {
+        box.put(
+          SettingsKeys.SelectedNativeChatChannelId.name,
+          this.selectedChannelId,
+        );
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Multi-chat selection persist failed — $e');
+    }
+  }
+
+  /// Multi-chat: add a channel and switch to it (adding expresses intent
+  /// to view). Dedupes by channel id; persists the list.
+  @action
+  Future<void> addChannel(TwitchChannelRef ref) async {
+    if (!this.channels.contains(ref)) {
+      this.channels.add(ref);
+      this._persistChannels();
+    }
+    await this.selectChannel(ref.id);
+  }
+
+  /// Multi-chat: drop a channel (and its in-memory buffer); removing the
+  /// selected channel falls back to the user's own. The buffer drop runs
+  /// AFTER the fallback switch — the switch re-snapshots the current
+  /// channel on its way out.
+  @action
+  Future<void> removeChannel(String id) async {
+    this.channels.removeWhere((ref) => ref.id == id);
+    this._persistChannels();
+    if (this.selectedChannelId == id) {
+      await this.selectChannel(null);
+    }
+    this._channelBuffers.remove(id);
+  }
+
+  /// Multi-chat: switch the visible channel (null = own). Only the
+  /// visible channel holds live EventSub subscriptions — the switch
+  /// happens on the same websocket session; the old channel's chat
+  /// snapshot is buffered in memory and restored on switch-back.
+  @action
+  Future<void> selectChannel(String? id) async {
+    if (id == this.selectedChannelId ||
+        this.authState != TwitchAuthState.loggedIn ||
+        this.user == null) {
+      return;
+    }
+    final previousBroadcasterId = this.effectiveBroadcasterId;
+    final newBroadcasterId = id ?? this.user!.id;
+
+    this._channelBuffers[previousBroadcasterId] = _ChannelBuffer(
+      messages: List.of(this.messages),
+      deletedMessageIds: Set.of(this._deletedMessageIds),
+      deletedMessageActors: Map.of(this._deletedMessageActors),
+      systemNotices: List.of(this.systemNotices),
+      arrivalSeq: this._arrivalSeq,
+    );
+
+    this.selectedChannelId = id;
+    this._persistSelectedChannel();
+
+    this.chatConnection = TwitchChatConnectionState.connecting;
+    if (this._eventSub != null) {
+      try {
+        await this._eventSub!.switchChannel(newBroadcasterId);
+      } catch (e) {
+        /// Switch failed — the pane shows the error state (with retry);
+        /// the selection is kept (no silent revert, spec §5).
+        GeneralHelper.advLog('Twitch channel switch failed — $e');
+        this.chatConnection = TwitchChatConnectionState.failed;
+        this.chatError = 'Could not switch to that channel';
+        this.chatConnectedAt = null;
+      }
+    } else {
+      /// No live session to move — a full connect targets the effective
+      /// broadcaster.
+      await this.connectChat();
+    }
+
+    final buffer = this._channelBuffers[newBroadcasterId];
+    this.messages.clear();
+    this._deletedMessageIds.clear();
+    this._deletedMessageActors.clear();
+    this.systemNotices.clear();
+    if (buffer != null) {
+      this.messages.addAll(buffer.messages);
+      this._deletedMessageIds.addAll(buffer.deletedMessageIds);
+      this._deletedMessageActors.addAll(buffer.deletedMessageActors);
+      this.systemNotices.addAll(buffer.systemNotices);
+      this._arrivalSeq = buffer.arrivalSeq;
+    } else {
+      this._arrivalSeq = 0;
+    }
+    this.lifecycleVersion++;
+
+    try {
+      final token = await this._validAccessToken();
+      this._refetchCatalogs(token, newBroadcasterId);
+    } on TwitchAuthException catch (e) {
+      /// Same policy as [connectChat]: a definitively dead token wipes
+      /// the session, a transient one is only logged.
+      if (e.statusCode == null ||
+          e.statusCode == 401 ||
+          e.statusCode == 403) {
+        await this._handleInvalidAuth(e.message);
+      } else {
+        GeneralHelper.advLog('Twitch token refresh on switch failed — $e');
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Twitch token refresh on switch failed — $e');
+    }
+  }
+
+  /// Whether [key] was already applied — first-time keys are recorded
+  /// (bounded FIFO) and reported as new. See [_appliedModerationKeys].
+  bool _moderationKeyIsNew(String key) {
+    if (!this._appliedModerationKeys.add(key)) return false;
+    this._appliedModerationOrder.addLast(key);
+    while (this._appliedModerationOrder.length > _kMaxAppliedModerationKeys) {
+      this._appliedModerationKeys.remove(
+            this._appliedModerationOrder.removeFirst(),
+          );
+    }
+    return true;
+  }
+
+  /// Send a chat message as the logged-in user into the effective
+  /// channel (their own, or the selected multi-chat channel). Returns
+  /// whether it was delivered — never throws; failures surface in
   /// [sendChatError]. The sent message renders via the EventSub echo.
   @action
   Future<bool> sendChatMessage(String text) async {
@@ -473,7 +793,7 @@ abstract class _TwitchChatStore with Store {
       final result = await this._messageService.sendChatMessage(
         accessToken: token,
         senderId: this.user!.id,
-        broadcasterId: this.user!.id,
+        broadcasterId: this.effectiveBroadcasterId,
         message: trimmed,
       );
       if (result.isSent) return true;
@@ -590,8 +910,14 @@ abstract class _TwitchChatStore with Store {
 
   /// Moderation lifecycle — all idempotent; events for unknown/evicted
   /// ids are no-ops. [lifecycleVersion] bumps only on real mutations.
+  /// Duplicate deliveries (and the EventSub echo of a local mod action)
+  /// are skipped via the applied-keys dedup.
   @action
   void applyMessageDelete(ChatMessageDeleteEvent event) {
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:delete:${event.messageId}')) {
+      return;
+    }
     final visible = this
         .messages
         .any((message) => message.messageId == event.messageId);
@@ -608,9 +934,14 @@ abstract class _TwitchChatStore with Store {
   /// superset of `message_delete`). Both orderings converge: the version
   /// bumps on any real change, so a `message_delete`-first tombstone gains
   /// its actor (and tap target) when this lands; a moderate-first
-  /// tombstone makes the later `message_delete` a no-op.
+  /// tombstone makes the later `message_delete` a no-op. The dedup key
+  /// includes the actor, so the actor-upgrade ordering is never skipped.
   @action
   void applyModerationDelete(String messageId, String actorName) {
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:mod-delete:$messageId:$actorName')) {
+      return;
+    }
     final visible =
         this.messages.any((message) => message.messageId == messageId);
     if (!visible) return;
@@ -622,6 +953,17 @@ abstract class _TwitchChatStore with Store {
 
   @action
   void applyClearUserMessages(String targetUserId) {
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId')) {
+      return;
+    }
+    this._purgeUserMessages(targetUserId);
+  }
+
+  /// Tombstones every visible message of [targetUserId] — the shared body
+  /// of the EventSub purge and a local timeout/ban (the local path marks
+  /// the dedup key first so the EventSub echo is skipped).
+  void _purgeUserMessages(String targetUserId) {
     var changed = false;
     for (final message in this.messages) {
       if (message.chatterUserId == targetUserId &&
@@ -634,9 +976,15 @@ abstract class _TwitchChatStore with Store {
 
   /// `/clear` on an empty chat is a full no-op — nothing was deleted, so
   /// nothing is marked (and the window's empty-states stay correct).
+  /// Duplicate deliveries of the SAME /clear (same arrival seq) are
+  /// deduped so the banner never doubles.
   @action
   void applyChatClear() {
     if (this.messages.isEmpty) return;
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:clear:${this._arrivalSeq}')) {
+      return;
+    }
     for (final message in this.messages) {
       this._deletedMessageIds.add(message.messageId);
     }
@@ -655,6 +1003,19 @@ abstract class _TwitchChatStore with Store {
     this._deletedMessageIds.clear();
     this.systemNotices.clear();
     this._arrivalSeq = 0;
+  }
+
+  /// Multi-chat wipe on logout/reset: per-channel buffers, the moderated
+  /// set and the moderation dedup keys die with the session; the selection
+  /// resets to the user's own channel (the persisted channels list stays
+  /// in the settings box for the next login).
+  void _resetMultiChatState() {
+    this._channelBuffers.clear();
+    this.moderatedChannelIds.clear();
+    this._appliedModerationKeys.clear();
+    this._appliedModerationOrder.clear();
+    this.selectedChannelId = null;
+    this._persistSelectedChannel();
   }
 
   void _onEventSubState(TwitchEventSubState state) {
@@ -702,6 +1063,7 @@ abstract class _TwitchChatStore with Store {
       this.user = null;
       this.authState = TwitchAuthState.loggedOut;
       this.authError = message;
+      this._resetMultiChatState();
     });
   }
 
@@ -711,6 +1073,7 @@ abstract class _TwitchChatStore with Store {
       this._clearLifecycle();
       this.user = null;
       this.authState = TwitchAuthState.loggedOut;
+      this._resetMultiChatState();
     });
     this._disconnectChat();
   }

@@ -11,6 +11,7 @@ import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
@@ -1002,6 +1003,276 @@ void main() {
       await store.startLogin();
 
       expect(eventSubService.lastIncludeModeration, isTrue);
+    });
+  });
+
+  group('multi-channel', () {
+    late FakeTwitchMessageService messageService;
+    late FakeTwitchChannelService channelService;
+    late void Function(TwitchEventSubState) emitState;
+
+    TwitchChannelRef ref(String id) => TwitchChannelRef(
+          id: id,
+          login: 'login-$id',
+          displayName: 'Channel $id',
+          addedAt: DateTime.utc(2026, 8, 9),
+        );
+
+    Box settingsBox() => Hive.box(HiveKeys.Settings.name);
+
+    setUp(() {
+      messageService = FakeTwitchMessageService();
+      channelService = FakeTwitchChannelService();
+    });
+
+    Future<void> login({List<String>? scopes}) async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes =
+          scopes ?? const ['user:read:chat', 'user:write:chat'];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, onStateChanged, _______) {
+          emitState = onStateChanged;
+          return eventSubService;
+        },
+        badgeStoreResolver: () => badgeStore,
+        messageService: messageService,
+        channelService: channelService,
+      );
+      await store.startLogin();
+      emitState(TwitchEventSubState.connected);
+    }
+
+    test('addChannel dedupes by id, persists and selects the channel',
+        () async {
+      await login();
+
+      await store.addChannel(ref('chan-1'));
+      await store.addChannel(ref('chan-1'));
+
+      expect(store.channels.map((entry) => entry.id), ['chan-1']);
+      final stored =
+          settingsBox().get(SettingsKeys.NativeChatChannels.name) as List;
+      expect(stored, hasLength(1));
+      expect((stored.single as Map)['id'], 'chan-1');
+      expect(
+          settingsBox().get(SettingsKeys.SelectedNativeChatChannelId.name),
+          'chan-1');
+      expect(store.selectedChannelId, 'chan-1');
+      expect(store.effectiveBroadcasterId, 'chan-1');
+      expect(eventSubService.lastSwitchBroadcasterId, 'chan-1');
+    });
+
+    test('channels and selection survive a store restart (settings round-trip)',
+        () async {
+      await login();
+      await store.addChannel(ref('chan-1'));
+
+      final restarted = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+            eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        channelService: channelService,
+      );
+      await restarted.init();
+
+      expect(restarted.channels.map((entry) => entry.id), ['chan-1']);
+      expect(restarted.selectedChannelId, 'chan-1');
+      expect(restarted.effectiveBroadcasterId, 'chan-1');
+
+      /// Cold start connects straight into the persisted channel.
+      expect(eventSubService.lastBroadcasterId, 'chan-1');
+    });
+
+    test('garbage in the settings box degrades to empty/null', () async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      await settingsBox()
+          .put(SettingsKeys.NativeChatChannels.name, ['nope', 42, {'id': 1}]);
+      await settingsBox()
+          .put(SettingsKeys.SelectedNativeChatChannelId.name, 42);
+
+      await login();
+
+      expect(store.channels, isEmpty);
+      expect(store.selectedChannelId, isNull);
+      expect(store.effectiveBroadcasterId, 'user-1');
+    });
+
+    test('switching snapshots and restores per-channel buffers', () async {
+      await login();
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1'));
+
+      await store.selectChannel('chan-1');
+      expect(store.selectedChannelId, 'chan-1');
+      expect(store.messages, isEmpty);
+      expect(store.isMessageDeleted('m1'), isFalse);
+
+      store.appendChatMessageForTest(chatMessage('m9', 'u9'));
+
+      await store.selectChannel(null);
+      expect(store.messages.map((message) => message.messageId), ['m1', 'm2']);
+      expect(store.isMessageDeleted('m1'), isTrue);
+
+      await store.selectChannel('chan-1');
+      expect(store.messages.map((message) => message.messageId), ['m9']);
+    });
+
+    test('the chat bar shows connecting during a switch, live after', () async {
+      await login();
+      expect(store.chatConnection, TwitchChatConnectionState.live);
+
+      await store.selectChannel('chan-1');
+      expect(store.chatConnection, TwitchChatConnectionState.connecting);
+
+      emitState(TwitchEventSubState.connected);
+      expect(store.chatConnection, TwitchChatConnectionState.live);
+    });
+
+    test('selectChannel no-ops when unchanged or logged out', () async {
+      await store.selectChannel('chan-1');
+      expect(eventSubService.switchChannelCalls, 0);
+
+      await login();
+      await store.selectChannel(null);
+      expect(eventSubService.switchChannelCalls, 0);
+    });
+
+    test('removeChannel drops the channel, its buffer and falls back to own',
+        () async {
+      await login();
+      await store.addChannel(ref('chan-1'));
+      store.appendChatMessageForTest(chatMessage('m9', 'u9'));
+      expect(store.selectedChannelId, 'chan-1');
+
+      await store.removeChannel('chan-1');
+
+      expect(store.channels, isEmpty);
+      expect(settingsBox().get(SettingsKeys.NativeChatChannels.name), isEmpty);
+      expect(settingsBox().get(SettingsKeys.SelectedNativeChatChannelId.name),
+          isNull);
+      expect(store.selectedChannelId, isNull);
+      expect(eventSubService.lastSwitchBroadcasterId, 'user-1');
+
+      /// The buffer was dropped — re-adding starts with an empty chat.
+      await store.addChannel(ref('chan-1'));
+      expect(store.messages, isEmpty);
+    });
+
+    test('connectChat subscribes to the selected channel', () async {
+      await login();
+      await store.addChannel(ref('chan-1'));
+
+      await store.connectChat();
+
+      expect(eventSubService.lastBroadcasterId, 'chan-1');
+    });
+
+    test('sendChatMessage targets the effective broadcaster', () async {
+      await login();
+      await store.selectChannel('chan-9');
+
+      expect(await store.sendChatMessage('hi'), isTrue);
+      expect(messageService.lastSenderId, 'user-1');
+      expect(messageService.lastBroadcasterId, 'chan-9');
+    });
+
+    test('login populates the moderated set when scoped', () async {
+      channelService.moderatedChannels = [ref('chan-mod')];
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:read:moderated_channels',
+      ]);
+      await pumpEventQueue();
+
+      expect(channelService.moderatedCalls, 1);
+      expect(channelService.lastModeratedUserId, 'user-1');
+      expect(store.moderatedChannelIds, contains('chan-mod'));
+    });
+
+    test('a failing moderated fetch degrades to an empty set', () async {
+      channelService.moderatedThrows =
+          const TwitchAuthException('down', statusCode: 500);
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:read:moderated_channels',
+      ]);
+      await pumpEventQueue();
+
+      expect(store.moderatedChannelIds, isEmpty);
+      expect(store.chatConnection, isNot(TwitchChatConnectionState.failed));
+    });
+
+    test('a pre-upgrade token skips the moderated fetch', () async {
+      await login(scopes: const ['user:read:chat']);
+      await pumpEventQueue();
+
+      expect(channelService.moderatedCalls, 0);
+    });
+
+    test('gating — own / moderated / other channel with manage scopes',
+        () async {
+      await login(scopes: const [
+        'user:read:chat',
+        'user:write:chat',
+        'moderator:manage:chat_messages',
+        'moderator:manage:banned_users',
+      ]);
+      store.moderatedChannelIds.add('chan-mod');
+
+      /// Own channel counts as full-mod implicitly.
+      expect(store.canModerateSelectedChannel, isTrue);
+
+      await store.selectChannel('chan-mod');
+      expect(store.canModerateSelectedChannel, isTrue);
+
+      await store.selectChannel('chan-other');
+      expect(store.canModerateSelectedChannel, isFalse);
+    });
+
+    test('gating — pre-upgrade token cannot moderate anywhere', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:read:moderated_channels',
+      ]);
+      store.moderatedChannelIds.add('chan-mod');
+
+      expect(store.canModerateSelectedChannel, isFalse);
+
+      await store.selectChannel('chan-mod');
+      expect(store.canModerateSelectedChannel, isFalse);
+    });
+
+    test('repeat delete events for the same id apply once', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1'));
+      final version = store.lifecycleVersion;
+
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1'));
+
+      expect(store.lifecycleVersion, version);
+      expect(store.isMessageDeleted('m1'), isTrue);
+    });
+
+    test('a duplicate /clear does not double-banner; a real second one does',
+        () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyChatClear();
+      expect(store.systemNotices, hasLength(1));
+
+      /// Same arrival seq = same /clear delivered twice — deduped.
+      store.applyChatClear();
+      expect(store.systemNotices, hasLength(1));
+
+      /// Messages after the clear move the seq — a genuine second /clear.
+      store.appendChatMessageForTest(chatMessage('m2', 'u1'));
+      store.applyChatClear();
+      expect(store.systemNotices, hasLength(2));
     });
   });
 }
