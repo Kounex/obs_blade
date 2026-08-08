@@ -46,6 +46,7 @@ void main() {
   late List<ChatMessageDeleteEvent> deletes;
   late List<ChatClearUserMessagesEvent> purges;
   late List<ChatClearEvent> clears;
+  late List<(String, String)> moderationDeletes;
 
   String welcome(String sessionId) => json.encode({
         'metadata': {
@@ -113,6 +114,25 @@ void main() {
         sleep: (_) async {},
       );
 
+  TwitchEventSubService moderationServiceWith(MockClient client) =>
+      TwitchEventSubService(
+        onChatMessage: messages.add,
+        onMessageDelete: deletes.add,
+        onClearUserMessages: purges.add,
+        onChatClear: clears.add,
+        onModerationDelete: (messageId, actor) =>
+            moderationDeletes.add((messageId, actor)),
+        onStateChanged: states.add,
+        onRevoked: revocations.add,
+        client: client,
+        channelFactory: (uri) {
+          final channel = FakeWebSocketChannel();
+          channels.add(channel);
+          return channel;
+        },
+        sleep: (_) async {},
+      );
+
   setUp(() {
     channels = [];
     states = [];
@@ -121,6 +141,7 @@ void main() {
     deletes = [];
     purges = [];
     clears = [];
+    moderationDeletes = [];
   });
 
   test('welcome subscribes to message + lifecycle types with the session id',
@@ -374,6 +395,109 @@ void main() {
     await pumpEventQueue();
 
     expect(posts, 4);
+    expect(revocations, isEmpty);
+    expect(states, contains(TwitchEventSubState.connected));
+  });
+
+  test('includeModeration appends a v2 channel.moderate subscription',
+      () async {
+    final bodies = <Map<String, dynamic>>[];
+    final client = MockClient((request) async {
+      bodies.add(json.decode(request.body) as Map<String, dynamic>);
+      return http.Response(
+        json.encode({
+          'data': [
+            {'id': 'sub-${bodies.length}'}
+          ],
+        }),
+        202,
+      );
+    });
+
+    final service = serviceWith(client);
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', includeModeration: true);
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    expect(bodies.map((body) => body['type']), [
+      'channel.chat.message',
+      'channel.chat.message_delete',
+      'channel.chat.clear_user_messages',
+      'channel.chat.clear',
+      'channel.moderate',
+    ]);
+    for (final body in bodies.sublist(0, 4)) {
+      expect(body['version'], '1');
+      expect(body['condition'],
+          {'broadcaster_user_id': 'user-1', 'user_id': 'user-1'});
+    }
+    expect(bodies[4]['version'], '2');
+    expect(bodies[4]['condition'],
+        {'broadcaster_user_id': 'user-1', 'moderator_user_id': 'user-1'});
+  });
+
+  test('moderate delete dispatches; other actions are ignored', () async {
+    final client = MockClient((request) async =>
+        http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
+
+    final service = moderationServiceWith(client);
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', includeModeration: true);
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    String moderateNotification(Map<String, Object?> event) => json.encode({
+          'metadata': {
+            'message_id': 'mod-1',
+            'message_type': 'notification',
+            'message_timestamp': '2026-08-08T10:00:00.000Z',
+            'subscription_type': 'channel.moderate',
+            'subscription_version': '2',
+          },
+          'payload': {
+            'subscription': {'type': 'channel.moderate'},
+            'event': event,
+          },
+        });
+
+    final timeoutEvent = json.decode(File(
+            'test/chat/fixtures/twitch/channel_moderate_timeout.json')
+        .readAsStringSync()) as Map<String, Object?>;
+    final deleteEvent = json.decode(File(
+            'test/chat/fixtures/twitch/channel_moderate_delete.json')
+        .readAsStringSync()) as Map<String, Object?>;
+
+    channels.single.incoming.add(moderateNotification(timeoutEvent));
+    channels.single.incoming.add(moderateNotification(deleteEvent));
+    await pumpEventQueue();
+
+    expect(moderationDeletes, [
+      ('ab24e0b0-2260-4bac-94e4-05eedd4ecd0e', 'quotrok'),
+    ]);
+  });
+
+  test('a failing moderate POST degrades the reveal, not chat', () async {
+    var posts = 0;
+    final client = MockClient((request) async {
+      posts++;
+      if (posts == 5) return http.Response('Forbidden', 403);
+      return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-$posts'}
+            ],
+          }),
+          202);
+    });
+
+    final service = serviceWith(client);
+    await service.connect(
+        accessToken: 'token-1', userId: 'user-1', includeModeration: true);
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    expect(posts, 5);
     expect(revocations, isEmpty);
     expect(states, contains(TwitchEventSubState.connected));
   });

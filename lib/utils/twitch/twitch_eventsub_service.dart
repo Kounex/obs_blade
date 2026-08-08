@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/eventsub_envelope.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
@@ -12,7 +13,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 enum TwitchEventSubState { disconnected, connecting, connected, reconnecting }
 
 /// Dedicated EventSub WebSocket session for chat messages + moderation
-/// lifecycle events (`message_delete`, `clear_user_messages`, `clear`).
+/// lifecycle events (`message_delete`, `clear_user_messages`, `clear`,
+/// optionally `channel.moderate` v2 for the deleting-mod reveal).
 /// Completely separate from the OBS WebSocket — owns its socket, keepalive
 /// watchdog and reconnect backoff. [channelFactory] and [sleep] are
 /// injectable for tests.
@@ -38,6 +40,11 @@ class TwitchEventSubService {
   ];
   static const String _kMessageType = 'channel.chat.message';
 
+  /// `channel.moderate` v2 — optional best-effort fifth type, created only
+  /// when [connect] passes `includeModeration` (the token must carry the
+  /// full moderator:read bundle; condition uses `moderator_user_id`).
+  static const String _kModerateType = 'channel.moderate';
+
   final http.Client _client;
   final WebSocketChannel Function(Uri) _channelFactory;
   final Future<void> Function(Duration) _sleep;
@@ -51,6 +58,11 @@ class TwitchEventSubService {
       onClearUserMessages;
   final void Function(ChatClearEvent event)? onChatClear;
 
+  /// `channel.moderate` delete actions — (messageId, moderator display
+  /// name). Optional; a null callback skips parsing for this type.
+  final void Function(String messageId, String moderatorName)?
+      onModerationDelete;
+
   final void Function(TwitchEventSubState state) onStateChanged;
 
   /// Subscription revoked by Twitch (e.g. `authorization_revoked`) or
@@ -63,6 +75,7 @@ class TwitchEventSubService {
 
   String? _accessToken;
   String? _userId;
+  bool _includeModeration = false;
   String? _sessionId;
 
   /// Ids created on the current session (message + whichever lifecycle
@@ -76,6 +89,7 @@ class TwitchEventSubService {
     this.onMessageDelete,
     this.onClearUserMessages,
     this.onChatClear,
+    this.onModerationDelete,
     required this.onStateChanged,
     required this.onRevoked,
     http.Client? client,
@@ -88,9 +102,11 @@ class TwitchEventSubService {
   Future<void> connect({
     required String accessToken,
     required String userId,
+    bool includeModeration = false,
   }) async {
     this._accessToken = accessToken;
     this._userId = userId;
+    this._includeModeration = includeModeration;
     this._disposed = false;
     this._reconnectAttempts = 0;
     this._openSocket(Uri.parse(_wsUrl));
@@ -201,6 +217,17 @@ class TwitchEventSubService {
               ),
             );
           }
+        case 'channel.moderate':
+          final callback = this.onModerationDelete;
+          if (callback != null) {
+            final event = ChannelModerateEvent.fromJson(
+              envelope.payload['event'] as Map<String, Object?>,
+            );
+            final delete = event.delete;
+            if (event.action == 'delete' && delete != null) {
+              callback(delete.messageId, event.moderatorUserName);
+            }
+          }
       }
     } catch (e) {
       GeneralHelper.advLog('Twitch EventSub: could not parse $type event — $e');
@@ -239,9 +266,14 @@ class TwitchEventSubService {
     final sessionId = this._sessionId;
     if (token == null || userId == null || sessionId == null) return;
 
+    final types = <String>[
+      ..._kSubscriptionTypes,
+      if (this._includeModeration) _kModerateType,
+    ];
     final created = <String>[];
-    for (final type in _kSubscriptionTypes) {
+    for (final type in types) {
       final mandatory = type == _kMessageType;
+      final isModerate = type == _kModerateType;
 
       /// The socket-level failure path (DNS/socket/timeout) must not
       /// escape this unawaited future — surface it like a failed
@@ -255,8 +287,13 @@ class TwitchEventSubService {
           },
           body: json.encode({
             'type': type,
-            'version': '1',
-            'condition': {'broadcaster_user_id': userId, 'user_id': userId},
+            'version': isModerate ? '2' : '1',
+            'condition': isModerate
+                ? {
+                    'broadcaster_user_id': userId,
+                    'moderator_user_id': userId,
+                  }
+                : {'broadcaster_user_id': userId, 'user_id': userId},
             'transport': {'method': 'websocket', 'session_id': sessionId},
           }),
         );
