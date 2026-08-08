@@ -13,9 +13,12 @@ void main() {
     test('message_delete parses the documented example payload', () {
       final event = ChatMessageDeleteEvent.fromJson(
           fixture('channel_chat_message_delete'));
-      expect(event.messageId, 'e860a7a5-58d3-4959-9c5f-0f4dc9b5b0a2');
+      expect(event.messageId, 'ab24e0b0-2260-4bac-94e4-05eedd4ecd0e');
       expect(event.targetUserId, '7734');
-      expect(event.userName, 'Cool_Mod');
+
+      /// Twitch's real payload carries no deleting-moderator field — the
+      /// actor stays unknown and the row's reveal line stays hidden.
+      expect(event.userName, isNull);
     });
 
     test('clear_user_messages parses the documented example payload', () {

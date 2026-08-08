@@ -5,7 +5,10 @@ part 'chat_lifecycle_events.g.dart';
 
 /// `channel.chat.message_delete` event — a moderator removed one message.
 /// [userName] is the deleting moderator's display name (the row's reveal
-/// line consumes it); other display fields are deliberately not modeled.
+/// line consumes it). Twitch's actual payload carries no moderator field —
+/// the fixture mirrors the documented example — so this is always null in
+/// practice and only kept forward-compatible; other display fields are
+/// deliberately not modeled.
 @Freezed(fromJson: true, toJson: false)
 abstract class ChatMessageDeleteEvent with _$ChatMessageDeleteEvent {
   // ignore: invalid_annotation_target
@@ -13,7 +16,7 @@ abstract class ChatMessageDeleteEvent with _$ChatMessageDeleteEvent {
   const factory ChatMessageDeleteEvent({
     required String messageId,
     required String targetUserId,
-    required String userName,
+    String? userName,
   }) = _ChatMessageDeleteEvent;
 
   factory ChatMessageDeleteEvent.fromJson(Map<String, Object?> json) =>

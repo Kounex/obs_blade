@@ -25,9 +25,10 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// (set by the window from the store's lifecycle state).
   final bool isDeleted;
 
-  /// Display name of the moderator who deleted this message — only single
-  /// deletes carry one (purge//clear payloads don't). Non-null together
-  /// with [isDeleted] makes the row tappable ([onDeletedTap]).
+  /// Display name of the moderator who deleted this message — Twitch's
+  /// `message_delete` payload does not currently include the actor, so
+  /// this is null in practice (purge//clear ids always are). Non-null
+  /// together with [isDeleted] makes the row tappable ([onDeletedTap]).
   final String? deletedActor;
 
   /// Whether the actor reveal line under a deleted message is expanded.

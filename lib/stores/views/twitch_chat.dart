@@ -155,8 +155,10 @@ abstract class _TwitchChatStore with Store {
 
   /// Display name of the moderator who deleted a message, keyed by
   /// messageId — plain Map, same [lifecycleVersion] reactivity story as
-  /// [_deletedMessageIds]. Only single deletes carry an actor (purge and
-  /// /clear payloads don't), so those ids are absent here.
+  /// [_deletedMessageIds]. Twitch's `message_delete` payload does not
+  /// currently include the deleting moderator (kept forward-compatible on
+  /// the DTO), so entries only ever appear if Twitch adds the field;
+  /// purge and /clear ids are always absent here.
   final Map<String, String> _deletedMessageActors = <String, String>{};
 
   /// System banners merged into the scroll by arrival sequence — plain
@@ -576,7 +578,10 @@ abstract class _TwitchChatStore with Store {
         .messages
         .any((message) => message.messageId == event.messageId);
     if (visible && this._deletedMessageIds.add(event.messageId)) {
-      this._deletedMessageActors[event.messageId] = event.userName;
+      final actor = event.userName;
+      if (actor != null) {
+        this._deletedMessageActors[event.messageId] = actor;
+      }
       this.lifecycleVersion++;
     }
   }

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatMessageDeleteEvent {
 
- String get messageId; String get targetUserId; String get userName;
+ String get messageId; String get targetUserId; String? get userName;
 /// Create a copy of ChatMessageDeleteEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,7 +46,7 @@ abstract mixin class $ChatMessageDeleteEventCopyWith<$Res>  {
   factory $ChatMessageDeleteEventCopyWith(ChatMessageDeleteEvent value, $Res Function(ChatMessageDeleteEvent) _then) = _$ChatMessageDeleteEventCopyWithImpl;
 @useResult
 $Res call({
- String messageId, String targetUserId, String userName
+ String messageId, String targetUserId, String? userName
 });
 
 
@@ -63,12 +63,12 @@ class _$ChatMessageDeleteEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageDeleteEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messageId = null,Object? targetUserId = null,Object? userName = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? messageId = null,Object? targetUserId = null,Object? userName = freezed,}) {
   return _then(_self.copyWith(
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,targetUserId: null == targetUserId ? _self.targetUserId : targetUserId // ignore: cast_nullable_to_non_nullable
-as String,userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
-as String,
+as String,userName: freezed == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -153,7 +153,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  String targetUserId,  String userName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  String targetUserId,  String? userName)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessageDeleteEvent() when $default != null:
 return $default(_that.messageId,_that.targetUserId,_that.userName);case _:
@@ -174,7 +174,7 @@ return $default(_that.messageId,_that.targetUserId,_that.userName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  String targetUserId,  String userName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  String targetUserId,  String? userName)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageDeleteEvent():
 return $default(_that.messageId,_that.targetUserId,_that.userName);case _:
@@ -194,7 +194,7 @@ return $default(_that.messageId,_that.targetUserId,_that.userName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  String targetUserId,  String userName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  String targetUserId,  String? userName)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageDeleteEvent() when $default != null:
 return $default(_that.messageId,_that.targetUserId,_that.userName);case _:
@@ -209,12 +209,12 @@ return $default(_that.messageId,_that.targetUserId,_that.userName);case _:
 
 @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
 class _ChatMessageDeleteEvent implements ChatMessageDeleteEvent {
-  const _ChatMessageDeleteEvent({required this.messageId, required this.targetUserId, required this.userName});
+  const _ChatMessageDeleteEvent({required this.messageId, required this.targetUserId, this.userName});
   factory _ChatMessageDeleteEvent.fromJson(Map<String, dynamic> json) => _$ChatMessageDeleteEventFromJson(json);
 
 @override final  String messageId;
 @override final  String targetUserId;
-@override final  String userName;
+@override final  String? userName;
 
 /// Create a copy of ChatMessageDeleteEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -246,7 +246,7 @@ abstract mixin class _$ChatMessageDeleteEventCopyWith<$Res> implements $ChatMess
   factory _$ChatMessageDeleteEventCopyWith(_ChatMessageDeleteEvent value, $Res Function(_ChatMessageDeleteEvent) _then) = __$ChatMessageDeleteEventCopyWithImpl;
 @override @useResult
 $Res call({
- String messageId, String targetUserId, String userName
+ String messageId, String targetUserId, String? userName
 });
 
 
@@ -263,12 +263,12 @@ class __$ChatMessageDeleteEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageDeleteEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messageId = null,Object? targetUserId = null,Object? userName = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? messageId = null,Object? targetUserId = null,Object? userName = freezed,}) {
   return _then(_ChatMessageDeleteEvent(
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,targetUserId: null == targetUserId ? _self.targetUserId : targetUserId // ignore: cast_nullable_to_non_nullable
-as String,userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
-as String,
+as String,userName: freezed == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
