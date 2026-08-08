@@ -242,7 +242,7 @@ Expected: `Built with build_runner ... wrote 3 outputs` (creates
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_lifecycle_dto_test.dart`
-Expected: PASS (8 tests).
+Expected: PASS (9 tests — 6 existing + 3 new).
 
 - [ ] **Step 6: Commit**
 
@@ -1048,7 +1048,21 @@ g) Add the `kTwitchModerationScopes` import — the auth service is already
 imported (`package:obs_blade/utils/twitch/twitch_auth_service.dart`), no
 new import needed.
 
-- [ ] **Step 6: Update the remaining factory call sites (mechanical)**
+- [ ] **Step 6: Regenerate the MobX store artifact**
+
+The store file has `part 'twitch_chat.g.dart'` and the new
+`applyModerationDelete` is an `@action` — regen AFTER all annotated
+edits, once:
+
+```bash
+~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs \
+  --build-filter='lib/stores/views/twitch_chat.*.dart'
+```
+
+Expected: builds succeeded; `lib/stores/views/twitch_chat.g.dart` gains
+the wrapped `applyModerationDelete` action next to `applyMessageDelete`.
+
+- [ ] **Step 7: Update the remaining factory call sites (mechanical)**
 
 Every test factory literal gains a 7th parameter (the new callback sits
 between `onChatClear` and `onStateChanged`):
@@ -1063,15 +1077,16 @@ between `onChatClear` and `onStateChanged`):
   `test/chat/native_twitch_chat_view_test.dart:94` — same 6→7 underscore
   insertion as above.
 
-- [ ] **Step 7: Run the chat tests to verify they pass**
+- [ ] **Step 8: Run the chat tests to verify they pass**
 
 Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/`
-Expected: PASS (all 219+ prior tests plus the 7 new ones).
+Expected: PASS (all 219 prior tests plus the 7 new ones = 226).
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add lib/stores/views/twitch_chat.dart \
+  lib/stores/views/twitch_chat.g.dart \
   test/chat/support/fake_twitch_services.dart \
   test/chat/twitch_chat_store_test.dart \
   test/chat/twitch_chat_integration_test.dart \
@@ -1154,7 +1169,7 @@ Prepend to `docs/changelog-agent.md` (after the intro line):
   longer loses single deletes.
 - New `ChannelModerateEvent` DTO is tolerant (only `delete` modeled,
   fixtures mirror the real twitch-rs v2 envelope). Tests: DTO 3, service
-  3, store 6 + gate 2. Gates: full suite green, analyze 0 errors + 6
+  3, store 5 + gate 2. Gates: full suite green, analyze 0 errors + 6
   pre-existing warnings.
 ```
 
