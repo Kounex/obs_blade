@@ -2,8 +2,9 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-08** (full reset at
-session close-out: all waves pushed, only the deleted-content dogfood open).
+Read this first after `AGENTS.md`. Last reset: **2026-08-08** (close-out:
+all waves pushed incl. the process-tier ratification; only the
+actor-reveal dogfood open — needs a fresh Twitch login first).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -52,8 +53,8 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Everything is on `master` and pushed** (latest: `350e89d`). Gates at last
-wrap-up: full suite 250/250, analyze 0 errors + exactly 6 pre-existing
+**Everything is on `master` and pushed** (latest: `b8b9913`). Gates at last
+wrap-up: full suite 263/263, analyze 0 errors + exactly 6 pre-existing
 warnings. Depth for every wave below: [`changelog-agent.md`](changelog-agent.md)
 + specs/plans under `docs/superpowers/`; per-task detail incl. commit ranges
 in the SDD ledger `.superpowers/sdd/progress.md` (untracked, per-machine).
@@ -115,19 +116,25 @@ in the SDD ledger `.superpowers/sdd/progress.md` (untracked, per-machine).
 
 - **Native chat availability/entitlement gate** — the named next chat item:
   plugs into `nativeChatAvailableFor` (`lib/models/enums/chat_engine.dart`),
-  brings auto-switch-on-login. Should be the first wave through the new
-  verifier pass (below).
+  brings auto-switch-on-login. Pick the process tier first per §0 of the
+  checklist (default S; this one touches entitlement → consider M/L).
 - Replies/announce — send polish, after the gate.
 - Store cut — Android build/test + version/build-number bump first (see
   master notes in changelog).
 - Paid backend — OAuth broker registration still deferred; see
   `private/backend-architecture.md`.
 
-**Process (SDD waves):** after plan approval, run the pre-dispatch
-plan-verification pass before Task 1 — checklist + named defect probes +
-codegen artifact rules in
-[`docs/superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md);
-paste per its §4 wiring; append new ratified defect classes at wrap-up.
+**Process (tiers — S is the default):** size the process to the change.
+S = implement directly in-session (no subagents/plan doc), TDD + gates
+once. M = 1 implementer subagent + 1 end reviewer, prose mini-plan. L =
+full SDD (verifier pass, per-task reviews, defect probes) — only on user
+risk flag or genuine multi-day scope. Cost rules: gates once at wrap-up,
+resume subagents for fix loops, terse reports, secondary model for all
+dispatches (quota exhausted → drop a tier, don't run full pipeline on
+primary). Policy + rationale:
+[`docs/superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md)
+§0; defect probes + codegen rules §2–§4 apply to L waves; append new
+ratified defect classes at wrap-up.
 
 ## Verify quickly
 
@@ -157,7 +164,7 @@ flutter test test/chat/ test/websocket/ test/persistence/
 | [`persistence-risk.md`](persistence-risk.md) / [`hive-ce-source-audit.md`](hive-ce-source-audit.md) | Hive CE safety |
 | [`upgrade-plan.md`](upgrade-plan.md) | Flutter/package bump status |
 | [`local-obs-e2e.md`](local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
-| [`superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md) | SDD wave hardening — verifier pass, defect probes, codegen checklist |
+| [`superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md) | Process policy — tiers (§0, S default), verifier pass, defect probes, codegen checklist |
 | [`redesign/`](redesign/) | "On Air" redesign: design system, audit digest, session notes |
 | [`private/monetization-strategy.md`](private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored.** |
 | [`private/backend-architecture.md`](private/backend-architecture.md) | Infra plan for paid backend features. **Gitignored.** |

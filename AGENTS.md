@@ -134,7 +134,10 @@ chat audit + handoff.
   only when the user flags risk (persistence/protocol/release paths) or
   the work is genuinely multi-day. Subagents go on the secondary model;
   if its quota is exhausted, say so and drop a tier instead of running
-  the full pipeline on primary. Append new ratified defect classes to
+  the full pipeline on primary. This tier policy is the project's
+  explicit override of the superpowers-skill defaults (brainstorming,
+  subagent-driven-development) for process sizing — skills still apply
+  within the chosen tier. Append new ratified defect classes to
   the checklist at wave wrap-up.
 - Branch: `master`
 
