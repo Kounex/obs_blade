@@ -76,7 +76,8 @@ class TwitchChatMessageRow extends StatelessWidget {
           settingsKeyForBadgeSetId(badge.setId).name,
           defaultValue: true,
         ))
-          if (badgeStore.badgeVersion(badge.setId, badge.id)
+          if (badgeStore.badgeVersion(
+                  this.event.broadcasterUserId, badge.setId, badge.id)
               case final version?)
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
@@ -157,7 +158,9 @@ class TwitchChatMessageRow extends StatelessWidget {
     return [
       for (var i = 0; i < tokens.length; i++) ...[
         if (i > 0) const TextSpan(text: ' '),
-        if (emoteStore.emoteImageUrl(tokens[i]) case final imageUrl?)
+        if (emoteStore.emoteImageUrl(tokens[i],
+                broadcasterId: this.event.broadcasterUserId)
+            case final imageUrl?)
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: Image.network(

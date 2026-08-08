@@ -679,12 +679,13 @@ void main() {
 
     test('logout clears the catalog', () async {
       await logIn();
-      emoteStore.emotes[FakeThirdPartyEmoteService.peepo.name] =
+      emoteStore.globalEmotes[FakeThirdPartyEmoteService.peepo.name] =
           FakeThirdPartyEmoteService.peepo;
 
       await store.logout();
 
-      expect(emoteStore.emotes, isEmpty);
+      expect(emoteStore.globalEmotes, isEmpty);
+      expect(emoteStore.channelEmotes, isEmpty);
     });
   });
 

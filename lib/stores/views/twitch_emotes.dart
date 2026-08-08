@@ -8,10 +8,10 @@ part 'twitch_emotes.g.dart';
 class TwitchEmoteStore = _TwitchEmoteStore with _$TwitchEmoteStore;
 
 /// Session-scoped catalog of the first-party emotes the logged-in user can
-/// use in their own channel's chat (Helix `chat/emotes/user`), split for
+/// use in the viewed channel's chat (Helix `chat/emotes/user`), split for
 /// the picker into channel vs global sections. Refetched on every chat
-/// connect, in-memory only — failures degrade to "no first-party emotes",
-/// never to a chat error.
+/// connect / channel switch, in-memory only — failures degrade to "no
+/// first-party emotes", never to a chat error.
 abstract class _TwitchEmoteStore with Store {
   final TwitchEmoteService _service;
 
@@ -42,17 +42,21 @@ abstract class _TwitchEmoteStore with Store {
   Future<void> fetch({
     required String accessToken,
     required String userId,
+    required String broadcasterId,
   }) async {
     final generation = ++this._fetchGeneration;
     this.isLoading = true;
 
-    /// The chat engine only ever connects to the user's own channel, so
-    /// userId doubles as broadcasterId.
+    /// Multi-chat: [userId] is the session user (whose usable emotes are
+    /// fetched); [broadcasterId] is the channel being viewed — own channel
+    /// in single-chat mode, any added channel after a switch. The channel
+    /// section of the picker holds the viewed channel's own emotes
+    /// (ownerId == broadcasterId).
     final emotes = await this._tryFetch(
       this._service.fetchUserEmotes(
         accessToken,
         userId: userId,
-        broadcasterId: userId,
+        broadcasterId: broadcasterId,
       ),
     );
 
@@ -63,7 +67,7 @@ abstract class _TwitchEmoteStore with Store {
     final channel = <TwitchUserEmote>[];
     final global = <TwitchUserEmote>[];
     for (final emote in emotes ?? const <TwitchUserEmote>[]) {
-      (emote.ownerId == userId ? channel : global).add(emote);
+      (emote.ownerId == broadcasterId ? channel : global).add(emote);
     }
     int byName(TwitchUserEmote a, TwitchUserEmote b) =>
         a.name.compareTo(b.name);

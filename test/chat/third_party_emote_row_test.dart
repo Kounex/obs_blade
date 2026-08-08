@@ -74,7 +74,7 @@ void main() {
   }
 
   testWidgets('a known token becomes an inline image', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
 
     final richText = await pumpRow(tester, 'hi peepoHappy');
 
@@ -86,8 +86,8 @@ void main() {
   });
 
   testWidgets('multiple emote tokens in one message', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
-    emoteStore.emotes['monkaS'] = FakeThirdPartyEmoteService.monka;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['monkaS'] = FakeThirdPartyEmoteService.monka;
 
     final richText = await pumpRow(tester, 'peepoHappy and monkaS');
 
@@ -96,7 +96,7 @@ void main() {
   });
 
   testWidgets('unknown tokens and wrong case stay text', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
 
     final richText = await pumpRow(tester, 'PeepoHappy peepoHappyy');
 
@@ -105,7 +105,7 @@ void main() {
   });
 
   testWidgets('punctuation-glued tokens stay text', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
 
     final richText = await pumpRow(tester, 'peepoHappy!');
 
@@ -114,7 +114,7 @@ void main() {
   });
 
   testWidgets('spacing is preserved exactly', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
 
     final richText = await pumpRow(tester, 'a  peepoHappy  b');
 
@@ -122,7 +122,7 @@ void main() {
   });
 
   testWidgets('toggle off keeps everything text', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
 
     /// Real file I/O never completes inside the test body's FakeAsync
     /// zone — runAsync escapes it (same pattern as the badge tests).
@@ -138,7 +138,7 @@ void main() {
   });
 
   testWidgets('first-party emote fragments are untouched', (tester) async {
-    emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
     final event = ChatMessageEvent(
       broadcasterUserId: 'b1',
       chatterUserId: '1',

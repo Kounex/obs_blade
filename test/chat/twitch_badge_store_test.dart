@@ -24,9 +24,9 @@ void main() {
 
     expect(service.lastAccessToken, 'token-1');
     expect(service.lastBroadcasterId, 'user-1');
-    expect(store.badgeVersion('moderator', '1')?.imageUrl2x,
+    expect(store.badgeVersion('user-1', 'moderator', '1')?.imageUrl2x,
         'https://badges.example/mod/2x.png');
-    expect(store.badgeVersion('subscriber', '12')?.imageUrl2x,
+    expect(store.badgeVersion('user-1', 'subscriber', '12')?.imageUrl2x,
         'https://badges.example/sub/2x.png');
     expect(store.isLoading, isFalse);
   });
@@ -37,15 +37,38 @@ void main() {
 
     await store.fetch(accessToken: 'token-1', broadcasterId: 'user-1');
 
-    expect(store.badgeVersion('moderator', '1')?.imageUrl2x,
+    expect(store.badgeVersion('user-1', 'moderator', '1')?.imageUrl2x,
         'https://badges.example/mod-override/2x.png');
   });
 
   test('unknown badges resolve to null', () async {
     await store.fetch(accessToken: 'token-1', broadcasterId: 'user-1');
 
-    expect(store.badgeVersion('vip', '1'), isNull);
-    expect(store.badgeVersion('moderator', '99'), isNull);
+    expect(store.badgeVersion('user-1', 'vip', '1'), isNull);
+    expect(store.badgeVersion('user-1', 'moderator', '99'), isNull);
+  });
+
+  test('two broadcasters keep separate channel catalogs', () async {
+    service.channelSets = [FakeTwitchBadgeService.subscriberSet];
+    await store.fetch(accessToken: 'token-1', broadcasterId: 'chan-1');
+
+    service.channelSets = [FakeTwitchBadgeService.moderatorChannelOverrideSet];
+    await store.fetch(accessToken: 'token-1', broadcasterId: 'chan-2');
+
+    /// chan-1's slot survived chan-2's fetch untouched.
+    expect(store.badgeVersion('chan-1', 'subscriber', '12'), isNotNull);
+    expect(store.badgeVersion('chan-1', 'moderator', '1'), isNull);
+    expect(store.badgeVersion('chan-2', 'moderator', '1'), isNotNull);
+    expect(store.badgeVersion('chan-2', 'subscriber', '12'), isNull);
+  });
+
+  test('an unfetched broadcaster falls back to the global catalog', () async {
+    service.globalSets = [FakeTwitchBadgeService.moderatorSet];
+    service.channelSets = [FakeTwitchBadgeService.subscriberSet];
+    await store.fetch(accessToken: 'token-1', broadcasterId: 'chan-1');
+
+    expect(store.badgeVersion('chan-unseen', 'moderator', '1'), isNotNull);
+    expect(store.badgeVersion('chan-unseen', 'subscriber', '12'), isNull);
   });
 
   test('a failing channel fetch keeps the global catalog', () async {
@@ -55,7 +78,7 @@ void main() {
 
     await store.fetch(accessToken: 'token-1', broadcasterId: 'user-1');
 
-    expect(store.badgeVersion('moderator', '1'), isNotNull);
+    expect(store.badgeVersion('user-1', 'moderator', '1'), isNotNull);
     expect(store.isLoading, isFalse);
   });
 
@@ -71,8 +94,8 @@ void main() {
     gate.complete([FakeTwitchBadgeService.subscriberSet]);
     await first;
 
-    expect(store.badgeVersion('moderator', '1'), isNotNull);
-    expect(store.badgeVersion('subscriber', '12'), isNull);
+    expect(store.badgeVersion('user-1', 'moderator', '1'), isNotNull);
+    expect(store.badgeVersion('user-1', 'subscriber', '12'), isNull);
     expect(store.isLoading, isFalse);
   });
 

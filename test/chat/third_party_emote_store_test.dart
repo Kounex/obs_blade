@@ -26,9 +26,9 @@ void main() {
     await store.fetch(broadcasterId: 'user-1');
 
     expect(service.lastBroadcasterId, 'user-1');
-    expect(store.emoteImageUrl('peepoHappy'),
+    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
         FakeThirdPartyEmoteService.peepo.imageUrl);
-    expect(store.emoteImageUrl('monkaS'),
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
         FakeThirdPartyEmoteService.monka.imageUrl);
     expect(store.catalogVersion, 1);
   });
@@ -44,7 +44,7 @@ void main() {
 
     await store.fetch(broadcasterId: 'user-1');
 
-    expect(store.emoteImageUrl('peepoHappy'),
+    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
         FakeThirdPartyEmoteService.peepoChannelOverride.imageUrl);
   });
 
@@ -59,8 +59,37 @@ void main() {
 
     await store.fetch(broadcasterId: 'user-1');
 
-    expect(store.emoteImageUrl('monkaS'),
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
         FakeThirdPartyEmoteService.monkaSevenTv.imageUrl);
+  });
+
+  test('two broadcasters keep separate channel catalogs', () async {
+    service.sevenTvChannel = {
+      FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
+    };
+    await store.fetch(broadcasterId: 'chan-1');
+
+    service.sevenTvChannel = {
+      FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
+    };
+    await store.fetch(broadcasterId: 'chan-2');
+
+    /// chan-1's slot survived chan-2's fetch untouched.
+    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-1'),
+        isNotNull);
+    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-2'), isNull);
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'chan-2'), isNotNull);
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'chan-1'), isNull);
+  });
+
+  test('an unfetched broadcaster falls back to the global catalogs', () async {
+    service.sevenTvGlobal = {
+      FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
+    };
+    await store.fetch(broadcasterId: 'chan-1');
+
+    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-unseen'),
+        FakeThirdPartyEmoteService.peepo.imageUrl);
   });
 
   test('a failing endpoint keeps the other catalogs', () async {
@@ -71,7 +100,8 @@ void main() {
 
     await store.fetch(broadcasterId: 'user-1');
 
-    expect(store.emoteImageUrl('peepoHappy'), isNotNull);
+    expect(
+        store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'), isNotNull);
     expect(store.catalogVersion, 1);
   });
 
@@ -91,24 +121,26 @@ void main() {
     });
     await first;
 
-    expect(store.emoteImageUrl('peepoHappy'), isNotNull);
-    expect(store.emoteImageUrl('monkaS'), isNull);
+    expect(
+        store.emoteImageUrl('peepoHappy', broadcasterId: 'user-2'), isNotNull);
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-2'), isNull);
 
     /// The superseded fetch returned before applying — only the newer
     /// fetch bumped the version.
     expect(store.catalogVersion, 1);
   });
 
-  test('clear drops the catalog and bumps the version', () async {
+  test('clear drops the catalogs and bumps the version', () async {
     service.sevenTvGlobal = {
       FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
     };
     await store.fetch(broadcasterId: 'user-1');
-    expect(store.emotes, isNotEmpty);
+    expect(store.globalEmotes, isNotEmpty);
 
     store.clear();
 
-    expect(store.emotes, isEmpty);
+    expect(store.globalEmotes, isEmpty);
+    expect(store.channelEmotes, isEmpty);
     expect(store.catalogVersion, 2);
   });
 
@@ -118,8 +150,8 @@ void main() {
     };
     await store.fetch(broadcasterId: 'user-1');
 
-    expect(store.emoteImageUrl('PeepoHappy'), isNull);
-    expect(store.emoteImageUrl('peepoHappyy'), isNull);
-    expect(store.emoteImageUrl(''), isNull);
+    expect(store.emoteImageUrl('PeepoHappy', broadcasterId: 'user-1'), isNull);
+    expect(store.emoteImageUrl('peepoHappyy', broadcasterId: 'user-1'), isNull);
+    expect(store.emoteImageUrl('', broadcasterId: 'user-1'), isNull);
   });
 }

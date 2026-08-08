@@ -418,7 +418,11 @@ abstract class _TwitchChatStore with Store {
           unawaited(
             this
                 ._userEmoteStoreResolver()
-                .fetch(accessToken: token, userId: this.user!.id)
+                .fetch(
+                  accessToken: token,
+                  userId: this.user!.id,
+                  broadcasterId: this.user!.id,
+                )
                 .catchError((Object e) {
               GeneralHelper.advLog('Twitch user emote fetch failed — $e');
             }),

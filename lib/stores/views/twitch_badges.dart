@@ -8,8 +8,9 @@ part 'twitch_badges.g.dart';
 class TwitchBadgeStore = _TwitchBadgeStore with _$TwitchBadgeStore;
 
 /// Session-scoped cache of the Twitch chat badge catalogs (global +
-/// per-channel). Refetched on every chat connect, in-memory only — badge
-/// failures degrade to "no badges", never to a chat error.
+/// per-channel, keyed by broadcaster for multi-chat). Refetched on every
+/// chat connect / channel switch, in-memory only — badge failures degrade
+/// to "no badges", never to a chat error.
 abstract class _TwitchBadgeStore with Store {
   final TwitchBadgeService _service;
 
@@ -24,17 +25,20 @@ abstract class _TwitchBadgeStore with Store {
   final ObservableMap<String, Map<String, TwitchBadgeVersion>> globalBadges =
       ObservableMap();
 
-  /// Per-channel catalog: setId -> (versionId -> version)
-  final ObservableMap<String, Map<String, TwitchBadgeVersion>> channelBadges =
-      ObservableMap();
+  /// Per-channel catalogs: broadcasterId -> setId -> (versionId -> version)
+  final ObservableMap<String, Map<String, Map<String, TwitchBadgeVersion>>>
+      channelBadges = ObservableMap();
 
   @observable
   bool isLoading = false;
 
-  /// Exact (setId, id) lookup — the channel catalog wins over the global
-  /// one; null when unknown (the message row skips those silently).
-  TwitchBadgeVersion? badgeVersion(String setId, String id) =>
-      this.channelBadges[setId]?[id] ?? this.globalBadges[setId]?[id];
+  /// Exact (setId, id) lookup — [broadcasterId]'s channel catalog wins
+  /// over the global one and an unfetched broadcaster falls back to global
+  /// cleanly; null when unknown (the message row skips those silently).
+  TwitchBadgeVersion? badgeVersion(
+          String broadcasterId, String setId, String id) =>
+      this.channelBadges[broadcasterId]?[setId]?[id] ??
+      this.globalBadges[setId]?[id];
 
   @action
   Future<void> fetch({
@@ -59,8 +63,16 @@ abstract class _TwitchBadgeStore with Store {
     this.isLoading = false;
     final globalSets = results[0];
     final channelSets = results[1];
-    if (globalSets != null) this._applySets(this.globalBadges, globalSets);
-    if (channelSets != null) this._applySets(this.channelBadges, channelSets);
+    if (globalSets != null) {
+      this.globalBadges
+        ..clear()
+        ..addAll(_setsToMap(globalSets));
+    }
+    if (channelSets != null) {
+      /// Only the fetched broadcaster's slot is replaced — other channels'
+      /// catalogs (multi-chat) survive the refetch.
+      this.channelBadges[broadcasterId] = _setsToMap(channelSets);
+    }
   }
 
   @action
@@ -85,19 +97,11 @@ abstract class _TwitchBadgeStore with Store {
     }
   }
 
-  void _applySets(
-    ObservableMap<String, Map<String, TwitchBadgeVersion>> target,
+  static Map<String, Map<String, TwitchBadgeVersion>> _setsToMap(
     List<TwitchBadgeSet> sets,
-  ) {
-    target
-      ..clear()
-      ..addEntries(
-        sets.map(
-          (set) => MapEntry(
-            set.setId,
-            {for (final version in set.versions) version.id: version},
-          ),
-        ),
-      );
-  }
+  ) =>
+      {
+        for (final set in sets)
+          set.setId: {for (final version in set.versions) version.id: version},
+      };
 }

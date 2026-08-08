@@ -51,9 +51,17 @@ mixin _$TwitchEmoteStore on _TwitchEmoteStore, Store {
   );
 
   @override
-  Future<void> fetch({required String accessToken, required String userId}) {
+  Future<void> fetch({
+    required String accessToken,
+    required String userId,
+    required String broadcasterId,
+  }) {
     return _$fetchAsyncAction.run(
-      () => super.fetch(accessToken: accessToken, userId: userId),
+      () => super.fetch(
+        accessToken: accessToken,
+        userId: userId,
+        broadcasterId: broadcasterId,
+      ),
     );
   }
 

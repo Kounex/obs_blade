@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
+import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -213,6 +214,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                 final emoteStore = GetIt.instance<TwitchEmoteStore>();
                 final thirdPartyStore =
                     GetIt.instance<ThirdPartyEmoteStore>();
+                final broadcasterId =
+                    GetIt.instance<TwitchChatStore>().user?.id ?? '';
 
                 /// Tracked so catalogs landing while the sheet is open
                 /// pop in once.
@@ -234,8 +237,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                     ) as bool)
                         ? this._filtered(
                             [
-                              for (final emote
-                                  in thirdPartyStore.emotes.values)
+                              for (final emote in thirdPartyStore
+                                  .emotesFor(broadcasterId))
                                 (emote.name, emote.imageUrl),
                             ]..sort((a, b) => a.$1.compareTo(b.$1)),
                             query,

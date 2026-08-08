@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
+import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -45,6 +46,11 @@ void main() {
         ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService());
     GetIt.instance.registerSingleton<TwitchEmoteStore>(emoteStore);
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(thirdPartyStore);
+
+    /// The picker reads the viewed channel's id off the chat store — a
+    /// logged-out store falls back to the global catalog (which is what
+    /// these tests seed).
+    GetIt.instance.registerSingleton<TwitchChatStore>(TwitchChatStore());
     controller = TextEditingController();
   });
 
@@ -71,7 +77,7 @@ void main() {
   void seedCatalogs() {
     emoteStore.channelEmotes.add(FakeTwitchEmoteService.channelEmote);
     emoteStore.globalEmotes.add(FakeTwitchEmoteService.globalEmote);
-    thirdPartyStore.emotes[FakeThirdPartyEmoteService.peepo.name] =
+    thirdPartyStore.globalEmotes[FakeThirdPartyEmoteService.peepo.name] =
         FakeThirdPartyEmoteService.peepo;
   }
 

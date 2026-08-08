@@ -25,6 +25,8 @@ void main() {
         expect(request.bodyFields['client_id'], kTwitchClientId);
         expect(request.bodyFields['scopes'],
             'user:read:chat user:write:chat user:read:emotes '
+            'user:read:follows moderator:read:moderated_channels '
+            'moderator:manage:chat_messages moderator:manage:banned_users '
             'moderator:read:blocked_terms moderator:read:chat_settings '
             'moderator:read:unban_requests moderator:read:banned_users '
             'moderator:read:chat_messages moderator:read:warnings '

@@ -397,7 +397,7 @@ void main() {
 
       /// Catalog lands after the rows are already built — the view's
       /// Observer tracks catalogVersion, so rows rebuild once (pop-in).
-      emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+      emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
       emoteStore.catalogVersion++;
       await tester.pump();
 
@@ -410,7 +410,7 @@ void main() {
 
     testWidgets('turning the toggle off re-renders rows as text',
         (tester) async {
-      emoteStore.emotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+      emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
       store.chatConnection = TwitchChatConnectionState.live;
       store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
 

@@ -7,10 +7,11 @@ part 'third_party_emotes.g.dart';
 
 class ThirdPartyEmoteStore = _ThirdPartyEmoteStore with _$ThirdPartyEmoteStore;
 
-/// Session-scoped cache of the third-party emote catalogs (7TV + BTTV,
-/// global + channel, merged into one map). Refetched on every chat
-/// connect, in-memory only — catalog failures degrade to "no third-party
-/// emotes", never to a chat error.
+/// Session-scoped cache of the third-party emote catalogs (7TV + BTTV):
+/// the shared global catalogs plus per-broadcaster channel catalogs
+/// (keyed by broadcaster for multi-chat). Refetched on every chat
+/// connect / channel switch, in-memory only — catalog failures degrade to
+/// "no third-party emotes", never to a chat error.
 abstract class _ThirdPartyEmoteStore with Store {
   final ThirdPartyEmoteService _service;
 
@@ -21,8 +22,14 @@ abstract class _ThirdPartyEmoteStore with Store {
   _ThirdPartyEmoteStore({ThirdPartyEmoteService? service})
       : _service = service ?? ThirdPartyEmoteService();
 
-  /// Merged catalog (emote name -> emote).
-  final ObservableMap<String, ThirdPartyEmote> emotes = ObservableMap();
+  /// Merged global catalogs (emote name -> emote): BTTV applied first,
+  /// 7TV wins same-name ties.
+  final ObservableMap<String, ThirdPartyEmote> globalEmotes = ObservableMap();
+
+  /// Per-broadcaster merged channel catalogs:
+  /// broadcasterId -> (emote name -> emote)
+  final ObservableMap<String, Map<String, ThirdPartyEmote>> channelEmotes =
+      ObservableMap();
 
   /// Bumped once per applied fetch (and on [clear]) — the chat view's
   /// outer Observer reads this so the visible rows rebuild once when
@@ -30,17 +37,25 @@ abstract class _ThirdPartyEmoteStore with Store {
   @observable
   int catalogVersion = 0;
 
-  /// Exact, case-sensitive lookup by chat token; null when unknown (the
-  /// message row renders the token as text then).
-  String? emoteImageUrl(String token) => this.emotes[token]?.imageUrl;
+  /// Exact, case-sensitive lookup by chat token — [broadcasterId]'s
+  /// channel catalog wins over the global one and an unfetched broadcaster
+  /// falls back to global cleanly; null when unknown (the message row
+  /// renders the token as text then).
+  String? emoteImageUrl(String token, {required String broadcasterId}) =>
+      this.channelEmotes[broadcasterId]?[token]?.imageUrl ??
+      this.globalEmotes[token]?.imageUrl;
+
+  /// Merged picker view for [broadcasterId] — its channel emotes win over
+  /// the shared globals on name ties.
+  List<ThirdPartyEmote> emotesFor(String broadcasterId) => {
+        ...this.globalEmotes,
+        ...?this.channelEmotes[broadcasterId],
+      }.values.toList();
 
   @action
   Future<void> fetch({required String broadcasterId}) async {
     final generation = ++this._fetchGeneration;
 
-    /// Merge order decides precedence on name ties — later wins:
-    /// global-BTTV -> global-7TV -> channel-BTTV -> channel-7TV
-    /// (net: channel > global, 7TV > BTTV).
     final results = await Future.wait([
       this._tryFetch(this._service.fetchBttvGlobal(), 'bttv-global'),
       this._tryFetch(this._service.fetchSevenTvGlobal(), '7tv-global'),
@@ -54,19 +69,29 @@ abstract class _ThirdPartyEmoteStore with Store {
     /// [catalogVersion]) now.
     if (generation != this._fetchGeneration) return;
 
-    this.emotes
+    /// Merge order decides precedence on name ties — later wins:
+    /// BTTV -> 7TV within each scope; the channel scope wins at lookup.
+    this.globalEmotes
       ..clear()
       ..addEntries([
-        for (final result in results)
+        for (final result in results.sublist(0, 2))
           if (result != null) ...result.entries,
       ]);
+
+    /// Only the fetched broadcaster's slot is replaced — other channels'
+    /// catalogs (multi-chat) survive the refetch.
+    this.channelEmotes[broadcasterId] = Map.fromEntries([
+      for (final result in results.sublist(2))
+        if (result != null) ...result.entries,
+    ]);
     this.catalogVersion++;
   }
 
   @action
   void clear() {
     this._fetchGeneration++;
-    this.emotes.clear();
+    this.globalEmotes.clear();
+    this.channelEmotes.clear();
     this.catalogVersion++;
   }
 
