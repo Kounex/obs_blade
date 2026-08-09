@@ -70,9 +70,11 @@ class _AddChatSheetState extends State<AddChatSheet> {
   List<TwitchChannelRef> _moderated = const [];
   List<TwitchChannelRef> _followed = const [];
 
-  /// Live ids for each quick-pick section (from best-effort `/streams`).
-  Set<String> _moderatedLiveIds = const {};
-  Set<String> _followedLiveIds = const {};
+  /// Live viewer counts for each quick-pick section (from best-effort
+  /// `/streams`). Key present ⇒ live.
+  Map<String, int> _moderatedLiveViewers = const {};
+  Map<String, int> _followedLiveViewers = const {};
+  Map<String, int> _searchLiveViewers = const {};
 
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
 
@@ -96,14 +98,14 @@ class _AddChatSheetState extends State<AddChatSheet> {
 
   /// Best-effort live enrich — a streams failure must not fail the
   /// section (list still renders, just without LIVE chips / live-first).
-  Future<Set<String>> _liveIdsFor(
+  Future<Map<String, int>> _liveViewerCountsFor(
     String accessToken,
-    List<TwitchChannelRef> refs,
+    Iterable<String> ids,
   ) async {
     try {
       return await this._channelService.getLiveBroadcasterIds(
         accessToken: accessToken,
-        broadcasterIds: refs.map((ref) => ref.id),
+        broadcasterIds: ids,
       );
     } catch (_) {
       return const {};
@@ -124,16 +126,19 @@ class _AddChatSheetState extends State<AddChatSheet> {
       final refs = await this
           ._channelService
           .getModeratedChannels(accessToken: token, userId: userId);
-      final liveIds = await this._liveIdsFor(token, refs);
+      final liveCounts = await this._liveViewerCountsFor(
+        token,
+        refs.map((ref) => ref.id),
+      );
       final sorted = sortChannelPickerRefs(
         refs,
-        liveIds: liveIds,
+        liveIds: liveCounts.keys.toSet(),
         modIds: const {},
       );
       if (this.mounted) {
         this.setState(() {
           this._moderated = sorted;
-          this._moderatedLiveIds = liveIds;
+          this._moderatedLiveViewers = liveCounts;
           this._loadingModerated = false;
         });
       }
@@ -161,17 +166,20 @@ class _AddChatSheetState extends State<AddChatSheet> {
       final refs = await this
           ._channelService
           .getFollowedChannels(accessToken: token, userId: userId);
-      final liveIds = await this._liveIdsFor(token, refs);
+      final liveCounts = await this._liveViewerCountsFor(
+        token,
+        refs.map((ref) => ref.id),
+      );
       final modIds = this._store.moderatedChannelIds.toSet();
       final sorted = sortChannelPickerRefs(
         refs,
-        liveIds: liveIds,
+        liveIds: liveCounts.keys.toSet(),
         modIds: modIds,
       );
       if (this.mounted) {
         this.setState(() {
           this._followed = sorted;
-          this._followedLiveIds = liveIds;
+          this._followedLiveViewers = liveCounts;
           this._loadingFollowed = false;
         });
       }
@@ -192,6 +200,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
       this.setState(() {
         this._lastQuery = '';
         this._results = const [];
+        this._searchLiveViewers = const {};
         this._searchError = null;
         this._searching = false;
       });
@@ -217,9 +226,14 @@ class _AddChatSheetState extends State<AddChatSheet> {
         results,
         modIds: this._store.moderatedChannelIds.toSet(),
       );
+      final liveCounts = await this._liveViewerCountsFor(
+        token,
+        sorted.map((result) => result.id),
+      );
       if (this.mounted && seq == this._searchSeq) {
         this.setState(() {
           this._results = sorted;
+          this._searchLiveViewers = liveCounts;
           this._searching = false;
         });
       }
@@ -372,7 +386,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
             error: this._moderatedError,
             onRetry: this._loadModerated,
             refs: this._moderated,
-            liveIds: this._moderatedLiveIds,
+            liveViewers: this._moderatedLiveViewers,
             /// Section header already means mod — no Mod chip here.
             showModChip: false,
             store: store,
@@ -389,7 +403,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
             error: this._followedError,
             onRetry: this._loadFollowed,
             refs: this._followed,
-            liveIds: this._followedLiveIds,
+            liveViewers: this._followedLiveViewers,
             showModChip: true,
             store: store,
             ownId: ownId,
@@ -438,7 +452,8 @@ class _AddChatSheetState extends State<AddChatSheet> {
             id: result.id,
             displayName: result.displayName,
             subtitle: _searchSubtitle(result),
-            live: result.isLive,
+            live: result.isLive || this._searchLiveViewers.containsKey(result.id),
+            viewerCount: this._searchLiveViewers[result.id],
             mod: modIds.contains(result.id),
             added: this._isAdded(store, ownId, result.id),
             onAdd: () => this._addChannel(
@@ -469,7 +484,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
     required Object? error,
     required VoidCallback onRetry,
     required List<TwitchChannelRef> refs,
-    required Set<String> liveIds,
+    required Map<String, int> liveViewers,
     required bool showModChip,
     required TwitchChatStore store,
     required String? ownId,
@@ -501,7 +516,8 @@ class _AddChatSheetState extends State<AddChatSheet> {
             id: ref.id,
             displayName: ref.displayName,
             subtitle: '@${ref.login}',
-            live: liveIds.contains(ref.id),
+            live: liveViewers.containsKey(ref.id),
+            viewerCount: liveViewers[ref.id],
             mod: showModChip && modIds.contains(ref.id),
             added: this._isAdded(store, ownId, ref.id),
             onAdd: () => this._addChannel(ref),
@@ -560,6 +576,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
     required String subtitle,
     required bool added,
     bool live = false,
+    int? viewerCount,
     bool mod = false,
     required VoidCallback onAdd,
   }) {
@@ -603,6 +620,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
                 NativeChatStatusChip.live(
                   key: Key('add-chat-live-$chipScope-$id'),
                   color: statusColors.live,
+                  viewerCount: viewerCount,
                 ),
               ],
               if (mod) ...[

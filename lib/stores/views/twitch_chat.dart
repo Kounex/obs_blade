@@ -197,6 +197,10 @@ abstract class _TwitchChatStore with Store {
   @observable
   bool selectedChannelIsLive = false;
 
+  /// Viewer count when [selectedChannelIsLive]; null when offline/unknown.
+  @observable
+  int? selectedChannelViewerCount;
+
   Timer? _livePollTimer;
 
   /// Ids of channels the user moderates (from Get Moderated Channels on
@@ -530,15 +534,19 @@ abstract class _TwitchChatStore with Store {
   void _stopLivePoll() {
     this._livePollTimer?.cancel();
     this._livePollTimer = null;
-    runInAction(() => this.selectedChannelIsLive = false);
+    runInAction(() {
+      this.selectedChannelIsLive = false;
+      this.selectedChannelViewerCount = null;
+    });
   }
 
   /// Best-effort Helix streams check for the effective channel (header
-  /// LIVE chip). Failures leave the previous value alone.
+  /// LIVE chip + viewer count). Failures leave the previous value alone.
   @action
   Future<void> refreshSelectedChannelLive() async {
     if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
       this.selectedChannelIsLive = false;
+      this.selectedChannelViewerCount = null;
       return;
     }
     try {
@@ -547,8 +555,9 @@ abstract class _TwitchChatStore with Store {
         accessToken: token,
         broadcasterIds: [this.effectiveBroadcasterId],
       );
-      this.selectedChannelIsLive =
-          live.contains(this.effectiveBroadcasterId);
+      final id = this.effectiveBroadcasterId;
+      this.selectedChannelIsLive = live.containsKey(id);
+      this.selectedChannelViewerCount = live[id];
     } catch (e) {
       GeneralHelper.advLog('Twitch live status refresh failed — $e');
     }

@@ -400,10 +400,10 @@ class FakeTwitchChannelService extends TwitchChannelService {
   List<TwitchChannelRef> followedChannels = const [];
   List<TwitchChannelSearchResult> searchResults = const [];
 
-  /// Ids returned as live from [getLiveBroadcasterIds] (intersected with
+  /// Live streams returned from [getLiveBroadcasterIds] (intersected with
   /// the requested set). Empty by default — picker tests that need LIVE
-  /// chips set this explicitly.
-  Set<String> liveBroadcasterIds = const {};
+  /// chips set this explicitly (id → viewer count).
+  Map<String, int> liveStreams = const {};
 
   /// When set, the matching call throws this error (picker section /
   /// login fetch failure paths).
@@ -462,7 +462,7 @@ class FakeTwitchChannelService extends TwitchChannelService {
   }
 
   @override
-  Future<Set<String>> getLiveBroadcasterIds({
+  Future<Map<String, int>> getLiveBroadcasterIds({
     required String accessToken,
     required Iterable<String> broadcasterIds,
   }) async {
@@ -470,7 +470,10 @@ class FakeTwitchChannelService extends TwitchChannelService {
     this.lastLiveBroadcasterIds = broadcasterIds.toList();
     if (this.liveThrows != null) throw this.liveThrows!;
     final requested = broadcasterIds.toSet();
-    return this.liveBroadcasterIds.intersection(requested);
+    return {
+      for (final entry in this.liveStreams.entries)
+        if (requested.contains(entry.key)) entry.key: entry.value,
+    };
   }
 }
 

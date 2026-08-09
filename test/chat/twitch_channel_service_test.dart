@@ -215,7 +215,8 @@ void main() {
   });
 
   group('getLiveBroadcasterIds', () {
-    test('GETs /streams with repeated user_id and returns live ids', () async {
+    test('GETs /streams with repeated user_id and returns viewer counts',
+        () async {
       final client = MockClient((request) async {
         expect(request.method, 'GET');
         expect(request.url.path, '/helix/streams');
@@ -224,8 +225,8 @@ void main() {
         return http.Response(
           json.encode({
             'data': [
-              {'user_id': 'chan-1', 'type': 'live'},
-              {'user_id': 'chan-3', 'type': 'live'},
+              {'user_id': 'chan-1', 'type': 'live', 'viewer_count': 1200},
+              {'user_id': 'chan-3', 'type': 'live', 'viewer_count': 42},
             ],
           }),
           200,
@@ -238,7 +239,7 @@ void main() {
         broadcasterIds: ['chan-1', 'chan-2', 'chan-3'],
       );
 
-      expect(live, {'chan-1', 'chan-3'});
+      expect(live, {'chan-1': 1200, 'chan-3': 42});
     });
 
     test('empty input skips the request', () async {

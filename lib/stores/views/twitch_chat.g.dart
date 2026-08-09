@@ -238,6 +238,28 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
   }
 
+  late final _$selectedChannelViewerCountAtom = Atom(
+    name: '_TwitchChatStore.selectedChannelViewerCount',
+    context: context,
+  );
+
+  @override
+  int? get selectedChannelViewerCount {
+    _$selectedChannelViewerCountAtom.reportRead();
+    return super.selectedChannelViewerCount;
+  }
+
+  @override
+  set selectedChannelViewerCount(int? value) {
+    _$selectedChannelViewerCountAtom.reportWrite(
+      value,
+      super.selectedChannelViewerCount,
+      () {
+        super.selectedChannelViewerCount = value;
+      },
+    );
+  }
+
   late final _$lifecycleVersionAtom = Atom(
     name: '_TwitchChatStore.lifecycleVersion',
     context: context,
@@ -486,6 +508,7 @@ sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 selectedChannelId: ${selectedChannelId},
 selectedChannelIsLive: ${selectedChannelIsLive},
+selectedChannelViewerCount: ${selectedChannelViewerCount},
 lifecycleVersion: ${lifecycleVersion},
 isLoggedIn: ${isLoggedIn}
     ''';

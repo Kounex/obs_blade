@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 
 Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
@@ -51,6 +52,7 @@ void main() {
           chatType: ChatType.Twitch,
           status: NativeChatConnectionStatus.live,
           channelIsLive: true,
+          channelViewerCount: 1200,
           channelIsMod: true,
           child: const Center(child: Text('chat content')),
         ),
@@ -65,6 +67,20 @@ void main() {
     expect(titleX, lessThan(liveX));
     expect(liveX, lessThan(modX));
     expect(modX, lessThan(statusX));
+    expect(find.text('LIVE · 1.2k'), findsOneWidget);
+  });
+
+  group('formatChatViewerCount', () {
+    test('formats compact counts', () {
+      expect(formatChatViewerCount(42), '42');
+      expect(formatChatViewerCount(999), '999');
+      expect(formatChatViewerCount(1000), '1k');
+      expect(formatChatViewerCount(1200), '1.2k');
+      expect(formatChatViewerCount(3400), '3.4k');
+      expect(formatChatViewerCount(10500), '10.5k');
+      expect(formatChatViewerCount(1000000), '1M');
+      expect(formatChatViewerCount(12500000), '12.5M');
+    });
   });
 
   testWidgets('live: tapping the status row shows account and uptime',

@@ -96,18 +96,18 @@ class TwitchChannelService {
     ];
   }
 
-  /// Ids of [broadcasterIds] that are currently live (`GET /streams`).
-  /// Batches in chunks of 100 (Helix cap). Empty input → empty set; no
-  /// request. Used to live-first sort the moderated/followed picker
-  /// sections — the streams call is optional at the call site (best-effort).
-  Future<Set<String>> getLiveBroadcasterIds({
+  /// Live streams for [broadcasterIds] (`GET /streams`) — map of
+  /// broadcaster id → [viewer_count]. Batches in chunks of 100 (Helix
+  /// cap). Empty input → empty map; no request. Used to live-first sort
+  /// the picker and to feed LIVE chip viewer counts.
+  Future<Map<String, int>> getLiveBroadcasterIds({
     required String accessToken,
     required Iterable<String> broadcasterIds,
   }) async {
     final ids = broadcasterIds.toList();
-    if (ids.isEmpty) return <String>{};
+    if (ids.isEmpty) return <String, int>{};
 
-    final live = <String>{};
+    final live = <String, int>{};
     for (var i = 0; i < ids.length; i += 100) {
       final chunk = ids.sublist(i, i + 100 > ids.length ? ids.length : i + 100);
       final response = await this._client.get(
@@ -128,8 +128,11 @@ class TwitchChannelService {
           (json.decode(response.body) as Map<String, dynamic>)['data'];
       if (data is! List) continue;
       for (final entry in data) {
-        final userId = (entry as Map<String, dynamic>)['user_id'] as String?;
-        if (userId != null) live.add(userId);
+        final map = entry as Map<String, dynamic>;
+        final userId = map['user_id'] as String?;
+        if (userId == null) continue;
+        final viewers = (map['viewer_count'] as num?)?.toInt() ?? 0;
+        live[userId] = viewers;
       }
     }
     return live;

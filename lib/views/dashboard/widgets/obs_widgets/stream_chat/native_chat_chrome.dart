@@ -14,10 +14,17 @@ class NativeChatStatusChip extends StatelessWidget {
     required this.color,
   });
 
-  factory NativeChatStatusChip.live({Key? key, required Color color}) =>
+  /// [viewerCount] when known → `LIVE · 1.2k`; omit for a plain LIVE chip.
+  factory NativeChatStatusChip.live({
+    Key? key,
+    required Color color,
+    int? viewerCount,
+  }) =>
       NativeChatStatusChip(
         key: key,
-        label: 'LIVE',
+        label: viewerCount == null
+            ? 'LIVE'
+            : 'LIVE · ${formatChatViewerCount(viewerCount)}',
         color: color,
       );
 
@@ -53,6 +60,21 @@ class NativeChatStatusChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Compact viewer count for LIVE chips: `999`, `1.2k`, `3.4M`.
+String formatChatViewerCount(int count) {
+  if (count >= 1000000) {
+    final value = count / 1000000;
+    if (count % 1000000 == 0) return '${value.toInt()}M';
+    return '${value.toStringAsFixed(1)}M';
+  }
+  if (count >= 1000) {
+    final value = count / 1000;
+    if (count % 1000 == 0) return '${value.toInt()}k';
+    return '${value.toStringAsFixed(1)}k';
+  }
+  return '$count';
 }
 
 /// Sheet / page titles — title2 scale so they read clearly above body

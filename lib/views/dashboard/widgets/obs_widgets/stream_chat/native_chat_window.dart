@@ -73,6 +73,9 @@ class NativeChatWindow extends StatelessWidget {
   /// Effective channel is currently live (header LIVE chip).
   final bool channelIsLive;
 
+  /// Viewer count when [channelIsLive]; omitted from the chip when null.
+  final int? channelViewerCount;
+
   /// User can moderate the effective channel (header Mod chip).
   final bool channelIsMod;
 
@@ -89,6 +92,7 @@ class NativeChatWindow extends StatelessWidget {
     this.onLogout,
     this.onConnect,
     this.channelIsLive = false,
+    this.channelViewerCount,
     this.channelIsMod = false,
   });
 
@@ -168,6 +172,7 @@ class NativeChatWindow extends StatelessWidget {
                       color: (Theme.of(context).extension<AppStatusColors>() ??
                               AppStatusColors.standard)
                           .live,
+                      viewerCount: this.channelViewerCount,
                     ),
                   ],
                   if (this.channelIsMod) ...[

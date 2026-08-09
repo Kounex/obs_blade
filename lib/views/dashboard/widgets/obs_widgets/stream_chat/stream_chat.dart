@@ -282,6 +282,10 @@ class _StreamChatState extends State<StreamChat>
                       connectedAt: twitchStore.chatConnectedAt,
                       channelIsLive:
                           loggedIn && twitchStore.selectedChannelIsLive,
+                      channelViewerCount: loggedIn &&
+                              twitchStore.selectedChannelIsLive
+                          ? twitchStore.selectedChannelViewerCount
+                          : null,
                       channelIsMod: loggedIn &&
                           twitchStore.canModerateSelectedChannel,
                       onRetry: twitchStore.connectChat,
