@@ -59,6 +59,9 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// Tap handler for badges + username → user card.
   final VoidCallback? onAuthorTap;
 
+  /// Tap handler for an `@mention` in the body → user card for that id.
+  final ValueChanged<String>? onMentionTap;
+
   /// Long-press handler for mod actions on a live message.
   final VoidCallback? onMessageLongPress;
 
@@ -87,6 +90,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.isDeletedExpanded = false,
     this.onDeletedTap,
     this.onAuthorTap,
+    this.onMentionTap,
     this.onMessageLongPress,
     this.accentBarColor,
     this.mentionHexFor,
@@ -97,7 +101,7 @@ class TwitchChatMessageRow extends StatelessWidget {
   static const double _badgeSize = 18.0;
 
   bool get _isFirstMessage =>
-      this.event.messageType == 'user_intro' &&
+      this.event.isFirstMessage &&
       isChatFirstMessageVisible(this.settingsBox);
 
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
@@ -203,29 +207,41 @@ class TwitchChatMessageRow extends StatelessWidget {
             ),
           )
         else if (fragment.type == 'mention' && fragment.mention != null)
-          TextSpan(
-            text: fragment.text,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: mentionColorForFragment(
-                    mentionUserId: fragment.mention!.userId,
-                    broadcasterUserId: this.event.broadcasterUserId,
-                    chatterHex:
-                        this.mentionHexFor?.call(fragment.mention!.userId),
-                  ) ??
-                  Colors.white,
-            ),
-          )
+          this._mentionSpan(context, fragment)
         else
           ...this._textSpans(context, fragment.text),
     ];
   }
 
+  InlineSpan _mentionSpan(BuildContext context, ChatMessageFragment fragment) {
+    final mention = fragment.mention!;
+    final style = TextStyle(
+      fontWeight: FontWeight.w700,
+      color: mentionColorForFragment(
+            mentionUserId: mention.userId,
+            broadcasterUserId: this.event.broadcasterUserId,
+            chatterHex: this.mentionHexFor?.call(mention.userId),
+          ) ??
+          Colors.white,
+    );
+    if (this.onMentionTap == null) {
+      return TextSpan(text: fragment.text, style: style);
+    }
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: GestureDetector(
+        onTap: () => this.onMentionTap!(mention.userId),
+        behavior: HitTestBehavior.translucent,
+        child: Text(fragment.text, style: style),
+      ),
+    );
+  }
+
   /// Body spans for a deleted message — the content stays (Twitch mod
   /// view) but dims hard: text recolors to half the marker's opacity and
   /// emote images get a matching [Opacity]. Structure, spacing and error
-  /// builders are preserved. Assumes [_messageSpans] results are flat and
-  /// recognizer-less (true today: plain TextSpans + emote WidgetSpans).
+  /// builders are preserved. Assumes [_messageSpans] results are flat
+  /// (plain TextSpans + emote/mention WidgetSpans).
   List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
     final color = Theme.of(context)
         .textTheme
@@ -355,13 +371,39 @@ class TwitchChatMessageRow extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.xs / 2),
                 Expanded(
-                  child: Text(
-                    'Replying to @${reply.parentUserName}: ${reply.parentMessageBody}',
+                  child: Text.rich(
+                    TextSpan(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: this._textSize * 0.85,
+                          ),
+                      children: [
+                        const TextSpan(text: 'Replying to '),
+                        if (this.onMentionTap == null)
+                          TextSpan(text: '@${reply.parentUserName}')
+                        else
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  this.onMentionTap!(reply.parentUserId),
+                              behavior: HitTestBehavior.translucent,
+                              child: Text(
+                                '@${reply.parentUserName}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      fontSize: this._textSize * 0.85,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        TextSpan(text: ': ${reply.parentMessageBody}'),
+                      ],
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: this._textSize * 0.85,
-                        ),
                   ),
                 ),
               ],

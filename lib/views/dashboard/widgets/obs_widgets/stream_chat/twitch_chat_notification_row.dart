@@ -24,6 +24,19 @@ String chatNoticeBodyText({
   return '${body[0].toUpperCase()}${body.substring(1)}';
 }
 
+/// Fixed banner label for notice types that put the chatter on the
+/// attached message line (Twitch: speaker + "Announcement").
+@visibleForTesting
+String? chatNoticeBannerLabel(String noticeType) {
+  final type = noticeType.startsWith('shared_chat_')
+      ? noticeType.substring('shared_chat_'.length)
+      : noticeType;
+  return switch (type) {
+    'announcement' => 'Announcement',
+    _ => null,
+  };
+}
+
 /// One `channel.chat.notification` banner — icon, system copy, optional
 /// attached chat line, left accent bar (Twitch-style).
 class TwitchChatNotificationRow extends StatelessWidget {
@@ -41,6 +54,12 @@ class TwitchChatNotificationRow extends StatelessWidget {
   /// Chatter hex lookup for @mentions inside an attached message.
   final String? Function(String userId)? mentionHexFor;
 
+  /// Opens the user card for this notice's chatter.
+  final VoidCallback? onAuthorTap;
+
+  /// Opens the user card for an `@mention` in the attached message.
+  final ValueChanged<String>? onMentionTap;
+
   const TwitchChatNotificationRow({
     super.key,
     required this.event,
@@ -48,6 +67,8 @@ class TwitchChatNotificationRow extends StatelessWidget {
     this.accentContinues = false,
     this.showAttachedMessage = true,
     this.mentionHexFor,
+    this.onAuthorTap,
+    this.onMentionTap,
   });
 
   @override
@@ -58,18 +79,38 @@ class TwitchChatNotificationRow extends StatelessWidget {
     final textSize = NativeChatAppearance.textSize(this.settingsBox);
     final spacing = NativeChatAppearance.messageSpacing(this.settingsBox);
     final authorColor = this._parseColor(this.event.color) ?? accent;
-    final body = chatNoticeBodyText(
-      systemMessage: this.event.systemMessage,
-      chatterUserName: this.event.chatterUserName,
-    );
+    final bannerLabel = chatNoticeBannerLabel(this.event.noticeType);
+    final body = bannerLabel != null
+        ? ''
+        : chatNoticeBodyText(
+            systemMessage: this.event.systemMessage,
+            chatterUserName: this.event.chatterUserName,
+          );
 
     final attached = this.event.message;
     final showAttached = this.showAttachedMessage &&
         attached != null &&
         attached.text.trim().isNotEmpty;
 
+    final titleStyle = TextStyle(
+      color: bannerLabel != null ? accent : authorColor,
+      fontWeight: FontWeight.w700,
+      fontSize: textSize,
+    );
+    final Widget title = bannerLabel != null
+        ? Text(bannerLabel, style: titleStyle)
+        : this.onAuthorTap == null
+            ? Text(this.event.chatterUserName, style: titleStyle)
+            : GestureDetector(
+                onTap: this.onAuthorTap,
+                behavior: HitTestBehavior.translucent,
+                child: Text(this.event.chatterUserName, style: titleStyle),
+              );
+
+    /// Same vertical rhythm as [TwitchChatMessageRow] (symmetric spacing,
+    /// not bottom-only) so notice ↔ message gaps match message ↔ message.
     return Padding(
-      padding: EdgeInsets.only(bottom: spacing),
+      padding: EdgeInsets.symmetric(vertical: spacing),
       child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -102,14 +143,7 @@ class TwitchChatNotificationRow extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              this.event.chatterUserName,
-                              style: TextStyle(
-                                color: authorColor,
-                                fontWeight: FontWeight.w700,
-                                fontSize: textSize,
-                              ),
-                            ),
+                            title,
                             if (body.isNotEmpty)
                               Text(
                                 body,
@@ -138,6 +172,8 @@ class TwitchChatNotificationRow extends StatelessWidget {
                       ),
                       settingsBox: this.settingsBox,
                       mentionHexFor: this.mentionHexFor,
+                      onAuthorTap: this.onAuthorTap,
+                      onMentionTap: this.onMentionTap,
                       compact: true,
                     ),
                   ],

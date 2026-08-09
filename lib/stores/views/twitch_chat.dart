@@ -23,6 +23,7 @@ import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tombstone.dart';
@@ -89,6 +90,8 @@ abstract class _TwitchChatStore with Store {
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
   ) _eventSubFactory;
+  final TwitchIrcSidecar Function(void Function(String messageId) onFirstMessage)
+      _ircSidecarFactory;
   final TwitchBadgeStore Function() _badgeStoreResolver;
   final ThirdPartyEmoteStore Function() _emoteStoreResolver;
   final TwitchEmoteStore Function() _userEmoteStoreResolver;
@@ -97,6 +100,12 @@ abstract class _TwitchChatStore with Store {
   final TwitchModerationService _moderationService;
 
   TwitchEventSubService? _eventSub;
+  TwitchIrcSidecar? _ircSidecar;
+
+  /// IRC `first-msg` ids that arrived before the matching EventSub row.
+  final LinkedHashSet<String> _pendingFirstMessageIds = LinkedHashSet();
+  static const int _kPendingFirstMessageCap = 200;
+
   StreamSubscription<BoxEvent>? _authBoxSub;
   bool _loginCancelled = false;
 
@@ -120,6 +129,8 @@ abstract class _TwitchChatStore with Store {
       void Function(TwitchEventSubState),
       void Function(String),
     )? eventSubFactory,
+    TwitchIrcSidecar Function(void Function(String messageId))?
+        ircSidecarFactory,
     TwitchBadgeStore Function()? badgeStoreResolver,
     ThirdPartyEmoteStore Function()? emoteStoreResolver,
     TwitchEmoteStore Function()? userEmoteStoreResolver,
@@ -141,6 +152,9 @@ abstract class _TwitchChatStore with Store {
                   onStateChanged: onStateChanged,
                   onRevoked: onRevoked,
                 )),
+        _ircSidecarFactory = ircSidecarFactory ??
+            ((onFirstMessage) =>
+                TwitchIrcSidecar(onFirstMessage: onFirstMessage)),
         _badgeStoreResolver = badgeStoreResolver ??
             (() => GetIt.instance<TwitchBadgeStore>()),
         _emoteStoreResolver = emoteStoreResolver ??
@@ -340,6 +354,16 @@ abstract class _TwitchChatStore with Store {
   String get effectiveBroadcasterId =>
       this.selectedChannelId ?? this.user!.id;
 
+  /// Login used for IRC `JOIN #…` — own login or the selected channel ref.
+  String get effectiveBroadcasterLogin {
+    final id = this.selectedChannelId;
+    if (id == null) return this.user!.login;
+    for (final ref in this.channels) {
+      if (ref.id == id) return ref.login;
+    }
+    return this.user!.login;
+  }
+
   /// Null-safe [effectiveBroadcasterId] for moderation dedup keys — the
   /// lifecycle apply methods can run without a login (tests, a session
   /// wipe mid-stream).
@@ -525,6 +549,8 @@ abstract class _TwitchChatStore with Store {
         broadcasterId: this.effectiveBroadcasterId,
         includeModeration: this.canReadModeration,
       );
+
+      await this._connectIrcSidecar(token);
 
       this._refetchCatalogs(token, this.effectiveBroadcasterId);
       /// Live poll starts when EventSub reports connected (see
@@ -802,6 +828,7 @@ abstract class _TwitchChatStore with Store {
     if (this._eventSub != null) {
       try {
         await this._eventSub!.switchChannel(newBroadcasterId);
+        await this._ircSidecar?.switchChannel(this.effectiveBroadcasterLogin);
       } catch (e) {
         /// Switch failed — the pane shows the error state (with retry);
         /// the selection is kept (no silent revert, spec §5).
@@ -816,6 +843,7 @@ abstract class _TwitchChatStore with Store {
       await this.connectChat();
     }
 
+    this._pendingFirstMessageIds.clear();
     final buffer = this._channelBuffers[newBroadcasterId];
     this.messages.clear();
     this._deletedMessageIds.clear();
@@ -1035,7 +1063,16 @@ abstract class _TwitchChatStore with Store {
     if (color != null && color.isNotEmpty) {
       this._chatterColors[event.chatterUserId] = color;
     }
-    this.messages.add(event);
+    final fromPending =
+        this._pendingFirstMessageIds.remove(event.messageId);
+    final isFirst = event.isFirstMessage ||
+        fromPending ||
+        event.messageType == 'user_intro';
+    this.messages.add(
+      isFirst && !event.isFirstMessage
+          ? event.copyWith(isFirstMessage: true)
+          : event,
+    );
     this._arrivalSeq++;
     while (this.messages.length > kMaxMessages) {
       final evicted = this.messages.first.messageId;
@@ -1043,6 +1080,40 @@ abstract class _TwitchChatStore with Store {
       this._deletedMessageActors.remove(evicted);
       this._tombstoneInfos.remove(evicted);
       this.messages.removeAt(0);
+    }
+  }
+
+  /// IRC sidecar reported `first-msg=1` for [messageId].
+  @action
+  void applyIrcFirstMessage(String messageId) {
+    final index =
+        this.messages.indexWhere((message) => message.messageId == messageId);
+    if (index >= 0) {
+      final current = this.messages[index];
+      if (!current.isFirstMessage) {
+        this.messages[index] = current.copyWith(isFirstMessage: true);
+      }
+      return;
+    }
+    this._pendingFirstMessageIds.add(messageId);
+    while (this._pendingFirstMessageIds.length > _kPendingFirstMessageCap) {
+      this._pendingFirstMessageIds.remove(this._pendingFirstMessageIds.first);
+    }
+  }
+
+  Future<void> _connectIrcSidecar(String token) async {
+    final login = this.user?.login;
+    if (login == null || login.isEmpty) return;
+    try {
+      await this._ircSidecar?.dispose();
+      this._ircSidecar = this._ircSidecarFactory(this.applyIrcFirstMessage);
+      await this._ircSidecar!.connect(
+        accessToken: token,
+        login: login,
+        channelLogin: this.effectiveBroadcasterLogin,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch IRC sidecar connect failed — $e');
     }
   }
 
@@ -1405,6 +1476,10 @@ abstract class _TwitchChatStore with Store {
     final eventSub = this._eventSub;
     this._eventSub = null;
     await eventSub?.dispose();
+    final irc = this._ircSidecar;
+    this._ircSidecar = null;
+    await irc?.dispose();
+    this._pendingFirstMessageIds.clear();
     this._stopLivePoll();
     runInAction(() {
       this.chatConnection = TwitchChatConnectionState.disconnected;

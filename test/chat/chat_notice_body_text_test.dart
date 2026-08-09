@@ -31,4 +31,10 @@ void main() {
       '',
     );
   });
+
+  test('announcement notices use a fixed banner label', () {
+    expect(chatNoticeBannerLabel('announcement'), 'Announcement');
+    expect(chatNoticeBannerLabel('shared_chat_announcement'), 'Announcement');
+    expect(chatNoticeBannerLabel('sub'), isNull);
+  });
 }

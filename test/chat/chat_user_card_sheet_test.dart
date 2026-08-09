@@ -174,6 +174,25 @@ void main() {
     );
   });
 
+  testWidgets('LIVE rows are not compact so chat spacing applies',
+      (tester) async {
+    store.appendChatMessageForTest(cardMessage('m1', 'viewer-1', 'hello'));
+
+    userService.userResult = const TwitchUser(
+      id: 'viewer-1',
+      login: 'viewerlogin',
+      displayName: 'ViewerOne',
+    );
+
+    await openCard(tester, userId: 'viewer-1');
+    await tester.pumpAndSettle();
+
+    final row = tester.widget<TwitchChatMessageRow>(
+      find.byType(TwitchChatMessageRow),
+    );
+    expect(row.compact, isFalse);
+  });
+
   testWidgets('omits Helix fact rows when the service returns null',
       (tester) async {
     userService.userResult = null;

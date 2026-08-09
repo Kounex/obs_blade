@@ -434,6 +434,18 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void applyIrcFirstMessage(String messageId) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyIrcFirstMessage',
+    );
+    try {
+      return super.applyIrcFirstMessage(messageId);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _appendNotification(ChatNotificationEvent event) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore._appendNotification',

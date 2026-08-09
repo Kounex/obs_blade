@@ -21,13 +21,19 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     required ChatMessageText message,
     String? color,
     @Default(<ChatMessageBadge>[]) List<ChatMessageBadge> badges,
-    /// Twitch message kind — `text`, `user_intro` (first message), etc.
+    /// Twitch message kind — `text`, `user_intro` (intro), etc.
     @Default('text') String messageType,
     ChatMessageReply? reply,
 
     /// From EventSub envelope `metadata.message_timestamp` — not on the
     /// chat event JSON. Stamped by [TwitchEventSubService] after parse.
     @JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,
+
+    /// First-time chatter highlight — from IRC `first-msg=1` (sidecar) or
+    /// `message_type == user_intro`. Not on the EventSub chat JSON.
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(false)
+    bool isFirstMessage,
   }) = _ChatMessageEvent;
 
   factory ChatMessageEvent.fromJson(Map<String, Object?> json) =>

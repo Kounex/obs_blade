@@ -18,6 +18,7 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_user_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_message_display.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
@@ -241,15 +242,20 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
                 'No messages in this chat yet',
                 style: Theme.of(context).textTheme.bodySmall,
               )
-            else
-              for (final event in this._bufferedMessages)
+            else ...[
+              for (var i = 0; i < this._bufferedMessages.length; i++) ...[
+                if (i > 0 && NativeChatAppearance.separators(settingsBox))
+                  nativeChatHairline(context),
                 TwitchChatMessageRow(
-                  key: ValueKey('card-msg-${event.messageId}'),
-                  event: event,
+                  key: ValueKey(
+                    'card-msg-${this._bufferedMessages[i].messageId}',
+                  ),
+                  event: this._bufferedMessages[i],
                   settingsBox: settingsBox,
-                  compact: true,
                   showTimestamp: true,
                 ),
+              ],
+            ],
             if (this.widget.connection != null) ...[
               const SizedBox(height: AppSpacing.lg),
               nativeChatHairline(context),

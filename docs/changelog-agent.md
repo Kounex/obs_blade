@@ -2,6 +2,16 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-09 — Native chat: IRC first-msg sidecar
+
+- Spec/plan: `docs/superpowers/specs/2026-08-09-irc-first-msg-sidecar-design.md`,
+  `docs/superpowers/plans/2026-08-09-irc-first-msg-sidecar.md`.
+- Read-only IRC WebSocket joins the selected channel for `first-msg=1`
+  tags; merges onto EventSub rows by message id (`isFirstMessage`). Also
+  treats `user_intro` as first-message. Best-effort — IRC failure never
+  drops EventSub chat. UI chrome unchanged (magenta + FIRST MESSAGE).
+- Gates: `flutter test test/chat/twitch_irc_sidecar_test.dart` green.
+
 ## 2026-08-09 — Native chat: user card (viewer profile sheet)
 
 - Spec/plan: `docs/superpowers/specs/2026-08-09-chat-user-card-design.md`,

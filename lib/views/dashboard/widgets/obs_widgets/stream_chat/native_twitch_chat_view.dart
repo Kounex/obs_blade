@@ -303,6 +303,14 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       showAttachedMessage:
                           !chatMessageIds.contains(item.event.messageId),
                       mentionHexFor: mentionHexFor,
+                      onAuthorTap: () => showChatUserCardSheet(
+                        context,
+                        userId: item.event.chatterUserId,
+                      ),
+                      onMentionTap: (userId) => showChatUserCardSheet(
+                        context,
+                        userId: userId,
+                      ),
                     );
                   }
                   final event = item as ChatMessageEvent;
@@ -346,6 +354,10 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     onAuthorTap: () => showChatUserCardSheet(
                       context,
                       userId: event.chatterUserId,
+                    ),
+                    onMentionTap: (userId) => showChatUserCardSheet(
+                      context,
+                      userId: userId,
                     ),
                     onMessageLongPress:
                         deleted || !this._store.canModerateSelectedChannel

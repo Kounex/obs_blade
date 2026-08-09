@@ -12,8 +12,10 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_notification_row.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
@@ -60,6 +62,52 @@ ChatMessageEvent textEvent(String id, String author, String text) =>
         text: text,
         fragments: [ChatMessageFragment(type: 'text', text: text)],
       ),
+    );
+
+ChatMessageEvent mentionEvent({
+  required String id,
+  required String author,
+  required String mentionedUserId,
+  required String mentionText,
+}) =>
+    ChatMessageEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: id,
+      chatterUserLogin: author.toLowerCase(),
+      chatterUserName: author,
+      messageId: id,
+      message: ChatMessageText(
+        text: '$mentionText hi',
+        fragments: [
+          ChatMessageFragment(
+            type: 'mention',
+            text: mentionText,
+            mention: ChatFragmentMention(
+              userId: mentionedUserId,
+              userLogin: mentionText.substring(1).toLowerCase(),
+              userName: mentionText.substring(1),
+            ),
+          ),
+          const ChatMessageFragment(type: 'text', text: ' hi'),
+        ],
+      ),
+    );
+
+ChatNotificationEvent noticeEvent({
+  required String id,
+  required String author,
+  String systemMessage = '',
+}) =>
+    ChatNotificationEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: id,
+      chatterUserLogin: author.toLowerCase(),
+      chatterUserName: author,
+      messageId: id,
+      systemMessage: systemMessage.isEmpty
+          ? '$author subscribed at Tier 1.'
+          : systemMessage,
+      noticeType: 'sub',
     );
 
 ChatMessageEvent badgeEvent() => ChatMessageEvent(
@@ -338,6 +386,64 @@ void main() {
       expect(tapped, isTrue);
     });
 
+    testWidgets('mention tap fires the card callback with that user id',
+        (tester) async {
+      String? tappedId;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: mentionEvent(
+            id: '1',
+            author: 'Viewer32',
+            mentionedUserId: 'u2',
+            mentionText: '@Bob',
+          ),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onMentionTap: (id) => tappedId = id,
+        )),
+      );
+
+      await tester.tap(find.text('@Bob'));
+      expect(tappedId, 'u2');
+    });
+
+    testWidgets('reply parent @name tap fires mention callback',
+        (tester) async {
+      String? tappedId;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: ChatMessageEvent(
+            broadcasterUserId: 'b1',
+            chatterUserId: '1',
+            chatterUserLogin: 'viewer32',
+            chatterUserName: 'Viewer32',
+            messageId: '1',
+            message: const ChatMessageText(
+              text: 'thanks',
+              fragments: [
+                ChatMessageFragment(type: 'text', text: 'thanks'),
+              ],
+            ),
+            reply: const ChatMessageReply(
+              parentMessageId: 'p1',
+              parentMessageBody: 'hello there',
+              parentUserId: 'u2',
+              parentUserName: 'Bob',
+              parentUserLogin: 'bob',
+              threadMessageId: 'p1',
+              threadUserId: 'u2',
+              threadUserName: 'Bob',
+              threadUserLogin: 'bob',
+            ),
+          ),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onMentionTap: (id) => tappedId = id,
+        )),
+      );
+
+      await tester.tap(find.text('@Bob'));
+      expect(tappedId, 'u2');
+    });
+
     testWidgets('long-press fires mod callback; short body tap does not',
         (tester) async {
       var longPressed = false;
@@ -355,6 +461,76 @@ void main() {
       longPressed = false;
       await tester.tap(find.textContaining('Hi chat'));
       expect(longPressed, isFalse);
+    });
+  });
+
+  group('TwitchChatNotificationRow', () {
+    testWidgets('notice author tap fires the card callback', (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatNotificationRow(
+          event: noticeEvent(id: 'n1', author: 'Alice'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onAuthorTap: () => tapped = true,
+        )),
+      );
+
+      await tester.tap(find.text('Alice'));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('applies the same vertical message spacing as chat rows',
+        (tester) async {
+      final settings = Hive.box(HiveKeys.Settings.name);
+      await tester.runAsync(() async {
+        await settings.put(SettingsKeys.TwitchChatMessageSpacing.name, 10.0);
+      });
+
+      await tester.pumpWidget(
+        wrap(TwitchChatNotificationRow(
+          event: noticeEvent(id: 'n1', author: 'Alice'),
+          settingsBox: settings,
+        )),
+      );
+
+      final padding = tester.widget<Padding>(
+        find.descendant(
+          of: find.byType(TwitchChatNotificationRow),
+          matching: find.byWidgetPredicate(
+            (widget) => widget is Padding && widget.child is IntrinsicHeight,
+          ),
+        ),
+      );
+      expect(padding.padding, const EdgeInsets.symmetric(vertical: 10.0));
+    });
+
+    testWidgets('announcement banner shows Announcement, not the author twice',
+        (tester) async {
+      await tester.pumpWidget(
+        wrap(TwitchChatNotificationRow(
+          event: ChatNotificationEvent(
+            broadcasterUserId: 'b1',
+            chatterUserId: 'c1',
+            chatterUserLogin: 'alice',
+            chatterUserName: 'Alice',
+            messageId: 'a1',
+            systemMessage: 'Alice: hello stream',
+            noticeType: 'announcement',
+            message: const ChatMessageText(
+              text: 'hello stream',
+              fragments: [
+                ChatMessageFragment(type: 'text', text: 'hello stream'),
+              ],
+            ),
+          ),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        )),
+      );
+
+      expect(find.text('Announcement'), findsOneWidget);
+      expect(find.textContaining('Alice'), findsOneWidget);
+      expect(find.textContaining('hello stream'), findsOneWidget);
+      expect(find.text('Alice'), findsNothing);
     });
   });
 
