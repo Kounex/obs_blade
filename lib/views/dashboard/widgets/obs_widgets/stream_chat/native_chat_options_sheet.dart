@@ -117,23 +117,22 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
         AppSpacing.lg,
         AppSpacing.lg,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          nativeChatSheetDragHandle(context),
-          Expanded(
-            child: SingleChildScrollView(
-              child: switch (this._page) {
-                _OptionsPage.root => this._buildRoot(context),
-                _OptionsPage.appearance => _AppearancePage(onBack: this._back),
-                _OptionsPage.emotes => _EmotesPage(onBack: this._back),
-                _OptionsPage.badges => _BadgesPage(onBack: this._back),
-                _OptionsPage.eventMessages =>
-                  _EventMessagesPage(onBack: this._back),
-              },
-            ),
-          ),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            nativeChatSheetDragHandle(context),
+            switch (this._page) {
+              _OptionsPage.root => this._buildRoot(context),
+              _OptionsPage.appearance => _AppearancePage(onBack: this._back),
+              _OptionsPage.emotes => _EmotesPage(onBack: this._back),
+              _OptionsPage.badges => _BadgesPage(onBack: this._back),
+              _OptionsPage.eventMessages =>
+                _EventMessagesPage(onBack: this._back),
+            },
+          ],
+        ),
       ),
     );
   }
