@@ -63,7 +63,7 @@ List<TwitchChannelSearchResult> sortChannelSearchResults(
 /// Channels typeahead plus the "channels you moderate" / "channels you
 /// follow" quick-pick sections. Requires a user access token with the
 /// matching scopes (`user:read:follows`,
-/// `moderator:read:moderated_channels`; see `kTwitchChatScopes`).
+/// `user:read:moderated_channels`; see `kTwitchChatScopes`).
 ///
 /// [client] is injectable for tests — no real HTTP in unit tests.
 class TwitchChannelService {

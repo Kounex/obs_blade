@@ -25,7 +25,7 @@ websocket.
 
 - New scopes ride `kTwitchChatScopes` in
   `lib/utils/twitch/twitch_auth_service.dart` — exact additions:
-  `user:read:follows`, `moderator:read:moderated_channels`,
+  `user:read:follows`, `user:read:moderated_channels`,
   `moderator:manage:chat_messages`, `moderator:manage:banned_users`.
 - Own channel is derived from `TwitchAuth` (never stored in the channels
   list); `SelectedNativeChatChannelId == null` means own channel (default —
@@ -268,7 +268,7 @@ fall back cleanly for an unfetched broadcaster. Commit:
 - `sendChatMessage` passes `senderId: user.id, broadcasterId:
   effectiveBroadcasterId`.
 - Login: after own-user fetch, if token has
-  `moderator:read:moderated_channels`, fire-and-forget
+  `user:read:moderated_channels`, fire-and-forget
   `getModeratedChannels` → `moderatedChannelIds` (failure = empty set,
   logged).
 - `messageId` dedup: track recently-applied delete/purge ids (small

@@ -35,7 +35,7 @@ const List<String> kTwitchChatScopes = <String>[
   'user:write:chat',
   'user:read:emotes',
   'user:read:follows',
-  'moderator:read:moderated_channels',
+  'user:read:moderated_channels',
   'moderator:manage:chat_messages',
   'moderator:manage:banned_users',
   ...kTwitchModerationScopes,

@@ -81,7 +81,7 @@ void main() {
     authService.tokenScopes = const [
       'user:read:chat',
       'user:read:follows',
-      'moderator:read:moderated_channels',
+      'user:read:moderated_channels',
     ];
     eventSubService = FakeTwitchEventSubService();
     channelService = FakeTwitchChannelService();
@@ -331,7 +331,7 @@ void main() {
             expiresAtMs: current.expiresAtMs,
             scopes: const [
               'user:read:chat',
-              'moderator:read:moderated_channels',
+              'user:read:moderated_channels',
             ],
             userId: current.userId,
             userLogin: current.userLogin,

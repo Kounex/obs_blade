@@ -273,7 +273,7 @@ abstract class _TwitchChatStore with Store {
   /// deliberately plain (non-reactive) pattern as [canReadEmotes].
   bool get canReadModeratedChannels =>
       this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:read:moderated_channels',
+            'user:read:moderated_channels',
           ) ??
       false;
 

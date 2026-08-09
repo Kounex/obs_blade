@@ -1,0 +1,111 @@
+<h2>How should the chat input dock look?</h2>
+<p class="subtitle">Docked at the bottom of the chat window (the pane you already have), mobile view, dark theme. All three show the same two states: ready to send (write scope granted) and read-only (logged in before the scope existed). Pick the shape — behavior (keyboard send action, 500-char limit, error feedback) is the same for all.</p>
+
+<style>
+  .dock-row { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: flex-start; }
+  .dock-opt { flex: 1 1 300px; max-width: 360px; cursor: pointer; border: 2px solid transparent; border-radius: 12px; padding: 6px; transition: all .15s ease; }
+  .dock-opt:hover { border-color: var(--accent); }
+  .dock-opt.selected { border-color: var(--selected-border); background: var(--selected-bg); }
+  .phone { background: #121214; border: 1px solid #2a2a2e; border-radius: 18px; padding: 12px; font-size: 12.5px; }
+  .pane { background: #1c1c21; border: 1px solid #333339; border-radius: 12px; overflow: hidden; }
+  .statusrow { display: flex; align-items: center; padding: 6px 10px; border-bottom: 1px solid #2e2e34; font-size: 10.5px; color: #8a8a92; }
+  .statusrow .ok { margin-left: auto; color: #4cd964; font-weight: 500; }
+  .msgs { display: flex; flex-direction: column; gap: 7px; padding: 10px; min-height: 130px; }
+  .msg { line-height: 1.35; color: #d6d6db; }
+  .badge { display: inline-block; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 1px 4px; margin-right: 4px; vertical-align: 1px; }
+  .b-mod { background: #00ad03; color: #fff; }
+  .b-sub { background: #8205b4; color: #fff; }
+  .n1 { color: #ff6b6b; font-weight: 600; }
+  .n2 { color: #59c2ff; font-weight: 600; }
+  /* A: pill field + circular send */
+  .dockA { display: flex; gap: 8px; align-items: center; padding: 8px; border-top: 1px solid #2e2e34; }
+  .fieldA { flex: 1; background: #26262b; border: 1px solid #3a3a40; border-radius: 999px; padding: 8px 12px; color: #6a6a72; font-size: 12px; }
+  .sendA { width: 34px; height: 34px; border-radius: 50%; background: #a970ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  /* B: flush field, suffix send icon */
+  .dockB { display: flex; align-items: center; border-top: 1px solid #2e2e34; padding: 4px 4px 4px 12px; }
+  .fieldB { flex: 1; color: #6a6a72; font-size: 12px; padding: 10px 0; }
+  .sendB { width: 34px; height: 34px; border-radius: 8px; background: #26262b; border: 1px solid #3a3a40; color: #a970ff; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-right: 4px; }
+  /* C: pill + send + counter */
+  .dockC { padding: 8px; border-top: 1px solid #2e2e34; }
+  .dockC .row { display: flex; gap: 8px; align-items: center; }
+  .counter { text-align: right; font-size: 10px; color: #6a6a72; padding: 4px 6px 0; }
+  .counter em { color: #ff9f0a; font-style: normal; }
+  /* read-only hint */
+  .hint { border-top: 1px solid #2e2e34; padding: 10px; display: flex; align-items: center; gap: 8px; color: #8a8a92; font-size: 11.5px; }
+  .hint .lock { color: #a970ff; }
+  .hint .act { margin-left: auto; color: #a970ff; font-weight: 600; white-space: nowrap; }
+  .opt-label { text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 8px; }
+  .opt-label b { color: var(--text-primary); }
+</style>
+
+<div class="dock-row">
+
+  <div class="dock-opt" data-choice="a" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="pane">
+        <div class="statusrow">Stream Chat <span class="ok">● connected</span></div>
+        <div class="msgs">
+          <div class="msg"><span class="badge b-mod">MOD</span><span class="n1">nightowl</span>: nice clutch</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: gg!</div>
+        </div>
+        <div class="dockA">
+          <div class="fieldA">Send a message…</div>
+          <div class="sendA">➤</div>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="pane">
+        <div class="hint"><span class="lock">🔒</span> Logged in read-only <span class="act">Re-login to chat</span></div>
+      </div>
+    </div>
+    <div class="opt-label"><b>A — Pill field + circular send</b> · classic messenger look, friendliest</div>
+  </div>
+
+  <div class="dock-opt" data-choice="b" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="pane">
+        <div class="statusrow">Stream Chat <span class="ok">● connected</span></div>
+        <div class="msgs">
+          <div class="msg"><span class="badge b-mod">MOD</span><span class="n1">nightowl</span>: nice clutch</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: gg!</div>
+        </div>
+        <div class="dockB">
+          <div class="fieldB">Send a message…</div>
+          <div class="sendB">➤</div>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="pane">
+        <div class="hint"><span class="lock">🔒</span> Logged in read-only <span class="act">Re-login to chat</span></div>
+      </div>
+    </div>
+    <div class="opt-label"><b>B — Flush field + boxed send</b> · most compact, matches the app's control idiom</div>
+  </div>
+
+  <div class="dock-opt" data-choice="c" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="pane">
+        <div class="statusrow">Stream Chat <span class="ok">● connected</span></div>
+        <div class="msgs">
+          <div class="msg"><span class="badge b-mod">MOD</span><span class="n1">nightowl</span>: nice clutch</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: gg!</div>
+        </div>
+        <div class="dockC">
+          <div class="row">
+            <div class="fieldA">Send a message…</div>
+            <div class="sendA">➤</div>
+          </div>
+          <div class="counter"><em>462</em>/500</div>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <div class="pane">
+        <div class="hint"><span class="lock">🔒</span> Logged in read-only <span class="act">Re-login to chat</span></div>
+      </div>
+    </div>
+    <div class="opt-label"><b>C — A + character counter</b> · counter appears near the 500 limit, amber when close</div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top: 1.5rem;">The read-only strip (bottom phone in each) replaces the whole dock until the account re-logs in with write scope — tapping it starts the login flow. Same component in all three options.</p>

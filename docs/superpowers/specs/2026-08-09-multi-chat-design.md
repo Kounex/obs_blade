@@ -155,7 +155,7 @@ moderation bundle):
 | Scope | Enables |
 |---|---|
 | `user:read:follows` | followed-channels picker section |
-| `moderator:read:moderated_channels` | moderated section + mod gating |
+| `user:read:moderated_channels` | moderated section + mod gating |
 | `moderator:manage:chat_messages` | delete message |
 | `moderator:manage:banned_users` | timeout / ban |
 

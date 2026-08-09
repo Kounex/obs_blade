@@ -1,0 +1,104 @@
+<h2>Which window treatment feels right for the native chat?</h2>
+<p class="subtitle">Mobile view, dark theme. The control bar (platform · username · native toggle) is shown for context and stays identical in all three — only the chat area below it changes. The dashed block at the bottom marks where the future chat input will dock.</p>
+
+<style>
+  .phone-row { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: flex-start; }
+  .phone-opt { flex: 1 1 300px; max-width: 360px; cursor: pointer; border: 2px solid transparent; border-radius: 12px; padding: 6px; transition: all .15s ease; }
+  .phone-opt:hover { border-color: var(--accent); }
+  .phone-opt.selected { border-color: var(--selected-border); background: var(--selected-bg); }
+  .phone { background: #121214; border: 1px solid #2a2a2e; border-radius: 18px; padding: 12px; font-size: 12.5px; }
+  .ctrlbar { display: flex; gap: 6px; margin-bottom: 10px; }
+  .ctrl { background: #26262b; border: 1px solid #3a3a40; border-radius: 8px; padding: 6px 9px; color: #c9c9cf; font-size: 11px; white-space: nowrap; }
+  .ctrl.brand { color: #a970ff; }
+  .msgs { display: flex; flex-direction: column; gap: 7px; padding: 10px; min-height: 220px; }
+  .msg { line-height: 1.35; color: #d6d6db; }
+  .badge { display: inline-block; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 1px 4px; margin-right: 4px; vertical-align: 1px; }
+  .b-mod { background: #00ad03; color: #fff; }
+  .b-sub { background: #8205b4; color: #fff; }
+  .b-vip { background: #e005b9; color: #fff; }
+  .n1 { color: #ff6b6b; font-weight: 600; }
+  .n2 { color: #59c2ff; font-weight: 600; }
+  .n3 { color: #8aff80; font-weight: 600; }
+  .n4 { color: #e8c06a; font-weight: 600; }
+  .dock { margin-top: 8px; border: 1.5px dashed #4a4a52; border-radius: 8px; padding: 8px 10px; color: #6a6a72; font-size: 11px; text-align: center; }
+  /* Treatment A: inset pane */
+  .paneA { background: #1c1c21; border: 1px solid #333339; border-radius: 12px; display: flex; flex-direction: column; }
+  /* Treatment B: header window */
+  .paneB { background: #1c1c21; border: 1px solid #333339; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .paneB .hdr { background: #232329; border-bottom: 1px solid #333339; padding: 7px 10px; color: #a970ff; font-weight: 600; font-size: 11.5px; display: flex; align-items: center; gap: 6px; }
+  .paneB .hdr .live { margin-left: auto; color: #4cd964; font-weight: 500; font-size: 10.5px; }
+  /* Treatment C: hairline only */
+  .paneC { border: 1px solid #333339; border-radius: 12px; display: flex; flex-direction: column; }
+  .opt-caption { text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 8px; }
+  .opt-caption b { color: var(--text-primary); }
+</style>
+
+<div class="phone-row">
+
+  <div class="phone-opt" data-choice="a" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="ctrlbar">
+        <div class="ctrl brand">▾ Twitch</div>
+        <div class="ctrl">▾ kounex</div>
+        <div class="ctrl">Native ⠿</div>
+      </div>
+      <div class="paneA">
+        <div class="msgs">
+          <div class="msg"><span class="badge b-mod">MOD</span><span class="n1">nightowl</span>: that raid timing was perfect</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: PogChamp LET'S GO</div>
+          <div class="msg"><span class="n3">lurker42</span>: first time catching live, love the setup</div>
+          <div class="msg"><span class="badge b-vip">VIP</span><span class="n4">streamfan</span>: the new overlay looks clean 👀</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: clip it!</div>
+        </div>
+        <div class="dock">Chat input — docks here later</div>
+      </div>
+    </div>
+    <div class="opt-caption"><b>A — Inset pane</b> · soft fill + hairline, matches the app's control surfaces</div>
+  </div>
+
+  <div class="phone-opt" data-choice="b" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="ctrlbar">
+        <div class="ctrl brand">▾ Twitch</div>
+        <div class="ctrl">▾ kounex</div>
+        <div class="ctrl">Native ⠿</div>
+      </div>
+      <div class="paneB">
+        <div class="hdr">Twitch Chat <span class="live">● connected</span></div>
+        <div class="msgs">
+          <div class="msg"><span class="badge b-mod">MOD</span><span class="n1">nightowl</span>: that raid timing was perfect</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: PogChamp LET'S GO</div>
+          <div class="msg"><span class="n3">lurker42</span>: first time catching live, love the setup</div>
+          <div class="msg"><span class="badge b-vip">VIP</span><span class="n4">streamfan</span>: the new overlay looks clean 👀</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: clip it!</div>
+        </div>
+        <div class="dock">Chat input — docks here later</div>
+      </div>
+    </div>
+    <div class="opt-caption"><b>B — Header window</b> · titled strip, "app within an app", status visible</div>
+  </div>
+
+  <div class="phone-opt" data-choice="c" onclick="toggleSelect(this)">
+    <div class="phone">
+      <div class="ctrlbar">
+        <div class="ctrl brand">▾ Twitch</div>
+        <div class="ctrl">▾ kounex</div>
+        <div class="ctrl">Native ⠿</div>
+      </div>
+      <div class="paneC">
+        <div class="msgs">
+          <div class="msg"><span class="badge b-mod">MOD</span><span class="n1">nightowl</span>: that raid timing was perfect</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: PogChamp LET'S GO</div>
+          <div class="msg"><span class="n3">lurker42</span>: first time catching live, love the setup</div>
+          <div class="msg"><span class="badge b-vip">VIP</span><span class="n4">streamfan</span>: the new overlay looks clean 👀</div>
+          <div class="msg"><span class="badge b-sub">SUB</span><span class="n2">pixelpunk</span>: clip it!</div>
+        </div>
+        <div class="dock">Chat input — docks here later</div>
+      </div>
+    </div>
+    <div class="opt-caption"><b>C — Hairline only</b> · border, no fill — lightest, densest</div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top: 1.5rem;">Click a phone to pick — or tell me in the terminal what you'd change (radius, fill, header content, spacing…). Note: standalone/tablet chat already lives in a titled card; this treatment is the <i>inner</i> window, so it will nest inside that card there.</p>

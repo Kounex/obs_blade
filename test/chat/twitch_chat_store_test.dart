@@ -1184,7 +1184,7 @@ void main() {
       channelService.moderatedChannels = [ref('chan-mod')];
       await login(scopes: const [
         'user:read:chat',
-        'moderator:read:moderated_channels',
+        'user:read:moderated_channels',
       ]);
       await pumpEventQueue();
 
@@ -1198,7 +1198,7 @@ void main() {
           const TwitchAuthException('down', statusCode: 500);
       await login(scopes: const [
         'user:read:chat',
-        'moderator:read:moderated_channels',
+        'user:read:moderated_channels',
       ]);
       await pumpEventQueue();
 
@@ -1236,7 +1236,7 @@ void main() {
     test('gating — pre-upgrade token cannot moderate anywhere', () async {
       await login(scopes: const [
         'user:read:chat',
-        'moderator:read:moderated_channels',
+        'user:read:moderated_channels',
       ]);
       store.moderatedChannelIds.add('chan-mod');
 
