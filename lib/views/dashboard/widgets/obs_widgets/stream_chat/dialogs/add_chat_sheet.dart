@@ -15,6 +15,7 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/twitch/twitch_channel_service.dart';
 import '../native_chat_chrome.dart';
+import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
 
 /// Opens the "Add chat" picker sheet (multi-chat) — the entry behind
@@ -289,25 +290,14 @@ class _AddChatSheetState extends State<AddChatSheet> {
               top: AppSpacing.sm,
               bottom: AppSpacing.md,
             ),
-            child: TextField(
+            child: NativeChatTextField(
               controller: this._searchController,
               onChanged: this._onQueryChanged,
-              textAlignVertical: TextAlignVertical.center,
-              decoration: InputDecoration(
-                hintText: 'Search channels',
-                prefixIcon: const Icon(CupertinoIcons.search, size: 18.0),
-                prefixIconConstraints: const BoxConstraints(
-                  minWidth: 40.0,
-                  minHeight: 40.0,
-                ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: 12.0,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
+              hintText: 'Search channels',
+              prefixIcon: const Icon(CupertinoIcons.search, size: 16.0),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 36.0,
+                minHeight: 0.0,
               ),
             ),
           ),
@@ -615,8 +605,19 @@ class _AddChatSheetState extends State<AddChatSheet> {
                   ],
                 ),
               ),
+              /// Reserved check slot left of LIVE so viewer chips share a
+              /// column whether or not the channel is already added.
+              SizedBox(
+                width: 18.0 + AppSpacing.xs,
+                child: added
+                    ? Icon(
+                        Icons.check,
+                        size: 18.0,
+                        color: Theme.of(context).colorScheme.primary,
+                      )
+                    : null,
+              ),
               if (live) ...[
-                const SizedBox(width: AppSpacing.xs),
                 NativeChatStatusChip.live(
                   key: Key('add-chat-live-$chipScope-$id'),
                   color: statusColors.live,
@@ -627,14 +628,6 @@ class _AddChatSheetState extends State<AddChatSheet> {
                 const SizedBox(width: AppSpacing.xs),
                 NativeChatStatusChip.mod(
                   key: Key('add-chat-mod-$chipScope-$id'),
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ],
-              if (added) ...[
-                const SizedBox(width: AppSpacing.xs),
-                Icon(
-                  Icons.check,
-                  size: 18.0,
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ],

@@ -9,6 +9,7 @@ import '../../../../../../types/classes/twitch/chat_settings.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../native_chat_chrome.dart';
+import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
 
 /// Opens the channel-level Mod actions sheet (clear / modes / shield /
@@ -489,15 +490,13 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
+        NativeChatTextField(
           controller: this._announceController,
-          maxLines: 4,
+          hintText: 'Announcement message',
           minLines: 2,
+          maxLines: 4,
           maxLength: kAnnounceMaxLength,
-          decoration: const InputDecoration(
-            hintText: 'Announcement message',
-            border: OutlineInputBorder(),
-          ),
+          textInputAction: TextInputAction.newline,
           onChanged: (_) => this.setState(() {}),
         ),
         const SizedBox(height: AppSpacing.sm),

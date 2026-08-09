@@ -92,7 +92,7 @@ class ChatEmotePickerButton extends StatelessWidget {
             alignment: Alignment.center,
             child: const Icon(
               CupertinoIcons.smiley,
-              size: 18.0,
+              size: 20.0,
             ),
           ),
         ),
@@ -188,25 +188,6 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: BorderSide(
-        color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
-        width: 0.0,
-      ),
-    );
-    final draftBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: BorderSide(
-        color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
-        width: 0.0,
-      ),
-    );
-    final draftFocusedBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: BorderSide(color: this.widget.accentColor),
-    );
-
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -218,30 +199,13 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(
+          NativeChatTextField(
             onChanged: (value) => this.setState(() => this._query = value),
-            style: Theme.of(context).textTheme.bodyMedium,
-            decoration: InputDecoration(
-              isDense: true,
-              filled: true,
-              fillColor: StylingHelper.lightenDarkenColor(
-                  Theme.of(context).cardColor),
-              hintText: 'Search emotes…',
-              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                  ),
-              prefixIcon: const Icon(CupertinoIcons.search, size: 16.0),
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 36.0,
-                minHeight: 0.0,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              border: inputBorder,
-              enabledBorder: inputBorder,
-              focusedBorder: inputBorder,
+            hintText: 'Search emotes…',
+            prefixIcon: const Icon(CupertinoIcons.search, size: 16.0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 36.0,
+              minHeight: 0.0,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -433,8 +397,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
-                  child: TextField(
-                    key: const Key('emote-draft-field'),
+                  child: NativeChatTextField(
+                    fieldKey: const Key('emote-draft-field'),
                     controller: this._draft,
                     focusNode: this._draftFocus,
                     minLines: 1,
@@ -442,32 +406,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                     maxLength: 500,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => this._done(),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: StylingHelper.lightenDarkenColor(
-                          Theme.of(context).cardColor),
-                      hintText: 'Add emotes…',
-                      hintStyle:
-                          Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.color,
-                              ),
-                      counterText: '',
-                      constraints: const BoxConstraints(
-                        minHeight: kNativeChatDockControlSize,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      border: draftBorder,
-                      enabledBorder: draftBorder,
-                      focusedBorder: draftFocusedBorder,
-                    ),
+                    hintText: 'Add emotes…',
+                    focusBorderColor: this.widget.accentColor,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),

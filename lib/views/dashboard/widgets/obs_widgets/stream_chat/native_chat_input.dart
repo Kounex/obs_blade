@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
 import '../../../../../utils/styling_helper.dart';
+import 'native_chat_text_field.dart';
 
-/// Visual height of the send control (and the matching emote leading).
-/// Hit targets stay at [kMinInteractiveDimensionCupertino]; chrome is
-/// bottom-aligned inside them so it shares a baseline with the field.
-const double kNativeChatDockControlSize = 34.0;
+export 'native_chat_text_field.dart'
+    show
+        NativeChatTextField,
+        kNativeChatDockControlSize,
+        kNativeChatInputOpticalOffset;
 
 /// Chat input dock of the native chat window: pill text field + circular
 /// send button when the account may write ([canSend]), or a read-only hint
@@ -174,7 +176,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                 const SizedBox(width: AppSpacing.sm),
               ],
               Expanded(
-                child: TextField(
+                child: NativeChatTextField(
                   controller: this._controller,
                   focusNode: this.widget.focusNode,
                   enabled: !this.widget.inFlight,
@@ -183,58 +185,8 @@ class _NativeChatInputState extends State<NativeChatInput> {
                   maxLength: 500,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => this._submit(),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    filled: true,
-                    fillColor: StylingHelper.lightenDarkenColor(
-                        Theme.of(context).cardColor),
-                    hintText: 'Send a message…',
-                    hintStyle:
-                        Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.color,
-                            ),
-
-                    /// The 500-cap is enforced silently (Twitch's limit) —
-                    /// no counter chrome (design decision: option A)
-                    counterText: '',
-                    /// Match [kNativeChatDockControlSize] on a single line so
-                    /// the field shares a baseline with send / emote.
-                    constraints: const BoxConstraints(
-                      minHeight: kNativeChatDockControlSize,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(
-                        color: Theme.of(context)
-                            .dividerColor
-                            .withValues(alpha: 0.4),
-                        width: 0.0,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(
-                        color: Theme.of(context)
-                            .dividerColor
-                            .withValues(alpha: 0.4),
-                        width: 0.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide(
-                        color: this.widget.accentColor,
-                      ),
-                    ),
-                  ),
+                  hintText: 'Send a message…',
+                  focusBorderColor: this.widget.accentColor,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -268,7 +220,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                               ))
                         : const Icon(
                             CupertinoIcons.paperplane_fill,
-                            size: 15.0,
+                            size: 17.0,
                             color: Colors.white,
                           ),
                   ),

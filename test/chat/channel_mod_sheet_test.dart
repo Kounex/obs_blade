@@ -16,6 +16,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_mod_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_text_field.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -296,7 +297,14 @@ void main() {
     await settle(tester);
     expect(moderationService.announceCalls, 0);
 
-    await tester.enterText(find.byType(TextField), 'Hello chat');
+    expect(find.byType(NativeChatTextField), findsOneWidget);
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(NativeChatTextField),
+        matching: find.byType(TextField),
+      ),
+      'Hello chat',
+    );
     await tester.pump();
     await tapVisible(tester, find.text('blue'));
     await tapVisible(tester, find.text('Send'));
