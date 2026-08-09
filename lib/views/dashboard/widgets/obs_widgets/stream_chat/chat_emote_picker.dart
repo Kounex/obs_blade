@@ -213,32 +213,9 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Emotes',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              Pressable(
-                haptic: true,
-                onTap: this._done,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                    vertical: AppSpacing.xs,
-                  ),
-                  child: Text(
-                    'Done',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: this.widget.accentColor,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            'Emotes',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
