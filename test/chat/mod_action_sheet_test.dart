@@ -180,8 +180,8 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('tapping a live message in a moderated channel opens the '
-      'sheet', (tester) async {
+  testWidgets('long-pressing a live message in a moderated channel opens '
+      'the sheet', (tester) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
     await tester.pumpWidget(
@@ -189,7 +189,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.textContaining('text m1'));
+    await tester.longPress(find.textContaining('text m1'));
     await tester.pumpAndSettle();
 
     expect(find.text('Delete message'), findsOneWidget);
@@ -199,7 +199,7 @@ void main() {
       (tester) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-    /// Selected channel the user does not moderate — tap is inert.
+    /// Selected channel the user does not moderate — long-press is inert.
     store.selectedChannelId = 'chan-other';
 
     await tester.pumpWidget(
@@ -207,7 +207,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.textContaining('text m1'));
+    await tester.longPress(find.textContaining('text m1'));
     await tester.pumpAndSettle();
     expect(find.text('Delete message'), findsNothing);
 
