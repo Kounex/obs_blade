@@ -8,13 +8,18 @@ class NativeChatStatusChip extends StatelessWidget {
   final String label;
   final Color color;
 
+  /// When set (LIVE chip only), rendered after ` · ` in the status red.
+  final String? viewerCountLabel;
+
   const NativeChatStatusChip({
     super.key,
     required this.label,
     required this.color,
+    this.viewerCountLabel,
   });
 
-  /// [viewerCount] when known → `LIVE · 1.2k`; omit for a plain LIVE chip.
+  /// [viewerCount] when known → `LIVE · 1.2k` with the count in red;
+  /// omit for a plain LIVE chip.
   factory NativeChatStatusChip.live({
     Key? key,
     required Color color,
@@ -22,9 +27,10 @@ class NativeChatStatusChip extends StatelessWidget {
   }) =>
       NativeChatStatusChip(
         key: key,
-        label: viewerCount == null
-            ? 'LIVE'
-            : 'LIVE · ${formatChatViewerCount(viewerCount)}',
+        label: 'LIVE',
+        viewerCountLabel: viewerCount == null
+            ? null
+            : formatChatViewerCount(viewerCount),
         color: color,
       );
 
@@ -37,6 +43,15 @@ class NativeChatStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: this.color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+        );
+    final viewerColor = (Theme.of(context).extension<AppStatusColors>() ??
+            AppStatusColors.standard)
+        .unreachable;
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -50,14 +65,21 @@ class NativeChatStatusChip extends StatelessWidget {
           width: 1.0,
         ),
       ),
-      child: Text(
-        this.label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: this.color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
+      child: this.viewerCountLabel == null
+          ? Text(this.label, style: baseStyle)
+          : Text.rich(
+              TextSpan(
+                style: baseStyle,
+                children: [
+                  TextSpan(text: this.label),
+                  const TextSpan(text: ' · '),
+                  TextSpan(
+                    text: this.viewerCountLabel,
+                    style: baseStyle?.copyWith(color: viewerColor),
+                  ),
+                ],
+              ),
             ),
-      ),
     );
   }
 }

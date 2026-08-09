@@ -67,7 +67,7 @@ void main() {
     expect(titleX, lessThan(liveX));
     expect(liveX, lessThan(modX));
     expect(modX, lessThan(statusX));
-    expect(find.text('LIVE · 1.2k'), findsOneWidget);
+    expect(find.text('LIVE · 1.2k', findRichText: true), findsOneWidget);
   });
 
   group('formatChatViewerCount', () {

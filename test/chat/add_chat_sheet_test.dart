@@ -170,7 +170,8 @@ void main() {
     );
     expect(
         find.byKey(const Key('add-chat-live-mod-mod-live')), findsOneWidget);
-    expect(find.text('LIVE · 1.2k'), findsWidgets);
+    expect(
+        find.text('LIVE · 1.2k', findRichText: true), findsWidgets);
     expect(find.byKey(const Key('add-chat-mod-mod-mod-live')), findsNothing);
 
     /// Followed: live → mod → rest; LIVE + Mod chips as applicable.
@@ -183,7 +184,7 @@ void main() {
     );
     expect(
         find.byKey(const Key('add-chat-live-fol-fol-live')), findsOneWidget);
-    expect(find.text('LIVE · 42'), findsOneWidget);
+    expect(find.text('LIVE · 42', findRichText: true), findsOneWidget);
     expect(find.byKey(const Key('add-chat-mod-fol-fol-live')), findsOneWidget);
     expect(find.byKey(const Key('add-chat-mod-fol-fol-mod')), findsOneWidget);
     expect(
@@ -216,7 +217,7 @@ void main() {
     expect(find.textContaining('@login-s-2'), findsOneWidget);
     expect(find.textContaining('followers'), findsNothing);
     expect(find.byKey(const Key('add-chat-live-search-s-1')), findsOneWidget);
-    expect(find.text('LIVE · 3.4k'), findsOneWidget);
+    expect(find.text('LIVE · 3.4k', findRichText: true), findsOneWidget);
     expect(find.byKey(const Key('add-chat-live-search-s-2')), findsNothing);
 
     /// An active query replaces the quick-pick sections.
