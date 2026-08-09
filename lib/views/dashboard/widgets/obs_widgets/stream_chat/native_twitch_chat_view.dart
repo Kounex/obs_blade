@@ -241,6 +241,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       ),
                 )
                 .toList();
+            final chatMessageIds = {
+              for (final item in visibleItems)
+                if (item is ChatMessageEvent) item.messageId,
+            };
+            String? mentionHexFor(String userId) =>
+                this._store.chatterColor(userId);
             return Stack(
               children: [
                 ListView.separated(
@@ -292,6 +298,9 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       event: item.event,
                       settingsBox: settingsBox,
                       accentContinues: continues,
+                      showAttachedMessage:
+                          !chatMessageIds.contains(item.event.messageId),
+                      mentionHexFor: mentionHexFor,
                     );
                   }
                   final event = item as ChatMessageEvent;
@@ -309,13 +318,6 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       );
                     }
                   }
-                  Color? mentionColor(String userId) {
-                    final hex = this._store.chatterColor(userId);
-                    if (hex == null || hex.length != 7) return null;
-                    final value = int.tryParse(hex.substring(1), radix: 16);
-                    if (value == null) return null;
-                    return Color(0xFF000000 | value);
-                  }
 
                   return TwitchChatMessageRow(
                     event: event,
@@ -325,7 +327,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     isDeletedExpanded:
                         this._expandedDeletedIds.contains(event.messageId),
                     accentBarColor: accent,
-                    mentionColorFor: mentionColor,
+                    mentionHexFor: mentionHexFor,
                     onDeletedTap: actor == null
                         ? null
                         : () => setState(() {

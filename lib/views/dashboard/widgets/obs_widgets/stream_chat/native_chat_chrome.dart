@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../shared/design/design.dart';
+import 'chat_message_display.dart';
 
 /// Compact LIVE / Mod chip used in the add-chat picker and the native
 /// chat header — same visual language in both places.
@@ -48,10 +49,6 @@ class NativeChatStatusChip extends StatelessWidget {
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         );
-    final viewerColor = (Theme.of(context).extension<AppStatusColors>() ??
-            AppStatusColors.standard)
-        .unreachable;
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -75,7 +72,7 @@ class NativeChatStatusChip extends StatelessWidget {
                   const TextSpan(text: ' · '),
                   TextSpan(
                     text: this.viewerCountLabel,
-                    style: baseStyle?.copyWith(color: viewerColor),
+                    style: baseStyle?.copyWith(color: kChatViewerCountColor),
                   ),
                 ],
               ),

@@ -10,6 +10,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_message_display.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
@@ -55,9 +56,13 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// (same chatter).
   final Color? accentBarColor;
 
-  /// Resolves a mention's color from recent chatter history (hex → Color
-  /// parsing happens here). Null → bold white mention style.
-  final Color? Function(String userId)? mentionColorFor;
+  /// Resolves a mention's chatter hex (`#RRGGBB`) from recent history.
+  /// Broadcaster mentions always use [kChatBroadcasterMentionColor].
+  final String? Function(String userId)? mentionHexFor;
+
+  /// When embedded under a notification banner, skip outer vertical
+  /// padding (the banner owns spacing).
+  final bool compact;
 
   const TwitchChatMessageRow({
     super.key,
@@ -69,7 +74,8 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.onDeletedTap,
     this.onMessageTap,
     this.accentBarColor,
-    this.mentionColorFor,
+    this.mentionHexFor,
+    this.compact = false,
   });
 
   static const double _badgeSize = 18.0;
@@ -126,8 +132,13 @@ class TwitchChatMessageRow extends StatelessWidget {
   }
 
   List<InlineSpan> _messageSpans(BuildContext context) {
-    final fragments = this.event.message.fragments;
+    final fragments = fragmentsForChatDisplay(this.event);
     if (fragments.isEmpty) {
+      /// Reply with only a suppressed `@parent` — fall back carefully:
+      /// don't re-print the full wire text (it still has the @).
+      if (this.event.reply != null && this.event.message.fragments.isNotEmpty) {
+        return const [];
+      }
       return this._linkAwareTextSpans(context, this.event.message.text);
     }
     return [
@@ -148,7 +159,12 @@ class TwitchChatMessageRow extends StatelessWidget {
             text: fragment.text,
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: this.mentionColorFor?.call(fragment.mention!.userId) ??
+              color: mentionColorForFragment(
+                    mentionUserId: fragment.mention!.userId,
+                    broadcasterUserId: this.event.broadcasterUserId,
+                    chatterHex:
+                        this.mentionHexFor?.call(fragment.mention!.userId),
+                  ) ??
                   Colors.white,
             ),
           )
@@ -359,22 +375,25 @@ class TwitchChatMessageRow extends StatelessWidget {
       }
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: this._spacing),
-      child: revealable
-          ? GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: this.onDeletedTap,
-              child: chrome,
-            )
-          : this.onMessageTap != null
-              ? GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: this.onMessageTap,
-                  child: chrome,
-                )
-              : chrome,
-    );
+    final padded = this.compact
+        ? chrome
+        : Padding(
+            padding: EdgeInsets.symmetric(vertical: this._spacing),
+            child: chrome,
+          );
+    return revealable
+        ? GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: this.onDeletedTap,
+            child: padded,
+          )
+        : this.onMessageTap != null
+            ? GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: this.onMessageTap,
+                child: padded,
+              )
+            : padded;
   }
 
   Text _richText(BuildContext context) => Text.rich(

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
-import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 /// One `channel.chat.notification` banner — icon, system copy, optional
-/// attached message, left accent bar (Twitch-style).
+/// attached chat line, left accent bar (Twitch-style).
 class TwitchChatNotificationRow extends StatelessWidget {
   final ChatNotificationEvent event;
   final Box settingsBox;
@@ -15,11 +17,20 @@ class TwitchChatNotificationRow extends StatelessWidget {
   /// chatter, the accent continues onto that row (caller sets both).
   final bool accentContinues;
 
+  /// When false, a separate [ChatMessageEvent] with the same [messageId]
+  /// already carries the body — don't duplicate it under the banner.
+  final bool showAttachedMessage;
+
+  /// Chatter hex lookup for @mentions inside an attached message.
+  final String? Function(String userId)? mentionHexFor;
+
   const TwitchChatNotificationRow({
     super.key,
     required this.event,
     required this.settingsBox,
     this.accentContinues = false,
+    this.showAttachedMessage = true,
+    this.mentionHexFor,
   });
 
   @override
@@ -31,7 +42,10 @@ class TwitchChatNotificationRow extends StatelessWidget {
     final spacing = NativeChatAppearance.messageSpacing(this.settingsBox);
     final authorColor = _parseColor(this.event.color) ?? accent;
 
-    final attached = this.event.message?.text.trim() ?? '';
+    final attached = this.event.message;
+    final showAttached = this.showAttachedMessage &&
+        attached != null &&
+        attached.text.trim().isNotEmpty;
 
     return Padding(
       padding: EdgeInsets.only(bottom: spacing),
@@ -57,7 +71,10 @@ class TwitchChatNotificationRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(top: 2.0, right: AppSpacing.xs),
+                        padding: const EdgeInsets.only(
+                          top: 2.0,
+                          right: AppSpacing.xs,
+                        ),
                         child: Icon(icon, size: 14.0, color: accent),
                       ),
                       Expanded(
@@ -65,11 +82,22 @@ class TwitchChatNotificationRow extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (attached.isNotEmpty) ...[
+                  if (showAttached) ...[
                     const SizedBox(height: AppSpacing.xs / 2),
-                    Text(
-                      attached,
-                      style: TextStyle(fontSize: textSize, height: 1.25),
+                    TwitchChatMessageRow(
+                      event: ChatMessageEvent(
+                        broadcasterUserId: this.event.broadcasterUserId,
+                        chatterUserId: this.event.chatterUserId,
+                        chatterUserLogin: this.event.chatterUserLogin,
+                        chatterUserName: this.event.chatterUserName,
+                        messageId: this.event.messageId,
+                        message: attached,
+                        color: this.event.color,
+                        badges: this.event.badges,
+                      ),
+                      settingsBox: this.settingsBox,
+                      mentionHexFor: this.mentionHexFor,
+                      compact: true,
                     ),
                   ],
                 ],
