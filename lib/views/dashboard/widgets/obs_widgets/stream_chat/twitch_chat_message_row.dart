@@ -213,10 +213,10 @@ class TwitchChatMessageRow extends StatelessWidget {
     ];
   }
 
-  /// Split [text] into plain runs and tappable http(s) links.
+  /// Split [text] into plain runs and tappable links (http(s) + bare domains).
   List<InlineSpan> _linkAwareTextSpans(BuildContext context, String text) {
     if (text.isEmpty) return const [];
-    final matches = kChatUrlPattern.allMatches(text).toList();
+    final matches = chatUrlMatches(text).toList();
     if (matches.isEmpty) return [TextSpan(text: text)];
 
     final linkStyle = TextStyle(
