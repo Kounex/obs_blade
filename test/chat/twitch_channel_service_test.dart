@@ -25,14 +25,14 @@ void main() {
                 'id': 'chan-1',
                 'broadcaster_login': 'ninja',
                 'display_name': 'Ninja',
-                'follower_count': 19000000,
+                'game_name': 'Fortnite',
                 'is_live': true,
               },
               {
                 'id': 'chan-2',
                 'broadcaster_login': 'ninjascousin',
                 'display_name': 'NinjasCousin',
-                'follower_count': 42,
+                'game_name': '',
                 'is_live': false,
               },
             ],
@@ -48,9 +48,10 @@ void main() {
       expect(results[0].id, 'chan-1');
       expect(results[0].login, 'ninja');
       expect(results[0].displayName, 'Ninja');
-      expect(results[0].followerCount, 19000000);
+      expect(results[0].gameName, 'Fortnite');
       expect(results[0].isLive, isTrue);
       expect(results[1].isLive, isFalse);
+      expect(results[1].gameName, isEmpty);
     });
 
     test('encodes a query with spaces', () async {
@@ -191,7 +192,7 @@ void main() {
           id: id,
           login: id,
           displayName: id,
-          followerCount: 0,
+          gameName: '',
           isLive: live,
         );
 

@@ -35,14 +35,14 @@ void main() {
 
   TwitchChannelSearchResult result(
     String id, {
-    int followers = 0,
+    String gameName = '',
     bool live = false,
   }) =>
       TwitchChannelSearchResult(
         id: id,
         login: 'login-$id',
         displayName: 'Channel $id',
-        followerCount: followers,
+        gameName: gameName,
         isLive: live,
       );
 
@@ -188,7 +188,7 @@ void main() {
   testWidgets('search is debounced (~300 ms) and renders results',
       (tester) async {
     channelService.searchResults = [
-      result('s-1', followers: 1500, live: true),
+      result('s-1', gameName: 'Just Chatting', live: true),
       result('s-2'),
     ];
 
@@ -206,8 +206,9 @@ void main() {
     expect(channelService.lastQuery, 'someone');
     expect(find.text('Channel s-1'), findsOneWidget);
     expect(find.text('Channel s-2'), findsOneWidget);
-    expect(find.textContaining('@login-s-1'), findsOneWidget);
-    expect(find.textContaining('1.5k followers'), findsOneWidget);
+    expect(find.textContaining('@login-s-1 · Just Chatting'), findsOneWidget);
+    expect(find.textContaining('@login-s-2'), findsOneWidget);
+    expect(find.textContaining('followers'), findsNothing);
     expect(find.byKey(const Key('add-chat-live-search-s-1')), findsOneWidget);
     expect(find.byKey(const Key('add-chat-live-search-s-2')), findsNothing);
 

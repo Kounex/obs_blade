@@ -241,12 +241,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
     Navigator.of(context).pop();
   }
 
-  static String _formatFollowers(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    }
-    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k';
-    return '$count';
+  static String _searchSubtitle(TwitchChannelSearchResult result) {
+    final login = '@${result.login}';
+    if (result.gameName.isEmpty) return login;
+    return '$login · ${result.gameName}';
   }
 
   @override
@@ -254,6 +252,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
     final store = this._store;
     final locked =
         !store.canReadModeratedChannels || !store.canReadFollows;
+    final listMaxHeight = MediaQuery.sizeOf(context).height * 0.45;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -271,18 +270,35 @@ class _AddChatSheetState extends State<AddChatSheet> {
             'Add chat',
             style: nativeChatSheetTitleStyle(context),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          TextField(
-            controller: this._searchController,
-            onChanged: this._onQueryChanged,
-            decoration: const InputDecoration(
-              hintText: 'Search channels',
-              prefixIcon: Icon(CupertinoIcons.search),
-              isDense: true,
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.sm,
+              bottom: AppSpacing.md,
+            ),
+            child: TextField(
+              controller: this._searchController,
+              onChanged: this._onQueryChanged,
+              textAlignVertical: TextAlignVertical.center,
+              decoration: InputDecoration(
+                hintText: 'Search channels',
+                prefixIcon: const Icon(CupertinoIcons.search, size: 18.0),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 40.0,
+                  minHeight: 40.0,
+                ),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 12.0,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Flexible(
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: listMaxHeight),
             child: SingleChildScrollView(
               child: Observer(
                 builder: (_) {
@@ -421,8 +437,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
             chipScope: 'search',
             id: result.id,
             displayName: result.displayName,
-            subtitle:
-                '@${result.login} · ${_formatFollowers(result.followerCount)} followers',
+            subtitle: _searchSubtitle(result),
             live: result.isLive,
             mod: modIds.contains(result.id),
             added: this._isAdded(store, ownId, result.id),
