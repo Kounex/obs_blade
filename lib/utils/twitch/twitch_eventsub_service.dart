@@ -239,7 +239,7 @@ class TwitchEventSubService {
           this.onChatMessage(
             ChatMessageEvent.fromJson(
               envelope.payload['event'] as Map<String, Object?>,
-            ),
+            ).copyWith(receivedAt: envelope.metadata.messageTimestamp),
           );
         case 'channel.chat.notification':
           final callback = this.onChatNotification;

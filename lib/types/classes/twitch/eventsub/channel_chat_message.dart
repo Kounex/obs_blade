@@ -24,6 +24,10 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     /// Twitch message kind — `text`, `user_intro` (first message), etc.
     @Default('text') String messageType,
     ChatMessageReply? reply,
+
+    /// From EventSub envelope `metadata.message_timestamp` — not on the
+    /// chat event JSON. Stamped by [TwitchEventSubService] after parse.
+    @JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,
   }) = _ChatMessageEvent;
 
   factory ChatMessageEvent.fromJson(Map<String, Object?> json) =>

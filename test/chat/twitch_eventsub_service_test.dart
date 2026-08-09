@@ -208,6 +208,10 @@ void main() {
     expect(messages, hasLength(1));
     expect(messages.single.chatterUserName, 'viewer32');
     expect(messages.single.message.text, 'Hi chat');
+    expect(
+      messages.single.receivedAt,
+      DateTime.utc(2026, 8, 4, 10),
+    );
   });
 
   test('subscription POST throwing routes to onRevoked instead of escaping', () async {

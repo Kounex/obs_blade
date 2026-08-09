@@ -300,7 +300,9 @@ $EventSubMetadataCopyWith<$Res> get metadata {
 /// @nodoc
 mixin _$EventSubMetadata {
 
- String get messageId; String get messageType; String? get subscriptionType;
+ String get messageId; String get messageType;/// Wire clock for this envelope — used as the chat message's
+/// [ChatMessageEvent.receivedAt] (the event payload itself has no time).
+@JsonKey(fromJson: _messageTimestampFromJson) DateTime? get messageTimestamp; String? get subscriptionType;
 /// Create a copy of EventSubMetadata
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -311,16 +313,16 @@ $EventSubMetadataCopyWith<EventSubMetadata> get copyWith => _$EventSubMetadataCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventSubMetadata&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.subscriptionType, subscriptionType) || other.subscriptionType == subscriptionType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EventSubMetadata&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.messageTimestamp, messageTimestamp) || other.messageTimestamp == messageTimestamp)&&(identical(other.subscriptionType, subscriptionType) || other.subscriptionType == subscriptionType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,messageId,messageType,subscriptionType);
+int get hashCode => Object.hash(runtimeType,messageId,messageType,messageTimestamp,subscriptionType);
 
 @override
 String toString() {
-  return 'EventSubMetadata(messageId: $messageId, messageType: $messageType, subscriptionType: $subscriptionType)';
+  return 'EventSubMetadata(messageId: $messageId, messageType: $messageType, messageTimestamp: $messageTimestamp, subscriptionType: $subscriptionType)';
 }
 
 
@@ -331,7 +333,7 @@ abstract mixin class $EventSubMetadataCopyWith<$Res>  {
   factory $EventSubMetadataCopyWith(EventSubMetadata value, $Res Function(EventSubMetadata) _then) = _$EventSubMetadataCopyWithImpl;
 @useResult
 $Res call({
- String messageId, String messageType, String? subscriptionType
+ String messageId, String messageType,@JsonKey(fromJson: _messageTimestampFromJson) DateTime? messageTimestamp, String? subscriptionType
 });
 
 
@@ -348,11 +350,12 @@ class _$EventSubMetadataCopyWithImpl<$Res>
 
 /// Create a copy of EventSubMetadata
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? messageId = null,Object? messageType = null,Object? subscriptionType = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? messageId = null,Object? messageType = null,Object? messageTimestamp = freezed,Object? subscriptionType = freezed,}) {
   return _then(_self.copyWith(
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,messageType: null == messageType ? _self.messageType : messageType // ignore: cast_nullable_to_non_nullable
-as String,subscriptionType: freezed == subscriptionType ? _self.subscriptionType : subscriptionType // ignore: cast_nullable_to_non_nullable
+as String,messageTimestamp: freezed == messageTimestamp ? _self.messageTimestamp : messageTimestamp // ignore: cast_nullable_to_non_nullable
+as DateTime?,subscriptionType: freezed == subscriptionType ? _self.subscriptionType : subscriptionType // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -438,10 +441,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  String messageType,  String? subscriptionType)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String messageId,  String messageType, @JsonKey(fromJson: _messageTimestampFromJson)  DateTime? messageTimestamp,  String? subscriptionType)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _EventSubMetadata() when $default != null:
-return $default(_that.messageId,_that.messageType,_that.subscriptionType);case _:
+return $default(_that.messageId,_that.messageType,_that.messageTimestamp,_that.subscriptionType);case _:
   return orElse();
 
 }
@@ -459,10 +462,10 @@ return $default(_that.messageId,_that.messageType,_that.subscriptionType);case _
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  String messageType,  String? subscriptionType)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String messageId,  String messageType, @JsonKey(fromJson: _messageTimestampFromJson)  DateTime? messageTimestamp,  String? subscriptionType)  $default,) {final _that = this;
 switch (_that) {
 case _EventSubMetadata():
-return $default(_that.messageId,_that.messageType,_that.subscriptionType);case _:
+return $default(_that.messageId,_that.messageType,_that.messageTimestamp,_that.subscriptionType);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -479,10 +482,10 @@ return $default(_that.messageId,_that.messageType,_that.subscriptionType);case _
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  String messageType,  String? subscriptionType)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String messageId,  String messageType, @JsonKey(fromJson: _messageTimestampFromJson)  DateTime? messageTimestamp,  String? subscriptionType)?  $default,) {final _that = this;
 switch (_that) {
 case _EventSubMetadata() when $default != null:
-return $default(_that.messageId,_that.messageType,_that.subscriptionType);case _:
+return $default(_that.messageId,_that.messageType,_that.messageTimestamp,_that.subscriptionType);case _:
   return null;
 
 }
@@ -494,11 +497,14 @@ return $default(_that.messageId,_that.messageType,_that.subscriptionType);case _
 
 @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
 class _EventSubMetadata implements EventSubMetadata {
-  const _EventSubMetadata({required this.messageId, required this.messageType, this.subscriptionType});
+  const _EventSubMetadata({required this.messageId, required this.messageType, @JsonKey(fromJson: _messageTimestampFromJson) this.messageTimestamp, this.subscriptionType});
   factory _EventSubMetadata.fromJson(Map<String, dynamic> json) => _$EventSubMetadataFromJson(json);
 
 @override final  String messageId;
 @override final  String messageType;
+/// Wire clock for this envelope — used as the chat message's
+/// [ChatMessageEvent.receivedAt] (the event payload itself has no time).
+@override@JsonKey(fromJson: _messageTimestampFromJson) final  DateTime? messageTimestamp;
 @override final  String? subscriptionType;
 
 /// Create a copy of EventSubMetadata
@@ -511,16 +517,16 @@ _$EventSubMetadataCopyWith<_EventSubMetadata> get copyWith => __$EventSubMetadat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventSubMetadata&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.subscriptionType, subscriptionType) || other.subscriptionType == subscriptionType));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _EventSubMetadata&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.messageTimestamp, messageTimestamp) || other.messageTimestamp == messageTimestamp)&&(identical(other.subscriptionType, subscriptionType) || other.subscriptionType == subscriptionType));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,messageId,messageType,subscriptionType);
+int get hashCode => Object.hash(runtimeType,messageId,messageType,messageTimestamp,subscriptionType);
 
 @override
 String toString() {
-  return 'EventSubMetadata(messageId: $messageId, messageType: $messageType, subscriptionType: $subscriptionType)';
+  return 'EventSubMetadata(messageId: $messageId, messageType: $messageType, messageTimestamp: $messageTimestamp, subscriptionType: $subscriptionType)';
 }
 
 
@@ -531,7 +537,7 @@ abstract mixin class _$EventSubMetadataCopyWith<$Res> implements $EventSubMetada
   factory _$EventSubMetadataCopyWith(_EventSubMetadata value, $Res Function(_EventSubMetadata) _then) = __$EventSubMetadataCopyWithImpl;
 @override @useResult
 $Res call({
- String messageId, String messageType, String? subscriptionType
+ String messageId, String messageType,@JsonKey(fromJson: _messageTimestampFromJson) DateTime? messageTimestamp, String? subscriptionType
 });
 
 
@@ -548,11 +554,12 @@ class __$EventSubMetadataCopyWithImpl<$Res>
 
 /// Create a copy of EventSubMetadata
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? messageId = null,Object? messageType = null,Object? subscriptionType = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? messageId = null,Object? messageType = null,Object? messageTimestamp = freezed,Object? subscriptionType = freezed,}) {
   return _then(_EventSubMetadata(
 messageId: null == messageId ? _self.messageId : messageId // ignore: cast_nullable_to_non_nullable
 as String,messageType: null == messageType ? _self.messageType : messageType // ignore: cast_nullable_to_non_nullable
-as String,subscriptionType: freezed == subscriptionType ? _self.subscriptionType : subscriptionType // ignore: cast_nullable_to_non_nullable
+as String,messageTimestamp: freezed == messageTimestamp ? _self.messageTimestamp : messageTimestamp // ignore: cast_nullable_to_non_nullable
+as DateTime?,subscriptionType: freezed == subscriptionType ? _self.subscriptionType : subscriptionType // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

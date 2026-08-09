@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:intl/intl.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
@@ -14,6 +15,11 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_m
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
+
+/// Formats [ChatMessageEvent.receivedAt] for the user-card message list
+/// (Twitch-style `12:29 PM`).
+String formatChatMessageTime(DateTime time) =>
+    DateFormat.jm().format(time.toLocal());
 
 /// One chat line: role badges + colored author name + message text with
 /// inline emotes (first-party fragments and third-party 7TV/BTTV tokens),
@@ -68,6 +74,9 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// padding (the banner owns spacing).
   final bool compact;
 
+  /// Prefix [event.receivedAt] as `12:29 PM` (user-card LIVE list).
+  final bool showTimestamp;
+
   const TwitchChatMessageRow({
     super.key,
     required this.event,
@@ -82,6 +91,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.accentBarColor,
     this.mentionHexFor,
     this.compact = false,
+    this.showTimestamp = false,
   });
 
   static const double _badgeSize = 18.0;
@@ -441,6 +451,15 @@ class TwitchChatMessageRow extends StatelessWidget {
                 fontSize: this._textSize,
               ),
           children: [
+            if (this.showTimestamp && this.event.receivedAt != null)
+              TextSpan(
+                text: '${formatChatMessageTime(this.event.receivedAt!)} ',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontSize: this._textSize * 0.9,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
             if (this.onAuthorTap == null) ...this._badgeSpans(),
             this._authorSpan(context),
             const TextSpan(text: ': '),

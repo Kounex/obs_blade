@@ -248,6 +248,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
                   event: event,
                   settingsBox: settingsBox,
                   compact: true,
+                  showTimestamp: true,
                 ),
             if (this.widget.connection != null) ...[
               const SizedBox(height: AppSpacing.lg),

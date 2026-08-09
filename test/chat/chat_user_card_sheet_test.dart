@@ -14,11 +14,17 @@ import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/chat_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
 
-ChatMessageEvent cardMessage(String id, String userId, String text) =>
+ChatMessageEvent cardMessage(
+  String id,
+  String userId,
+  String text, {
+  DateTime? receivedAt,
+}) =>
     ChatMessageEvent(
       broadcasterUserId: 'b1',
       chatterUserId: userId,
@@ -26,6 +32,7 @@ ChatMessageEvent cardMessage(String id, String userId, String text) =>
       chatterUserName: 'Name$userId',
       messageId: id,
       color: '#9146FF',
+      receivedAt: receivedAt,
       message: ChatMessageText(
         text: text,
         fragments: [ChatMessageFragment(type: 'text', text: text)],
@@ -144,6 +151,27 @@ void main() {
     expect(find.textContaining('Nameviewer-1: second'), findsOneWidget);
     expect(find.textContaining('Nameviewer-1: first'), findsOneWidget);
     expect(find.text('No messages in this chat yet'), findsNothing);
+  });
+
+  testWidgets('prefixes LIVE rows with the message timestamp', (tester) async {
+    final stamp = DateTime(2026, 8, 9, 12, 29);
+    store.appendChatMessageForTest(
+      cardMessage('m1', 'viewer-1', 'hello', receivedAt: stamp),
+    );
+
+    userService.userResult = const TwitchUser(
+      id: 'viewer-1',
+      login: 'viewerlogin',
+      displayName: 'ViewerOne',
+    );
+
+    await openCard(tester, userId: 'viewer-1');
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('${formatChatMessageTime(stamp)} '),
+      findsOneWidget,
+    );
   });
 
   testWidgets('omits Helix fact rows when the service returns null',

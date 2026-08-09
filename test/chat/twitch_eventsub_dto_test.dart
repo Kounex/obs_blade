@@ -37,6 +37,10 @@ void main() {
 
       expect(envelope.metadata.messageType, 'session_welcome');
       expect(envelope.metadata.subscriptionType, isNull);
+      expect(
+        envelope.metadata.messageTimestamp,
+        DateTime.utc(2026, 8, 4, 10),
+      );
       expect((envelope.payload['session'] as Map)['id'], 'session-1');
     });
 
@@ -58,6 +62,10 @@ void main() {
 
       expect(envelope.metadata.messageType, 'notification');
       expect(envelope.metadata.subscriptionType, 'channel.chat.message');
+      expect(
+        envelope.metadata.messageTimestamp,
+        DateTime.utc(2026, 8, 4, 10),
+      );
     });
   });
 
