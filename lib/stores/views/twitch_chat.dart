@@ -22,6 +22,7 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
 
 part 'twitch_chat.g.dart';
 
@@ -85,6 +86,7 @@ abstract class _TwitchChatStore with Store {
   final TwitchEmoteStore Function() _userEmoteStoreResolver;
   final TwitchMessageService _messageService;
   final TwitchChannelService _channelService;
+  final TwitchModerationService _moderationService;
 
   TwitchEventSubService? _eventSub;
   StreamSubscription<BoxEvent>? _authBoxSub;
@@ -114,6 +116,7 @@ abstract class _TwitchChatStore with Store {
     TwitchEmoteStore Function()? userEmoteStoreResolver,
     TwitchMessageService? messageService,
     TwitchChannelService? channelService,
+    TwitchModerationService? moderationService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onMessageDelete, onClearUserMessages, onChatClear,
@@ -134,7 +137,8 @@ abstract class _TwitchChatStore with Store {
         _userEmoteStoreResolver = userEmoteStoreResolver ??
             (() => GetIt.instance<TwitchEmoteStore>()),
         _messageService = messageService ?? TwitchMessageService(),
-        _channelService = channelService ?? TwitchChannelService();
+        _channelService = channelService ?? TwitchChannelService(),
+        _moderationService = moderationService ?? TwitchModerationService();
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -822,6 +826,71 @@ abstract class _TwitchChatStore with Store {
           ? dropReason.message!
           : 'Message not delivered (${dropReason.code})',
     };
+  }
+
+  /// Mod action sheet: delete [event]'s message in the effective channel.
+  /// Returns whether it was applied — never throws; the sheet surfaces a
+  /// snackbar on `false`. On success the tombstone is applied locally with
+  /// the local user as the actor, and both EventSub echoes
+  /// (`channel.chat.message_delete` and the `channel.moderate` delete) are
+  /// pre-marked so they land as no-ops.
+  @action
+  Future<bool> deleteMessage(ChatMessageEvent event) async {
+    if (!this.canModerateSelectedChannel || this.user == null) return false;
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.deleteChatMessage(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        messageId: event.messageId,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch message delete failed — $e');
+      return false;
+    }
+    this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:delete:${event.messageId}');
+    this.applyModerationDelete(
+        event.messageId, this.user!.displayName ?? this.user!.login);
+    return true;
+  }
+
+  /// Mod action sheet: time [targetUserId] out for [durationSeconds] in
+  /// the effective channel. Same return/echo contract as [deleteMessage].
+  @action
+  Future<bool> timeoutUser(String targetUserId, int durationSeconds) =>
+      this._banOrTimeout(targetUserId, durationSeconds: durationSeconds);
+
+  /// Mod action sheet: ban [targetUserId] permanently in the effective
+  /// channel. Same return/echo contract as [deleteMessage].
+  @action
+  Future<bool> banUser(String targetUserId) =>
+      this._banOrTimeout(targetUserId);
+
+  /// Shared timeout/ban body — the local purge marks the
+  /// `clear_user_messages` echo key first, so the EventSub echo of the
+  /// timeout/ban lands as a no-op.
+  Future<bool> _banOrTimeout(String targetUserId,
+      {int? durationSeconds}) async {
+    if (!this.canModerateSelectedChannel || this.user == null) return false;
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.banUser(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        userId: targetUserId,
+        durationSeconds: durationSeconds,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch ban/timeout failed — $e');
+      return false;
+    }
+    this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId');
+    this._purgeUserMessages(targetUserId);
+    return true;
   }
 
   Future<String> _validAccessToken() async {

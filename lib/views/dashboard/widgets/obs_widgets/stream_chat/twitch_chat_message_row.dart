@@ -40,6 +40,11 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// callback with an actor yields an inert, tap-swallowing target.
   final VoidCallback? onDeletedTap;
 
+  /// Tap handler for a LIVE message (multi-chat mod actions) — set by the
+  /// window only when the store allows moderating the selected channel.
+  /// Tombstones keep their actor-reveal tap and never get this.
+  final VoidCallback? onMessageTap;
+
   const TwitchChatMessageRow({
     super.key,
     required this.event,
@@ -48,6 +53,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.deletedActor,
     this.isDeletedExpanded = false,
     this.onDeletedTap,
+    this.onMessageTap,
   });
 
   static const double _emoteSize = 20.0;
@@ -210,7 +216,13 @@ class TwitchChatMessageRow extends StatelessWidget {
               onTap: this.onDeletedTap,
               child: body,
             )
-          : body,
+          : this.onMessageTap != null
+              ? GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: this.onMessageTap,
+                  child: body,
+                )
+              : body,
     );
   }
 

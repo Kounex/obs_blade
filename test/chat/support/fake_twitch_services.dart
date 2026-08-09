@@ -17,6 +17,7 @@ import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
 
 class FakeTwitchAuthService extends TwitchAuthService {
   bool validateResult = true;
@@ -450,5 +451,52 @@ class FakeTwitchChannelService extends TwitchChannelService {
     this.lastQuery = query;
     if (this.searchThrows != null) throw this.searchThrows!;
     return this.searchResults;
+  }
+}
+
+/// Records delete/ban calls; [deleteThrows] / [banThrows] simulate the
+/// Helix failure paths (store must leave local state untouched).
+class FakeTwitchModerationService extends TwitchModerationService {
+  Object? deleteThrows;
+  Object? banThrows;
+
+  int deleteCalls = 0;
+  int banCalls = 0;
+  String? lastDeleteBroadcasterId;
+  String? lastDeleteModeratorId;
+  String? lastDeleteMessageId;
+  String? lastBanBroadcasterId;
+  String? lastBanModeratorId;
+  String? lastBanUserId;
+  int? lastBanDurationSeconds;
+
+  @override
+  Future<void> deleteChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String messageId,
+  }) async {
+    this.deleteCalls++;
+    this.lastDeleteBroadcasterId = broadcasterId;
+    this.lastDeleteModeratorId = moderatorId;
+    this.lastDeleteMessageId = messageId;
+    if (this.deleteThrows != null) throw this.deleteThrows!;
+  }
+
+  @override
+  Future<void> banUser({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String userId,
+    int? durationSeconds,
+  }) async {
+    this.banCalls++;
+    this.lastBanBroadcasterId = broadcasterId;
+    this.lastBanModeratorId = moderatorId;
+    this.lastBanUserId = userId;
+    this.lastBanDurationSeconds = durationSeconds;
+    if (this.banThrows != null) throw this.banThrows!;
   }
 }

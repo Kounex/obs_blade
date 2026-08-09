@@ -1275,4 +1275,136 @@ void main() {
       expect(store.systemNotices, hasLength(2));
     });
   });
+
+  group('mod actions', () {
+    late FakeTwitchModerationService moderationService;
+
+    setUp(() {
+      moderationService = FakeTwitchModerationService();
+    });
+
+    /// Own channel with manage scopes by default — the local user counts
+    /// as a full mod there.
+    Future<void> login({List<String>? scopes}) async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes = scopes ??
+          const [
+            'user:read:chat',
+            'user:write:chat',
+            'moderator:manage:chat_messages',
+            'moderator:manage:banned_users',
+          ];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+            eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        moderationService: moderationService,
+      );
+      await store.startLogin();
+    }
+
+    test('deleteMessage hits the service and tombstones locally with self '
+        'as actor', () async {
+      await login();
+      final event = chatMessage('m1', 'u1');
+      store.appendChatMessageForTest(event);
+
+      final ok = await store.deleteMessage(event);
+
+      expect(ok, isTrue);
+      expect(moderationService.deleteCalls, 1);
+      expect(moderationService.lastDeleteBroadcasterId, 'user-1');
+      expect(moderationService.lastDeleteModeratorId, 'user-1');
+      expect(moderationService.lastDeleteMessageId, 'm1');
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.deletedMessageActor('m1'), 'Kounex');
+    });
+
+    test('the EventSub echoes of a local delete do not double-apply',
+        () async {
+      await login();
+      final event = chatMessage('m1', 'u1');
+      store.appendChatMessageForTest(event);
+      await store.deleteMessage(event);
+      final version = store.lifecycleVersion;
+
+      /// channel.chat.message_delete echo — same dedup key, skipped.
+      store.applyMessageDelete(const ChatMessageDeleteEvent(
+          messageId: 'm1', targetUserId: 'u1'));
+      expect(store.lifecycleVersion, version);
+
+      /// channel.moderate delete echo — same actor, skipped too.
+      store.applyModerationDelete('m1', 'Kounex');
+      expect(store.lifecycleVersion, version);
+      expect(store.deletedMessageActor('m1'), 'Kounex');
+    });
+
+    test('timeoutUser hits the service with the duration and purges '
+        'locally', () async {
+      await login();
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+      store.appendChatMessageForTest(chatMessage('m3', 'u2'));
+
+      final ok = await store.timeoutUser('u2', 600);
+
+      expect(ok, isTrue);
+      expect(moderationService.banCalls, 1);
+      expect(moderationService.lastBanBroadcasterId, 'user-1');
+      expect(moderationService.lastBanModeratorId, 'user-1');
+      expect(moderationService.lastBanUserId, 'u2');
+      expect(moderationService.lastBanDurationSeconds, 600);
+      expect(store.isMessageDeleted('m1'), isFalse);
+      expect(store.isMessageDeleted('m2'), isTrue);
+      expect(store.isMessageDeleted('m3'), isTrue);
+    });
+
+    test('banUser omits the duration; the purge echo is deduped', () async {
+      await login();
+      store.appendChatMessageForTest(chatMessage('m1', 'u2'));
+
+      final ok = await store.banUser('u2');
+
+      expect(ok, isTrue);
+      expect(moderationService.lastBanUserId, 'u2');
+      expect(moderationService.lastBanDurationSeconds, isNull);
+      expect(store.isMessageDeleted('m1'), isTrue);
+
+      /// clear_user_messages echo of the ban — same dedup key, skipped.
+      final version = store.lifecycleVersion;
+      store.applyClearUserMessages('u2');
+      expect(store.lifecycleVersion, version);
+    });
+
+    test('failures return false and leave local state untouched', () async {
+      await login();
+      final event = chatMessage('m1', 'u1');
+      store.appendChatMessageForTest(event);
+      final version = store.lifecycleVersion;
+
+      moderationService.deleteThrows = const TwitchAuthException('down');
+      expect(await store.deleteMessage(event), isFalse);
+      expect(store.isMessageDeleted('m1'), isFalse);
+
+      moderationService.banThrows = const TwitchAuthException('down');
+      expect(await store.timeoutUser('u1', 600), isFalse);
+      expect(store.isMessageDeleted('m1'), isFalse);
+      expect(store.lifecycleVersion, version);
+    });
+
+    test('gated off without manage scopes and in non-moderated channels',
+        () async {
+      await login(scopes: const ['user:read:chat']);
+      expect(await store.deleteMessage(chatMessage('m1', 'u1')), isFalse);
+
+      /// Manage scopes, but the selected channel is not moderated.
+      await login();
+      store.selectedChannelId = 'chan-other';
+      expect(store.canModerateSelectedChannel, isFalse);
+      expect(await store.banUser('u1'), isFalse);
+      expect(moderationService.banCalls, 0);
+      expect(moderationService.deleteCalls, 0);
+    });
+  });
 }

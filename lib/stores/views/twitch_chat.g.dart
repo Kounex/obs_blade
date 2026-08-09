@@ -314,6 +314,16 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     return _$sendChatMessageAsyncAction.run(() => super.sendChatMessage(text));
   }
 
+  late final _$deleteMessageAsyncAction = AsyncAction(
+    '_TwitchChatStore.deleteMessage',
+    context: context,
+  );
+
+  @override
+  Future<bool> deleteMessage(ChatMessageEvent event) {
+    return _$deleteMessageAsyncAction.run(() => super.deleteMessage(event));
+  }
+
   late final _$_TwitchChatStoreActionController = ActionController(
     name: '_TwitchChatStore',
     context: context,
@@ -326,6 +336,30 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
     try {
       return super.cancelLogin();
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<bool> timeoutUser(String targetUserId, int durationSeconds) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.timeoutUser',
+    );
+    try {
+      return super.timeoutUser(targetUserId, durationSeconds);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<bool> banUser(String targetUserId) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.banUser',
+    );
+    try {
+      return super.banUser(targetUserId);
     } finally {
       _$_TwitchChatStoreActionController.endAction(_$actionInfo);
     }

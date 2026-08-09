@@ -13,6 +13,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
+import 'dialogs/mod_action_sheet.dart';
 import 'twitch_chat_message_row.dart';
 
 /// Native read-only Twitch chat. Lives in the same dashboard slot the
@@ -245,10 +246,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   final event = item as ChatMessageEvent;
                   final actor =
                       this._store.deletedMessageActor(event.messageId);
+                  final deleted =
+                      this._store.isMessageDeleted(event.messageId);
                   return TwitchChatMessageRow(
                     event: event,
                     settingsBox: settingsBox,
-                    isDeleted: this._store.isMessageDeleted(event.messageId),
+                    isDeleted: deleted,
                     deletedActor: actor,
                     isDeletedExpanded:
                         this._expandedDeletedIds.contains(event.messageId),
@@ -260,6 +263,14 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                                 this._expandedDeletedIds.add(id);
                               }
                             }),
+
+                    /// Mod actions target live messages in moderated
+                    /// channels only — a tombstone's tap keeps its
+                    /// actor-reveal meaning.
+                    onMessageTap:
+                        deleted || !this._store.canModerateSelectedChannel
+                            ? null
+                            : () => showModActionSheet(context, event),
                   );
                 },
               ),
