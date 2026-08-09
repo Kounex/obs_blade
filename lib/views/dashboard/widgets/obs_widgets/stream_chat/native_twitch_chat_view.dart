@@ -15,6 +15,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'chat_notice_chrome.dart';
+import 'chat_notice_visibility.dart';
 import 'dialogs/mod_action_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'twitch_chat_message_row.dart';
@@ -218,9 +219,28 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.TwitchChatEmoteSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.TwitchChatNoticeSubs,
+            SettingsKeys.TwitchChatNoticeStreaks,
+            SettingsKeys.TwitchChatNoticeRaids,
+            SettingsKeys.TwitchChatNoticeAnnouncements,
+            SettingsKeys.TwitchChatNoticeBitsBadge,
+            SettingsKeys.TwitchChatNoticeCharity,
+            SettingsKeys.TwitchChatNoticeModiversary,
+            SettingsKeys.TwitchChatNoticeOther,
+            SettingsKeys.TwitchChatNoticeFirstMessage,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
+            final visibleItems = items
+                .where(
+                  (item) =>
+                      item is! ChatNotificationNotice ||
+                      isChatNoticeTypeVisible(
+                        settingsBox,
+                        item.event.noticeType,
+                      ),
+                )
+                .toList();
             return Stack(
               children: [
                 ListView.separated(
@@ -229,7 +249,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     horizontal: AppSpacing.sm,
                     vertical: AppSpacing.xs,
                   ),
-                  itemCount: items.length,
+                  itemCount: visibleItems.length,
                   separatorBuilder: (context, index) => separators
                       ? Divider(
                           height: 1.0,
@@ -240,7 +260,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                         )
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
-                  final item = items[index];
+                  final item = visibleItems[index];
                   if (item is ChatSystemNotice) {
                     return Padding(
                       padding:
@@ -263,8 +283,8 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     );
                   }
                   if (item is ChatNotificationNotice) {
-                    final next = index + 1 < items.length
-                        ? items[index + 1]
+                    final next = index + 1 < visibleItems.length
+                        ? visibleItems[index + 1]
                         : null;
                     final continues = next is ChatMessageEvent &&
                         next.chatterUserId == item.event.chatterUserId;
@@ -281,7 +301,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       this._store.isMessageDeleted(event.messageId);
                   Color? accent;
                   if (index > 0) {
-                    final prev = items[index - 1];
+                    final prev = visibleItems[index - 1];
                     if (prev is ChatNotificationNotice &&
                         prev.event.chatterUserId == event.chatterUserId) {
                       accent = chatNoticeAccentColor(

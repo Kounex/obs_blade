@@ -60,11 +60,12 @@ class NativeChatOptionsButton extends StatelessWidget {
   }
 }
 
-enum _OptionsPage { root, appearance, emotes, badges }
+enum _OptionsPage { root, appearance, emotes, badges, notifications }
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
-/// Appearance + Emotes + Badges; other chat types only Appearance.
+/// Appearance + Emotes + Badges + Notifications; other chat types only
+/// Appearance.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
@@ -79,6 +80,19 @@ class NativeChatOptionsSheet extends StatefulWidget {
     ('Founder', SettingsKeys.TwitchChatBadgeFounder),
     ('Bits', SettingsKeys.TwitchChatBadgeBits),
     ('Other badges', SettingsKeys.TwitchChatBadgeOther),
+  ];
+
+  /// Chat notification category toggles (+ first-message chrome).
+  static const List<(String, SettingsKeys)> twitchNoticeRows = [
+    ('Subs & gifts', SettingsKeys.TwitchChatNoticeSubs),
+    ('Watch streaks', SettingsKeys.TwitchChatNoticeStreaks),
+    ('Raids', SettingsKeys.TwitchChatNoticeRaids),
+    ('Announcements', SettingsKeys.TwitchChatNoticeAnnouncements),
+    ('Bits badge', SettingsKeys.TwitchChatNoticeBitsBadge),
+    ('Charity', SettingsKeys.TwitchChatNoticeCharity),
+    ('Modiversary', SettingsKeys.TwitchChatNoticeModiversary),
+    ('Other notifications', SettingsKeys.TwitchChatNoticeOther),
+    ('First message', SettingsKeys.TwitchChatNoticeFirstMessage),
   ];
 
   @override
@@ -112,6 +126,8 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             _OptionsPage.appearance => _AppearancePage(onBack: this._back),
             _OptionsPage.emotes => _EmotesPage(onBack: this._back),
             _OptionsPage.badges => _BadgesPage(onBack: this._back),
+            _OptionsPage.notifications =>
+              _NotificationsPage(onBack: this._back),
           },
         ],
       ),
@@ -143,6 +159,11 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             context,
             label: 'Badges',
             onTap: () => this._open(_OptionsPage.badges),
+          ),
+          this._navRow(
+            context,
+            label: 'Notifications',
+            onTap: () => this._open(_OptionsPage.notifications),
           ),
         ],
       ],
@@ -526,6 +547,53 @@ class _BadgesPage extends StatelessWidget {
         final rows = NativeChatOptionsSheet.twitchBadgeRows;
         return _PageScaffold(
           title: 'Badges',
+          onBack: this.onBack,
+          onReset: () => this._reset(settingsBox),
+          children: [
+            for (var i = 0; i < rows.length; i++) ...[
+              if (i > 0) nativeChatHairline(context),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(rows[i].$1),
+                trailing: BaseAdaptiveSwitch(
+                  value: settingsBox.get(
+                    rows[i].$2.name,
+                    defaultValue: true,
+                  ),
+                  onChanged: (value) =>
+                      settingsBox.put(rows[i].$2.name, value),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _NotificationsPage extends StatelessWidget {
+  final VoidCallback onBack;
+
+  const _NotificationsPage({required this.onBack});
+
+  void _reset(Box settingsBox) {
+    for (final row in NativeChatOptionsSheet.twitchNoticeRows) {
+      settingsBox.put(row.$2.name, true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: NativeChatOptionsSheet.twitchNoticeRows
+          .map((row) => row.$2)
+          .toList(),
+      builder: (context, settingsBox, child) {
+        final rows = NativeChatOptionsSheet.twitchNoticeRows;
+        return _PageScaffold(
+          title: 'Notifications',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [

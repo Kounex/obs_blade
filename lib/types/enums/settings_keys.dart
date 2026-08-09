@@ -106,6 +106,42 @@ enum SettingsKeys {
   /// Default 2.
   TwitchChatMessageSpacing,
 
+  /// [bool]: Show sub / gift / upgrade chat notifications.
+  /// Active by default
+  TwitchChatNoticeSubs,
+
+  /// [bool]: Show watch-streak chat notifications.
+  /// Active by default
+  TwitchChatNoticeStreaks,
+
+  /// [bool]: Show raid / unraid chat notifications.
+  /// Active by default
+  TwitchChatNoticeRaids,
+
+  /// [bool]: Show announcement chat notifications.
+  /// Active by default
+  TwitchChatNoticeAnnouncements,
+
+  /// [bool]: Show bits-badge-tier chat notifications.
+  /// Active by default
+  TwitchChatNoticeBitsBadge,
+
+  /// [bool]: Show charity-donation chat notifications.
+  /// Active by default
+  TwitchChatNoticeCharity,
+
+  /// [bool]: Show modiversary chat notifications.
+  /// Active by default
+  TwitchChatNoticeModiversary,
+
+  /// [bool]: Show unrecognized chat notification types.
+  /// Active by default
+  TwitchChatNoticeOther,
+
+  /// [bool]: Highlight first-time chatter messages (`user_intro`).
+  /// Active by default
+  TwitchChatNoticeFirstMessage,
+
   /// [bool]: Draw a very thin hairline between native chat messages.
   /// Off by default.
   TwitchChatMessageSeparators,
@@ -262,6 +298,19 @@ enum SettingsKeys {
         SettingsKeys.TwitchChatMessageSpacing: 'twitch-chat-message-spacing',
         SettingsKeys.TwitchChatMessageSeparators:
             'twitch-chat-message-separators',
+        SettingsKeys.TwitchChatNoticeSubs: 'twitch-chat-notice-subs',
+        SettingsKeys.TwitchChatNoticeStreaks: 'twitch-chat-notice-streaks',
+        SettingsKeys.TwitchChatNoticeRaids: 'twitch-chat-notice-raids',
+        SettingsKeys.TwitchChatNoticeAnnouncements:
+            'twitch-chat-notice-announcements',
+        SettingsKeys.TwitchChatNoticeBitsBadge:
+            'twitch-chat-notice-bits-badge',
+        SettingsKeys.TwitchChatNoticeCharity: 'twitch-chat-notice-charity',
+        SettingsKeys.TwitchChatNoticeModiversary:
+            'twitch-chat-notice-modiversary',
+        SettingsKeys.TwitchChatNoticeOther: 'twitch-chat-notice-other',
+        SettingsKeys.TwitchChatNoticeFirstMessage:
+            'twitch-chat-notice-first-message',
         SettingsKeys.NativeChatChannels: 'native-chat-channels',
         SettingsKeys.SelectedNativeChatChannelId:
             'selected-native-chat-channel-id',

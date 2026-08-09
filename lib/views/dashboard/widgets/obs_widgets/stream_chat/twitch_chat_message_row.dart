@@ -11,6 +11,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 
 /// One chat line: role badges + colored author name + message text with
@@ -73,7 +74,9 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   static const double _badgeSize = 18.0;
 
-  bool get _isFirstMessage => this.event.messageType == 'user_intro';
+  bool get _isFirstMessage =>
+      this.event.messageType == 'user_intro' &&
+      isChatFirstMessageVisible(this.settingsBox);
 
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);

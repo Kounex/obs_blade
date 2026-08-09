@@ -24,7 +24,7 @@ void main() {
   Future<void> closeHiveInZone(WidgetTester tester) async {
     var closed = false;
     unawaited(harness.close().then((_) => closed = true));
-    for (var i = 0; i < 10 && !closed; i++) {
+    for (var i = 0; i < 30 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 100)));
@@ -48,7 +48,7 @@ void main() {
     }
   });
 
-  testWidgets('root lists Appearance / Emotes / Badges for Twitch',
+  testWidgets('root lists Appearance / Emotes / Badges / Notifications for Twitch',
       (tester) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
@@ -58,8 +58,10 @@ void main() {
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Badges'), findsOneWidget);
+    expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Third-party emotes (7TV/BTTV)'), findsNothing);
     expect(find.text('Broadcaster'), findsNothing);
+    expect(find.text('Subs & gifts'), findsNothing);
   });
 
   testWidgets('Appearance page shows preview, sliders, separators',
@@ -158,6 +160,42 @@ void main() {
     expect(
       settingsBox().get(SettingsKeys.TwitchChatBadgeModerator.name),
       isFalse,
+    );
+
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('Notifications page toggles write the settings box',
+      (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
+    );
+
+    await tester.tap(find.text('Notifications'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Subs & gifts'), findsOneWidget);
+    expect(find.text('First message'), findsOneWidget);
+    expect(find.text('Reset'), findsOneWidget);
+
+    final subsSwitch = find.descendant(
+      of: find.widgetWithText(ListTile, 'Subs & gifts'),
+      matching: find.byType(BaseAdaptiveSwitch),
+    );
+    expect(tester.widget<BaseAdaptiveSwitch>(subsSwitch).value, isTrue);
+
+    await tester.tap(subsSwitch);
+    await tester.pump();
+    expect(
+      settingsBox().get(SettingsKeys.TwitchChatNoticeSubs.name),
+      isFalse,
+    );
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(
+      settingsBox().get(SettingsKeys.TwitchChatNoticeSubs.name),
+      isTrue,
     );
 
     await closeHiveInZone(tester);
