@@ -43,6 +43,30 @@ void main() {
     }
   });
 
+  testWidgets('LIVE/Mod chips sit after the title, before connection status',
+      (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        NativeChatWindow(
+          chatType: ChatType.Twitch,
+          status: NativeChatConnectionStatus.live,
+          channelIsLive: true,
+          channelIsMod: true,
+          child: const Center(child: Text('chat content')),
+        ),
+      ),
+    );
+
+    final titleX = tester.getTopLeft(find.text('Stream Chat')).dx;
+    final liveX = tester.getTopLeft(find.byKey(const Key('chat-header-live'))).dx;
+    final modX = tester.getTopLeft(find.byKey(const Key('chat-header-mod'))).dx;
+    final statusX = tester.getTopLeft(find.text('connected')).dx;
+
+    expect(titleX, lessThan(liveX));
+    expect(liveX, lessThan(modX));
+    expect(modX, lessThan(statusX));
+  });
+
   testWidgets('live: tapping the status row shows account and uptime',
       (tester) async {
     await tester.pumpWidget(

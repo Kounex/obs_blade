@@ -161,23 +161,23 @@ class NativeChatWindow extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                   ),
-                  const Spacer(),
                   if (this.channelIsLive) ...[
+                    const SizedBox(width: AppSpacing.sm),
                     NativeChatStatusChip.live(
                       key: const Key('chat-header-live'),
                       color: (Theme.of(context).extension<AppStatusColors>() ??
                               AppStatusColors.standard)
                           .live,
                     ),
-                    const SizedBox(width: AppSpacing.xs),
                   ],
                   if (this.channelIsMod) ...[
+                    const SizedBox(width: AppSpacing.xs),
                     NativeChatStatusChip.mod(
                       key: const Key('chat-header-mod'),
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    const SizedBox(width: AppSpacing.xs),
                   ],
+                  const Spacer(),
                   Container(
                     width: 8.0,
                     height: 8.0,
