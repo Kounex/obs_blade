@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 
 /// One chat line: role badges + colored author name + message text with
 /// inline emotes (first-party fragments and third-party 7TV/BTTV tokens).
@@ -17,7 +18,8 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   /// Settings box — the badge visibility toggles
   /// ([settingsKeyForBadgeSetId]) plus the third-party emote toggle
-  /// ([SettingsKeys.TwitchChatThirdPartyEmotes]), read with default-on.
+  /// ([SettingsKeys.TwitchChatThirdPartyEmotes]) and appearance keys
+  /// ([NativeChatAppearance]), read with defaults.
   final Box settingsBox;
 
   /// Moderation tombstone — username/badges stay; the body renders its
@@ -56,8 +58,12 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.onMessageTap,
   });
 
-  static const double _emoteSize = 20.0;
   static const double _badgeSize = 18.0;
+
+  double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
+  double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
+  double get _spacing =>
+      NativeChatAppearance.messageSpacing(this.settingsBox);
 
   Color _authorColor(BuildContext context) {
     final hex = this.event.color;
@@ -209,7 +215,7 @@ class TwitchChatMessageRow extends StatelessWidget {
       ],
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs / 2),
+      padding: EdgeInsets.symmetric(vertical: this._spacing),
       child: revealable
           ? GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -228,7 +234,9 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   Text _richText(BuildContext context) => Text.rich(
         TextSpan(
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: this._textSize,
+              ),
           children: [
             ...this._badgeSpans(),
             TextSpan(

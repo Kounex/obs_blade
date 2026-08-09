@@ -14,6 +14,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'dialogs/mod_action_sheet.dart';
+import 'native_chat_appearance.dart';
 import 'twitch_chat_message_row.dart';
 
 /// Native read-only Twitch chat. Lives in the same dashboard slot the
@@ -210,17 +211,32 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.TwitchChatBadgeBits,
             SettingsKeys.TwitchChatBadgeOther,
             SettingsKeys.TwitchChatThirdPartyEmotes,
+            SettingsKeys.TwitchChatTextSize,
+            SettingsKeys.TwitchChatEmoteSize,
+            SettingsKeys.TwitchChatMessageSpacing,
+            SettingsKeys.TwitchChatMessageSeparators,
           ],
-          builder: (context, settingsBox, child) => Stack(
-            children: [
-              ListView.builder(
-                controller: this._scrollController,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm,
-                  vertical: AppSpacing.xs,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
+          builder: (context, settingsBox, child) {
+            final separators = NativeChatAppearance.separators(settingsBox);
+            return Stack(
+              children: [
+                ListView.separated(
+                  controller: this._scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  itemCount: items.length,
+                  separatorBuilder: (context, index) => separators
+                      ? Divider(
+                          height: 1.0,
+                          thickness: 0.5,
+                          color: Theme.of(context)
+                              .dividerColor
+                              .withValues(alpha: 0.35),
+                        )
+                      : const SizedBox.shrink(),
+                  itemBuilder: (context, index) {
                   final item = items[index];
                   if (item is ChatSystemNotice) {
                     return Padding(
@@ -318,7 +334,8 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   ),
                 ),
             ],
-          ),
+          );
+          },
         );
       },
     );

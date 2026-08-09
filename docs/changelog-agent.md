@@ -2,6 +2,14 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-09 — Native chat: appearance controls + nested options sheet
+
+- Options sheet is now a drill-in root (Appearance / Emotes / Badges) with
+  page-swap navigation. Appearance: text size, emote size, message spacing
+  sliders + separators toggle, live preview row. Additive Settings keys;
+  message list/row honor them via HiveBuilder. Spec:
+  `docs/superpowers/specs/2026-08-09-native-chat-appearance-design.md`.
+
 ## 2026-08-09 — Native chat: multi-chat (channel picker, switch, mod actions)
 
 - Spec/plan: `docs/superpowers/specs/2026-08-09-multi-chat-design.md`,

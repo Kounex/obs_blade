@@ -94,6 +94,22 @@ enum SettingsKeys {
   /// Active by default
   TwitchChatThirdPartyEmotes,
 
+  /// [double]: Native chat message text size in logical pixels (sp).
+  /// Default 14 — see appearance options sheet.
+  TwitchChatTextSize,
+
+  /// [double]: Inline emote height/width in the native chat (px).
+  /// Default 20.
+  TwitchChatEmoteSize,
+
+  /// [double]: Vertical padding (px) above/below each native chat message.
+  /// Default 2.
+  TwitchChatMessageSpacing,
+
+  /// [bool]: Draw a very thin hairline between native chat messages.
+  /// Off by default.
+  TwitchChatMessageSeparators,
+
   /// [List<dynamic>]: json maps ([TwitchChannelRef.toJson]) of the
   /// channels the user added to the native multi-chat. The user's own
   /// channel is never stored here — it is derived from the Twitch auth.
@@ -241,6 +257,11 @@ enum SettingsKeys {
         SettingsKeys.TwitchChatBadgeOther: 'twitch-chat-badge-other',
         SettingsKeys.TwitchChatThirdPartyEmotes:
             'twitch-chat-third-party-emotes',
+        SettingsKeys.TwitchChatTextSize: 'twitch-chat-text-size',
+        SettingsKeys.TwitchChatEmoteSize: 'twitch-chat-emote-size',
+        SettingsKeys.TwitchChatMessageSpacing: 'twitch-chat-message-spacing',
+        SettingsKeys.TwitchChatMessageSeparators:
+            'twitch-chat-message-separators',
         SettingsKeys.NativeChatChannels: 'native-chat-channels',
         SettingsKeys.SelectedNativeChatChannelId:
             'selected-native-chat-channel-id',
