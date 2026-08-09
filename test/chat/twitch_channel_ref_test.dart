@@ -8,7 +8,9 @@ void main() {
     test('contains the multi-chat discovery + mod action scopes', () {
       expect(kTwitchChatScopes, containsAll(<String>[
         'user:read:follows',
+        'user:read:subscriptions',
         'user:read:moderated_channels',
+        'moderator:read:followers',
         'moderator:manage:chat_messages',
         'moderator:manage:banned_users',
       ]));

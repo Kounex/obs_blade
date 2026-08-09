@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TwitchUser {
 
- String get id; String get login; String? get displayName; String? get profileImageUrl;
+ String get id; String get login; String? get displayName; String? get profileImageUrl;@JsonKey(fromJson: _createdAtFromJson) DateTime? get createdAt;
 /// Create a copy of TwitchUser
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $TwitchUserCopyWith<TwitchUser> get copyWith => _$TwitchUserCopyWithImpl<TwitchU
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TwitchUser&&(identical(other.id, id) || other.id == id)&&(identical(other.login, login) || other.login == login)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.profileImageUrl, profileImageUrl) || other.profileImageUrl == profileImageUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TwitchUser&&(identical(other.id, id) || other.id == id)&&(identical(other.login, login) || other.login == login)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.profileImageUrl, profileImageUrl) || other.profileImageUrl == profileImageUrl)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,login,displayName,profileImageUrl);
+int get hashCode => Object.hash(runtimeType,id,login,displayName,profileImageUrl,createdAt);
 
 @override
 String toString() {
-  return 'TwitchUser(id: $id, login: $login, displayName: $displayName, profileImageUrl: $profileImageUrl)';
+  return 'TwitchUser(id: $id, login: $login, displayName: $displayName, profileImageUrl: $profileImageUrl, createdAt: $createdAt)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $TwitchUserCopyWith<$Res>  {
   factory $TwitchUserCopyWith(TwitchUser value, $Res Function(TwitchUser) _then) = _$TwitchUserCopyWithImpl;
 @useResult
 $Res call({
- String id, String login, String? displayName, String? profileImageUrl
+ String id, String login, String? displayName, String? profileImageUrl,@JsonKey(fromJson: _createdAtFromJson) DateTime? createdAt
 });
 
 
@@ -63,13 +63,14 @@ class _$TwitchUserCopyWithImpl<$Res>
 
 /// Create a copy of TwitchUser
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? login = null,Object? displayName = freezed,Object? profileImageUrl = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? login = null,Object? displayName = freezed,Object? profileImageUrl = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,login: null == login ? _self.login : login // ignore: cast_nullable_to_non_nullable
 as String,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String?,profileImageUrl: freezed == profileImageUrl ? _self.profileImageUrl : profileImageUrl // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String login,  String? displayName,  String? profileImageUrl)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String login,  String? displayName,  String? profileImageUrl, @JsonKey(fromJson: _createdAtFromJson)  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TwitchUser() when $default != null:
-return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl);case _:
+return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl,_that.createdAt);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String login,  String? displayName,  String? profileImageUrl)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String login,  String? displayName,  String? profileImageUrl, @JsonKey(fromJson: _createdAtFromJson)  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _TwitchUser():
-return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl);case _:
+return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +196,10 @@ return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl);ca
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String login,  String? displayName,  String? profileImageUrl)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String login,  String? displayName,  String? profileImageUrl, @JsonKey(fromJson: _createdAtFromJson)  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _TwitchUser() when $default != null:
-return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl);case _:
+return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl,_that.createdAt);case _:
   return null;
 
 }
@@ -210,13 +211,14 @@ return $default(_that.id,_that.login,_that.displayName,_that.profileImageUrl);ca
 
 @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
 class _TwitchUser implements TwitchUser {
-  const _TwitchUser({required this.id, required this.login, this.displayName, this.profileImageUrl});
+  const _TwitchUser({required this.id, required this.login, this.displayName, this.profileImageUrl, @JsonKey(fromJson: _createdAtFromJson) this.createdAt});
   factory _TwitchUser.fromJson(Map<String, dynamic> json) => _$TwitchUserFromJson(json);
 
 @override final  String id;
 @override final  String login;
 @override final  String? displayName;
 @override final  String? profileImageUrl;
+@override@JsonKey(fromJson: _createdAtFromJson) final  DateTime? createdAt;
 
 /// Create a copy of TwitchUser
 /// with the given fields replaced by the non-null parameter values.
@@ -228,16 +230,16 @@ _$TwitchUserCopyWith<_TwitchUser> get copyWith => __$TwitchUserCopyWithImpl<_Twi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TwitchUser&&(identical(other.id, id) || other.id == id)&&(identical(other.login, login) || other.login == login)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.profileImageUrl, profileImageUrl) || other.profileImageUrl == profileImageUrl));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TwitchUser&&(identical(other.id, id) || other.id == id)&&(identical(other.login, login) || other.login == login)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.profileImageUrl, profileImageUrl) || other.profileImageUrl == profileImageUrl)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,login,displayName,profileImageUrl);
+int get hashCode => Object.hash(runtimeType,id,login,displayName,profileImageUrl,createdAt);
 
 @override
 String toString() {
-  return 'TwitchUser(id: $id, login: $login, displayName: $displayName, profileImageUrl: $profileImageUrl)';
+  return 'TwitchUser(id: $id, login: $login, displayName: $displayName, profileImageUrl: $profileImageUrl, createdAt: $createdAt)';
 }
 
 
@@ -248,7 +250,7 @@ abstract mixin class _$TwitchUserCopyWith<$Res> implements $TwitchUserCopyWith<$
   factory _$TwitchUserCopyWith(_TwitchUser value, $Res Function(_TwitchUser) _then) = __$TwitchUserCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String login, String? displayName, String? profileImageUrl
+ String id, String login, String? displayName, String? profileImageUrl,@JsonKey(fromJson: _createdAtFromJson) DateTime? createdAt
 });
 
 
@@ -265,13 +267,14 @@ class __$TwitchUserCopyWithImpl<$Res>
 
 /// Create a copy of TwitchUser
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? login = null,Object? displayName = freezed,Object? profileImageUrl = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? login = null,Object? displayName = freezed,Object? profileImageUrl = freezed,Object? createdAt = freezed,}) {
   return _then(_TwitchUser(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,login: null == login ? _self.login : login // ignore: cast_nullable_to_non_nullable
 as String,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String?,profileImageUrl: freezed == profileImageUrl ? _self.profileImageUrl : profileImageUrl // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

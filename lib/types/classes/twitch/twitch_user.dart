@@ -13,8 +13,14 @@ abstract class TwitchUser with _$TwitchUser {
     required String login,
     String? displayName,
     String? profileImageUrl,
+    @JsonKey(fromJson: _createdAtFromJson) DateTime? createdAt,
   }) = _TwitchUser;
 
   factory TwitchUser.fromJson(Map<String, Object?> json) =>
       _$TwitchUserFromJson(json);
+}
+
+DateTime? _createdAtFromJson(Object? value) {
+  if (value is! String) return null;
+  return DateTime.tryParse(value);
 }

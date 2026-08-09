@@ -11,4 +11,5 @@ _TwitchUser _$TwitchUserFromJson(Map<String, dynamic> json) => _TwitchUser(
   login: json['login'] as String,
   displayName: json['display_name'] as String?,
   profileImageUrl: json['profile_image_url'] as String?,
+  createdAt: _createdAtFromJson(json['created_at']),
 );
