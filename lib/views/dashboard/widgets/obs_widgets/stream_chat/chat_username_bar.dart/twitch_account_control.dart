@@ -40,7 +40,8 @@ class TwitchAccountControl extends StatelessWidget {
 
 /// The connected account, styled like the bar's other control containers
 /// and reading as tappable (checkmark + display name). Tapping opens the
-/// disconnect confirmation.
+/// disconnect confirmation. When the parent [Flexible] compresses the
+/// native right cluster, the name ellipsizes instead of overflowing.
 class _AccountChip extends StatelessWidget {
   final String? displayName;
 
@@ -51,60 +52,73 @@ class _AccountChip extends StatelessWidget {
     final enabledColor =
         Theme.of(context).cupertinoOverrideTheme!.primaryColor;
 
-    return Tooltip(
-      message:
-          'Connected as ${this.displayName ?? 'Twitch'} — tap to disconnect',
-      child: Pressable(
-        haptic: true,
-        onTap: () => ModalHandler.showBaseDialog(
-          context: context,
-          dialogWidget: ConfirmationDialog(
-            title: 'Disconnect Twitch?',
-            body:
-                'Connected as ${this.displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
-            okText: 'Disconnect',
-            isYesDestructive: true,
-            onOk: (_) => GetIt.instance<TwitchChatStore>().logout(),
-          ),
-        ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            color:
-                StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
-              width: 0.0,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                CupertinoIcons.checkmark_circle_fill,
-                size: 18.0,
-                color: enabledColor,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textMax = constraints.maxWidth.isFinite
+            ? (constraints.maxWidth -
+                    AppSpacing.md * 2 -
+                    18.0 -
+                    AppSpacing.xs)
+                .clamp(0.0, 96.0)
+            : 96.0;
+
+        return Tooltip(
+          message:
+              'Connected as ${this.displayName ?? 'Twitch'} — tap to disconnect',
+          child: Pressable(
+            haptic: true,
+            onTap: () => ModalHandler.showBaseDialog(
+              context: context,
+              dialogWidget: ConfirmationDialog(
+                title: 'Disconnect Twitch?',
+                body:
+                    'Connected as ${this.displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
+                okText: 'Disconnect',
+                isYesDestructive: true,
+                onOk: (_) => GetIt.instance<TwitchChatStore>().logout(),
               ),
-              const SizedBox(width: AppSpacing.xs),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 96.0),
-                child: Text(
-                  this.displayName ?? 'Twitch',
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: enabledColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                color: StylingHelper.lightenDarkenColor(
+                    Theme.of(context).cardColor),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                  width: 0.0,
                 ),
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    CupertinoIcons.checkmark_circle_fill,
+                    size: 18.0,
+                    color: enabledColor,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: textMax),
+                    child: Text(
+                      this.displayName ?? 'Twitch',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: enabledColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

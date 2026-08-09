@@ -1,15 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../../shared/general/hive_builder.dart';
+import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import 'dialogs/channel_mod_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 
@@ -172,6 +176,25 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             subtitle: 'Subs, raids, streaks, and similar system lines',
             onTap: () => this._open(_OptionsPage.eventMessages),
           ),
+          if (GetIt.instance.isRegistered<TwitchChatStore>())
+            Observer(
+              builder: (_) {
+                final store = GetIt.instance<TwitchChatStore>();
+                // Touch observables so the row rebuilds on channel / auth change.
+                store.authState;
+                store.selectedChannelId;
+                store.moderatedChannelIds.length;
+                if (!store.canModerateSelectedChannel) {
+                  return const SizedBox.shrink();
+                }
+                return this._navRow(
+                  context,
+                  label: 'Moderation…',
+                  subtitle: 'Clear chat, modes, Shield Mode, announce',
+                  onTap: () => showChannelModSheet(context),
+                );
+              },
+            ),
         ],
       ],
     );

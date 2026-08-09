@@ -9,6 +9,7 @@ import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
+import '../channel_mod_button.dart';
 import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
@@ -123,14 +124,7 @@ class ChatUsernameBar extends StatelessWidget {
                       const SizedBox(height: AppSpacing.sm),
                     ],
                     if (nativeMode)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          NativeChatOptionsButton(chatType: chatType),
-                          const SizedBox(width: AppSpacing.sm),
-                          const TwitchAccountControl(),
-                        ],
-                      )
+                      _NativeRightCluster(chatType: chatType)
                     else
                       UsernameActionRow(
                         settingsBox: settingsBox,
@@ -140,6 +134,54 @@ class ChatUsernameBar extends StatelessWidget {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Native right cluster: optional Mod shield (fit-gated) + options + account.
+/// Shield shows only when [TwitchChatStore.canModerateSelectedChannel] and
+/// options + shield + account preferred widths fit without overflow.
+class _NativeRightCluster extends StatelessWidget {
+  final ChatType chatType;
+
+  const _NativeRightCluster({required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Observer(
+          builder: (_) {
+            final store = GetIt.instance<TwitchChatStore>();
+            // Touch observables so fit/gate rebuilds on channel / auth change.
+            store.authState;
+            store.selectedChannelId;
+            store.moderatedChannelIds.length;
+            final canMod = store.canModerateSelectedChannel;
+            final displayName = store.user?.displayName ?? store.user?.login;
+            final accountWidth =
+                accountChipPreferredWidth(context, displayName);
+            final showShield = canMod &&
+                nativeModClusterFitsWithShield(
+                  maxWidth: constraints.maxWidth,
+                  accountWidth: accountWidth,
+                );
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showShield) ...[
+                  const ChannelModButton(),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                NativeChatOptionsButton(chatType: this.chatType),
+                const SizedBox(width: AppSpacing.sm),
+                const Flexible(child: TwitchAccountControl()),
+              ],
+            );
+          },
         );
       },
     );
