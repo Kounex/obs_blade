@@ -54,3 +54,6 @@ app.*.map.json
 # Non-public docs (business/infra strategy) — this repo is public.
 # See docs/session-handoff.md for the cross-machine sync procedure.
 docs/private/
+
+# Local agent brainstorm / SDD scratch
+.superpowers/
