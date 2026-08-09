@@ -192,6 +192,13 @@ abstract class _TwitchChatStore with Store {
   @observable
   String? selectedChannelId;
 
+  /// Whether the effective (selected) channel is currently live — refreshed
+  /// on connect/switch and on a light poll. Header LIVE chip.
+  @observable
+  bool selectedChannelIsLive = false;
+
+  Timer? _livePollTimer;
+
   /// Ids of channels the user moderates (from Get Moderated Channels on
   /// login) — gates the dropdown shields and the mod action sheet.
   final ObservableSet<String> moderatedChannelIds = ObservableSet<String>();
@@ -486,6 +493,9 @@ abstract class _TwitchChatStore with Store {
       );
 
       this._refetchCatalogs(token, this.effectiveBroadcasterId);
+      /// Live poll starts when EventSub reports connected (see
+      /// [_onEventSubState]) — not here, so a failed handshake never
+      /// leaves a dangling Timer in tests.
     } on TwitchAuthException catch (e) {
       // Wipe the stored session only on a definitive auth failure: a
       // 401/403 on refresh means the refresh token is dead, and a null
@@ -505,6 +515,42 @@ abstract class _TwitchChatStore with Store {
       this.chatConnection = TwitchChatConnectionState.failed;
       this.chatError = 'Could not connect to Twitch chat';
       this.chatConnectedAt = null;
+    }
+  }
+
+  void _startLivePoll() {
+    this._livePollTimer?.cancel();
+    this._livePollTimer =
+        Timer.periodic(const Duration(minutes: 1), (_) {
+      unawaited(this.refreshSelectedChannelLive());
+    });
+    unawaited(this.refreshSelectedChannelLive());
+  }
+
+  void _stopLivePoll() {
+    this._livePollTimer?.cancel();
+    this._livePollTimer = null;
+    runInAction(() => this.selectedChannelIsLive = false);
+  }
+
+  /// Best-effort Helix streams check for the effective channel (header
+  /// LIVE chip). Failures leave the previous value alone.
+  @action
+  Future<void> refreshSelectedChannelLive() async {
+    if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
+      this.selectedChannelIsLive = false;
+      return;
+    }
+    try {
+      final token = await this._validAccessToken();
+      final live = await this._channelService.getLiveBroadcasterIds(
+        accessToken: token,
+        broadcasterIds: [this.effectiveBroadcasterId],
+      );
+      this.selectedChannelIsLive =
+          live.contains(this.effectiveBroadcasterId);
+    } catch (e) {
+      GeneralHelper.advLog('Twitch live status refresh failed — $e');
     }
   }
 
@@ -761,6 +807,7 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Twitch token refresh on switch failed — $e');
     }
+    unawaited(this.refreshSelectedChannelLive());
   }
 
   /// Whether [key] was already applied — first-time keys are recorded
@@ -1084,6 +1131,7 @@ abstract class _TwitchChatStore with Store {
     this._appliedModerationKeys.clear();
     this._appliedModerationOrder.clear();
     this.selectedChannelId = null;
+    this._stopLivePoll();
     this._persistSelectedChannel();
   }
 
@@ -1095,6 +1143,7 @@ abstract class _TwitchChatStore with Store {
             this.chatConnectedAt = DateTime.now();
           }
           this.chatConnection = TwitchChatConnectionState.live;
+          this._startLivePoll();
           break;
         case TwitchEventSubState.connecting:
           this.chatConnection = TwitchChatConnectionState.connecting;
@@ -1105,6 +1154,7 @@ abstract class _TwitchChatStore with Store {
         case TwitchEventSubState.disconnected:
           this.chatConnection = TwitchChatConnectionState.disconnected;
           this.chatConnectedAt = null;
+          this._stopLivePoll();
           break;
       }
     });
@@ -1151,6 +1201,7 @@ abstract class _TwitchChatStore with Store {
     final eventSub = this._eventSub;
     this._eventSub = null;
     await eventSub?.dispose();
+    this._stopLivePoll();
     runInAction(() {
       this.chatConnection = TwitchChatConnectionState.disconnected;
       this.chatConnectedAt = null;
@@ -1159,6 +1210,7 @@ abstract class _TwitchChatStore with Store {
 
   Future<void> dispose() async {
     await this._authBoxSub?.cancel();
+    this._stopLivePoll();
     await this._disconnectChat();
   }
 }

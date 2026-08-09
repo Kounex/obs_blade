@@ -76,6 +76,7 @@ void main() {
     expect(find.text('Emote size'), findsOneWidget);
     expect(find.text('Message spacing'), findsOneWidget);
     expect(find.text('Separators'), findsOneWidget);
+    expect(find.text('Reset'), findsOneWidget);
     expect(find.byType(Slider), findsNWidgets(3));
 
     final separators = find.descendant(
@@ -89,6 +90,13 @@ void main() {
     expect(
       settingsBox().get(SettingsKeys.TwitchChatMessageSeparators.name),
       isTrue,
+    );
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(
+      settingsBox().get(SettingsKeys.TwitchChatMessageSeparators.name),
+      isFalse,
     );
 
     await closeHiveInZone(tester);

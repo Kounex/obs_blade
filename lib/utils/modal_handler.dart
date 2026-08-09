@@ -70,19 +70,27 @@ class ModalHandler {
     required Widget Function(BuildContext context) builder,
     bool useRootNavigator = true,
     bool barrierDismissible = false,
+    bool enableDrag = false,
+    bool includeCloseButton = false,
     double maxWidth = kBaseCardMaxWidth,
+
+    /// Fraction of the screen height the sheet may occupy. `1.0` = no
+    /// practical cap (SafeArea still applies). Chat sheets that need a
+    /// top gap for barrier taps pass ~0.72.
+    double maxHeightFraction = 1.0,
     double additionalBottomViewInsets = 0,
   }) async =>
       showModalBottomSheet(
         context: context,
         useRootNavigator: useRootNavigator,
         isDismissible: barrierDismissible,
-        enableDrag: false,
+        enableDrag: enableDrag,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
         builder: (context) => _bottomSheetWrapper(
           context: context,
           additionalBottomViewInsets: additionalBottomViewInsets,
+          includeCloseButton: includeCloseButton,
           modalWidget: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -90,7 +98,7 @@ class ModalHandler {
               SizedBox(height: MediaQuery.paddingOf(context).bottom),
             ],
           ),
-          maxHeight: MediaQuery.sizeOf(context).height / 1.5,
+          maxHeight: MediaQuery.sizeOf(context).height * maxHeightFraction,
           maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
         ),
       );
@@ -182,17 +190,6 @@ class ModalHandler {
       );
     }
 
-    // child = Align(
-    //   alignment: Alignment.bottomCenter,
-    //   child: ConstrainedBox(
-    //     constraints: BoxConstraints(
-    //       maxHeight: maxHeight,
-    //       maxWidth: maxWidth,
-    //     ),
-    //     child: child,
-    //   ),
-    // );
-
     return Material(
       type: MaterialType.transparency,
       child: SafeArea(
@@ -204,7 +201,16 @@ class ModalHandler {
                     ? additionalBottomViewInsets
                     : 0),
           ),
-          child: child,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: maxHeight,
+                maxWidth: maxWidth,
+              ),
+              child: child,
+            ),
+          ),
         ),
       ),
     );

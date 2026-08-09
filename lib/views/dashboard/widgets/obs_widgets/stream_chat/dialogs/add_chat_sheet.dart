@@ -14,6 +14,7 @@ import '../../../../../../types/classes/twitch/twitch_channel_search_result.dart
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/twitch/twitch_channel_service.dart';
+import '../native_chat_chrome.dart';
 import '../twitch_device_code_dialog.dart';
 
 /// Opens the "Add chat" picker sheet (multi-chat) — the entry behind
@@ -25,6 +26,9 @@ void showAddChatSheet(
     ModalHandler.showBaseBottomSheet(
       context: context,
       barrierDismissible: true,
+      enableDrag: true,
+      includeCloseButton: true,
+      maxHeightFraction: 0.72,
       builder: (context) => AddChatSheet(channelService: channelService),
     );
 
@@ -253,14 +257,20 @@ class _AddChatSheetState extends State<AddChatSheet> {
         !store.canReadModeratedChannels || !store.canReadFollows;
 
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          nativeChatSheetDragHandle(context),
           Text(
             'Add chat',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: nativeChatSheetTitleStyle(context),
           ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
@@ -434,10 +444,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
         child: Text(
           title,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600),
+          style: nativeChatSheetSectionStyle(context),
         ),
       );
 
@@ -579,19 +586,15 @@ class _AddChatSheetState extends State<AddChatSheet> {
               ),
               if (live) ...[
                 const SizedBox(width: AppSpacing.xs),
-                this._statusChip(
-                  context,
+                NativeChatStatusChip.live(
                   key: Key('add-chat-live-$chipScope-$id'),
-                  label: 'LIVE',
                   color: statusColors.live,
                 ),
               ],
               if (mod) ...[
                 const SizedBox(width: AppSpacing.xs),
-                this._statusChip(
-                  context,
+                NativeChatStatusChip.mod(
                   key: Key('add-chat-mod-$chipScope-$id'),
-                  label: 'Mod',
                   color: Theme.of(context).colorScheme.primary,
                 ),
               ],
@@ -606,36 +609,6 @@ class _AddChatSheetState extends State<AddChatSheet> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Compact trailing chip — LIVE / Mod — so the live→mod sort order is
-  /// readable at a glance.
-  Widget _statusChip(
-    BuildContext context, {
-    required Key key,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      key: key,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs,
-        vertical: 2.0,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: color.withValues(alpha: 0.55), width: 1.0),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-            ),
       ),
     );
   }

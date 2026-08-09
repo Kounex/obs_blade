@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
@@ -10,6 +11,7 @@ import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import 'native_chat_appearance.dart';
+import 'native_chat_chrome.dart';
 
 export 'native_chat_appearance.dart' show NativeChatAppearance;
 
@@ -29,6 +31,9 @@ class NativeChatOptionsButton extends StatelessWidget {
         onTap: () => ModalHandler.showBaseBottomSheet(
           context: context,
           barrierDismissible: true,
+          enableDrag: true,
+          includeCloseButton: true,
+          maxHeightFraction: 0.72,
           builder: (context) =>
               NativeChatOptionsSheet(chatType: this.chatType),
         ),
@@ -93,13 +98,24 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: switch (this._page) {
-        _OptionsPage.root => this._buildRoot(context),
-        _OptionsPage.appearance => _AppearancePage(onBack: this._back),
-        _OptionsPage.emotes => _EmotesPage(onBack: this._back),
-        _OptionsPage.badges => _BadgesPage(onBack: this._back),
-      },
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          nativeChatSheetDragHandle(context),
+          switch (this._page) {
+            _OptionsPage.root => this._buildRoot(context),
+            _OptionsPage.appearance => _AppearancePage(onBack: this._back),
+            _OptionsPage.emotes => _EmotesPage(onBack: this._back),
+            _OptionsPage.badges => _BadgesPage(onBack: this._back),
+          },
+        ],
+      ),
     );
   }
 
@@ -110,7 +126,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
       children: [
         Text(
           'Native chat options',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: nativeChatSheetTitleStyle(context),
         ),
         const SizedBox(height: AppSpacing.sm),
         this._navRow(
@@ -144,7 +160,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
       onTap: onTap,
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        title: Text(label),
+        title: Text(
+          label,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+        ),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16.0),
       ),
     );
@@ -155,11 +176,13 @@ class _PageScaffold extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
   final List<Widget> children;
+  final VoidCallback? onReset;
 
   const _PageScaffold({
     required this.title,
     required this.onBack,
     required this.children,
+    this.onReset,
   });
 
   @override
@@ -181,9 +204,30 @@ class _PageScaffold extends StatelessWidget {
             Expanded(
               child: Text(
                 this.title,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: nativeChatSheetTitleStyle(context),
               ),
             ),
+            if (this.onReset != null)
+              Tooltip(
+                message: 'Reset to defaults',
+                child: Pressable(
+                  haptic: true,
+                  onTap: this.onReset,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Text(
+                      'Reset',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -197,6 +241,25 @@ class _AppearancePage extends StatelessWidget {
   final VoidCallback onBack;
 
   const _AppearancePage({required this.onBack});
+
+  void _reset(Box settingsBox) {
+    settingsBox.put(
+      SettingsKeys.TwitchChatTextSize.name,
+      NativeChatAppearance.textSizeDefault,
+    );
+    settingsBox.put(
+      SettingsKeys.TwitchChatEmoteSize.name,
+      NativeChatAppearance.emoteSizeDefault,
+    );
+    settingsBox.put(
+      SettingsKeys.TwitchChatMessageSpacing.name,
+      NativeChatAppearance.messageSpacingDefault,
+    );
+    settingsBox.put(
+      SettingsKeys.TwitchChatMessageSeparators.name,
+      NativeChatAppearance.separatorsDefault,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +279,7 @@ class _AppearancePage extends StatelessWidget {
         return _PageScaffold(
           title: 'Appearance',
           onBack: this.onBack,
+          onReset: () => this._reset(settingsBox),
           children: [
             _AppearancePreview(
               textSize: textSize,
@@ -352,27 +416,51 @@ class _AppearanceSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final track = scheme.onSurface.withValues(alpha: 0.22);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Expanded(
-              child: Text(this.label, style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                this.label,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             Text(
               this.value.round().toString(),
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: scheme.primary,
+                  ),
             ),
           ],
         ),
-        Slider(
-          value: this.value.clamp(this.min, this.max),
-          min: this.min,
-          max: this.max,
-          divisions: (this.max - this.min).round(),
-          label: this.value.round().toString(),
-          onChanged: (v) => this.onChanged(v.roundToDouble()),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 3.0,
+            activeTrackColor: scheme.primary,
+            inactiveTrackColor: track,
+            thumbColor: scheme.primary,
+            overlayColor: scheme.primary.withValues(alpha: 0.12),
+            valueIndicatorColor: scheme.primary,
+            showValueIndicator: ShowValueIndicator.never,
+            thumbShape: const RoundSliderThumbShape(
+              enabledThumbRadius: 8.0,
+              elevation: 1.0,
+            ),
+            trackShape: const RoundedRectSliderTrackShape(),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
+          ),
+          child: Slider(
+            value: this.value.clamp(this.min, this.max),
+            min: this.min,
+            max: this.max,
+            divisions: (this.max - this.min).round(),
+            onChanged: (v) => this.onChanged(v.roundToDouble()),
+          ),
         ),
       ],
     );
@@ -386,14 +474,18 @@ class _EmotesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PageScaffold(
-      title: 'Emotes',
-      onBack: this.onBack,
-      children: [
-        HiveBuilder<dynamic>(
-          hiveKey: HiveKeys.Settings,
-          rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
-          builder: (context, settingsBox, child) => ListTile(
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
+      builder: (context, settingsBox, child) => _PageScaffold(
+        title: 'Emotes',
+        onBack: this.onBack,
+        onReset: () => settingsBox.put(
+          SettingsKeys.TwitchChatThirdPartyEmotes.name,
+          true,
+        ),
+        children: [
+          ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Third-party emotes (7TV/BTTV)'),
             trailing: BaseAdaptiveSwitch(
@@ -407,8 +499,8 @@ class _EmotesPage extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -418,39 +510,44 @@ class _BadgesPage extends StatelessWidget {
 
   const _BadgesPage({required this.onBack});
 
+  void _reset(Box settingsBox) {
+    for (final row in NativeChatOptionsSheet.twitchBadgeRows) {
+      settingsBox.put(row.$2.name, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _PageScaffold(
-      title: 'Badges',
-      onBack: this.onBack,
-      children: [
-        HiveBuilder<dynamic>(
-          hiveKey: HiveKeys.Settings,
-          rebuildKeys: NativeChatOptionsSheet.twitchBadgeRows
-              .map((row) => row.$2)
-              .toList(),
-          builder: (context, settingsBox, child) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ...ListTile.divideTiles(
-                context: context,
-                tiles: NativeChatOptionsSheet.twitchBadgeRows.map(
-                  (row) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(row.$1),
-                    trailing: BaseAdaptiveSwitch(
-                      value:
-                          settingsBox.get(row.$2.name, defaultValue: true),
-                      onChanged: (value) =>
-                          settingsBox.put(row.$2.name, value),
-                    ),
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: NativeChatOptionsSheet.twitchBadgeRows
+          .map((row) => row.$2)
+          .toList(),
+      builder: (context, settingsBox, child) {
+        final rows = NativeChatOptionsSheet.twitchBadgeRows;
+        return _PageScaffold(
+          title: 'Badges',
+          onBack: this.onBack,
+          onReset: () => this._reset(settingsBox),
+          children: [
+            for (var i = 0; i < rows.length; i++) ...[
+              if (i > 0) nativeChatHairline(context),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(rows[i].$1),
+                trailing: BaseAdaptiveSwitch(
+                  value: settingsBox.get(
+                    rows[i].$2.name,
+                    defaultValue: true,
                   ),
+                  onChanged: (value) =>
+                      settingsBox.put(rows[i].$2.name, value),
                 ),
               ),
             ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

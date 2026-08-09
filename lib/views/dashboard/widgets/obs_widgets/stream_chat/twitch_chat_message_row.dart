@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 
 /// One chat line: role badges + colored author name + message text with
@@ -107,10 +108,10 @@ class TwitchChatMessageRow extends StatelessWidget {
     ];
   }
 
-  List<InlineSpan> _messageSpans() {
+  List<InlineSpan> _messageSpans(BuildContext context) {
     final fragments = this.event.message.fragments;
     if (fragments.isEmpty) {
-      return [TextSpan(text: this.event.message.text)];
+      return this._linkAwareTextSpans(context, this.event.message.text);
     }
     return [
       for (final fragment in fragments)
@@ -126,7 +127,7 @@ class TwitchChatMessageRow extends StatelessWidget {
             ),
           )
         else
-          ...this._textSpans(fragment.text),
+          ...this._textSpans(context, fragment.text),
     ];
   }
 
@@ -142,7 +143,7 @@ class TwitchChatMessageRow extends StatelessWidget {
         ?.color
         ?.withValues(alpha: 0.5);
     return [
-      for (final span in this._messageSpans())
+      for (final span in this._messageSpans(context))
         if (span is TextSpan)
           TextSpan(text: span.text, style: TextStyle(color: color))
         else if (span is WidgetSpan)
@@ -157,13 +158,13 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   /// Third-party emotes (7TV/BTTV) arrive as plain text — split on
   /// spaces and swap known tokens for inline images, preserving spacing
-  /// exactly. Unknown tokens (and the toggle-off case) stay text.
-  List<InlineSpan> _textSpans(String text) {
+  /// exactly. Unknown tokens (and the toggle-off case) stay text / links.
+  List<InlineSpan> _textSpans(BuildContext context, String text) {
     if (!this.settingsBox.get(
       SettingsKeys.TwitchChatThirdPartyEmotes.name,
       defaultValue: true,
     )) {
-      return [TextSpan(text: text)];
+      return this._linkAwareTextSpans(context, text);
     }
     final emoteStore = GetIt.instance<ThirdPartyEmoteStore>();
     final tokens = text.split(' ');
@@ -184,9 +185,45 @@ class TwitchChatMessageRow extends StatelessWidget {
             ),
           )
         else
-          TextSpan(text: tokens[i]),
+          ...this._linkAwareTextSpans(context, tokens[i]),
       ],
     ];
+  }
+
+  /// Split [text] into plain runs and tappable http(s) links.
+  List<InlineSpan> _linkAwareTextSpans(BuildContext context, String text) {
+    if (text.isEmpty) return const [];
+    final matches = kChatUrlPattern.allMatches(text).toList();
+    if (matches.isEmpty) return [TextSpan(text: text)];
+
+    final linkStyle = TextStyle(
+      color: Theme.of(context).colorScheme.primary,
+      decoration: TextDecoration.underline,
+      decorationColor: Theme.of(context).colorScheme.primary,
+    );
+    final spans = <InlineSpan>[];
+    var cursor = 0;
+    for (final match in matches) {
+      if (match.start > cursor) {
+        spans.add(TextSpan(text: text.substring(cursor, match.start)));
+      }
+      final url = match.group(0)!;
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: () => confirmAndOpenChatLink(context, url),
+            child: Text(url, style: linkStyle),
+          ),
+        ),
+      );
+      cursor = match.end;
+    }
+    if (cursor < text.length) {
+      spans.add(TextSpan(text: text.substring(cursor)));
+    }
+    return spans;
   }
 
   /// Badge-less rows never change — an Observer that tracks nothing
@@ -257,7 +294,7 @@ class TwitchChatMessageRow extends StatelessWidget {
                 ),
               ),
             ] else
-              ...this._messageSpans(),
+              ...this._messageSpans(context),
           ],
         ),
       );

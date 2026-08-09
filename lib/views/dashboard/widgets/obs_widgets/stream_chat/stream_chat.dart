@@ -214,6 +214,7 @@ class _StreamChatState extends State<StreamChat>
     if (this.widget.usernameRowExpandable) {
       usernameBar = CustomExpansionTile(
         headerText: 'Chat options',
+        headerTextStyle: nativeChatSheetTitleStyle(context),
         expandedBody: usernameBar,
       );
     }
@@ -278,6 +279,10 @@ class _StreamChatState extends State<StreamChat>
                       statusDetail: twitchStore.chatError,
                       accountLabel: displayName,
                       connectedAt: twitchStore.chatConnectedAt,
+                      channelIsLive:
+                          loggedIn && twitchStore.selectedChannelIsLive,
+                      channelIsMod: loggedIn &&
+                          twitchStore.canModerateSelectedChannel,
                       onRetry: twitchStore.connectChat,
                       onConnect: () => startTwitchLogin(context),
                       onLogout: () => ModalHandler.showBaseDialog(

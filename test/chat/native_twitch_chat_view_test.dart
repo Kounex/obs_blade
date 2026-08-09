@@ -102,6 +102,7 @@ void main() {
   });
 
   tearDown(() async {
+    await store.dispose();
     await GetIt.instance.reset();
     await harness.close();
     if (tempDir.existsSync()) {

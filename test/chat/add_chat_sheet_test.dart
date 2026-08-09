@@ -100,6 +100,7 @@ void main() {
     channelService.moderatedCalls = 0;
     channelService.followedCalls = 0;
     channelService.searchCalls = 0;
+    channelService.liveCalls = 0;
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
   });
 

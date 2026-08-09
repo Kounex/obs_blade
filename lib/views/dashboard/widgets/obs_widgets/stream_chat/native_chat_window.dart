@@ -8,6 +8,7 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
+import 'native_chat_chrome.dart';
 
 /// Platform-agnostic connection state of a native chat engine, rendered by
 /// [NativeChatWindow]'s status row. Each native engine maps its own store
@@ -69,6 +70,12 @@ class NativeChatWindow extends StatelessWidget {
   /// hint) — the reserved bottom slot of the pane.
   final Widget? input;
 
+  /// Effective channel is currently live (header LIVE chip).
+  final bool channelIsLive;
+
+  /// User can moderate the effective channel (header Mod chip).
+  final bool channelIsMod;
+
   const NativeChatWindow({
     super.key,
     required this.chatType,
@@ -81,6 +88,8 @@ class NativeChatWindow extends StatelessWidget {
     this.onRetry,
     this.onLogout,
     this.onConnect,
+    this.channelIsLive = false,
+    this.channelIsMod = false,
   });
 
   (String, Color) _statusMeta(BuildContext context) {
@@ -146,9 +155,27 @@ class NativeChatWindow extends StatelessWidget {
                 children: [
                   Text(
                     'Stream Chat',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
                   const Spacer(),
+                  if (this.channelIsLive) ...[
+                    NativeChatStatusChip.live(
+                      key: const Key('chat-header-live'),
+                      color: (Theme.of(context).extension<AppStatusColors>() ??
+                              AppStatusColors.standard)
+                          .live,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
+                  if (this.channelIsMod) ...[
+                    NativeChatStatusChip.mod(
+                      key: const Key('chat-header-mod'),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
                   Container(
                     width: 8.0,
                     height: 8.0,
@@ -280,7 +307,7 @@ class _NativeChatConnectionSheet extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${this.chatType.text} chat',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: nativeChatSheetTitleStyle(context),
                 ),
               ),
               Container(

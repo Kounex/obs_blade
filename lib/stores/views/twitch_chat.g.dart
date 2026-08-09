@@ -216,6 +216,28 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$selectedChannelIsLiveAtom = Atom(
+    name: '_TwitchChatStore.selectedChannelIsLive',
+    context: context,
+  );
+
+  @override
+  bool get selectedChannelIsLive {
+    _$selectedChannelIsLiveAtom.reportRead();
+    return super.selectedChannelIsLive;
+  }
+
+  @override
+  set selectedChannelIsLive(bool value) {
+    _$selectedChannelIsLiveAtom.reportWrite(
+      value,
+      super.selectedChannelIsLive,
+      () {
+        super.selectedChannelIsLive = value;
+      },
+    );
+  }
+
   late final _$lifecycleVersionAtom = Atom(
     name: '_TwitchChatStore.lifecycleVersion',
     context: context,
@@ -272,6 +294,18 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   @override
   Future<void> connectChat() {
     return _$connectChatAsyncAction.run(() => super.connectChat());
+  }
+
+  late final _$refreshSelectedChannelLiveAsyncAction = AsyncAction(
+    '_TwitchChatStore.refreshSelectedChannelLive',
+    context: context,
+  );
+
+  @override
+  Future<void> refreshSelectedChannelLive() {
+    return _$refreshSelectedChannelLiveAsyncAction.run(
+      () => super.refreshSelectedChannelLive(),
+    );
   }
 
   late final _$addChannelAsyncAction = AsyncAction(
@@ -451,6 +485,7 @@ chatConnectedAt: ${chatConnectedAt},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 selectedChannelId: ${selectedChannelId},
+selectedChannelIsLive: ${selectedChannelIsLive},
 lifecycleVersion: ${lifecycleVersion},
 isLoggedIn: ${isLoggedIn}
     ''';
