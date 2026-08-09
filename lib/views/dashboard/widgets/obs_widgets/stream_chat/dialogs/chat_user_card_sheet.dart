@@ -65,7 +65,10 @@ void showChatUserCardSheet(
       builder: (_) => ChatUserCardSheet(
         userId: userId,
         connection: connection,
-        userService: userService ?? TwitchUserService(),
+        userService: userService ??
+            (GetIt.instance.isRegistered<TwitchUserService>()
+                ? GetIt.instance<TwitchUserService>()
+                : TwitchUserService()),
       ),
     );
 
@@ -109,66 +112,68 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   }
 
   Future<void> _loadFacts() async {
-    final auth =
-        Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).get(TwitchAuth.kBoxKey);
-    if (auth == null) {
-      if (mounted) this.setState(() => this._loadingFacts = false);
-      return;
-    }
+    try {
+      final auth =
+          Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).get(TwitchAuth.kBoxKey);
+      if (auth == null) return;
 
-    final service = this.widget.userService;
-    final broadcasterId = this._store.user == null
-        ? null
-        : this._store.effectiveBroadcasterId;
-    final scopes = auth.scopes.toSet();
+      final service = this.widget.userService;
+      final broadcasterId = this._store.user == null
+          ? null
+          : this._store.effectiveBroadcasterId;
+      final scopes = auth.scopes.toSet();
 
-    final userFuture = service.fetchUser(
-      accessToken: auth.accessToken,
-      userId: this.widget.userId,
-    );
+      final userFuture = service.fetchUser(
+        accessToken: auth.accessToken,
+        userId: this.widget.userId,
+      );
 
-    Future<DateTime?> followFuture = Future<DateTime?>.value(null);
-    if (broadcasterId != null) {
-      if (this._isSelf && scopes.contains('user:read:follows')) {
-        followFuture = service.selfFollowedAt(
+      Future<DateTime?> followFuture = Future<DateTime?>.value(null);
+      if (broadcasterId != null) {
+        if (this._isSelf && scopes.contains('user:read:follows')) {
+          followFuture = service.selfFollowedAt(
+            accessToken: auth.accessToken,
+            userId: this.widget.userId,
+            broadcasterId: broadcasterId,
+          );
+        } else if (!this._isSelf &&
+            scopes.contains('moderator:read:followers')) {
+          followFuture = service.followerSince(
+            accessToken: auth.accessToken,
+            broadcasterId: broadcasterId,
+            userId: this.widget.userId,
+          );
+        }
+      }
+
+      Future<TwitchSelfSubscription?> subFuture =
+          Future<TwitchSelfSubscription?>.value(null);
+      if (this._isSelf &&
+          broadcasterId != null &&
+          scopes.contains('user:read:subscriptions')) {
+        subFuture = service.selfSubscription(
           accessToken: auth.accessToken,
-          userId: this.widget.userId,
           broadcasterId: broadcasterId,
-        );
-      } else if (!this._isSelf &&
-          scopes.contains('moderator:read:followers')) {
-        followFuture = service.followerSince(
-          accessToken: auth.accessToken,
-          broadcasterId: broadcasterId,
-          userId: this.widget.userId,
         );
       }
+
+      final results = await Future.wait<Object?>([
+        userFuture,
+        followFuture,
+        subFuture,
+      ]);
+
+      if (!mounted) return;
+      this.setState(() {
+        this._helixUser = results[0] as TwitchUser?;
+        this._followedAt = results[1] as DateTime?;
+        this._selfSub = results[2] as TwitchSelfSubscription?;
+      });
+    } catch (_) {
+      // Omit Helix rows — buffer/header still render.
+    } finally {
+      if (mounted) this.setState(() => this._loadingFacts = false);
     }
-
-    Future<TwitchSelfSubscription?> subFuture =
-        Future<TwitchSelfSubscription?>.value(null);
-    if (this._isSelf &&
-        broadcasterId != null &&
-        scopes.contains('user:read:subscriptions')) {
-      subFuture = service.selfSubscription(
-        accessToken: auth.accessToken,
-        broadcasterId: broadcasterId,
-      );
-    }
-
-    final results = await Future.wait<Object?>([
-      userFuture,
-      followFuture,
-      subFuture,
-    ]);
-
-    if (!mounted) return;
-    this.setState(() {
-      this._helixUser = results[0] as TwitchUser?;
-      this._followedAt = results[1] as DateTime?;
-      this._selfSub = results[2] as TwitchSelfSubscription?;
-      this._loadingFacts = false;
-    });
   }
 
   Color _displayNameColor(BuildContext context) {

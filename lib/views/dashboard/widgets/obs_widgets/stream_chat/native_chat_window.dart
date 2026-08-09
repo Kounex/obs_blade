@@ -8,6 +8,8 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
+import '../../../../../utils/twitch/twitch_user_service.dart';
+import 'dialogs/chat_user_card_sheet.dart';
 import 'native_chat_chrome.dart';
 
 /// Platform-agnostic connection state of a native chat engine, rendered by
@@ -58,6 +60,9 @@ class NativeChatWindow extends StatelessWidget {
   /// When the current session went live — feeds the sheet's uptime line
   final DateTime? connectedAt;
 
+  /// Logged-in user's Twitch id — opens the merged self user card when set.
+  final String? selfUserId;
+
   /// Sheet actions; a null callback hides the action
   final VoidCallback? onRetry;
   final VoidCallback? onLogout;
@@ -79,6 +84,13 @@ class NativeChatWindow extends StatelessWidget {
   /// User can moderate the effective channel (header Mod chip).
   final bool channelIsMod;
 
+  /// Optional Helix helper override (tests).
+  final TwitchUserService? userService;
+
+  /// Test seam — replaces the default status-row sheet action.
+  @visibleForTesting
+  final VoidCallback? onStatusTapOverride;
+
   const NativeChatWindow({
     super.key,
     required this.chatType,
@@ -91,6 +103,9 @@ class NativeChatWindow extends StatelessWidget {
     this.onRetry,
     this.onLogout,
     this.onConnect,
+    this.selfUserId,
+    this.userService,
+    this.onStatusTapOverride,
     this.channelIsLive = false,
     this.channelViewerCount,
     this.channelIsMod = false,
@@ -132,24 +147,46 @@ class NativeChatWindow extends StatelessWidget {
         children: [
           Pressable(
             haptic: true,
-            onTap: () => ModalHandler.showBaseBottomSheet(
-              context: context,
-              barrierDismissible: true,
-              enableDrag: true,
-              maxHeightFraction: 0.72,
-              builder: (context) => _NativeChatConnectionSheet(
-                chatType: this.chatType,
-                status: this.status,
-                statusLabel: statusLabel,
-                statusColor: statusColor,
-                statusDetail: this.statusDetail,
-                accountLabel: this.accountLabel,
-                connectedAt: this.connectedAt,
-                onRetry: this.onRetry,
-                onLogout: this.onLogout,
-                onConnect: this.onConnect,
-              ),
-            ),
+            onTap: this.onStatusTapOverride ?? () {
+              if (this.selfUserId != null) {
+                showChatUserCardSheet(
+                  context,
+                  userId: this.selfUserId!,
+                  userService: this.userService,
+                  connection: ChatUserCardConnection(
+                    chatType: this.chatType,
+                    status: this.status,
+                    statusLabel: statusLabel,
+                    statusColor: statusColor,
+                    statusDetail: this.statusDetail,
+                    accountLabel: this.accountLabel,
+                    connectedAt: this.connectedAt,
+                    onRetry: this.onRetry,
+                    onLogout: this.onLogout,
+                    onConnect: this.onConnect,
+                  ),
+                );
+                return;
+              }
+              ModalHandler.showBaseBottomSheet(
+                context: context,
+                barrierDismissible: true,
+                enableDrag: true,
+                maxHeightFraction: 0.72,
+                builder: (context) => _NativeChatConnectionSheet(
+                  chatType: this.chatType,
+                  status: this.status,
+                  statusLabel: statusLabel,
+                  statusColor: statusColor,
+                  statusDetail: this.statusDetail,
+                  accountLabel: this.accountLabel,
+                  connectedAt: this.connectedAt,
+                  onRetry: this.onRetry,
+                  onLogout: this.onLogout,
+                  onConnect: this.onConnect,
+                ),
+              );
+            },
             child: Container(
               constraints: const BoxConstraints(
                 minHeight: kMinInteractiveDimensionCupertino,

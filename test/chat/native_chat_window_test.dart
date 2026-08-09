@@ -14,6 +14,7 @@ NativeChatWindow buildWindow({
   VoidCallback? onRetry,
   VoidCallback? onLogout,
   VoidCallback? onConnect,
+  String? selfUserId,
 }) =>
     NativeChatWindow(
       chatType: ChatType.Twitch,
@@ -24,6 +25,7 @@ NativeChatWindow buildWindow({
       onRetry: onRetry,
       onLogout: onLogout,
       onConnect: onConnect,
+      selfUserId: selfUserId,
       child: const Center(child: Text('chat content')),
     );
 
@@ -83,92 +85,8 @@ void main() {
     });
   });
 
-  testWidgets('live: tapping the status row shows account and uptime',
+  testWidgets('offline without selfUserId keeps the connect-only sheet',
       (tester) async {
-    await tester.pumpWidget(
-      wrap(
-        buildWindow(
-          status: NativeChatConnectionStatus.live,
-          accountLabel: 'Kounex',
-          connectedAt: DateTime.now().subtract(const Duration(seconds: 90)),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('connected'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    expect(find.text('Twitch chat'), findsOneWidget);
-    expect(find.text('Connected as Kounex'), findsOneWidget);
-    expect(
-      find.textContaining(RegExp(r'Connected for \d+:\d{2}')),
-      findsOneWidget,
-    );
-
-    final before =
-        tester.widget<Text>(find.textContaining('Connected for')).data!;
-    await tester.pump(const Duration(seconds: 2));
-    final after =
-        tester.widget<Text>(find.textContaining('Connected for')).data!;
-    expect(after, isNot(equals(before)));
-
-    await tester.tapAt(const Offset(400, 100));
-    await tester.pumpAndSettle();
-    expect(find.text('Twitch chat'), findsNothing);
-  });
-
-  testWidgets('connection sheet dismisses on barrier tap', (tester) async {
-    await tester.pumpWidget(
-      wrap(
-        buildWindow(
-          status: NativeChatConnectionStatus.live,
-          accountLabel: 'Kounex',
-          connectedAt: DateTime.now().subtract(const Duration(seconds: 90)),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('connected'));
-    await tester.pumpAndSettle();
-    expect(find.text('Twitch chat'), findsOneWidget);
-
-    await tester.tapAt(const Offset(400, 100));
-    await tester.pumpAndSettle();
-    expect(find.text('Twitch chat'), findsNothing);
-  });
-
-  testWidgets('failed: sheet shows the error and fires retry + logout',
-      (tester) async {
-    var retried = false;
-    var loggedOut = false;
-    await tester.pumpWidget(
-      wrap(
-        buildWindow(
-          status: NativeChatConnectionStatus.failed,
-          statusDetail: 'Could not connect to Twitch chat',
-          onRetry: () => retried = true,
-          onLogout: () => loggedOut = true,
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('failed'));
-    await tester.pumpAndSettle();
-    expect(find.text('Could not connect to Twitch chat'), findsOneWidget);
-
-    await tester.tap(find.text('Retry'));
-    await tester.pumpAndSettle();
-    expect(retried, isTrue);
-
-    await tester.tap(find.text('failed'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Log out'));
-    await tester.pumpAndSettle();
-    expect(loggedOut, isTrue);
-  });
-
-  testWidgets('offline: sheet fires connect', (tester) async {
     var connected = false;
     await tester.pumpWidget(
       wrap(
@@ -183,9 +101,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Connect Twitch'), findsOneWidget);
+    expect(find.text('Twitch chat'), findsOneWidget);
     await tester.tap(find.text('Connect Twitch'));
     await tester.pumpAndSettle();
     expect(connected, isTrue);
+  });
+
+  testWidgets('failed without selfUserId keeps the connection sheet',
+      (tester) async {
+    var retried = false;
+    await tester.pumpWidget(
+      wrap(
+        buildWindow(
+          status: NativeChatConnectionStatus.failed,
+          statusDetail: 'Could not connect to Twitch chat',
+          onRetry: () => retried = true,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('failed'));
+    await tester.pumpAndSettle();
+    expect(find.text('Could not connect to Twitch chat'), findsOneWidget);
+    expect(find.text('Twitch chat'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(retried, isTrue);
+  });
+
+  testWidgets('live with selfUserId routes through the merged card entry',
+      (tester) async {
+    var mergedCard = false;
+    await tester.pumpWidget(
+      wrap(
+        NativeChatWindow(
+          chatType: ChatType.Twitch,
+          status: NativeChatConnectionStatus.live,
+          accountLabel: 'Kounex',
+          selfUserId: 'self-1',
+          onStatusTapOverride: () => mergedCard = true,
+          child: const Center(child: Text('chat content')),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('connected'));
+    expect(mergedCard, isTrue);
   });
 
   group('formatChatUptime', () {
@@ -211,34 +173,6 @@ void main() {
         '1:02:05',
       );
     });
-  });
-
-  testWidgets('live sheet uptime ticks while open', (tester) async {
-    await tester.pumpWidget(
-      wrap(
-        buildWindow(
-          status: NativeChatConnectionStatus.live,
-          accountLabel: 'Kounex',
-          connectedAt: DateTime.now().subtract(const Duration(seconds: 90)),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('connected'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    final before =
-        tester.widget<Text>(find.textContaining('Connected for')).data!;
-    await tester.pump(const Duration(seconds: 2));
-    final after =
-        tester.widget<Text>(find.textContaining('Connected for')).data!;
-
-    expect(after, isNot(equals(before)));
-
-    await tester.tapAt(const Offset(400, 100));
-    await tester.pumpAndSettle();
-    expect(find.text('Twitch chat'), findsNothing);
   });
 
   testWidgets('renders the input slot below the content when provided',

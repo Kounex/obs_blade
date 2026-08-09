@@ -375,13 +375,10 @@ void main() {
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
       await tester.pump();
 
-      final richTexts = tester
-          .widgetList<RichText>(find.byType(RichText))
-          .map((r) => r.text.toPlainText());
-      expect(
-        richTexts,
-        containsAll(<String>['Viewer32: Hi chat', 'Emoter: Hello Kappa']),
-      );
+      expect(find.text('Viewer32'), findsOneWidget);
+      expect(find.textContaining('Hi chat'), findsOneWidget);
+      expect(find.text('Emoter'), findsOneWidget);
+      expect(find.textContaining('Hello Kappa'), findsOneWidget);
     });
 
     testWidgets('failed state offers a retry that reconnects', (tester) async {
@@ -423,11 +420,13 @@ void main() {
 
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
 
-      RichText richText = tester.widget<RichText>(find.descendant(
-        of: find.byType(TwitchChatMessageRow),
-        matching: find.byType(RichText),
-      ));
-      expect(richText.text.toPlainText(), 'Viewer: hi peepoHappy');
+      RichText richText = tester
+          .widgetList<RichText>(find.descendant(
+            of: find.byType(TwitchChatMessageRow),
+            matching: find.byType(RichText),
+          ))
+          .first;
+      expect(richText.text.toPlainText(), '\u{FFFC}: hi peepoHappy');
 
       /// Catalog lands after the rows are already built — the view's
       /// Observer tracks catalogVersion, so rows rebuild once (pop-in).
@@ -435,11 +434,13 @@ void main() {
       emoteStore.catalogVersion++;
       await tester.pump();
 
-      richText = tester.widget<RichText>(find.descendant(
-        of: find.byType(TwitchChatMessageRow),
-        matching: find.byType(RichText),
-      ));
-      expect(richText.text.toPlainText(), 'Viewer: hi \u{FFFC}');
+      richText = tester
+          .widgetList<RichText>(find.descendant(
+            of: find.byType(TwitchChatMessageRow),
+            matching: find.byType(RichText),
+          ))
+          .first;
+      expect(richText.text.toPlainText(), '\u{FFFC}: hi \u{FFFC}');
     });
 
     testWidgets('turning the toggle off re-renders rows as text',
@@ -450,11 +451,13 @@ void main() {
 
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
 
-      RichText richText = tester.widget<RichText>(find.descendant(
-        of: find.byType(TwitchChatMessageRow),
-        matching: find.byType(RichText),
-      ));
-      expect(richText.text.toPlainText(), 'Viewer: hi \u{FFFC}');
+      RichText richText = tester
+          .widgetList<RichText>(find.descendant(
+            of: find.byType(TwitchChatMessageRow),
+            matching: find.byType(RichText),
+          ))
+          .first;
+      expect(richText.text.toPlainText(), '\u{FFFC}: hi \u{FFFC}');
 
       /// Real file I/O never completes inside the test body's FakeAsync
       /// zone — runAsync escapes it (same pattern as the badge tests).
@@ -464,11 +467,13 @@ void main() {
       });
       await tester.pump();
 
-      richText = tester.widget<RichText>(find.descendant(
-        of: find.byType(TwitchChatMessageRow),
-        matching: find.byType(RichText),
-      ));
-      expect(richText.text.toPlainText(), 'Viewer: hi peepoHappy');
+      richText = tester
+          .widgetList<RichText>(find.descendant(
+            of: find.byType(TwitchChatMessageRow),
+            matching: find.byType(RichText),
+          ))
+          .first;
+      expect(richText.text.toPlainText(), '\u{FFFC}: hi peepoHappy');
     });
 
     testWidgets('/clear tombstones the rows and banners between old and new',
@@ -484,16 +489,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('Chat was cleared by a moderator'), findsOneWidget);
-      final texts = tester
-          .widgetList<RichText>(find.byType(RichText))
-          .map((richText) => richText.text.toPlainText());
-      expect(
-        texts,
-        containsAll(<String>[
-          'Viewer32: Hi chat —Deleted',
-          'Emoter: Hello Kappa —Deleted',
-        ]),
-      );
+      expect(find.textContaining('Hi chat —Deleted', findRichText: true),
+          findsOneWidget);
+      expect(find.textContaining('Hello Kappa —Deleted', findRichText: true),
+          findsOneWidget);
 
       /// The banner sorts after the cleared rows, before newer ones.
       store.appendChatMessageForTest(textEvent('3', 'Viewer32', 'fresh'));
@@ -589,10 +588,9 @@ void main() {
       store.applyClearUserMessages('1');
       await tester.pump();
 
-      expect(
-        find.text('Viewer32: Hi chat —Deleted', findRichText: true),
-        findsOneWidget,
-      );
+      expect(find.text('Viewer32'), findsOneWidget);
+      expect(find.textContaining('Hi chat —Deleted', findRichText: true),
+          findsOneWidget);
 
       await tester.tap(find.byType(TwitchChatMessageRow));
       await tester.pump();

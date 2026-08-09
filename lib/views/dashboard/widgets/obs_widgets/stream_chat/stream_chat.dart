@@ -301,6 +301,7 @@ class _StreamChatState extends State<StreamChat>
                           onOk: (_) => twitchStore.logout(),
                         ),
                       ),
+                      selfUserId: loggedIn ? twitchStore.user?.id : null,
                       child: loggedIn
                           ? const NativeTwitchChatView()
                           : StaggeredEntrance(
