@@ -157,7 +157,7 @@ class NativeChatWindow extends StatelessWidget {
                 children: [
                   Text(
                     'Stream Chat',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                   ),

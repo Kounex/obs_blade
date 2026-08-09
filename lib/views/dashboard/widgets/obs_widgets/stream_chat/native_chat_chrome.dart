@@ -55,17 +55,18 @@ class NativeChatStatusChip extends StatelessWidget {
   }
 }
 
-/// Sheet / page titles — heavier than body so headers read as chrome.
+/// Sheet / page titles — title2 scale so they read clearly above body
+/// (`titleMedium` is 15px in the On Air theme, same as body).
 TextStyle? nativeChatSheetTitleStyle(BuildContext context) =>
-    Theme.of(context).textTheme.titleMedium?.copyWith(
+    Theme.of(context).textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w700,
-          letterSpacing: -0.2,
+          letterSpacing: -0.3,
         );
 
 /// Section labels inside a sheet (Emotes, Badges groups, etc.).
 TextStyle? nativeChatSheetSectionStyle(BuildContext context) =>
-    Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
+    Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
         );
 
 /// Thin hairline matching native chat message separators.

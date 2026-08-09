@@ -10,7 +10,7 @@ abstract final class NativeChatAppearance {
 
   static const double emoteSizeDefault = 20.0;
   static const double emoteSizeMin = 14.0;
-  static const double emoteSizeMax = 32.0;
+  static const double emoteSizeMax = 48.0;
 
   static const double messageSpacingDefault = 2.0;
   static const double messageSpacingMin = 0.0;
