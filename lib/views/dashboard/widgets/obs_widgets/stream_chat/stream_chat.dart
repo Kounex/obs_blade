@@ -24,6 +24,7 @@ import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
 import 'chat_emote_picker.dart';
 import 'native_chat_input.dart';
+import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
 import 'native_twitch_chat_view.dart';
 import 'twitch_device_code_dialog.dart';
