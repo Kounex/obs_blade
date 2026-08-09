@@ -1061,6 +1061,34 @@ abstract class _TwitchChatStore with Store {
   /// Hex color last seen for [userId], if any (`#RRGGBB`).
   String? chatterColor(String userId) => this._chatterColors[userId];
 
+  /// Max recent lines shown on the native chat user card.
+  static const int kUserCardMessageCap = 20;
+
+  /// Messages from [userId] in the current channel buffer, newest first
+  /// (capped at [kUserCardMessageCap]).
+  List<ChatMessageEvent> messagesForChatter(String userId) {
+    final matches = <ChatMessageEvent>[
+      for (final message in this.messages)
+        if (message.chatterUserId == userId) message,
+    ];
+    final start = matches.length > kUserCardMessageCap
+        ? matches.length - kUserCardMessageCap
+        : 0;
+    return matches.sublist(start).reversed.toList();
+  }
+
+  /// Chatter color for the user card header — newest buffered message
+  /// first, then the rolling color map.
+  String? newestChatterColor(String userId) {
+    for (var i = this.messages.length - 1; i >= 0; i--) {
+      final message = this.messages[i];
+      if (message.chatterUserId == userId) {
+        return message.color ?? this._chatterColors[userId];
+      }
+    }
+    return this._chatterColors[userId];
+  }
+
   /// Test seam — the store's message intake is normally fed by the
   /// EventSub service callback.
   @action

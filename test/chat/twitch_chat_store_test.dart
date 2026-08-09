@@ -390,6 +390,41 @@ void main() {
       expect(store.messages.first.messageId, '5');
       expect(store.messages.last.messageId, '504');
     });
+
+    test('messagesForChatter returns newest-first capped rows for one user',
+        () {
+      ChatMessageEvent tagged(String id, String chatterId, {String? color}) =>
+          ChatMessageEvent(
+            broadcasterUserId: 'b1',
+            chatterUserId: chatterId,
+            chatterUserLogin: 'u$chatterId',
+            chatterUserName: 'User$chatterId',
+            messageId: id,
+            color: color,
+            message: ChatMessageText(
+              text: 'msg $id',
+              fragments: [
+                ChatMessageFragment(type: 'text', text: 'msg $id'),
+              ],
+            ),
+          );
+
+      for (var i = 0; i < 25; i++) {
+        store.appendChatMessageForTest(tagged('a$i', 'target'));
+        store.appendChatMessageForTest(tagged('b$i', 'other'));
+      }
+      store.appendChatMessageForTest(
+        tagged('latest', 'target', color: '#FF0000'),
+      );
+
+      final rows = store.messagesForChatter('target');
+
+      expect(rows, hasLength(20));
+      expect(rows.first.messageId, 'latest');
+      expect(rows.last.messageId, 'a6');
+      expect(store.newestChatterColor('target'), '#FF0000');
+      expect(store.messagesForChatter('missing'), isEmpty);
+    });
   });
 
   group('badge catalog wiring', () {
