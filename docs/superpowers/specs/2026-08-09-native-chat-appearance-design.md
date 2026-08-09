@@ -43,7 +43,7 @@ Persisted keys (new `SettingsKeys`, string names in the existing map):
 |---|---|---|---|
 | `TwitchChatTextSize` | `double` (sp) | `14` | slider 11–20 |
 | `TwitchChatEmoteSize` | `double` (px) | `20` | slider 14–32 |
-| `TwitchChatMessageSpacing` | `double` (px) | `2` | slider 0–12 (vertical padding per row; matches current `AppSpacing.xs / 2`) |
+| `TwitchChatMessageSpacing` | `double` (px) | `4` | slider 0–12 (vertical padding per row) |
 | `TwitchChatMessageSeparators` | `bool` | `false` | toggle — very thin hairline between messages |
 
 Naming keeps the `TwitchChat*` prefix for consistency with existing chat

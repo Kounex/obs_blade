@@ -103,7 +103,7 @@ enum SettingsKeys {
   TwitchChatEmoteSize,
 
   /// [double]: Vertical padding (px) above/below each native chat message.
-  /// Default 2.
+  /// Default 4.
   TwitchChatMessageSpacing,
 
   /// [bool]: Show sub / gift / upgrade chat notifications.
