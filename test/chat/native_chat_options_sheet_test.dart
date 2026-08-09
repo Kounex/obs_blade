@@ -48,7 +48,7 @@ void main() {
     }
   });
 
-  testWidgets('root lists Appearance / Emotes / Badges / Notifications for Twitch',
+  testWidgets('root lists Appearance / Emotes / Badges / Event messages',
       (tester) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
@@ -56,9 +56,13 @@ void main() {
 
     expect(find.text('Native chat options'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('Text size, emote size, spacing, and separators'),
+        findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Badges'), findsOneWidget);
-    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.text('Event messages'), findsOneWidget);
+    expect(find.text('Subs, raids, streaks, and similar system lines'),
+        findsOneWidget);
     expect(find.text('Third-party emotes (7TV/BTTV)'), findsNothing);
     expect(find.text('Broadcaster'), findsNothing);
     expect(find.text('Subs & gifts'), findsNothing);
@@ -73,6 +77,11 @@ void main() {
     await tester.tap(find.text('Appearance'));
     await tester.pumpAndSettle();
 
+    expect(
+      find.text(
+          'Adjust how chat lines look — size, spacing, and dividers.'),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('appearance-preview')), findsOneWidget);
     expect(find.text('Text size'), findsOneWidget);
     expect(find.text('Emote size'), findsOneWidget);
@@ -165,15 +174,19 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Notifications page toggles write the settings box',
+  testWidgets('Event messages page toggles write the settings box',
       (tester) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
-    await tester.tap(find.text('Notifications'));
+    await tester.tap(find.text('Event messages'));
     await tester.pumpAndSettle();
 
+    expect(
+      find.textContaining('in-chat only — not device notifications'),
+      findsOneWidget,
+    );
     expect(find.text('Subs & gifts'), findsOneWidget);
     expect(find.text('First message'), findsOneWidget);
     expect(find.text('Reset'), findsOneWidget);

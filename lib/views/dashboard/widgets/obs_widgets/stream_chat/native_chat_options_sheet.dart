@@ -60,11 +60,11 @@ class NativeChatOptionsButton extends StatelessWidget {
   }
 }
 
-enum _OptionsPage { root, appearance, emotes, badges, notifications }
+enum _OptionsPage { root, appearance, emotes, badges, eventMessages }
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
-/// Appearance + Emotes + Badges + Notifications; other chat types only
+/// Appearance + Emotes + Badges + Event messages; other chat types only
 /// Appearance.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
@@ -82,7 +82,7 @@ class NativeChatOptionsSheet extends StatefulWidget {
     ('Other badges', SettingsKeys.TwitchChatBadgeOther),
   ];
 
-  /// Chat notification category toggles (+ first-message chrome).
+  /// In-chat system-line category toggles (+ first-message chrome).
   static const List<(String, SettingsKeys)> twitchNoticeRows = [
     ('Subs & gifts', SettingsKeys.TwitchChatNoticeSubs),
     ('Watch streaks', SettingsKeys.TwitchChatNoticeStreaks),
@@ -91,7 +91,7 @@ class NativeChatOptionsSheet extends StatefulWidget {
     ('Bits badge', SettingsKeys.TwitchChatNoticeBitsBadge),
     ('Charity', SettingsKeys.TwitchChatNoticeCharity),
     ('Modiversary', SettingsKeys.TwitchChatNoticeModiversary),
-    ('Other notifications', SettingsKeys.TwitchChatNoticeOther),
+    ('Other events', SettingsKeys.TwitchChatNoticeOther),
     ('First message', SettingsKeys.TwitchChatNoticeFirstMessage),
   ];
 
@@ -126,8 +126,8 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             _OptionsPage.appearance => _AppearancePage(onBack: this._back),
             _OptionsPage.emotes => _EmotesPage(onBack: this._back),
             _OptionsPage.badges => _BadgesPage(onBack: this._back),
-            _OptionsPage.notifications =>
-              _NotificationsPage(onBack: this._back),
+            _OptionsPage.eventMessages =>
+              _EventMessagesPage(onBack: this._back),
           },
         ],
       ),
@@ -147,23 +147,27 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
         this._navRow(
           context,
           label: 'Appearance',
+          subtitle: 'Text size, emote size, spacing, and separators',
           onTap: () => this._open(_OptionsPage.appearance),
         ),
         if (this._isTwitch) ...[
           this._navRow(
             context,
             label: 'Emotes',
+            subtitle: 'Third-party emotes in chat',
             onTap: () => this._open(_OptionsPage.emotes),
           ),
           this._navRow(
             context,
             label: 'Badges',
+            subtitle: 'Which role badges appear next to names',
             onTap: () => this._open(_OptionsPage.badges),
           ),
           this._navRow(
             context,
-            label: 'Notifications',
-            onTap: () => this._open(_OptionsPage.notifications),
+            label: 'Event messages',
+            subtitle: 'Subs, raids, streaks, and similar system lines',
+            onTap: () => this._open(_OptionsPage.eventMessages),
           ),
         ],
       ],
@@ -173,6 +177,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   Widget _navRow(
     BuildContext context, {
     required String label,
+    required String subtitle,
     required VoidCallback onTap,
   }) {
     return Pressable(
@@ -186,6 +191,10 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                 fontWeight: FontWeight.w500,
               ),
         ),
+        subtitle: Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16.0),
       ),
     );
@@ -194,12 +203,14 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
 
 class _PageScaffold extends StatelessWidget {
   final String title;
+  final String description;
   final VoidCallback onBack;
   final List<Widget> children;
   final VoidCallback? onReset;
 
   const _PageScaffold({
     required this.title,
+    required this.description,
     required this.onBack,
     required this.children,
     this.onReset,
@@ -250,6 +261,11 @@ class _PageScaffold extends StatelessWidget {
               ),
           ],
         ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          this.description,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: AppSpacing.sm),
         ...this.children,
       ],
@@ -298,6 +314,8 @@ class _AppearancePage extends StatelessWidget {
         final separators = NativeChatAppearance.separators(settingsBox);
         return _PageScaffold(
           title: 'Appearance',
+          description:
+              'Adjust how chat lines look — size, spacing, and dividers.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
@@ -499,6 +517,8 @@ class _EmotesPage extends StatelessWidget {
       rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
       builder: (context, settingsBox, child) => _PageScaffold(
         title: 'Emotes',
+        description:
+            'Choose whether 7TV and BTTV emotes render inline in chat.',
         onBack: this.onBack,
         onReset: () => settingsBox.put(
           SettingsKeys.TwitchChatThirdPartyEmotes.name,
@@ -547,6 +567,8 @@ class _BadgesPage extends StatelessWidget {
         final rows = NativeChatOptionsSheet.twitchBadgeRows;
         return _PageScaffold(
           title: 'Badges',
+          description:
+              'Show or hide badge categories next to chatter names.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
@@ -572,10 +594,10 @@ class _BadgesPage extends StatelessWidget {
   }
 }
 
-class _NotificationsPage extends StatelessWidget {
+class _EventMessagesPage extends StatelessWidget {
   final VoidCallback onBack;
 
-  const _NotificationsPage({required this.onBack});
+  const _EventMessagesPage({required this.onBack});
 
   void _reset(Box settingsBox) {
     for (final row in NativeChatOptionsSheet.twitchNoticeRows) {
@@ -593,7 +615,10 @@ class _NotificationsPage extends StatelessWidget {
       builder: (context, settingsBox, child) {
         final rows = NativeChatOptionsSheet.twitchNoticeRows;
         return _PageScaffold(
-          title: 'Notifications',
+          title: 'Event messages',
+          description:
+              'Choose which system chat lines appear in the feed. '
+              'These are in-chat only — not device notifications.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
