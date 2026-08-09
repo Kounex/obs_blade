@@ -131,6 +131,9 @@ class NativeChatWindow extends StatelessWidget {
             onTap: () => ModalHandler.showBaseBottomSheet(
               context: context,
               barrierDismissible: true,
+              enableDrag: true,
+              includeCloseButton: true,
+              maxHeightFraction: 0.72,
               builder: (context) => _NativeChatConnectionSheet(
                 chatType: this.chatType,
                 status: this.status,
@@ -297,11 +300,17 @@ class _NativeChatConnectionSheet extends StatelessWidget {
             this.status == NativeChatConnectionStatus.failed;
 
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          nativeChatSheetDragHandle(context),
           Row(
             children: [
               Expanded(

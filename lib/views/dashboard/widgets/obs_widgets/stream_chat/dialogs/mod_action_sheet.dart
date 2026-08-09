@@ -19,6 +19,9 @@ void showModActionSheet(BuildContext context, ChatMessageEvent event) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
       barrierDismissible: true,
+      enableDrag: true,
+      includeCloseButton: true,
+      maxHeightFraction: 0.72,
       builder: (_) => ModActionSheet(
         event: event,
         onFailure: (message) => ScaffoldMessenger.of(context)

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
@@ -73,9 +74,29 @@ void main() {
         tester.widget<Text>(find.textContaining('Connected for')).data!;
     expect(after, isNot(equals(before)));
 
-    await tester.tapAt(const Offset(400, 100));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byIcon(CupertinoIcons.clear_circled_solid));
+    await tester.pumpAndSettle();
+    expect(find.text('Twitch chat'), findsNothing);
+  });
+
+  testWidgets('connection sheet dismisses via close button', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        buildWindow(
+          status: NativeChatConnectionStatus.live,
+          accountLabel: 'Kounex',
+          connectedAt: DateTime.now().subtract(const Duration(seconds: 90)),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('connected'));
+    await tester.pumpAndSettle();
+    expect(find.text('Twitch chat'), findsOneWidget);
+
+    await tester.tap(find.byIcon(CupertinoIcons.clear_circled_solid));
+    await tester.pumpAndSettle();
+    expect(find.text('Twitch chat'), findsNothing);
   });
 
   testWidgets('failed: sheet shows the error and fires retry + logout',
@@ -176,9 +197,9 @@ void main() {
 
     expect(after, isNot(equals(before)));
 
-    await tester.tapAt(const Offset(400, 100));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.byIcon(CupertinoIcons.clear_circled_solid));
+    await tester.pumpAndSettle();
+    expect(find.text('Twitch chat'), findsNothing);
   });
 
   testWidgets('renders the input slot below the content when provided',
