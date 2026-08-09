@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
@@ -19,6 +20,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tombstone.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
@@ -928,13 +930,48 @@ void main() {
       expect(store.isMessageDeleted('nope'), isFalse);
       expect(store.lifecycleVersion, version);
     });
+
+    test('timeout stamps Timed out markers; ban stamps Banned', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m3', 'u2'));
+
+      store.applyModerationTimeout('u1', const Duration(seconds: 600));
+
+      expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
+      expect(store.tombstoneInfo('m1')?.timeoutDuration,
+          const Duration(seconds: 600));
+      expect(store.tombstoneInfo('m2')?.kind, ChatTombstoneKind.timedOut);
+      expect(store.isMessageDeleted('m3'), isFalse);
+
+      store.applyModerationBan('u2');
+      expect(store.tombstoneInfo('m3')?.kind, ChatTombstoneKind.banned);
+    });
+
+    test('clear_user_messages after timeout keeps the Timed out marker', () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyModerationTimeout('u1', const Duration(minutes: 10));
+      store.applyClearUserMessages('u1');
+
+      expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
+    });
+
+    test('clear_user_messages before timeout upgrades Deleted to Timed out',
+        () {
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyClearUserMessages('u1');
+      expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.deleted);
+
+      store.applyModerationTimeout('u1', const Duration(minutes: 10));
+      expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
+    });
   });
 
   group('lifecycle wiring', () {
     late void Function(ChatMessageDeleteEvent) emitDelete;
     late void Function(ChatClearUserMessagesEvent) emitPurge;
     late void Function(ChatClearEvent) emitClear;
-    late void Function(String, String) emitModerationDelete;
+    late void Function(ChannelModerateEvent) emitModerate;
 
     /// A fresh store whose factory captures the lifecycle callbacks the
     /// store hands to its EventSub service (chatConnectedAt-group pattern).
@@ -942,12 +979,12 @@ void main() {
       store = TwitchChatStore(
         authService: authService,
         eventSubFactory: (onChatMessage, onChatNotification, onMessageDelete,
-            onClearUserMessages, onChatClear, onModerationDelete,
+            onClearUserMessages, onChatClear, onChannelModerate,
             onStateChanged, onRevoked) {
           emitDelete = onMessageDelete;
           emitPurge = onClearUserMessages;
           emitClear = onChatClear;
-          emitModerationDelete = onModerationDelete;
+          emitModerate = onChannelModerate;
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
@@ -977,7 +1014,11 @@ void main() {
       await loginWithCapturedCallbacks();
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-      emitModerationDelete('m1', 'Cool_Mod');
+      emitModerate(const ChannelModerateEvent(
+        action: 'delete',
+        moderatorUserName: 'Cool_Mod',
+        delete: ModerateDeleteAction(messageId: 'm1'),
+      ));
 
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(store.deletedMessageActor('m1'), 'Cool_Mod');

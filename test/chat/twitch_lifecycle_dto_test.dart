@@ -71,6 +71,8 @@ void main() {
       expect(event.action, 'timeout');
       expect(event.moderatorUserName, 'quotrok');
       expect(event.delete, isNull);
+      expect(event.timeout?.userId, '141981764');
+      expect(event.timeout?.expiresAt, isNotNull);
     });
 
     test('delete without message_id throws', () {

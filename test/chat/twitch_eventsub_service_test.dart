@@ -120,8 +120,12 @@ void main() {
         onMessageDelete: deletes.add,
         onClearUserMessages: purges.add,
         onChatClear: clears.add,
-        onModerationDelete: (messageId, actor) =>
-            moderationDeletes.add((messageId, actor)),
+        onChannelModerate: (event) {
+          final delete = event.delete;
+          if (event.action == 'delete' && delete != null) {
+            moderationDeletes.add((delete.messageId, event.moderatorUserName));
+          }
+        },
         onStateChanged: states.add,
         onRevoked: revocations.add,
         client: client,

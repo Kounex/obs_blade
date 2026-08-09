@@ -482,12 +482,48 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void applyChannelModerate(ChannelModerateEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyChannelModerate',
+    );
+    try {
+      return super.applyChannelModerate(event);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void applyModerationDelete(String messageId, String actorName) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore.applyModerationDelete',
     );
     try {
       return super.applyModerationDelete(messageId, actorName);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void applyModerationTimeout(String targetUserId, Duration duration) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyModerationTimeout',
+    );
+    try {
+      return super.applyModerationTimeout(targetUserId, duration);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void applyModerationBan(String targetUserId) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyModerationBan',
+    );
+    try {
+      return super.applyModerationBan(targetUserId);
     } finally {
       _$_TwitchChatStoreActionController.endAction(_$actionInfo);
     }

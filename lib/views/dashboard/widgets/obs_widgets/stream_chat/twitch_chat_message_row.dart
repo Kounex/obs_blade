@@ -28,9 +28,12 @@ class TwitchChatMessageRow extends StatelessWidget {
   final Box settingsBox;
 
   /// Moderation tombstone — username/badges stay; the body renders its
-  /// original content dimmed (Twitch mod view) with a ` —Deleted` marker
-  /// (set by the window from the store's lifecycle state).
+  /// original content dimmed (Twitch mod view) with a kind-specific
+  /// marker (` —Deleted` / ` —Timed out (10m)` / ` —Banned`).
   final bool isDeleted;
+
+  /// Marker copy when [isDeleted] — defaults to ` —Deleted`.
+  final String deletedMarker;
 
   /// Display name of the moderator who deleted this message — arrives via
   /// `channel.moderate` when the token carries the moderation scope
@@ -69,6 +72,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     required this.event,
     required this.settingsBox,
     this.isDeleted = false,
+    this.deletedMarker = ' —Deleted',
     this.deletedActor,
     this.isDeletedExpanded = false,
     this.onDeletedTap,
@@ -414,7 +418,7 @@ class TwitchChatMessageRow extends StatelessWidget {
             if (this.isDeleted) ...[
               ...this._dimmedMessageSpans(context),
               TextSpan(
-                text: ' —Deleted',
+                text: this.deletedMarker,
                 style: TextStyle(
                   fontStyle: FontStyle.italic,
                   color: Theme.of(context).textTheme.bodySmall?.color,

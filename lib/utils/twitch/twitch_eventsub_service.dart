@@ -64,10 +64,9 @@ class TwitchEventSubService {
       onClearUserMessages;
   final void Function(ChatClearEvent event)? onChatClear;
 
-  /// `channel.moderate` delete actions — (messageId, moderator display
-  /// name). Optional; a null callback skips parsing for this type.
-  final void Function(String messageId, String moderatorName)?
-      onModerationDelete;
+  /// `channel.moderate` v2 — delete / timeout / ban (tombstone markers +
+  /// delete actor reveal). Optional; a null callback skips parsing.
+  final void Function(ChannelModerateEvent event)? onChannelModerate;
 
   final void Function(TwitchEventSubState state) onStateChanged;
 
@@ -110,7 +109,7 @@ class TwitchEventSubService {
     this.onMessageDelete,
     this.onClearUserMessages,
     this.onChatClear,
-    this.onModerationDelete,
+    this.onChannelModerate,
     required this.onStateChanged,
     required this.onRevoked,
     http.Client? client,
@@ -279,15 +278,13 @@ class TwitchEventSubService {
             );
           }
         case 'channel.moderate':
-          final callback = this.onModerationDelete;
+          final callback = this.onChannelModerate;
           if (callback != null) {
-            final event = ChannelModerateEvent.fromJson(
-              envelope.payload['event'] as Map<String, Object?>,
+            callback(
+              ChannelModerateEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
             );
-            final delete = event.delete;
-            if (event.action == 'delete' && delete != null) {
-              callback(delete.messageId, event.moderatorUserName);
-            }
           }
       }
     } catch (e) {

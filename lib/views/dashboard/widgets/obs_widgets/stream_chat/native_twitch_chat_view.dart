@@ -16,6 +16,7 @@ import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'chat_notice_chrome.dart';
 import 'chat_notice_visibility.dart';
+import 'chat_tombstone.dart';
 import 'dialogs/mod_action_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'twitch_chat_message_row.dart';
@@ -308,6 +309,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       this._store.deletedMessageActor(event.messageId);
                   final deleted =
                       this._store.isMessageDeleted(event.messageId);
+                  final tombstone = this._store.tombstoneInfo(event.messageId);
                   Color? accent;
                   if (index > 0) {
                     final prev = visibleItems[index - 1];
@@ -323,6 +325,9 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     event: event,
                     settingsBox: settingsBox,
                     isDeleted: deleted,
+                    deletedMarker: tombstone == null
+                        ? ' —Deleted'
+                        : chatTombstoneMarker(tombstone),
                     deletedActor: actor,
                     isDeletedExpanded:
                         this._expandedDeletedIds.contains(event.messageId),

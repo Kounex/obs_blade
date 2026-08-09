@@ -11,6 +11,7 @@ import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
@@ -24,6 +25,7 @@ import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tombstone.dart';
 
 part 'twitch_chat.g.dart';
 
@@ -54,6 +56,7 @@ class _ChannelBuffer {
   final List<ChatMessageEvent> messages;
   final Set<String> deletedMessageIds;
   final Map<String, String> deletedMessageActors;
+  final Map<String, ChatTombstoneInfo> tombstoneInfos;
   final List<ChatSystemNotice> systemNotices;
   final List<ChatNotificationNotice> chatNotifications;
   final int arrivalSeq;
@@ -62,6 +65,7 @@ class _ChannelBuffer {
     required this.messages,
     required this.deletedMessageIds,
     required this.deletedMessageActors,
+    required this.tombstoneInfos,
     required this.systemNotices,
     required this.chatNotifications,
     required this.arrivalSeq,
@@ -81,7 +85,7 @@ abstract class _TwitchChatStore with Store {
     void Function(ChatMessageDeleteEvent) onMessageDelete,
     void Function(ChatClearUserMessagesEvent) onClearUserMessages,
     void Function(ChatClearEvent) onChatClear,
-    void Function(String messageId, String actorName) onModerationDelete,
+    void Function(ChannelModerateEvent) onChannelModerate,
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
   ) _eventSubFactory;
@@ -112,7 +116,7 @@ abstract class _TwitchChatStore with Store {
       void Function(ChatMessageDeleteEvent),
       void Function(ChatClearUserMessagesEvent),
       void Function(ChatClearEvent),
-      void Function(String messageId, String actorName),
+      void Function(ChannelModerateEvent),
       void Function(TwitchEventSubState),
       void Function(String),
     )? eventSubFactory,
@@ -125,7 +129,7 @@ abstract class _TwitchChatStore with Store {
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onChatNotification, onMessageDelete,
-                    onClearUserMessages, onChatClear, onModerationDelete,
+                    onClearUserMessages, onChatClear, onChannelModerate,
                     onStateChanged, onRevoked) =>
                 TwitchEventSubService(
                   onChatMessage: onChatMessage,
@@ -133,7 +137,7 @@ abstract class _TwitchChatStore with Store {
                   onMessageDelete: onMessageDelete,
                   onClearUserMessages: onClearUserMessages,
                   onChatClear: onChatClear,
-                  onModerationDelete: onModerationDelete,
+                  onChannelModerate: onChannelModerate,
                   onStateChanged: onStateChanged,
                   onRevoked: onRevoked,
                 )),
@@ -242,6 +246,17 @@ abstract class _TwitchChatStore with Store {
   /// actions (only when the token carries the moderation scope bundle);
   /// purge and /clear ids never have one.
   final Map<String, String> _deletedMessageActors = <String, String>{};
+
+  /// Per-message tombstone kind (`deleted` / `timedOut` / `banned`).
+  /// Missing key with an id in [_deletedMessageIds] → treat as deleted.
+  final Map<String, ChatTombstoneInfo> _tombstoneInfos =
+      <String, ChatTombstoneInfo>{};
+
+  /// Pending purge reason keyed by target user id — set by
+  /// `channel.moderate` timeout/ban (or local mod actions) so a later
+  /// `clear_user_messages` stamps the right marker. Cleared on apply.
+  final Map<String, ChatTombstoneInfo> _pendingUserPurgeReasons =
+      <String, ChatTombstoneInfo>{};
 
   /// System banners merged into the scroll by arrival sequence — plain
   /// List, same [lifecycleVersion] reactivity story as [_deletedMessageIds].
@@ -500,7 +515,7 @@ abstract class _TwitchChatStore with Store {
         (event) => this.applyMessageDelete(event),
         (event) => this.applyClearUserMessages(event.targetUserId),
         (_) => this.applyChatClear(),
-        (messageId, actor) => this.applyModerationDelete(messageId, actor),
+        (event) => this.applyChannelModerate(event),
         this._onEventSubState,
         this._onEventSubRevoked,
       );
@@ -774,6 +789,7 @@ abstract class _TwitchChatStore with Store {
       messages: List.of(this.messages),
       deletedMessageIds: Set.of(this._deletedMessageIds),
       deletedMessageActors: Map.of(this._deletedMessageActors),
+      tombstoneInfos: Map.of(this._tombstoneInfos),
       systemNotices: List.of(this.systemNotices),
       chatNotifications: List.of(this.chatNotifications),
       arrivalSeq: this._arrivalSeq,
@@ -804,6 +820,8 @@ abstract class _TwitchChatStore with Store {
     this.messages.clear();
     this._deletedMessageIds.clear();
     this._deletedMessageActors.clear();
+    this._tombstoneInfos.clear();
+    this._pendingUserPurgeReasons.clear();
     this.systemNotices.clear();
     this.chatNotifications.clear();
     this._chatterColors.clear();
@@ -811,6 +829,7 @@ abstract class _TwitchChatStore with Store {
       this.messages.addAll(buffer.messages);
       this._deletedMessageIds.addAll(buffer.deletedMessageIds);
       this._deletedMessageActors.addAll(buffer.deletedMessageActors);
+      this._tombstoneInfos.addAll(buffer.tombstoneInfos);
       this.systemNotices.addAll(buffer.systemNotices);
       this.chatNotifications.addAll(buffer.chatNotifications);
       this._arrivalSeq = buffer.arrivalSeq;
@@ -970,7 +989,11 @@ abstract class _TwitchChatStore with Store {
     }
     this._moderationKeyIsNew(
         '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId');
-    this._purgeUserMessages(targetUserId);
+    final info = durationSeconds != null
+        ? ChatTombstoneInfo.timedOut(Duration(seconds: durationSeconds))
+        : const ChatTombstoneInfo.banned();
+    this._pendingUserPurgeReasons[targetUserId] = info;
+    this._purgeUserMessages(targetUserId, info);
     return true;
   }
 
@@ -1015,8 +1038,10 @@ abstract class _TwitchChatStore with Store {
     this.messages.add(event);
     this._arrivalSeq++;
     while (this.messages.length > kMaxMessages) {
-      this._deletedMessageIds.remove(this.messages.first.messageId);
-      this._deletedMessageActors.remove(this.messages.first.messageId);
+      final evicted = this.messages.first.messageId;
+      this._deletedMessageIds.remove(evicted);
+      this._deletedMessageActors.remove(evicted);
+      this._tombstoneInfos.remove(evicted);
       this.messages.removeAt(0);
     }
   }
@@ -1050,6 +1075,13 @@ abstract class _TwitchChatStore with Store {
   /// [lifecycleVersion]).
   bool isMessageDeleted(String messageId) =>
       this._deletedMessageIds.contains(messageId);
+
+  /// Tombstone kind/marker info for [messageId] — defaults to deleted
+  /// when the id is tombstoned without a richer reason.
+  ChatTombstoneInfo? tombstoneInfo(String messageId) {
+    if (!this._deletedMessageIds.contains(messageId)) return null;
+    return this._tombstoneInfos[messageId] ?? const ChatTombstoneInfo.deleted();
+  }
 
   /// Display name of the moderator who deleted [messageId] — null for
   /// purges, /clear, and unknown/untombstoned ids. Plain read (reactivity
@@ -1102,12 +1134,46 @@ abstract class _TwitchChatStore with Store {
     final visible = this
         .messages
         .any((message) => message.messageId == event.messageId);
-    if (visible && this._deletedMessageIds.add(event.messageId)) {
+    if (visible && this._stampTombstone(
+          event.messageId,
+          const ChatTombstoneInfo.deleted(),
+        )) {
       final actor = event.userName;
       if (actor != null) {
         this._deletedMessageActors[event.messageId] = actor;
       }
       this.lifecycleVersion++;
+    }
+  }
+
+  /// `channel.moderate` — delete (actor reveal), timeout / ban (marker).
+  @action
+  void applyChannelModerate(ChannelModerateEvent event) {
+    switch (event.action) {
+      case 'delete':
+      case 'shared_chat_delete':
+        final delete = event.delete ?? event.sharedChatDelete;
+        if (delete != null) {
+          this.applyModerationDelete(
+            delete.messageId,
+            event.moderatorUserName,
+          );
+        }
+      case 'timeout':
+      case 'shared_chat_timeout':
+        final timeout = event.timeout ?? event.sharedChatTimeout;
+        if (timeout != null) {
+          this.applyModerationTimeout(
+            timeout.userId,
+            timeoutDurationFromExpiresAt(timeout.expiresAt),
+          );
+        }
+      case 'ban':
+      case 'shared_chat_ban':
+        final ban = event.ban ?? event.sharedChatBan;
+        if (ban != null) {
+          this.applyModerationBan(ban.userId);
+        }
     }
   }
 
@@ -1126,10 +1192,37 @@ abstract class _TwitchChatStore with Store {
     final visible =
         this.messages.any((message) => message.messageId == messageId);
     if (!visible) return;
-    final tombstoned = this._deletedMessageIds.add(messageId);
+    final tombstoned =
+        this._stampTombstone(messageId, const ChatTombstoneInfo.deleted());
     final actorNew = this._deletedMessageActors[messageId] != actorName;
     if (actorNew) this._deletedMessageActors[messageId] = actorName;
     if (tombstoned || actorNew) this.lifecycleVersion++;
+  }
+
+  /// `channel.moderate` timeout — remember the duration and stamp any
+  /// already-purged rows; also purge if `clear_user_messages` hasn't
+  /// arrived yet.
+  @action
+  void applyModerationTimeout(String targetUserId, Duration duration) {
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:mod-timeout:$targetUserId')) {
+      return;
+    }
+    final info = ChatTombstoneInfo.timedOut(duration);
+    this._pendingUserPurgeReasons[targetUserId] = info;
+    this._purgeUserMessages(targetUserId, info);
+  }
+
+  /// `channel.moderate` ban — same correlation story as timeout.
+  @action
+  void applyModerationBan(String targetUserId) {
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:mod-ban:$targetUserId')) {
+      return;
+    }
+    const info = ChatTombstoneInfo.banned();
+    this._pendingUserPurgeReasons[targetUserId] = info;
+    this._purgeUserMessages(targetUserId, info);
   }
 
   @action
@@ -1138,21 +1231,35 @@ abstract class _TwitchChatStore with Store {
         '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId')) {
       return;
     }
-    this._purgeUserMessages(targetUserId);
+    final info = this._pendingUserPurgeReasons.remove(targetUserId) ??
+        const ChatTombstoneInfo.deleted();
+    this._purgeUserMessages(targetUserId, info);
   }
 
-  /// Tombstones every visible message of [targetUserId] — the shared body
-  /// of the EventSub purge and a local timeout/ban (the local path marks
-  /// the dedup key first so the EventSub echo is skipped).
-  void _purgeUserMessages(String targetUserId) {
+  /// Tombstones every visible message of [targetUserId] (or upgrades the
+  /// marker on already-tombstoned ones). Shared by EventSub purge and
+  /// local timeout/ban.
+  bool _purgeUserMessages(String targetUserId, ChatTombstoneInfo info) {
     var changed = false;
     for (final message in this.messages) {
       if (message.chatterUserId == targetUserId &&
-          this._deletedMessageIds.add(message.messageId)) {
+          this._stampTombstone(message.messageId, info)) {
         changed = true;
       }
     }
     if (changed) this.lifecycleVersion++;
+    return changed;
+  }
+
+  /// Adds/updates the tombstone for [messageId]. Returns true when the
+  /// id was newly tombstoned or the kind/duration changed.
+  bool _stampTombstone(String messageId, ChatTombstoneInfo info) {
+    final added = this._deletedMessageIds.add(messageId);
+    final previous = this._tombstoneInfos[messageId];
+    final infoChanged = previous?.kind != info.kind ||
+        previous?.timeoutDuration != info.timeoutDuration;
+    this._tombstoneInfos[messageId] = info;
+    return added || infoChanged;
   }
 
   /// `/clear` on an empty chat is a full no-op — nothing was deleted, so
@@ -1167,7 +1274,7 @@ abstract class _TwitchChatStore with Store {
       return;
     }
     for (final message in this.messages) {
-      this._deletedMessageIds.add(message.messageId);
+      this._stampTombstone(message.messageId, const ChatTombstoneInfo.deleted());
     }
     this.systemNotices.add(
       ChatSystemNotice(
@@ -1182,6 +1289,8 @@ abstract class _TwitchChatStore with Store {
   void _clearLifecycle() {
     this._deletedMessageActors.clear();
     this._deletedMessageIds.clear();
+    this._tombstoneInfos.clear();
+    this._pendingUserPurgeReasons.clear();
     this.systemNotices.clear();
     this.chatNotifications.clear();
     this._chatterColors.clear();
