@@ -12,6 +12,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart';
 
 /// Dock toggle for [ChatEmotePickerSheet] — styled like the chat bar's
 /// control containers, 44pt touch target. Refocuses the dock's field when
@@ -72,18 +73,27 @@ class ChatEmotePickerButton extends StatelessWidget {
             minWidth: kMinInteractiveDimensionCupertino,
             minHeight: kMinInteractiveDimensionCupertino,
           ),
-          decoration: BoxDecoration(
-            color:
-                StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
-              width: 0.0,
+          /// Bottom-align with the growing text field / send control — the
+          /// 44pt box is the hit target; chrome matches
+          /// [kNativeChatDockControlSize].
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            width: kNativeChatDockControlSize,
+            height: kNativeChatDockControlSize,
+            decoration: BoxDecoration(
+              color: StylingHelper.lightenDarkenColor(
+                  Theme.of(context).cardColor),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                width: 0.0,
+              ),
             ),
-          ),
-          child: const Icon(
-            CupertinoIcons.smiley,
-            size: 18.0,
+            alignment: Alignment.center,
+            child: const Icon(
+              CupertinoIcons.smiley,
+              size: 18.0,
+            ),
           ),
         ),
       ),
@@ -469,6 +479,9 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                                   ?.color,
                             ),
                     counterText: '',
+                    constraints: const BoxConstraints(
+                      minHeight: kNativeChatDockControlSize,
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
                       vertical: AppSpacing.sm,
@@ -488,10 +501,10 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                     minWidth: kMinInteractiveDimensionCupertino,
                     minHeight: kMinInteractiveDimensionCupertino,
                   ),
-                  alignment: Alignment.center,
+                  alignment: Alignment.bottomCenter,
                   child: Container(
                     key: const Key('emote-done-button'),
-                    height: 34.0,
+                    height: kNativeChatDockControlSize,
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
                     ),

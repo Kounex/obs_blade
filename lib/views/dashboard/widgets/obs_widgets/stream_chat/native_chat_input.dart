@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../utils/styling_helper.dart';
 
+/// Visual height of the send control (and the matching emote leading).
+/// Hit targets stay at [kMinInteractiveDimensionCupertino]; chrome is
+/// bottom-aligned inside them so it shares a baseline with the field.
+const double kNativeChatDockControlSize = 34.0;
+
 /// Chat input dock of the native chat window: pill text field + circular
 /// send button when the account may write ([canSend]), or a read-only hint
 /// strip when the token predates the write scope. Generic by params — no
@@ -189,6 +194,11 @@ class _NativeChatInputState extends State<NativeChatInput> {
                     /// The 500-cap is enforced silently (Twitch's limit) —
                     /// no counter chrome (design decision: option A)
                     counterText: '',
+                    /// Match [kNativeChatDockControlSize] on a single line so
+                    /// the field shares a baseline with send / emote.
+                    constraints: const BoxConstraints(
+                      minHeight: kNativeChatDockControlSize,
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
                       vertical: AppSpacing.sm,
@@ -229,10 +239,10 @@ class _NativeChatInputState extends State<NativeChatInput> {
                     minWidth: kMinInteractiveDimensionCupertino,
                     minHeight: kMinInteractiveDimensionCupertino,
                   ),
-                  alignment: Alignment.center,
+                  alignment: Alignment.bottomCenter,
                   child: Container(
-                    width: 34.0,
-                    height: 34.0,
+                    width: kNativeChatDockControlSize,
+                    height: kNativeChatDockControlSize,
                     decoration: BoxDecoration(
                       color: this.widget.accentColor,
                       shape: BoxShape.circle,
