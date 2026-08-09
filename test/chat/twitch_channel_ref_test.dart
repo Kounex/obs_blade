@@ -13,6 +13,9 @@ void main() {
         'moderator:read:followers',
         'moderator:manage:chat_messages',
         'moderator:manage:banned_users',
+        'moderator:manage:chat_settings',
+        'moderator:manage:shield_mode',
+        'moderator:manage:announcements',
       ]));
     });
   });

@@ -28,6 +28,8 @@ void main() {
             'user:read:follows user:read:subscriptions '
             'user:read:moderated_channels moderator:read:followers '
             'moderator:manage:chat_messages moderator:manage:banned_users '
+            'moderator:manage:chat_settings moderator:manage:shield_mode '
+            'moderator:manage:announcements '
             'moderator:read:blocked_terms moderator:read:chat_settings '
             'moderator:read:unban_requests moderator:read:banned_users '
             'moderator:read:chat_messages moderator:read:warnings '
