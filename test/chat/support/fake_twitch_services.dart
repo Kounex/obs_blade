@@ -18,6 +18,7 @@ import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_user_service.dart';
 
 class FakeTwitchAuthService extends TwitchAuthService {
   bool validateResult = true;
@@ -477,8 +478,6 @@ class FakeTwitchChannelService extends TwitchChannelService {
   }
 }
 
-/// Records delete/ban calls; [deleteThrows] / [banThrows] simulate the
-/// Helix failure paths (store must leave local state untouched).
 class FakeTwitchModerationService extends TwitchModerationService {
   Object? deleteThrows;
   Object? banThrows;
@@ -522,4 +521,47 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.lastBanDurationSeconds = durationSeconds;
     if (this.banThrows != null) throw this.banThrows!;
   }
+}
+
+class FakeTwitchUserService extends TwitchUserService {
+  TwitchUser? userResult;
+  DateTime? followResult;
+  DateTime? selfFollowResult;
+  TwitchSelfSubscription? selfSubResult;
+
+  int fetchUserCalls = 0;
+  String? lastUserId;
+
+  @override
+  Future<TwitchUser?> fetchUser({
+    required String accessToken,
+    required String userId,
+  }) async {
+    this.fetchUserCalls++;
+    this.lastUserId = userId;
+    return this.userResult;
+  }
+
+  @override
+  Future<DateTime?> followerSince({
+    required String accessToken,
+    required String broadcasterId,
+    required String userId,
+  }) async =>
+      this.followResult;
+
+  @override
+  Future<DateTime?> selfFollowedAt({
+    required String accessToken,
+    required String userId,
+    required String broadcasterId,
+  }) async =>
+      this.selfFollowResult;
+
+  @override
+  Future<TwitchSelfSubscription?> selfSubscription({
+    required String accessToken,
+    required String broadcasterId,
+  }) async =>
+      this.selfSubResult;
 }
