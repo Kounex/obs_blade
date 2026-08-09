@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
@@ -74,12 +73,12 @@ void main() {
         tester.widget<Text>(find.textContaining('Connected for')).data!;
     expect(after, isNot(equals(before)));
 
-    await tester.tap(find.byIcon(CupertinoIcons.clear_circled_solid));
+    await tester.tapAt(const Offset(400, 100));
     await tester.pumpAndSettle();
     expect(find.text('Twitch chat'), findsNothing);
   });
 
-  testWidgets('connection sheet dismisses via close button', (tester) async {
+  testWidgets('connection sheet dismisses on barrier tap', (tester) async {
     await tester.pumpWidget(
       wrap(
         buildWindow(
@@ -94,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Twitch chat'), findsOneWidget);
 
-    await tester.tap(find.byIcon(CupertinoIcons.clear_circled_solid));
+    await tester.tapAt(const Offset(400, 100));
     await tester.pumpAndSettle();
     expect(find.text('Twitch chat'), findsNothing);
   });
@@ -197,7 +196,7 @@ void main() {
 
     expect(after, isNot(equals(before)));
 
-    await tester.tap(find.byIcon(CupertinoIcons.clear_circled_solid));
+    await tester.tapAt(const Offset(400, 100));
     await tester.pumpAndSettle();
     expect(find.text('Twitch chat'), findsNothing);
   });

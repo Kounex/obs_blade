@@ -190,26 +190,28 @@ class ModalHandler {
       );
     }
 
-    return Material(
-      type: MaterialType.transparency,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(context).bottom +
-                (MediaQuery.viewInsetsOf(context).bottom > 0
-                    ? additionalBottomViewInsets
-                    : 0),
+    // Shrink-wrap to the sheet height. A full-route child makes Flutter's
+    // BottomSheet Material fill the screen and steal barrier taps even when
+    // transparent. heightFactor keeps width centering via Align.
+    // Bottom safe inset is applied by the caller (see showBaseBottomSheet).
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.viewInsetsOf(context).bottom +
+            (MediaQuery.viewInsetsOf(context).bottom > 0
+                ? additionalBottomViewInsets
+                : 0),
+      ),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1.0,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+            maxWidth: maxWidth,
           ),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: maxHeight,
-                maxWidth: maxWidth,
-              ),
-              child: child,
-            ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: child,
           ),
         ),
       ),

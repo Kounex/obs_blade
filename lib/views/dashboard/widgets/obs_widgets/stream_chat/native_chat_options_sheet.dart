@@ -32,7 +32,6 @@ class NativeChatOptionsButton extends StatelessWidget {
           context: context,
           barrierDismissible: true,
           enableDrag: true,
-          includeCloseButton: true,
           maxHeightFraction: 0.72,
           builder: (context) =>
               NativeChatOptionsSheet(chatType: this.chatType),

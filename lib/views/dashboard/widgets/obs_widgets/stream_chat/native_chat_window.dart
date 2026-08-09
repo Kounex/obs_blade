@@ -132,7 +132,6 @@ class NativeChatWindow extends StatelessWidget {
               context: context,
               barrierDismissible: true,
               enableDrag: true,
-              includeCloseButton: true,
               maxHeightFraction: 0.72,
               builder: (context) => _NativeChatConnectionSheet(
                 chatType: this.chatType,

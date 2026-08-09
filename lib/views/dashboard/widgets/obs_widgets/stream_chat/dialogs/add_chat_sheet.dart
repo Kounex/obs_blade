@@ -27,7 +27,6 @@ void showAddChatSheet(
       context: context,
       barrierDismissible: true,
       enableDrag: true,
-      includeCloseButton: true,
       maxHeightFraction: 0.72,
       builder: (context) => AddChatSheet(channelService: channelService),
     );
