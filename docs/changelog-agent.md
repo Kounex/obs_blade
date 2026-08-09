@@ -2,6 +2,19 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-09 — Native chat: user card (viewer profile sheet)
+
+- Spec/plan: `docs/superpowers/specs/2026-08-09-chat-user-card-design.md`,
+  `docs/superpowers/plans/2026-08-09-chat-user-card.md`. Tier M: one
+  implementer subagent for Tasks 1–5 + end review / gate fixes in-session.
+- Ships: tap username/badges → Twitch-like user card (avatar, Helix
+  created/follow/self-sub when scoped, LIVE buffer messages); long-press →
+  mod sheet; header “connected” opens merged self card + connection
+  footer. New scopes: `user:read:subscriptions`, `moderator:read:followers`
+  (silent upgrade; rows hide when missing).
+- Gates: `flutter test test/chat/` → 347 green; analyze 0 errors on
+  touched libs.
+
 ## 2026-08-09 — Native chat: appearance controls + nested options sheet
 
 - Options sheet is now a drill-in root (Appearance / Emotes / Badges) with
