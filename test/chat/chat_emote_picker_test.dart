@@ -114,31 +114,52 @@ void main() {
     expect(find.text('Third-party (7TV/BTTV)'), findsNothing);
   });
 
-  testWidgets('tapping a cell inserts code + space at the cursor',
+  testWidgets(
+      'tapping cells appends into the draft; Done writes back to the dock',
       (tester) async {
     seedCatalogs();
-    controller
-      ..text = 'hi there'
-      ..selection = const TextSelection.collapsed(offset: 2);
+    controller.text = 'hi ';
     await tester.pumpWidget(wrap(buildSheet()));
+
+    final draft = find.byKey(const Key('emote-draft-field'));
+    expect(tester.widget<TextField>(draft).controller!.text, 'hi ');
 
     await tester.tap(find.byType(Image).first);
     await tester.pump();
+    await tester.tap(find.byType(Image).at(1));
+    await tester.pump();
 
-    expect(controller.text, 'hiKappa  there');
-    expect(controller.selection.baseOffset, 8);
+    /// Dock stays unchanged until Done.
+    expect(controller.text, 'hi ');
+    expect(
+      tester.widget<TextField>(draft).controller!.text,
+      'hi Kappa PogChamp ',
+    );
+    expect(find.text('Emotes'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('emote-done-button')));
+    await tester.pumpAndSettle();
+
+    expect(controller.text, 'hi Kappa PogChamp ');
+    expect(find.text('Emotes'), findsNothing);
   });
 
-  testWidgets('appends at the end when the controller has no selection',
+  testWidgets('draft insert respects cursor; dock unchanged until Done',
       (tester) async {
     seedCatalogs();
-    controller.text = 'hi';
+    controller.text = 'hi there';
     await tester.pumpWidget(wrap(buildSheet()));
+
+    final draftController =
+        tester.widget<TextField>(find.byKey(const Key('emote-draft-field')))
+            .controller!;
+    draftController.selection = const TextSelection.collapsed(offset: 2);
 
     await tester.tap(find.byType(Image).first);
     await tester.pump();
 
-    expect(controller.text, 'hiKappa ');
+    expect(draftController.text, 'hiKappa  there');
+    expect(controller.text, 'hi there');
   });
 
   testWidgets(
@@ -204,7 +225,7 @@ void main() {
     expect(find.byType(Image), findsNothing);
   });
 
-  testWidgets('button opens the sheet and refocuses after an insert',
+  testWidgets('button opens the sheet and refocuses after Done',
       (tester) async {
     seedCatalogs();
 
@@ -230,6 +251,11 @@ void main() {
     expect(find.text('Emotes'), findsOneWidget);
 
     await tester.tap(find.byType(Image).first);
+    await tester.pump();
+    expect(controller.text, isEmpty);
+    expect(find.text('Emotes'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('emote-done-button')));
     await tester.pumpAndSettle();
     expect(controller.text, 'Kappa ');
     expect(focusNode.hasFocus, isTrue);

@@ -15,7 +15,7 @@ import 'package:obs_blade/utils/styling_helper.dart';
 
 /// Dock toggle for [ChatEmotePickerSheet] — styled like the chat bar's
 /// control containers, 44pt touch target. Refocuses the dock's field when
-/// the sheet closed after an insert (compose continuation), not on a bare
+/// the sheet closed after Done (compose continuation), not on a bare
 /// dismiss.
 class ChatEmotePickerButton extends StatelessWidget {
   final TextEditingController controller;
@@ -50,11 +50,12 @@ class ChatEmotePickerButton extends StatelessWidget {
           /// Drop the dock's keyboard first — the sheet rides above an
           /// open keyboard (ModalHandler viewInsets padding), and on
           /// small phones sheet + keyboard would overflow vertically.
-          /// After an insert the field is refocused below.
+          /// After Done the field is refocused below.
           this.focusNode.unfocus();
-          final inserted = await ModalHandler.showBaseBottomSheet<bool>(
+          final applied = await ModalHandler.showBaseBottomSheet<bool>(
             context: context,
             barrierDismissible: true,
+            maxHeightFraction: 0.85,
             builder: (context) => ChatEmotePickerSheet(
               controller: this.controller,
               canReadEmotes: this.canReadEmotes,
@@ -62,7 +63,7 @@ class ChatEmotePickerButton extends StatelessWidget {
               onRelogin: this.onRelogin,
             ),
           );
-          if ((inserted ?? false) && this.focusNode.canRequestFocus) {
+          if ((applied ?? false) && this.focusNode.canRequestFocus) {
             this.focusNode.requestFocus();
           }
         },
@@ -93,8 +94,8 @@ class ChatEmotePickerButton extends StatelessWidget {
 /// Emote picker sheet: first-party sections (Channel / Global) from
 /// [TwitchEmoteStore] plus the combined third-party section from
 /// [ThirdPartyEmoteStore] (only when the third-party toggle is on).
-/// Tapping an emote inserts `code + ' '` into [controller] at the cursor
-/// and pops with `true` so the caller can refocus the dock.
+/// Emote taps append into a local draft; [Done] writes it back to
+/// [controller] and pops with `true` so the caller can refocus the dock.
 class ChatEmotePickerSheet extends StatefulWidget {
   final TextEditingController controller;
   final bool canReadEmotes;
@@ -117,11 +118,24 @@ class ChatEmotePickerSheet extends StatefulWidget {
 
 class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
   String _query = '';
+  late final TextEditingController _draft;
+  late final FocusNode _draftFocus;
 
-  /// Set on the first insert — a second tap landing inside the sheet's exit
-  /// animation must not re-insert and re-pop (the double pop trips a
-  /// navigator assert in debug builds).
-  bool _inserted = false;
+  @override
+  void initState() {
+    super.initState();
+    final seed = this.widget.controller.text;
+    this._draft = TextEditingController(text: seed)
+      ..selection = TextSelection.collapsed(offset: seed.length);
+    this._draftFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    this._draft.dispose();
+    this._draftFocus.dispose();
+    super.dispose();
+  }
 
   /// (code, imageUrl) pairs of one section.
   List<(String, String)> _filtered(
@@ -134,38 +148,53 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
       ];
 
   void _insert(String code) {
-    if (_inserted) return;
-    _inserted = true;
-    final controller = this.widget.controller;
     final insert = '$code ';
-    final selection = controller.selection;
+    final selection = this._draft.selection;
     if (selection.isValid) {
-      controller
-        ..text = controller.text.replaceRange(
-          selection.start,
-          selection.end,
-          insert,
-        )
+      this._draft
+        ..text = this._draft.text.replaceRange(
+              selection.start,
+              selection.end,
+              insert,
+            )
         ..selection = TextSelection.collapsed(
           offset: selection.start + insert.length,
         );
     } else {
-      controller
-        ..text = controller.text + insert
+      this._draft
+        ..text = this._draft.text + insert
         ..selection =
-            TextSelection.collapsed(offset: controller.text.length);
+            TextSelection.collapsed(offset: this._draft.text.length);
     }
+  }
+
+  void _done() {
+    final text = this._draft.text;
+    this.widget.controller
+      ..text = text
+      ..selection = TextSelection.collapsed(offset: text.length);
     Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
     final inputBorder = OutlineInputBorder(
-      borderRadius: AppRadius.pill,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(
         color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
         width: 0.0,
       ),
+    );
+    final draftBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: BorderSide(
+        color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+        width: 0.0,
+      ),
+    );
+    final draftFocusedBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderSide: BorderSide(color: this.widget.accentColor),
     );
 
     return Padding(
@@ -174,14 +203,36 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Emotes',
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Emotes',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              Pressable(
+                haptic: true,
+                onTap: this._done,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: AppSpacing.xs,
+                  ),
+                  child: Text(
+                    'Done',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: this.widget.accentColor,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
-            onChanged: (value) =>
-                this.setState(() => this._query = value),
+            onChanged: (value) => this.setState(() => this._query = value),
             style: Theme.of(context).textTheme.bodyMedium,
             decoration: InputDecoration(
               isDense: true,
@@ -208,7 +259,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
           ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
-            height: 320.0,
+            height: 280.0,
             child: Observer(
               builder: (context) {
                 final emoteStore = GetIt.instance<TwitchEmoteStore>();
@@ -388,6 +439,78 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                 );
               },
             ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('emote-draft-field'),
+                  controller: this._draft,
+                  focusNode: this._draftFocus,
+                  minLines: 1,
+                  maxLines: 5,
+                  maxLength: 500,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => this._done(),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: StylingHelper.lightenDarkenColor(
+                        Theme.of(context).cardColor),
+                    hintText: 'Add emotes…',
+                    hintStyle:
+                        Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.color,
+                            ),
+                    counterText: '',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    border: draftBorder,
+                    enabledBorder: draftBorder,
+                    focusedBorder: draftFocusedBorder,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Pressable(
+                haptic: true,
+                onTap: this._done,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: kMinInteractiveDimensionCupertino,
+                    minHeight: kMinInteractiveDimensionCupertino,
+                  ),
+                  alignment: Alignment.center,
+                  child: Container(
+                    key: const Key('emote-done-button'),
+                    height: 34.0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
+                    decoration: BoxDecoration(
+                      color: this.widget.accentColor,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Done',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

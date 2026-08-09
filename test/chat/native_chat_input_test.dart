@@ -139,6 +139,13 @@ void main() {
     expect(tester.widget<TextField>(find.byType(TextField)).maxLength, 500);
   });
 
+  testWidgets('field grows up to five lines', (tester) async {
+    await tester.pumpWidget(wrap(buildInput()));
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.minLines, 1);
+    expect(field.maxLines, 5);
+  });
+
   testWidgets('uses an external controller and never disposes it',
       (tester) async {
     final controller = TextEditingController(text: 'hello');

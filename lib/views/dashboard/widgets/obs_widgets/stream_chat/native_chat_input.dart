@@ -155,6 +155,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
             const SizedBox(height: AppSpacing.xs),
           ],
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (this.widget.leading != null) ...[
                 this.widget.leading!,
@@ -165,6 +166,8 @@ class _NativeChatInputState extends State<NativeChatInput> {
                   controller: this._controller,
                   focusNode: this.widget.focusNode,
                   enabled: !this.widget.inFlight,
+                  minLines: 1,
+                  maxLines: 5,
                   maxLength: 500,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => this._submit(),
@@ -191,7 +194,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                       vertical: AppSpacing.sm,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: AppRadius.pill,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
                         color: Theme.of(context)
                             .dividerColor
@@ -200,7 +203,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: AppRadius.pill,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
                         color: Theme.of(context)
                             .dividerColor
@@ -209,7 +212,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: AppRadius.pill,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide(
                         color: this.widget.accentColor,
                       ),
