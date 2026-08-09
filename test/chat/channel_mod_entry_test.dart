@@ -227,23 +227,39 @@ void main() {
   });
 
   testWidgets(
-      'not moderating → no shield and no Mod card even if folded flag set',
+      'not moderating → no shield, no combined chip, no Mod card',
       (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn(scopes: const ['user:read:chat']);
+      store.user = const TwitchUser(
+        id: 'user-1',
+        login: 'verylongdisplayname',
+        displayName: 'VeryLongDisplayNameThatCannotFit',
+      );
       await settingsBox()
           .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
       await settingsBox()
           .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
     });
 
-    await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 800));
+    /// Same tight width that folds Mod for moderators — must stay gear-only.
+    await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 400));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(store.canModerateSelectedChannel, isFalse);
-    expect(shieldFinder(), findsNothing);
     expect(find.byType(ChannelModButton), findsNothing);
+    final options = tester.widget<NativeChatOptionsButton>(
+      find.byType(NativeChatOptionsButton),
+    );
+    expect(options.modFoldedIntoOptions, isFalse);
+    expect(
+      find.descendant(
+        of: find.byType(NativeChatOptionsButton),
+        matching: shieldFinder(),
+      ),
+      findsNothing,
+    );
 
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(
