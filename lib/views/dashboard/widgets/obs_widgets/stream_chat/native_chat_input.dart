@@ -133,7 +133,14 @@ class _NativeChatInputState extends State<NativeChatInput> {
             .unreachable;
 
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      /// Extra bottom so the gap under the row matches the gap above to
+      /// the pane divider (top [AppSpacing.sm]).
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.md,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

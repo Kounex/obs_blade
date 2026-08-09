@@ -451,68 +451,65 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('emote-draft-field'),
-                  controller: this._draft,
-                  focusNode: this._draftFocus,
-                  minLines: 1,
-                  maxLines: 5,
-                  maxLength: 500,
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => this._done(),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    filled: true,
-                    fillColor: StylingHelper.lightenDarkenColor(
-                        Theme.of(context).cardColor),
-                    hintText: 'Add emotes…',
-                    hintStyle:
-                        Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.color,
-                            ),
-                    counterText: '',
-                    constraints: const BoxConstraints(
-                      minHeight: kNativeChatDockControlSize,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const Key('emote-draft-field'),
+                    controller: this._draft,
+                    focusNode: this._draftFocus,
+                    minLines: 1,
+                    maxLines: 5,
+                    maxLength: 500,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => this._done(),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: StylingHelper.lightenDarkenColor(
+                          Theme.of(context).cardColor),
+                      hintText: 'Add emotes…',
+                      hintStyle:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.color,
+                              ),
+                      counterText: '',
+                      constraints: const BoxConstraints(
+                        minHeight: kNativeChatDockControlSize,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      border: draftBorder,
+                      enabledBorder: draftBorder,
+                      focusedBorder: draftFocusedBorder,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.sm,
-                    ),
-                    border: draftBorder,
-                    enabledBorder: draftBorder,
-                    focusedBorder: draftFocusedBorder,
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Pressable(
-                haptic: true,
-                onTap: this._done,
-                child: Container(
-                  constraints: const BoxConstraints(
-                    minWidth: kMinInteractiveDimensionCupertino,
-                    minHeight: kMinInteractiveDimensionCupertino,
-                  ),
-                  alignment: Alignment.bottomCenter,
+                const SizedBox(width: AppSpacing.sm),
+                Pressable(
+                  haptic: true,
+                  onTap: this._done,
                   child: Container(
                     key: const Key('emote-done-button'),
-                    height: kNativeChatDockControlSize,
+                    alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: kMinInteractiveDimensionCupertino,
                     ),
                     decoration: BoxDecoration(
                       color: this.widget.accentColor,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    alignment: Alignment.center,
                     child: Text(
                       'Done',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -522,8 +519,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
