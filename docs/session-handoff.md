@@ -3,8 +3,7 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-08-09** (multi-chat
-wave: Tasks 1–9 committed, Task 10 implemented-but-uncommitted, gates
-pending — see "Right now").
+wave shipped on `master`; dogfood open).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -53,53 +52,23 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Multi-chat wave in flight** — spec
+**Multi-chat wave shipped** on `master` (spec
 [`docs/superpowers/specs/2026-08-09-multi-chat-design.md`](superpowers/specs/2026-08-09-multi-chat-design.md),
-plan [`docs/superpowers/plans/2026-08-09-multi-chat.md`](superpowers/plans/2026-08-09-multi-chat.md)
-(11 tasks). Process: tier M, but the implementer subagent died mid-Task-10
-(secondary-model quota exhausted) → dropped to S in-session per tier
-policy.
+plan [`docs/superpowers/plans/2026-08-09-multi-chat.md`](superpowers/plans/2026-08-09-multi-chat.md);
+Tasks 1–10 + wrap-up docs). Process: started tier M, dropped to S mid-wave
+when secondary-model quota exhausted — see `changelog-agent.md` 2026-08-09
+entry. Gates green at wrap-up (331 chat/ws/persistence tests).
 
-**State on `master` (all LOCAL-ONLY, not pushed):**
+**Open: dogfood (user, real Twitch).** Fresh Twitch login first (consent
+now bundles 12 scopes — sanity-check readability), then spec §6:
 
-- Spec `855313a`, plan `cd3ed14`, Tasks 1–9: `6d719c9..7279de1`.
-- **Task 10 (mod action sheet) implemented, UNCOMMITTED** in the working
-  tree: modified `lib/stores/views/twitch_chat.dart`,
-  `native_twitch_chat_view.dart`, `twitch_chat_message_row.dart`,
-  `test/chat/support/fake_twitch_services.dart`,
-  `test/chat/twitch_chat_store_test.dart`; new
-  `lib/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/mod_action_sheet.dart`,
-  `test/chat/mod_action_sheet_test.dart`.
-- One compile error fixed post-mortem (`twitch_chat.dart` — `displayName`
-  is `String?`, now `?? this.user!.login` fallback). After the fix:
-  `flutter test test/chat/mod_action_sheet_test.dart
-  test/chat/twitch_chat_store_test.dart` → **84/84 green**.
-- Unrelated pre-existing churn: `android/.settings/org.eclipse.buildship.core.prefs`
-  modified — leave it out of the Task 10 commit.
-
-**Exact next steps (in order):**
-
-1. Sanity-review the uncommitted Task 10 diff (`git diff`) against plan
-   Task 10; check `twitch_chat.g.dart` — if MobX regen output is missing
-   or stale, run `flutter pub run build_runner build
-   --delete-conflicting-outputs`.
-2. Gates: `flutter analyze` (0 errors; ≤6 pre-existing warnings) and
-   `flutter test test/chat/ test/websocket/ test/persistence/` (all green).
-3. Commit Task 10:
-   `feat(chat): mod actions — delete/timeout/ban with local reconcile`.
-4. End-review pass over the wave diff (`git diff 0a2f510..HEAD`) against
-   the spec — tier-M reviewer remnant; secondary quota was exhausted, so
-   self-review in-session and note that in the changelog.
-5. Wrap-up docs: `docs/changelog-agent.md` wave entry + reset this
-   handoff file (multi-chat shipped, dogfood open).
-6. Push (handoff rule).
-
-**Dogfood (user, real Twitch — after push):** fresh Twitch login first
-(consent now bundles 12 scopes — sanity-check readability), then spec §6:
-search-add a channel, add from moderated/followed, switch + history
-restore, chat in another channel, delete/timeout/ban in a modded channel
-(tombstones/purges on both sides, no doubles), per-channel emote picker,
-pre-upgrade token degradation (search-only picker, no shields/actions).
+1. Search-add a channel; add from moderated/followed; duplicates disabled.
+2. Switch + history restore; badges/emotes correct per channel.
+3. Chat (send + receive) in another channel.
+4. In a modded channel: delete / timeout / ban — tombstones/purges both
+   sides, no doubles.
+5. Per-channel emote picker; deleted message with emotes renders dimmed.
+6. Pre-upgrade token: search-only picker, no shields/actions, CTA shown.
 
 **Previous wave:** actor-reveal dogfood (channel.moderate v2) **PASSED**
 (user-verified 08-08/09). Earlier open threads from the send-input wave

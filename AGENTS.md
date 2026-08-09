@@ -76,9 +76,12 @@ WebView; availability seam: `nativeChatAvailableFor` in
 `lib/models/enums/chat_engine.dart`). The native side renders in
 `NativeChatWindow` (optional `input` slot docks the generic, Twitch-free
 `NativeChatInput`; silent `user:write:chat` scope upgrade — pre-upgrade
-sessions get a read-only lock strip). Role badges + per-category toggles
-ship via `TwitchBadgeStore` + the native chat options sheet (per-platform
-seam); third-party (7TV/BTTV) emotes render inline via
+sessions get a read-only lock strip). **Multi-chat** lets users add other
+channels (search / moderated / followed), switch via the chat-bar dropdown
+(connect-on-switch, per-channel history), and run delete/timeout/ban in
+modded channels (local reconcile + EventSub echo dedup). Role badges +
+per-category toggles ship via `TwitchBadgeStore` + the native chat options
+sheet (per-platform seam); third-party (7TV/BTTV) emotes render inline via
 `ThirdPartyEmoteStore` (toggle in the native chat options sheet); an emote
 picker (first-party Get User Emotes via `TwitchEmoteStore` + the
 third-party catalogs) docks in the native input (`user:read:emotes` silent
@@ -88,8 +91,8 @@ tombstones (dimmed content + ` —Deleted` marker) + `/clear` banner,
 best-effort subs; a `channel.moderate` v2 sub (gated on the
 `kTwitchModerationScopes` 8-scope bundle, pre-upgrade tokens skip it)
 supplies the deleting mod for the tap reveal) and scrolled-up chat shows a
-pause chip. Next: availability/entitlement gate, replies/announce — see
-chat audit + handoff.
+pause chip. Next after dogfood: replies/announce, availability/entitlement
+gate — see chat audit + handoff.
 
 ## Docs index
 

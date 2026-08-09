@@ -2,6 +2,31 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-09 — Native chat: multi-chat (channel picker, switch, mod actions)
+
+- Spec/plan: `docs/superpowers/specs/2026-08-09-multi-chat-design.md`,
+  `docs/superpowers/plans/2026-08-09-multi-chat.md` (11 tasks). Started
+  tier M; implementer subagent died mid-Task-10 on secondary-model quota
+  exhaustion → dropped to S in-session (tier policy). End-review was the
+  same: self-review in-session rather than a secondary-model reviewer.
+- Ships: persisted native channel list + selected id (own channel pinned,
+  never stored); add-chat sheet (search / moderated / followed); chat-bar
+  channel dropdown (shield markers, long-press remove → own fallback);
+  connect-on-switch EventSub on the same websocket session with per-channel
+  in-memory history; per-broadcaster badge/emote catalogs; Helix delete /
+  timeout / ban via mod action sheet with local tombstone/purge + EventSub
+  echo dedup; four new scopes on the silent upgrade path with per-capability
+  degradation for pre-upgrade tokens.
+- Gates: `flutter analyze` 0 errors (info-level `unnecessary_underscores`
+  noise in tests only); `flutter test test/chat/ test/websocket/
+  test/persistence/` → 331/331 green. MobX regen for Task 10 actions
+  included in the mod-actions commit.
+- Deliberate refinements beyond spec: adding a channel switches to it;
+  removal is long-press on the dropdown row (spec §2).
+- Open: real-Twitch dogfood (spec §6 checklist in the handoff). Next chat
+  items after dogfood: replies/announce, then availability/entitlement
+  gate.
+
 ## 2026-08-08 — Process: tiered SDD (S default) after quota postmortem
 
 - The moderation-actor wave (below) burned a full 5h quota on ~300 LOC:
