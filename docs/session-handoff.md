@@ -2,8 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-09** (user card
-wave shipped on `master`; dogfood open).
+Read this first after `AGENTS.md`. Last reset: **2026-08-09 evening**
+(workstation wrap-up; dogfood OK; push `master`).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -52,32 +52,27 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**User card wave shipped** on `master` (spec
-[`docs/superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md),
-plan [`docs/superpowers/plans/2026-08-09-chat-user-card.md`](superpowers/plans/2026-08-09-chat-user-card.md)).
-Tier M: implementer subagent Tasks 1–5; gate fixes + docs in-session.
-Gates: `flutter test test/chat/` → **347** green.
+**Native chat dogfood wave closed** on workstation (user happy with
+current behavior). Shipped since last handoff baton:
 
-**Channel Mod actions sheet shipped** on `master` (`ChannelModSheet`:
-clear, chat modes, shield, announce; entry via shield button + native
-options sheet when moderating).
+- Channel Mod room sheet + adaptive bar entry; when shield doesn’t fit →
+  combined options chip + featured Mod card in Options (mod-gated only).
+  Spec: [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md).
+- Notice meta chips + announcement dual-rail chrome.
+  Spec: [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md).
+- EventSub `session_reconnect` open-before-close; mid-`selectChannel`
+  buffering so rows aren’t dropped.
+- Mod long-press hold wash without eating username/link taps (local wash).
+- Shared `NativeChatTextField`; InputDialog always uses validation
+  controller.
 
-**Open: dogfood (user).** Fresh Twitch login (consent now includes
-`user:read:subscriptions` + `moderator:read:followers`), then:
+**Next product threads** (no active WIP): replies; availability/entitlement
+gate; anything left on the multi-chat dogfood checklist in
+`changelog-agent.md`. Default process tier **S**.
 
-1. Tap a username/badges → card (avatar, created, follow/sub if scoped,
-   LIVE messages from buffer).
-2. Long-press a message in a modded channel → mod sheet; short tap body
-   does not; links still open.
-3. Header “connected” → your card + connection footer (uptime / logout).
-4. Pre-upgrade token: fact rows that need new scopes simply omit.
-
-**Also still open from earlier waves:** multi-chat dogfood checklist (see
-`changelog-agent.md`); replies; store cut; entitlement gate.
-
-**Process (tiers — S is the default):** see
-[`docs/superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md)
-§0.
+**Cursor note:** visual companion under Cursor needs
+`visual-companion-cursor` (foreground `--foreground` start) — bare
+Superpowers `start-server.sh` dies when the shell exits.
 
 ## Verify quickly
 
@@ -98,7 +93,8 @@ flutter test test/chat/ test/websocket/ test/persistence/
 |---|---|
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
-| [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card design |
-| [`superpowers/plans/2026-08-09-chat-user-card.md`](superpowers/plans/2026-08-09-chat-user-card.md) | User card plan |
+| [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
+| [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
+| [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |
 | [`chat-webview-audit.md`](chat-webview-audit.md) | Chat strategy |
 | [`private/`](private/) | Gitignored — monetization / backend |

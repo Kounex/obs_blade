@@ -2,6 +2,25 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-09 — Native chat: dogfood polish (evening wrap)
+
+- Mod overflow: combined gear|shield options chip + featured Mod card in
+  Options when the bar shield doesn’t fit; omitted when not moderating /
+  when shield is on the bar. Spec
+  `docs/superpowers/specs/2026-08-09-mod-overflow-options-design.md`.
+- Notice meta chips + announcement dual-rail chrome (typed EventSub
+  blocks). Spec
+  `docs/superpowers/specs/2026-08-09-chat-notice-meta-design.md`.
+- Delivery: EventSub `session_reconnect` open-before-close; buffer
+  mid-`selectChannel` arrivals by broadcaster.
+- Moderation UX: timer/`Listener` long-press with local hold wash so
+  username/link `Pressable`s survive; empty timeline includes notices;
+  announce accent no longer bleeds onto the next PRIVMSG.
+- Harness: shared `FakeSilentIrcSidecar`; chat view keyed by
+  `effectiveBroadcasterIdSafe`. InputDialog always uses
+  `CustomValidationTextEditingController`.
+- Dogfood: user signed off for the day. Next: replies / entitlement gate.
+
 ## 2026-08-09 — Native chat: IRC first-msg sidecar
 
 - Spec/plan: `docs/superpowers/specs/2026-08-09-irc-first-msg-sidecar-design.md`,
