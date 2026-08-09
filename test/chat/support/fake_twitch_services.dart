@@ -18,6 +18,7 @@ import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
+import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
 import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_user_service.dart';
 
@@ -119,6 +120,10 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
   /// When set, [switchChannel] throws this error (subscription failure on
   /// switch — the chat pane's error path).
   Object? switchChannelThrows;
+
+  /// Invoked inside [switchChannel] after bookkeeping — lets tests inject
+  /// EventSub arrivals mid-switch (buffer race).
+  Future<void> Function(String broadcasterId)? onSwitchChannel;
   bool disposeCalled = false;
 
   FakeTwitchEventSubService()
@@ -147,6 +152,8 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
     this.switchChannelCalls++;
     this.lastSwitchBroadcasterId = broadcasterId;
     if (this.switchChannelThrows != null) throw this.switchChannelThrows!;
+    final hook = this.onSwitchChannel;
+    if (hook != null) await hook(broadcasterId);
   }
 
   @override
@@ -711,4 +718,28 @@ class FakeTwitchUserService extends TwitchUserService {
     required String broadcasterId,
   }) async =>
       this.selfSubResult;
+}
+
+/// No-op IRC sidecar so widget/store tests never open a real Twitch WS
+/// (and never leave pending connect timers after dispose).
+class FakeSilentIrcSidecar extends TwitchIrcSidecar {
+  FakeSilentIrcSidecar()
+      : super(
+          onFirstMessage: (_) {},
+          channelFactory: (_) => throw StateError('IRC disabled in tests'),
+          sleep: (_) async {},
+        );
+
+  @override
+  Future<void> connect({
+    required String accessToken,
+    required String login,
+    required String channelLogin,
+  }) async {}
+
+  @override
+  Future<void> switchChannel(String channelLogin) async {}
+
+  @override
+  Future<void> dispose() async {}
 }

@@ -141,6 +141,7 @@ void main() {
       authService: FakeTwitchAuthService(),
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
           FakeTwitchEventSubService(),
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     badgeStore = TwitchBadgeStore(service: FakeTwitchBadgeService());
@@ -462,6 +463,123 @@ void main() {
       await tester.tap(find.textContaining('Hi chat'));
       expect(longPressed, isFalse);
     });
+
+    testWidgets('highlighted row paints the hold wash without extra padding',
+        (tester) async {
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          highlighted: true,
+        )),
+      );
+
+      final box = tester.widget<ColoredBox>(
+        find
+            .descendant(
+              of: find.byType(TwitchChatMessageRow),
+              matching: find.byType(ColoredBox),
+            )
+            .first,
+      );
+      expect(
+        box.color,
+        TwitchChatMessageRow.holdHighlightColor(
+          tester.element(find.byType(TwitchChatMessageRow)),
+        ),
+      );
+      /// Wash wraps existing padding only — no nested highlight inset.
+      expect(box.child, isA<Padding>());
+    });
+
+    testWidgets('hold wash starts after a short delay, cancels on lift',
+        (tester) async {
+      var pressed = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onMessageLongPress: () => pressed = true,
+        )),
+      );
+
+      Color? washColor() {
+        final boxes = tester.widgetList<ColoredBox>(
+          find.descendant(
+            of: find.byType(TwitchChatMessageRow),
+            matching: find.byType(ColoredBox),
+          ),
+        );
+        for (final box in boxes) {
+          if (box.color != Colors.transparent) return box.color;
+        }
+        return null;
+      }
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.textContaining('Hi chat')),
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(washColor(), isNull);
+      expect(pressed, isFalse);
+
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(
+        washColor(),
+        TwitchChatMessageRow.holdHighlightColor(
+          tester.element(find.byType(TwitchChatMessageRow)),
+        ),
+      );
+      expect(pressed, isFalse);
+
+      await gesture.up();
+      await tester.pump();
+      expect(washColor(), isNull);
+      expect(pressed, isFalse);
+    });
+
+    testWidgets('author tap still works when mod long-press is wired',
+        (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onAuthorTap: () => tapped = true,
+          onMessageLongPress: () {},
+        )),
+      );
+
+      await tester.tap(find.text('Viewer32'));
+      await tester.pump();
+      expect(tapped, isTrue);
+    });
+
+    testWidgets(
+        'slow author press still opens the card when mod long-press is wired',
+        (tester) async {
+      var tapped = false;
+      var longPressed = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onAuthorTap: () => tapped = true,
+          onMessageLongPress: () => longPressed = true,
+        )),
+      );
+
+      /// Real taps often outlast the hold-wash delay (~140ms). Parent
+      /// setState used to dispose [Pressable] here; local wash must not.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('Viewer32')),
+      );
+      await tester.pump(const Duration(milliseconds: 220));
+      await gesture.up();
+      await tester.pump();
+      expect(tapped, isTrue);
+      expect(longPressed, isFalse);
+    });
   });
 
   group('TwitchChatNotificationRow', () {
@@ -555,6 +673,83 @@ void main() {
       expect(find.textContaining('Hi chat'), findsOneWidget);
       expect(find.text('Emoter'), findsOneWidget);
       expect(find.textContaining('Hello Kappa'), findsOneWidget);
+    });
+
+    testWidgets('announce-only buffer leaves the waiting empty state',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.appendChatNotificationForTest(
+        ChatNotificationEvent(
+          broadcasterUserId: 'b1',
+          chatterUserId: '1',
+          chatterUserLogin: 'viewer32',
+          chatterUserName: 'Viewer32',
+          messageId: 'a1',
+          systemMessage: '',
+          noticeType: 'announcement',
+          announcement: const ChatNotificationAnnouncement(color: 'orange'),
+          message: const ChatMessageText(
+            text: 'orange hello',
+            fragments: [
+              ChatMessageFragment(type: 'text', text: 'orange hello'),
+            ],
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+
+      expect(find.text('Connected — waiting for messages…'), findsNothing);
+      expect(find.text('Announcement'), findsOneWidget);
+      expect(find.textContaining('orange hello'), findsOneWidget);
+    });
+
+    testWidgets('announce does not paint accent on the next PRIVMSG',
+        (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.appendChatNotificationForTest(
+        ChatNotificationEvent(
+          broadcasterUserId: 'b1',
+          chatterUserId: '1',
+          chatterUserLogin: 'viewer32',
+          chatterUserName: 'Viewer32',
+          messageId: 'a1',
+          systemMessage: '',
+          noticeType: 'announcement',
+          announcement: const ChatNotificationAnnouncement(color: 'orange'),
+          message: const ChatMessageText(
+            text: 'announce body',
+            fragments: [
+              ChatMessageFragment(type: 'text', text: 'announce body'),
+            ],
+          ),
+        ),
+      );
+      /// Same chatter as the announce, different message id (next PRIVMSG).
+      store.messages.add(
+        textEvent('1', 'Viewer32', 'plain follow-up').copyWith(
+          messageId: 'm2',
+          message: const ChatMessageText(
+            text: 'plain follow-up',
+            fragments: [
+              ChatMessageFragment(type: 'text', text: 'plain follow-up'),
+            ],
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+
+      final followUp = tester.widgetList<TwitchChatMessageRow>(
+        find.byType(TwitchChatMessageRow),
+      ).firstWhere((row) => !row.compact);
+      expect(followUp.accentBarColor, isNull);
+      expect(followUp.event.messageId, 'm2');
+      expect(find.textContaining('plain follow-up'), findsOneWidget);
+      /// Twin chat.message for the announce id is suppressed.
+      expect(find.textContaining('announce body'), findsOneWidget);
     });
 
     testWidgets('failed state offers a retry that reconnects', (tester) async {

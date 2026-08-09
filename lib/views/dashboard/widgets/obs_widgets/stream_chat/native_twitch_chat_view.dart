@@ -45,7 +45,23 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   /// logged out) never render, so the set stays session-bounded.
   final Set<String> _expandedDeletedIds = <String>{};
 
+  /// Message targeted by the open mod sheet (gray wash while sheet is up).
+  /// Hold wash during the press is local to the row — do not setState here
+  /// or username/link [Pressable]s get disposed mid-gesture.
+  String? _modTargetMessageId;
+
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
+
+  Future<void> _openModActions(ChatMessageEvent event) async {
+    this.setState(() => this._modTargetMessageId = event.messageId);
+    try {
+      await showModActionSheet(this.context, event);
+    } finally {
+      if (this.mounted) {
+        this.setState(() => this._modTargetMessageId = null);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -55,8 +71,9 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
 
   void _onScroll() {
     if (!this._scrollController.hasClients) return;
-    final atBottom = this._scrollController.position.pixels >=
-        this._scrollController.position.maxScrollExtent - 24.0;
+    final position = this._scrollController.position;
+    if (!position.hasContentDimensions) return;
+    final atBottom = position.pixels >= position.maxScrollExtent - 24.0;
     if (atBottom && !this._pinnedToBottom) {
       setState(() {
         this._pinnedToBottom = true;
@@ -67,13 +84,29 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
     }
   }
 
-  void _scrollToBottom() {
-    if (!this._scrollController.hasClients) return;
-    this._scrollController.animateTo(
-      this._scrollController.position.maxScrollExtent,
-      duration: AppMotion.fast,
-      curve: AppMotion.standard,
-    );
+  /// Instant pin to the newest message. Prefer [jumpTo] over [animateTo]
+  /// so we never race a post-frame stick-to-bottom jump (that combo could
+  /// leave pixels past [maxScrollExtent] and throw every rebuild).
+  void _jumpToBottomIfPossible() {
+    if (!this.mounted || !this._scrollController.hasClients) return;
+    final position = this._scrollController.position;
+    if (!position.hasContentDimensions) return;
+    final target = position.maxScrollExtent;
+    if ((position.pixels - target).abs() < 0.5) return;
+    position.jumpTo(target);
+  }
+
+  void _resumePinnedToBottom() {
+    setState(() {
+      this._pinnedToBottom = true;
+      this._unreadWhileScrolledUp = false;
+    });
+    this._jumpToBottomIfPossible();
+    /// Layout may still be settling after the chip disappears — one
+    /// follow-up jump is enough (not a per-rebuild schedule).
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      this._jumpToBottomIfPossible();
+    });
   }
 
   @override
@@ -87,7 +120,6 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
     return Observer(
       builder: (_) {
         final connection = this._store.chatConnection;
-        final messageCount = this._store.messages.length;
 
         /// Tracked so the visible list rebuilds once when third-party
         /// emote catalogs land (pop-in) — rows resolve tokens
@@ -97,15 +129,19 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         final emoteCatalogVersion =
             GetIt.instance<ThirdPartyEmoteStore>().catalogVersion;
 
-        /// Tracked so lifecycle changes (tombstones, /clear banner)
-        /// rebuild the list — the merge/membership reads below are
-        /// non-reactive plain data, so this version read is their only
-        /// rebuild trigger (same pattern as the emote pop-in above).
+        /// Tracked so lifecycle changes (tombstones, /clear banner,
+        /// chat notifications) rebuild the list — notices live in a
+        /// plain List, so this version read is their only trigger.
         // ignore: unused_local_variable
         final lifecycleVersion = this._store.lifecycleVersion;
 
+        /// Include notices — an announce-only buffer must not stick on
+        /// "waiting for messages…" until a PRIVMSG arrives.
+        final items = this._store.messagesWithNotices();
+        final timelineEmpty = items.isEmpty;
+
         if (connection == TwitchChatConnectionState.connecting &&
-            messageCount == 0) {
+            timelineEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -124,7 +160,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         }
 
         if (connection == TwitchChatConnectionState.failed &&
-            messageCount == 0) {
+            timelineEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -166,7 +202,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           );
         }
 
-        if (messageCount == 0) {
+        if (timelineEmpty) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
@@ -179,21 +215,22 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           );
         }
 
-        final items = this._store.messagesWithNotices();
 
-        /// New-frame bookkeeping: jump to the newest message while pinned,
-        /// flag the unread chip otherwise (post-frame — not during build).
-        /// Tombstones don't change the count (no unread flag); a /clear
-        /// banner does (it counts as new activity).
+        /// Stick to bottom only when the timeline length changes while
+        /// pinned — not on every Observer rebuild (lifecycle/emote/etc.),
+        /// which used to schedule a jump every frame and could race the
+        /// pause-chip resume path into an overscrolled, exception-spamming
+        /// state. Tombstones don't change the count (no jump / unread);
+        /// a /clear banner does.
+        final countChanged = items.length != this._lastRenderedCount;
         if (this._pinnedToBottom) {
           this._unreadWhileScrolledUp = false;
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            if (this._scrollController.hasClients) {
-              this._scrollController.jumpTo(
-                  this._scrollController.position.maxScrollExtent);
-            }
-          });
-        } else if (items.length != this._lastRenderedCount) {
+          if (countChanged) {
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              this._jumpToBottomIfPossible();
+            });
+          }
+        } else if (countChanged) {
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (this.mounted) {
               setState(() => this._unreadWhileScrolledUp = true);
@@ -233,16 +270,31 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
-            final visibleItems = items
-                .where(
-                  (item) =>
-                      item is! ChatNotificationNotice ||
-                      isChatNoticeTypeVisible(
-                        settingsBox,
-                        item.event.noticeType,
-                      ),
-                )
-                .toList();
+            /// Announce bodies render on the banner — drop the twin
+            /// `channel.chat.message` with the same id so it doesn't show
+            /// as a plain line under the notice.
+            final announceBodyIds = <String>{
+              for (final item in items)
+                if (item is ChatNotificationNotice &&
+                    chatNoticeChrome(item.event.noticeType).color ==
+                        ChatNoticeColorSeed.announce &&
+                    item.event.message != null &&
+                    item.event.message!.text.trim().isNotEmpty)
+                  item.event.messageId,
+            };
+            final visibleItems = items.where((item) {
+              if (item is ChatNotificationNotice) {
+                return isChatNoticeTypeVisible(
+                  settingsBox,
+                  item.event.noticeType,
+                );
+              }
+              if (item is ChatMessageEvent &&
+                  announceBodyIds.contains(item.messageId)) {
+                return false;
+              }
+              return true;
+            }).toList();
             final chatMessageIds = {
               for (final item in visibleItems)
                 if (item is ChatMessageEvent) item.messageId,
@@ -294,14 +346,28 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     final next = index + 1 < visibleItems.length
                         ? visibleItems[index + 1]
                         : null;
-                    final continues = next is ChatMessageEvent &&
+                    final announce = chatNoticeChrome(item.event.noticeType)
+                            .color ==
+                        ChatNoticeColorSeed.announce;
+                    /// Announce chrome is self-contained (Twitch doesn't
+                    /// paint the next PRIVMSG with announce rails). Other
+                    /// notices may continue the accent onto the chatter's
+                    /// following line.
+                    final continues = !announce &&
+                        next is ChatMessageEvent &&
                         next.chatterUserId == item.event.chatterUserId;
+                    final attachedOnNotice = item.event.message != null &&
+                        item.event.message!.text.trim().isNotEmpty;
                     return TwitchChatNotificationRow(
                       event: item.event,
                       settingsBox: settingsBox,
                       accentContinues: continues,
-                      showAttachedMessage:
-                          !chatMessageIds.contains(item.event.messageId),
+                      /// Prefer the body on the announce banner; hide the
+                      /// duplicate `channel.chat.message` with the same id
+                      /// below. Other notices keep the prior split layout.
+                      showAttachedMessage: announce
+                          ? attachedOnNotice
+                          : !chatMessageIds.contains(item.event.messageId),
                       mentionHexFor: mentionHexFor,
                       onAuthorTap: () => showChatUserCardSheet(
                         context,
@@ -324,9 +390,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     final prev = visibleItems[index - 1];
                     if (prev is ChatNotificationNotice &&
                         prev.event.chatterUserId == event.chatterUserId) {
-                      accent = chatNoticeAccentColor(
-                        chatNoticeChrome(prev.event.noticeType).color,
-                      );
+                      final seed =
+                          chatNoticeChrome(prev.event.noticeType).color;
+                      /// Announce → next chat must not keep an orange strip.
+                      if (seed != ChatNoticeColorSeed.announce) {
+                        accent = chatNoticeAccentColor(seed);
+                      }
                     }
                   }
 
@@ -359,10 +428,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       context,
                       userId: userId,
                     ),
+                    highlighted: this._modTargetMessageId == event.messageId,
                     onMessageLongPress:
                         deleted || !this._store.canModerateSelectedChannel
                             ? null
-                            : () => showModActionSheet(context, event),
+                            : () => this._openModActions(event),
                   );
                 },
               ),
@@ -374,13 +444,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   child: Center(
                     child: Pressable(
                       haptic: true,
-                      onTap: () {
-                        setState(() {
-                          this._pinnedToBottom = true;
-                          this._unreadWhileScrolledUp = false;
-                        });
-                        this._scrollToBottom();
-                      },
+                      onTap: this._resumePinnedToBottom,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md,

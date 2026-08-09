@@ -54,6 +54,7 @@ void main() {
       authService: FakeTwitchAuthService(),
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
           FakeTwitchEventSubService(),
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<DashboardStore>(DashboardStore());

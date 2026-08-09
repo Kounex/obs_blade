@@ -14,7 +14,6 @@ import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
-import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_mod_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_text_field.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
@@ -50,30 +49,6 @@ const _clearOnlyScopes = [
   'moderator:manage:chat_messages',
   'moderator:manage:banned_users',
 ];
-
-/// No-op IRC sidecar so widget tests never open a real Twitch WS
-/// (and never spin a reconnect loop).
-class _SilentIrcSidecar extends TwitchIrcSidecar {
-  _SilentIrcSidecar()
-      : super(
-          onFirstMessage: (_) {},
-          channelFactory: (_) => throw StateError('IRC disabled in tests'),
-          sleep: (_) async {},
-        );
-
-  @override
-  Future<void> connect({
-    required String accessToken,
-    required String login,
-    required String channelLogin,
-  }) async {}
-
-  @override
-  Future<void> switchChannel(String channelLogin) async {}
-
-  @override
-  Future<void> dispose() async {}
-}
 
 void main() {
   late Directory tempDir;
@@ -126,7 +101,7 @@ void main() {
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       moderationService: moderationService,
       channelService: FakeTwitchChannelService(),
-      ircSidecarFactory: (_) => _SilentIrcSidecar(),
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
     await store.startLogin();
     store.chatConnection = TwitchChatConnectionState.live;
@@ -290,10 +265,11 @@ void main() {
     await tapVisible(tester, find.text('Announce…'));
 
     expect(find.byIcon(CupertinoIcons.chevron_back), findsOneWidget);
-    expect(find.text('Send'), findsOneWidget);
+    expect(find.text('Announce'), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.paperplane_fill), findsOneWidget);
 
     /// Empty → Send disabled.
-    await tester.tap(find.text('Send'));
+    await tester.tap(find.byIcon(CupertinoIcons.paperplane_fill));
     await settle(tester);
     expect(moderationService.announceCalls, 0);
 
@@ -306,8 +282,9 @@ void main() {
       'Hello chat',
     );
     await tester.pump();
-    await tapVisible(tester, find.text('blue'));
-    await tapVisible(tester, find.text('Send'));
+    await tapVisible(tester, find.text('Blue'));
+    await tester.tap(find.byIcon(CupertinoIcons.paperplane_fill));
+    await settle(tester);
 
     expect(moderationService.announceCalls, 1);
     expect(moderationService.lastAnnounceMessage, 'Hello chat');

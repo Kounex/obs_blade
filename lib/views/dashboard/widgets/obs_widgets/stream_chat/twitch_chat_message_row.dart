@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -65,6 +68,11 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// Long-press handler for mod actions on a live message.
   final VoidCallback? onMessageLongPress;
 
+  /// Light gray wash while this row is the open mod-sheet target.
+  /// Hold wash during the press is painted locally by the long-press
+  /// listener so parent [setState] cannot dispose author/link taps.
+  final bool highlighted;
+
   /// Left accent when this row continues a prior chat notification
   /// (same chatter).
   final Color? accentBarColor;
@@ -92,6 +100,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.onAuthorTap,
     this.onMentionTap,
     this.onMessageLongPress,
+    this.highlighted = false,
     this.accentBarColor,
     this.mentionHexFor,
     this.compact = false,
@@ -99,6 +108,11 @@ class TwitchChatMessageRow extends StatelessWidget {
   });
 
   static const double _badgeSize = 18.0;
+
+  /// Soft on-surface wash — readable on dark/light chat without competing
+  /// with announce / first-message chrome.
+  static Color holdHighlightColor(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
 
   bool get _isFirstMessage =>
       this.event.isFirstMessage &&
@@ -169,9 +183,9 @@ class TwitchChatMessageRow extends StatelessWidget {
     }
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
-      child: GestureDetector(
+      child: Pressable(
+        haptic: true,
         onTap: this.onAuthorTap,
-        behavior: HitTestBehavior.translucent,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -229,9 +243,9 @@ class TwitchChatMessageRow extends StatelessWidget {
     }
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
-      child: GestureDetector(
+      child: Pressable(
+        haptic: true,
         onTap: () => this.onMentionTap!(mention.userId),
-        behavior: HitTestBehavior.translucent,
         child: Text(fragment.text, style: style),
       ),
     );
@@ -318,7 +332,8 @@ class TwitchChatMessageRow extends StatelessWidget {
         WidgetSpan(
           alignment: PlaceholderAlignment.baseline,
           baseline: TextBaseline.alphabetic,
-          child: GestureDetector(
+          child: Pressable(
+            haptic: true,
             onTap: () => confirmAndOpenChatLink(context, url),
             child: Text(url, style: linkStyle),
           ),
@@ -383,10 +398,10 @@ class TwitchChatMessageRow extends StatelessWidget {
                         else
                           WidgetSpan(
                             alignment: PlaceholderAlignment.middle,
-                            child: GestureDetector(
+                            child: Pressable(
+                              haptic: true,
                               onTap: () =>
                                   this.onMentionTap!(reply.parentUserId),
-                              behavior: HitTestBehavior.translucent,
                               child: Text(
                                 '@${reply.parentUserName}',
                                 style: Theme.of(context)
@@ -471,20 +486,39 @@ class TwitchChatMessageRow extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: this._spacing),
             child: chrome,
           );
-    return revealable
-        ? GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: this.onDeletedTap,
-            onLongPress: this.onMessageLongPress,
-            child: padded,
-          )
-        : this.onMessageLongPress != null
-            ? GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onLongPress: this.onMessageLongPress,
-                child: padded,
-              )
-            : padded;
+
+    Widget child;
+    if (this.onMessageLongPress != null) {
+      /// Timer-based long-press via [Listener] — no [GestureDetector]
+      /// long-press in the arena (that was eating author/link taps).
+      /// Hold wash is painted locally so the list parent never rebuilds
+      /// mid-press (that disposed [Pressable] and killed username taps).
+      child = _ModLongPressListener(
+        highlighted: this.highlighted,
+        onLongPress: this.onMessageLongPress!,
+        child: padded,
+      );
+    } else if (this.highlighted) {
+      child = ColoredBox(
+        color: holdHighlightColor(context),
+        child: padded,
+      );
+    } else {
+      child = padded;
+    }
+
+    if (revealable) {
+      child = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          this.onDeletedTap!();
+        },
+        child: child,
+      );
+    }
+
+    return child;
   }
 
   Text _richText(BuildContext context) => Text.rich(
@@ -519,4 +553,107 @@ class TwitchChatMessageRow extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Long-press + hold-wash without a competing [GestureDetector].
+///
+/// Uses pointer timers only so child [Pressable] taps (author / mention /
+/// links) are never delayed or cancelled by a parent long-press recognizer.
+/// Wash is local [setState] on a stable [ColoredBox] — never a parent list
+/// rebuild that would dispose nested tap targets mid-gesture.
+class _ModLongPressListener extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onLongPress;
+  final bool highlighted;
+
+  const _ModLongPressListener({
+    required this.child,
+    required this.onLongPress,
+    this.highlighted = false,
+  });
+
+  @override
+  State<_ModLongPressListener> createState() => _ModLongPressListenerState();
+}
+
+class _ModLongPressListenerState extends State<_ModLongPressListener> {
+  static const Duration _highlightDelay = Duration(milliseconds: 140);
+  static const Duration _longPressDelay = Duration(milliseconds: 500);
+  static const double _moveSlop = 18.0;
+
+  Timer? _highlightTimer;
+  Timer? _longPressTimer;
+  int? _activePointer;
+  Offset? _downPosition;
+  bool _holding = false;
+
+  @override
+  void dispose() {
+    this._highlightTimer?.cancel();
+    this._longPressTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setHolding(bool value) {
+    if (this._holding == value || !this.mounted) return;
+    this.setState(() => this._holding = value);
+  }
+
+  void _cancelPending() {
+    this._highlightTimer?.cancel();
+    this._longPressTimer?.cancel();
+    this._highlightTimer = null;
+    this._longPressTimer = null;
+    this._activePointer = null;
+    this._downPosition = null;
+    /// Sheet wash continues via [highlighted] after parent setState in
+    /// [onLongPress] (runs before this pointer-up in the event queue).
+    this._setHolding(false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wash = this._holding || this.widget.highlighted;
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (event) {
+        if (this._activePointer != null) return;
+        this._activePointer = event.pointer;
+        this._downPosition = event.localPosition;
+        this._highlightTimer = Timer(_highlightDelay, () {
+          this._setHolding(true);
+        });
+        this._longPressTimer = Timer(_longPressDelay, () {
+          this._highlightTimer?.cancel();
+          this._setHolding(true);
+          HapticFeedback.mediumImpact();
+          this.widget.onLongPress();
+        });
+      },
+      onPointerMove: (event) {
+        if (event.pointer != this._activePointer ||
+            this._downPosition == null) {
+          return;
+        }
+        if ((event.localPosition - this._downPosition!).distance >
+            _moveSlop) {
+          this._cancelPending();
+        }
+      },
+      onPointerUp: (event) {
+        if (event.pointer != this._activePointer) return;
+        this._cancelPending();
+      },
+      onPointerCancel: (event) {
+        if (event.pointer != this._activePointer) return;
+        this._cancelPending();
+      },
+      child: ColoredBox(
+        color: wash
+            ? TwitchChatMessageRow.holdHighlightColor(context)
+            : Colors.transparent,
+        child: this.widget.child,
+      ),
+    );
+  }
 }

@@ -303,7 +303,15 @@ class _StreamChatState extends State<StreamChat>
                       ),
                       selfUserId: loggedIn ? twitchStore.user?.id : null,
                       child: loggedIn
-                          ? const NativeTwitchChatView()
+                          ? NativeTwitchChatView(
+                              /// Fresh scroll state per channel — avoids
+                              /// carrying a stuck/overscrolled controller
+                              /// across multi-chat switches. Null-safe:
+                              /// logged-in shells may not have [user] yet.
+                              key: ValueKey(
+                                twitchStore.effectiveBroadcasterIdSafe,
+                              ),
+                            )
                           : StaggeredEntrance(
                               child: _ChatEmptyState(
                                 chatType: chatType,
