@@ -71,13 +71,172 @@ void main() {
 
     expect(event.noticeType, 'watch_streak');
     expect(event.watchStreak?.streakCount, 5);
+    expect(event.watchStreak?.channelPointsAwarded, 450);
     expect(chatNoticeChrome(event.noticeType).icon, ChatNoticeIconSeed.flame);
+    expect(chatNoticeMetaText(event), '450');
   });
 
   test('shared_chat_ notice types normalize for chrome', () {
     expect(
       chatNoticeChrome('shared_chat_sub_gift').color,
       ChatNoticeColorSeed.sub,
+    );
+  });
+
+  test('ChatNotificationEvent parses announcement.color', () {
+    final event = ChatNotificationEvent.fromJson({
+      'broadcaster_user_id': 'b1',
+      'chatter_user_id': 'c1',
+      'chatter_user_login': 'alice',
+      'chatter_user_name': 'Alice',
+      'message_id': 'a1',
+      'system_message': '',
+      'notice_type': 'announcement',
+      'color': '#00FF00',
+      'badges': <Object>[],
+      'message': {
+        'text': 'Hello chat',
+        'fragments': [
+          {'type': 'text', 'text': 'Hello chat'},
+        ],
+      },
+      'announcement': {'color': 'ORANGE'},
+    });
+
+    expect(event.announcement?.color, 'orange');
+    // Top-level color is the chatter name hex — not the highlight.
+    expect(event.color, '#00FF00');
+  });
+
+  test('shared_chat_announcement promotes announcement block', () {
+    final event = ChatNotificationEvent.fromJson({
+      'broadcaster_user_id': 'b1',
+      'chatter_user_id': 'c1',
+      'chatter_user_login': 'alice',
+      'chatter_user_name': 'Alice',
+      'message_id': 'a2',
+      'system_message': '',
+      'notice_type': 'shared_chat_announcement',
+      'shared_chat_announcement': {'color': 'blue'},
+    });
+    expect(event.announcement?.color, 'blue');
+  });
+
+  test('shared_chat_watch_streak promotes typed block for meta', () {
+    final event = ChatNotificationEvent.fromJson({
+      'broadcaster_user_id': 'b1',
+      'chatter_user_id': 'c1',
+      'chatter_user_login': 'alice',
+      'chatter_user_name': 'Alice',
+      'message_id': 'n2',
+      'system_message': 'Alice is currently on a 5-stream streak!',
+      'notice_type': 'shared_chat_watch_streak',
+      'shared_chat_watch_streak': {
+        'streak_count': 5,
+        'channel_points_awarded': 450,
+      },
+    });
+    expect(event.watchStreak?.channelPointsAwarded, 450);
+    expect(chatNoticeMetaText(event), '450');
+  });
+
+  test('chatNoticeMetaText covers raid / gifts / bits / charity', () {
+    ChatNotificationEvent base({
+      required String noticeType,
+      Map<String, Object?>? extra,
+    }) =>
+        ChatNotificationEvent.fromJson({
+          'broadcaster_user_id': 'b1',
+          'chatter_user_id': 'c1',
+          'chatter_user_login': 'alice',
+          'chatter_user_name': 'Alice',
+          'message_id': 'n3',
+          'system_message': 'Alice did a thing',
+          'notice_type': noticeType,
+          ...?extra,
+        });
+
+    expect(
+      chatNoticeMetaText(
+        base(
+          noticeType: 'raid',
+          extra: {
+            'raid': {'viewer_count': 1200, 'user_name': 'Other'},
+          },
+        ),
+      ),
+      '1.2k',
+    );
+    expect(
+      chatNoticeMetaText(
+        base(
+          noticeType: 'community_sub_gift',
+          extra: {
+            'community_sub_gift': {'total': 5, 'sub_plan': '1000'},
+          },
+        ),
+      ),
+      '5 · Tier 1',
+    );
+    expect(
+      chatNoticeMetaText(
+        base(
+          noticeType: 'sub_gift',
+          extra: {
+            'sub_gift': {'sub_plan': '2000', 'recipient_user_name': 'Bob'},
+          },
+        ),
+      ),
+      'Tier 2',
+    );
+    expect(
+      chatNoticeMetaText(
+        base(
+          noticeType: 'bits_badge_tier',
+          extra: {
+            'bits_badge_tier': {'tier': 1000},
+          },
+        ),
+      ),
+      '1k',
+    );
+    expect(
+      chatNoticeMetaText(
+        base(
+          noticeType: 'charity_donation',
+          extra: {
+            'charity_donation': {
+              'charity_name': 'Example',
+              'amount': {
+                'value': 500,
+                'decimal_places': 2,
+                'currency': 'USD',
+              },
+            },
+          },
+        ),
+      ),
+      '5.00 USD',
+    );
+    expect(
+      chatNoticeMetaText(
+        base(noticeType: 'sub'),
+      ),
+      isNull,
+    );
+    expect(
+      chatNoticeMetaText(
+        base(
+          noticeType: 'watch_streak',
+          extra: {
+            'watch_streak': {
+              'streak_count': 3,
+              'channel_points_awarded': 0,
+            },
+          },
+        ),
+      ),
+      isNull,
     );
   });
 
