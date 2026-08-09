@@ -1198,6 +1198,39 @@ void main() {
       expect(store.messages.map((message) => message.messageId), ['m9']);
     });
 
+    test('selectChannel keeps mid-switch arrivals for both channels', () async {
+      await login();
+      await store.addChannel(ref('chan-1'));
+      await store.selectChannel(null);
+      store.appendChatMessageForTest(
+        chatMessage('own-1', 'u1').copyWith(broadcasterUserId: 'user-1'),
+      );
+
+      eventSubService.onSwitchChannel = (broadcasterId) async {
+        expect(broadcasterId, 'chan-1');
+        store.appendChatMessageForTest(
+          chatMessage('new-live', 'u2').copyWith(broadcasterUserId: 'chan-1'),
+        );
+        store.appendChatMessageForTest(
+          chatMessage('old-late', 'u3').copyWith(broadcasterUserId: 'user-1'),
+        );
+      };
+
+      await store.selectChannel('chan-1');
+      eventSubService.onSwitchChannel = null;
+      expect(
+        store.messages.map((message) => message.messageId),
+        ['new-live'],
+      );
+      expect(store.chatConnection, isNot(TwitchChatConnectionState.failed));
+
+      await store.selectChannel(null);
+      expect(
+        store.messages.map((message) => message.messageId),
+        ['own-1', 'old-late'],
+      );
+    });
+
     test('the chat bar shows connecting during a switch, live after', () async {
       await login();
       expect(store.chatConnection, TwitchChatConnectionState.live);

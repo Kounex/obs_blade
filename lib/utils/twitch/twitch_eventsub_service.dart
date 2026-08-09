@@ -76,6 +76,11 @@ class TwitchEventSubService {
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _socketSub;
+
+  /// Opened at `session_reconnect`'s url while [_channel] stays up until
+  /// the pending socket receives `session_welcome` (Twitch open-before-close).
+  WebSocketChannel? _pendingReconnectChannel;
+  StreamSubscription<dynamic>? _pendingReconnectSub;
   Timer? _watchdog;
 
   String? _accessToken;
@@ -244,11 +249,21 @@ class TwitchEventSubService {
         case 'channel.chat.notification':
           final callback = this.onChatNotification;
           if (callback != null) {
-            callback(
-              ChatNotificationEvent.fromJson(
-                envelope.payload['event'] as Map<String, Object?>,
-              ),
+            final eventJson = Map<String, dynamic>.from(
+              envelope.payload['event'] as Map,
             );
+            final event = ChatNotificationEvent.fromJson(
+              Map<String, Object?>.from(eventJson),
+            );
+            if (event.noticeType == 'announcement' ||
+                event.noticeType == 'shared_chat_announcement') {
+              GeneralHelper.advLog(
+                'Twitch announcement color='
+                '${event.announcement?.color ?? 'null'} '
+                'raw=${eventJson['announcement'] ?? eventJson['shared_chat_announcement']}',
+              );
+            }
+            callback(event);
           }
         case 'channel.chat.message_delete':
           final callback = this.onMessageDelete;
@@ -299,8 +314,101 @@ class TwitchEventSubService {
       this._handleDisconnect();
       return;
     }
-    this._closeSocket();
-    this._openSocket(Uri.parse(reconnectUrl));
+    this._openPendingReconnect(Uri.parse(reconnectUrl));
+  }
+
+  /// Twitch: connect to [reconnect_url] first, keep the old socket until
+  /// the new one welcomes, then close the old one. Closing first creates
+  /// a delivery hole for chat notifications.
+  void _openPendingReconnect(Uri uri) {
+    if (this._disposed) return;
+    this._cancelPendingReconnect();
+    this.onStateChanged(TwitchEventSubState.reconnecting);
+
+    final pending = this._channelFactory(uri);
+    this._pendingReconnectChannel = pending;
+    this._pendingReconnectSub = pending.stream.listen(
+      this._handlePendingReconnectRaw,
+      onDone: this._onPendingReconnectClosed,
+      onError: (_) => this._onPendingReconnectClosed(),
+      cancelOnError: true,
+    );
+  }
+
+  void _handlePendingReconnectRaw(dynamic raw) {
+    this._resetWatchdog();
+
+    /// After promote, this subscription is the active socket — same path.
+    if (this._pendingReconnectChannel == null) {
+      this._handleRawMessage(raw);
+      return;
+    }
+
+    Map<String, dynamic> decoded;
+    try {
+      decoded = json.decode(raw as String) as Map<String, dynamic>;
+    } catch (e) {
+      GeneralHelper.advLog('Twitch EventSub: undecodable reconnect — $e');
+      return;
+    }
+
+    final envelope = EventSubEnvelope.fromJson(decoded);
+    if (envelope.metadata.messageType != 'session_welcome') {
+      /// Keepalives / stray traffic before welcome — ignore; old socket
+      /// still carries live notifications.
+      return;
+    }
+
+    this._promotePendingReconnect();
+    unawaited(this._handleWelcome(envelope.payload));
+  }
+
+  void _promotePendingReconnect() {
+    final pending = this._pendingReconnectChannel;
+    final pendingSub = this._pendingReconnectSub;
+    this._pendingReconnectChannel = null;
+    this._pendingReconnectSub = null;
+    if (pending == null || pendingSub == null) return;
+
+    /// Retire the old socket without scheduling a hard reconnect.
+    final oldSub = this._socketSub;
+    final oldChannel = this._channel;
+    this._socketSub = null;
+    this._channel = null;
+    unawaited(oldSub?.cancel());
+    try {
+      oldChannel?.sink.close();
+    } catch (_) {}
+
+    this._channel = pending;
+    this._socketSub = pendingSub;
+  }
+
+  void _onPendingReconnectClosed() {
+    if (this._disposed) return;
+    if (this._pendingReconnectChannel == null) {
+      /// Promoted socket closed — normal disconnect path.
+      this._handleDisconnect();
+      return;
+    }
+    /// Pending died before welcome — keep the old socket; log and drop
+    /// the attempt (Twitch will reconnect again or keepalive continues).
+    GeneralHelper.advLog(
+      'Twitch EventSub: pending session_reconnect socket closed before welcome',
+    );
+    this._cancelPendingReconnect();
+    this.onStateChanged(TwitchEventSubState.connected);
+  }
+
+  void _cancelPendingReconnect() {
+    final sub = this._pendingReconnectSub;
+    final channel = this._pendingReconnectChannel;
+    this._pendingReconnectSub = null;
+    this._pendingReconnectChannel = null;
+    unawaited(sub?.cancel());
+    try {
+      channel?.sink.close();
+    } catch (_) {}
   }
 
   void _handleRevocation(Map<String, Object?> payload) {
@@ -460,6 +568,7 @@ class TwitchEventSubService {
 
   void _closeSocket() {
     this._watchdog?.cancel();
+    this._cancelPendingReconnect();
     this._socketSub?.cancel();
     this._socketSub = null;
     this._channel?.sink.close();

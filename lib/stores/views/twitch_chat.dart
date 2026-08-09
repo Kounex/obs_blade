@@ -61,9 +61,9 @@ class _ChannelBuffer {
   final Map<String, ChatTombstoneInfo> tombstoneInfos;
   final List<ChatSystemNotice> systemNotices;
   final List<ChatNotificationNotice> chatNotifications;
-  final int arrivalSeq;
+  int arrivalSeq;
 
-  const _ChannelBuffer({
+  _ChannelBuffer({
     required this.messages,
     required this.deletedMessageIds,
     required this.deletedMessageActors,
@@ -72,6 +72,16 @@ class _ChannelBuffer {
     required this.chatNotifications,
     required this.arrivalSeq,
   });
+
+  factory _ChannelBuffer.empty() => _ChannelBuffer(
+        messages: <ChatMessageEvent>[],
+        deletedMessageIds: <String>{},
+        deletedMessageActors: <String, String>{},
+        tombstoneInfos: <String, ChatTombstoneInfo>{},
+        systemNotices: <ChatSystemNotice>[],
+        chatNotifications: <ChatNotificationNotice>[],
+        arrivalSeq: 0,
+      );
 }
 
 /// Owns the native Twitch chat: device-flow login state, the persisted
@@ -243,6 +253,11 @@ abstract class _TwitchChatStore with Store {
   /// Per-channel chat snapshots keyed by broadcaster id (in-memory only).
   final Map<String, _ChannelBuffer> _channelBuffers =
       <String, _ChannelBuffer>{};
+
+  /// True while [selectChannel] awaits EventSub resubscribe + buffer
+  /// restore — [_appendMessage] routes into [_channelBuffers] by
+  /// `broadcasterUserId` so the clear cannot drop mid-switch arrivals.
+  bool _channelSwitchInProgress = false;
 
   /// Recently applied moderation keys (deletes / purges / clears) — local
   /// mod actions tombstone immediately and the EventSub echo must not
@@ -900,57 +915,68 @@ abstract class _TwitchChatStore with Store {
       chatNotifications: List.of(this.chatNotifications),
       arrivalSeq: this._arrivalSeq,
     );
+    /// Ensure the destination has a buffer so mid-switch EventSub rows
+    /// for the new channel aren't wiped by the post-switch clear.
+    this._channelBuffers.putIfAbsent(
+      newBroadcasterId,
+      _ChannelBuffer.empty,
+    );
 
     this.selectedChannelId = id;
     this._persistSelectedChannel();
 
     this.chatConnection = TwitchChatConnectionState.connecting;
-    if (this._eventSub != null) {
-      try {
-        await this._eventSub!.switchChannel(newBroadcasterId);
-        await this._ircSidecar?.switchChannel(this.effectiveBroadcasterLogin);
-      } catch (e) {
-        /// Switch failed — the pane shows the error state (with retry);
-        /// the selection is kept (no silent revert, spec §5).
-        GeneralHelper.advLog('Twitch channel switch failed — $e');
-        this.chatConnection = TwitchChatConnectionState.failed;
-        this.chatError = 'Could not switch to that channel';
-        this.chatConnectedAt = null;
-      }
-    } else {
-      /// No live session to move — a full connect targets the effective
-      /// broadcaster.
-      await this.connectChat();
-    }
-
-    this._pendingFirstMessageIds.clear();
-    final buffer = this._channelBuffers[newBroadcasterId];
-    this.messages.clear();
-    this._deletedMessageIds.clear();
-    this._deletedMessageActors.clear();
-    this._tombstoneInfos.clear();
-    this._pendingUserPurgeReasons.clear();
-    this.systemNotices.clear();
-    this.chatNotifications.clear();
-    this._chatterColors.clear();
-    if (buffer != null) {
-      this.messages.addAll(buffer.messages);
-      this._deletedMessageIds.addAll(buffer.deletedMessageIds);
-      this._deletedMessageActors.addAll(buffer.deletedMessageActors);
-      this._tombstoneInfos.addAll(buffer.tombstoneInfos);
-      this.systemNotices.addAll(buffer.systemNotices);
-      this.chatNotifications.addAll(buffer.chatNotifications);
-      this._arrivalSeq = buffer.arrivalSeq;
-      for (final message in buffer.messages) {
-        final color = message.color;
-        if (color != null && color.isNotEmpty) {
-          this._chatterColors[message.chatterUserId] = color;
+    this._channelSwitchInProgress = true;
+    try {
+      if (this._eventSub != null) {
+        try {
+          await this._eventSub!.switchChannel(newBroadcasterId);
+          await this._ircSidecar?.switchChannel(this.effectiveBroadcasterLogin);
+        } catch (e) {
+          /// Switch failed — the pane shows the error state (with retry);
+          /// the selection is kept (no silent revert, spec §5).
+          GeneralHelper.advLog('Twitch channel switch failed — $e');
+          this.chatConnection = TwitchChatConnectionState.failed;
+          this.chatError = 'Could not switch to that channel';
+          this.chatConnectedAt = null;
         }
+      } else {
+        /// No live session to move — a full connect targets the effective
+        /// broadcaster.
+        await this.connectChat();
       }
-    } else {
-      this._arrivalSeq = 0;
+
+      this._pendingFirstMessageIds.clear();
+      final buffer = this._channelBuffers[newBroadcasterId];
+      this.messages.clear();
+      this._deletedMessageIds.clear();
+      this._deletedMessageActors.clear();
+      this._tombstoneInfos.clear();
+      this._pendingUserPurgeReasons.clear();
+      this.systemNotices.clear();
+      this.chatNotifications.clear();
+      this._chatterColors.clear();
+      if (buffer != null) {
+        this.messages.addAll(buffer.messages);
+        this._deletedMessageIds.addAll(buffer.deletedMessageIds);
+        this._deletedMessageActors.addAll(buffer.deletedMessageActors);
+        this._tombstoneInfos.addAll(buffer.tombstoneInfos);
+        this.systemNotices.addAll(buffer.systemNotices);
+        this.chatNotifications.addAll(buffer.chatNotifications);
+        this._arrivalSeq = buffer.arrivalSeq;
+        for (final message in buffer.messages) {
+          final color = message.color;
+          if (color != null && color.isNotEmpty) {
+            this._chatterColors[message.chatterUserId] = color;
+          }
+        }
+      } else {
+        this._arrivalSeq = 0;
+      }
+      this.lifecycleVersion++;
+    } finally {
+      this._channelSwitchInProgress = false;
     }
-    this.lifecycleVersion++;
 
     try {
       final token = await this._validAccessToken();
@@ -1299,6 +1325,10 @@ abstract class _TwitchChatStore with Store {
 
   @action
   void _appendMessage(ChatMessageEvent event) {
+    if (this._channelSwitchInProgress) {
+      this._bufferMessageDuringSwitch(event);
+      return;
+    }
     final color = event.color;
     if (color != null && color.isNotEmpty) {
       this._chatterColors[event.chatterUserId] = color;
@@ -1320,6 +1350,33 @@ abstract class _TwitchChatStore with Store {
       this._deletedMessageActors.remove(evicted);
       this._tombstoneInfos.remove(evicted);
       this.messages.removeAt(0);
+    }
+  }
+
+  /// Route a live EventSub row into the matching channel buffer so the
+  /// post-[selectChannel] clear/restore cannot drop it.
+  void _bufferMessageDuringSwitch(ChatMessageEvent event) {
+    final buffer = this._channelBuffers.putIfAbsent(
+      event.broadcasterUserId,
+      _ChannelBuffer.empty,
+    );
+    final fromPending =
+        this._pendingFirstMessageIds.remove(event.messageId);
+    final isFirst = event.isFirstMessage ||
+        fromPending ||
+        event.messageType == 'user_intro';
+    buffer.messages.add(
+      isFirst && !event.isFirstMessage
+          ? event.copyWith(isFirstMessage: true)
+          : event,
+    );
+    buffer.arrivalSeq++;
+    while (buffer.messages.length > kMaxMessages) {
+      final evicted = buffer.messages.first.messageId;
+      buffer.deletedMessageIds.remove(evicted);
+      buffer.deletedMessageActors.remove(evicted);
+      buffer.tombstoneInfos.remove(evicted);
+      buffer.messages.removeAt(0);
     }
   }
 
@@ -1359,13 +1416,45 @@ abstract class _TwitchChatStore with Store {
 
   @action
   void _appendNotification(ChatNotificationEvent event) {
+    if (this._channelSwitchInProgress) {
+      final buffer = this._channelBuffers.putIfAbsent(
+        event.broadcasterUserId,
+        _ChannelBuffer.empty,
+      );
+      final existing = buffer.chatNotifications.indexWhere(
+        (notice) => notice.event.messageId == event.messageId,
+      );
+      if (existing >= 0) {
+        buffer.chatNotifications[existing] = ChatNotificationNotice(
+          afterSeq: buffer.chatNotifications[existing].afterSeq,
+          event: event,
+        );
+      } else {
+        buffer.chatNotifications.add(
+          ChatNotificationNotice(afterSeq: buffer.arrivalSeq, event: event),
+        );
+      }
+      return;
+    }
     final color = event.color;
     if (color != null && color.isNotEmpty) {
       this._chatterColors[event.chatterUserId] = color;
     }
-    this.chatNotifications.add(
-      ChatNotificationNotice(afterSeq: this._arrivalSeq, event: event),
+    /// Replace a prior notice with the same message id (shared-chat
+    /// promote / reconnect) so announcement color updates land.
+    final existing = this.chatNotifications.indexWhere(
+      (notice) => notice.event.messageId == event.messageId,
     );
+    if (existing >= 0) {
+      this.chatNotifications[existing] = ChatNotificationNotice(
+        afterSeq: this.chatNotifications[existing].afterSeq,
+        event: event,
+      );
+    } else {
+      this.chatNotifications.add(
+        ChatNotificationNotice(afterSeq: this._arrivalSeq, event: event),
+      );
+    }
     this.lifecycleVersion++;
   }
 

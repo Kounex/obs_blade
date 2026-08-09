@@ -228,22 +228,29 @@ void main() {
     expect(revocations.single, startsWith('subscription_failed:'));
   });
 
-  test('session_reconnect opens a new socket at the reconnect url without resubscribing', () async {
+  test('session_reconnect opens new socket before closing old; no resubscribe',
+      () async {
     var subscriptionPosts = 0;
     final client = MockClient((request) async {
       subscriptionPosts++;
       return http.Response(
-          json.encode({'data': [{'id': 'sub-1'}]}), 202);
+          json.encode({
+            'data': [
+              {'id': 'sub-1'}
+            ]
+          }),
+          202);
     });
 
     final service = serviceWith(client);
     await service.connect(
         accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
-    channels.single.incoming.add(welcome('session-1'));
+    final old = channels.single;
+    old.incoming.add(welcome('session-1'));
     await pumpEventQueue();
     expect(subscriptionPosts, 5);
 
-    channels.single.incoming.add(json.encode({
+    old.incoming.add(json.encode({
       'metadata': {
         'message_id': 'r1',
         'message_type': 'session_reconnect',
@@ -259,11 +266,20 @@ void main() {
     }));
     await pumpEventQueue();
     expect(channels, hasLength(2));
+    /// Twitch contract: keep the old socket until the new one welcomes.
+    expect(old.closeCalled, isFalse);
 
-    /// Resumed session: same session id → no new subscription
+    /// Traffic on the retiring socket still lands during the handoff.
+    old.incoming.add(notification());
+    await pumpEventQueue();
+    expect(messages, hasLength(1));
+
+    /// Resumed session: same session id → no new subscription; old closes.
     channels[1].incoming.add(welcome('session-1'));
     await pumpEventQueue();
     expect(subscriptionPosts, 5);
+    expect(old.closeCalled, isTrue);
+    expect(states, contains(TwitchEventSubState.connected));
   });
 
   test('socket close triggers a reconnect via the injected sleep', () async {
