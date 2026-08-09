@@ -79,7 +79,9 @@ WebView; availability seam: `nativeChatAvailableFor` in
 sessions get a read-only lock strip). **Multi-chat** lets users add other
 channels (search / moderated / followed), switch via the chat-bar dropdown
 (connect-on-switch, per-channel history), and run delete/timeout/ban in
-modded channels (local reconcile + EventSub echo dedup). Role badges +
+modded channels (local reconcile + EventSub echo dedup). Room-level mod
+actions (`ChannelModSheet` — clear, chat modes, shield, announce) ship via
+the chat-bar shield button and native options sheet when moderating. Role badges +
 per-category toggles ship via `TwitchBadgeStore` + the native chat options
 sheet (per-platform seam); third-party (7TV/BTTV) emotes render inline via
 `ThirdPartyEmoteStore` (toggle in the native chat options sheet); an emote
@@ -91,8 +93,8 @@ tombstones (dimmed content + ` —Deleted` marker) + `/clear` banner,
 best-effort subs; a `channel.moderate` v2 sub (gated on the
 `kTwitchModerationScopes` 8-scope bundle, pre-upgrade tokens skip it)
 supplies the deleting mod for the tap reveal) and scrolled-up chat shows a
-pause chip. Next after dogfood: replies/announce, availability/entitlement
-gate — see chat audit + handoff.
+pause chip. Next after dogfood: replies, availability/entitlement gate —
+see chat audit + handoff.
 
 ## Docs index
 

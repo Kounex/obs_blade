@@ -58,6 +58,10 @@ plan [`docs/superpowers/plans/2026-08-09-chat-user-card.md`](superpowers/plans/2
 Tier M: implementer subagent Tasks 1–5; gate fixes + docs in-session.
 Gates: `flutter test test/chat/` → **347** green.
 
+**Channel Mod actions sheet shipped** on `master` (`ChannelModSheet`:
+clear, chat modes, shield, announce; entry via shield button + native
+options sheet when moderating).
+
 **Open: dogfood (user).** Fresh Twitch login (consent now includes
 `user:read:subscriptions` + `moderator:read:followers`), then:
 
@@ -69,7 +73,7 @@ Gates: `flutter test test/chat/` → **347** green.
 4. Pre-upgrade token: fact rows that need new scopes simply omit.
 
 **Also still open from earlier waves:** multi-chat dogfood checklist (see
-`changelog-agent.md`); replies/announce; store cut; entitlement gate.
+`changelog-agent.md`); replies; store cut; entitlement gate.
 
 **Process (tiers — S is the default):** see
 [`docs/superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md)
