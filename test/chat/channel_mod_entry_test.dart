@@ -96,7 +96,7 @@ void main() {
   });
 
   testWidgets(
-      'wide cluster with short name shows shield and options when moderating',
+      'wide cluster with short name shows shield and gear-only options',
       (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn();
@@ -113,11 +113,14 @@ void main() {
     expect(store.canModerateSelectedChannel, isTrue);
     expect(shieldFinder(), findsOneWidget);
     expect(find.byType(ChannelModButton), findsOneWidget);
-    expect(find.byType(NativeChatOptionsButton), findsOneWidget);
+    final options = tester.widget<NativeChatOptionsButton>(
+      find.byType(NativeChatOptionsButton),
+    );
+    expect(options.modFoldedIntoOptions, isFalse);
   });
 
   testWidgets(
-      'narrow cluster hides shield but keeps options when moderating',
+      'narrow cluster folds Mod into a combined options chip',
       (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn();
@@ -139,30 +142,70 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(store.canModerateSelectedChannel, isTrue);
-    expect(shieldFinder(), findsNothing);
     expect(find.byType(ChannelModButton), findsNothing);
-    expect(find.byType(NativeChatOptionsButton), findsOneWidget);
+    final options = tester.widget<NativeChatOptionsButton>(
+      find.byType(NativeChatOptionsButton),
+    );
+    expect(options.modFoldedIntoOptions, isTrue);
+    /// Combined chip: gear + shield inside the options control.
+    expect(
+      find.descendant(
+        of: find.byType(NativeChatOptionsButton),
+        matching: find.byIcon(CupertinoIcons.slider_horizontal_3),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(NativeChatOptionsButton),
+        matching: shieldFinder(),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
-      'options sheet shows Moderation… when moderating; tap opens ChannelModSheet',
+      'folded options sheet shows featured Mod card; tap opens ChannelModSheet',
       (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn();
     });
 
     await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
+      wrap(const NativeChatOptionsSheet(
+        chatType: ChatType.Twitch,
+        modFoldedIntoOptions: true,
+      )),
     );
     await tester.pump();
 
-    expect(find.text('Moderation…'), findsOneWidget);
+    expect(find.text('Channel moderation'), findsOneWidget);
+    expect(find.text('Moderation…'), findsNothing);
 
-    await tester.tap(find.text('Moderation…'));
+    await tester.tap(find.text('Channel moderation'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(ChannelModSheet), findsOneWidget);
+  });
+
+  testWidgets(
+      'options sheet omits Mod when shield is on the bar (not folded)',
+      (tester) async {
+    await tester.runAsync(() async {
+      await seedLoggedIn();
+    });
+
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(
+        chatType: ChatType.Twitch,
+        modFoldedIntoOptions: false,
+      )),
+    );
+    await tester.pump();
+
+    expect(find.text('Channel moderation'), findsNothing);
+    expect(find.text('Moderation…'), findsNothing);
   });
 
   testWidgets('WebView engine shows no shield', (tester) async {
@@ -184,7 +227,8 @@ void main() {
   });
 
   testWidgets(
-      'not moderating → no shield and no Moderation… row', (tester) async {
+      'not moderating → no shield and no Mod card even if folded flag set',
+      (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn(scopes: const ['user:read:chat']);
       await settingsBox()
@@ -202,9 +246,13 @@ void main() {
     expect(find.byType(ChannelModButton), findsNothing);
 
     await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
+      wrap(const NativeChatOptionsSheet(
+        chatType: ChatType.Twitch,
+        modFoldedIntoOptions: true,
+      )),
     );
     await tester.pump();
+    expect(find.text('Channel moderation'), findsNothing);
     expect(find.text('Moderation…'), findsNothing);
   });
 }

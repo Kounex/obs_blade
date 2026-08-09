@@ -21,15 +21,27 @@ export 'native_chat_appearance.dart' show NativeChatAppearance;
 
 /// Entry point in the native-mode chat bar: opens [NativeChatOptionsSheet].
 /// Styled like the bar's other control containers, 44pt touch target.
+///
+/// When [modFoldedIntoOptions] is true (shield did not fit on the bar),
+/// renders a wider gear + shield chip and the sheet shows the featured
+/// Mod card.
 class NativeChatOptionsButton extends StatelessWidget {
   final ChatType chatType;
 
-  const NativeChatOptionsButton({super.key, required this.chatType});
+  /// Mod shield is hidden for space — this control carries options + mod.
+  final bool modFoldedIntoOptions;
+
+  const NativeChatOptionsButton({
+    super.key,
+    required this.chatType,
+    this.modFoldedIntoOptions = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final folded = this.modFoldedIntoOptions;
     return Tooltip(
-      message: 'Native chat options',
+      message: folded ? 'Chat options & moderation' : 'Native chat options',
       child: Pressable(
         haptic: true,
         onTap: () => ModalHandler.showBaseBottomSheet(
@@ -37,14 +49,21 @@ class NativeChatOptionsButton extends StatelessWidget {
           barrierDismissible: true,
           enableDrag: true,
           maxHeightFraction: 0.72,
-          builder: (context) =>
-              NativeChatOptionsSheet(chatType: this.chatType),
+          builder: (context) => NativeChatOptionsSheet(
+            chatType: this.chatType,
+            modFoldedIntoOptions: folded,
+          ),
         ),
         child: Container(
-          constraints: const BoxConstraints(
-            minWidth: kMinInteractiveDimensionCupertino,
+          constraints: BoxConstraints(
+            minWidth: folded
+                ? kMinInteractiveDimensionCupertino + 28.0
+                : kMinInteractiveDimensionCupertino,
             minHeight: kMinInteractiveDimensionCupertino,
           ),
+          padding: folded
+              ? const EdgeInsets.symmetric(horizontal: AppSpacing.sm)
+              : EdgeInsets.zero,
           decoration: BoxDecoration(
             color:
                 StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
@@ -54,10 +73,37 @@ class NativeChatOptionsButton extends StatelessWidget {
               width: 0.0,
             ),
           ),
-          child: const Icon(
-            CupertinoIcons.slider_horizontal_3,
-            size: 18.0,
-          ),
+          child: folded
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      CupertinoIcons.slider_horizontal_3,
+                      size: 18.0,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
+                      child: Container(
+                        width: 1.0,
+                        height: 16.0,
+                        color: Theme.of(context)
+                            .dividerColor
+                            .withValues(alpha: 0.55),
+                      ),
+                    ),
+                    const Icon(
+                      CupertinoIcons.shield,
+                      size: 18.0,
+                    ),
+                  ],
+                )
+              : const Icon(
+                  CupertinoIcons.slider_horizontal_3,
+                  size: 18.0,
+                ),
         ),
       ),
     );
@@ -73,7 +119,15 @@ enum _OptionsPage { root, appearance, emotes, badges, eventMessages }
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
-  const NativeChatOptionsSheet({super.key, required this.chatType});
+  /// When true, show the featured Mod card (shield folded into Options).
+  /// When false, Moderation is not listed — the bar shield is the entry.
+  final bool modFoldedIntoOptions;
+
+  const NativeChatOptionsSheet({
+    super.key,
+    required this.chatType,
+    this.modFoldedIntoOptions = false,
+  });
 
   /// (label, settings key) pairs in display order
   static const List<(String, SettingsKeys)> twitchBadgeRows = [
@@ -151,6 +205,8 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           style: nativeChatSheetTitleStyle(context),
         ),
         const SizedBox(height: AppSpacing.sm),
+        if (this._isTwitch && this.widget.modFoldedIntoOptions)
+          this._foldedModCard(context),
         this._navRow(
           context,
           label: 'Appearance',
@@ -176,27 +232,88 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             subtitle: 'Subs, raids, streaks, and similar system lines',
             onTap: () => this._open(_OptionsPage.eventMessages),
           ),
-          if (GetIt.instance.isRegistered<TwitchChatStore>())
-            Observer(
-              builder: (_) {
-                final store = GetIt.instance<TwitchChatStore>();
-                // Touch observables so the row rebuilds on channel / auth change.
-                store.authState;
-                store.selectedChannelId;
-                store.moderatedChannelIds.length;
-                if (!store.canModerateSelectedChannel) {
-                  return const SizedBox.shrink();
-                }
-                return this._navRow(
-                  context,
-                  label: 'Moderation…',
-                  subtitle: 'Clear chat, modes, Shield Mode, announce',
-                  onTap: () => showChannelModSheet(context),
-                );
-              },
-            ),
         ],
       ],
+    );
+  }
+
+  /// Featured Mod entry when the bar shield is folded into Options.
+  Widget _foldedModCard(BuildContext context) {
+    if (!GetIt.instance.isRegistered<TwitchChatStore>()) {
+      return const SizedBox.shrink();
+    }
+    return Observer(
+      builder: (_) {
+        final store = GetIt.instance<TwitchChatStore>();
+        store.authState;
+        store.selectedChannelId;
+        store.moderatedChannelIds.length;
+        if (!store.canModerateSelectedChannel) {
+          return const SizedBox.shrink();
+        }
+        final scheme = Theme.of(context).colorScheme;
+        final tint = scheme.secondary.withValues(alpha: 0.14);
+        final border = scheme.secondary.withValues(alpha: 0.45);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Pressable(
+            haptic: true,
+            onTap: () => showChannelModSheet(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: tint,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: border),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36.0,
+                    height: 36.0,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: scheme.secondary.withValues(alpha: 0.22),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Icon(
+                      CupertinoIcons.shield,
+                      size: 18.0,
+                      color: scheme.secondary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Channel moderation',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2.0),
+                        Text(
+                          'Clear · modes · Shield · announce',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    CupertinoIcons.chevron_forward,
+                    size: 16.0,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

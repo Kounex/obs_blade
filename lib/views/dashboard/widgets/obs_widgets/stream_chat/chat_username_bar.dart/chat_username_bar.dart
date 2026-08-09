@@ -141,8 +141,8 @@ class ChatUsernameBar extends StatelessWidget {
 }
 
 /// Native right cluster: optional Mod shield (fit-gated) + options + account.
-/// Shield shows only when [TwitchChatStore.canModerateSelectedChannel] and
-/// options + shield + account preferred widths fit without overflow.
+/// Shield shows when moderating and the cluster fits; otherwise Mod folds
+/// into a combined options chip ([NativeChatOptionsButton.modFoldedIntoOptions]).
 class _NativeRightCluster extends StatelessWidget {
   final ChatType chatType;
 
@@ -168,6 +168,7 @@ class _NativeRightCluster extends StatelessWidget {
                   maxWidth: constraints.maxWidth,
                   accountWidth: accountWidth,
                 );
+            final modFoldedIntoOptions = canMod && !showShield;
 
             return Row(
               mainAxisSize: MainAxisSize.min,
@@ -176,7 +177,10 @@ class _NativeRightCluster extends StatelessWidget {
                   const ChannelModButton(),
                   const SizedBox(width: AppSpacing.sm),
                 ],
-                NativeChatOptionsButton(chatType: this.chatType),
+                NativeChatOptionsButton(
+                  chatType: this.chatType,
+                  modFoldedIntoOptions: modFoldedIntoOptions,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 const Flexible(child: TwitchAccountControl()),
               ],
