@@ -7,6 +7,23 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_n
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
+/// Body copy under the notice author — strips a leading chatter name from
+/// Twitch's `system_message` and capitalizes the first letter (Twitch UI:
+/// name on one line, "Subscribed for…" on the next).
+@visibleForTesting
+String chatNoticeBodyText({
+  required String systemMessage,
+  required String chatterUserName,
+}) {
+  var body = systemMessage;
+  if (body.startsWith(chatterUserName)) {
+    body = body.substring(chatterUserName.length);
+  }
+  body = body.trim();
+  if (body.isEmpty) return body;
+  return '${body[0].toUpperCase()}${body.substring(1)}';
+}
+
 /// One `channel.chat.notification` banner — icon, system copy, optional
 /// attached chat line, left accent bar (Twitch-style).
 class TwitchChatNotificationRow extends StatelessWidget {
@@ -40,7 +57,11 @@ class TwitchChatNotificationRow extends StatelessWidget {
     final icon = chatNoticeIconData(chrome.icon);
     final textSize = NativeChatAppearance.textSize(this.settingsBox);
     final spacing = NativeChatAppearance.messageSpacing(this.settingsBox);
-    final authorColor = _parseColor(this.event.color) ?? accent;
+    final authorColor = this._parseColor(this.event.color) ?? accent;
+    final body = chatNoticeBodyText(
+      systemMessage: this.event.systemMessage,
+      chatterUserName: this.event.chatterUserName,
+    );
 
     final attached = this.event.message;
     final showAttached = this.showAttachedMessage &&
@@ -78,7 +99,27 @@ class TwitchChatNotificationRow extends StatelessWidget {
                         child: Icon(icon, size: 14.0, color: accent),
                       ),
                       Expanded(
-                        child: this._systemText(textSize, authorColor),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              this.event.chatterUserName,
+                              style: TextStyle(
+                                color: authorColor,
+                                fontWeight: FontWeight.w700,
+                                fontSize: textSize,
+                              ),
+                            ),
+                            if (body.isNotEmpty)
+                              Text(
+                                body,
+                                style: TextStyle(
+                                  fontSize: textSize,
+                                  height: 1.25,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -114,36 +155,5 @@ class TwitchChatNotificationRow extends StatelessWidget {
     final value = int.tryParse(hex.substring(1), radix: 16);
     if (value == null) return null;
     return Color(0xFF000000 | value);
-  }
-
-  /// Prefer coloring the chatter name when [systemMessage] leads with it
-  /// (Twitch's usual format); otherwise show the string as-is.
-  Widget _systemText(double textSize, Color authorColor) {
-    final message = this.event.systemMessage;
-    final name = this.event.chatterUserName;
-    if (message.startsWith(name)) {
-      return Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: name,
-              style: TextStyle(
-                color: authorColor,
-                fontWeight: FontWeight.w700,
-                fontSize: textSize,
-              ),
-            ),
-            TextSpan(
-              text: message.substring(name.length),
-              style: TextStyle(fontSize: textSize, height: 1.25),
-            ),
-          ],
-        ),
-      );
-    }
-    return Text(
-      message,
-      style: TextStyle(fontSize: textSize, height: 1.25),
-    );
   }
 }
