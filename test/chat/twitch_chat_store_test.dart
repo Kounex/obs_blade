@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
+import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
@@ -1247,6 +1248,33 @@ void main() {
       expect(eventSubService.lastBroadcasterId, 'chan-1');
     });
 
+    test('live poll batches own + saved channels and syncs selection',
+        () async {
+      await login();
+      await store.addChannel(ref('chan-1'));
+      await store.addChannel(ref('chan-2'));
+      channelService.liveStreams = {
+        'user-1': 10,
+        'chan-2': 2500,
+      };
+
+      await store.refreshSelectedChannelLive();
+
+      expect(
+        channelService.lastLiveBroadcasterIds,
+        containsAll(['user-1', 'chan-1', 'chan-2']),
+      );
+      expect(store.channelLiveViewers['user-1'], 10);
+      expect(store.channelLiveViewers['chan-2'], 2500);
+      expect(store.channelLiveViewers.containsKey('chan-1'), isFalse);
+      expect(store.isChannelLive(null), isTrue);
+      expect(store.isChannelLive('chan-2'), isTrue);
+      expect(store.isChannelLive('chan-1'), isFalse);
+      /// Selected is chan-2 (last add) — header fields mirror the map.
+      expect(store.selectedChannelIsLive, isTrue);
+      expect(store.selectedChannelViewerCount, 2500);
+    });
+
     test('sendChatMessage targets the effective broadcaster', () async {
       await login();
       await store.selectChannel('chan-9');
@@ -1481,6 +1509,229 @@ void main() {
       expect(await store.banUser('u1'), isFalse);
       expect(moderationService.banCalls, 0);
       expect(moderationService.deleteCalls, 0);
+    });
+  });
+
+  group('room mod actions', () {
+    late FakeTwitchModerationService moderationService;
+
+    Future<void> login({List<String>? scopes}) async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes = scopes ??
+          const [
+            'user:read:chat',
+            'user:write:chat',
+            'moderator:manage:chat_messages',
+            'moderator:manage:banned_users',
+            'moderator:manage:chat_settings',
+            'moderator:manage:shield_mode',
+            'moderator:manage:announcements',
+          ];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+            eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        moderationService: moderationService,
+      );
+      await store.startLogin();
+    }
+
+    setUp(() {
+      moderationService = FakeTwitchModerationService();
+    });
+
+    test('capability getters reflect the persisted scopes', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:manage:chat_settings',
+      ]);
+      expect(store.canManageChatSettings, isTrue);
+      expect(store.canManageShieldMode, isFalse);
+      expect(store.canSendAnnouncements, isFalse);
+
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:manage:shield_mode',
+      ]);
+      expect(store.canManageChatSettings, isFalse);
+      expect(store.canManageShieldMode, isTrue);
+      expect(store.canSendAnnouncements, isFalse);
+
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:manage:announcements',
+      ]);
+      expect(store.canManageChatSettings, isFalse);
+      expect(store.canManageShieldMode, isFalse);
+      expect(store.canSendAnnouncements, isTrue);
+    });
+
+    test('clearSelectedChannelChat clears via Helix and applies locally',
+        () async {
+      await login();
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+
+      final ok = await store.clearSelectedChannelChat();
+
+      expect(ok, isTrue);
+      expect(moderationService.clearCalls, 1);
+      expect(moderationService.lastClearBroadcasterId, 'user-1');
+      expect(moderationService.lastClearModeratorId, 'user-1');
+      expect(store.isMessageDeleted('m1'), isTrue);
+      expect(store.isMessageDeleted('m2'), isTrue);
+      expect(store.systemNotices.single.kind, ChatSystemNoticeKind.chatCleared);
+    });
+
+    test('clearSelectedChannelChat returns false on service failure', () async {
+      await login();
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      moderationService.clearThrows = const TwitchAuthException('down');
+
+      expect(await store.clearSelectedChannelChat(), isFalse);
+      expect(store.isMessageDeleted('m1'), isFalse);
+      expect(store.systemNotices, isEmpty);
+    });
+
+    test('updateSelectedChatSettings updates the snapshot only on success',
+        () async {
+      await login();
+      moderationService.chatSettings = const TwitchChatSettings(
+        emoteMode: false,
+        followerMode: false,
+        followerModeDurationMinutes: null,
+        subscriberMode: false,
+        slowMode: false,
+        slowModeWaitTimeSeconds: null,
+        uniqueChatMode: false,
+      );
+      store.roomChatSettings = moderationService.chatSettings;
+
+      final ok = await store.updateSelectedChatSettings(emoteMode: true);
+
+      expect(ok, isTrue);
+      expect(moderationService.updateSettingsCalls, 1);
+      expect(moderationService.lastUpdateEmoteMode, isTrue);
+      expect(store.roomChatSettings?.emoteMode, isTrue);
+    });
+
+    test('updateSelectedChatSettings leaves the snapshot on failure',
+        () async {
+      await login();
+      const before = TwitchChatSettings(
+        emoteMode: false,
+        followerMode: true,
+        followerModeDurationMinutes: 10,
+        subscriberMode: false,
+        slowMode: false,
+        slowModeWaitTimeSeconds: null,
+        uniqueChatMode: false,
+      );
+      store.roomChatSettings = before;
+      moderationService.updateSettingsThrows = const TwitchAuthException('down');
+
+      expect(await store.updateSelectedChatSettings(emoteMode: true), isFalse);
+      expect(store.roomChatSettings, before);
+    });
+
+    test('setShieldMode updates the snapshot only on success', () async {
+      await login();
+      store.roomShieldModeActive = false;
+
+      expect(await store.setShieldMode(true), isTrue);
+      expect(moderationService.updateShieldCalls, 1);
+      expect(moderationService.lastShieldIsActive, isTrue);
+      expect(store.roomShieldModeActive, isTrue);
+    });
+
+    test('setShieldMode leaves the snapshot on failure', () async {
+      await login();
+      store.roomShieldModeActive = false;
+      moderationService.updateShieldThrows = const TwitchAuthException('down');
+
+      expect(await store.setShieldMode(true), isFalse);
+      expect(store.roomShieldModeActive, isFalse);
+    });
+
+    test('sendAnnouncement hits the service and returns true', () async {
+      await login();
+
+      final ok = await store.sendAnnouncement('hello room', 'primary');
+
+      expect(ok, isTrue);
+      expect(moderationService.announceCalls, 1);
+      expect(moderationService.lastAnnounceBroadcasterId, 'user-1');
+      expect(moderationService.lastAnnounceModeratorId, 'user-1');
+      expect(moderationService.lastAnnounceMessage, 'hello room');
+      expect(moderationService.lastAnnounceColor, 'primary');
+    });
+
+    test('sendAnnouncement returns false on service failure', () async {
+      await login();
+      moderationService.announceThrows = const TwitchAuthException('down');
+
+      expect(await store.sendAnnouncement('hello room', 'primary'), isFalse);
+      expect(moderationService.announceCalls, 1);
+    });
+
+    test('refreshRoomModState loads settings and shield for the effective '
+        'channel', () async {
+      await login();
+      moderationService.chatSettings = const TwitchChatSettings(
+        emoteMode: true,
+        followerMode: false,
+        followerModeDurationMinutes: null,
+        subscriberMode: true,
+        slowMode: false,
+        slowModeWaitTimeSeconds: null,
+        uniqueChatMode: false,
+      );
+      moderationService.shieldModeActive = true;
+
+      await store.refreshRoomModState();
+
+      expect(moderationService.getSettingsCalls, 1);
+      expect(moderationService.getShieldCalls, 1);
+      expect(moderationService.lastSettingsBroadcasterId, 'user-1');
+      expect(moderationService.lastShieldBroadcasterId, 'user-1');
+      expect(store.roomChatSettings?.emoteMode, isTrue);
+      expect(store.roomChatSettings?.subscriberMode, isTrue);
+      expect(store.roomShieldModeActive, isTrue);
+    });
+
+    test('refreshRoomModState targets the selected channel', () async {
+      await login();
+      await store.addChannel(TwitchChannelRef(
+        id: 'chan-9',
+        login: 'login-chan-9',
+        displayName: 'Channel 9',
+        addedAt: DateTime.utc(2026, 8, 9),
+      ));
+
+      await store.refreshRoomModState();
+
+      expect(moderationService.lastSettingsBroadcasterId, 'chan-9');
+      expect(moderationService.lastShieldBroadcasterId, 'chan-9');
+    });
+
+    test('room actions are gated without manage scopes or in non-mod channels',
+        () async {
+      await login(scopes: const ['user:read:chat']);
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+
+      expect(await store.clearSelectedChannelChat(), isFalse);
+      expect(await store.updateSelectedChatSettings(emoteMode: true), isFalse);
+      expect(await store.setShieldMode(true), isFalse);
+      expect(await store.sendAnnouncement('hi', 'primary'), isFalse);
+      expect(moderationService.clearCalls, 0);
+      expect(moderationService.updateSettingsCalls, 0);
+      expect(moderationService.updateShieldCalls, 0);
+      expect(moderationService.announceCalls, 0);
+
+      await login();
+      store.selectedChannelId = 'chan-other';
+      expect(await store.clearSelectedChannelChat(), isFalse);
     });
   });
 }

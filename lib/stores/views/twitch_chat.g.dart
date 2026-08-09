@@ -278,6 +278,46 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$roomChatSettingsAtom = Atom(
+    name: '_TwitchChatStore.roomChatSettings',
+    context: context,
+  );
+
+  @override
+  TwitchChatSettings? get roomChatSettings {
+    _$roomChatSettingsAtom.reportRead();
+    return super.roomChatSettings;
+  }
+
+  @override
+  set roomChatSettings(TwitchChatSettings? value) {
+    _$roomChatSettingsAtom.reportWrite(value, super.roomChatSettings, () {
+      super.roomChatSettings = value;
+    });
+  }
+
+  late final _$roomShieldModeActiveAtom = Atom(
+    name: '_TwitchChatStore.roomShieldModeActive',
+    context: context,
+  );
+
+  @override
+  bool? get roomShieldModeActive {
+    _$roomShieldModeActiveAtom.reportRead();
+    return super.roomShieldModeActive;
+  }
+
+  @override
+  set roomShieldModeActive(bool? value) {
+    _$roomShieldModeActiveAtom.reportWrite(
+      value,
+      super.roomShieldModeActive,
+      () {
+        super.roomShieldModeActive = value;
+      },
+    );
+  }
+
   late final _$initAsyncAction = AsyncAction(
     '_TwitchChatStore.init',
     context: context,
@@ -378,6 +418,80 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   @override
   Future<bool> deleteMessage(ChatMessageEvent event) {
     return _$deleteMessageAsyncAction.run(() => super.deleteMessage(event));
+  }
+
+  late final _$clearSelectedChannelChatAsyncAction = AsyncAction(
+    '_TwitchChatStore.clearSelectedChannelChat',
+    context: context,
+  );
+
+  @override
+  Future<bool> clearSelectedChannelChat() {
+    return _$clearSelectedChannelChatAsyncAction.run(
+      () => super.clearSelectedChannelChat(),
+    );
+  }
+
+  late final _$updateSelectedChatSettingsAsyncAction = AsyncAction(
+    '_TwitchChatStore.updateSelectedChatSettings',
+    context: context,
+  );
+
+  @override
+  Future<bool> updateSelectedChatSettings({
+    bool? emoteMode,
+    bool? followerMode,
+    int? followerModeDurationMinutes,
+    bool? subscriberMode,
+    bool? slowMode,
+    int? slowModeWaitTimeSeconds,
+    bool? uniqueChatMode,
+  }) {
+    return _$updateSelectedChatSettingsAsyncAction.run(
+      () => super.updateSelectedChatSettings(
+        emoteMode: emoteMode,
+        followerMode: followerMode,
+        followerModeDurationMinutes: followerModeDurationMinutes,
+        subscriberMode: subscriberMode,
+        slowMode: slowMode,
+        slowModeWaitTimeSeconds: slowModeWaitTimeSeconds,
+        uniqueChatMode: uniqueChatMode,
+      ),
+    );
+  }
+
+  late final _$setShieldModeAsyncAction = AsyncAction(
+    '_TwitchChatStore.setShieldMode',
+    context: context,
+  );
+
+  @override
+  Future<bool> setShieldMode(bool isActive) {
+    return _$setShieldModeAsyncAction.run(() => super.setShieldMode(isActive));
+  }
+
+  late final _$sendAnnouncementAsyncAction = AsyncAction(
+    '_TwitchChatStore.sendAnnouncement',
+    context: context,
+  );
+
+  @override
+  Future<bool> sendAnnouncement(String message, String color) {
+    return _$sendAnnouncementAsyncAction.run(
+      () => super.sendAnnouncement(message, color),
+    );
+  }
+
+  late final _$refreshRoomModStateAsyncAction = AsyncAction(
+    '_TwitchChatStore.refreshRoomModState',
+    context: context,
+  );
+
+  @override
+  Future<void> refreshRoomModState() {
+    return _$refreshRoomModStateAsyncAction.run(
+      () => super.refreshRoomModState(),
+    );
   }
 
   late final _$_TwitchChatStoreActionController = ActionController(
@@ -582,6 +696,8 @@ selectedChannelId: ${selectedChannelId},
 selectedChannelIsLive: ${selectedChannelIsLive},
 selectedChannelViewerCount: ${selectedChannelViewerCount},
 lifecycleVersion: ${lifecycleVersion},
+roomChatSettings: ${roomChatSettings},
+roomShieldModeActive: ${roomShieldModeActive},
 isLoggedIn: ${isLoggedIn}
     ''';
   }

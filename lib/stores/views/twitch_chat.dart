@@ -8,6 +8,7 @@ import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
+import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
@@ -218,7 +219,8 @@ abstract class _TwitchChatStore with Store {
   String? selectedChannelId;
 
   /// Whether the effective (selected) channel is currently live — refreshed
-  /// on connect/switch and on a light poll. Header LIVE chip.
+  /// on connect/switch and on a light poll. Header LIVE chip. Kept in sync
+  /// with [channelLiveViewers] for the effective broadcaster.
   @observable
   bool selectedChannelIsLive = false;
 
@@ -226,10 +228,16 @@ abstract class _TwitchChatStore with Store {
   @observable
   int? selectedChannelViewerCount;
 
+  /// Batch-polled live viewer counts keyed by broadcaster id (own + saved
+  /// channels). Absent key = offline/unknown. Feeds the channel dropdown
+  /// LIVE chips and keeps [selectedChannelIsLive] in sync.
+  final ObservableMap<String, int> channelLiveViewers =
+      ObservableMap<String, int>();
+
   Timer? _livePollTimer;
 
   /// Ids of channels the user moderates (from Get Moderated Channels on
-  /// login) — gates the dropdown shields and the mod action sheet.
+  /// login) — gates dropdown Mod chips and the mod action sheet.
   final ObservableSet<String> moderatedChannelIds = ObservableSet<String>();
 
   /// Per-channel chat snapshots keyed by broadcaster id (in-memory only).
@@ -293,6 +301,17 @@ abstract class _TwitchChatStore with Store {
   /// indices, not seqs). Reset on logout/session wipe.
   int _arrivalSeq = 0;
 
+  /// Cached chat mode settings for the effective channel — loaded by
+  /// [refreshRoomModState], patched after successful updates. In-memory
+  /// only; null until first fetch.
+  @observable
+  TwitchChatSettings? roomChatSettings;
+
+  /// Cached Shield Mode flag for the effective channel — same lifecycle
+  /// as [roomChatSettings]. Null until first fetch.
+  @observable
+  bool? roomShieldModeActive;
+
   @computed
   bool get isLoggedIn => this.authState == TwitchAuthState.loggedIn;
 
@@ -348,6 +367,30 @@ abstract class _TwitchChatStore with Store {
         scopes.contains('moderator:manage:chat_messages') &&
         scopes.contains('moderator:manage:banned_users');
   }
+
+  /// Whether the persisted token can get/update chat mode settings.
+  /// Same deliberately plain (non-reactive) pattern as [canWriteChat].
+  bool get canManageChatSettings =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:manage:chat_settings',
+          ) ??
+      false;
+
+  /// Whether the persisted token can get/update Shield Mode.
+  /// Same deliberately plain (non-reactive) pattern as [canWriteChat].
+  bool get canManageShieldMode =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:manage:shield_mode',
+          ) ??
+      false;
+
+  /// Whether the persisted token can send chat announcements.
+  /// Same deliberately plain (non-reactive) pattern as [canWriteChat].
+  bool get canSendAnnouncements =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:manage:announcements',
+          ) ??
+      false;
 
   /// The channel chat is read from / sent to — the selected multi-chat
   /// channel or the user's own. Only valid while logged in ([user] set).
@@ -591,32 +634,64 @@ abstract class _TwitchChatStore with Store {
     this._livePollTimer?.cancel();
     this._livePollTimer = null;
     runInAction(() {
+      this.channelLiveViewers.clear();
       this.selectedChannelIsLive = false;
       this.selectedChannelViewerCount = null;
     });
   }
 
-  /// Best-effort Helix streams check for the effective channel (header
-  /// LIVE chip + viewer count). Failures leave the previous value alone.
+  /// Best-effort Helix streams check for own + every saved channel
+  /// (dropdown LIVE chips + header for the effective channel). Failures
+  /// leave the previous map alone.
   @action
   Future<void> refreshSelectedChannelLive() async {
     if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
+      this.channelLiveViewers.clear();
       this.selectedChannelIsLive = false;
       this.selectedChannelViewerCount = null;
       return;
     }
     try {
       final token = await this._validAccessToken();
+      final ids = <String>[
+        this.user!.id,
+        for (final ref in this.channels) ref.id,
+      ];
       final live = await this._channelService.getLiveBroadcasterIds(
         accessToken: token,
-        broadcasterIds: [this.effectiveBroadcasterId],
+        broadcasterIds: ids,
       );
+      this.channelLiveViewers
+        ..clear()
+        ..addAll(live);
       final id = this.effectiveBroadcasterId;
       this.selectedChannelIsLive = live.containsKey(id);
       this.selectedChannelViewerCount = live[id];
     } catch (e) {
       GeneralHelper.advLog('Twitch live status refresh failed — $e');
     }
+  }
+
+  /// Whether [channelId] (null = own) is currently live per the batch poll.
+  bool isChannelLive(String? channelId) {
+    final id = channelId ?? this.user?.id;
+    if (id == null) return false;
+    return this.channelLiveViewers.containsKey(id);
+  }
+
+  /// Viewer count when [isChannelLive]; null when offline/unknown.
+  int? viewerCountForChannel(String? channelId) {
+    final id = channelId ?? this.user?.id;
+    if (id == null) return null;
+    return this.channelLiveViewers[id];
+  }
+
+  /// Dropdown Mod chip: own channel when manage scopes allow (same as the
+  /// header); other channels when listed in [moderatedChannelIds] (same as
+  /// the add-chat picker — that list is itself scope-gated on fetch).
+  bool canModerateChannel(String? channelId) {
+    if (channelId == null) return this.canModerateChats;
+    return this.moderatedChannelIds.contains(channelId);
   }
 
   /// Fire-and-forget catalog refetches for [broadcasterId] — badges,
@@ -791,8 +866,13 @@ abstract class _TwitchChatStore with Store {
   Future<void> removeChannel(String id) async {
     this.channels.removeWhere((ref) => ref.id == id);
     this._persistChannels();
+    this.channelLiveViewers.remove(id);
     if (this.selectedChannelId == id) {
       await this.selectChannel(null);
+    } else {
+      /// List changed while staying on the current channel — refresh so
+      /// dropdown LIVE chips drop the removed id promptly.
+      unawaited(this.refreshSelectedChannelLive());
     }
     this._channelBuffers.remove(id);
   }
@@ -1023,6 +1103,166 @@ abstract class _TwitchChatStore with Store {
     this._pendingUserPurgeReasons[targetUserId] = info;
     this._purgeUserMessages(targetUserId, info);
     return true;
+  }
+
+  /// Room mod sheet: clear all chat in the effective channel. Returns
+  /// whether it was applied — never throws; on success the local clear
+  /// helper runs immediately (same dedup/banner path as EventSub).
+  @action
+  Future<bool> clearSelectedChannelChat() async {
+    if (!this.canModerateSelectedChannel || this.user == null) return false;
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.clearChat(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch chat clear failed — $e');
+      return false;
+    }
+    this.applyChatClear();
+    return true;
+  }
+
+  /// Room mod sheet: patch chat mode settings in the effective channel.
+  /// Returns whether it was applied — never throws; [roomChatSettings] is
+  /// patched only on success.
+  @action
+  Future<bool> updateSelectedChatSettings({
+    bool? emoteMode,
+    bool? followerMode,
+    int? followerModeDurationMinutes,
+    bool? subscriberMode,
+    bool? slowMode,
+    int? slowModeWaitTimeSeconds,
+    bool? uniqueChatMode,
+  }) async {
+    if (!this.canManageChatSettings ||
+        !this.canModerateSelectedChannel ||
+        this.user == null) {
+      return false;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.updateChatSettings(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        emoteMode: emoteMode,
+        followerMode: followerMode,
+        followerModeDurationMinutes: followerModeDurationMinutes,
+        subscriberMode: subscriberMode,
+        slowMode: slowMode,
+        slowModeWaitTimeSeconds: slowModeWaitTimeSeconds,
+        uniqueChatMode: uniqueChatMode,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch chat settings update failed — $e');
+      return false;
+    }
+    final base = this.roomChatSettings ?? const TwitchChatSettings(
+          emoteMode: false,
+          followerMode: false,
+          followerModeDurationMinutes: null,
+          subscriberMode: false,
+          slowMode: false,
+          slowModeWaitTimeSeconds: null,
+          uniqueChatMode: false,
+        );
+    this.roomChatSettings = base.copyWithWithUpdates(
+      emoteMode: emoteMode,
+      followerMode: followerMode,
+      followerModeDurationMinutes: followerModeDurationMinutes,
+      subscriberMode: subscriberMode,
+      slowMode: slowMode,
+      slowModeWaitTimeSeconds: slowModeWaitTimeSeconds,
+      uniqueChatMode: uniqueChatMode,
+    );
+    return true;
+  }
+
+  /// Room mod sheet: enable or disable Shield Mode in the effective
+  /// channel. Returns whether it was applied — never throws;
+  /// [roomShieldModeActive] updates only on success.
+  @action
+  Future<bool> setShieldMode(bool isActive) async {
+    if (!this.canManageShieldMode ||
+        !this.canModerateSelectedChannel ||
+        this.user == null) {
+      return false;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.updateShieldModeStatus(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        isActive: isActive,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch Shield Mode update failed — $e');
+      return false;
+    }
+    this.roomShieldModeActive = isActive;
+    return true;
+  }
+
+  /// Room mod sheet: post a chat announcement in the effective channel.
+  /// Returns whether it was sent — never throws.
+  @action
+  Future<bool> sendAnnouncement(String message, String color) async {
+    if (!this.canSendAnnouncements ||
+        !this.canModerateSelectedChannel ||
+        this.user == null) {
+      return false;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.sendChatAnnouncement(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        message: message,
+        color: color,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch chat announcement failed — $e');
+      return false;
+    }
+    return true;
+  }
+
+  /// Room mod sheet: load chat settings and Shield Mode for the effective
+  /// channel. Failures are logged; existing snapshots are left unchanged.
+  @action
+  Future<void> refreshRoomModState() async {
+    if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
+      return;
+    }
+    try {
+      final token = await this._validAccessToken();
+      final broadcasterId = this.effectiveBroadcasterId;
+      final moderatorId = this.user!.id;
+      if (this.canManageChatSettings) {
+        this.roomChatSettings = await this._moderationService.getChatSettings(
+          accessToken: token,
+          broadcasterId: broadcasterId,
+          moderatorId: moderatorId,
+        );
+      }
+      if (this.canManageShieldMode) {
+        this.roomShieldModeActive =
+            await this._moderationService.getShieldModeStatus(
+          accessToken: token,
+          broadcasterId: broadcasterId,
+          moderatorId: moderatorId,
+        );
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Twitch room mod state refresh failed — $e');
+    }
   }
 
   Future<String> _validAccessToken() async {
@@ -1406,6 +1646,8 @@ abstract class _TwitchChatStore with Store {
     this._appliedModerationKeys.clear();
     this._appliedModerationOrder.clear();
     this.selectedChannelId = null;
+    this.roomChatSettings = null;
+    this.roomShieldModeActive = null;
     this._stopLivePoll();
     this._persistSelectedChannel();
   }

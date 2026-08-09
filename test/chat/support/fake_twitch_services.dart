@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
@@ -481,9 +482,21 @@ class FakeTwitchChannelService extends TwitchChannelService {
 class FakeTwitchModerationService extends TwitchModerationService {
   Object? deleteThrows;
   Object? banThrows;
+  Object? clearThrows;
+  Object? getSettingsThrows;
+  Object? updateSettingsThrows;
+  Object? getShieldThrows;
+  Object? updateShieldThrows;
+  Object? announceThrows;
 
   int deleteCalls = 0;
   int banCalls = 0;
+  int clearCalls = 0;
+  int getSettingsCalls = 0;
+  int updateSettingsCalls = 0;
+  int getShieldCalls = 0;
+  int updateShieldCalls = 0;
+  int announceCalls = 0;
   String? lastDeleteBroadcasterId;
   String? lastDeleteModeratorId;
   String? lastDeleteMessageId;
@@ -491,6 +504,36 @@ class FakeTwitchModerationService extends TwitchModerationService {
   String? lastBanModeratorId;
   String? lastBanUserId;
   int? lastBanDurationSeconds;
+  String? lastClearBroadcasterId;
+  String? lastClearModeratorId;
+  String? lastSettingsBroadcasterId;
+  String? lastSettingsModeratorId;
+  bool? lastUpdateEmoteMode;
+  bool? lastUpdateFollowerMode;
+  int? lastUpdateFollowerDurationMinutes;
+  bool? lastUpdateSubscriberMode;
+  bool? lastUpdateSlowMode;
+  int? lastUpdateSlowModeWaitSeconds;
+  bool? lastUpdateUniqueChatMode;
+  String? lastShieldBroadcasterId;
+  String? lastShieldModeratorId;
+  bool? lastShieldIsActive;
+  String? lastAnnounceBroadcasterId;
+  String? lastAnnounceModeratorId;
+  String? lastAnnounceMessage;
+  String? lastAnnounceColor;
+
+  TwitchChatSettings chatSettings = const TwitchChatSettings(
+    emoteMode: false,
+    followerMode: false,
+    followerModeDurationMinutes: null,
+    subscriberMode: false,
+    slowMode: false,
+    slowModeWaitTimeSeconds: null,
+    uniqueChatMode: false,
+  );
+
+  bool shieldModeActive = false;
 
   @override
   Future<void> deleteChatMessage({
@@ -520,6 +563,110 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.lastBanUserId = userId;
     this.lastBanDurationSeconds = durationSeconds;
     if (this.banThrows != null) throw this.banThrows!;
+  }
+
+  @override
+  Future<void> clearChat({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+  }) async {
+    this.clearCalls++;
+    this.lastClearBroadcasterId = broadcasterId;
+    this.lastClearModeratorId = moderatorId;
+    if (this.clearThrows != null) throw this.clearThrows!;
+  }
+
+  @override
+  Future<TwitchChatSettings> getChatSettings({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+  }) async {
+    this.getSettingsCalls++;
+    this.lastSettingsBroadcasterId = broadcasterId;
+    this.lastSettingsModeratorId = moderatorId;
+    if (this.getSettingsThrows != null) throw this.getSettingsThrows!;
+    return this.chatSettings;
+  }
+
+  @override
+  Future<void> updateChatSettings({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    bool? emoteMode,
+    bool? followerMode,
+    int? followerModeDurationMinutes,
+    bool? subscriberMode,
+    bool? slowMode,
+    int? slowModeWaitTimeSeconds,
+    bool? uniqueChatMode,
+  }) async {
+    this.updateSettingsCalls++;
+    this.lastSettingsBroadcasterId = broadcasterId;
+    this.lastSettingsModeratorId = moderatorId;
+    this.lastUpdateEmoteMode = emoteMode;
+    this.lastUpdateFollowerMode = followerMode;
+    this.lastUpdateFollowerDurationMinutes = followerModeDurationMinutes;
+    this.lastUpdateSubscriberMode = subscriberMode;
+    this.lastUpdateSlowMode = slowMode;
+    this.lastUpdateSlowModeWaitSeconds = slowModeWaitTimeSeconds;
+    this.lastUpdateUniqueChatMode = uniqueChatMode;
+    if (this.updateSettingsThrows != null) throw this.updateSettingsThrows!;
+    this.chatSettings = this.chatSettings.copyWithWithUpdates(
+          emoteMode: emoteMode,
+          followerMode: followerMode,
+          followerModeDurationMinutes: followerModeDurationMinutes,
+          subscriberMode: subscriberMode,
+          slowMode: slowMode,
+          slowModeWaitTimeSeconds: slowModeWaitTimeSeconds,
+          uniqueChatMode: uniqueChatMode,
+        );
+  }
+
+  @override
+  Future<bool> getShieldModeStatus({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+  }) async {
+    this.getShieldCalls++;
+    this.lastShieldBroadcasterId = broadcasterId;
+    this.lastShieldModeratorId = moderatorId;
+    if (this.getShieldThrows != null) throw this.getShieldThrows!;
+    return this.shieldModeActive;
+  }
+
+  @override
+  Future<void> updateShieldModeStatus({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required bool isActive,
+  }) async {
+    this.updateShieldCalls++;
+    this.lastShieldBroadcasterId = broadcasterId;
+    this.lastShieldModeratorId = moderatorId;
+    this.lastShieldIsActive = isActive;
+    if (this.updateShieldThrows != null) throw this.updateShieldThrows!;
+    this.shieldModeActive = isActive;
+  }
+
+  @override
+  Future<void> sendChatAnnouncement({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String message,
+    required String color,
+  }) async {
+    this.announceCalls++;
+    this.lastAnnounceBroadcasterId = broadcasterId;
+    this.lastAnnounceModeratorId = moderatorId;
+    this.lastAnnounceMessage = message;
+    this.lastAnnounceColor = color;
+    if (this.announceThrows != null) throw this.announceThrows!;
   }
 }
 
