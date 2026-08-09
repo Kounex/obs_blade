@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/eventsub_envelope.dart';
@@ -34,15 +35,17 @@ class TwitchEventSubService {
   /// degrade tombstones, never chat.
   static const List<String> _kSubscriptionTypes = <String>[
     'channel.chat.message',
+    'channel.chat.notification',
     'channel.chat.message_delete',
     'channel.chat.clear_user_messages',
     'channel.chat.clear',
   ];
   static const String _kMessageType = 'channel.chat.message';
 
-  /// `channel.moderate` v2 — optional best-effort fifth type, created only
-  /// when [connect] passes `includeModeration` (the token must carry the
-  /// full moderator:read bundle; condition uses `moderator_user_id`).
+  /// `channel.moderate` v2 — optional best-effort type after the channel
+  /// chat suite, created only when [connect] passes `includeModeration`
+  /// (the token must carry the full moderator:read bundle; condition
+  /// uses `moderator_user_id`).
   static const String _kModerateType = 'channel.moderate';
 
   final http.Client _client;
@@ -50,6 +53,9 @@ class TwitchEventSubService {
   final Future<void> Function(Duration) _sleep;
 
   final void Function(ChatMessageEvent event) onChatMessage;
+
+  /// Chat notifications (subs, streaks, raids…) — best-effort; null skips.
+  final void Function(ChatNotificationEvent event)? onChatNotification;
 
   /// Lifecycle callbacks — optional; a null callback skips parsing for
   /// that type (tests / non-lifecycle consumers).
@@ -100,6 +106,7 @@ class TwitchEventSubService {
 
   TwitchEventSubService({
     required this.onChatMessage,
+    this.onChatNotification,
     this.onMessageDelete,
     this.onClearUserMessages,
     this.onChatClear,
@@ -235,6 +242,15 @@ class TwitchEventSubService {
               envelope.payload['event'] as Map<String, Object?>,
             ),
           );
+        case 'channel.chat.notification':
+          final callback = this.onChatNotification;
+          if (callback != null) {
+            callback(
+              ChatNotificationEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
+            );
+          }
         case 'channel.chat.message_delete':
           final callback = this.onMessageDelete;
           if (callback != null) {
@@ -310,12 +326,12 @@ class TwitchEventSubService {
     if (this._includeModeration) await this._createModerateSubscription();
   }
 
-  /// The channel-scoped subs (message + lifecycle) for the CURRENT
-  /// [_broadcasterId] — run on a fresh session and on every
+  /// The channel-scoped subs (message + notification + lifecycle) for the
+  /// CURRENT [_broadcasterId] — run on a fresh session and on every
   /// [switchChannel]. `channel.chat.message` is mandatory — a failure
-  /// routes to [onRevoked] and reports false. The three lifecycle types
-  /// are best-effort: failures are logged and degrade tombstones, never
-  /// chat.
+  /// routes to [onRevoked] and reports false. Notification + lifecycle
+  /// types are best-effort: failures are logged and degrade features,
+  /// never chat.
   Future<bool> _createChannelSubscriptions() async {
     final token = this._accessToken;
     final userId = this._userId;

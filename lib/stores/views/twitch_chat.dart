@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
@@ -54,6 +55,7 @@ class _ChannelBuffer {
   final Set<String> deletedMessageIds;
   final Map<String, String> deletedMessageActors;
   final List<ChatSystemNotice> systemNotices;
+  final List<ChatNotificationNotice> chatNotifications;
   final int arrivalSeq;
 
   const _ChannelBuffer({
@@ -61,6 +63,7 @@ class _ChannelBuffer {
     required this.deletedMessageIds,
     required this.deletedMessageActors,
     required this.systemNotices,
+    required this.chatNotifications,
     required this.arrivalSeq,
   });
 }
@@ -74,6 +77,7 @@ abstract class _TwitchChatStore with Store {
   final TwitchAuthService _authService;
   final TwitchEventSubService Function(
     void Function(ChatMessageEvent) onChatMessage,
+    void Function(ChatNotificationEvent) onChatNotification,
     void Function(ChatMessageDeleteEvent) onMessageDelete,
     void Function(ChatClearUserMessagesEvent) onClearUserMessages,
     void Function(ChatClearEvent) onChatClear,
@@ -104,6 +108,7 @@ abstract class _TwitchChatStore with Store {
     TwitchAuthService? authService,
     TwitchEventSubService Function(
       void Function(ChatMessageEvent),
+      void Function(ChatNotificationEvent),
       void Function(ChatMessageDeleteEvent),
       void Function(ChatClearUserMessagesEvent),
       void Function(ChatClearEvent),
@@ -119,10 +124,12 @@ abstract class _TwitchChatStore with Store {
     TwitchModerationService? moderationService,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
-            ((onChatMessage, onMessageDelete, onClearUserMessages, onChatClear,
-                    onModerationDelete, onStateChanged, onRevoked) =>
+            ((onChatMessage, onChatNotification, onMessageDelete,
+                    onClearUserMessages, onChatClear, onModerationDelete,
+                    onStateChanged, onRevoked) =>
                 TwitchEventSubService(
                   onChatMessage: onChatMessage,
+                  onChatNotification: onChatNotification,
                   onMessageDelete: onMessageDelete,
                   onClearUserMessages: onClearUserMessages,
                   onChatClear: onChatClear,
@@ -239,6 +246,13 @@ abstract class _TwitchChatStore with Store {
   /// System banners merged into the scroll by arrival sequence — plain
   /// List, same [lifecycleVersion] reactivity story as [_deletedMessageIds].
   final List<ChatSystemNotice> systemNotices = <ChatSystemNotice>[];
+
+  /// Chat notifications (subs, streaks, raids…) merged like [systemNotices].
+  final List<ChatNotificationNotice> chatNotifications =
+      <ChatNotificationNotice>[];
+
+  /// Recent chatter colors for @mention styling — keyed by user id.
+  final Map<String, String> _chatterColors = <String, String>{};
 
   /// Bumped on every lifecycle mutation (tombstone / banner) — the
   /// window's tracked rebuild signal for the two plain containers above.
@@ -482,6 +496,7 @@ abstract class _TwitchChatStore with Store {
       await this._eventSub?.dispose();
       this._eventSub = this._eventSubFactory(
         this._appendMessage,
+        this._appendNotification,
         (event) => this.applyMessageDelete(event),
         (event) => this.applyClearUserMessages(event.targetUserId),
         (_) => this.applyChatClear(),
@@ -760,6 +775,7 @@ abstract class _TwitchChatStore with Store {
       deletedMessageIds: Set.of(this._deletedMessageIds),
       deletedMessageActors: Map.of(this._deletedMessageActors),
       systemNotices: List.of(this.systemNotices),
+      chatNotifications: List.of(this.chatNotifications),
       arrivalSeq: this._arrivalSeq,
     );
 
@@ -789,12 +805,21 @@ abstract class _TwitchChatStore with Store {
     this._deletedMessageIds.clear();
     this._deletedMessageActors.clear();
     this.systemNotices.clear();
+    this.chatNotifications.clear();
+    this._chatterColors.clear();
     if (buffer != null) {
       this.messages.addAll(buffer.messages);
       this._deletedMessageIds.addAll(buffer.deletedMessageIds);
       this._deletedMessageActors.addAll(buffer.deletedMessageActors);
       this.systemNotices.addAll(buffer.systemNotices);
+      this.chatNotifications.addAll(buffer.chatNotifications);
       this._arrivalSeq = buffer.arrivalSeq;
+      for (final message in buffer.messages) {
+        final color = message.color;
+        if (color != null && color.isNotEmpty) {
+          this._chatterColors[message.chatterUserId] = color;
+        }
+      }
     } else {
       this._arrivalSeq = 0;
     }
@@ -983,6 +1008,10 @@ abstract class _TwitchChatStore with Store {
 
   @action
   void _appendMessage(ChatMessageEvent event) {
+    final color = event.color;
+    if (color != null && color.isNotEmpty) {
+      this._chatterColors[event.chatterUserId] = color;
+    }
     this.messages.add(event);
     this._arrivalSeq++;
     while (this.messages.length > kMaxMessages) {
@@ -992,11 +1021,30 @@ abstract class _TwitchChatStore with Store {
     }
   }
 
+  @action
+  void _appendNotification(ChatNotificationEvent event) {
+    final color = event.color;
+    if (color != null && color.isNotEmpty) {
+      this._chatterColors[event.chatterUserId] = color;
+    }
+    this.chatNotifications.add(
+      ChatNotificationNotice(afterSeq: this._arrivalSeq, event: event),
+    );
+    this.lifecycleVersion++;
+  }
+
+  /// Hex color last seen for [userId], if any (`#RRGGBB`).
+  String? chatterColor(String userId) => this._chatterColors[userId];
+
   /// Test seam — the store's message intake is normally fed by the
   /// EventSub service callback.
   @action
   void appendChatMessageForTest(ChatMessageEvent event) =>
       this._appendMessage(event);
+
+  @action
+  void appendChatNotificationForTest(ChatNotificationEvent event) =>
+      this._appendNotification(event);
 
   /// Whether [messageId] is tombstoned — plain read (reactivity rides
   /// [lifecycleVersion]).
@@ -1009,26 +1057,34 @@ abstract class _TwitchChatStore with Store {
   String? deletedMessageActor(String messageId) =>
       this._deletedMessageActors[messageId];
 
-  /// Visible messages + system notices in arrival order — the window's
-  /// single render source. A notice sorts after every message with
-  /// seq <= afterSeq; front eviction drops old seqs naturally.
+  /// Visible messages + system notices + chat notifications in arrival
+  /// order — the window's single render source. A banner sorts after every
+  /// message whose seq is <= afterSeq; front eviction drops old seqs
+  /// naturally.
   List<Object> messagesWithNotices() {
-    if (this.systemNotices.isEmpty) return List.of(this.messages);
+    final banners = <({int afterSeq, Object item})>[
+      for (final notice in this.systemNotices)
+        (afterSeq: notice.afterSeq, item: notice),
+      for (final notice in this.chatNotifications)
+        (afterSeq: notice.afterSeq, item: notice),
+    ]..sort((a, b) => a.afterSeq.compareTo(b.afterSeq));
+    if (banners.isEmpty) return List.of(this.messages);
+
     final base = this._arrivalSeq - this.messages.length + 1;
     final merged = <Object>[];
-    var noticeIndex = 0;
+    var bannerIndex = 0;
     for (var i = 0; i < this.messages.length; i++) {
       final seq = base + i;
-      while (noticeIndex < this.systemNotices.length &&
-          this.systemNotices[noticeIndex].afterSeq < seq) {
-        merged.add(this.systemNotices[noticeIndex]);
-        noticeIndex++;
+      while (bannerIndex < banners.length &&
+          banners[bannerIndex].afterSeq < seq) {
+        merged.add(banners[bannerIndex].item);
+        bannerIndex++;
       }
       merged.add(this.messages[i]);
     }
-    while (noticeIndex < this.systemNotices.length) {
-      merged.add(this.systemNotices[noticeIndex]);
-      noticeIndex++;
+    while (bannerIndex < banners.length) {
+      merged.add(banners[bannerIndex].item);
+      bannerIndex++;
     }
     return merged;
   }
@@ -1127,6 +1183,8 @@ abstract class _TwitchChatStore with Store {
     this._deletedMessageActors.clear();
     this._deletedMessageIds.clear();
     this.systemNotices.clear();
+    this.chatNotifications.clear();
+    this._chatterColors.clear();
     this._arrivalSeq = 0;
   }
 

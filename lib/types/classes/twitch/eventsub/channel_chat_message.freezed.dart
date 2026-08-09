@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatMessageEvent {
 
- String get broadcasterUserId; String get chatterUserId; String get chatterUserLogin; String get chatterUserName; String get messageId; ChatMessageText get message; String? get color; List<ChatMessageBadge> get badges;
+ String get broadcasterUserId; String get chatterUserId; String get chatterUserLogin; String get chatterUserName; String get messageId; ChatMessageText get message; String? get color; List<ChatMessageBadge> get badges;/// Twitch message kind — `text`, `user_intro` (first message), etc.
+ String get messageType; ChatMessageReply? get reply;
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +27,16 @@ $ChatMessageEventCopyWith<ChatMessageEvent> get copyWith => _$ChatMessageEventCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other.badges, badges));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other.badges, badges)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.reply, reply) || other.reply == reply));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(badges));
+int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(badges),messageType,reply);
 
 @override
 String toString() {
-  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges)';
+  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges, messageType: $messageType, reply: $reply)';
 }
 
 
@@ -46,11 +47,11 @@ abstract mixin class $ChatMessageEventCopyWith<$Res>  {
   factory $ChatMessageEventCopyWith(ChatMessageEvent value, $Res Function(ChatMessageEvent) _then) = _$ChatMessageEventCopyWithImpl;
 @useResult
 $Res call({
- String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges
+ String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges, String messageType, ChatMessageReply? reply
 });
 
 
-$ChatMessageTextCopyWith<$Res> get message;
+$ChatMessageTextCopyWith<$Res> get message;$ChatMessageReplyCopyWith<$Res>? get reply;
 
 }
 /// @nodoc
@@ -63,7 +64,7 @@ class _$ChatMessageEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,Object? messageType = null,Object? reply = freezed,}) {
   return _then(_self.copyWith(
 broadcasterUserId: null == broadcasterUserId ? _self.broadcasterUserId : broadcasterUserId // ignore: cast_nullable_to_non_nullable
 as String,chatterUserId: null == chatterUserId ? _self.chatterUserId : chatterUserId // ignore: cast_nullable_to_non_nullable
@@ -73,7 +74,9 @@ as String,messageId: null == messageId ? _self.messageId : messageId // ignore: 
 as String,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as ChatMessageText,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as String?,badges: null == badges ? _self.badges : badges // ignore: cast_nullable_to_non_nullable
-as List<ChatMessageBadge>,
+as List<ChatMessageBadge>,messageType: null == messageType ? _self.messageType : messageType // ignore: cast_nullable_to_non_nullable
+as String,reply: freezed == reply ? _self.reply : reply // ignore: cast_nullable_to_non_nullable
+as ChatMessageReply?,
   ));
 }
 /// Create a copy of ChatMessageEvent
@@ -84,6 +87,18 @@ $ChatMessageTextCopyWith<$Res> get message {
   
   return $ChatMessageTextCopyWith<$Res>(_self.message, (value) {
     return _then(_self.copyWith(message: value));
+  });
+}/// Create a copy of ChatMessageEvent
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ChatMessageReplyCopyWith<$Res>? get reply {
+    if (_self.reply == null) {
+    return null;
+  }
+
+  return $ChatMessageReplyCopyWith<$Res>(_self.reply!, (value) {
+    return _then(_self.copyWith(reply: value));
   });
 }
 }
@@ -167,10 +182,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent() when $default != null:
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply);case _:
   return orElse();
 
 }
@@ -188,10 +203,10 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent():
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +223,10 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent() when $default != null:
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply);case _:
   return null;
 
 }
@@ -223,7 +238,7 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 
 @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
 class _ChatMessageEvent implements ChatMessageEvent {
-  const _ChatMessageEvent({required this.broadcasterUserId, required this.chatterUserId, required this.chatterUserLogin, required this.chatterUserName, required this.messageId, required this.message, this.color, final  List<ChatMessageBadge> badges = const <ChatMessageBadge>[]}): _badges = badges;
+  const _ChatMessageEvent({required this.broadcasterUserId, required this.chatterUserId, required this.chatterUserLogin, required this.chatterUserName, required this.messageId, required this.message, this.color, final  List<ChatMessageBadge> badges = const <ChatMessageBadge>[], this.messageType = 'text', this.reply}): _badges = badges;
   factory _ChatMessageEvent.fromJson(Map<String, dynamic> json) => _$ChatMessageEventFromJson(json);
 
 @override final  String broadcasterUserId;
@@ -240,6 +255,9 @@ class _ChatMessageEvent implements ChatMessageEvent {
   return EqualUnmodifiableListView(_badges);
 }
 
+/// Twitch message kind — `text`, `user_intro` (first message), etc.
+@override@JsonKey() final  String messageType;
+@override final  ChatMessageReply? reply;
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
@@ -251,16 +269,16 @@ _$ChatMessageEventCopyWith<_ChatMessageEvent> get copyWith => __$ChatMessageEven
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other._badges, _badges));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other._badges, _badges)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.reply, reply) || other.reply == reply));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(_badges));
+int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(_badges),messageType,reply);
 
 @override
 String toString() {
-  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges)';
+  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges, messageType: $messageType, reply: $reply)';
 }
 
 
@@ -271,11 +289,11 @@ abstract mixin class _$ChatMessageEventCopyWith<$Res> implements $ChatMessageEve
   factory _$ChatMessageEventCopyWith(_ChatMessageEvent value, $Res Function(_ChatMessageEvent) _then) = __$ChatMessageEventCopyWithImpl;
 @override @useResult
 $Res call({
- String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges
+ String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges, String messageType, ChatMessageReply? reply
 });
 
 
-@override $ChatMessageTextCopyWith<$Res> get message;
+@override $ChatMessageTextCopyWith<$Res> get message;@override $ChatMessageReplyCopyWith<$Res>? get reply;
 
 }
 /// @nodoc
@@ -288,7 +306,7 @@ class __$ChatMessageEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,Object? messageType = null,Object? reply = freezed,}) {
   return _then(_ChatMessageEvent(
 broadcasterUserId: null == broadcasterUserId ? _self.broadcasterUserId : broadcasterUserId // ignore: cast_nullable_to_non_nullable
 as String,chatterUserId: null == chatterUserId ? _self.chatterUserId : chatterUserId // ignore: cast_nullable_to_non_nullable
@@ -298,7 +316,9 @@ as String,messageId: null == messageId ? _self.messageId : messageId // ignore: 
 as String,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as ChatMessageText,color: freezed == color ? _self.color : color // ignore: cast_nullable_to_non_nullable
 as String?,badges: null == badges ? _self._badges : badges // ignore: cast_nullable_to_non_nullable
-as List<ChatMessageBadge>,
+as List<ChatMessageBadge>,messageType: null == messageType ? _self.messageType : messageType // ignore: cast_nullable_to_non_nullable
+as String,reply: freezed == reply ? _self.reply : reply // ignore: cast_nullable_to_non_nullable
+as ChatMessageReply?,
   ));
 }
 
@@ -310,6 +330,18 @@ $ChatMessageTextCopyWith<$Res> get message {
   
   return $ChatMessageTextCopyWith<$Res>(_self.message, (value) {
     return _then(_self.copyWith(message: value));
+  });
+}/// Create a copy of ChatMessageEvent
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ChatMessageReplyCopyWith<$Res>? get reply {
+    if (_self.reply == null) {
+    return null;
+  }
+
+  return $ChatMessageReplyCopyWith<$Res>(_self.reply!, (value) {
+    return _then(_self.copyWith(reply: value));
   });
 }
 }
@@ -585,7 +617,7 @@ as List<ChatMessageFragment>,
 /// @nodoc
 mixin _$ChatMessageFragment {
 
- String get type; String get text; ChatFragmentEmote? get emote;
+ String get type; String get text; ChatFragmentEmote? get emote; ChatFragmentMention? get mention;
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -596,16 +628,16 @@ $ChatMessageFragmentCopyWith<ChatMessageFragment> get copyWith => _$ChatMessageF
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote)&&(identical(other.mention, mention) || other.mention == mention));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,type,text,emote);
+int get hashCode => Object.hash(runtimeType,type,text,emote,mention);
 
 @override
 String toString() {
-  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote)';
+  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote, mention: $mention)';
 }
 
 
@@ -616,11 +648,11 @@ abstract mixin class $ChatMessageFragmentCopyWith<$Res>  {
   factory $ChatMessageFragmentCopyWith(ChatMessageFragment value, $Res Function(ChatMessageFragment) _then) = _$ChatMessageFragmentCopyWithImpl;
 @useResult
 $Res call({
- String type, String text, ChatFragmentEmote? emote
+ String type, String text, ChatFragmentEmote? emote, ChatFragmentMention? mention
 });
 
 
-$ChatFragmentEmoteCopyWith<$Res>? get emote;
+$ChatFragmentEmoteCopyWith<$Res>? get emote;$ChatFragmentMentionCopyWith<$Res>? get mention;
 
 }
 /// @nodoc
@@ -633,12 +665,13 @@ class _$ChatMessageFragmentCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? text = null,Object? emote = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? text = null,Object? emote = freezed,Object? mention = freezed,}) {
   return _then(_self.copyWith(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,emote: freezed == emote ? _self.emote : emote // ignore: cast_nullable_to_non_nullable
-as ChatFragmentEmote?,
+as ChatFragmentEmote?,mention: freezed == mention ? _self.mention : mention // ignore: cast_nullable_to_non_nullable
+as ChatFragmentMention?,
   ));
 }
 /// Create a copy of ChatMessageFragment
@@ -652,6 +685,18 @@ $ChatFragmentEmoteCopyWith<$Res>? get emote {
 
   return $ChatFragmentEmoteCopyWith<$Res>(_self.emote!, (value) {
     return _then(_self.copyWith(emote: value));
+  });
+}/// Create a copy of ChatMessageFragment
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ChatFragmentMentionCopyWith<$Res>? get mention {
+    if (_self.mention == null) {
+    return null;
+  }
+
+  return $ChatFragmentMentionCopyWith<$Res>(_self.mention!, (value) {
+    return _then(_self.copyWith(mention: value));
   });
 }
 }
@@ -735,10 +780,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessageFragment() when $default != null:
-return $default(_that.type,_that.text,_that.emote);case _:
+return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
   return orElse();
 
 }
@@ -756,10 +801,10 @@ return $default(_that.type,_that.text,_that.emote);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageFragment():
-return $default(_that.type,_that.text,_that.emote);case _:
+return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -776,10 +821,10 @@ return $default(_that.type,_that.text,_that.emote);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String type,  String text,  ChatFragmentEmote? emote)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageFragment() when $default != null:
-return $default(_that.type,_that.text,_that.emote);case _:
+return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
   return null;
 
 }
@@ -791,12 +836,13 @@ return $default(_that.type,_that.text,_that.emote);case _:
 @JsonSerializable(createToJson: false)
 
 class _ChatMessageFragment implements ChatMessageFragment {
-  const _ChatMessageFragment({required this.type, required this.text, this.emote});
+  const _ChatMessageFragment({required this.type, required this.text, this.emote, this.mention});
   factory _ChatMessageFragment.fromJson(Map<String, dynamic> json) => _$ChatMessageFragmentFromJson(json);
 
 @override final  String type;
 @override final  String text;
 @override final  ChatFragmentEmote? emote;
+@override final  ChatFragmentMention? mention;
 
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
@@ -808,16 +854,16 @@ _$ChatMessageFragmentCopyWith<_ChatMessageFragment> get copyWith => __$ChatMessa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote)&&(identical(other.mention, mention) || other.mention == mention));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,type,text,emote);
+int get hashCode => Object.hash(runtimeType,type,text,emote,mention);
 
 @override
 String toString() {
-  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote)';
+  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote, mention: $mention)';
 }
 
 
@@ -828,11 +874,11 @@ abstract mixin class _$ChatMessageFragmentCopyWith<$Res> implements $ChatMessage
   factory _$ChatMessageFragmentCopyWith(_ChatMessageFragment value, $Res Function(_ChatMessageFragment) _then) = __$ChatMessageFragmentCopyWithImpl;
 @override @useResult
 $Res call({
- String type, String text, ChatFragmentEmote? emote
+ String type, String text, ChatFragmentEmote? emote, ChatFragmentMention? mention
 });
 
 
-@override $ChatFragmentEmoteCopyWith<$Res>? get emote;
+@override $ChatFragmentEmoteCopyWith<$Res>? get emote;@override $ChatFragmentMentionCopyWith<$Res>? get mention;
 
 }
 /// @nodoc
@@ -845,12 +891,13 @@ class __$ChatMessageFragmentCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? text = null,Object? emote = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? text = null,Object? emote = freezed,Object? mention = freezed,}) {
   return _then(_ChatMessageFragment(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,emote: freezed == emote ? _self.emote : emote // ignore: cast_nullable_to_non_nullable
-as ChatFragmentEmote?,
+as ChatFragmentEmote?,mention: freezed == mention ? _self.mention : mention // ignore: cast_nullable_to_non_nullable
+as ChatFragmentMention?,
   ));
 }
 
@@ -865,6 +912,18 @@ $ChatFragmentEmoteCopyWith<$Res>? get emote {
 
   return $ChatFragmentEmoteCopyWith<$Res>(_self.emote!, (value) {
     return _then(_self.copyWith(emote: value));
+  });
+}/// Create a copy of ChatMessageFragment
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ChatFragmentMentionCopyWith<$Res>? get mention {
+    if (_self.mention == null) {
+    return null;
+  }
+
+  return $ChatFragmentMentionCopyWith<$Res>(_self.mention!, (value) {
+    return _then(_self.copyWith(mention: value));
   });
 }
 }
@@ -1120,6 +1179,552 @@ class __$ChatFragmentEmoteCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,}) {
   return _then(_ChatFragmentEmote(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ChatFragmentMention {
+
+ String get userId; String get userLogin; String get userName;
+/// Create a copy of ChatFragmentMention
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatFragmentMentionCopyWith<ChatFragmentMention> get copyWith => _$ChatFragmentMentionCopyWithImpl<ChatFragmentMention>(this as ChatFragmentMention, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatFragmentMention&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.userLogin, userLogin) || other.userLogin == userLogin)&&(identical(other.userName, userName) || other.userName == userName));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,userId,userLogin,userName);
+
+@override
+String toString() {
+  return 'ChatFragmentMention(userId: $userId, userLogin: $userLogin, userName: $userName)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatFragmentMentionCopyWith<$Res>  {
+  factory $ChatFragmentMentionCopyWith(ChatFragmentMention value, $Res Function(ChatFragmentMention) _then) = _$ChatFragmentMentionCopyWithImpl;
+@useResult
+$Res call({
+ String userId, String userLogin, String userName
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatFragmentMentionCopyWithImpl<$Res>
+    implements $ChatFragmentMentionCopyWith<$Res> {
+  _$ChatFragmentMentionCopyWithImpl(this._self, this._then);
+
+  final ChatFragmentMention _self;
+  final $Res Function(ChatFragmentMention) _then;
+
+/// Create a copy of ChatFragmentMention
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? userLogin = null,Object? userName = null,}) {
+  return _then(_self.copyWith(
+userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,userLogin: null == userLogin ? _self.userLogin : userLogin // ignore: cast_nullable_to_non_nullable
+as String,userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ChatFragmentMention].
+extension ChatFragmentMentionPatterns on ChatFragmentMention {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ChatFragmentMention value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ChatFragmentMention() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ChatFragmentMention value)  $default,){
+final _that = this;
+switch (_that) {
+case _ChatFragmentMention():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ChatFragmentMention value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ChatFragmentMention() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String userLogin,  String userName)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ChatFragmentMention() when $default != null:
+return $default(_that.userId,_that.userLogin,_that.userName);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String userLogin,  String userName)  $default,) {final _that = this;
+switch (_that) {
+case _ChatFragmentMention():
+return $default(_that.userId,_that.userLogin,_that.userName);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String userLogin,  String userName)?  $default,) {final _that = this;
+switch (_that) {
+case _ChatFragmentMention() when $default != null:
+return $default(_that.userId,_that.userLogin,_that.userName);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+class _ChatFragmentMention implements ChatFragmentMention {
+  const _ChatFragmentMention({required this.userId, required this.userLogin, required this.userName});
+  factory _ChatFragmentMention.fromJson(Map<String, dynamic> json) => _$ChatFragmentMentionFromJson(json);
+
+@override final  String userId;
+@override final  String userLogin;
+@override final  String userName;
+
+/// Create a copy of ChatFragmentMention
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ChatFragmentMentionCopyWith<_ChatFragmentMention> get copyWith => __$ChatFragmentMentionCopyWithImpl<_ChatFragmentMention>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatFragmentMention&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.userLogin, userLogin) || other.userLogin == userLogin)&&(identical(other.userName, userName) || other.userName == userName));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,userId,userLogin,userName);
+
+@override
+String toString() {
+  return 'ChatFragmentMention(userId: $userId, userLogin: $userLogin, userName: $userName)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ChatFragmentMentionCopyWith<$Res> implements $ChatFragmentMentionCopyWith<$Res> {
+  factory _$ChatFragmentMentionCopyWith(_ChatFragmentMention value, $Res Function(_ChatFragmentMention) _then) = __$ChatFragmentMentionCopyWithImpl;
+@override @useResult
+$Res call({
+ String userId, String userLogin, String userName
+});
+
+
+
+
+}
+/// @nodoc
+class __$ChatFragmentMentionCopyWithImpl<$Res>
+    implements _$ChatFragmentMentionCopyWith<$Res> {
+  __$ChatFragmentMentionCopyWithImpl(this._self, this._then);
+
+  final _ChatFragmentMention _self;
+  final $Res Function(_ChatFragmentMention) _then;
+
+/// Create a copy of ChatFragmentMention
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? userLogin = null,Object? userName = null,}) {
+  return _then(_ChatFragmentMention(
+userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,userLogin: null == userLogin ? _self.userLogin : userLogin // ignore: cast_nullable_to_non_nullable
+as String,userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$ChatMessageReply {
+
+ String get parentMessageId; String get parentMessageBody; String get parentUserId; String get parentUserName; String get parentUserLogin; String get threadMessageId; String get threadUserId; String get threadUserName; String get threadUserLogin;
+/// Create a copy of ChatMessageReply
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatMessageReplyCopyWith<ChatMessageReply> get copyWith => _$ChatMessageReplyCopyWithImpl<ChatMessageReply>(this as ChatMessageReply, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageReply&&(identical(other.parentMessageId, parentMessageId) || other.parentMessageId == parentMessageId)&&(identical(other.parentMessageBody, parentMessageBody) || other.parentMessageBody == parentMessageBody)&&(identical(other.parentUserId, parentUserId) || other.parentUserId == parentUserId)&&(identical(other.parentUserName, parentUserName) || other.parentUserName == parentUserName)&&(identical(other.parentUserLogin, parentUserLogin) || other.parentUserLogin == parentUserLogin)&&(identical(other.threadMessageId, threadMessageId) || other.threadMessageId == threadMessageId)&&(identical(other.threadUserId, threadUserId) || other.threadUserId == threadUserId)&&(identical(other.threadUserName, threadUserName) || other.threadUserName == threadUserName)&&(identical(other.threadUserLogin, threadUserLogin) || other.threadUserLogin == threadUserLogin));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,parentMessageId,parentMessageBody,parentUserId,parentUserName,parentUserLogin,threadMessageId,threadUserId,threadUserName,threadUserLogin);
+
+@override
+String toString() {
+  return 'ChatMessageReply(parentMessageId: $parentMessageId, parentMessageBody: $parentMessageBody, parentUserId: $parentUserId, parentUserName: $parentUserName, parentUserLogin: $parentUserLogin, threadMessageId: $threadMessageId, threadUserId: $threadUserId, threadUserName: $threadUserName, threadUserLogin: $threadUserLogin)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatMessageReplyCopyWith<$Res>  {
+  factory $ChatMessageReplyCopyWith(ChatMessageReply value, $Res Function(ChatMessageReply) _then) = _$ChatMessageReplyCopyWithImpl;
+@useResult
+$Res call({
+ String parentMessageId, String parentMessageBody, String parentUserId, String parentUserName, String parentUserLogin, String threadMessageId, String threadUserId, String threadUserName, String threadUserLogin
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatMessageReplyCopyWithImpl<$Res>
+    implements $ChatMessageReplyCopyWith<$Res> {
+  _$ChatMessageReplyCopyWithImpl(this._self, this._then);
+
+  final ChatMessageReply _self;
+  final $Res Function(ChatMessageReply) _then;
+
+/// Create a copy of ChatMessageReply
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? parentMessageId = null,Object? parentMessageBody = null,Object? parentUserId = null,Object? parentUserName = null,Object? parentUserLogin = null,Object? threadMessageId = null,Object? threadUserId = null,Object? threadUserName = null,Object? threadUserLogin = null,}) {
+  return _then(_self.copyWith(
+parentMessageId: null == parentMessageId ? _self.parentMessageId : parentMessageId // ignore: cast_nullable_to_non_nullable
+as String,parentMessageBody: null == parentMessageBody ? _self.parentMessageBody : parentMessageBody // ignore: cast_nullable_to_non_nullable
+as String,parentUserId: null == parentUserId ? _self.parentUserId : parentUserId // ignore: cast_nullable_to_non_nullable
+as String,parentUserName: null == parentUserName ? _self.parentUserName : parentUserName // ignore: cast_nullable_to_non_nullable
+as String,parentUserLogin: null == parentUserLogin ? _self.parentUserLogin : parentUserLogin // ignore: cast_nullable_to_non_nullable
+as String,threadMessageId: null == threadMessageId ? _self.threadMessageId : threadMessageId // ignore: cast_nullable_to_non_nullable
+as String,threadUserId: null == threadUserId ? _self.threadUserId : threadUserId // ignore: cast_nullable_to_non_nullable
+as String,threadUserName: null == threadUserName ? _self.threadUserName : threadUserName // ignore: cast_nullable_to_non_nullable
+as String,threadUserLogin: null == threadUserLogin ? _self.threadUserLogin : threadUserLogin // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ChatMessageReply].
+extension ChatMessageReplyPatterns on ChatMessageReply {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ChatMessageReply value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ChatMessageReply() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ChatMessageReply value)  $default,){
+final _that = this;
+switch (_that) {
+case _ChatMessageReply():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ChatMessageReply value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ChatMessageReply() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String parentMessageId,  String parentMessageBody,  String parentUserId,  String parentUserName,  String parentUserLogin,  String threadMessageId,  String threadUserId,  String threadUserName,  String threadUserLogin)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ChatMessageReply() when $default != null:
+return $default(_that.parentMessageId,_that.parentMessageBody,_that.parentUserId,_that.parentUserName,_that.parentUserLogin,_that.threadMessageId,_that.threadUserId,_that.threadUserName,_that.threadUserLogin);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String parentMessageId,  String parentMessageBody,  String parentUserId,  String parentUserName,  String parentUserLogin,  String threadMessageId,  String threadUserId,  String threadUserName,  String threadUserLogin)  $default,) {final _that = this;
+switch (_that) {
+case _ChatMessageReply():
+return $default(_that.parentMessageId,_that.parentMessageBody,_that.parentUserId,_that.parentUserName,_that.parentUserLogin,_that.threadMessageId,_that.threadUserId,_that.threadUserName,_that.threadUserLogin);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String parentMessageId,  String parentMessageBody,  String parentUserId,  String parentUserName,  String parentUserLogin,  String threadMessageId,  String threadUserId,  String threadUserName,  String threadUserLogin)?  $default,) {final _that = this;
+switch (_that) {
+case _ChatMessageReply() when $default != null:
+return $default(_that.parentMessageId,_that.parentMessageBody,_that.parentUserId,_that.parentUserName,_that.parentUserLogin,_that.threadMessageId,_that.threadUserId,_that.threadUserName,_that.threadUserLogin);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+class _ChatMessageReply implements ChatMessageReply {
+  const _ChatMessageReply({required this.parentMessageId, required this.parentMessageBody, required this.parentUserId, required this.parentUserName, required this.parentUserLogin, required this.threadMessageId, required this.threadUserId, required this.threadUserName, required this.threadUserLogin});
+  factory _ChatMessageReply.fromJson(Map<String, dynamic> json) => _$ChatMessageReplyFromJson(json);
+
+@override final  String parentMessageId;
+@override final  String parentMessageBody;
+@override final  String parentUserId;
+@override final  String parentUserName;
+@override final  String parentUserLogin;
+@override final  String threadMessageId;
+@override final  String threadUserId;
+@override final  String threadUserName;
+@override final  String threadUserLogin;
+
+/// Create a copy of ChatMessageReply
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ChatMessageReplyCopyWith<_ChatMessageReply> get copyWith => __$ChatMessageReplyCopyWithImpl<_ChatMessageReply>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageReply&&(identical(other.parentMessageId, parentMessageId) || other.parentMessageId == parentMessageId)&&(identical(other.parentMessageBody, parentMessageBody) || other.parentMessageBody == parentMessageBody)&&(identical(other.parentUserId, parentUserId) || other.parentUserId == parentUserId)&&(identical(other.parentUserName, parentUserName) || other.parentUserName == parentUserName)&&(identical(other.parentUserLogin, parentUserLogin) || other.parentUserLogin == parentUserLogin)&&(identical(other.threadMessageId, threadMessageId) || other.threadMessageId == threadMessageId)&&(identical(other.threadUserId, threadUserId) || other.threadUserId == threadUserId)&&(identical(other.threadUserName, threadUserName) || other.threadUserName == threadUserName)&&(identical(other.threadUserLogin, threadUserLogin) || other.threadUserLogin == threadUserLogin));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,parentMessageId,parentMessageBody,parentUserId,parentUserName,parentUserLogin,threadMessageId,threadUserId,threadUserName,threadUserLogin);
+
+@override
+String toString() {
+  return 'ChatMessageReply(parentMessageId: $parentMessageId, parentMessageBody: $parentMessageBody, parentUserId: $parentUserId, parentUserName: $parentUserName, parentUserLogin: $parentUserLogin, threadMessageId: $threadMessageId, threadUserId: $threadUserId, threadUserName: $threadUserName, threadUserLogin: $threadUserLogin)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ChatMessageReplyCopyWith<$Res> implements $ChatMessageReplyCopyWith<$Res> {
+  factory _$ChatMessageReplyCopyWith(_ChatMessageReply value, $Res Function(_ChatMessageReply) _then) = __$ChatMessageReplyCopyWithImpl;
+@override @useResult
+$Res call({
+ String parentMessageId, String parentMessageBody, String parentUserId, String parentUserName, String parentUserLogin, String threadMessageId, String threadUserId, String threadUserName, String threadUserLogin
+});
+
+
+
+
+}
+/// @nodoc
+class __$ChatMessageReplyCopyWithImpl<$Res>
+    implements _$ChatMessageReplyCopyWith<$Res> {
+  __$ChatMessageReplyCopyWithImpl(this._self, this._then);
+
+  final _ChatMessageReply _self;
+  final $Res Function(_ChatMessageReply) _then;
+
+/// Create a copy of ChatMessageReply
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? parentMessageId = null,Object? parentMessageBody = null,Object? parentUserId = null,Object? parentUserName = null,Object? parentUserLogin = null,Object? threadMessageId = null,Object? threadUserId = null,Object? threadUserName = null,Object? threadUserLogin = null,}) {
+  return _then(_ChatMessageReply(
+parentMessageId: null == parentMessageId ? _self.parentMessageId : parentMessageId // ignore: cast_nullable_to_non_nullable
+as String,parentMessageBody: null == parentMessageBody ? _self.parentMessageBody : parentMessageBody // ignore: cast_nullable_to_non_nullable
+as String,parentUserId: null == parentUserId ? _self.parentUserId : parentUserId // ignore: cast_nullable_to_non_nullable
+as String,parentUserName: null == parentUserName ? _self.parentUserName : parentUserName // ignore: cast_nullable_to_non_nullable
+as String,parentUserLogin: null == parentUserLogin ? _self.parentUserLogin : parentUserLogin // ignore: cast_nullable_to_non_nullable
+as String,threadMessageId: null == threadMessageId ? _self.threadMessageId : threadMessageId // ignore: cast_nullable_to_non_nullable
+as String,threadUserId: null == threadUserId ? _self.threadUserId : threadUserId // ignore: cast_nullable_to_non_nullable
+as String,threadUserName: null == threadUserName ? _self.threadUserName : threadUserName // ignore: cast_nullable_to_non_nullable
+as String,threadUserLogin: null == threadUserLogin ? _self.threadUserLogin : threadUserLogin // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

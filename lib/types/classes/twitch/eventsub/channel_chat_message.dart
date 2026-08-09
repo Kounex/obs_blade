@@ -7,8 +7,7 @@ part 'channel_chat_message.g.dart';
 String twitchEmoteUrl(String emoteId) =>
     'https://static-cdn.jtvnw.net/emoticons/v2/$emoteId/default/dark/2.0';
 
-/// `channel.chat.message` event payload. Cheer/reply are parsed by
-/// Twitch's schema but intentionally not modeled.
+/// `channel.chat.message` event payload.
 @Freezed(fromJson: true, toJson: false)
 abstract class ChatMessageEvent with _$ChatMessageEvent {
   // ignore: invalid_annotation_target
@@ -22,6 +21,9 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     required ChatMessageText message,
     String? color,
     @Default(<ChatMessageBadge>[]) List<ChatMessageBadge> badges,
+    /// Twitch message kind — `text`, `user_intro` (first message), etc.
+    @Default('text') String messageType,
+    ChatMessageReply? reply,
   }) = _ChatMessageEvent;
 
   factory ChatMessageEvent.fromJson(Map<String, Object?> json) =>
@@ -45,6 +47,7 @@ abstract class ChatMessageFragment with _$ChatMessageFragment {
     required String type,
     required String text,
     ChatFragmentEmote? emote,
+    ChatFragmentMention? mention,
   }) = _ChatMessageFragment;
 
   factory ChatMessageFragment.fromJson(Map<String, Object?> json) =>
@@ -59,6 +62,43 @@ abstract class ChatFragmentEmote with _$ChatFragmentEmote {
 
   factory ChatFragmentEmote.fromJson(Map<String, Object?> json) =>
       _$ChatFragmentEmoteFromJson(json);
+}
+
+/// Resolved `@mention` — Twitch already matched the login; color is not
+/// on the wire (looked up from recent chatters in the store).
+@Freezed(fromJson: true, toJson: false)
+abstract class ChatFragmentMention with _$ChatFragmentMention {
+  // ignore: invalid_annotation_target
+  @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+  const factory ChatFragmentMention({
+    required String userId,
+    required String userLogin,
+    required String userName,
+  }) = _ChatFragmentMention;
+
+  factory ChatFragmentMention.fromJson(Map<String, Object?> json) =>
+      _$ChatFragmentMentionFromJson(json);
+}
+
+/// Parent preview when this message is a threaded reply.
+@Freezed(fromJson: true, toJson: false)
+abstract class ChatMessageReply with _$ChatMessageReply {
+  // ignore: invalid_annotation_target
+  @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+  const factory ChatMessageReply({
+    required String parentMessageId,
+    required String parentMessageBody,
+    required String parentUserId,
+    required String parentUserName,
+    required String parentUserLogin,
+    required String threadMessageId,
+    required String threadUserId,
+    required String threadUserName,
+    required String threadUserLogin,
+  }) = _ChatMessageReply;
+
+  factory ChatMessageReply.fromJson(Map<String, Object?> json) =>
+      _$ChatMessageReplyFromJson(json);
 }
 
 /// One entry of the payload's `badges` array: the exact lookup key for

@@ -9,13 +9,16 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
+import 'chat_notice_chrome.dart';
 import 'dialogs/mod_action_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'twitch_chat_message_row.dart';
+import 'twitch_chat_notification_row.dart';
 
 /// Native read-only Twitch chat. Lives in the same dashboard slot the
 /// WebView chat uses — driven by [TwitchChatStore]'s message buffer.
@@ -259,11 +262,41 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       ),
                     );
                   }
+                  if (item is ChatNotificationNotice) {
+                    final next = index + 1 < items.length
+                        ? items[index + 1]
+                        : null;
+                    final continues = next is ChatMessageEvent &&
+                        next.chatterUserId == item.event.chatterUserId;
+                    return TwitchChatNotificationRow(
+                      event: item.event,
+                      settingsBox: settingsBox,
+                      accentContinues: continues,
+                    );
+                  }
                   final event = item as ChatMessageEvent;
                   final actor =
                       this._store.deletedMessageActor(event.messageId);
                   final deleted =
                       this._store.isMessageDeleted(event.messageId);
+                  Color? accent;
+                  if (index > 0) {
+                    final prev = items[index - 1];
+                    if (prev is ChatNotificationNotice &&
+                        prev.event.chatterUserId == event.chatterUserId) {
+                      accent = chatNoticeAccentColor(
+                        chatNoticeChrome(prev.event.noticeType).color,
+                      );
+                    }
+                  }
+                  Color? mentionColor(String userId) {
+                    final hex = this._store.chatterColor(userId);
+                    if (hex == null || hex.length != 7) return null;
+                    final value = int.tryParse(hex.substring(1), radix: 16);
+                    if (value == null) return null;
+                    return Color(0xFF000000 | value);
+                  }
+
                   return TwitchChatMessageRow(
                     event: event,
                     settingsBox: settingsBox,
@@ -271,6 +304,8 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     deletedActor: actor,
                     isDeletedExpanded:
                         this._expandedDeletedIds.contains(event.messageId),
+                    accentBarColor: accent,
+                    mentionColorFor: mentionColor,
                     onDeletedTap: actor == null
                         ? null
                         : () => setState(() {

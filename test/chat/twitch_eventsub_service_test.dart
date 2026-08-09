@@ -171,6 +171,7 @@ void main() {
     expect(states, contains(TwitchEventSubState.connected));
     expect(bodies.map((body) => body['type']), [
       'channel.chat.message',
+      'channel.chat.notification',
       'channel.chat.message_delete',
       'channel.chat.clear_user_messages',
       'channel.chat.clear',
@@ -232,7 +233,7 @@ void main() {
         accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
-    expect(subscriptionPosts, 4);
+    expect(subscriptionPosts, 5);
 
     channels.single.incoming.add(json.encode({
       'metadata': {
@@ -254,7 +255,7 @@ void main() {
     /// Resumed session: same session id → no new subscription
     channels[1].incoming.add(welcome('session-1'));
     await pumpEventQueue();
-    expect(subscriptionPosts, 4);
+    expect(subscriptionPosts, 5);
   });
 
   test('socket close triggers a reconnect via the injected sleep', () async {
@@ -330,6 +331,7 @@ void main() {
       'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-2',
       'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-3',
       'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-4',
+      'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-5',
     ]);
   });
 
@@ -387,7 +389,8 @@ void main() {
     var posts = 0;
     final client = MockClient((request) async {
       posts++;
-      if (posts == 2) return http.Response('Forbidden', 403);
+      /// POST 3 = `channel.chat.message_delete` (after message + notification).
+      if (posts == 3) return http.Response('Forbidden', 403);
       return http.Response(
           json.encode({
             'data': [
@@ -403,7 +406,7 @@ void main() {
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
-    expect(posts, 4);
+    expect(posts, 5);
     expect(revocations, isEmpty);
     expect(states, contains(TwitchEventSubState.connected));
   });
@@ -434,18 +437,19 @@ void main() {
 
     expect(bodies.map((body) => body['type']), [
       'channel.chat.message',
+      'channel.chat.notification',
       'channel.chat.message_delete',
       'channel.chat.clear_user_messages',
       'channel.chat.clear',
       'channel.moderate',
     ]);
-    for (final body in bodies.sublist(0, 4)) {
+    for (final body in bodies.sublist(0, 5)) {
       expect(body['version'], '1');
       expect(body['condition'],
           {'broadcaster_user_id': 'user-1', 'user_id': 'user-1'});
     }
-    expect(bodies[4]['version'], '2');
-    expect(bodies[4]['condition'],
+    expect(bodies[5]['version'], '2');
+    expect(bodies[5]['condition'],
         {'broadcaster_user_id': 'user-1', 'moderator_user_id': 'user-1'});
   });
 
@@ -496,7 +500,7 @@ void main() {
     var posts = 0;
     final client = MockClient((request) async {
       posts++;
-      if (posts == 5) return http.Response('Forbidden', 403);
+      if (posts == 6) return http.Response('Forbidden', 403);
       return http.Response(
           json.encode({
             'data': [
@@ -515,7 +519,7 @@ void main() {
     channels.single.incoming.add(welcome('session-1'));
     await pumpEventQueue();
 
-    expect(posts, 5);
+    expect(posts, 6);
     expect(revocations, isEmpty);
     expect(states, contains(TwitchEventSubState.connected));
   });
@@ -574,11 +578,11 @@ void main() {
       channels.single.incoming.add(welcome('session-1'));
       await pumpEventQueue();
 
-      for (final body in bodies.sublist(0, 4)) {
+      for (final body in bodies.sublist(0, 5)) {
         expect(body['condition'],
             {'broadcaster_user_id': 'chan-9', 'user_id': 'user-1'});
       }
-      expect(bodies[4]['condition'],
+      expect(bodies[5]['condition'],
           {'broadcaster_user_id': 'user-1', 'moderator_user_id': 'user-1'});
     });
 
@@ -611,20 +615,21 @@ void main() {
           includeModeration: true);
       channels.single.incoming.add(welcome('session-1'));
       await pumpEventQueue();
-      expect(bodies, hasLength(5));
+      expect(bodies, hasLength(6));
 
       await service.switchChannel('chan-2');
 
-      /// The moderate sub (sub-5) is own-channel — never channel-scoped,
+      /// The moderate sub (sub-6) is own-channel — never channel-scoped,
       /// so it survives the switch untouched.
       expect(deletedUrls, [
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-1',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-2',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-3',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-4',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-5',
       ]);
-      expect(bodies, hasLength(9));
-      for (final body in bodies.sublist(5)) {
+      expect(bodies, hasLength(11));
+      for (final body in bodies.sublist(6)) {
         expect(body['condition'],
             {'broadcaster_user_id': 'chan-2', 'user_id': 'user-1'});
         expect(body['transport'],
@@ -657,7 +662,7 @@ void main() {
       channels.single.incoming.add(welcome('session-1'));
       await pumpEventQueue();
       await service.switchChannel('chan-2');
-      expect(bodies, hasLength(8));
+      expect(bodies, hasLength(10));
 
       /// Socket dies → reconnect → Twitch hands out a FRESH session id.
       await channels.single.incoming.close();
@@ -666,8 +671,8 @@ void main() {
       channels[1].incoming.add(welcome('session-3'));
       await pumpEventQueue();
 
-      expect(bodies, hasLength(12));
-      for (final body in bodies.sublist(8)) {
+      expect(bodies, hasLength(15));
+      for (final body in bodies.sublist(10)) {
         expect(body['condition'],
             {'broadcaster_user_id': 'chan-2', 'user_id': 'user-1'});
         expect(body['transport'],
@@ -708,14 +713,15 @@ void main() {
 
       await service.dispose();
 
-      /// sub-1..sub-4 were deleted by the switch; the live ones now are
-      /// the switched channel subs (sub-6..sub-9) + the moderate sub-5.
+      /// sub-1..sub-5 were deleted by the switch; the live ones now are
+      /// the switched channel subs (sub-7..sub-11) + the moderate sub-6.
       expect(deletedUrls, [
-        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-6',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-7',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-8',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-9',
-        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-5',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-10',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-11',
+        'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-6',
       ]);
     });
   });

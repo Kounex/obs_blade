@@ -87,7 +87,7 @@ void main() {
     channelService = FakeTwitchChannelService();
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
           eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),

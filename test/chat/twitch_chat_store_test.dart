@@ -57,7 +57,7 @@ void main() {
     badgeStore = TwitchBadgeStore(service: badgeService);
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
           eventSubService,
       badgeStoreResolver: () => badgeStore,
     );
@@ -455,7 +455,7 @@ void main() {
       store = TwitchChatStore(
         authService: authService,
         eventSubFactory:
-            (_, __, ___, ____, ______, onStateChanged, onRevoked) {
+            (_, __, ___, ____, _____, ______, onStateChanged, onRevoked) {
           emitState = onStateChanged;
           emitRevoked = onRevoked;
           return eventSubService;
@@ -511,7 +511,7 @@ void main() {
       messageService = FakeTwitchMessageService();
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         messageService: messageService,
@@ -646,7 +646,7 @@ void main() {
       await Hive.openBox(HiveKeys.Settings.name);
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         emoteStoreResolver: () => emoteStore,
@@ -704,7 +704,7 @@ void main() {
           const ['user:read:chat', 'user:write:chat', 'user:read:emotes'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         userEmoteStoreResolver: () => userEmoteStore,
@@ -941,7 +941,7 @@ void main() {
     Future<void> loginWithCapturedCallbacks() async {
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (onChatMessage, onMessageDelete,
+        eventSubFactory: (onChatMessage, onChatNotification, onMessageDelete,
             onClearUserMessages, onChatClear, onModerationDelete,
             onStateChanged, onRevoked) {
           emitDelete = onMessageDelete;
@@ -1031,7 +1031,7 @@ void main() {
           scopes ?? const ['user:read:chat', 'user:write:chat'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, onStateChanged, _______) {
+        eventSubFactory: (_, __, ___, ____, _____, ______, onStateChanged, ________) {
           emitState = onStateChanged;
           return eventSubService;
         },
@@ -1070,7 +1070,7 @@ void main() {
 
       final restarted = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         channelService: channelService,
@@ -1296,7 +1296,7 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         moderationService: moderationService,

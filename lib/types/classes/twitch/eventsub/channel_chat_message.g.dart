@@ -22,6 +22,10 @@ _ChatMessageEvent _$ChatMessageEventFromJson(Map<String, dynamic> json) =>
               ?.map((e) => ChatMessageBadge.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <ChatMessageBadge>[],
+      messageType: json['message_type'] as String? ?? 'text',
+      reply: json['reply'] == null
+          ? null
+          : ChatMessageReply.fromJson(json['reply'] as Map<String, dynamic>),
     );
 
 _ChatMessageText _$ChatMessageTextFromJson(Map<String, dynamic> json) =>
@@ -43,10 +47,35 @@ _ChatMessageFragment _$ChatMessageFragmentFromJson(Map<String, dynamic> json) =>
       emote: json['emote'] == null
           ? null
           : ChatFragmentEmote.fromJson(json['emote'] as Map<String, dynamic>),
+      mention: json['mention'] == null
+          ? null
+          : ChatFragmentMention.fromJson(
+              json['mention'] as Map<String, dynamic>,
+            ),
     );
 
 _ChatFragmentEmote _$ChatFragmentEmoteFromJson(Map<String, dynamic> json) =>
     _ChatFragmentEmote(id: json['id'] as String);
+
+_ChatFragmentMention _$ChatFragmentMentionFromJson(Map<String, dynamic> json) =>
+    _ChatFragmentMention(
+      userId: json['user_id'] as String,
+      userLogin: json['user_login'] as String,
+      userName: json['user_name'] as String,
+    );
+
+_ChatMessageReply _$ChatMessageReplyFromJson(Map<String, dynamic> json) =>
+    _ChatMessageReply(
+      parentMessageId: json['parent_message_id'] as String,
+      parentMessageBody: json['parent_message_body'] as String,
+      parentUserId: json['parent_user_id'] as String,
+      parentUserName: json['parent_user_name'] as String,
+      parentUserLogin: json['parent_user_login'] as String,
+      threadMessageId: json['thread_message_id'] as String,
+      threadUserId: json['thread_user_id'] as String,
+      threadUserName: json['thread_user_name'] as String,
+      threadUserLogin: json['thread_user_login'] as String,
+    );
 
 _ChatMessageBadge _$ChatMessageBadgeFromJson(Map<String, dynamic> json) =>
     _ChatMessageBadge(

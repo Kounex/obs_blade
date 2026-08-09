@@ -91,7 +91,7 @@ void main() {
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
           FakeTwitchEventSubService(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);

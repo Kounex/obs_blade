@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -9,11 +10,12 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 
 /// One chat line: role badges + colored author name + message text with
-/// inline emotes (first-party fragments and third-party 7TV/BTTV tokens).
-/// Cheermote/mention fragments fall back to plain text.
+/// inline emotes (first-party fragments and third-party 7TV/BTTV tokens),
+/// @mentions, reply previews, and first-message / notice accent chrome.
 class TwitchChatMessageRow extends StatelessWidget {
   final ChatMessageEvent event;
 
@@ -48,6 +50,14 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// Tombstones keep their actor-reveal tap and never get this.
   final VoidCallback? onMessageTap;
 
+  /// Left accent when this row continues a prior chat notification
+  /// (same chatter).
+  final Color? accentBarColor;
+
+  /// Resolves a mention's color from recent chatter history (hex → Color
+  /// parsing happens here). Null → bold white mention style.
+  final Color? Function(String userId)? mentionColorFor;
+
   const TwitchChatMessageRow({
     super.key,
     required this.event,
@@ -57,9 +67,13 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.isDeletedExpanded = false,
     this.onDeletedTap,
     this.onMessageTap,
+    this.accentBarColor,
+    this.mentionColorFor,
   });
 
   static const double _badgeSize = 18.0;
+
+  bool get _isFirstMessage => this.event.messageType == 'user_intro';
 
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
@@ -124,6 +138,15 @@ class TwitchChatMessageRow extends StatelessWidget {
               width: _emoteSize,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Text(fragment.text),
+            ),
+          )
+        else if (fragment.type == 'mention' && fragment.mention != null)
+          TextSpan(
+            text: fragment.text,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: this.mentionColorFor?.call(fragment.mention!.userId) ??
+                  Colors.white,
             ),
           )
         else
@@ -236,10 +259,47 @@ class TwitchChatMessageRow extends StatelessWidget {
         ? this._richText(context)
         : Observer(builder: this._richText);
     final bool revealable = this.isDeleted && this.deletedActor != null;
+    final reply = this.event.reply;
     final Widget body = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (this._isFirstMessage)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'FIRST MESSAGE',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: kChatFirstMessageAccent,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+            ),
+          ),
+        if (reply != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2.0),
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.reply,
+                  size: 12.0,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+                const SizedBox(width: AppSpacing.xs / 2),
+                Expanded(
+                  child: Text(
+                    'Replying to @${reply.parentUserName}: ${reply.parentMessageBody}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: this._textSize * 0.85,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         line,
         if (revealable && this.isDeletedExpanded)
           Padding(
@@ -251,21 +311,66 @@ class TwitchChatMessageRow extends StatelessWidget {
           ),
       ],
     );
+
+    Widget chrome = body;
+    if (this.accentBarColor != null || this._isFirstMessage) {
+      final accent = this._isFirstMessage
+          ? kChatFirstMessageAccent
+          : this.accentBarColor!;
+      chrome = IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 3.0,
+              margin: const EdgeInsets.only(right: AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Expanded(child: body),
+            if (this._isFirstMessage)
+              Container(
+                width: 3.0,
+                margin: const EdgeInsets.only(left: AppSpacing.sm),
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+          ],
+        ),
+      );
+      if (this._isFirstMessage) {
+        chrome = ColoredBox(
+          color: kChatFirstMessageTint,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xs,
+              vertical: AppSpacing.xs / 2,
+            ),
+            child: chrome,
+          ),
+        );
+      }
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: this._spacing),
       child: revealable
           ? GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: this.onDeletedTap,
-              child: body,
+              child: chrome,
             )
           : this.onMessageTap != null
               ? GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: this.onMessageTap,
-                  child: body,
+                  child: chrome,
                 )
-              : body,
+              : chrome,
     );
   }
 

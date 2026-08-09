@@ -434,12 +434,36 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void _appendNotification(ChatNotificationEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore._appendNotification',
+    );
+    try {
+      return super._appendNotification(event);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void appendChatMessageForTest(ChatMessageEvent event) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore.appendChatMessageForTest',
     );
     try {
       return super.appendChatMessageForTest(event);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void appendChatNotificationForTest(ChatNotificationEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.appendChatNotificationForTest',
+    );
+    try {
+      return super.appendChatNotificationForTest(event);
     } finally {
       _$_TwitchChatStoreActionController.endAction(_$actionInfo);
     }
