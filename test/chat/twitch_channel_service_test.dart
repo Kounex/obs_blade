@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 
@@ -157,6 +159,112 @@ void main() {
       expect(
         TwitchChannelService(client: client)
             .getModeratedChannels(accessToken: 'token-1', userId: 'user-1'),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+    });
+  });
+
+  group('sortChannelPickerRefs', () {
+    TwitchChannelRef ref(String id) => TwitchChannelRef(
+          id: id,
+          login: id,
+          displayName: id,
+          addedAt: DateTime.utc(2026, 8, 9),
+        );
+
+    test('orders live, then mod, then the rest — stable within a tier', () {
+      final sorted = sortChannelPickerRefs(
+        [ref('a'), ref('b'), ref('c'), ref('d'), ref('e')],
+        liveIds: {'c', 'e'},
+        modIds: {'b', 'e'},
+      );
+      expect(sorted.map((r) => r.id), ['c', 'e', 'b', 'a', 'd']);
+    });
+  });
+
+  group('sortChannelSearchResults', () {
+    TwitchChannelSearchResult result(String id, {bool live = false}) =>
+        TwitchChannelSearchResult(
+          id: id,
+          login: id,
+          displayName: id,
+          followerCount: 0,
+          isLive: live,
+        );
+
+    test('orders live, then mod, then the rest — stable within a tier', () {
+      final sorted = sortChannelSearchResults(
+        [
+          result('offline'),
+          result('mod-only'),
+          result('live-b', live: true),
+          result('live-a', live: true),
+          result('live-mod', live: true),
+        ],
+        modIds: {'mod-only', 'live-mod'},
+      );
+      expect(
+        sorted.map((r) => r.id),
+        ['live-b', 'live-a', 'live-mod', 'mod-only', 'offline'],
+      );
+    });
+  });
+
+  group('getLiveBroadcasterIds', () {
+    test('GETs /streams with repeated user_id and returns live ids', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(request.url.path, '/helix/streams');
+        expect(request.url.queryParametersAll['user_id'],
+            ['chan-1', 'chan-2', 'chan-3']);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'user_id': 'chan-1', 'type': 'live'},
+              {'user_id': 'chan-3', 'type': 'live'},
+            ],
+          }),
+          200,
+        );
+      });
+
+      final live = await TwitchChannelService(client: client)
+          .getLiveBroadcasterIds(
+        accessToken: 'token-1',
+        broadcasterIds: ['chan-1', 'chan-2', 'chan-3'],
+      );
+
+      expect(live, {'chan-1', 'chan-3'});
+    });
+
+    test('empty input skips the request', () async {
+      var called = false;
+      final client = MockClient((request) async {
+        called = true;
+        return http.Response('{}', 200);
+      });
+
+      final live = await TwitchChannelService(client: client)
+          .getLiveBroadcasterIds(
+        accessToken: 'token-1',
+        broadcasterIds: const [],
+      );
+
+      expect(live, isEmpty);
+      expect(called, isFalse);
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 401));
+
+      expect(
+        TwitchChannelService(client: client).getLiveBroadcasterIds(
+          accessToken: 'token-1',
+          broadcasterIds: ['chan-1'],
+        ),
         throwsA(
           isA<TwitchAuthException>()
               .having((e) => e.statusCode, 'statusCode', 401),

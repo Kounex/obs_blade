@@ -5,6 +5,60 @@ import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 
+/// Sort key for the add-chat picker: live → mod → everyone else.
+/// Stable within a tier (keeps Helix / original order).
+int channelPickerSortRank(
+  String id, {
+  required Set<String> liveIds,
+  required Set<String> modIds,
+}) {
+  if (liveIds.contains(id)) return 0;
+  if (modIds.contains(id)) return 1;
+  return 2;
+}
+
+/// Stable sort of [refs] by [channelPickerSortRank].
+List<TwitchChannelRef> sortChannelPickerRefs(
+  List<TwitchChannelRef> refs, {
+  required Set<String> liveIds,
+  required Set<String> modIds,
+}) {
+  final indexed = refs.asMap().entries.toList();
+  indexed.sort((a, b) {
+    final cmp = channelPickerSortRank(
+      a.value.id,
+      liveIds: liveIds,
+      modIds: modIds,
+    ).compareTo(channelPickerSortRank(
+      b.value.id,
+      liveIds: liveIds,
+      modIds: modIds,
+    ));
+    if (cmp != 0) return cmp;
+    return a.key.compareTo(b.key);
+  });
+  return [for (final entry in indexed) entry.value];
+}
+
+/// Stable sort of search results — live first, then mod, then the rest.
+List<TwitchChannelSearchResult> sortChannelSearchResults(
+  List<TwitchChannelSearchResult> results, {
+  required Set<String> modIds,
+}) {
+  int rank(TwitchChannelSearchResult result) => channelPickerSortRank(
+        result.id,
+        liveIds: result.isLive ? {result.id} : const {},
+        modIds: modIds,
+      );
+  final indexed = results.asMap().entries.toList();
+  indexed.sort((a, b) {
+    final cmp = rank(a.value).compareTo(rank(b.value));
+    if (cmp != 0) return cmp;
+    return a.key.compareTo(b.key);
+  });
+  return [for (final entry in indexed) entry.value];
+}
+
 /// Helix channel discovery for the multi-chat add-chat picker — Search
 /// Channels typeahead plus the "channels you moderate" / "channels you
 /// follow" quick-pick sections. Requires a user access token with the
@@ -40,6 +94,45 @@ class TwitchChannelService {
       for (final entry in data)
         TwitchChannelSearchResult.fromJson(entry as Map<String, Object?>),
     ];
+  }
+
+  /// Ids of [broadcasterIds] that are currently live (`GET /streams`).
+  /// Batches in chunks of 100 (Helix cap). Empty input → empty set; no
+  /// request. Used to live-first sort the moderated/followed picker
+  /// sections — the streams call is optional at the call site (best-effort).
+  Future<Set<String>> getLiveBroadcasterIds({
+    required String accessToken,
+    required Iterable<String> broadcasterIds,
+  }) async {
+    final ids = broadcasterIds.toList();
+    if (ids.isEmpty) return <String>{};
+
+    final live = <String>{};
+    for (var i = 0; i < ids.length; i += 100) {
+      final chunk = ids.sublist(i, i + 100 > ids.length ? ids.length : i + 100);
+      final response = await this._client.get(
+        Uri.parse('$kTwitchHelixBase/streams').replace(
+          /// Iterable value → repeated `user_id=` (Helix batch form).
+          queryParameters: {'user_id': chunk},
+        ),
+        headers: TwitchAuthService.helixHeaders(accessToken),
+      );
+      if (response.statusCode != 200) {
+        throw TwitchAuthException(
+          'Fetching live streams failed (${response.statusCode})',
+          cause: response.body,
+          statusCode: response.statusCode,
+        );
+      }
+      final data =
+          (json.decode(response.body) as Map<String, dynamic>)['data'];
+      if (data is! List) continue;
+      for (final entry in data) {
+        final userId = (entry as Map<String, dynamic>)['user_id'] as String?;
+        if (userId != null) live.add(userId);
+      }
+    }
+    return live;
   }
 
   /// Channels the user moderates (`moderation/channels`). Follows at most

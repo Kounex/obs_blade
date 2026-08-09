@@ -126,12 +126,62 @@ void main() {
     expect(find.text('Channel fol-2'), findsOneWidget);
     expect(channelService.moderatedCalls, 1);
     expect(channelService.followedCalls, 1);
+    expect(channelService.liveCalls, 2);
     expect(channelService.lastModeratedUserId, 'user-1');
     expect(channelService.lastFollowedUserId, 'user-1');
     expect(channelService.searchCalls, 0);
 
     /// Full-scope token — no re-login CTA.
     expect(find.text('Re-login'), findsNothing);
+  });
+
+  testWidgets(
+      'quick-pick sections sort live→mod and show LIVE/Mod chips',
+      (tester) async {
+    /// fol-mod / fol-live count as moderated for Mod chips, but only the
+    /// mod-* pair is listed in the moderated section (keeps order
+    /// assertions section-local). Seed the store set directly — a second
+    /// startLogin leaves the fake EventSub stuck connecting and hangs
+    /// pumpAndSettle.
+    channelService.moderatedChannels = [ref('mod-offline'), ref('mod-live')];
+    channelService.followedChannels = [
+      ref('fol-offline'),
+      ref('fol-mod'),
+      ref('fol-live'),
+    ];
+    channelService.liveBroadcasterIds = {'mod-live', 'fol-live'};
+    store.moderatedChannelIds
+      ..clear()
+      ..addAll(['mod-offline', 'mod-live', 'fol-mod', 'fol-live']);
+
+    await pumpSheet(tester);
+
+    /// Moderated: live first; LIVE chip only (no Mod — section header).
+    expect(
+      tester
+          .widgetList<Text>(find.textContaining('Channel mod-'))
+          .map((t) => t.data)
+          .toList(),
+      ['Channel mod-live', 'Channel mod-offline'],
+    );
+    expect(
+        find.byKey(const Key('add-chat-live-mod-mod-live')), findsOneWidget);
+    expect(find.byKey(const Key('add-chat-mod-mod-mod-live')), findsNothing);
+
+    /// Followed: live → mod → rest; LIVE + Mod chips as applicable.
+    expect(
+      tester
+          .widgetList<Text>(find.textContaining('Channel fol-'))
+          .map((t) => t.data)
+          .toList(),
+      ['Channel fol-live', 'Channel fol-mod', 'Channel fol-offline'],
+    );
+    expect(
+        find.byKey(const Key('add-chat-live-fol-fol-live')), findsOneWidget);
+    expect(find.byKey(const Key('add-chat-mod-fol-fol-live')), findsOneWidget);
+    expect(find.byKey(const Key('add-chat-mod-fol-fol-mod')), findsOneWidget);
+    expect(
+        find.byKey(const Key('add-chat-mod-fol-fol-offline')), findsNothing);
   });
 
   testWidgets('search is debounced (~300 ms) and renders results',
@@ -157,8 +207,8 @@ void main() {
     expect(find.text('Channel s-2'), findsOneWidget);
     expect(find.textContaining('@login-s-1'), findsOneWidget);
     expect(find.textContaining('1.5k followers'), findsOneWidget);
-    expect(find.byKey(const Key('add-chat-live-s-1')), findsOneWidget);
-    expect(find.byKey(const Key('add-chat-live-s-2')), findsNothing);
+    expect(find.byKey(const Key('add-chat-live-search-s-1')), findsOneWidget);
+    expect(find.byKey(const Key('add-chat-live-search-s-2')), findsNothing);
 
     /// An active query replaces the quick-pick sections.
     expect(find.text('Channels you moderate'), findsNothing);

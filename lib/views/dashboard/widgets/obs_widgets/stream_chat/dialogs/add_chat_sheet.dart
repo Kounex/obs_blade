@@ -67,6 +67,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
   List<TwitchChannelRef> _moderated = const [];
   List<TwitchChannelRef> _followed = const [];
 
+  /// Live ids for each quick-pick section (from best-effort `/streams`).
+  Set<String> _moderatedLiveIds = const {};
+  Set<String> _followedLiveIds = const {};
+
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
 
   String? get _accessToken => Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name)
@@ -87,6 +91,22 @@ class _AddChatSheetState extends State<AddChatSheet> {
     super.dispose();
   }
 
+  /// Best-effort live enrich — a streams failure must not fail the
+  /// section (list still renders, just without LIVE chips / live-first).
+  Future<Set<String>> _liveIdsFor(
+    String accessToken,
+    List<TwitchChannelRef> refs,
+  ) async {
+    try {
+      return await this._channelService.getLiveBroadcasterIds(
+        accessToken: accessToken,
+        broadcasterIds: refs.map((ref) => ref.id),
+      );
+    } catch (_) {
+      return const {};
+    }
+  }
+
   Future<void> _loadModerated() async {
     final token = this._accessToken;
     final userId = this._store.user?.id;
@@ -101,9 +121,16 @@ class _AddChatSheetState extends State<AddChatSheet> {
       final refs = await this
           ._channelService
           .getModeratedChannels(accessToken: token, userId: userId);
+      final liveIds = await this._liveIdsFor(token, refs);
+      final sorted = sortChannelPickerRefs(
+        refs,
+        liveIds: liveIds,
+        modIds: const {},
+      );
       if (this.mounted) {
         this.setState(() {
-          this._moderated = refs;
+          this._moderated = sorted;
+          this._moderatedLiveIds = liveIds;
           this._loadingModerated = false;
         });
       }
@@ -131,9 +158,17 @@ class _AddChatSheetState extends State<AddChatSheet> {
       final refs = await this
           ._channelService
           .getFollowedChannels(accessToken: token, userId: userId);
+      final liveIds = await this._liveIdsFor(token, refs);
+      final modIds = this._store.moderatedChannelIds.toSet();
+      final sorted = sortChannelPickerRefs(
+        refs,
+        liveIds: liveIds,
+        modIds: modIds,
+      );
       if (this.mounted) {
         this.setState(() {
-          this._followed = refs;
+          this._followed = sorted;
+          this._followedLiveIds = liveIds;
           this._loadingFollowed = false;
         });
       }
@@ -175,9 +210,13 @@ class _AddChatSheetState extends State<AddChatSheet> {
       final results = await this
           ._channelService
           .searchChannels(accessToken: token, query: query);
+      final sorted = sortChannelSearchResults(
+        results,
+        modIds: this._store.moderatedChannelIds.toSet(),
+      );
       if (this.mounted && seq == this._searchSeq) {
         this.setState(() {
-          this._results = results;
+          this._results = sorted;
           this._searching = false;
         });
       }
@@ -303,10 +342,14 @@ class _AddChatSheetState extends State<AddChatSheet> {
           this._sectionHeader(context, 'Channels you moderate'),
           this._sectionBody(
             context,
+            chipScope: 'mod',
             loading: this._loadingModerated,
             error: this._moderatedError,
             onRetry: this._loadModerated,
             refs: this._moderated,
+            liveIds: this._moderatedLiveIds,
+            /// Section header already means mod — no Mod chip here.
+            showModChip: false,
             store: store,
             ownId: ownId,
           ),
@@ -316,10 +359,13 @@ class _AddChatSheetState extends State<AddChatSheet> {
           this._sectionHeader(context, 'Channels you follow'),
           this._sectionBody(
             context,
+            chipScope: 'fol',
             loading: this._loadingFollowed,
             error: this._followedError,
             onRetry: this._loadFollowed,
             refs: this._followed,
+            liveIds: this._followedLiveIds,
+            showModChip: true,
             store: store,
             ownId: ownId,
           ),
@@ -356,17 +402,20 @@ class _AddChatSheetState extends State<AddChatSheet> {
         ),
       );
     }
+    final modIds = store.moderatedChannelIds;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final result in this._results)
           this._channelRow(
             context,
+            chipScope: 'search',
             id: result.id,
             displayName: result.displayName,
             subtitle:
                 '@${result.login} · ${_formatFollowers(result.followerCount)} followers',
             live: result.isLive,
+            mod: modIds.contains(result.id),
             added: this._isAdded(store, ownId, result.id),
             onAdd: () => this._addChannel(
               TwitchChannelRef(
@@ -394,10 +443,13 @@ class _AddChatSheetState extends State<AddChatSheet> {
 
   Widget _sectionBody(
     BuildContext context, {
+    required String chipScope,
     required bool loading,
     required Object? error,
     required VoidCallback onRetry,
     required List<TwitchChannelRef> refs,
+    required Set<String> liveIds,
+    required bool showModChip,
     required TwitchChatStore store,
     required String? ownId,
   }) {
@@ -417,15 +469,19 @@ class _AddChatSheetState extends State<AddChatSheet> {
         ),
       );
     }
+    final modIds = store.moderatedChannelIds;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final ref in refs)
           this._channelRow(
             context,
+            chipScope: chipScope,
             id: ref.id,
             displayName: ref.displayName,
             subtitle: '@${ref.login}',
+            live: liveIds.contains(ref.id),
+            mod: showModChip && modIds.contains(ref.id),
             added: this._isAdded(store, ownId, ref.id),
             onAdd: () => this._addChannel(ref),
           ),
@@ -477,13 +533,17 @@ class _AddChatSheetState extends State<AddChatSheet> {
 
   Widget _channelRow(
     BuildContext context, {
+    required String chipScope,
     required String id,
     required String displayName,
     required String subtitle,
     required bool added,
     bool live = false,
+    bool mod = false,
     required VoidCallback onAdd,
   }) {
+    final statusColors = Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
     return Pressable(
       haptic: true,
       onTap: added ? null : onAdd,
@@ -495,18 +555,6 @@ class _AddChatSheetState extends State<AddChatSheet> {
           opacity: added ? 0.5 : 1.0,
           child: Row(
             children: [
-              if (live) ...[
-                Container(
-                  key: Key('add-chat-live-$id'),
-                  width: 8.0,
-                  height: 8.0,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.greenAccent,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-              ],
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -529,15 +577,65 @@ class _AddChatSheetState extends State<AddChatSheet> {
                   ],
                 ),
               ),
-              if (added)
+              if (live) ...[
+                const SizedBox(width: AppSpacing.xs),
+                this._statusChip(
+                  context,
+                  key: Key('add-chat-live-$chipScope-$id'),
+                  label: 'LIVE',
+                  color: statusColors.live,
+                ),
+              ],
+              if (mod) ...[
+                const SizedBox(width: AppSpacing.xs),
+                this._statusChip(
+                  context,
+                  key: Key('add-chat-mod-$chipScope-$id'),
+                  label: 'Mod',
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ],
+              if (added) ...[
+                const SizedBox(width: AppSpacing.xs),
                 Icon(
                   Icons.check,
                   size: 18.0,
                   color: Theme.of(context).colorScheme.primary,
                 ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Compact trailing chip — LIVE / Mod — so the live→mod sort order is
+  /// readable at a glance.
+  Widget _statusChip(
+    BuildContext context, {
+    required Key key,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      key: key,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2.0,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: color.withValues(alpha: 0.55), width: 1.0),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
       ),
     );
   }
