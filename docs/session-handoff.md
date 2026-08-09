@@ -2,9 +2,9 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-08** (close-out:
-all waves pushed incl. the process-tier ratification; only the
-actor-reveal dogfood open — needs a fresh Twitch login first).
+Read this first after `AGENTS.md`. Last reset: **2026-08-09** (multi-chat
+wave: Tasks 1–9 committed, Task 10 implemented-but-uncommitted, gates
+pending — see "Right now").
 
 ## Handoff hygiene (read before editing this file)
 
@@ -53,76 +53,68 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Everything is on `master` and pushed** (latest: `b8b9913`). Gates at last
-wrap-up: full suite 263/263, analyze 0 errors + exactly 6 pre-existing
-warnings. Depth for every wave below: [`changelog-agent.md`](changelog-agent.md)
-+ specs/plans under `docs/superpowers/`; per-task detail incl. commit ranges
-in the SDD ledger `.superpowers/sdd/progress.md` (untracked, per-machine).
+**Multi-chat wave in flight** — spec
+[`docs/superpowers/specs/2026-08-09-multi-chat-design.md`](superpowers/specs/2026-08-09-multi-chat-design.md),
+plan [`docs/superpowers/plans/2026-08-09-multi-chat.md`](superpowers/plans/2026-08-09-multi-chat.md)
+(11 tasks). Process: tier M, but the implementer subagent died mid-Task-10
+(secondary-model quota exhausted) → dropped to S in-session per tier
+policy.
 
-- **"On Air" redesign** — closed, merged. Design system: `lib/shared/design/`.
-- **Native Twitch chat program** — all waves shipped:
-  - Phase 1 + engine switch (08-04): OAuth device-code login ("OBS Blade
-    Chat" app), read-only EventSub, manual WebView↔Native switch
-    (`SelectedChatEngine`, default WebView; seam `nativeChatAvailableFor`).
-  - Container UI (08-05): `NativeChatWindow` everywhere (tab slot, cards,
-    streaming mode) + connection sheet; generic params = YouTube reuse seam.
-  - Role badges + per-category toggles (08-05): `TwitchBadgeStore`, native
-    chat options sheet (per-platform seam).
-  - Send input (08-05): reads AND writes — `NativeChatInput` dock, silent
-    `user:write:chat` scope upgrade (pre-upgrade sessions: read-only lock
-    strip), Helix send, no optimistic insert. Dogfood passed 08-06.
-  - Third-party emotes 7TV/BTTV (08-06): `ThirdPartyEmoteStore`, inline
-    animated render, default-on toggle. Formal checklist never run as such —
-    de-facto covered during picker/lifecycle dogfood (inline emotes visible
-    in every session since).
-  - Emote picker (08-06): dock button → bottom sheet (search, Channel/
-    Global + third-party sections), insert at cursor; `user:read:emotes`
-    silent upgrade + CTA. **Dogfood PASSED 08-07.**
-  - Message lifecycle (08-06): delete/timeout-purge tombstoning, `/clear`
-    banner, scrolled-up "Paused ↓" chip. **Dogfood PASSED 08-07.**
-  - Deleted content + actor reveal (08-07/08-08): deleted rows keep
-    content dimmed (alpha 0.5) + italic ` —Deleted` marker; tap →
-    `<mod> deleted <chatter>'s message`. The actor arrives via a
-    best-effort `channel.moderate` v2 sub gated on the 8-scope
-    `moderator:read:*` bundle (pre-upgrade tokens: plain tombstones).
-    **DOGFOOD OPEN — needs a fresh login first** (consent screen shows
-    the bundle; sanity-check it reads acceptably):
-    - Re-login → delete a message from twitch.tv mod tools → dimmed +
-      marker → tap → reveal line with the acting mod; tap again collapses.
-    - Delete as a *different* mod account → reveal shows that mod.
-    - Time out a user / `/clear` → content + marker, no tap reveal.
-    - Deleted message with emotes → emotes render dimmed.
-    - Shared-chat session delete (`shared_chat_delete`): expected to
-      tombstone WITHOUT a tap reveal (no actor on that notification) —
-      observe once; if it reads broken, decide whether to model it.
+**State on `master` (all LOCAL-ONLY, not pushed):**
 
-**Open threads (unblocked, pick up anytime):**
+- Spec `855313a`, plan `cd3ed14`, Tasks 1–9: `6d719c9..7279de1`.
+- **Task 10 (mod action sheet) implemented, UNCOMMITTED** in the working
+  tree: modified `lib/stores/views/twitch_chat.dart`,
+  `native_twitch_chat_view.dart`, `twitch_chat_message_row.dart`,
+  `test/chat/support/fake_twitch_services.dart`,
+  `test/chat/twitch_chat_store_test.dart`; new
+  `lib/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/mod_action_sheet.dart`,
+  `test/chat/mod_action_sheet_test.dart`.
+- One compile error fixed post-mortem (`twitch_chat.dart` — `displayName`
+  is `String?`, now `?? this.user!.login` fallback). After the fix:
+  `flutter test test/chat/mod_action_sheet_test.dart
+  test/chat/twitch_chat_store_test.dart` → **84/84 green**.
+- Unrelated pre-existing churn: `android/.settings/org.eclipse.buildship.core.prefs`
+  modified — leave it out of the Task 10 commit.
 
-- Chat-only reconnect simulation (send-input wave): kill WAN only (pull
-  router uplink / DNS-block `eventsub.wss.twitch.tv`) with LAN to OBS up →
-  chat enters `reconnecting` via keepalive watchdog (~30s), recovers on its
-  own. Never successfully triggered.
-- Logout path itself untested (08-04) — incl. post-logout WebView fallback
-  (`_syncWebController` early-return, `stream_chat.dart:108-112`; fix only
-  if the fallback renders blank).
-- Earlier review notes (not yet acted on): revocation toast on forced
-  logout; message dedup by `messageId` (duplicate `/clear` → double banner
-  is the known symptom class); revoked-refresh-token (Twitch 400) kept
-  mid-session, wiped on next cold-start validate.
-- Watch-only: "Paused ↓" chip may briefly re-appear mid-resume-animation
-  (known transient; fix only if it reads badly).
+**Exact next steps (in order):**
 
-**Next work:**
+1. Sanity-review the uncommitted Task 10 diff (`git diff`) against plan
+   Task 10; check `twitch_chat.g.dart` — if MobX regen output is missing
+   or stale, run `flutter pub run build_runner build
+   --delete-conflicting-outputs`.
+2. Gates: `flutter analyze` (0 errors; ≤6 pre-existing warnings) and
+   `flutter test test/chat/ test/websocket/ test/persistence/` (all green).
+3. Commit Task 10:
+   `feat(chat): mod actions — delete/timeout/ban with local reconcile`.
+4. End-review pass over the wave diff (`git diff 0a2f510..HEAD`) against
+   the spec — tier-M reviewer remnant; secondary quota was exhausted, so
+   self-review in-session and note that in the changelog.
+5. Wrap-up docs: `docs/changelog-agent.md` wave entry + reset this
+   handoff file (multi-chat shipped, dogfood open).
+6. Push (handoff rule).
 
-- **Native chat availability/entitlement gate** — the named next chat item:
-  plugs into `nativeChatAvailableFor` (`lib/models/enums/chat_engine.dart`),
-  brings auto-switch-on-login. Pick the process tier first per §0 of the
-  checklist (default S; this one touches entitlement → consider M/L).
-- Replies/announce — send polish, after the gate.
-- Store cut — Android build/test + version/build-number bump first (see
-  master notes in changelog).
+**Dogfood (user, real Twitch — after push):** fresh Twitch login first
+(consent now bundles 12 scopes — sanity-check readability), then spec §6:
+search-add a channel, add from moderated/followed, switch + history
+restore, chat in another channel, delete/timeout/ban in a modded channel
+(tombstones/purges on both sides, no doubles), per-channel emote picker,
+pre-upgrade token degradation (search-only picker, no shields/actions).
+
+**Previous wave:** actor-reveal dogfood (channel.moderate v2) **PASSED**
+(user-verified 08-08/09). Earlier open threads from the send-input wave
+(chat-only reconnect simulation, logout path) remain untouched — pick up
+anytime, see git history for the 08-08 handoff text if needed.
+
+**Next work after multi-chat dogfood:**
+
+- Replies/announce — send polish (was queued behind the chat gate;
+  multi-chat jumped the queue).
+- Store cut — Android build/test + version/build-number bump first.
 - Paid backend — OAuth broker registration still deferred; see
   `private/backend-architecture.md`.
+- The availability/entitlement gate (`nativeChatAvailableFor` +
+  auto-switch-on-login) — still the named next chat item.
 
 **Process (tiers — S is the default):** size the process to the change.
 S = implement directly in-session (no subagents/plan doc), TDD + gates
@@ -165,6 +157,8 @@ flutter test test/chat/ test/websocket/ test/persistence/
 | [`upgrade-plan.md`](upgrade-plan.md) | Flutter/package bump status |
 | [`local-obs-e2e.md`](local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
 | [`superpowers/plan-defect-checklist.md`](superpowers/plan-defect-checklist.md) | Process policy — tiers (§0, S default), verifier pass, defect probes, codegen checklist |
+| [`superpowers/specs/2026-08-09-multi-chat-design.md`](superpowers/specs/2026-08-09-multi-chat-design.md) | Multi-chat design (approved) |
+| [`superpowers/plans/2026-08-09-multi-chat.md`](superpowers/plans/2026-08-09-multi-chat.md) | Multi-chat implementation plan (11 tasks) |
 | [`redesign/`](redesign/) | "On Air" redesign: design system, audit digest, session notes |
 | [`private/monetization-strategy.md`](private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored.** |
 | [`private/backend-architecture.md`](private/backend-architecture.md) | Infra plan for paid backend features. **Gitignored.** |
