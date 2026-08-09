@@ -9,13 +9,16 @@ import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../dialogs/add_chat_sheet.dart';
+import '../native_chat_chrome.dart';
 
 /// Multi-chat channel picker for the native chat bar, in the
 /// [UsernameDropdown] idiom: the user's own channel first (marked "You"),
-/// then the added channels (shield when the user moderates them), and an
-/// "Add chat…" entry at the bottom (an action, not a selection).
-/// Long-pressing an added channel offers removal (the selected channel
-/// falls back to own). Disabled while a switch is in flight.
+/// then the added channels, and an "Add chat…" entry at the bottom (an
+/// action, not a selection). Open-menu rows show LIVE / Mod status chips
+/// (closed/selected value stays name-only — the header already mirrors
+/// the effective channel). Long-pressing an added channel offers removal
+/// (the selected channel falls back to own). Disabled while a switch is
+/// in flight.
 class NativeChannelDropdown extends StatelessWidget {
   /// Dropdown values are channel ids; own channel is the empty string and
   /// the "Add chat…" entry is an action sentinel (never a selection).
@@ -43,6 +46,86 @@ class NativeChannelDropdown extends StatelessWidget {
     );
   }
 
+  Widget _channelLabel(
+    BuildContext context, {
+    required String name,
+    String? trailingLabel,
+  }) {
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+          ),
+        ),
+        if (trailingLabel != null) ...[
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            trailingLabel,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _menuRow(
+    BuildContext context, {
+    required TwitchChatStore store,
+    required String? channelId,
+    required String name,
+    String? trailingLabel,
+  }) {
+    final statusColors = Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
+    final live = store.isChannelLive(channelId);
+    final mod = store.canModerateChannel(channelId);
+
+    /// Menu width is locked to the dropdown button (not the screen), so
+    /// [Expanded] pushes chips to that trailing edge without a fixed size.
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.fade,
+                ),
+              ),
+              if (trailingLabel != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                Text(
+                  trailingLabel,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (live || mod) const SizedBox(width: AppSpacing.sm),
+        if (live)
+          NativeChatStatusChip.live(
+            key: Key('channel-dropdown-live-${channelId ?? 'own'}'),
+            color: statusColors.live,
+            viewerCount: store.viewerCountForChannel(channelId),
+          ),
+        if (live && mod) const SizedBox(width: AppSpacing.xs),
+        if (mod)
+          NativeChatStatusChip.mod(
+            key: Key('channel-dropdown-mod-${channelId ?? 'own'}'),
+            color: Theme.of(context).colorScheme.primary,
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Observer(
@@ -51,27 +134,19 @@ class NativeChannelDropdown extends StatelessWidget {
         final switching = store.chatConnection ==
             TwitchChatConnectionState.connecting;
 
+        final ownName = store.user?.displayName ??
+            store.user?.login ??
+            'Own channel';
+
         final items = <DropdownMenuItem<String>>[
           DropdownMenuItem<String>(
             value: _kOwnValue,
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    store.user?.displayName ??
-                        store.user?.login ??
-                        'Own channel',
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.fade,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Text(
-                  'You',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+            child: this._menuRow(
+              context,
+              store: store,
+              channelId: null,
+              name: ownName,
+              trailingLabel: 'You',
             ),
           ),
           for (final ref in store.channels)
@@ -80,25 +155,11 @@ class NativeChannelDropdown extends StatelessWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onLongPress: () => this._confirmRemove(context, ref.id),
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        ref.displayName,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.fade,
-                      ),
-                    ),
-                    if (store.moderatedChannelIds.contains(ref.id)) ...[
-                      const SizedBox(width: AppSpacing.xs),
-                      Icon(
-                        Icons.shield,
-                        size: 14.0,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ],
-                  ],
+                child: this._menuRow(
+                  context,
+                  store: store,
+                  channelId: ref.id,
+                  name: ref.displayName,
                 ),
               ),
             ),
@@ -112,6 +173,19 @@ class NativeChannelDropdown extends StatelessWidget {
               ],
             ),
           ),
+        ];
+
+        /// Closed value: name (+ You) only — LIVE/Mod live on the header
+        /// for the effective channel, so they stay off the compact control.
+        final selectedBuilders = <Widget>[
+          this._channelLabel(
+            context,
+            name: ownName,
+            trailingLabel: 'You',
+          ),
+          for (final ref in store.channels)
+            this._channelLabel(context, name: ref.displayName),
+          this._channelLabel(context, name: 'Add chat…'),
         ];
 
         return Flexible(
@@ -144,6 +218,7 @@ class NativeChannelDropdown extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     icon: const Icon(Icons.arrow_drop_down),
                     items: items,
+                    selectedItemBuilder: (_) => selectedBuilders,
                     onChanged: switching
                         ? null
                         : (value) {

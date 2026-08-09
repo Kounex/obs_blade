@@ -2,12 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/classes/twitch/chat_settings.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../chat_notice_chrome.dart';
+import '../chat_type_brand.dart';
 import '../native_chat_chrome.dart';
 import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
@@ -482,73 +485,142 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
     );
   }
 
+  /// Helix announce highlight → chip paint (matches chat rail solid).
+  Color _announceChipColor(String helixColor) =>
+      chatAnnouncementHighlight(helixColor).solid;
+
   Widget _buildAnnounceCompose(BuildContext context) {
     final text = this._announceController.text;
-    final canSend =
-        text.trim().isNotEmpty && text.length <= kAnnounceMaxLength;
+    final canSend = !this._running &&
+        text.trim().isNotEmpty &&
+        text.length <= kAnnounceMaxLength;
+    final accent = ChatType.Twitch.brandColor ??
+        Theme.of(context).cupertinoOverrideTheme?.primaryColor ??
+        Theme.of(context).colorScheme.primary;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        NativeChatTextField(
-          controller: this._announceController,
-          hintText: 'Announcement message',
-          minLines: 2,
-          maxLines: 4,
-          maxLength: kAnnounceMaxLength,
-          textInputAction: TextInputAction.newline,
-          onChanged: (_) => this.setState(() {}),
-        ),
-        const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: AppSpacing.xs,
           runSpacing: AppSpacing.xs,
           children: [
             for (final color in kAnnounceColors)
-              Pressable(
-                haptic: true,
-                onTap: () => this.setState(() => this._announceColor = color),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: this._announceColor == color
-                        ? Theme.of(context).colorScheme.primary
-                            .withValues(alpha: 0.2)
-                        : StylingHelper.lightenDarkenColor(
-                            Theme.of(context).cardColor),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: this._announceColor == color
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context)
-                              .dividerColor
-                              .withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Text(color),
-                ),
-              ),
+              this._announceColorChip(context, color),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        this._actionRow(
-          context,
-          icon: CupertinoIcons.paperplane,
-          label: 'Send',
-          enabled: canSend,
-          onTap: () => this._run(
-                () => this._store.sendAnnouncement(
-                      this._announceController.text.trim(),
-                      this._announceColor,
-                    ),
-                'Could not send announcement',
-                closeSheet: true,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: NativeChatTextField(
+                controller: this._announceController,
+                hintText: 'Send an announcement…',
+                minLines: 1,
+                maxLines: 5,
+                maxLength: kAnnounceMaxLength,
+                textInputAction: TextInputAction.send,
+                focusBorderColor: accent,
+                onChanged: (_) => this.setState(() {}),
+                onSubmitted: canSend
+                    ? (_) => this._sendAnnouncement()
+                    : null,
               ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Pressable(
+              haptic: true,
+              onTap: canSend ? this._sendAnnouncement : null,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minWidth: kMinInteractiveDimensionCupertino,
+                  minHeight: kMinInteractiveDimensionCupertino,
+                ),
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: kNativeChatDockControlSize,
+                  height: kNativeChatDockControlSize,
+                  decoration: BoxDecoration(
+                    color: canSend
+                        ? accent
+                        : accent.withValues(alpha: 0.35),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: this._running
+                      ? (StylingHelper.isApple(context)
+                          ? const CupertinoActivityIndicator(radius: 8.0)
+                          : const SizedBox(
+                              width: 16.0,
+                              height: 16.0,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                color: Colors.white,
+                              ),
+                            ))
+                      : const Icon(
+                          CupertinoIcons.paperplane_fill,
+                          size: 17.0,
+                          color: Colors.white,
+                        ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _announceColorChip(BuildContext context, String color) {
+    final chipColor = this._announceChipColor(color);
+    final selected = this._announceColor == color;
+    final label = switch (color) {
+      'primary' => 'Primary',
+      'blue' => 'Blue',
+      'green' => 'Green',
+      'orange' => 'Orange',
+      'purple' => 'Purple',
+      _ => color,
+    };
+    return Pressable(
+      haptic: true,
+      onTap: () => this.setState(() => this._announceColor = color),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? chipColor
+              : chipColor.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: chipColor.withValues(alpha: selected ? 1.0 : 0.55),
+          ),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: selected ? Colors.white : chipColor,
+                fontWeight: selected ? FontWeight.w600 : null,
+              ),
+        ),
+      ),
+    );
+  }
+
+  void _sendAnnouncement() {
+    this._run(
+      () => this._store.sendAnnouncement(
+            this._announceController.text.trim(),
+            this._announceColor,
+          ),
+      'Could not send announcement',
+      closeSheet: true,
     );
   }
 

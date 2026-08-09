@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -113,6 +114,12 @@ void main() {
     await tester.tap(find.text('Delete message'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Delete message?'), findsOneWidget);
+    expect(moderationService.deleteCalls, 0);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
     expect(moderationService.deleteCalls, 1);
     expect(moderationService.lastDeleteMessageId, 'm1');
     expect(moderationService.lastDeleteBroadcasterId, 'user-1');
@@ -130,17 +137,30 @@ void main() {
     await tester.tap(find.text('Timeout…'));
     await tester.pumpAndSettle();
 
+    expect(find.byIcon(CupertinoIcons.chevron_back), findsOneWidget);
+    expect(find.text('Back'), findsNothing);
+    expect(find.text('1 minute'), findsOneWidget);
+    expect(find.text('5 minutes'), findsOneWidget);
     expect(find.text('10 minutes'), findsOneWidget);
+    expect(find.text('30 minutes'), findsOneWidget);
     expect(find.text('1 hour'), findsOneWidget);
+    expect(find.text('12 hours'), findsOneWidget);
     expect(find.text('24 hours'), findsOneWidget);
+    expect(find.text('1 week'), findsOneWidget);
     expect(moderationService.banCalls, 0);
 
-    await tester.tap(find.text('10 minutes'));
+    await tester.tap(find.text('1 minute'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Timeout Useru1?'), findsOneWidget);
+    expect(moderationService.banCalls, 0);
+
+    await tester.tap(find.text('Timeout'));
     await tester.pumpAndSettle();
 
     expect(moderationService.banCalls, 1);
     expect(moderationService.lastBanUserId, 'u1');
-    expect(moderationService.lastBanDurationSeconds, 600);
+    expect(moderationService.lastBanDurationSeconds, 60);
     expect(store.isMessageDeleted('m1'), isTrue);
     expect(find.byType(ModActionSheet), findsNothing);
   });
@@ -150,7 +170,13 @@ void main() {
     store.appendChatMessageForTest(event);
 
     await openSheet(tester, event);
-    await tester.tap(find.text('Ban'));
+    await tester.tap(find.text('Ban').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ban Useru1?'), findsOneWidget);
+    expect(moderationService.banCalls, 0);
+
+    await tester.tap(find.text('Ban').last);
     await tester.pumpAndSettle();
 
     expect(moderationService.banCalls, 1);
@@ -158,6 +184,24 @@ void main() {
     expect(moderationService.lastBanDurationSeconds, isNull);
     expect(store.isMessageDeleted('m1'), isTrue);
     expect(find.byType(ModActionSheet), findsNothing);
+  });
+
+  testWidgets('canceling confirmation leaves the sheet open and does '
+      'nothing', (tester) async {
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+
+    await openSheet(tester, event);
+    await tester.tap(find.text('Delete message'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(moderationService.deleteCalls, 0);
+    expect(store.isMessageDeleted('m1'), isFalse);
+    expect(find.byType(ModActionSheet), findsOneWidget);
+    expect(find.text('Delete message'), findsOneWidget);
   });
 
   testWidgets('a failure closes the sheet, shows a snackbar and changes '
@@ -168,6 +212,8 @@ void main() {
 
     await openSheet(tester, event);
     await tester.tap(find.text('Delete message'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
     expect(moderationService.deleteCalls, 1);

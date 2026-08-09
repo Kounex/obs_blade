@@ -79,23 +79,32 @@ void main() {
     }
   });
 
-  testWidgets('own channel first with the You marker, shields for moderated',
+  testWidgets('own channel first with You; LIVE/Mod chips only in the open menu',
       (tester) async {
     store.channels.addAll([ref('chan-1'), ref('chan-2')]);
     store.moderatedChannelIds.add('chan-2');
+    store.channelLiveViewers.addAll({'chan-1': 1200, 'user-1': 42});
 
     await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
-    await tester.tap(find.byType(DropdownButton<String>));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    /// Own first (button + open menu both render the selected item), then
-    /// the added channels in list order.
-    expect(find.text('Kounex'), findsWidgets);
-    expect(find.text('You'), findsWidgets);
+    /// Closed control: name (+ You) only — no status chips.
+    expect(find.text('LIVE'), findsNothing);
+    expect(find.text('Mod'), findsNothing);
+    expect(find.text('Kounex'), findsOneWidget);
+    expect(find.text('You'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
     expect(find.text('Channel chan-1'), findsOneWidget);
     expect(find.text('Channel chan-2'), findsOneWidget);
-    expect(find.byIcon(Icons.shield), findsOneWidget);
     expect(find.text('Add chat…'), findsOneWidget);
+    expect(find.byKey(const Key('channel-dropdown-live-own')), findsOneWidget);
+    expect(find.byKey(const Key('channel-dropdown-live-chan-1')), findsOneWidget);
+    expect(find.byKey(const Key('channel-dropdown-mod-chan-2')), findsOneWidget);
+    expect(find.byIcon(Icons.shield), findsNothing);
   });
 
   testWidgets('selecting a channel calls selectChannel', (tester) async {

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../../shared/design/design.dart';
+import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/classes/twitch/eventsub/channel_chat_message.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../native_chat_chrome.dart';
 
 /// Opens the mod action sheet for [event] (multi-chat) — shown when a live
 /// message is tapped in a channel the user moderates
@@ -15,7 +17,12 @@ import '../../../../../../utils/styling_helper.dart';
 /// Failures surface as a snackbar hosted by [context] (the chat view's) —
 /// the sheet route is already popped by then, so its own context can't
 /// host it.
-void showModActionSheet(BuildContext context, ChatMessageEvent event) =>
+/// Returns when the sheet is dismissed (so callers can clear selection
+/// chrome on the target message).
+Future<void> showModActionSheet(
+  BuildContext context,
+  ChatMessageEvent event,
+) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
       barrierDismissible: true,
@@ -29,10 +36,23 @@ void showModActionSheet(BuildContext context, ChatMessageEvent event) =>
       ),
     );
 
+/// Timeout presets (label → seconds). Twitch caps at 2 weeks; these cover
+/// the common moderator ladder including a 1-minute quick hit.
+const List<(String, int)> kModTimeoutPresets = [
+  ('1 minute', 60),
+  ('5 minutes', 300),
+  ('10 minutes', 600),
+  ('30 minutes', 1800),
+  ('1 hour', 3600),
+  ('12 hours', 43200),
+  ('24 hours', 86400),
+  ('1 week', 604800),
+];
+
 /// Mod actions for one chat message: delete it, or timeout/ban its author.
-/// "Timeout…" swaps to a preset step (10 min / 1 h / 24 h). Every action
-/// closes the sheet; on failure the local state is untouched and
-/// [onFailure] explains via snackbar.
+/// "Timeout…" swaps to a preset step. Final actions (delete / timeout
+/// duration / ban) ask for confirmation first. On failure the local state
+/// is untouched and [onFailure] explains via snackbar.
 class ModActionSheet extends StatefulWidget {
   final ChatMessageEvent event;
 
@@ -70,82 +90,148 @@ class _ModActionSheetState extends State<ModActionSheet> {
     if (!ok) this.widget.onFailure(failureText);
   }
 
+  /// Confirm before a destructive Helix call — cancel leaves the sheet open.
+  void _confirmThenRun({
+    required String title,
+    required String body,
+    required String okText,
+    required Future<bool> Function() action,
+    required String failureText,
+  }) {
+    if (this._running) return;
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: ConfirmationDialog(
+        title: title,
+        body: body,
+        okText: okText,
+        noText: 'Cancel',
+        isYesDestructive: true,
+        onOk: (_) {
+          this._run(action, failureText);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final event = this.widget.event;
+    final name = event.chatterUserName;
+    final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            this._timeoutStep
-                ? 'Timeout ${event.chatterUserName}'
-                : 'Moderate ${event.chatterUserName}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          this._titleRow(context, name),
           const SizedBox(height: AppSpacing.sm),
-          if (this._timeoutStep) ...[
-            for (final preset in const [
-              ('10 minutes', 600),
-              ('1 hour', 3600),
-              ('24 hours', 86400),
-            ])
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: this._actionRow(
-                  context,
-                  icon: CupertinoIcons.timer,
-                  label: preset.$1,
-                  onTap: () => this._run(
-                    () =>
-                        this._store.timeoutUser(event.chatterUserId, preset.$2),
-                    'Could not time out the user',
-                  ),
-                ),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxListHeight),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (this._timeoutStep) ...[
+                    for (final preset in kModTimeoutPresets)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        child: this._actionRow(
+                          context,
+                          icon: CupertinoIcons.timer,
+                          label: preset.$1,
+                          onTap: () => this._confirmThenRun(
+                            title: 'Timeout $name?',
+                            body:
+                                'Timeout $name for ${preset.$1}? They can\'t '
+                                'chat until it expires.',
+                            okText: 'Timeout',
+                            action: () => this
+                                ._store
+                                .timeoutUser(event.chatterUserId, preset.$2),
+                            failureText: 'Could not time out the user',
+                          ),
+                        ),
+                      ),
+                  ] else ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      child: this._actionRow(
+                        context,
+                        icon: CupertinoIcons.trash,
+                        label: 'Delete message',
+                        onTap: () => this._confirmThenRun(
+                          title: 'Delete message?',
+                          body:
+                              'Remove this message from $name in chat? '
+                              'This can\'t be undone.',
+                          okText: 'Delete',
+                          action: () => this._store.deleteMessage(event),
+                          failureText: 'Could not delete the message',
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      child: this._actionRow(
+                        context,
+                        icon: CupertinoIcons.timer,
+                        label: 'Timeout…',
+                        onTap: () =>
+                            this.setState(() => this._timeoutStep = true),
+                      ),
+                    ),
+                    this._actionRow(
+                      context,
+                      icon: CupertinoIcons.hand_raised,
+                      label: 'Ban',
+                      destructive: true,
+                      onTap: () => this._confirmThenRun(
+                        title: 'Ban $name?',
+                        body:
+                            'Ban $name from this channel? They won\'t be able '
+                            'to chat until unbanned.',
+                        okText: 'Ban',
+                        action: () => this._store.banUser(event.chatterUserId),
+                        failureText: 'Could not ban the user',
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            this._actionRow(
-              context,
-              icon: CupertinoIcons.chevron_left,
-              label: 'Back',
-              onTap: () => this.setState(() => this._timeoutStep = false),
             ),
-          ] else ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: this._actionRow(
-                context,
-                icon: CupertinoIcons.trash,
-                label: 'Delete message',
-                onTap: () => this._run(
-                  () => this._store.deleteMessage(event),
-                  'Could not delete the message',
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: this._actionRow(
-                context,
-                icon: CupertinoIcons.timer,
-                label: 'Timeout…',
-                onTap: () => this.setState(() => this._timeoutStep = true),
-              ),
-            ),
-            this._actionRow(
-              context,
-              icon: CupertinoIcons.hand_raised,
-              label: 'Ban',
-              destructive: true,
-              onTap: () => this._run(
-                () => this._store.banUser(event.chatterUserId),
-                'Could not ban the user',
-              ),
-            ),
-          ],
+          ),
         ],
       ),
+    );
+  }
+
+  /// Same header idiom as native chat options: chevron left of the title
+  /// on the timeout step (not an action-row "Back" card).
+  Widget _titleRow(BuildContext context, String chatterName) {
+    final title = this._timeoutStep
+        ? 'Timeout $chatterName'
+        : 'Moderate $chatterName';
+    if (!this._timeoutStep) {
+      return Text(title, style: nativeChatSheetTitleStyle(context));
+    }
+    return Row(
+      children: [
+        Pressable(
+          haptic: true,
+          onTap: this._running
+              ? null
+              : () => this.setState(() => this._timeoutStep = false),
+          child: const Padding(
+            padding: EdgeInsets.only(right: AppSpacing.sm),
+            child: Icon(CupertinoIcons.chevron_back, size: 20.0),
+          ),
+        ),
+        Expanded(
+          child: Text(title, style: nativeChatSheetTitleStyle(context)),
+        ),
+      ],
     );
   }
 

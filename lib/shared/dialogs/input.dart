@@ -32,24 +32,22 @@ class InputDialog extends StatefulWidget {
 
 class _InputDialogState extends State<InputDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey();
-  late final TextEditingController _controller;
+  late final CustomValidationTextEditingController _controller;
 
   @override
   void initState() {
-    _controller = this.widget.inputCheck != null
-        ? CustomValidationTextEditingController(
-            text: this.widget.inputText ?? '',
-            check: this.widget.inputCheck!,
-          )
-        : TextEditingController(
-            text: this.widget.inputText ?? '',
-          );
+    /// Always use the validation controller — [BaseAdaptiveTextField]
+    /// requires it. [inputCheck] may be null (optional validation).
+    this._controller = CustomValidationTextEditingController(
+      text: this.widget.inputText ?? '',
+      check: this.widget.inputCheck,
+    );
     super.initState();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    this._controller.dispose();
     super.dispose();
   }
 
@@ -63,10 +61,9 @@ class _InputDialogState extends State<InputDialog> {
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Form(
-              key: _formKey,
+              key: this._formKey,
               child: BaseAdaptiveTextField(
-                controller:
-                    _controller as CustomValidationTextEditingController,
+                controller: this._controller,
                 placeholder: this.widget.inputPlaceholder,
               ),
             ),
@@ -84,15 +81,16 @@ class _InputDialogState extends State<InputDialog> {
           onPressed: (_) {
             bool valid = true;
             if (this.widget.inputCheck != null) {
-              _formKey.currentState!.validate();
-              (_controller as CustomValidationTextEditingController).submit();
-              valid = (_controller as CustomValidationTextEditingController)
-                  .isValid;
+              this._formKey.currentState!.validate();
+              this._controller.submit();
+              valid = this._controller.isValid;
             }
             if (valid) {
-              this
-                  .widget
-                  .onSave(_controller.text.isEmpty ? null : _controller.text);
+              this.widget.onSave(
+                    this._controller.text.isEmpty
+                        ? null
+                        : this._controller.text,
+                  );
               Navigator.of(context).pop();
             }
           },
