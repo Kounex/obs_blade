@@ -323,6 +323,39 @@ void main() {
       await tester.tap(find.byType(TwitchChatMessageRow));
       expect(tapped, isFalse);
     });
+
+    testWidgets('author tap fires the card callback', (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onAuthorTap: () => tapped = true,
+        )),
+      );
+
+      await tester.tap(find.text('Viewer32'));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('long-press fires mod callback; short body tap does not',
+        (tester) async {
+      var longPressed = false;
+      await tester.pumpWidget(
+        wrap(TwitchChatMessageRow(
+          event: textEvent('1', 'Viewer32', 'Hi chat'),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+          onMessageLongPress: () => longPressed = true,
+        )),
+      );
+
+      await tester.longPress(find.textContaining('Hi chat'));
+      expect(longPressed, isTrue);
+
+      longPressed = false;
+      await tester.tap(find.textContaining('Hi chat'));
+      expect(longPressed, isFalse);
+    });
   });
 
   group('NativeTwitchChatView', () {

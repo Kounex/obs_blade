@@ -17,6 +17,7 @@ import 'package:obs_blade/utils/styling_helper.dart';
 import 'chat_notice_chrome.dart';
 import 'chat_notice_visibility.dart';
 import 'chat_tombstone.dart';
+import 'dialogs/chat_user_card_sheet.dart';
 import 'dialogs/mod_action_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'twitch_chat_message_row.dart';
@@ -342,10 +343,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                               }
                             }),
 
-                    /// Mod actions target live messages in moderated
-                    /// channels only — a tombstone's tap keeps its
-                    /// actor-reveal meaning.
-                    onMessageTap:
+                    onAuthorTap: () => showChatUserCardSheet(
+                      context,
+                      userId: event.chatterUserId,
+                    ),
+                    onMessageLongPress:
                         deleted || !this._store.canModerateSelectedChannel
                             ? null
                             : () => showModActionSheet(context, event),

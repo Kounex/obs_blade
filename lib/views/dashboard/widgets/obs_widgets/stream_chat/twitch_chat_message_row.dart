@@ -50,10 +50,11 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// callback with an actor yields an inert, tap-swallowing target.
   final VoidCallback? onDeletedTap;
 
-  /// Tap handler for a LIVE message (multi-chat mod actions) — set by the
-  /// window only when the store allows moderating the selected channel.
-  /// Tombstones keep their actor-reveal tap and never get this.
-  final VoidCallback? onMessageTap;
+  /// Tap handler for badges + username → user card.
+  final VoidCallback? onAuthorTap;
+
+  /// Long-press handler for mod actions on a live message.
+  final VoidCallback? onMessageLongPress;
 
   /// Left accent when this row continues a prior chat notification
   /// (same chatter).
@@ -76,7 +77,8 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.deletedActor,
     this.isDeletedExpanded = false,
     this.onDeletedTap,
-    this.onMessageTap,
+    this.onAuthorTap,
+    this.onMessageLongPress,
     this.accentBarColor,
     this.mentionHexFor,
     this.compact = false,
@@ -107,7 +109,7 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// Badges before the author name, in payload order. Unknown badges
   /// (catalog not loaded yet, new Twitch set) and toggled-off categories
   /// are skipped silently.
-  List<InlineSpan> _badgeSpans() {
+  List<Widget> _badgeWidgets() {
     if (this.event.badges.isEmpty) return const [];
     final badgeStore = GetIt.instance<TwitchBadgeStore>();
     return [
@@ -119,20 +121,52 @@ class TwitchChatMessageRow extends StatelessWidget {
           if (badgeStore.badgeVersion(
                   this.event.broadcasterUserId, badge.setId, badge.id)
               case final version?)
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
-                child: Image.network(
-                  version.imageUrl2x,
-                  height: _badgeSize,
-                  width: _badgeSize,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
+              child: Image.network(
+                version.imageUrl2x,
+                height: _badgeSize,
+                width: _badgeSize,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
               ),
             ),
     ];
+  }
+
+  List<InlineSpan> _badgeSpans() => [
+        for (final widget in this._badgeWidgets())
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: widget,
+          ),
+      ];
+
+  InlineSpan _authorSpan(BuildContext context) {
+    final authorStyle = TextStyle(
+      fontWeight: FontWeight.w600,
+      color: this._authorColor(context),
+    );
+    if (this.onAuthorTap == null) {
+      return TextSpan(
+        text: this.event.chatterUserName,
+        style: authorStyle,
+      );
+    }
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: GestureDetector(
+        onTap: this.onAuthorTap,
+        behavior: HitTestBehavior.translucent,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...this._badgeWidgets(),
+            Text(this.event.chatterUserName, style: authorStyle),
+          ],
+        ),
+      ),
+    );
   }
 
   List<InlineSpan> _messageSpans(BuildContext context) {
@@ -389,12 +423,13 @@ class TwitchChatMessageRow extends StatelessWidget {
         ? GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: this.onDeletedTap,
+            onLongPress: this.onMessageLongPress,
             child: padded,
           )
-        : this.onMessageTap != null
+        : this.onMessageLongPress != null
             ? GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: this.onMessageTap,
+                behavior: HitTestBehavior.translucent,
+                onLongPress: this.onMessageLongPress,
                 child: padded,
               )
             : padded;
@@ -406,14 +441,8 @@ class TwitchChatMessageRow extends StatelessWidget {
                 fontSize: this._textSize,
               ),
           children: [
-            ...this._badgeSpans(),
-            TextSpan(
-              text: this.event.chatterUserName,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: this._authorColor(context),
-              ),
-            ),
+            if (this.onAuthorTap == null) ...this._badgeSpans(),
+            this._authorSpan(context),
             const TextSpan(text: ': '),
             if (this.isDeleted) ...[
               ...this._dimmedMessageSpans(context),
