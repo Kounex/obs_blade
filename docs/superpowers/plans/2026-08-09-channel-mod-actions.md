@@ -38,8 +38,7 @@ existing `ConfirmationDialog` / `ModalHandler` / sheet chrome.
 - Do not flip local mode/shield state on Helix failure; snackbar on failure.
 - Injectable `http.Client`; no real HTTP in unit tests.
 - Commit per task. Do **not** push unless asked.
-- Flutter: workstation `~/.dotfiles/flutter/sdk` or `./flutterw`; headless
-  clone uses `~/flutter`.
+- Flutter: `bash flutterw` (wraps your local SDK; see `AGENTS.md` tooling).
 
 ## File map
 

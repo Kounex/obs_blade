@@ -6,7 +6,7 @@
 
 **Architecture:** New self-contained feature — `TwitchAuthService` (device code grant, refresh, validate, revoke), `TwitchEventSubService` (dedicated EventSub WebSocket + Helix subscription), freezed DTOs under `lib/types/classes/twitch/`, one MobX `TwitchChatStore` (GetIt), and UI inside `lib/views/dashboard/widgets/obs_widgets/stream_chat/`. No changes to `DashboardStore`. Spec: `docs/superpowers/specs/2026-08-04-twitch-native-chat-phase1-design.md`.
 
-**Tech Stack:** Flutter (workstation SDK `~/.dotfiles/flutter/sdk/bin/flutter`), MobX + mobx_codegen, GetIt, Hive CE, freezed, `web_socket_channel` (existing), `http` (new, only added dependency), `url_launcher` (existing). Tests: `flutter_test`, `package:http/testing.dart` MockClient, hand-written fakes (no mocking library in this repo — keep it that way).
+**Tech Stack:** Flutter (workstation SDK `flutter`), MobX + mobx_codegen, GetIt, Hive CE, freezed, `web_socket_channel` (existing), `http` (new, only added dependency), `url_launcher` (existing). Tests: `flutter_test`, `package:http/testing.dart` MockClient, hand-written fakes (no mocking library in this repo — keep it that way).
 
 ## Global Constraints
 
@@ -17,7 +17,7 @@
 - Auth uses the **device code grant (DCF)** — the registered redirect URI (`http://localhost:14777/twitch-auth-callback`) is intentionally **unused**; do not build any redirect/loopback/deep-link handling.
 - Hive: `TwitchAuth` gets **typeId 13** (highest used is 12 — never renumber existing IDs). Register the adapter manually in `main.dart`'s `_initializeHive`; do **not** switch to the generated `HiveRegistrar.registerAdapters()`.
 - Single Twitch account; one box record under key `TwitchAuth.kBoxKey = 'current'` in box `HiveKeys.TwitchAuth`.
-- Codegen after adding/changing annotated classes: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`.
+- Codegen after adding/changing annotated classes: `dart run build_runner build --delete-conflicting-outputs`.
 - Commit after each task (repo policy: commit per verified unit). Do not push.
 - Conventions to match: doc comments in the surrounding file's style/density, `this.` prefix in widget methods (project style), `AppSpacing`/`AppRadius` design tokens, `Pressable` for tap targets, `GeneralHelper.advLog` for logging.
 
@@ -47,7 +47,7 @@ In `pubspec.yaml`, in the `# Network stuff` block, add:
   http: ^1.3.0
 ```
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter pub get`
+Run: `flutter pub get`
 Expected: `Got dependencies!`
 
 - [ ] **Step 2: Write the failing persistence test**
@@ -136,7 +136,7 @@ void main() {
 
 - [ ] **Step 3: Run the test — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/persistence/twitch_auth_persistence_test.dart`
+Run: `flutter test test/persistence/twitch_auth_persistence_test.dart`
 Expected: FAIL — compilation error, `lib/models/twitch_auth.dart` does not exist.
 
 - [ ] **Step 4: Create the model + registry entries**
@@ -212,7 +212,7 @@ class TwitchAuth extends HiveObject {
 
 - [ ] **Step 5: Run codegen**
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`
+Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded` — generates `lib/models/twitch_auth.g.dart` and updates `lib/hive_registrar.g.dart` (leave the registrar file as-is; it is generated but unused).
 
 - [ ] **Step 6: Register adapter + box in production and test harness**
@@ -255,12 +255,12 @@ In `lib/views/settings/data_management/data_management.dart`, in the Twitch `onC
 
 - [ ] **Step 7: Run the test — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/persistence/twitch_auth_persistence_test.dart`
+Run: `flutter test test/persistence/twitch_auth_persistence_test.dart`
 Expected: PASS (2 tests).
 
 - [ ] **Step 8: Analyze**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter analyze`
+Run: `flutter analyze`
 Expected: no new errors/warnings beyond the 6 pre-existing ones (`input.dart`, `translucent_sliver_app_bar.dart`, `statistics.dart`).
 
 - [ ] **Step 9: Commit**
@@ -460,7 +460,7 @@ void main() {
 
 - [ ] **Step 2: Run the test — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_auth_service_test.dart`
+Run: `flutter test test/chat/twitch_auth_service_test.dart`
 Expected: FAIL — compilation error, files do not exist.
 
 - [ ] **Step 3: Create the DTOs**
@@ -657,12 +657,12 @@ class TwitchAuthService {
 
 - [ ] **Step 5: Codegen**
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`
+Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded` — `.freezed.dart` / `.g.dart` for both DTOs.
 
 - [ ] **Step 6: Run the test — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_auth_service_test.dart`
+Run: `flutter test test/chat/twitch_auth_service_test.dart`
 Expected: PASS (7 tests).
 
 - [ ] **Step 7: Commit**
@@ -808,7 +808,7 @@ Append to `test/chat/twitch_auth_service_test.dart` (inside `main()`, plus the `
 
 - [ ] **Step 2: Run — verify the new tests fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_auth_service_test.dart`
+Run: `flutter test test/chat/twitch_auth_service_test.dart`
 Expected: FAIL — `refreshToken`, `validate`, `fetchOwnUser`, `revoke` undefined.
 
 - [ ] **Step 3: Create the user DTO + extend the service**
@@ -907,12 +907,12 @@ Append to `TwitchAuthService` in `lib/utils/twitch/twitch_auth_service.dart` (ad
 
 - [ ] **Step 4: Codegen**
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`
+Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded`.
 
 - [ ] **Step 5: Run — verify all tests pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_auth_service_test.dart`
+Run: `flutter test test/chat/twitch_auth_service_test.dart`
 Expected: PASS (15 tests).
 
 - [ ] **Step 6: Commit**
@@ -1143,7 +1143,7 @@ void main() {
 
 - [ ] **Step 2: Run — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_eventsub_dto_test.dart`
+Run: `flutter test test/chat/twitch_eventsub_dto_test.dart`
 Expected: FAIL — compilation error, DTO files do not exist.
 
 - [ ] **Step 3: Create the DTOs**
@@ -1249,12 +1249,12 @@ abstract class ChatFragmentEmote with _$ChatFragmentEmote {
 
 - [ ] **Step 4: Codegen**
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`
+Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded`.
 
 - [ ] **Step 5: Run — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_eventsub_dto_test.dart`
+Run: `flutter test test/chat/twitch_eventsub_dto_test.dart`
 Expected: PASS (5 tests).
 
 - [ ] **Step 6: Commit**
@@ -1536,7 +1536,7 @@ void main() {
 
 - [ ] **Step 2: Run — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_eventsub_service_test.dart`
+Run: `flutter test test/chat/twitch_eventsub_service_test.dart`
 Expected: FAIL — compilation error, service does not exist.
 
 - [ ] **Step 3: Create the service**
@@ -1789,7 +1789,7 @@ class TwitchEventSubService {
 
 - [ ] **Step 4: Run — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_eventsub_service_test.dart`
+Run: `flutter test test/chat/twitch_eventsub_service_test.dart`
 Expected: PASS (6 tests).
 
 - [ ] **Step 5: Commit**
@@ -2086,7 +2086,7 @@ void main() {
 
 - [ ] **Step 2: Run — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_store_test.dart`
+Run: `flutter test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compilation error, `lib/stores/views/twitch_chat.dart` does not exist.
 
 - [ ] **Step 3: Create the store**
@@ -2448,17 +2448,17 @@ In `lib/main.dart` `_initializeStores()`, after the `LogsStore` registration, ad
   );
 ```
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`
+Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded` — generates `lib/stores/views/twitch_chat.g.dart`.
 
 - [ ] **Step 5: Run — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_store_test.dart`
+Run: `flutter test test/chat/twitch_chat_store_test.dart`
 Expected: PASS (8 tests).
 
 - [ ] **Step 6: Analyze**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter analyze`
+Run: `flutter analyze`
 Expected: no new errors/warnings.
 
 - [ ] **Step 7: Commit**
@@ -2486,7 +2486,7 @@ git commit -m "feat(twitch): TwitchChatStore (login state, token lifecycle, mess
 
 Create `test/chat/support/fake_twitch_services.dart` by **moving** the `FakeTwitchAuthService` and `FakeTwitchEventSubService` classes out of `test/chat/twitch_chat_store_test.dart` (verbatim, plus their imports: `dart:async`, `twitch_device_code.dart`, `twitch_token.dart`, `twitch_user.dart`, `twitch_auth_service.dart`, `twitch_eventsub_service.dart`). In `twitch_chat_store_test.dart` delete both classes and import `support/fake_twitch_services.dart` instead.
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_store_test.dart`
+Run: `flutter test test/chat/twitch_chat_store_test.dart`
 Expected: PASS (8 tests) — pure move, no behavior change.
 
 - [ ] **Step 2: Write the failing widget test**
@@ -2652,7 +2652,7 @@ void main() {
 
 - [ ] **Step 3: Run — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/native_twitch_chat_view_test.dart`
+Run: `flutter test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — compilation error, view/row do not exist.
 
 - [ ] **Step 4: Create the message row**
@@ -2960,7 +2960,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
 
 - [ ] **Step 6: Run — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/native_twitch_chat_view_test.dart`
+Run: `flutter test test/chat/native_twitch_chat_view_test.dart`
 Expected: PASS (5 tests).
 
 - [ ] **Step 7: Commit**
@@ -3100,7 +3100,7 @@ void main() {
 
 - [ ] **Step 2: Run — verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: FAIL — compilation error, dialog does not exist.
 
 - [ ] **Step 3: Create the device code dialog + shared entry point**
@@ -3517,12 +3517,12 @@ In the action `Row`'s `children:`, insert as the **first** children (before the 
 
 - [ ] **Step 7: Run — verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/`
+Run: `flutter test test/chat/`
 Expected: PASS (all chat tests, including the 4 new integration tests).
 
 - [ ] **Step 8: Analyze**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter analyze`
+Run: `flutter analyze`
 Expected: no new errors/warnings.
 
 - [ ] **Step 9: Commit**
@@ -3545,24 +3545,24 @@ git commit -m "feat(twitch): connect/logout UI + native chat slot integration"
 
 - [ ] **Step 1: Full unit suite**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/ test/websocket/ test/persistence/`
+Run: `flutter test test/chat/ test/websocket/ test/persistence/`
 Expected: PASS (all).
 
 - [ ] **Step 2: Full analyze**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter analyze`
+Run: `flutter analyze`
 Expected: 0 errors; only the 6 pre-existing warnings (`input.dart`, `translucent_sliver_app_bar.dart`, `statistics.dart`).
 
 - [ ] **Step 3: Codegen is clean**
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs && git status --porcelain`
+Run: `dart run build_runner build --delete-conflicting-outputs && git status --porcelain`
 Expected: `Succeeded`; no modified files (generated code already committed).
 
 - [ ] **Step 4: Manual dogfood (workstation, real Twitch account — maintainer)**
 
 Not automatable — checklist for the user:
 
-1. `~/.dotfiles/flutter/sdk/bin/flutter devices` → `flutter run -d <sim-id>`.
+1. `flutter devices` → `flutter run -d <sim-id>`.
 2. Dashboard → chat widget → Twitch → no username needed: tap **Connect Twitch** (empty-state button or link icon in the username bar) → dialog shows a code → **Open Twitch** → authorize on twitch.tv/activate → dialog closes → chat connects.
 3. Post messages from a second account/device: they appear; emotes render inline; author colors show.
 4. Scroll up during activity → "New messages ↓" pill appears → tap jumps to bottom.

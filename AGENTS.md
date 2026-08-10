@@ -34,22 +34,13 @@ trusting anything below to still be current.
   handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
 
-### Maintainer's agent setup (Kounex-specific — external contributors can ignore)
+### Maintainer's agent setup
 
-- **Headless clone** (`~/agent/obs-blade`): `pub get` / `analyze` / unit tests
-  only — **do not run the app**.
-- **Workstation clone** (`~/development/flutter/obs_blade`): same branch;
-  **simulator/device runs, integration tests, visual-QA screenshots** — the
-  heavy lifter for anything that needs a running app.
-- **Dogfood handoff (when working from the headless/NAS clone):** the user
-  dogfoods by running the app from the workstation clone on a physical
-  device. So whenever a change is ready for dogfooding, don't leave pulling
-  to the user: **commit + push from the NAS, then pull on the workstation
-  yourself** —
-  `ssh macbook 'cd ~/development/flutter/obs_blade && git pull'`
-  (plain SSH is fine here; it's a self-contained command, not agent
-  delegation). The workstation clone should never sit behind `origin` on
-  the active branch after a NAS-side change.
+Maintainer-specific setup (machine topology, SDK locations, dogfood and
+private-doc sync workflow) lives in `docs/private/maintainer-workflow.md`
+— gitignored, kept only on the maintainer's machines. External
+contributors can ignore it entirely: everything needed to build and
+contribute is in this file and the tracked `docs/`.
 
 ## Quick map
 
@@ -122,12 +113,14 @@ see chat audit + handoff.
 | [`docs/superpowers/plan-defect-checklist.md`](docs/superpowers/plan-defect-checklist.md) | Running an SDD wave — pre-dispatch plan-verification pass, codegen checklist, named defect probes |
 | [`docs/redesign/`](docs/redesign/) | "On Air" redesign (now on `master`): design system, audit digest, session notes |
 | [`docs/private/monetization-strategy.md`](docs/private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored — not public.** |
-| [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — Hetzner hosting, build order, open decisions. **Gitignored — not public.** |
+| [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — hosting, build order, open decisions. **Gitignored — not public.** |
+| [`docs/private/maintainer-workflow.md`](docs/private/maintainer-workflow.md) | Maintainer-only machine setup + dogfood/private-doc sync workflow. **Gitignored — not public; contributors can ignore.** |
 
 ## Tooling
 
-- **Maintainer headless host:** Flutter `~/flutter` (3.44.8) or `./flutterw` — no `flutter run`.
-- **Maintainer workstation:** Flutter via `~/.dotfiles/flutter/sdk` — sims OK.
+- **Flutter:** `./flutterw` wraps whatever SDK you have (`FLUTTER_ROOT` →
+  `~/flutter` → `vendor/flutter`). Current pinned version: see
+  `docs/upgrade-plan.md`.
 - **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
   `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.

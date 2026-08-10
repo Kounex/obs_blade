@@ -13,12 +13,12 @@
 # Env overrides: DEVICE_ID, OUT_DIR
 set -u
 
-DEVICE_ID="${DEVICE_ID:-D6F98034-F7A7-4574-967C-A9E182A7ED3A}"
+DEVICE_ID="${DEVICE_ID:-booted}"
 OUT_DIR="${OUT_DIR:-/tmp/obs_shots}"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
-export FLUTTER_ROOT="${FLUTTER_ROOT:-$HOME/.dotfiles/flutter/sdk}"
+# flutterw resolves the SDK itself (FLUTTER_ROOT → ~/flutter → vendor/flutter)
 
 OBS_WS_CONFIG="$HOME/Library/Application Support/obs-studio/plugin_config/obs-websocket/config.json"
 OBS_WS_PASSWORD=""

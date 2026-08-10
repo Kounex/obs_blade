@@ -19,8 +19,8 @@
 - HTTP status policy: **404 → empty map** (expected: channel without a provider presence; not an error). Any other non-200 → throw `ThirdPartyEmoteException`.
 - Token matching: exact, case-sensitive, split on the single space character. Punctuation-glued tokens (`peepoHappy!`) do NOT match.
 - Catalogs are session-scoped, in-memory only; failures degrade to plain text and never touch chat connection state.
-- Codegen (MobX): `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`. Never hand-edit `*.g.dart` / `*.freezed.dart`; generated files are committed.
-- Test/analyze runner: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test <paths>` / `... analyze`.
+- Codegen (MobX): `bash flutterw pub run build_runner build --delete-conflicting-outputs`. Never hand-edit `*.g.dart` / `*.freezed.dart`; generated files are committed.
+- Test/analyze runner: `bash flutterw test <paths>` / `... analyze`.
 - Commit per task, small logically-scoped commits. Do NOT push.
 
 ---
@@ -147,7 +147,7 @@ void main() {
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: FAIL — compile error, `third_party_emote_service.dart` does not exist.
 
 - [x] **Step 3: Write minimal implementation**
@@ -266,7 +266,7 @@ class ThirdPartyEmoteService {
 
 - [x] **Step 4: Run test to verify it passes**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: PASS (5 tests).
 
 - [x] **Step 5: Commit**
@@ -385,7 +385,7 @@ group('fetchBttvChannel', () {
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: FAIL — compile error, `fetchBttvGlobal`/`fetchBttvChannel` are not defined.
 
 - [x] **Step 3: Write minimal implementation**
@@ -439,7 +439,7 @@ Map<String, ThirdPartyEmote> _parseBttvEmotes(Object? emotes) {
 
 - [x] **Step 4: Run test to verify it passes**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_service_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_service_test.dart`
 Expected: PASS (9 tests).
 
 - [x] **Step 5: Commit**
@@ -678,7 +678,7 @@ void main() {
 
 - [x] **Step 3: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_store_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_store_test.dart`
 Expected: FAIL — compile error, `third_party_emotes.dart` does not exist.
 
 - [x] **Step 4: Write the store implementation**
@@ -776,12 +776,12 @@ abstract class _ThirdPartyEmoteStore with Store {
 
 - [x] **Step 5: Run MobX codegen**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Expected: succeeds; `lib/stores/views/third_party_emotes.g.dart` generated. Commit the generated file as-is (never hand-edit).
 
 - [x] **Step 6: Run test to verify it passes**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_store_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_store_test.dart`
 Expected: PASS (7 tests).
 
 - [x] **Step 7: Commit**
@@ -895,7 +895,7 @@ group('third-party emote wiring', () {
 
 - [x] **Step 3: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error, `emoteStoreResolver` is not a parameter of `TwitchChatStore`.
 
 - [x] **Step 4: Wire the store**
@@ -978,7 +978,7 @@ f) In `lib/main.dart`, register the singleton right after the `TwitchBadgeStore`
 
 - [x] **Step 5: Run test to verify it passes**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: PASS (whole file, incl. the 3 new wiring tests).
 
 - [x] **Step 6: Commit**
@@ -1209,7 +1209,7 @@ void main() {
 
 - [x] **Step 3: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/third_party_emote_row_test.dart`
+Run: `bash flutterw test test/chat/third_party_emote_row_test.dart`
 Expected: FAIL — no `WidgetSpan` images render yet (lookup is wired but `_messageSpans` never resolves tokens), so the image assertions fail.
 
 - [x] **Step 4: Implement tokenization in the row**
@@ -1292,7 +1292,7 @@ c) Replace `_messageSpans()` and add `_textSpans()`:
 
 - [x] **Step 5: Run tests to verify they pass**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/`
+Run: `bash flutterw test test/chat/`
 Expected: PASS — the new row tests plus every existing chat test (the harness registrations from Step 1 keep the old row/view/integration tests green).
 
 - [x] **Step 6: Commit**
@@ -1377,7 +1377,7 @@ Append to the `NativeTwitchChatView` group in `test/chat/native_twitch_chat_view
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — the pop-in test still shows plain text after `catalogVersion++` (nothing tracks it), and the toggle test still shows the image after the box write (the key isn't in `rebuildKeys`).
 
 - [x] **Step 3: Wire the view**
@@ -1410,7 +1410,7 @@ c) In the `HiveBuilder`'s `rebuildKeys` list (~line 174-182), add:
 
 - [x] **Step 4: Run test to verify it passes**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: PASS (whole file, incl. the 2 new tests).
 
 - [x] **Step 5: Commit**
@@ -1514,7 +1514,7 @@ And add a new test after `'toggling a switch writes the settings box'`:
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_options_sheet_test.dart`
+Run: `bash flutterw test test/chat/native_chat_options_sheet_test.dart`
 Expected: FAIL — label not found / 7 switches instead of 8.
 
 - [x] **Step 3: Add the toggle to the sheet**
@@ -1619,7 +1619,7 @@ class _TwitchOptions extends StatelessWidget {
 
 - [x] **Step 4: Run test to verify it passes**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_options_sheet_test.dart`
+Run: `bash flutterw test test/chat/native_chat_options_sheet_test.dart`
 Expected: PASS.
 
 - [x] **Step 5: Commit**
@@ -1643,8 +1643,8 @@ git commit -m "feat(chat): third-party emotes toggle in the native chat options 
 Run:
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/ test/websocket/ test/persistence/
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
+bash flutterw test test/chat/ test/websocket/ test/persistence/
+bash flutterw analyze
 ```
 
 Expected: all tests PASS; analyze reports 0 errors (the 6 pre-existing warnings are tolerated — no new ones).

@@ -21,8 +21,8 @@
 - Insert rule: `'$code '` replaces the selected range (cursor lands after it); append at end when `!selection.isValid`. The sheet pops with `true` on insert; a bare dismiss pops with nothing; the dock's focus node is refocused **only after an insert**.
 - The picker button renders whenever the dock renders (logged in). When `!canReadEmotes` (pre-upgrade token), the sheet shows a re-login CTA instead of the first-party sections — the third-party section still shows.
 - Third-party = **one combined section** `'Third-party (7TV/BTTV)'` from the merged `ThirdPartyEmoteStore.emotes` (provider attribution is lost in the merge by design — spec updated to match), alpha-sorted by name, gated on `SettingsKeys.TwitchChatThirdPartyEmotes` (default-on) via `HiveBuilder`.
-- Codegen (MobX + freezed): `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`. Never hand-edit `*.g.dart` / `*.freezed.dart`; generated files are committed.
-- Test/analyze runner: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test <paths>` / `... analyze`.
+- Codegen (MobX + freezed): `bash flutterw pub run build_runner build --delete-conflicting-outputs`. Never hand-edit `*.g.dart` / `*.freezed.dart`; generated files are committed.
+- Test/analyze runner: `bash flutterw test <paths>` / `... analyze`.
 - Commit per task, small logically-scoped commits. Do NOT push.
 
 ---
@@ -164,7 +164,7 @@ void main() {
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_emote_service_test.dart`
 Expected: FAIL — compile error, `twitch_emote_service.dart` does not exist.
 
 - [x] **Step 3: Write minimal implementation**
@@ -293,8 +293,8 @@ class TwitchEmoteService {
 
 - [x] **Step 4: Run codegen + tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_service_test.dart`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Then: `bash flutterw test test/chat/twitch_emote_service_test.dart`
 Expected: codegen succeeds (`twitch_user_emote.freezed.dart` + `twitch_user_emote.g.dart` generated, committed as-is); tests PASS (4 tests).
 
 - [x] **Step 5: Commit**
@@ -484,7 +484,7 @@ void main() {
 
 - [x] **Step 3: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_emote_store_test.dart`
 Expected: FAIL — compile error, `twitch_emotes.dart` does not exist.
 
 - [x] **Step 4: Write the store implementation**
@@ -599,8 +599,8 @@ abstract class _TwitchEmoteStore with Store {
 
 - [x] **Step 5: Run codegen + tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_emote_store_test.dart`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Then: `bash flutterw test test/chat/twitch_emote_store_test.dart`
 Expected: codegen succeeds (`twitch_emotes.g.dart` generated, committed as-is); tests PASS (5 tests).
 
 - [x] **Step 6: Commit**
@@ -715,7 +715,7 @@ Append this group inside `main()`, after the `third-party emote wiring` group (t
 
 - [x] **Step 3: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error, `userEmoteStoreResolver` is not a parameter of `TwitchChatStore`.
 
 - [x] **Step 4: Wire the store**
@@ -804,7 +804,7 @@ g) In `lib/main.dart`, register the singleton right after the `ThirdPartyEmoteSt
 
 - [x] **Step 5: Run tests to verify they pass**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_auth_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_auth_service_test.dart`
 Expected: PASS (both whole files, incl. the 3 new wiring tests and the updated scope assertion).
 
 - [x] **Step 6: Commit**
@@ -906,7 +906,7 @@ Append these tests inside `main()`:
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_input_test.dart`
+Run: `bash flutterw test test/chat/native_chat_input_test.dart`
 Expected: FAIL — compile error, `controller`/`focusNode`/`leading` are not parameters of `NativeChatInput`.
 
 - [x] **Step 3: Add the seams**
@@ -979,7 +979,7 @@ e) In the dock `Row` (line 138-139), render the leading slot before the `Expande
 
 - [x] **Step 4: Run tests to verify they pass**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_input_test.dart`
+Run: `bash flutterw test test/chat/native_chat_input_test.dart`
 Expected: PASS (whole file, incl. the 4 new tests).
 
 - [x] **Step 5: Commit**
@@ -1245,7 +1245,7 @@ Note on the cursor test above (`'hiKappa  there'`): inserting `'Kappa '` at offs
 
 - [x] **Step 2: Run test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/chat_emote_picker_test.dart`
+Run: `bash flutterw test test/chat/chat_emote_picker_test.dart`
 Expected: FAIL — compile error, `chat_emote_picker.dart` does not exist.
 
 - [x] **Step 3: Implement the picker**
@@ -1682,7 +1682,7 @@ Known edge (accepted, documented here): programmatic insertion bypasses the fiel
 
 - [x] **Step 4: Run tests to verify they pass**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/chat_emote_picker_test.dart`
+Run: `bash flutterw test test/chat/chat_emote_picker_test.dart`
 Expected: PASS (9 tests).
 
 - [x] **Step 5: Commit**
@@ -1769,8 +1769,8 @@ No new tests for the composition itself: the dock/sheet widgets and the store wi
 Run:
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
+bash flutterw test test/chat/
+bash flutterw analyze
 ```
 
 Expected: all chat tests PASS (existing integration/view tests unaffected — the dock renders the same with the new slots); analyze 0 errors (6 pre-existing warnings tolerated, no new ones).
@@ -1797,8 +1797,8 @@ git commit -m "feat(chat): compose the emote picker into the native chat dock"
 Run:
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/ test/websocket/ test/persistence/
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
+bash flutterw test test/chat/ test/websocket/ test/persistence/
+bash flutterw analyze
 ```
 
 Expected: all tests PASS; analyze reports 0 errors (the 6 pre-existing warnings are tolerated — no new ones).

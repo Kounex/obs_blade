@@ -102,6 +102,6 @@ design), `StaggeredEntrance` (one-shot, MobX-safe), `AnimatedResultIcon`,
   (`dashboard_element_layout.dart`, compose-when-adjacent). Default order must
   still equal `DashboardElement.values` for upgrades with no saved order.
 - textColorHex stays dead (persisted field, never consumed).
-- **Merged 2026-08-03:** finish batch accepted on MacBook; `redesign` landed
+- **Merged 2026-08-03:** finish batch accepted on workstation; `redesign` landed
   on `master`. Soft follow-ups: connect-overlay motion pass; Twitch console
   registrations (deferred).

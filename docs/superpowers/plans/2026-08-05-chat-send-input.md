@@ -10,11 +10,11 @@
 
 ## Global Constraints
 
-- Flutter commands run as `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw <args>` (wrapper is not directly executable).
+- Flutter commands run as `bash flutterw <args>` (wrapper is not directly executable).
 - No new dependencies. No `DashboardStore` changes. No Hive schema changes (`TwitchAuth.scopes` is already persisted).
 - Style: `this.` prefix; tokens `AppSpacing`/`AppRadius`/`AppMotion`; `Pressable`; targets ≥ `kMinInteractiveDimensionCupertino`; doc comments matching neighbors.
 - Status colors via `Theme.of(context).extension<AppStatusColors>() ?? AppStatusColors.standard` (fallback required for plain-MaterialApp widget tests).
-- MobX/freezed changes require build_runner regeneration — never hand-edit `.g.dart`/`.freezed.dart` files. Command: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`.
+- MobX/freezed changes require build_runner regeneration — never hand-edit `.g.dart`/`.freezed.dart` files. Command: `bash flutterw pub run build_runner build --delete-conflicting-outputs`.
 - Analyze gate: 0 errors and exactly the 6 pre-existing warnings (`input.dart` ×2, `translucent_sliver_app_bar.dart` ×2, `statistics.dart` ×2). Test gate: full suite green (baseline 145).
 - Never stage/commit `android/.settings/org.eclipse.buildship.core.prefs`.
 - Public-repo hygiene: no credentials, absolute paths, device IDs, or LAN addresses in tracked files.
@@ -47,7 +47,7 @@ In `test/chat/twitch_auth_service_test.dart:26`, change:
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_auth_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_auth_service_test.dart`
 Expected: FAIL — expected `'user:read:chat user:write:chat'` but got `'user:read:chat'`.
 
 - [ ] **Step 3: Change the scope const + verify pass**
@@ -61,7 +61,7 @@ const List<String> kTwitchChatScopes = <String>[
 ];
 ```
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_auth_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_auth_service_test.dart`
 Expected: PASS. (The fake token responses at lines 79/109/180 keep `['user:read:chat']` — they model Twitch's answer payload for the auth-flow tests, not our request.)
 
 - [ ] **Step 4: Write the failing service tests**
@@ -162,7 +162,7 @@ void main() {
 
 - [ ] **Step 5: Run to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_message_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_message_service_test.dart`
 Expected: FAIL — `twitch_message_service.dart` does not exist (compile error).
 
 - [ ] **Step 6: Implement the DTO**
@@ -250,17 +250,17 @@ class TwitchMessageService {
 
 - [ ] **Step 8: Regenerate freezed code**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded` — `twitch_send_result.freezed.dart` + `twitch_send_result.g.dart` generated.
 
 - [ ] **Step 9: Run the task tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_message_service_test.dart test/chat/twitch_auth_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_message_service_test.dart test/chat/twitch_auth_service_test.dart`
 Expected: PASS — all tests in both files.
 
 - [ ] **Step 10: Analyze + commit**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 ```bash
@@ -452,7 +452,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 
 - [ ] **Step 3: Run to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — `canWriteChat`/`sendChatMessage`/`messageService:` param do not exist (compile error).
 
 - [ ] **Step 4: Implement the store changes**
@@ -560,17 +560,17 @@ and to the initializer list:
 
 - [ ] **Step 5: Regenerate MobX code**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Expected: `Succeeded` — `twitch_chat.g.dart` regenerated with the two new observables.
 
 - [ ] **Step 6: Run the task tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/`
+Run: `bash flutterw test test/chat/`
 Expected: PASS — whole chat test dir, incl. the 7 new store tests.
 
 - [ ] **Step 7: Analyze + commit**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 ```bash
@@ -758,7 +758,7 @@ And append to `test/chat/native_chat_window_test.dart` (the file already imports
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_input_test.dart test/chat/native_chat_window_test.dart`
+Run: `bash flutterw test test/chat/native_chat_input_test.dart test/chat/native_chat_window_test.dart`
 Expected: FAIL — `native_chat_input.dart` missing, `input:` param unknown (compile errors).
 
 - [ ] **Step 3: Add the input slot to `NativeChatWindow`**
@@ -1037,12 +1037,12 @@ class _NativeChatInputState extends State<NativeChatInput> {
 
 - [ ] **Step 5: Run the task tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_input_test.dart test/chat/native_chat_window_test.dart`
+Run: `bash flutterw test test/chat/native_chat_input_test.dart test/chat/native_chat_window_test.dart`
 Expected: PASS — 8 input tests + all window tests (incl. the new slot test).
 
 - [ ] **Step 6: Analyze + commit**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 ```bash
@@ -1100,10 +1100,10 @@ import 'native_chat_input.dart';
 
 - [ ] **Step 2: Full suite + analyze**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test`
+Run: `bash flutterw test`
 Expected: PASS — full suite green (baseline 145 + 3 service + 7 store + 8 input + 1 window slot = 164).
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 - [ ] **Step 3: Commit**

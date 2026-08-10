@@ -30,7 +30,7 @@
   no new Twitch scopes.
 - No settings toggle / hide path — the native chat viewer is the
   broadcaster by construction (spec § Context).
-- Flutter commands: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw …`.
+- Flutter commands: `bash flutterw …`.
   Gates per task: focused tests green; full suite green before commit;
   analyze 0 errors + exactly 6 pre-existing warnings (no new ones).
   Info-level lints are tolerated.
@@ -38,7 +38,7 @@
   style churns committed regions); hand-match the repo's short style.
 - Commit per task (`git add`/`git commit` only — **never push**).
 - Codegen after the Task 1 DTO change:
-  `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+  `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 
 ---
 
@@ -87,7 +87,7 @@ existing 'message_delete parses the documented example payload' test:
 
 - [x] **Step 2: Run the DTO test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
+Run: `bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: FAIL — compile error, `userName` isn't a getter on `ChatMessageDeleteEvent`.
 
 - [x] **Step 3: Add `userName` to the DTO and regenerate**
@@ -116,9 +116,9 @@ abstract class ChatMessageDeleteEvent with _$ChatMessageDeleteEvent {
 
 (The other two DTOs are untouched.) Then codegen:
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
+Then: `bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: PASS (6/6).
 
 - [x] **Step 4: Write the failing store tests (update 3 call sites + add actor coverage)**
@@ -232,7 +232,7 @@ and after `expect(deletes.single.targetUserId, 'u2');` add:
 
 - [x] **Step 5: Run the store tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error: `applyMessageDelete` takes a String,
 `deletedMessageActor` isn't defined, too few arguments to
 `ChatMessageDeleteEvent`.
@@ -307,16 +307,16 @@ f) In `connectChat`'s factory call (~line 342), replace
 g) Regenerate the MobX action wrapper — the action signature change
 regenerates `lib/stores/views/twitch_chat.g.dart`:
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 
 - [x] **Step 7: Run focused tests, then the full gates**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_lifecycle_dto_test.dart test/chat/twitch_eventsub_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart test/chat/twitch_lifecycle_dto_test.dart test/chat/twitch_eventsub_service_test.dart`
 Expected: PASS (all).
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test`
+Then: `bash flutterw test`
 Expected: PASS (full suite — the `<message deleted>` widget assertions still
 stand; the row hasn't changed yet).
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Then: `bash flutterw analyze`
 Expected: 0 errors + exactly 6 pre-existing warnings.
 
 - [x] **Step 8: Commit**
@@ -496,7 +496,7 @@ banners between old and new', update the `containsAll` list:
 
 - [x] **Step 2: Run the row tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — compile error: `deletedActor`/`isDeletedExpanded`/
 `onDeletedTap` aren't parameters; `<message deleted>` assertions mismatch.
 
@@ -628,11 +628,11 @@ d) Add the dimming helper after `_messageSpans`:
 
 - [x] **Step 4: Run focused tests, then the full gates**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: PASS (all).
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test`
+Then: `bash flutterw test`
 Expected: PASS (full suite).
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Then: `bash flutterw analyze`
 Expected: 0 errors + exactly 6 pre-existing warnings.
 
 - [x] **Step 5: Commit**
@@ -725,7 +725,7 @@ b) Add two tests at the end of the `NativeTwitchChatView` group:
 
 - [x] **Step 2: Run the window tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — the reveal never appears (window passes no actor/tap yet).
 
 - [x] **Step 3: Implement the window changes**
@@ -769,11 +769,11 @@ with:
 
 - [x] **Step 4: Run focused tests, then the full gates**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/`
+Run: `bash flutterw test test/chat/`
 Expected: PASS (all chat suites).
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test`
+Then: `bash flutterw test`
 Expected: PASS (full suite).
-Then: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Then: `bash flutterw analyze`
 Expected: 0 errors + exactly 6 pre-existing warnings.
 
 - [x] **Step 5: Docs — changelog**

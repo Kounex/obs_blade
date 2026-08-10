@@ -154,7 +154,7 @@ If a task modifies any file containing `@freezed`, `@observable`,
 `@action`, or a `part '*.g.dart'` directive it semantically changes:
 
 1. Make ALL annotated source edits first.
-2. Run `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run
+2. Run `bash flutterw pub run
    build_runner build --delete-conflicting-outputs` ONCE, after the last
    annotated edit.
 3. Stage every regenerated `.g.dart` in the task's commit (the commit

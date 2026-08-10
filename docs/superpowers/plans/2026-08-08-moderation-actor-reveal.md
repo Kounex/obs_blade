@@ -17,9 +17,8 @@ EventSub WebSocket.
 
 ## Global Constraints
 
-- Flutter SDK on this machine: `~/.dotfiles/flutter/sdk/bin/flutter`
-  (headless NAS clone: `~/flutter/bin/flutter`). `./flutterw` has no SDK here.
-- freezed codegen: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build
+- Flutter SDK on this machine: `flutter` (or `bash flutterw`).
+- freezed codegen: `dart run build_runner build
   --delete-conflicting-outputs --build-filter='<path>.*.dart'`.
 - Gates before final commit: `flutter test` all green (currently 250);
   `flutter analyze` = 0 errors + exactly the 6 pre-existing warnings.
@@ -180,7 +179,7 @@ and a new group inside `main()` after the existing `group(...)` block:
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_lifecycle_dto_test.dart`
+Run: `flutter test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: FAIL — `ChannelModerateEvent` undefined (import not found).
 
 - [ ] **Step 4: Write the DTO**
@@ -232,7 +231,7 @@ abstract class ModerateDeleteAction with _$ModerateDeleteAction {
 Then codegen:
 
 ```bash
-~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs \
+dart run build_runner build --delete-conflicting-outputs \
   --build-filter='lib/types/classes/twitch/eventsub/channel_moderate_event.*.dart'
 ```
 
@@ -241,7 +240,7 @@ Expected: `Built with build_runner ... wrote 3 outputs` (creates
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_lifecycle_dto_test.dart`
+Run: `flutter test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: PASS (9 tests — 6 existing + 3 new).
 
 - [ ] **Step 6: Commit**
@@ -422,7 +421,7 @@ c) Add the tests (append after the
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_eventsub_service_test.dart`
+Run: `flutter test test/chat/twitch_eventsub_service_test.dart`
 Expected: FAIL to compile — no `includeModeration` parameter, no
 `onModerationDelete` parameter.
 
@@ -566,7 +565,7 @@ with:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_eventsub_service_test.dart`
+Run: `flutter test test/chat/twitch_eventsub_service_test.dart`
 Expected: PASS — all existing tests (default `includeModeration: false`
 keeps 4 subscriptions) plus the 3 new ones.
 
@@ -613,7 +612,7 @@ with:
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_auth_service_test.dart`
+Run: `flutter test test/chat/twitch_auth_service_test.dart`
 Expected: FAIL — scopes string mismatch (still the old 3 scopes).
 
 - [ ] **Step 3: Add the bundle to the scopes**
@@ -662,7 +661,7 @@ const List<String> kTwitchChatScopes = <String>[
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_auth_service_test.dart`
+Run: `flutter test test/chat/twitch_auth_service_test.dart`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -845,7 +844,7 @@ final `}` of `main()`):
 
 - [ ] **Step 3: Run the store tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_store_test.dart`
+Run: `flutter test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL to compile — `applyModerationDelete` undefined, factory
 arity mismatch, `lastIncludeModeration` undefined.
 
@@ -1055,7 +1054,7 @@ The store file has `part 'twitch_chat.g.dart'` and the new
 edits, once:
 
 ```bash
-~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs \
+dart run build_runner build --delete-conflicting-outputs \
   --build-filter='lib/stores/views/twitch_chat.*.dart'
 ```
 
@@ -1079,7 +1078,7 @@ between `onChatClear` and `onStateChanged`):
 
 - [ ] **Step 8: Run the chat tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/`
+Run: `flutter test test/chat/`
 Expected: PASS (all 219 prior tests plus the 7 new ones = 226).
 
 - [ ] **Step 9: Commit**
@@ -1196,8 +1195,8 @@ reveal" bullet with:
 - [ ] **Step 5: Full gates**
 
 ```bash
-~/.dotfiles/flutter/sdk/bin/flutter test
-~/.dotfiles/flutter/sdk/bin/flutter analyze
+flutter test
+flutter analyze
 ```
 
 Expected: all tests pass; `0 errors` + exactly the 6 pre-existing

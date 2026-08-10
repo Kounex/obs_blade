@@ -23,14 +23,13 @@ Read this first after `AGENTS.md`. Last reset: **2026-08-09 evening**
   diff your branch against its remote counterpart and skim recent log. This
   file is only as current as whoever last updated it remembered to make it.
 - **Non-public docs live in `docs/private/`** (gitignored — this repo is
-  public). Git will never sync it. If you create or edit anything there,
-  mirror it to the other machine immediately (use `rsync --delete`, not
-  `scp`, so deletions/renames propagate too — plain `scp` leaves stale
-  copies behind):
-  `rsync -a --delete docs/private/ macbook:~/development/flutter/obs_blade/docs/private/`
-  (or NAS-ward: `rsync -a --delete docs/private/ nas:~/agent/obs-blade/docs/private/`).
-  Same goes for any other file that's deliberately outside git — don't let
-  state exist on only one machine.
+  public; git will never sync it). The sync is **manual, mandatory, and
+  same-turn**: after *any* create/edit/delete there, mirror to the other
+  machine immediately — no "sync later", that's how the copies silently
+  drift — and verify the mirror with checksums. At session start, confirm
+  both copies are in sync *before* trusting or editing anything there.
+  Exact commands + machine topology: `docs/private/maintainer-workflow.md`
+  (maintainer machines only). Don't let state exist on only one machine.
 
 ## Workspace facts
 
@@ -43,10 +42,11 @@ Read this first after `AGENTS.md`. Last reset: **2026-08-09 evening**
 
 ### Machines
 
-| Host | Path | Role |
-|---|---|---|
-| **Headless** (NAS) | `~/agent/obs-blade` | `pub get` / `analyze` / unit tests only. **Never `flutter run`.** |
-| **Workstation** (MacBook) | `~/development/flutter/obs_blade` | Same branch — simulator/device runs, integration tests, visual-QA screenshots. The heavy lifter for anything needing a running app. |
+The maintainer works from a two-clone setup (headless analyze/test clone +
+workstation simulator/device clone). Topology, paths, SDK locations, and
+the dogfood handoff rule are maintainer-only and live in
+`docs/private/maintainer-workflow.md` (gitignored). Contributors: ignore —
+build and test from your own checkout per `AGENTS.md`.
 
 Commit per verified unit proactively (small, logically-scoped commits).
 Push when the user asks, and always at wrap-up/handoff — the remote is the
@@ -79,15 +79,12 @@ Superpowers `start-server.sh` dies when the shell exits.
 ## Verify quickly
 
 ```bash
-# Headless (NAS)
-cd ~/agent/obs-blade && git checkout master && git pull
-~/flutter/bin/flutter test test/chat/ test/websocket/ test/persistence/
-
-# Workstation (MacBook, login shell so PATH picks up Flutter)
-cd ~/development/flutter/obs_blade
+git checkout master && git pull
 flutter test test/chat/ test/websocket/ test/persistence/
-# Simulator: flutter devices && flutter run -d <sim-id>
 ```
+
+Maintainer: machine-specific verify, simulator, and visual-QA commands are
+in `docs/private/maintainer-workflow.md`.
 
 ## Doc map
 
@@ -99,4 +96,4 @@ flutter test test/chat/ test/websocket/ test/persistence/
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |
 | [`chat-webview-audit.md`](chat-webview-audit.md) | Chat strategy |
-| [`private/`](private/) | Gitignored — monetization / backend |
+| [`private/`](private/) | Gitignored — monetization / backend / maintainer workflow |

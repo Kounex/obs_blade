@@ -385,7 +385,7 @@ Running log of upgrade/migration work. Not store release notes.
   § Responsive layouts; order screen hint; Force Tablet Mode noted for QA.
 - Verify: persistence/chat/websocket tests **38/38**; analyze 0 errors on
   touched paths. Landed as `23248b7` on `origin/redesign`.
-- **2026-08-03 MacBook close-out:** maintainer accepted the finish batch
+- **2026-08-03 workstation close-out:** maintainer accepted the finish batch
   visually; `redesign` merged into `master`. Soft leftovers: connect-overlay
   motion pass; Twitch console registrations (deferred).
 
@@ -442,23 +442,24 @@ Running log of upgrade/migration work. Not store release notes.
 - Bumped `keyboard_actions` to `^4.2.1` — 4.2.0 breaks the iOS simulator
   build on Flutter 3.44 (`SemanticsConfiguration.isFocused` now `bool?`;
   fixed upstream in 4.2.1). First real device/sim build of the branch.
-- Added local OBS ↔ simulator E2E loop on the MacBook
+- Added local OBS ↔ simulator E2E loop on macOS
   (`docs/local-obs-e2e.md`): `tool/obs_local/obs_test_env.sh`
   (start/stop/status for the real OBS instance, reuses running OBS, minimizes
   window) + `tool/obs_local/ws_smoke.dart` (standalone Hello → Identify →
   Identified + GetVersion/GetSceneList/GetInputList probe mirroring
   `AuthenticationHelper` semantics; no new deps). Tests run against the
   existing `Untitled` profile/scene collection per user direction.
-- Committed + pushed `chore/flutter-deps-upgrade` so MacBook
-  (`~/development/flutter/obs_blade`) can mirror NAS for simulator testing.
-- Folded MacBook-only order-list bottom padding (`kBottomNavigationBarHeight`)
+- Committed + pushed `chore/flutter-deps-upgrade` so the workstation clone
+  can mirror the headless clone for simulator testing.
+- Folded workstation-only order-list bottom padding (`kBottomNavigationBarHeight`)
   into the branch before push.
-- Updated handoff/AGENTS for dual-machine roles (NAS = analyze/test; Mac = sim).
+- Updated handoff/AGENTS for dual-machine roles (headless = analyze/test;
+  workstation = sim).
 
 ## 2026-07-25
 
 - Cloned repo; lean `AGENTS.md` + `docs/`.
-- Flutter **3.44.8** at `~/flutter`; branch `chore/flutter-deps-upgrade`.
+- Flutter **3.44.8**; branch `chore/flutter-deps-upgrade`.
 - Migrated **Hive → Hive CE**; regenerated adapters; typeIds/fields verified.
 - Built **foundation mock data** + committed `*.hive` boxes; open / cold-open /
   copy-reopen tests (`test/persistence/`).

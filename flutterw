@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Prefer a machine-local Flutter install (analyze / pub / test only on the NAS).
-# Override with FLUTTER_ROOT if needed.
+# Prefer a machine-local Flutter install (analyze / pub / test only on
+# headless clones). Override with FLUTTER_ROOT if needed.
 if [[ -n "${FLUTTER_ROOT:-}" && -x "${FLUTTER_ROOT}/bin/flutter" ]]; then
   exec "${FLUTTER_ROOT}/bin/flutter" "$@"
 fi

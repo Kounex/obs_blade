@@ -20,7 +20,7 @@ Every task implicitly includes these:
 - **All engine visibility/reads go through `nativeChatAvailableFor(ChatType)`** in `lib/models/enums/chat_engine.dart`.
 - **No `DashboardStore` changes. No new dependencies. EventSub lifecycle untouched** (stays connected while logged in regardless of engine).
 - **Style:** match the codebase — `this.` prefix on instance members, design tokens (`AppSpacing`, `AppRadius`, `AppMotion`), `Pressable` for tappables, relative imports where neighboring files use them.
-- **Toolchain:** Flutter/Dart binaries at `~/.dotfiles/flutter/sdk/bin/` (workstation clone). Codegen: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`.
+- **Toolchain:** Flutter/Dart via `bash flutterw` (SDK wrapper). Codegen: `dart run build_runner build --delete-conflicting-outputs`.
 - **Quality gates:** full `flutter test` green; `flutter analyze` = 0 errors and only the 6 pre-existing warnings (`input.dart` ×2, `translucent_sliver_app_bar.dart` ×2, `statistics.dart` ×2).
 - **Commit per task** with `git add <specific files>` (never `-A`). **Do NOT push** — push happens at wrap-up/handoff.
 - **Hive-in-widget-test rules** (proven patterns in `test/chat/twitch_chat_integration_test.dart`):
@@ -150,7 +150,7 @@ void main() {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/chat_engine_test.dart`
+Run: `flutter test test/chat/chat_engine_test.dart`
 Expected: FAIL — compile error `Target of URI doesn't exist: 'package:obs_blade/models/enums/chat_engine.dart'`.
 
 - [ ] **Step 3: Create the enum + plumbing**
@@ -284,12 +284,12 @@ to:
 
 - [ ] **Step 4: Generate the Hive adapter**
 
-Run: `~/.dotfiles/flutter/sdk/bin/dart run build_runner build --delete-conflicting-outputs`
+Run: `dart run build_runner build --delete-conflicting-outputs`
 Expected: ends with `Succeeded after ...`; `lib/models/enums/chat_engine.g.dart` now exists and contains `class ChatEngineAdapter extends TypeAdapter<ChatEngine>`. `lib/hive_registrar.g.dart` also regenerates (adds the `chat_engine.dart` import + `registerAdapter(ChatEngineAdapter());` in both extensions) — expected, commit it as-is.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/chat_engine_test.dart`
+Run: `flutter test test/chat/chat_engine_test.dart`
 Expected: `+4: All tests passed!`
 
 - [ ] **Step 6: Commit**
@@ -428,7 +428,7 @@ void main() {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/chat_engine_switch_test.dart`
+Run: `flutter test test/chat/chat_engine_switch_test.dart`
 Expected: FAIL — compile error `Target of URI doesn't exist: '.../chat_engine_switch.dart'`.
 
 - [ ] **Step 3: Implement the switch**
@@ -494,7 +494,7 @@ class ChatEngineSwitch extends StatelessWidget {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/chat_engine_switch_test.dart`
+Run: `flutter test test/chat/chat_engine_switch_test.dart`
 Expected: `+3: All tests passed!`
 
 - [ ] **Step 5: Commit**
@@ -611,7 +611,7 @@ Append these two tests inside `main()`, after the existing 'username bar shows t
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: FAIL — compile error `Target of URI doesn't exist: '.../twitch_account_control.dart'`.
 
 - [ ] **Step 3: Implement the control**
@@ -765,7 +765,7 @@ class _ConnectPill extends StatelessWidget {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: all tests pass (`+8: All tests passed!`).
 
 Note: the pre-existing bar tests ('username bar shows the Twitch account action…', 'username bar shows the connected account…') still pass at this point because `username_action_row.dart` is untouched so far — Task 4 rewrites them.
@@ -921,7 +921,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_u
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: FAIL — the rewritten bar tests fail (no `CupertinoSlidingSegmentedControl` in the current bar; `UsernameActionRow` still contains the chip, so the 'only for Twitch' expectations break).
 
 - [ ] **Step 3: Rewrite the bar**
@@ -1212,11 +1212,11 @@ class _UsernameAction extends StatelessWidget {
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: all tests pass (`+9: All tests passed!`).
 
 Also run the switch tests to catch regressions:
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/chat_engine_switch_test.dart`
+Run: `flutter test test/chat/chat_engine_switch_test.dart`
 Expected: `+3: All tests passed!`
 
 - [ ] **Step 6: Commit**
@@ -1371,7 +1371,7 @@ and its tap line becomes:
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: FAIL — the two new tests fail (logged-in currently takes over the slot; the connect prompt copy doesn't exist), and the replaced connect-prompt test fails (current copy is the username prompt + pill without `nativeConnectPrompt`). The connect-button test may already pass at RED (the legacy empty-state pill it taps still exists pre-change) — it guards the login flow, not the new behavior.
 
 - [ ] **Step 3: Implement the engine-aware slot**
@@ -1563,7 +1563,7 @@ Notes for the implementer:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test test/chat/twitch_chat_integration_test.dart`
+Run: `flutter test test/chat/twitch_chat_integration_test.dart`
 Expected: all tests pass (`+11: All tests passed!`).
 
 - [ ] **Step 5: Commit**
@@ -1587,12 +1587,12 @@ git commit -m "feat(chat): engine-aware chat slot + split empty states"
 
 - [ ] **Step 1: Full test suite**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter test`
+Run: `flutter test`
 Expected: all tests pass — around `+108: All tests passed!` (96 pre-existing + 4 chat_engine + 3 switch + 2 account control + 1 bar swap + 2 slot; the exact total may shift if the suite changed since this plan was written — green is the gate, not the number).
 
 - [ ] **Step 2: Analyze**
 
-Run: `~/.dotfiles/flutter/sdk/bin/flutter analyze`
+Run: `flutter analyze`
 Expected: 0 errors; only the 6 pre-existing warnings (`input.dart` ×2, `translucent_sliver_app_bar.dart` ×2, `statistics.dart` ×2). Any new warning in touched files must be fixed before continuing.
 
 - [ ] **Step 3: Changelog entry**

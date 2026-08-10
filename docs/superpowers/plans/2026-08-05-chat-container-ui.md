@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Flutter commands run as `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw <args>` (wrapper is not directly executable).
+- Flutter commands run as `bash flutterw <args>` (wrapper is not directly executable).
 - No new dependencies. No `DashboardStore` changes. No Hive schema changes.
 - Style: `this.` prefix for members; design tokens `AppSpacing`/`AppRadius`/`AppMotion`; `Pressable` (not `GestureDetector`/`InkWell`); touch targets ≥ `kMinInteractiveDimensionCupertino`; doc comments matching neighboring files.
 - Status colors come from `Theme.of(context).extension<AppStatusColors>() ?? AppStatusColors.standard` — the `?? standard` fallback is required because widget tests run a plain `MaterialApp` without the extension registered.
@@ -100,7 +100,7 @@ import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — `chatConnectedAt` getter does not exist (compile error).
 
 - [ ] **Step 3: Add the observable + transitions**
@@ -186,17 +186,17 @@ In `lib/stores/views/twitch_chat.dart`:
 
 - [ ] **Step 4: Regenerate MobX code**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+Run: `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 Expected: finishes with `Succeeded` — `lib/stores/views/twitch_chat.g.dart` regenerated with `chatConnectedAt`.
 
 - [ ] **Step 5: Run the task tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: PASS — all tests incl. the 3 new ones.
 
 - [ ] **Step 6: Analyze**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 - [ ] **Step 7: Commit**
@@ -373,7 +373,7 @@ void main() {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_window_test.dart`
+Run: `bash flutterw test test/chat/native_chat_window_test.dart`
 Expected: FAIL — `native_chat_window.dart` does not exist (compile error).
 
 - [ ] **Step 3: Implement the window**
@@ -735,12 +735,12 @@ class _NativeChatConnectionSheet extends StatelessWidget {
 
 - [ ] **Step 4: Run the task tests**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_chat_window_test.dart`
+Run: `bash flutterw test test/chat/native_chat_window_test.dart`
 Expected: PASS — 4 widget tests + 2 unit tests.
 
 - [ ] **Step 5: Analyze**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 - [ ] **Step 6: Commit**
@@ -810,7 +810,7 @@ void main() {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/chat_window_mapping_test.dart`
+Run: `bash flutterw test test/chat/chat_window_mapping_test.dart`
 Expected: FAIL — `twitchChatWindowStatus` is not defined (compile error).
 
 - [ ] **Step 3: Add the mapping + wrap the native branch**
@@ -904,12 +904,12 @@ Note: the `Observer` builder reads `isLoggedIn`, `chatConnection`, `chatError`, 
 
 - [ ] **Step 4: Run the mapping tests + the full suite**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test`
+Run: `bash flutterw test`
 Expected: PASS — full suite green (baseline 133 + ~12 new from this feature).
 
 - [ ] **Step 5: Analyze**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze`
+Run: `bash flutterw analyze`
 Expected: 0 errors; only the 6 known pre-existing warnings.
 
 - [ ] **Step 6: Commit**

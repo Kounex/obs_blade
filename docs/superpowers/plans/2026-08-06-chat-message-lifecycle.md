@@ -33,14 +33,14 @@
   because rows render inside the window's HiveBuilder (untracked by the
   outer Observer); a public `@observable int lifecycleVersion` is the
   rebuild trigger — the established `catalogVersion` pattern.
-- Flutter commands: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw …`.
+- Flutter commands: `bash flutterw …`.
   Gates per task: focused tests green; full suite green before commit;
   analyze 0 errors + exactly 6 pre-existing warnings (no new ones).
   Info-level lints are tolerated (the `(_, __, …)` factory idiom adds some
   `unnecessary_underscores` infos — accepted class).
 - Commit per task (`git add`/`git commit` only — **never push**).
 - Codegen after Tasks 1 and 2:
-  `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs`
+  `bash flutterw pub run build_runner build --delete-conflicting-outputs`
 
 ---
 
@@ -166,7 +166,7 @@ Twitch docs example):
 
 - [x] **Step 3: Run the test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
+Run: `bash flutterw test test/chat/twitch_lifecycle_dto_test.dart`
 Expected: FAIL — compile error, `chat_lifecycle_events.dart` does not exist.
 
 - [x] **Step 4: Write the DTOs**
@@ -247,8 +247,8 @@ class ChatSystemNotice {
 - [x] **Step 5: Codegen + run the test to verify it passes**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_lifecycle_dto_test.dart
+bash flutterw pub run build_runner build --delete-conflicting-outputs
+bash flutterw test test/chat/twitch_lifecycle_dto_test.dart
 ```
 
 Expected: PASS (6/6).
@@ -432,7 +432,7 @@ Add a new group at the end of `main()`:
 
 - [x] **Step 2: Run the tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile errors (`lifecycleVersion`, `isMessageDeleted`, …
 do not exist).
 
@@ -589,14 +589,14 @@ e) Wire the wipe into both clear sites. In `logout()` the line
 - [x] **Step 4: Codegen + run the tests to verify they pass**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw pub run build_runner build --delete-conflicting-outputs
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart
+bash flutterw pub run build_runner build --delete-conflicting-outputs
+bash flutterw test test/chat/twitch_chat_store_test.dart
 ```
 
 Expected: PASS (all existing + 8 new). Then the full suite once:
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
+bash flutterw test
 ```
 
 Expected: all PASS.
@@ -868,7 +868,7 @@ f) Add the new tests at the end of `main()`:
 
 - [x] **Step 2: Run the tests to verify the new/changed ones fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_eventsub_service_test.dart`
+Run: `bash flutterw test test/chat/twitch_eventsub_service_test.dart`
 Expected: FAIL — compile errors (`onMessageDelete` etc. don't exist) and/or
 behavioral failures (only 1 POST, single dispose DELETE).
 
@@ -1123,8 +1123,8 @@ i) Replace the `dispose` method's subscription cleanup with:
 - [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_eventsub_service_test.dart
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
+bash flutterw test test/chat/twitch_eventsub_service_test.dart
+bash flutterw test
 ```
 
 Expected: service suite PASS (7 existing-updated + 3 new), full suite PASS
@@ -1205,7 +1205,7 @@ Add a new group at the end of `main()`:
 
 - [x] **Step 2: Run the test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/twitch_chat_store_test.dart`
+Run: `bash flutterw test test/chat/twitch_chat_store_test.dart`
 Expected: FAIL — compile error (the factory closure has 6 params, the
 store's typedef has 3).
 
@@ -1297,9 +1297,9 @@ All `(_, __, ___) =>` discards become `(_, __, ___, ____, _____, ______) =>`
 - [x] **Step 5: Run the tests to verify they pass**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
+bash flutterw test test/chat/
+bash flutterw test
+bash flutterw analyze
 ```
 
 Expected: all PASS; analyze 0 errors + exactly 6 pre-existing warnings.
@@ -1368,7 +1368,7 @@ In `test/chat/native_twitch_chat_view_test.dart`, add to the
 
 - [x] **Step 2: Run the test to verify it fails**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — compile error (`isDeleted` isn't a parameter).
 
 - [x] **Step 3: Implement the tombstone branch**
@@ -1410,8 +1410,8 @@ b) In `_richText`, replace the tail of the span list (`const TextSpan(text: ': '
 - [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
+bash flutterw test test/chat/native_twitch_chat_view_test.dart
+bash flutterw test
 ```
 
 Expected: PASS (existing rows unchanged — `isDeleted` defaults false).
@@ -1521,7 +1521,7 @@ In `test/chat/native_twitch_chat_view_test.dart`, add to the
 
 - [x] **Step 2: Run the tests to verify they fail**
 
-Run: `FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart`
+Run: `bash flutterw test test/chat/native_twitch_chat_view_test.dart`
 Expected: FAIL — no banner text, no `Paused ↓` chip.
 
 - [x] **Step 3: Implement the window changes**
@@ -1666,9 +1666,9 @@ e) Replace the whole `if (this._unreadWhileScrolledUp) Positioned(…)` pill
 - [x] **Step 4: Run the tests to verify they pass**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/native_twitch_chat_view_test.dart
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
+bash flutterw test test/chat/native_twitch_chat_view_test.dart
+bash flutterw test
+bash flutterw analyze
 ```
 
 Expected: PASS everywhere; analyze 0 errors + exactly 6 pre-existing
@@ -1693,8 +1693,8 @@ git commit -m "feat(chat): merged lifecycle list + two-state pause chip"
 - [x] **Step 1: Run the full gates**
 
 ```bash
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw test test/chat/ test/websocket/ test/persistence/
-FLUTTER_ROOT="$HOME/.dotfiles/flutter/sdk" bash flutterw analyze
+bash flutterw test test/chat/ test/websocket/ test/persistence/
+bash flutterw analyze
 ```
 
 Expected: all tests PASS; analyze 0 errors (6 pre-existing warnings, none new).
