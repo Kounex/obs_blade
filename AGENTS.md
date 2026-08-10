@@ -41,6 +41,15 @@ trusting anything below to still be current.
 - **Workstation clone** (`~/development/flutter/obs_blade`): same branch;
   **simulator/device runs, integration tests, visual-QA screenshots** — the
   heavy lifter for anything that needs a running app.
+- **Dogfood handoff (when working from the headless/NAS clone):** the user
+  dogfoods by running the app from the workstation clone on a physical
+  device. So whenever a change is ready for dogfooding, don't leave pulling
+  to the user: **commit + push from the NAS, then pull on the workstation
+  yourself** —
+  `ssh macbook 'cd ~/development/flutter/obs_blade && git pull'`
+  (plain SSH is fine here; it's a self-contained command, not agent
+  delegation). The workstation clone should never sit behind `origin` on
+  the active branch after a NAS-side change.
 
 ## Quick map
 
