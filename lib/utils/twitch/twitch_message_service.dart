@@ -21,6 +21,10 @@ class TwitchMessageService {
     required String senderId,
     required String broadcasterId,
     required String message,
+
+    /// Threaded reply target — Helix `reply_parent_message_id`. Null sends
+    /// a plain top-level message.
+    String? replyParentMessageId,
   }) async {
     final response = await this._client.post(
       Uri.parse('$kTwitchHelixBase/chat/messages'),
@@ -32,6 +36,8 @@ class TwitchMessageService {
         'broadcaster_id': broadcasterId,
         'sender_id': senderId,
         'message': message,
+        if (replyParentMessageId != null)
+          'reply_parent_message_id': replyParentMessageId,
       }),
     );
     if (response.statusCode != 200) {

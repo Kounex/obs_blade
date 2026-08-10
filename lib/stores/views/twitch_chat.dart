@@ -216,6 +216,13 @@ abstract class _TwitchChatStore with Store {
   @observable
   String? sendChatError;
 
+  /// Reply target for the next sent message (long-press → Reply) — the
+  /// full event, so the dock strip can show author + excerpt while the
+  /// send forwards [ChatMessageEvent.messageId]. Cleared on a successful
+  /// send and on [selectChannel]; kept on failure so the user can retry.
+  @observable
+  ChatMessageEvent? replyTarget;
+
   /// Multi-chat: channels the user added (persisted in the settings box as
   /// json maps, [SettingsKeys.NativeChatChannels]). The user's own channel
   /// is never in this list — it is derived from [user].
@@ -925,6 +932,10 @@ abstract class _TwitchChatStore with Store {
     this.selectedChannelId = id;
     this._persistSelectedChannel();
 
+    /// A pending reply target points at a message in the previous
+    /// channel — meaningless here.
+    this.replyTarget = null;
+
     this.chatConnection = TwitchChatConnectionState.connecting;
     this._channelSwitchInProgress = true;
     try {
@@ -1010,6 +1021,15 @@ abstract class _TwitchChatStore with Store {
     return true;
   }
 
+  /// Long-press → Reply: target the next sent message at [event]. The
+  /// dock strip renders from [replyTarget]; sending forwards its id.
+  @action
+  void setReplyTarget(ChatMessageEvent event) => this.replyTarget = event;
+
+  /// Cancel the pending reply (strip ✕, or [selectChannel]).
+  @action
+  void clearReplyTarget() => this.replyTarget = null;
+
   /// Send a chat message as the logged-in user into the effective
   /// channel (their own, or the selected multi-chat channel). Returns
   /// whether it was delivered — never throws; failures surface in
@@ -1033,8 +1053,12 @@ abstract class _TwitchChatStore with Store {
         senderId: this.user!.id,
         broadcasterId: this.effectiveBroadcasterId,
         message: trimmed,
+        replyParentMessageId: this.replyTarget?.messageId,
       );
-      if (result.isSent) return true;
+      if (result.isSent) {
+        this.replyTarget = null;
+        return true;
+      }
       this.sendChatError = _dropReasonText(result.dropReason);
       return false;
     } catch (e) {

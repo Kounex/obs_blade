@@ -2,6 +2,25 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-10 — Native chat: replies (send side)
+
+- Spec: `docs/superpowers/specs/2026-08-10-chat-replies-design.md`. Tier S,
+  in-session. Incoming side already existed (DTO + preview row); this ships
+  the outgoing half.
+- Start a reply: long-press a live message — mods get a Reply row atop
+  `ModActionSheet`, non-mods with write scope get a new lightweight
+  `MessageActionSheet`; read-only / tombstones stay inert. Choosing Reply
+  sets `TwitchChatStore.replyTarget` and focuses the input dock.
+- Composing: `NativeReplyStrip` docks above the input via a new generic
+  `contextStrip` seam on `NativeChatInput` (✕ cancels; replacing a target
+  just retargets).
+- Send: Helix `reply_parent_message_id` threaded through
+  `TwitchMessageService` ← store (`replyTarget?.messageId`). Target cleared
+  on successful send and on `selectChannel`, kept on failure for retry.
+- Test gotcha (worth remembering): a real Hive write (`auth.save()`) inside
+  `testWidgets`' fake-async zone never completes and hangs the whole suite
+  at shutdown — mutate the box's in-memory instance instead.
+
 ## 2026-08-09 — Native chat: dogfood polish (evening wrap)
 
 - Mod overflow: combined gear|shield options chip + featured Mod card in

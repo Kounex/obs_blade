@@ -241,11 +241,34 @@ void main() {
     expect(find.text('Delete message'), findsOneWidget);
   });
 
-  testWidgets('no sheet in a non-moderated channel or for tombstones',
+  testWidgets('mod sheet offers Reply; tapping it sets the reply target',
       (tester) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-    /// Selected channel the user does not moderate — long-press is inert.
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.textContaining('text m1'));
+    await tester.pumpAndSettle();
+
+    /// Reply sits above the moderation actions.
+    expect(find.text('Reply'), findsOneWidget);
+    expect(find.text('Delete message'), findsOneWidget);
+
+    await tester.tap(find.text('Reply'));
+    await tester.pumpAndSettle();
+
+    expect(store.replyTarget?.messageId, 'm1');
+    expect(find.byType(ModActionSheet), findsNothing);
+  });
+
+  testWidgets('non-mod with write scope gets a reply-only sheet',
+      (tester) async {
+    store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+
+    /// Selected channel the user does not moderate.
     store.selectedChannelId = 'chan-other';
 
     await tester.pumpWidget(
@@ -255,6 +278,41 @@ void main() {
 
     await tester.longPress(find.textContaining('text m1'));
     await tester.pumpAndSettle();
+
+    expect(find.text('Message from @Useru1'), findsOneWidget);
+    expect(find.text('Reply'), findsOneWidget);
+    expect(find.text('Delete message'), findsNothing);
+
+    await tester.tap(find.text('Reply'));
+    await tester.pumpAndSettle();
+
+    expect(store.replyTarget?.messageId, 'm1');
+    expect(find.byType(MessageActionSheet), findsNothing);
+  });
+
+  testWidgets('read-only non-mod gets no sheet; tombstones stay inert',
+      (tester) async {
+    /// Drop the write scope from the persisted auth — `canWriteChat` reads
+    /// the box live, nothing actionable for a non-mod then. No save():
+    /// the box serves this same in-memory instance on get(), and a Hive
+    /// write (real I/O) would never complete inside testWidgets' fake
+    /// async zone.
+    final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
+    final auth = authBox.get(TwitchAuth.kBoxKey)!;
+    auth.scopes =
+        auth.scopes.where((scope) => scope != 'user:write:chat').toList();
+
+    store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+    store.selectedChannelId = 'chan-other';
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.textContaining('text m1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reply'), findsNothing);
     expect(find.text('Delete message'), findsNothing);
 
     /// Back in a moderated channel but tombstoned — the tap keeps its

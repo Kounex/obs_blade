@@ -26,6 +26,7 @@ import 'chat_emote_picker.dart';
 import 'native_chat_input.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
+import 'native_reply_strip.dart';
 import 'native_twitch_chat_view.dart';
 import 'twitch_device_code_dialog.dart';
 
@@ -311,6 +312,8 @@ class _StreamChatState extends State<StreamChat>
                               key: ValueKey(
                                 twitchStore.effectiveBroadcasterIdSafe,
                               ),
+                              onReplyTargetSet: () =>
+                                  this._chatInputFocusNode.requestFocus(),
                             )
                           : StaggeredEntrance(
                               child: _ChatEmptyState(
@@ -329,6 +332,10 @@ class _StreamChatState extends State<StreamChat>
                                 accentColor: chatType.brandColor ??
                                     Theme.of(context).colorScheme.secondary,
                                 onRelogin: () => startTwitchLogin(context),
+                              ),
+                              contextStrip: NativeReplyStrip(
+                                accentColor: chatType.brandColor ??
+                                    Theme.of(context).colorScheme.secondary,
                               ),
                               canSend: twitchStore.canWriteChat,
                               inFlight: twitchStore.sendingChat,

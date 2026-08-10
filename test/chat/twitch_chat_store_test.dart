@@ -669,6 +669,43 @@ void main() {
       expect(store.sendChatError, 'Could not send — try again');
       expect(store.sendingChat, isFalse);
     });
+
+    test('forwards a set reply target and clears it on success', () async {
+      await login();
+      store.setReplyTarget(chatMessage('parent-1', 'u7'));
+
+      expect(await store.sendChatMessage('totally agree'), isTrue);
+      expect(messageService.lastReplyParentMessageId, 'parent-1');
+      expect(store.replyTarget, isNull);
+    });
+
+    test('keeps the reply target when the send fails', () async {
+      await login();
+      final target = chatMessage('parent-1', 'u7');
+      store.setReplyTarget(target);
+      messageService.sendThrows =
+          const TwitchAuthException('nope', statusCode: 401);
+
+      expect(await store.sendChatMessage('hi'), isFalse);
+      expect(messageService.lastReplyParentMessageId, 'parent-1');
+      expect(store.replyTarget, same(target));
+    });
+
+    test('clearReplyTarget cancels a pending reply', () async {
+      await login();
+      store.setReplyTarget(chatMessage('parent-1', 'u7'));
+      store.clearReplyTarget();
+
+      expect(await store.sendChatMessage('hi'), isTrue);
+      expect(messageService.lastReplyParentMessageId, isNull);
+    });
+
+    test('sends without a reply param when no target is set', () async {
+      await login();
+
+      expect(await store.sendChatMessage('hi'), isTrue);
+      expect(messageService.lastReplyParentMessageId, isNull);
+    });
   });
 
   group('third-party emote wiring', () {
@@ -1196,6 +1233,15 @@ void main() {
 
       await store.selectChannel('chan-1');
       expect(store.messages.map((message) => message.messageId), ['m9']);
+    });
+
+    test('selectChannel clears a pending reply target', () async {
+      await login();
+      store.setReplyTarget(chatMessage('parent-1', 'u7'));
+      expect(store.replyTarget, isNotNull);
+
+      await store.selectChannel('chan-1');
+      expect(store.replyTarget, isNull);
     });
 
     test('selectChannel keeps mid-switch arrivals for both channels', () async {

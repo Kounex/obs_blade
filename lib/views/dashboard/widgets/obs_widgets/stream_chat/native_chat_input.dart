@@ -39,6 +39,11 @@ class NativeChatInput extends StatefulWidget {
   /// toggle). Only shown in the send-ready state, not on the lock strip.
   final Widget? leading;
 
+  /// Optional strip rendered above the input row (e.g. a "replying to…"
+  /// context line). Only shown in the send-ready state, before the
+  /// [errorText] row.
+  final Widget? contextStrip;
+
   /// Brand accent (send button, hint action)
   final Color accentColor;
 
@@ -60,6 +65,7 @@ class NativeChatInput extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.leading,
+    this.contextStrip,
   });
 
   @override
@@ -146,6 +152,10 @@ class _NativeChatInputState extends State<NativeChatInput> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (this.widget.contextStrip != null) ...[
+            this.widget.contextStrip!,
+            const SizedBox(height: AppSpacing.xs),
+          ],
           if (this.widget.errorText != null) ...[
             Row(
               children: [

@@ -198,6 +198,24 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     });
   }
 
+  late final _$replyTargetAtom = Atom(
+    name: '_TwitchChatStore.replyTarget',
+    context: context,
+  );
+
+  @override
+  ChatMessageEvent? get replyTarget {
+    _$replyTargetAtom.reportRead();
+    return super.replyTarget;
+  }
+
+  @override
+  set replyTarget(ChatMessageEvent? value) {
+    _$replyTargetAtom.reportWrite(value, super.replyTarget, () {
+      super.replyTarget = value;
+    });
+  }
+
   late final _$selectedChannelIdAtom = Atom(
     name: '_TwitchChatStore.selectedChannelId',
     context: context,
@@ -512,6 +530,30 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void setReplyTarget(ChatMessageEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.setReplyTarget',
+    );
+    try {
+      return super.setReplyTarget(event);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void clearReplyTarget() {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.clearReplyTarget',
+    );
+    try {
+      return super.clearReplyTarget();
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   Future<bool> timeoutUser(String targetUserId, int durationSeconds) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore.timeoutUser',
@@ -692,6 +734,7 @@ chatError: ${chatError},
 chatConnectedAt: ${chatConnectedAt},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
+replyTarget: ${replyTarget},
 selectedChannelId: ${selectedChannelId},
 selectedChannelIsLive: ${selectedChannelIsLive},
 selectedChannelViewerCount: ${selectedChannelViewerCount},

@@ -26,7 +26,11 @@ import 'twitch_chat_notification_row.dart';
 /// Native read-only Twitch chat. Lives in the same dashboard slot the
 /// WebView chat uses — driven by [TwitchChatStore]'s message buffer.
 class NativeTwitchChatView extends StatefulWidget {
-  const NativeTwitchChatView({super.key});
+  /// Fired after a reply target gets set from a message sheet — the
+  /// caller (owner of the input dock) uses it to focus the text field.
+  final VoidCallback? onReplyTargetSet;
+
+  const NativeTwitchChatView({super.key, this.onReplyTargetSet});
 
   @override
   State<NativeTwitchChatView> createState() => _NativeTwitchChatViewState();
@@ -55,12 +59,39 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   Future<void> _openModActions(ChatMessageEvent event) async {
     this.setState(() => this._modTargetMessageId = event.messageId);
     try {
-      await showModActionSheet(this.context, event);
+      await showModActionSheet(
+        this.context,
+        event,
+        onReply: this._store.canWriteChat ? () => this._replyTo(event) : null,
+      );
     } finally {
       if (this.mounted) {
         this.setState(() => this._modTargetMessageId = null);
       }
     }
+  }
+
+  /// Non-mod long-press: a lightweight sheet with just the Reply action.
+  Future<void> _openReplyActions(ChatMessageEvent event) async {
+    this.setState(() => this._modTargetMessageId = event.messageId);
+    try {
+      await showMessageActionSheet(
+        this.context,
+        authorName: event.chatterUserName,
+        onReply: () => this._replyTo(event),
+      );
+    } finally {
+      if (this.mounted) {
+        this.setState(() => this._modTargetMessageId = null);
+      }
+    }
+  }
+
+  /// Target the next sent message at [event] (reply strip appears) and
+  /// let the caller focus the input dock.
+  void _replyTo(ChatMessageEvent event) {
+    this._store.setReplyTarget(event);
+    this.widget.onReplyTargetSet?.call();
   }
 
   @override
@@ -429,10 +460,13 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       userId: userId,
                     ),
                     highlighted: this._modTargetMessageId == event.messageId,
-                    onMessageLongPress:
-                        deleted || !this._store.canModerateSelectedChannel
-                            ? null
-                            : () => this._openModActions(event),
+                    onMessageLongPress: deleted
+                        ? null
+                        : (this._store.canModerateSelectedChannel
+                            ? () => this._openModActions(event)
+                            : (this._store.canWriteChat
+                                ? () => this._openReplyActions(event)
+                                : null)),
                   );
                 },
               ),

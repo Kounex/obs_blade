@@ -11,6 +11,7 @@ NativeChatInput buildInput({
   TextEditingController? controller,
   FocusNode? focusNode,
   Widget? leading,
+  Widget? contextStrip,
   Future<bool> Function(String)? onSend,
   VoidCallback? onRelogin,
 }) =>
@@ -18,6 +19,7 @@ NativeChatInput buildInput({
       controller: controller,
       focusNode: focusNode,
       leading: leading,
+      contextStrip: contextStrip,
       canSend: canSend,
       inFlight: inFlight,
       errorText: errorText,
@@ -35,6 +37,19 @@ void main() {
 
     await tester.pumpWidget(wrap(buildInput(canSend: false)));
     expect(find.byType(TextField), findsNothing);
+    expect(find.text('Logged in read-only'), findsOneWidget);
+  });
+
+  testWidgets('contextStrip shows in the ready state, not on the lock strip',
+      (tester) async {
+    const strip = Text('strip-marker');
+
+    await tester.pumpWidget(wrap(buildInput(contextStrip: strip)));
+    expect(find.text('strip-marker'), findsOneWidget);
+
+    await tester
+        .pumpWidget(wrap(buildInput(canSend: false, contextStrip: strip)));
+    expect(find.text('strip-marker'), findsNothing);
     expect(find.text('Logged in read-only'), findsOneWidget);
   });
 

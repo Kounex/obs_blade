@@ -14,6 +14,9 @@ import '../native_chat_chrome.dart';
 /// message is tapped in a channel the user moderates
 /// (`TwitchChatStore.canModerateSelectedChannel` gates the tap target).
 ///
+/// [onReply] (when the account may write chat) adds a non-destructive
+/// Reply row above the moderation actions.
+///
 /// Failures surface as a snackbar hosted by [context] (the chat view's) —
 /// the sheet route is already popped by then, so its own context can't
 /// host it.
@@ -21,8 +24,9 @@ import '../native_chat_chrome.dart';
 /// chrome on the target message).
 Future<void> showModActionSheet(
   BuildContext context,
-  ChatMessageEvent event,
-) =>
+  ChatMessageEvent event, {
+  VoidCallback? onReply,
+}) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
       barrierDismissible: true,
@@ -30,10 +34,28 @@ Future<void> showModActionSheet(
       maxHeightFraction: 0.72,
       builder: (_) => ModActionSheet(
         event: event,
+        onReply: onReply,
         onFailure: (message) => ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(message))),
       ),
+    );
+
+/// Opens the lightweight message sheet for non-moderators: just the Reply
+/// action (mod users get [showModActionSheet] instead). [onReply] runs
+/// after the sheet pops.
+Future<void> showMessageActionSheet(
+  BuildContext context, {
+  required String authorName,
+  required VoidCallback onReply,
+}) =>
+    ModalHandler.showBaseBottomSheet(
+      context: context,
+      barrierDismissible: true,
+      enableDrag: true,
+      maxHeightFraction: 0.72,
+      builder: (_) =>
+          MessageActionSheet(authorName: authorName, onReply: onReply),
     );
 
 /// Timeout presets (label → seconds). Twitch caps at 2 weeks; these cover
@@ -60,10 +82,15 @@ class ModActionSheet extends StatefulWidget {
   /// [showModActionSheet]).
   final void Function(String message) onFailure;
 
+  /// When the account may write chat: Reply row above the moderation
+  /// actions. Runs after the sheet pops.
+  final VoidCallback? onReply;
+
   const ModActionSheet({
     super.key,
     required this.event,
     required this.onFailure,
+    this.onReply,
   });
 
   @override
@@ -155,6 +182,21 @@ class _ModActionSheetState extends State<ModActionSheet> {
                         ),
                       ),
                   ] else ...[
+                    if (this.widget.onReply != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        child: chatActionRowCard(
+                          context,
+                          icon: CupertinoIcons.reply,
+                          label: 'Reply',
+                          onTap: this._running
+                              ? null
+                              : () {
+                                  Navigator.of(context).pop();
+                                  this.widget.onReply!();
+                                },
+                        ),
+                      ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                       child: this._actionRow(
@@ -243,42 +285,103 @@ class _ModActionSheetState extends State<ModActionSheet> {
     required String label,
     required VoidCallback onTap,
     bool destructive = false,
-  }) {
-    final Color color = destructive
-        ? (Theme.of(context).extension<AppStatusColors>() ??
-                AppStatusColors.standard)
-            .unreachable
-        : Theme.of(context).textTheme.bodyMedium?.color ??
-            CupertinoColors.label;
-    return Pressable(
-      haptic: true,
-      onTap: this._running ? null : onTap,
-      child: Container(
-        constraints: const BoxConstraints(
-          minHeight: kMinInteractiveDimensionCupertino,
+  }) =>
+      chatActionRowCard(
+        context,
+        icon: icon,
+        label: label,
+        destructive: destructive,
+        onTap: this._running ? null : onTap,
+      );
+}
+
+/// Shared action-row card idiom (connection sheet / mod sheet): container
+/// card, 44pt target, destructive in the unreachable red. Null [onTap]
+/// renders it disabled.
+Widget chatActionRowCard(
+  BuildContext context, {
+  required IconData icon,
+  required String label,
+  required VoidCallback? onTap,
+  bool destructive = false,
+}) {
+  final Color color = destructive
+      ? (Theme.of(context).extension<AppStatusColors>() ??
+              AppStatusColors.standard)
+          .unreachable
+      : Theme.of(context).textTheme.bodyMedium?.color ??
+          CupertinoColors.label;
+  return Pressable(
+    haptic: true,
+    onTap: onTap,
+    child: Container(
+      constraints: const BoxConstraints(
+        minHeight: kMinInteractiveDimensionCupertino,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+          width: 0.0,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        decoration: BoxDecoration(
-          color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
-            width: 0.0,
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18.0, color: color),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: color),
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 18.0, color: color),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: color),
-            ),
-          ],
-        ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Lightweight message sheet for non-moderators — just the Reply action
+/// (mod users get [ModActionSheet] with Reply on top instead). Same card
+/// idiom via [chatActionRowCard].
+class MessageActionSheet extends StatelessWidget {
+  final String authorName;
+
+  /// Runs after the sheet pops (set reply target + focus the input).
+  final VoidCallback onReply;
+
+  const MessageActionSheet({
+    super.key,
+    required this.authorName,
+    required this.onReply,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Message from @${this.authorName}',
+            style: nativeChatSheetTitleStyle(context),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          chatActionRowCard(
+            context,
+            icon: CupertinoIcons.reply,
+            label: 'Reply',
+            onTap: () {
+              Navigator.of(context).pop();
+              this.onReply();
+            },
+          ),
+        ],
       ),
     );
   }
