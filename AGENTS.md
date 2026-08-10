@@ -19,6 +19,12 @@ Repo: `Kounex/obs_blade` (**public**) · branches: `master`, `redesign`, `foss`,
 handoff, holds only current state + immediate next steps. Read it before
 trusting anything below to still be current.
 
+→ **If `docs/private/` exists in your checkout, you're on a maintainer
+machine: also read `docs/private/maintainer-workflow.md` before doing
+anything** (machine topology, dogfood handoff rule, private-doc sync
+duties — they apply to you). If `docs/private/` is absent, you're in an
+external contributor clone and can ignore everything about it.
+
 ## Agent constraints
 
 - **500k+ live users** — treat persistence and release paths carefully.
