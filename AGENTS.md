@@ -139,6 +139,27 @@ see chat audit + handoff.
   the simulator's data container. Phone-width by default; for a large-screen
   smoke, enable Settings → **Force Tablet Mode** (or use a wide / iPad sim)
   and re-check dashboard Scene Items/Audio + Chat/Stats side-by-side.
+- **Test selection (scale the run to the change):** don't run the full
+  suite every time — run what the change can actually break, widening as
+  you get closer to shipping:
+  1. **While iterating:** only the test file(s) covering the code in
+     flight — `bash flutterw test test/chat/twitch_chat_store_test.dart`
+     (seconds, not minutes).
+  2. **Before committing a unit:** the suite directory matching the area
+     touched — chat (`lib/utils/twitch/`, `lib/stores/views/twitch_*`,
+     `lib/views/**/stream_chat/`) → `test/chat/`; websocket/protocol
+     (`lib/stores/shared/network.dart`, `lib/types/`) → `test/websocket/`;
+     persistence (`lib/models/`, `TypeIDs`, hive registrar) →
+     `test/persistence/`; shared widgets/utils → their matching
+     `test/shared/` / `test/utils/` files. Cross-cutting changes (design
+     system, DI/`main.dart`, routing) → all affected suites.
+  3. **Wrap-up, before push/handoff:** the full gate once —
+     `bash flutterw test test/chat/ test/websocket/ test/persistence/` +
+     analyze. Store cut: full gate + integration tests.
+  Two gotchas: don't run `flutter test` concurrently with analyze or
+  other Flutter processes (they starve each other and can look hung), and
+  never do real I/O (e.g. a Hive `save()`) inside `testWidgets`' fake-async
+  zone — it never completes and hangs the suite at shutdown.
 - **Process tiers (default S):** size the process to the change — S:
   implement directly in-session (no subagents/plan doc), TDD + gates
   once at the end; M: 1 implementer subagent + 1 end reviewer, prose
