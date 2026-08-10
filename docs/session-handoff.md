@@ -24,9 +24,11 @@ Read this first after `AGENTS.md`. Last reset: **2026-08-09 evening**
   file is only as current as whoever last updated it remembered to make it.
 - **Non-public docs live in `docs/private/`** (gitignored — this repo is
   public). Git will never sync it. If you create or edit anything there,
-  copy it to the other machine immediately:
-  `scp docs/private/*.md macbook:~/development/flutter/obs_blade/docs/private/`
-  (or NAS-ward: `scp docs/private/*.md nas:~/agent/obs-blade/docs/private/`).
+  mirror it to the other machine immediately (use `rsync --delete`, not
+  `scp`, so deletions/renames propagate too — plain `scp` leaves stale
+  copies behind):
+  `rsync -a --delete docs/private/ macbook:~/development/flutter/obs_blade/docs/private/`
+  (or NAS-ward: `rsync -a --delete docs/private/ nas:~/agent/obs-blade/docs/private/`).
   Same goes for any other file that's deliberately outside git — don't let
   state exist on only one machine.
 
