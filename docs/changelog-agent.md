@@ -2,6 +2,20 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-12 — Native chat: API roadmap audit
+
+- New doc `docs/chat-native-roadmap.md`: audited Helix/EventSub surface
+  against the native chat. Findings ordered into waves: (1) correctness —
+  GIF fragments (live since 2026-07-16, unhandled in `ChatMessageFragment`),
+  power-ups message types, shared-chat source chips + multi-chat dedup;
+  (2) free with held scopes — pinned messages CRUD, unban, `moderator:read:*`
+  inbox surfaces; (3) mod tooling bundle — warn, unban requests, AutoMod v2
+  queue (one scope upgrade); (4) post-entitlement streamer actions — points
+  redemption feed (read-only; Helix mutation is client-ID-locked), polls/
+  predictions, raid out, chatters list. Vapor list recorded (no shared-chat
+  session API, Hype Chat/Moments dead, redemption mutation locked, etc.).
+  No code changes.
+
 ## 2026-08-10 — Native chat: replies (send side)
 
 - Spec: `docs/superpowers/specs/2026-08-10-chat-replies-design.md`. Tier S,
