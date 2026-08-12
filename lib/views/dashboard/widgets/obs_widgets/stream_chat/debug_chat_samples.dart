@@ -48,9 +48,11 @@ List<({String label, String description, ChatMessageEvent event})>
               gif: ChatFragmentGif(
                 /// Must be a live giphy id — a dead one silently falls
                 /// back to the fragment text via the row's errorBuilder.
-                gifId: '3oEjI6SIIHBdRxXI40',
+                /// Also pick one that visibly animates: a spinner-on-white
+                /// GIF looks exactly like a stuck loading state.
+                gifId: '111ebonMs90YLu',
                 url:
-                    'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
+                    'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif',
               ),
             ),
           ],

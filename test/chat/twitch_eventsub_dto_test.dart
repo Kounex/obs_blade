@@ -111,10 +111,10 @@ void main() {
       final fragment = event.message.fragments.first;
       expect(fragment.type, 'gif');
       expect(fragment.text, 'dance');
-      expect(fragment.gif?.gifId, '3oEjI6SIIHBdRxXI40');
+      expect(fragment.gif?.gifId, '111ebonMs90YLu');
       expect(
         fragment.gif?.url,
-        'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
+        'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif',
       );
     });
 

@@ -16,10 +16,11 @@ import 'third_party_emote_row_test.dart' show collectWidgetSpans;
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 /// Live giphy id — the row's errorBuilder turns a dead URL back into
-/// text, so this constant must point at a GIF that actually serves.
+/// text, so this constant must point at a GIF that actually serves
+/// (and one that visibly animates, not a spinner-on-white).
 const _gif = ChatFragmentGif(
-  gifId: '3oEjI6SIIHBdRxXI40',
-  url: 'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
+  gifId: '111ebonMs90YLu',
+  url: 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif',
 );
 
 ChatMessageEvent _gifEvent() => const ChatMessageEvent(
