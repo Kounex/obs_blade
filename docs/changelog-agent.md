@@ -14,7 +14,7 @@ Running log of upgrade/migration work. Not store release notes.
   Slim banner above the native chat timeline (mods get ✕ unpin),
   Pin/Unpin rows in the mod action sheet (replacing an active pin
   confirms first). Pins are always "until stream ends" — no duration UI.
-  Commit pending.
+  Commit cf353b6f.
 - Ban inbox: `TwitchBannedUser` (empty-string `expires_at` = perma-ban,
   not null) + `TwitchUnbanRequest` DTOs; `getBannedUsers` (own channel
   only — Helix 401s other channels even with a mod token), `unbanUser`,
@@ -22,13 +22,14 @@ Running log of upgrade/migration work. Not store release notes.
   deny is wave 3's manage scope). "Bans & requests…" sheet off the
   channel mod sheet; unban drops the user from both lists optimistically.
   Deferred: blocked terms / warnings / mods-VIPs read lists (no action
-  attached; revisit with wave 3). Commit pending.
-- Gate: `test/chat/` green, analyze no new issues.
-- Test gotchas: a widget test that calls `selectChannel` must register
-  `FakeTwitchChannelService` + `FakeSilentIrcSidecar` or the real IRC
-  sidecar hangs the fake-async zone; sheets with a load spinner never
-  let `pumpAndSettle` settle — use bounded pumps (`settle()` idiom from
-  `channel_mod_sheet_test.dart`).
+  attached; revisit with wave 3). Commit 9b45af49.
+- Gate: `test/chat/` 489 tests green (1m31s), analyze no new issues.
+- Test gotchas: a widget test that calls `selectChannel` must wrap it in
+  `tester.runAsync` — it persists the selection to Hive, and real I/O
+  never completes in the fake-async zone (parked the suite 10 min);
+  sheets with a load spinner never let `pumpAndSettle` settle — bounded
+  pumps + the mod-sheet `await refresh → setState` idiom (no Observer in
+  sheets).
 
 ## 2026-08-13 — Native chat: roadmap wave 1 (correctness)
 
