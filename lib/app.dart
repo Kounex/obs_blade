@@ -179,6 +179,15 @@ class App extends StatelessWidget {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: StylingHelper.lightenDarkenColor(
             cardColor ?? StylingHelper.primary_color, 8),
+
+        /// The background above is a near-card tone, so the stock M3
+        /// content color can land mid-gray on it — pin the foreground to
+        /// the app's plain readable tone instead.
+        contentTextStyle: appTextTheme.bodyMedium?.copyWith(
+          color: brightness != null && brightness == Brightness.light
+              ? Colors.black
+              : Colors.white,
+        ),
         actionTextColor: hightlightColor ?? StylingHelper.highlight_color,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
