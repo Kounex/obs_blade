@@ -1591,6 +1591,178 @@ void main() {
     });
   });
 
+  group('pinned messages', () {
+    late FakeTwitchModerationService moderationService;
+
+    setUp(() {
+      moderationService = FakeTwitchModerationService();
+    });
+
+    /// Own channel with manage scopes by default — connectChat fires the
+    /// initial pin refresh, so tests start from [pinnedSample] loaded.
+    Future<void> login({List<String>? scopes}) async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes = scopes ??
+          const [
+            'user:read:chat',
+            'user:write:chat',
+            'moderator:manage:chat_messages',
+            'moderator:manage:banned_users',
+          ];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+            eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        moderationService: moderationService,
+      );
+      await store.startLogin();
+      await pumpEventQueue();
+    }
+
+    test('connect fetches the pinned message for the own channel', () async {
+      await login();
+
+      expect(moderationService.getPinnedCalls, 1);
+      expect(moderationService.lastPinnedBroadcasterId, 'user-1');
+      expect(moderationService.lastPinnedModeratorId, 'user-1');
+      expect(store.pinnedMessage?.messageId, 'msg-pinned');
+    });
+
+    test('empty data leaves pinnedMessage null', () async {
+      moderationService.pinnedMessageResult = null;
+      await login();
+
+      expect(store.pinnedMessage, isNull);
+    });
+
+    test('a pre-upgrade token skips the pin fetch', () async {
+      await login(scopes: const ['user:read:chat']);
+
+      expect(moderationService.getPinnedCalls, 0);
+      expect(store.pinnedMessage, isNull);
+    });
+
+    test('the moderation read bundle is enough to fetch pins', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        ...kTwitchModerationScopes,
+      ]);
+
+      expect(moderationService.getPinnedCalls, 1);
+      expect(store.pinnedMessage?.messageId, 'msg-pinned');
+    });
+
+    test('a non-moderated selected channel skips the pin fetch', () async {
+      await login();
+      moderationService.getPinnedCalls = 0;
+
+      store.selectedChannelId = 'chan-other';
+      await store.refreshPinnedMessage();
+
+      expect(moderationService.getPinnedCalls, 0);
+    });
+
+    test('a refresh failure keeps the previous pin', () async {
+      await login();
+      moderationService.getPinnedThrows = const TwitchAuthException('down');
+
+      await store.refreshPinnedMessage();
+
+      expect(store.pinnedMessage?.messageId, 'msg-pinned');
+    });
+
+    test('pinMessage pins and refetches the pin', () async {
+      moderationService.pinnedMessageResult = null;
+      await login();
+      expect(store.pinnedMessage, isNull);
+
+      final ok = await store.pinMessage(chatMessage('m1', 'u1'));
+
+      expect(ok, isTrue);
+      expect(moderationService.pinCalls, 1);
+      expect(moderationService.lastPinMessageId, 'm1');
+      expect(moderationService.lastPinnedBroadcasterId, 'user-1');
+
+      /// The post-pin refresh picks up the new pin.
+      expect(store.pinnedMessage?.messageId, 'm1');
+    });
+
+    test('pinMessage failure returns false and keeps the state', () async {
+      moderationService.pinnedMessageResult = null;
+      await login();
+      moderationService.pinThrows = const TwitchAuthException('down');
+
+      final ok = await store.pinMessage(chatMessage('m1', 'u1'));
+
+      expect(ok, isFalse);
+      expect(store.pinnedMessage, isNull);
+    });
+
+    test('pinMessage is gated off without manage scopes', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        ...kTwitchModerationScopes,
+      ]);
+
+      expect(await store.pinMessage(chatMessage('m1', 'u1')), isFalse);
+      expect(moderationService.pinCalls, 0);
+    });
+
+    test('unpinMessage unpins and clears the banner state', () async {
+      await login();
+      expect(store.pinnedMessage, isNotNull);
+
+      final ok = await store.unpinMessage();
+
+      expect(ok, isTrue);
+      expect(moderationService.unpinCalls, 1);
+      expect(moderationService.lastUnpinMessageId, 'msg-pinned');
+      expect(store.pinnedMessage, isNull);
+    });
+
+    test('unpinMessage failure keeps the pin', () async {
+      await login();
+      moderationService.unpinThrows = const TwitchAuthException('down');
+
+      final ok = await store.unpinMessage();
+
+      expect(ok, isFalse);
+      expect(store.pinnedMessage?.messageId, 'msg-pinned');
+    });
+
+    test('unpinMessage without an active pin is a no-op', () async {
+      moderationService.pinnedMessageResult = null;
+      await login();
+
+      expect(await store.unpinMessage(), isFalse);
+      expect(moderationService.unpinCalls, 0);
+    });
+
+    test('a channel switch clears the pin and refetches for the new channel',
+        () async {
+      await login();
+      store.moderatedChannelIds.add('chan-mod');
+      moderationService.getPinnedCalls = 0;
+
+      await store.selectChannel('chan-mod');
+      await pumpEventQueue();
+
+      expect(moderationService.getPinnedCalls, 1);
+      expect(moderationService.lastPinnedBroadcasterId, 'chan-mod');
+      expect(store.pinnedMessage?.messageId, 'msg-pinned');
+    });
+
+    test('logout clears the pinned message', () async {
+      await login();
+      expect(store.pinnedMessage, isNotNull);
+
+      await store.logout();
+
+      expect(store.pinnedMessage, isNull);
+    });
+  });
+
   group('room mod actions', () {
     late FakeTwitchModerationService moderationService;
 

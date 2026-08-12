@@ -329,4 +329,76 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Pin message pins directly when nothing is pinned yet',
+      (tester) async {
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+    store.pinnedMessage = null;
+
+    await openSheet(tester, event);
+
+    expect(find.text('Pin message'), findsOneWidget);
+    expect(find.text('Unpin message'), findsNothing);
+
+    await tester.tap(find.text('Pin message'));
+    await tester.pumpAndSettle();
+
+    /// No confirmation when no pin gets replaced.
+    expect(moderationService.pinCalls, 1);
+    expect(moderationService.lastPinMessageId, 'm1');
+    expect(store.pinnedMessage?.messageId, 'm1');
+    expect(find.byType(ModActionSheet), findsNothing);
+  });
+
+  testWidgets('Pin message asks before replacing the active pin',
+      (tester) async {
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+
+    /// Flush the login connect's pin fetch — the sample pin is active.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    expect(store.pinnedMessage?.messageId, 'msg-pinned');
+
+    await openSheet(tester, event);
+    await tester.tap(find.text('Pin message'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pin this message?'), findsOneWidget);
+    expect(moderationService.pinCalls, 0);
+
+    await tester.tap(find.text('Pin').last);
+    await tester.pumpAndSettle();
+
+    expect(moderationService.pinCalls, 1);
+    expect(moderationService.lastPinMessageId, 'm1');
+    expect(store.pinnedMessage?.messageId, 'm1');
+    expect(find.byType(ModActionSheet), findsNothing);
+  });
+
+  testWidgets('the pinned message offers Unpin message and unpins directly',
+      (tester) async {
+    final event = chatMessage('msg-pinned', 'u1');
+    store.appendChatMessageForTest(event);
+
+    /// Flush the login connect's pin fetch — the sample pin is active.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    expect(store.pinnedMessage?.messageId, 'msg-pinned');
+
+    await openSheet(tester, event);
+
+    expect(find.text('Unpin message'), findsOneWidget);
+    expect(find.text('Pin message'), findsNothing);
+
+    await tester.tap(find.text('Unpin message'));
+    await tester.pumpAndSettle();
+
+    /// No confirmation for unpin.
+    expect(moderationService.unpinCalls, 1);
+    expect(moderationService.lastUnpinMessageId, 'msg-pinned');
+    expect(store.pinnedMessage, isNull);
+    expect(find.byType(ModActionSheet), findsNothing);
+  });
 }

@@ -20,6 +20,7 @@ import 'chat_tombstone.dart';
 import 'dialogs/chat_user_card_sheet.dart';
 import 'dialogs/mod_action_sheet.dart';
 import 'native_chat_appearance.dart';
+import 'pinned_chat_banner.dart';
 import 'twitch_chat_message_row.dart';
 import 'twitch_chat_notification_row.dart';
 
@@ -270,11 +271,15 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         }
         this._lastRenderedCount = items.length;
 
+        /// Tracked so the pinned-message banner appears/clears with the
+        /// store's refetch (connect/switch and local pin mutations).
+        final pinned = this._store.pinnedMessage;
+
         /// Toggle changes re-filter badges and re-render emote tokens in
         /// place; row-level Observers pick up badge catalog arrivals
         /// (emote catalog arrivals ride the outer Observer's
         /// catalogVersion read above).
-        return HiveBuilder<dynamic>(
+        final timeline = HiveBuilder<dynamic>(
           hiveKey: HiveKeys.Settings,
           rebuildKeys: const [
             SettingsKeys.TwitchChatBadgeBroadcaster,
@@ -510,6 +515,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             ],
           );
           },
+        );
+        return Column(
+          children: [
+            if (pinned != null) PinnedChatBanner(pinned: pinned),
+            Expanded(child: timeline),
+          ],
         );
       },
     );

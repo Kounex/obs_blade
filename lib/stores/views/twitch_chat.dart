@@ -17,6 +17,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.d
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -335,6 +336,13 @@ abstract class _TwitchChatStore with Store {
   @observable
   bool? roomShieldModeActive;
 
+  /// The pinned chat message in the effective channel — fetched by
+  /// [refreshPinnedMessage] (no EventSub exists for pins, so the store
+  /// re-fetches on connect/switch and after local pin/unpin mutations).
+  /// Null when nothing is pinned or the fetch hasn't run/failed.
+  @observable
+  TwitchPinnedMessage? pinnedMessage;
+
   @computed
   bool get isLoggedIn => this.authState == TwitchAuthState.loggedIn;
 
@@ -619,6 +627,7 @@ abstract class _TwitchChatStore with Store {
       await this._connectIrcSidecar(token);
 
       this._refetchCatalogs(token, this.effectiveBroadcasterId);
+      unawaited(this.refreshPinnedMessage());
       /// Live poll starts when EventSub reports connected (see
       /// [_onEventSubState]) — not here, so a failed handshake never
       /// leaves a dangling Timer in tests.
@@ -968,6 +977,7 @@ abstract class _TwitchChatStore with Store {
       this.systemNotices.clear();
       this.chatNotifications.clear();
       this._chatterColors.clear();
+      this.pinnedMessage = null;
       if (buffer != null) {
         this.messages.addAll(buffer.messages);
         this._deletedMessageIds.addAll(buffer.deletedMessageIds);
@@ -1007,6 +1017,7 @@ abstract class _TwitchChatStore with Store {
       GeneralHelper.advLog('Twitch token refresh on switch failed — $e');
     }
     unawaited(this.refreshSelectedChannelLive());
+    unawaited(this.refreshPinnedMessage());
   }
 
   /// Whether [key] was already applied — first-time keys are recorded
@@ -1314,6 +1325,85 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Twitch room mod state refresh failed — $e');
     }
+  }
+
+  /// Whether the pin endpoints may be called for the selected channel:
+  /// the token must read pins (read bundle or the manage scope) and the
+  /// channel must be the user's own or one they moderate.
+  bool get _canUsePins =>
+      (this.canReadModeration || this.canModerateChats) &&
+      (this.selectedChannelId == null ||
+          this.moderatedChannelIds.contains(this.selectedChannelId));
+
+  /// Fetch the pinned message for the effective channel. Best-effort —
+  /// failures are only logged and leave [pinnedMessage] unchanged.
+  @action
+  Future<void> refreshPinnedMessage() async {
+    if (this.authState != TwitchAuthState.loggedIn ||
+        this.user == null ||
+        !this._canUsePins) {
+      return;
+    }
+    try {
+      final token = await this._validAccessToken();
+      this.pinnedMessage = await this._moderationService.getPinnedChatMessage(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch pinned message refresh failed — $e');
+    }
+  }
+
+  /// Mod action sheet: pin [event]'s message in the effective channel
+  /// (until the stream ends; Helix auto-replaces an existing pin). Returns
+  /// whether it was applied — never throws; [pinnedMessage] is refetched
+  /// on success.
+  @action
+  Future<bool> pinMessage(ChatMessageEvent event) async {
+    if (!this.canModerateSelectedChannel || this.user == null) return false;
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.pinChatMessage(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        messageId: event.messageId,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch message pin failed — $e');
+      return false;
+    }
+    await this.refreshPinnedMessage();
+    return true;
+  }
+
+  /// Unpin the currently pinned message in the effective channel. Returns
+  /// whether it was applied — never throws; [pinnedMessage] clears
+  /// optimistically on success.
+  @action
+  Future<bool> unpinMessage() async {
+    final pinned = this.pinnedMessage;
+    if (!this.canModerateSelectedChannel ||
+        this.user == null ||
+        pinned == null) {
+      return false;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.unpinChatMessage(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        messageId: pinned.messageId,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch message unpin failed — $e');
+      return false;
+    }
+    this.pinnedMessage = null;
+    return true;
   }
 
   Future<String> _validAccessToken() async {
@@ -1779,6 +1869,7 @@ abstract class _TwitchChatStore with Store {
     this.selectedChannelId = null;
     this.roomChatSettings = null;
     this.roomShieldModeActive = null;
+    this.pinnedMessage = null;
     this._stopLivePoll();
     this._persistSelectedChannel();
   }

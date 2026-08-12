@@ -117,13 +117,14 @@ class _ModActionSheetState extends State<ModActionSheet> {
     if (!ok) this.widget.onFailure(failureText);
   }
 
-  /// Confirm before a destructive Helix call — cancel leaves the sheet open.
+  /// Confirm before a Helix call — cancel leaves the sheet open.
   void _confirmThenRun({
     required String title,
     required String body,
     required String okText,
     required Future<bool> Function() action,
     required String failureText,
+    bool destructive = true,
   }) {
     if (this._running) return;
     ModalHandler.showBaseDialog(
@@ -133,7 +134,7 @@ class _ModActionSheetState extends State<ModActionSheet> {
         body: body,
         okText: okText,
         noText: 'Cancel',
-        isYesDestructive: true,
+        isYesDestructive: destructive,
         onOk: (_) {
           this._run(action, failureText);
         },
@@ -197,6 +198,7 @@ class _ModActionSheetState extends State<ModActionSheet> {
                                 },
                         ),
                       ),
+                    this._pinRow(context, event),
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                       child: this._actionRow(
@@ -245,6 +247,49 @@ class _ModActionSheetState extends State<ModActionSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Pin row between Reply and Delete: "Unpin message" when [event] is
+  /// the pinned one, else "Pin message" — replacing a different active pin
+  /// asks for confirmation first (Helix auto-replaces). [pinnedMessage] is
+  /// read once at build; the banner refreshes from the store afterwards.
+  Widget _pinRow(BuildContext context, ChatMessageEvent event) {
+    final pinned = this._store.pinnedMessage;
+    if (pinned?.messageId == event.messageId) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+        child: this._actionRow(
+          context,
+          icon: CupertinoIcons.pin_slash,
+          label: 'Unpin message',
+          onTap: () => this._run(
+            () => this._store.unpinMessage(),
+            'Could not unpin the message',
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+      child: this._actionRow(
+        context,
+        icon: CupertinoIcons.pin,
+        label: 'Pin message',
+        onTap: pinned == null
+            ? () => this._run(
+                  () => this._store.pinMessage(event),
+                  'Could not pin the message',
+                )
+            : () => this._confirmThenRun(
+                  title: 'Pin this message?',
+                  body: 'Replace the currently pinned message?',
+                  okText: 'Pin',
+                  destructive: false,
+                  action: () => this._store.pinMessage(event),
+                  failureText: 'Could not pin the message',
+                ),
       ),
     );
   }

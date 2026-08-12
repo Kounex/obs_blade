@@ -333,4 +333,215 @@ void main() {
       );
     });
   });
+
+  group('getPinnedChatMessage', () {
+    test('GETs chat/pins and parses the pinned message', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/chat/pins'
+          '?broadcaster_id=chan-1&moderator_id=user-1',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response(
+          json.encode({
+            'data': [
+              {
+                'message_id': 'abc-def-123-456',
+                'broadcaster_id': 'chan-1',
+                'sender_user_id': 'user-2',
+                'sender_user_login': 'chatter',
+                'sender_user_name': 'Chatter',
+                'pinned_by_user_id': 'user-1',
+                'pinned_by_user_login': 'kounex',
+                'pinned_by_user_name': 'Kounex',
+                'message': {
+                  'text': 'remember the giveaway Kappa',
+                  'fragments': [
+                    {'type': 'text', 'text': 'remember the giveaway '},
+                    {
+                      'type': 'emote',
+                      'text': 'Kappa',
+                      'emote': {'id': '25', 'emote_set_id': '0'},
+                    },
+                  ],
+                },
+                'starts_at': '2026-08-13T10:00:00Z',
+                'ends_at': '2026-08-13T10:15:00Z',
+                'updated_at': '2026-08-13T10:00:00Z',
+              },
+            ],
+          }),
+          200,
+        );
+      });
+
+      final pinned =
+          await TwitchModerationService(client: client).getPinnedChatMessage(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+      );
+
+      expect(pinned, isNotNull);
+      expect(pinned!.messageId, 'abc-def-123-456');
+      expect(pinned.senderUserName, 'Chatter');
+      expect(pinned.pinnedByUserLogin, 'kounex');
+      expect(pinned.message.text, 'remember the giveaway Kappa');
+      expect(pinned.message.fragments, hasLength(2));
+      expect(pinned.endsAt, isNotNull);
+      expect(pinned.startsAt, DateTime.utc(2026, 8, 13, 10));
+    });
+
+    test('null ends_at parses as pinned-until-stream-end', () async {
+      final client = MockClient((request) async => http.Response(
+            json.encode({
+              'data': [
+                {
+                  'message_id': 'm1',
+                  'broadcaster_id': 'chan-1',
+                  'sender_user_id': 'user-2',
+                  'sender_user_login': 'chatter',
+                  'sender_user_name': 'Chatter',
+                  'pinned_by_user_id': 'user-1',
+                  'pinned_by_user_login': 'kounex',
+                  'pinned_by_user_name': 'Kounex',
+                  'message': {'text': 'hi', 'fragments': []},
+                  'starts_at': '2026-08-13T10:00:00Z',
+                  'ends_at': null,
+                  'updated_at': '2026-08-13T10:00:00Z',
+                },
+              ],
+            }),
+            200,
+          ));
+
+      final pinned =
+          await TwitchModerationService(client: client).getPinnedChatMessage(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+      );
+
+      expect(pinned, isNotNull);
+      expect(pinned!.endsAt, isNull);
+      expect(pinned.message.fragments, isEmpty);
+    });
+
+    test('empty data means nothing is pinned (null, not an error)', () async {
+      final client = MockClient((request) async => http.Response(
+            json.encode({'data': []}),
+            200,
+          ));
+
+      final pinned =
+          await TwitchModerationService(client: client).getPinnedChatMessage(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+      );
+
+      expect(pinned, isNull);
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 401));
+
+      expect(
+        TwitchModerationService(client: client).getPinnedChatMessage(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+    });
+  });
+
+  group('pinChatMessage', () {
+    test('PUTs chat/pins with the message id and no duration', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'PUT');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/chat/pins'
+          '?broadcaster_id=chan-1&moderator_id=user-1&message_id=msg-1',
+        );
+        expect(request.url.queryParameters.containsKey('duration_seconds'),
+            isFalse);
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response('', 204);
+      });
+
+      await TwitchModerationService(client: client).pinChatMessage(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        messageId: 'msg-1',
+      );
+    });
+
+    test('throws TwitchAuthException with status on non-204', () {
+      final client = MockClient((request) async => http.Response('nope', 409));
+
+      expect(
+        TwitchModerationService(client: client).pinChatMessage(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+          messageId: 'msg-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 409),
+        ),
+      );
+    });
+  });
+
+  group('unpinChatMessage', () {
+    test('DELETEs chat/pins with the message id', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'DELETE');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/chat/pins'
+          '?broadcaster_id=chan-1&moderator_id=user-1&message_id=msg-1',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response('', 204);
+      });
+
+      await TwitchModerationService(client: client).unpinChatMessage(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        messageId: 'msg-1',
+      );
+    });
+
+    test('throws TwitchAuthException with status on non-204', () {
+      final client = MockClient((request) async => http.Response('nope', 403));
+
+      expect(
+        TwitchModerationService(client: client).unpinChatMessage(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+          messageId: 'msg-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 403),
+        ),
+      );
+    });
+  });
 }

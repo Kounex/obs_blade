@@ -2,16 +2,18 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 
 /// Helix mod actions for the multi-chat mod action sheet — delete a
 /// message, timeout or ban a user, clear chat, chat modes, Shield Mode,
 /// and announcements — in any channel the logged-in user moderates.
 /// Requires a user access token with `moderator:manage:chat_messages`
-/// (delete / clear), `moderator:manage:banned_users` (timeout/ban),
+/// (delete / clear / pins), `moderator:manage:banned_users` (timeout/ban),
 /// `moderator:manage:chat_settings` (modes), `moderator:manage:shield_mode`
 /// (shield), and `moderator:manage:announcements` (announce); see
-/// `kTwitchChatScopes`.
+/// `kTwitchChatScopes`. Reading the pinned message only needs
+/// `moderator:read:chat_messages` from the read bundle.
 ///
 /// [client] is injectable for tests — no real HTTP in unit tests.
 class TwitchModerationService {
@@ -264,6 +266,91 @@ class TwitchModerationService {
     if (response.statusCode != 200) {
       throw TwitchAuthException(
         'Banning a Twitch user failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+  }
+
+  /// Fetch the currently pinned chat message in [broadcasterId]'s channel,
+  /// or null when nothing is pinned (Helix answers 200 with empty `data`
+  /// — at most one pin per channel, and there is no EventSub for pins, so
+  /// callers re-fetch after local pin/unpin mutations).
+  Future<TwitchPinnedMessage?> getPinnedChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+  }) async {
+    final response = await this._client.get(
+      Uri.parse('$kTwitchHelixBase/chat/pins').replace(queryParameters: {
+        'broadcaster_id': broadcasterId,
+        'moderator_id': moderatorId,
+      }),
+      headers: TwitchAuthService.helixHeaders(accessToken),
+    );
+    if (response.statusCode != 200) {
+      throw TwitchAuthException(
+        'Fetching the pinned Twitch chat message failed '
+        '(${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    final data = json.decode(response.body) as Map<String, Object?>;
+    final rows = data['data'] as List<Object?>?;
+    if (rows == null || rows.isEmpty) {
+      return null;
+    }
+    return TwitchPinnedMessage.fromHelixJson(
+      rows.first as Map<String, Object?>,
+    );
+  }
+
+  /// Pin [messageId] in [broadcasterId]'s channel until the stream ends
+  /// (Helix 204; auto-replaces an existing pin). `duration_seconds` is
+  /// intentionally not exposed — OBS Blade always pins without expiry.
+  Future<void> pinChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String messageId,
+  }) async {
+    final response = await this._client.put(
+      Uri.parse('$kTwitchHelixBase/chat/pins').replace(queryParameters: {
+        'broadcaster_id': broadcasterId,
+        'moderator_id': moderatorId,
+        'message_id': messageId,
+      }),
+      headers: TwitchAuthService.helixHeaders(accessToken),
+    );
+    if (response.statusCode != 204) {
+      throw TwitchAuthException(
+        'Pinning a Twitch chat message failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+  }
+
+  /// Remove the pin from [messageId] in [broadcasterId]'s channel
+  /// (Helix 204).
+  Future<void> unpinChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String messageId,
+  }) async {
+    final response = await this._client.delete(
+      Uri.parse('$kTwitchHelixBase/chat/pins').replace(queryParameters: {
+        'broadcaster_id': broadcasterId,
+        'moderator_id': moderatorId,
+        'message_id': messageId,
+      }),
+      headers: TwitchAuthService.helixHeaders(accessToken),
+    );
+    if (response.statusCode != 204) {
+      throw TwitchAuthException(
+        'Unpinning a Twitch chat message failed (${response.statusCode})',
         cause: response.body,
         statusCode: response.statusCode,
       );

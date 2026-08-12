@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
@@ -498,6 +500,9 @@ class FakeTwitchModerationService extends TwitchModerationService {
   Object? getShieldThrows;
   Object? updateShieldThrows;
   Object? announceThrows;
+  Object? getPinnedThrows;
+  Object? pinThrows;
+  Object? unpinThrows;
 
   int deleteCalls = 0;
   int banCalls = 0;
@@ -507,6 +512,9 @@ class FakeTwitchModerationService extends TwitchModerationService {
   int getShieldCalls = 0;
   int updateShieldCalls = 0;
   int announceCalls = 0;
+  int getPinnedCalls = 0;
+  int pinCalls = 0;
+  int unpinCalls = 0;
   String? lastDeleteBroadcasterId;
   String? lastDeleteModeratorId;
   String? lastDeleteMessageId;
@@ -532,6 +540,29 @@ class FakeTwitchModerationService extends TwitchModerationService {
   String? lastAnnounceModeratorId;
   String? lastAnnounceMessage;
   String? lastAnnounceColor;
+  String? lastPinnedBroadcasterId;
+  String? lastPinnedModeratorId;
+  String? lastPinMessageId;
+  String? lastUnpinMessageId;
+
+  /// Sample pinned message returned by [getPinnedChatMessage] when
+  /// [pinnedMessageResult] is left untouched — assign a custom one (or
+  /// null for the "nothing pinned" case) to steer a test.
+  static final pinnedSample = TwitchPinnedMessage(
+    messageId: 'msg-pinned',
+    broadcasterId: 'user-1',
+    senderUserId: 'user-2',
+    senderUserLogin: 'chatter',
+    senderUserName: 'Chatter',
+    pinnedByUserId: 'user-1',
+    pinnedByUserLogin: 'kounex',
+    pinnedByUserName: 'Kounex',
+    message: const ChatMessageText(text: 'remember the giveaway'),
+  );
+
+  /// Returned by [getPinnedChatMessage] — defaults to [pinnedSample];
+  /// assign explicitly (incl. null) to steer a test.
+  TwitchPinnedMessage? pinnedMessageResult = pinnedSample;
 
   TwitchChatSettings chatSettings = const TwitchChatSettings(
     emoteMode: false,
@@ -677,6 +708,62 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.lastAnnounceMessage = message;
     this.lastAnnounceColor = color;
     if (this.announceThrows != null) throw this.announceThrows!;
+  }
+
+  @override
+  Future<TwitchPinnedMessage?> getPinnedChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+  }) async {
+    this.getPinnedCalls++;
+    this.lastPinnedBroadcasterId = broadcasterId;
+    this.lastPinnedModeratorId = moderatorId;
+    if (this.getPinnedThrows != null) throw this.getPinnedThrows!;
+    return this.pinnedMessageResult;
+  }
+
+  @override
+  Future<void> pinChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String messageId,
+  }) async {
+    this.pinCalls++;
+    this.lastPinnedBroadcasterId = broadcasterId;
+    this.lastPinnedModeratorId = moderatorId;
+    this.lastPinMessageId = messageId;
+    if (this.pinThrows != null) throw this.pinThrows!;
+
+    /// Mirror Helix: after a pin, the GET returns the newly pinned
+    /// message (the store refetches right after a local pin).
+    this.pinnedMessageResult = TwitchPinnedMessage(
+      messageId: messageId,
+      broadcasterId: broadcasterId,
+      senderUserId: 'user-2',
+      senderUserLogin: 'chatter',
+      senderUserName: 'Chatter',
+      pinnedByUserId: moderatorId,
+      pinnedByUserLogin: 'kounex',
+      pinnedByUserName: 'Kounex',
+      message: const ChatMessageText(text: 'pinned text'),
+    );
+  }
+
+  @override
+  Future<void> unpinChatMessage({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String messageId,
+  }) async {
+    this.unpinCalls++;
+    this.lastPinnedBroadcasterId = broadcasterId;
+    this.lastPinnedModeratorId = moderatorId;
+    this.lastUnpinMessageId = messageId;
+    if (this.unpinThrows != null) throw this.unpinThrows!;
+    this.pinnedMessageResult = null;
   }
 }
 
