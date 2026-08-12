@@ -25,6 +25,14 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     @Default('text') String messageType,
     ChatMessageReply? reply,
 
+    /// Shared-chat origin — set when this message was broadcast from a
+    /// partner channel in a shared chat session (Stream Together); null
+    /// for messages originating in the viewed channel (and outside shared
+    /// sessions entirely).
+    String? sourceBroadcasterUserId,
+    String? sourceBroadcasterUserLogin,
+    String? sourceBroadcasterUserName,
+
     /// From EventSub envelope `metadata.message_timestamp` — not on the
     /// chat event JSON. Stamped by [TwitchEventSubService] after parse.
     @JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,

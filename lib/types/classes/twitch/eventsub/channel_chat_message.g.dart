@@ -6,27 +6,29 @@ part of 'channel_chat_message.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_ChatMessageEvent _$ChatMessageEventFromJson(Map<String, dynamic> json) =>
-    _ChatMessageEvent(
-      broadcasterUserId: json['broadcaster_user_id'] as String,
-      chatterUserId: json['chatter_user_id'] as String,
-      chatterUserLogin: json['chatter_user_login'] as String,
-      chatterUserName: json['chatter_user_name'] as String,
-      messageId: json['message_id'] as String,
-      message: ChatMessageText.fromJson(
-        json['message'] as Map<String, dynamic>,
-      ),
-      color: json['color'] as String?,
-      badges:
-          (json['badges'] as List<dynamic>?)
-              ?.map((e) => ChatMessageBadge.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          const <ChatMessageBadge>[],
-      messageType: json['message_type'] as String? ?? 'text',
-      reply: json['reply'] == null
-          ? null
-          : ChatMessageReply.fromJson(json['reply'] as Map<String, dynamic>),
-    );
+_ChatMessageEvent _$ChatMessageEventFromJson(
+  Map<String, dynamic> json,
+) => _ChatMessageEvent(
+  broadcasterUserId: json['broadcaster_user_id'] as String,
+  chatterUserId: json['chatter_user_id'] as String,
+  chatterUserLogin: json['chatter_user_login'] as String,
+  chatterUserName: json['chatter_user_name'] as String,
+  messageId: json['message_id'] as String,
+  message: ChatMessageText.fromJson(json['message'] as Map<String, dynamic>),
+  color: json['color'] as String?,
+  badges:
+      (json['badges'] as List<dynamic>?)
+          ?.map((e) => ChatMessageBadge.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const <ChatMessageBadge>[],
+  messageType: json['message_type'] as String? ?? 'text',
+  reply: json['reply'] == null
+      ? null
+      : ChatMessageReply.fromJson(json['reply'] as Map<String, dynamic>),
+  sourceBroadcasterUserId: json['source_broadcaster_user_id'] as String?,
+  sourceBroadcasterUserLogin: json['source_broadcaster_user_login'] as String?,
+  sourceBroadcasterUserName: json['source_broadcaster_user_name'] as String?,
+);
 
 _ChatMessageText _$ChatMessageTextFromJson(Map<String, dynamic> json) =>
     _ChatMessageText(

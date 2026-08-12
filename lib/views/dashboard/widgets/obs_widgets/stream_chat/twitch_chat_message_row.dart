@@ -18,6 +18,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_m
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 /// Formats [ChatMessageEvent.receivedAt] for the user-card message list
 /// (Twitch-style `12:29 PM`).
@@ -121,6 +122,20 @@ class TwitchChatMessageRow extends StatelessWidget {
   bool get _isFirstMessage =>
       this.event.isFirstMessage &&
       isChatFirstMessageVisible(this.settingsBox);
+
+  /// Shared-chat origin channel name when this message was broadcast from
+  /// a partner channel — never for same-channel messages (Twitch leaves
+  /// the source fields null for those, and we double-guard on the id).
+  String? get _sourceChannelName {
+    final sourceId = this.event.sourceBroadcasterUserId;
+    final sourceName = this.event.sourceBroadcasterUserName;
+    if (sourceId == null ||
+        sourceName == null ||
+        sourceId == this.event.broadcasterUserId) {
+      return null;
+    }
+    return sourceName;
+  }
 
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
@@ -557,6 +572,18 @@ class TwitchChatMessageRow extends StatelessWidget {
                   color: Theme.of(context).textTheme.bodySmall?.color,
                   fontSize: this._textSize * 0.9,
                   fontWeight: FontWeight.w400,
+                ),
+              ),
+            if (this._sourceChannelName case final sourceName?)
+              WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
+                  child: NativeChatStatusChip(
+                    label: '#$sourceName',
+                    color: Theme.of(context).textTheme.bodySmall?.color ??
+                        Colors.grey,
+                  ),
                 ),
               ),
             if (this.onAuthorTap == null) ...this._badgeSpans(),

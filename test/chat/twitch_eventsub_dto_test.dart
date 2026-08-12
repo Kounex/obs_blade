@@ -118,6 +118,22 @@ void main() {
       );
     });
 
+    test('parses shared-chat source fields (real docs payload)', () {
+      final event = eventFromFixture('channel_chat_message_shared_chat.json');
+
+      expect(event.sourceBroadcasterUserId, '112233');
+      expect(event.sourceBroadcasterUserLogin, 'partnerstreamer');
+      expect(event.sourceBroadcasterUserName, 'PartnerStreamer');
+    });
+
+    test('source fields are null for same-channel messages', () {
+      final event = eventFromFixture('channel_chat_message_text.json');
+
+      expect(event.sourceBroadcasterUserId, isNull);
+      expect(event.sourceBroadcasterUserLogin, isNull);
+      expect(event.sourceBroadcasterUserName, isNull);
+    });
+
     test('parses badges (real docs payload)', () {
       final event = eventFromFixture('channel_chat_message_text.json');
 

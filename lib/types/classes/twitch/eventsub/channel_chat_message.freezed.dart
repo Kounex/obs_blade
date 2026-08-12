@@ -16,7 +16,11 @@ T _$identity<T>(T value) => value;
 mixin _$ChatMessageEvent {
 
  String get broadcasterUserId; String get chatterUserId; String get chatterUserLogin; String get chatterUserName; String get messageId; ChatMessageText get message; String? get color; List<ChatMessageBadge> get badges;/// Twitch message kind — `text`, `user_intro` (intro), etc.
- String get messageType; ChatMessageReply? get reply;/// From EventSub envelope `metadata.message_timestamp` — not on the
+ String get messageType; ChatMessageReply? get reply;/// Shared-chat origin — set when this message was broadcast from a
+/// partner channel in a shared chat session (Stream Together); null
+/// for messages originating in the viewed channel (and outside shared
+/// sessions entirely).
+ String? get sourceBroadcasterUserId; String? get sourceBroadcasterUserLogin; String? get sourceBroadcasterUserName;/// From EventSub envelope `metadata.message_timestamp` — not on the
 /// chat event JSON. Stamped by [TwitchEventSubService] after parse.
 @JsonKey(includeFromJson: false, includeToJson: false) DateTime? get receivedAt;/// First-time chatter highlight — from IRC `first-msg=1` (sidecar) or
 /// `message_type == user_intro`. Not on the EventSub chat JSON.
@@ -31,16 +35,16 @@ $ChatMessageEventCopyWith<ChatMessageEvent> get copyWith => _$ChatMessageEventCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other.badges, badges)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.reply, reply) || other.reply == reply)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.isFirstMessage, isFirstMessage) || other.isFirstMessage == isFirstMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other.badges, badges)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.reply, reply) || other.reply == reply)&&(identical(other.sourceBroadcasterUserId, sourceBroadcasterUserId) || other.sourceBroadcasterUserId == sourceBroadcasterUserId)&&(identical(other.sourceBroadcasterUserLogin, sourceBroadcasterUserLogin) || other.sourceBroadcasterUserLogin == sourceBroadcasterUserLogin)&&(identical(other.sourceBroadcasterUserName, sourceBroadcasterUserName) || other.sourceBroadcasterUserName == sourceBroadcasterUserName)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.isFirstMessage, isFirstMessage) || other.isFirstMessage == isFirstMessage));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(badges),messageType,reply,receivedAt,isFirstMessage);
+int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(badges),messageType,reply,sourceBroadcasterUserId,sourceBroadcasterUserLogin,sourceBroadcasterUserName,receivedAt,isFirstMessage);
 
 @override
 String toString() {
-  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges, messageType: $messageType, reply: $reply, receivedAt: $receivedAt, isFirstMessage: $isFirstMessage)';
+  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges, messageType: $messageType, reply: $reply, sourceBroadcasterUserId: $sourceBroadcasterUserId, sourceBroadcasterUserLogin: $sourceBroadcasterUserLogin, sourceBroadcasterUserName: $sourceBroadcasterUserName, receivedAt: $receivedAt, isFirstMessage: $isFirstMessage)';
 }
 
 
@@ -51,7 +55,7 @@ abstract mixin class $ChatMessageEventCopyWith<$Res>  {
   factory $ChatMessageEventCopyWith(ChatMessageEvent value, $Res Function(ChatMessageEvent) _then) = _$ChatMessageEventCopyWithImpl;
 @useResult
 $Res call({
- String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges, String messageType, ChatMessageReply? reply,@JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,@JsonKey(includeFromJson: false, includeToJson: false) bool isFirstMessage
+ String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges, String messageType, ChatMessageReply? reply, String? sourceBroadcasterUserId, String? sourceBroadcasterUserLogin, String? sourceBroadcasterUserName,@JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,@JsonKey(includeFromJson: false, includeToJson: false) bool isFirstMessage
 });
 
 
@@ -68,7 +72,7 @@ class _$ChatMessageEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,Object? messageType = null,Object? reply = freezed,Object? receivedAt = freezed,Object? isFirstMessage = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,Object? messageType = null,Object? reply = freezed,Object? sourceBroadcasterUserId = freezed,Object? sourceBroadcasterUserLogin = freezed,Object? sourceBroadcasterUserName = freezed,Object? receivedAt = freezed,Object? isFirstMessage = null,}) {
   return _then(_self.copyWith(
 broadcasterUserId: null == broadcasterUserId ? _self.broadcasterUserId : broadcasterUserId // ignore: cast_nullable_to_non_nullable
 as String,chatterUserId: null == chatterUserId ? _self.chatterUserId : chatterUserId // ignore: cast_nullable_to_non_nullable
@@ -80,7 +84,10 @@ as ChatMessageText,color: freezed == color ? _self.color : color // ignore: cast
 as String?,badges: null == badges ? _self.badges : badges // ignore: cast_nullable_to_non_nullable
 as List<ChatMessageBadge>,messageType: null == messageType ? _self.messageType : messageType // ignore: cast_nullable_to_non_nullable
 as String,reply: freezed == reply ? _self.reply : reply // ignore: cast_nullable_to_non_nullable
-as ChatMessageReply?,receivedAt: freezed == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
+as ChatMessageReply?,sourceBroadcasterUserId: freezed == sourceBroadcasterUserId ? _self.sourceBroadcasterUserId : sourceBroadcasterUserId // ignore: cast_nullable_to_non_nullable
+as String?,sourceBroadcasterUserLogin: freezed == sourceBroadcasterUserLogin ? _self.sourceBroadcasterUserLogin : sourceBroadcasterUserLogin // ignore: cast_nullable_to_non_nullable
+as String?,sourceBroadcasterUserName: freezed == sourceBroadcasterUserName ? _self.sourceBroadcasterUserName : sourceBroadcasterUserName // ignore: cast_nullable_to_non_nullable
+as String?,receivedAt: freezed == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,isFirstMessage: null == isFirstMessage ? _self.isFirstMessage : isFirstMessage // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -188,10 +195,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? receivedAt, @JsonKey(includeFromJson: false, includeToJson: false)  bool isFirstMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply,  String? sourceBroadcasterUserId,  String? sourceBroadcasterUserLogin,  String? sourceBroadcasterUserName, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? receivedAt, @JsonKey(includeFromJson: false, includeToJson: false)  bool isFirstMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent() when $default != null:
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply,_that.receivedAt,_that.isFirstMessage);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply,_that.sourceBroadcasterUserId,_that.sourceBroadcasterUserLogin,_that.sourceBroadcasterUserName,_that.receivedAt,_that.isFirstMessage);case _:
   return orElse();
 
 }
@@ -209,10 +216,10 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? receivedAt, @JsonKey(includeFromJson: false, includeToJson: false)  bool isFirstMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply,  String? sourceBroadcasterUserId,  String? sourceBroadcasterUserLogin,  String? sourceBroadcasterUserName, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? receivedAt, @JsonKey(includeFromJson: false, includeToJson: false)  bool isFirstMessage)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent():
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply,_that.receivedAt,_that.isFirstMessage);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply,_that.sourceBroadcasterUserId,_that.sourceBroadcasterUserLogin,_that.sourceBroadcasterUserName,_that.receivedAt,_that.isFirstMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -229,10 +236,10 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? receivedAt, @JsonKey(includeFromJson: false, includeToJson: false)  bool isFirstMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String broadcasterUserId,  String chatterUserId,  String chatterUserLogin,  String chatterUserName,  String messageId,  ChatMessageText message,  String? color,  List<ChatMessageBadge> badges,  String messageType,  ChatMessageReply? reply,  String? sourceBroadcasterUserId,  String? sourceBroadcasterUserLogin,  String? sourceBroadcasterUserName, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? receivedAt, @JsonKey(includeFromJson: false, includeToJson: false)  bool isFirstMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageEvent() when $default != null:
-return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply,_that.receivedAt,_that.isFirstMessage);case _:
+return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLogin,_that.chatterUserName,_that.messageId,_that.message,_that.color,_that.badges,_that.messageType,_that.reply,_that.sourceBroadcasterUserId,_that.sourceBroadcasterUserLogin,_that.sourceBroadcasterUserName,_that.receivedAt,_that.isFirstMessage);case _:
   return null;
 
 }
@@ -244,7 +251,7 @@ return $default(_that.broadcasterUserId,_that.chatterUserId,_that.chatterUserLog
 
 @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
 class _ChatMessageEvent implements ChatMessageEvent {
-  const _ChatMessageEvent({required this.broadcasterUserId, required this.chatterUserId, required this.chatterUserLogin, required this.chatterUserName, required this.messageId, required this.message, this.color, final  List<ChatMessageBadge> badges = const <ChatMessageBadge>[], this.messageType = 'text', this.reply, @JsonKey(includeFromJson: false, includeToJson: false) this.receivedAt, @JsonKey(includeFromJson: false, includeToJson: false) this.isFirstMessage = false}): _badges = badges;
+  const _ChatMessageEvent({required this.broadcasterUserId, required this.chatterUserId, required this.chatterUserLogin, required this.chatterUserName, required this.messageId, required this.message, this.color, final  List<ChatMessageBadge> badges = const <ChatMessageBadge>[], this.messageType = 'text', this.reply, this.sourceBroadcasterUserId, this.sourceBroadcasterUserLogin, this.sourceBroadcasterUserName, @JsonKey(includeFromJson: false, includeToJson: false) this.receivedAt, @JsonKey(includeFromJson: false, includeToJson: false) this.isFirstMessage = false}): _badges = badges;
   factory _ChatMessageEvent.fromJson(Map<String, dynamic> json) => _$ChatMessageEventFromJson(json);
 
 @override final  String broadcasterUserId;
@@ -264,6 +271,13 @@ class _ChatMessageEvent implements ChatMessageEvent {
 /// Twitch message kind — `text`, `user_intro` (intro), etc.
 @override@JsonKey() final  String messageType;
 @override final  ChatMessageReply? reply;
+/// Shared-chat origin — set when this message was broadcast from a
+/// partner channel in a shared chat session (Stream Together); null
+/// for messages originating in the viewed channel (and outside shared
+/// sessions entirely).
+@override final  String? sourceBroadcasterUserId;
+@override final  String? sourceBroadcasterUserLogin;
+@override final  String? sourceBroadcasterUserName;
 /// From EventSub envelope `metadata.message_timestamp` — not on the
 /// chat event JSON. Stamped by [TwitchEventSubService] after parse.
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  DateTime? receivedAt;
@@ -281,16 +295,16 @@ _$ChatMessageEventCopyWith<_ChatMessageEvent> get copyWith => __$ChatMessageEven
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other._badges, _badges)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.reply, reply) || other.reply == reply)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.isFirstMessage, isFirstMessage) || other.isFirstMessage == isFirstMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageEvent&&(identical(other.broadcasterUserId, broadcasterUserId) || other.broadcasterUserId == broadcasterUserId)&&(identical(other.chatterUserId, chatterUserId) || other.chatterUserId == chatterUserId)&&(identical(other.chatterUserLogin, chatterUserLogin) || other.chatterUserLogin == chatterUserLogin)&&(identical(other.chatterUserName, chatterUserName) || other.chatterUserName == chatterUserName)&&(identical(other.messageId, messageId) || other.messageId == messageId)&&(identical(other.message, message) || other.message == message)&&(identical(other.color, color) || other.color == color)&&const DeepCollectionEquality().equals(other._badges, _badges)&&(identical(other.messageType, messageType) || other.messageType == messageType)&&(identical(other.reply, reply) || other.reply == reply)&&(identical(other.sourceBroadcasterUserId, sourceBroadcasterUserId) || other.sourceBroadcasterUserId == sourceBroadcasterUserId)&&(identical(other.sourceBroadcasterUserLogin, sourceBroadcasterUserLogin) || other.sourceBroadcasterUserLogin == sourceBroadcasterUserLogin)&&(identical(other.sourceBroadcasterUserName, sourceBroadcasterUserName) || other.sourceBroadcasterUserName == sourceBroadcasterUserName)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.isFirstMessage, isFirstMessage) || other.isFirstMessage == isFirstMessage));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(_badges),messageType,reply,receivedAt,isFirstMessage);
+int get hashCode => Object.hash(runtimeType,broadcasterUserId,chatterUserId,chatterUserLogin,chatterUserName,messageId,message,color,const DeepCollectionEquality().hash(_badges),messageType,reply,sourceBroadcasterUserId,sourceBroadcasterUserLogin,sourceBroadcasterUserName,receivedAt,isFirstMessage);
 
 @override
 String toString() {
-  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges, messageType: $messageType, reply: $reply, receivedAt: $receivedAt, isFirstMessage: $isFirstMessage)';
+  return 'ChatMessageEvent(broadcasterUserId: $broadcasterUserId, chatterUserId: $chatterUserId, chatterUserLogin: $chatterUserLogin, chatterUserName: $chatterUserName, messageId: $messageId, message: $message, color: $color, badges: $badges, messageType: $messageType, reply: $reply, sourceBroadcasterUserId: $sourceBroadcasterUserId, sourceBroadcasterUserLogin: $sourceBroadcasterUserLogin, sourceBroadcasterUserName: $sourceBroadcasterUserName, receivedAt: $receivedAt, isFirstMessage: $isFirstMessage)';
 }
 
 
@@ -301,7 +315,7 @@ abstract mixin class _$ChatMessageEventCopyWith<$Res> implements $ChatMessageEve
   factory _$ChatMessageEventCopyWith(_ChatMessageEvent value, $Res Function(_ChatMessageEvent) _then) = __$ChatMessageEventCopyWithImpl;
 @override @useResult
 $Res call({
- String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges, String messageType, ChatMessageReply? reply,@JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,@JsonKey(includeFromJson: false, includeToJson: false) bool isFirstMessage
+ String broadcasterUserId, String chatterUserId, String chatterUserLogin, String chatterUserName, String messageId, ChatMessageText message, String? color, List<ChatMessageBadge> badges, String messageType, ChatMessageReply? reply, String? sourceBroadcasterUserId, String? sourceBroadcasterUserLogin, String? sourceBroadcasterUserName,@JsonKey(includeFromJson: false, includeToJson: false) DateTime? receivedAt,@JsonKey(includeFromJson: false, includeToJson: false) bool isFirstMessage
 });
 
 
@@ -318,7 +332,7 @@ class __$ChatMessageEventCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageEvent
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,Object? messageType = null,Object? reply = freezed,Object? receivedAt = freezed,Object? isFirstMessage = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? broadcasterUserId = null,Object? chatterUserId = null,Object? chatterUserLogin = null,Object? chatterUserName = null,Object? messageId = null,Object? message = null,Object? color = freezed,Object? badges = null,Object? messageType = null,Object? reply = freezed,Object? sourceBroadcasterUserId = freezed,Object? sourceBroadcasterUserLogin = freezed,Object? sourceBroadcasterUserName = freezed,Object? receivedAt = freezed,Object? isFirstMessage = null,}) {
   return _then(_ChatMessageEvent(
 broadcasterUserId: null == broadcasterUserId ? _self.broadcasterUserId : broadcasterUserId // ignore: cast_nullable_to_non_nullable
 as String,chatterUserId: null == chatterUserId ? _self.chatterUserId : chatterUserId // ignore: cast_nullable_to_non_nullable
@@ -330,7 +344,10 @@ as ChatMessageText,color: freezed == color ? _self.color : color // ignore: cast
 as String?,badges: null == badges ? _self._badges : badges // ignore: cast_nullable_to_non_nullable
 as List<ChatMessageBadge>,messageType: null == messageType ? _self.messageType : messageType // ignore: cast_nullable_to_non_nullable
 as String,reply: freezed == reply ? _self.reply : reply // ignore: cast_nullable_to_non_nullable
-as ChatMessageReply?,receivedAt: freezed == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
+as ChatMessageReply?,sourceBroadcasterUserId: freezed == sourceBroadcasterUserId ? _self.sourceBroadcasterUserId : sourceBroadcasterUserId // ignore: cast_nullable_to_non_nullable
+as String?,sourceBroadcasterUserLogin: freezed == sourceBroadcasterUserLogin ? _self.sourceBroadcasterUserLogin : sourceBroadcasterUserLogin // ignore: cast_nullable_to_non_nullable
+as String?,sourceBroadcasterUserName: freezed == sourceBroadcasterUserName ? _self.sourceBroadcasterUserName : sourceBroadcasterUserName // ignore: cast_nullable_to_non_nullable
+as String?,receivedAt: freezed == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,isFirstMessage: null == isFirstMessage ? _self.isFirstMessage : isFirstMessage // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
