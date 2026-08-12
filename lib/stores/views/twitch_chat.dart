@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
@@ -1420,6 +1421,23 @@ abstract class _TwitchChatStore with Store {
     while (this._pendingFirstMessageIds.length > _kPendingFirstMessageCap) {
       this._pendingFirstMessageIds.remove(this._pendingFirstMessageIds.first);
     }
+  }
+
+  /// Debug/dogfood only: inject a crafted event into the live buffer so
+  /// rendering paths that are hard to reproduce on demand (GIF fragments,
+  /// power-ups, shared-chat source chips) can be exercised in the running
+  /// app. Stamps the selected channel + arrival time. No-op in release.
+  @action
+  void debugInjectMessage(ChatMessageEvent event) {
+    if (!kDebugMode) return;
+    this._appendMessage(
+      event.copyWith(
+        broadcasterUserId: this.effectiveBroadcasterIdSafe.isNotEmpty
+            ? this.effectiveBroadcasterIdSafe
+            : event.broadcasterUserId,
+        receivedAt: DateTime.now(),
+      ),
+    );
   }
 
   Future<void> _connectIrcSidecar(String token) async {

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -13,6 +14,7 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import 'debug_chat_samples.dart';
 import 'dialogs/channel_mod_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
@@ -110,7 +112,7 @@ class NativeChatOptionsButton extends StatelessWidget {
   }
 }
 
-enum _OptionsPage { root, appearance, emotes, badges, eventMessages }
+enum _OptionsPage { root, appearance, emotes, badges, eventMessages, debugSamples }
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
@@ -188,6 +190,8 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
               _OptionsPage.badges => _BadgesPage(onBack: this._back),
               _OptionsPage.eventMessages =>
                 _EventMessagesPage(onBack: this._back),
+              _OptionsPage.debugSamples =>
+                _DebugSamplesPage(onBack: this._back),
             },
           ],
         ),
@@ -232,6 +236,15 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             subtitle: 'Subs, raids, streaks, and similar system lines',
             onTap: () => this._open(_OptionsPage.eventMessages),
           ),
+          if (kDebugMode &&
+              GetIt.instance.isRegistered<TwitchChatStore>())
+            this._navRow(
+              context,
+              label: 'Debug samples',
+              subtitle:
+                  'Inject crafted messages (GIF, power-up, shared chat)',
+              onTap: () => this._open(_OptionsPage.debugSamples),
+            ),
         ],
       ],
     );
@@ -783,6 +796,45 @@ class _EventMessagesPage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Debug/dogfood only (`kDebugMode`): inject crafted sample events into
+/// the live chat buffer — see `debug_chat_samples.dart`. Closes the sheet
+/// after an injection so the result is immediately visible in chat.
+class _DebugSamplesPage extends StatelessWidget {
+  final VoidCallback onBack;
+
+  const _DebugSamplesPage({required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    final samples = debugChatSamples();
+    return _PageScaffold(
+      title: 'Debug samples',
+      description:
+          'Append a crafted message to the current chat to check rendering '
+          'paths that are hard to trigger on demand.',
+      onBack: this.onBack,
+      children: [
+        for (var i = 0; i < samples.length; i++) ...[
+          if (i > 0) nativeChatHairline(context),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(samples[i].label),
+            subtitle: Text(
+              samples[i].description,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            onTap: () {
+              GetIt.instance<TwitchChatStore>()
+                  .debugInjectMessage(samples[i].event);
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ],
     );
   }
 }
