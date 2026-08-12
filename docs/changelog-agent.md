@@ -2,6 +2,38 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-13 — Dogfood fixes for waves 1+2
+
+- Tier S, in-session, from maintainer dogfood remarks on the physical
+  device.
+- **Pins appeared unresponsive (root cause: stale codegen).** The store's
+  `twitch_chat.g.dart` was last generated 2026-08-10 — before wave 2 — so
+  `pinnedMessage`/`banInboxLoading`/`banInboxError` had no atoms and the
+  pin/ban methods no actions: the banner only changed when an unrelated
+  timeline event rebuilt the view, and a second ✕ tap hit the
+  `pinned == null` guard → spurious failure toast. `build_runner` regen
+  (diff purely additive) + widget regression test (unpin clears the
+  banner with no other store event). Commit e27a56ce.
+- **New test gotcha (worth remembering):** mobx's `AsyncAction` caches a
+  zone forked from *first use* — a public action awaiting another public
+  action breaks under `testWidgets` when the inner action first ran in
+  `setUp` (real zone): the awaited work parks outside the fake-async
+  zone and `pumpAndSettle` never flushes it. Fix pattern: public async
+  actions delegate to a private non-action body (`_fetchPinnedMessage`),
+  callers inside other actions call the private body. Same commit.
+- Gray-on-gray failure toast: the snackbar theme set a near-card
+  background but no `contentTextStyle` — fixed globally in `app.dart`.
+  Commit b5190715.
+- GIF debug sample rendered as text: its giphy id 404s and the row's
+  `errorBuilder` silently falls back to the fragment text. Swapped
+  sample + fixture + tests to a verified-live id. Commit 21cddf76.
+- Shared-chat source chips were all muted gray — now
+  `sourceChannelColor` hashes the origin broadcaster id into a fixed
+  8-color palette (stable per channel). Commit c321275a.
+- Gate: `test/chat/` 491 tests green (1m32s), analyze no new issues.
+  Pubspec.lock churn from a NAS-side `pub get` (matcher/meta downgrades)
+  was reverted — don't commit it from this machine.
+
 ## 2026-08-13 — Native chat: roadmap wave 2 (pins + ban inbox)
 
 - Tier S, in-session. Roadmap: `docs/chat-native-roadmap.md` wave 2 — all

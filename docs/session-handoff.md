@@ -2,8 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS wrap-up;
-chat roadmap waves 1+2 shipped and pushed; workstation clone current).
+Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS fix
+pass on the wave 1+2 dogfood remarks; pushed, workstation clone pulled).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,19 +54,27 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Chat roadmap waves 1+2 shipped** (`master` @ `33138ddb`, everything
-pushed; both clones current). Wave 1: GIF fragments, gigantified power-up
-emotes, shared-chat source chip, debug sample injector. Wave 2: pinned
-messages (banner + mod-sheet Pin/Unpin) and the ban inbox ("Bans &
-requests…" sheet — banned users own-channel-only, unban, read-only pending
-unban requests). Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
+**Chat roadmap waves 1+2 shipped** (`master`, everything pushed; both
+clones current). Wave 1: GIF fragments, gigantified power-up emotes,
+shared-chat source chip, debug sample injector. Wave 2: pinned messages
+(banner + mod-sheet Pin/Unpin) and the ban inbox ("Bans & requests…"
+sheet — banned users own-channel-only, unban, read-only pending unban
+requests). Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
 + `changelog-agent.md` (2026-08-13 entries).
+
+**First dogfood pass done; four remark fixes shipped** (see
+`changelog-agent.md` 2026-08-13 "Dogfood fixes"): pin banner was
+non-reactive (stale store codegen — regen + nested-`AsyncAction` test
+gotcha), unreadable snackbar contrast (global theme fix), GIF debug
+sample pointed at a dead giphy id, shared-chat chips now colored per
+origin channel.
 
 **Immediate next threads:**
 
-1. **User dogfood of waves 1+2** on the workstation (physical device) —
-   pins/ban-inbox against a real channel; the chat options sheet's "Debug
-   samples" page (kDebugMode) covers the hard-to-stage rendering cases.
+1. **User dogfood continues** on the workstation (physical device) —
+   re-check pins/ban-inbox plus the new chip colors against a real
+   channel; the chat options sheet's "Debug samples" page (kDebugMode)
+   covers the hard-to-stage rendering cases.
 2. **Wave 3 — mod tooling bundle** (one deliberate scope upgrade, forces
    re-login once): warn users, unban-request approve/deny queue, AutoMod v2
    queue; fold in the deferred Wave 2 read surfaces (blocked terms,
