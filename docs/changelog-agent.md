@@ -2,6 +2,22 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-13 — Native chat: roadmap wave 1 (correctness)
+
+- Tier S, in-session. Roadmap: `docs/chat-native-roadmap.md` wave 1.
+- GIF fragments (`type: "gif"`, live 2026-07-16): `ChatFragmentGif` DTO +
+  inline image at 3x emote size, text fallback. Commit f0adf45b.
+- Power-ups: `power_ups_gigantified_emote` renders the emote 3x;
+  `power_ups_message_effect` stays a normal message (cosmetic animation
+  not reproducible). Commit 53c3882c.
+- Shared chat: `#channel` source chip on partner-origin messages.
+  Cross-channel dedup checked and moot — `switchChannel` keeps only one
+  channel's subs live. Commit aeb42ea4.
+- Gate: `test/chat/` 434 tests green, analyze no new issues.
+- Test gotcha (worth remembering): a chip's `Text` inflates to a second
+  `RichText` — `find.byType(RichText)` in row tests must tolerate or
+  filter multiple matches once chrome widgets render inside spans.
+
 ## 2026-08-12 — Native chat: API roadmap audit
 
 - New doc `docs/chat-native-roadmap.md`: audited Helix/EventSub surface

@@ -23,22 +23,21 @@ channels (no per-channel opt-out with user tokens). **There is no API to
 create/join/leave sessions** — dashboard only, so this is display/dedup work
 for us, not a management feature.
 
-## Wave 1 — correctness, no auth changes
+## Wave 1 — correctness, no auth changes — **SHIPPED 2026-08-13**
 
 Live gaps in what we already receive; small, no scope upgrades.
 
-- **GIF fragments** — since 2026-07-16 `channel.chat.message` fragments include
-  `type: "gif"` (`gif_id`, `url`). Our `ChatMessageFragment`
-  (`lib/types/classes/twitch/eventsub/channel_chat_message.dart:55`) models only
-  text/emote/mention → GIF messages degrade to fallback text today.
-- **Power-ups message types** — `power_ups_message_effect` /
-  `power_ups_gigantified_emote` arrive inline on `channel.chat.message`
-  (`message_type` + `message_id`-level fields); no rendering case.
-- **Shared-chat source chips + dedup** — tag rows with a "from #channel" chip
-  when `source_broadcaster_user_id` is set, and dedup when multi-chat follows
-  two channels in the same session (same payload arrives once per channel
-  subscription). `shared_chat_*` notifications are already normalized; messages
-  are not.
+- **GIF fragments** ✅ — `ChatFragmentGif` modeled, rendered inline at 3x
+  emote size with text fallback (`channel_chat_message_gif.json` fixture,
+  `gif_fragment_row_test.dart`).
+- **Power-ups message types** ✅ — `power_ups_gigantified_emote` renders the
+  emote at 3x; `power_ups_message_effect` is a cosmetic animation we can't
+  reproduce → keeps rendering as a normal message (`power_ups_row_test.dart`).
+- **Shared-chat source chips** ✅ — `#channel` chip before the author when
+  `source_broadcaster_user_*` points at a partner channel
+  (`shared_chat_row_test.dart`). **Dedup verified moot:** `switchChannel`
+  keeps exactly one channel's subscriptions live, so a shared-session message
+  can never arrive twice in one view.
 
 ## Wave 2 — free with current scopes
 
