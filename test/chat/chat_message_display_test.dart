@@ -124,4 +124,19 @@ void main() {
       isNull,
     );
   });
+
+  test('source channel color is stable, opaque, and varies by channel', () {
+    expect(sourceChannelColor('partner-a'), sourceChannelColor('partner-a'));
+
+    /// These keys hash to different palette slots — partners sharing one
+    /// chat session must not collapse onto one hue.
+    expect(
+      sourceChannelColor('partner-a'),
+      isNot(sourceChannelColor('partner-b')),
+    );
+
+    for (final key in const ['partner-a', 'partner-b', 'debug-partner']) {
+      expect(sourceChannelColor(key).a, 1.0);
+    }
+  });
 }

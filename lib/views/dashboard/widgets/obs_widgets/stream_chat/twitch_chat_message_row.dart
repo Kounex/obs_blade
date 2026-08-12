@@ -580,8 +580,11 @@ class TwitchChatMessageRow extends StatelessWidget {
                   padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
                   child: _SourceChannelChip(
                     label: '#$sourceName',
-                    color: Theme.of(context).textTheme.bodySmall?.color ??
-                        Colors.grey,
+                    color: sourceChannelColor(
+                      this.event.sourceBroadcasterUserId ??
+                          this.event.sourceBroadcasterUserLogin ??
+                          sourceName,
+                    ),
                   ),
                 ),
               ),

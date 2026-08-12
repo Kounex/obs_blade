@@ -55,3 +55,27 @@ Color? mentionColorForFragment({
   if (value == null) return null;
   return Color(0xFF000000 | value);
 }
+
+/// Deterministic color for a shared-chat source channel's chip. Twitch
+/// sends no color for the origin channel, and a single gray chip forces
+/// reading the name every time once 3+ partner channels share a session —
+/// a stable hue per channel lets the eye map chip → channel at a glance.
+/// Keyed by [sourceKey] (broadcaster id when available — survives
+/// renames), hashed into a fixed palette of chat-readable brights.
+Color sourceChannelColor(String sourceKey) {
+  const palette = [
+    Color(0xFFFF6B6B), // coral red
+    Color(0xFFFFA94D), // orange
+    Color(0xFFFFD43B), // gold
+    Color(0xFF51CF66), // green
+    Color(0xFF3BC9DB), // teal
+    Color(0xFF4DABF7), // blue
+    Color(0xFFB197FC), // violet
+    Color(0xFFF783AC), // pink
+  ];
+  var hash = 0;
+  for (final unit in sourceKey.codeUnits) {
+    hash = (hash * 31 + unit) & 0x7FFFFFFF;
+  }
+  return palette[hash % palette.length];
+}
