@@ -14,6 +14,7 @@ import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_bans_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_mod_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_text_field.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
@@ -153,6 +154,16 @@ void main() {
     expect(find.textContaining('Emote'), findsOneWidget);
     expect(moderationService.getSettingsCalls, 1);
     expect(moderationService.getShieldCalls, 1);
+  });
+
+  testWidgets('Bans & requests… opens the ban inbox sheet', (tester) async {
+    await openSheet(tester);
+
+    expect(find.text('Bans'), findsOneWidget);
+    await tapVisible(tester, find.text('Bans & requests…'));
+
+    expect(find.byType(ChannelBansSheet), findsOneWidget);
+    expect(find.text('Unban requests'), findsOneWidget);
   });
 
   testWidgets('Clear → confirm → Helix clear, local clear, sheet closes',

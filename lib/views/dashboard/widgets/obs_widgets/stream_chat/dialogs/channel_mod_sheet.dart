@@ -14,6 +14,7 @@ import '../chat_type_brand.dart';
 import '../native_chat_chrome.dart';
 import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
+import 'channel_bans_sheet.dart';
 
 /// Opens the channel-level Mod actions sheet (clear / modes / shield /
 /// announce). Failures surface as a snackbar on the caller's [context].
@@ -408,6 +409,16 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
             okText: 'Disable',
             action: () => this._store.setShieldMode(false),
             failureText: 'Could not update Shield Mode',
+          ),
+        ),
+        this._sectionHeader(context, 'Bans'),
+        this._actionRow(
+          context,
+          icon: CupertinoIcons.person_badge_minus,
+          label: 'Bans & requests…',
+          onTap: () => this._requireScopeOr(
+            this._store.canReadModeration || this._store.canModerateChats,
+            () => showChannelBansSheet(context),
           ),
         ),
         this._sectionHeader(context, 'Announce'),

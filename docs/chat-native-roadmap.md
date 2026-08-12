@@ -39,21 +39,29 @@ Live gaps in what we already receive; small, no scope upgrades.
   keeps exactly one channel's subscriptions live, so a shared-session message
   can never arrive twice in one view.
 
-## Wave 2 — free with current scopes
+## Wave 2 — free with current scopes — **SHIPPED 2026-08-13**
 
 The token already carries everything these need — no re-login flow.
 
-- **Pinned messages** (GA 2026-05-29) — full CRUD `GET/POST/PATCH/DELETE
-  /helix/chat/pins` + `pin: true` on Send Chat Message, all under
-  `moderator:manage:chat_messages` (held). Long-press mod-sheet extension.
-  Caveats: `pin` is mutually exclusive with `reply_parent_message_id`;
-  unresolvable reply parents **silently drop** the send (`is_sent: false`) —
-  surface that as failure, never retry blindly.
-- **Unban** — `DELETE /moderation/bans` under held `moderator:manage:banned_users`.
-- **Read surfaces under the held `moderator:read:*` bundle** (required for
-  `channel.moderate` v2 anyway): banned-users list, blocked terms, unban-request
-  list (read-only), warnings read, moderators/VIPs lists. Enables a
-  ban/unban inbox view at zero auth cost.
+- **Pinned messages** ✅ (GA 2026-05-29) — `GET/PUT/DELETE /helix/chat/pins`
+  (the live API is PUT, not POST/PATCH as drafted) under
+  `moderator:manage:chat_messages` / read via the held
+  `moderator:read:chat_messages`. No EventSub for pins → the store refetches
+  on connect/switch and after local pin mutations. Slim banner above the
+  timeline (mods get ✕ unpin) + Pin/Unpin rows in the mod action sheet
+  (replacing an active pin confirms first). Pins are always "until stream
+  ends" — no duration UI. `pin: true` on Send Chat Message deliberately not
+  used (kept out — pin-from-compose adds little over pinning after send).
+- **Unban + ban inbox** ✅ — `DELETE /moderation/bans` under held
+  `moderator:manage:banned_users`; `GET /moderation/banned` (own channel
+  only — Helix 401s even with a mod token for other channels) and
+  `GET /moderation/unban_requests?status=pending` (read-only; approve/deny
+  is Wave 3's manage scope) feed a "Bans & requests…" sheet off the channel
+  mod sheet. Unban drops the user from both lists (also resolves their
+  pending request).
+- **Deferred informational lists** — blocked terms, warnings read,
+  moderators/VIPs: pure read surfaces with no action attached; revisit with
+  Wave 3 where their manage counterparts land.
 
 ## Wave 3 — mod tooling (one scope-upgrade bundle)
 
@@ -120,9 +128,10 @@ wave rather than before it.
 
 ## Suggested order
 
-1. Wave 1 (correctness — GIF fragments are live degradation today)
-2. Wave 2 (free — pins + unban + ban-list inbox)
-3. Wave 3 (mod tooling bundle — one scope upgrade)
+1. ~~Wave 1 (correctness)~~ — shipped 2026-08-13
+2. ~~Wave 2 (free — pins + unban + ban-list inbox)~~ — shipped 2026-08-13
+3. Wave 3 (mod tooling bundle — one scope upgrade; fold in the deferred
+   Wave 2 read surfaces where they pair with a manage action)
 4. Entitlement gate decision, then Wave 4
 
 ## Sources

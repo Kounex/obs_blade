@@ -2,6 +2,34 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-13 — Native chat: roadmap wave 2 (pins + ban inbox)
+
+- Tier S, in-session. Roadmap: `docs/chat-native-roadmap.md` wave 2 — all
+  free with already-held scopes, no re-login flow.
+- Pinned messages: `TwitchPinnedMessage` DTO + `getPinnedChatMessage`/
+  `pinChatMessage`/`unpinChatMessage` on `TwitchModerationService` (live
+  API is PUT on pin, not POST/PATCH as the roadmap draft said; 200 with
+  empty `data` when nothing is pinned — no 404). No EventSub for pins →
+  the store refetches on connect/switch and after local pin mutations.
+  Slim banner above the native chat timeline (mods get ✕ unpin),
+  Pin/Unpin rows in the mod action sheet (replacing an active pin
+  confirms first). Pins are always "until stream ends" — no duration UI.
+  Commit pending.
+- Ban inbox: `TwitchBannedUser` (empty-string `expires_at` = perma-ban,
+  not null) + `TwitchUnbanRequest` DTOs; `getBannedUsers` (own channel
+  only — Helix 401s other channels even with a mod token), `unbanUser`,
+  `getPendingUnbanRequests` (status param required; read-only — approve/
+  deny is wave 3's manage scope). "Bans & requests…" sheet off the
+  channel mod sheet; unban drops the user from both lists optimistically.
+  Deferred: blocked terms / warnings / mods-VIPs read lists (no action
+  attached; revisit with wave 3). Commit pending.
+- Gate: `test/chat/` green, analyze no new issues.
+- Test gotchas: a widget test that calls `selectChannel` must register
+  `FakeTwitchChannelService` + `FakeSilentIrcSidecar` or the real IRC
+  sidecar hangs the fake-async zone; sheets with a load spinner never
+  let `pumpAndSettle` settle — use bounded pumps (`settle()` idiom from
+  `channel_mod_sheet_test.dart`).
+
 ## 2026-08-13 — Native chat: roadmap wave 1 (correctness)
 
 - Tier S, in-session. Roadmap: `docs/chat-native-roadmap.md` wave 1.

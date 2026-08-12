@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_banned_user.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
@@ -503,6 +504,9 @@ class FakeTwitchModerationService extends TwitchModerationService {
   Object? getPinnedThrows;
   Object? pinThrows;
   Object? unpinThrows;
+  Object? getBansThrows;
+  Object? unbanThrows;
+  Object? unbanRequestsThrows;
 
   int deleteCalls = 0;
   int banCalls = 0;
@@ -515,6 +519,9 @@ class FakeTwitchModerationService extends TwitchModerationService {
   int getPinnedCalls = 0;
   int pinCalls = 0;
   int unpinCalls = 0;
+  int getBansCalls = 0;
+  int unbanCalls = 0;
+  int unbanRequestsCalls = 0;
   String? lastDeleteBroadcasterId;
   String? lastDeleteModeratorId;
   String? lastDeleteMessageId;
@@ -544,6 +551,7 @@ class FakeTwitchModerationService extends TwitchModerationService {
   String? lastPinnedModeratorId;
   String? lastPinMessageId;
   String? lastUnpinMessageId;
+  String? lastUnbanUserId;
 
   /// Sample pinned message returned by [getPinnedChatMessage] when
   /// [pinnedMessageResult] is left untouched — assign a custom one (or
@@ -563,6 +571,37 @@ class FakeTwitchModerationService extends TwitchModerationService {
   /// Returned by [getPinnedChatMessage] — defaults to [pinnedSample];
   /// assign explicitly (incl. null) to steer a test.
   TwitchPinnedMessage? pinnedMessageResult = pinnedSample;
+
+  /// Permanent-ban sample for the ban inbox.
+  static const bannedSample = TwitchBannedUser(
+    userId: 'bad-1',
+    userLogin: 'troll',
+    userName: 'Troll',
+    reason: 'spam',
+    moderatorName: 'Kounex',
+  );
+
+  /// Timeout sample (carries an expiry, unlike [bannedSample]).
+  static final timeoutSample = TwitchBannedUser(
+    userId: 'bad-2',
+    userLogin: 'capslock',
+    userName: 'CapsLock',
+    reason: 'shouting',
+    expiresAt: DateTime.utc(2026, 8, 20),
+  );
+
+  /// Pending unban request sample for [bannedSample]'s user.
+  static const unbanRequestSample = TwitchUnbanRequest(
+    id: 'req-1',
+    userId: 'bad-1',
+    userLogin: 'troll',
+    userName: 'Troll',
+    text: 'sorry, will behave',
+  );
+
+  /// Ban inbox results — assigned into the store by the refresh.
+  List<TwitchBannedUser> bannedUsersResult = const [bannedSample];
+  List<TwitchUnbanRequest> unbanRequestsResult = const [unbanRequestSample];
 
   TwitchChatSettings chatSettings = const TwitchChatSettings(
     emoteMode: false,
@@ -764,6 +803,45 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.lastUnpinMessageId = messageId;
     if (this.unpinThrows != null) throw this.unpinThrows!;
     this.pinnedMessageResult = null;
+  }
+
+  @override
+  Future<List<TwitchBannedUser>> getBannedUsers({
+    required String accessToken,
+    required String broadcasterId,
+  }) async {
+    this.getBansCalls++;
+    if (this.getBansThrows != null) throw this.getBansThrows!;
+    return List.of(this.bannedUsersResult);
+  }
+
+  @override
+  Future<void> unbanUser({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String userId,
+  }) async {
+    this.unbanCalls++;
+    this.lastUnbanUserId = userId;
+    if (this.unbanThrows != null) throw this.unbanThrows!;
+    this.bannedUsersResult =
+        this.bannedUsersResult.where((user) => user.userId != userId).toList();
+    this.unbanRequestsResult = this
+        .unbanRequestsResult
+        .where((request) => request.userId != userId)
+        .toList();
+  }
+
+  @override
+  Future<List<TwitchUnbanRequest>> getPendingUnbanRequests({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+  }) async {
+    this.unbanRequestsCalls++;
+    if (this.unbanRequestsThrows != null) throw this.unbanRequestsThrows!;
+    return List.of(this.unbanRequestsResult);
   }
 }
 

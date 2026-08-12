@@ -1763,6 +1763,134 @@ void main() {
     });
   });
 
+  group('ban inbox', () {
+    late FakeTwitchModerationService moderationService;
+
+    setUp(() {
+      moderationService = FakeTwitchModerationService();
+    });
+
+    /// Own channel with manage scopes by default.
+    Future<void> login({List<String>? scopes}) async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes = scopes ??
+          const [
+            'user:read:chat',
+            'user:write:chat',
+            'moderator:manage:chat_messages',
+            'moderator:manage:banned_users',
+            ...kTwitchModerationScopes,
+          ];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+            eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        moderationService: moderationService,
+      );
+      await store.startLogin();
+      await pumpEventQueue();
+    }
+
+    test('refresh loads banned users and pending requests', () async {
+      await login();
+
+      await store.refreshBanInbox();
+
+      expect(moderationService.getBansCalls, 1);
+      expect(moderationService.unbanRequestsCalls, 1);
+      expect(store.bannedUsers.map((user) => user.userId), ['bad-1']);
+      expect(store.unbanRequests.map((request) => request.id), ['req-1']);
+      expect(store.banInboxLoading, isFalse);
+      expect(store.banInboxError, isNull);
+    });
+
+    test('a pre-upgrade token skips the fetch', () async {
+      await login(scopes: const ['user:read:chat']);
+
+      await store.refreshBanInbox();
+
+      expect(moderationService.getBansCalls, 0);
+      expect(moderationService.unbanRequestsCalls, 0);
+      expect(store.bannedUsers, isEmpty);
+      expect(store.unbanRequests, isEmpty);
+    });
+
+    test('a moderated channel loads only the requests (the ban list is '
+        'own-channel-only)', () async {
+      await login();
+      store.moderatedChannelIds.add('chan-mod');
+      await store.selectChannel('chan-mod');
+      await pumpEventQueue();
+
+      await store.refreshBanInbox();
+
+      expect(moderationService.getBansCalls, 0);
+      expect(moderationService.unbanRequestsCalls, 1);
+      expect(store.bannedUsers, isEmpty);
+      expect(store.unbanRequests, hasLength(1));
+    });
+
+    test('a failure sets banInboxError and keeps the lists', () async {
+      await login();
+      await store.refreshBanInbox();
+      moderationService.getBansThrows = const TwitchAuthException('down');
+
+      await store.refreshBanInbox();
+
+      expect(store.banInboxError, isNotNull);
+      expect(store.banInboxLoading, isFalse);
+      expect(store.bannedUsers, hasLength(1));
+    });
+
+    test('unbanUser unbans and drops the user from both lists', () async {
+      await login();
+      await store.refreshBanInbox();
+
+      final ok = await store.unbanUser('bad-1');
+
+      expect(ok, isTrue);
+      expect(moderationService.unbanCalls, 1);
+      expect(moderationService.lastUnbanUserId, 'bad-1');
+      expect(store.bannedUsers, isEmpty);
+      expect(store.unbanRequests, isEmpty);
+    });
+
+    test('unbanUser failure keeps the lists', () async {
+      await login();
+      await store.refreshBanInbox();
+      moderationService.unbanThrows = const TwitchAuthException('down');
+
+      final ok = await store.unbanUser('bad-1');
+
+      expect(ok, isFalse);
+      expect(store.bannedUsers, hasLength(1));
+      expect(store.unbanRequests, hasLength(1));
+    });
+
+    test('unbanUser is gated off without manage scopes', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        ...kTwitchModerationScopes,
+      ]);
+
+      expect(await store.unbanUser('bad-1'), isFalse);
+      expect(moderationService.unbanCalls, 0);
+    });
+
+    test('logout clears the inbox', () async {
+      await login();
+      await store.refreshBanInbox();
+      expect(store.bannedUsers, isNotEmpty);
+
+      await store.logout();
+
+      expect(store.bannedUsers, isEmpty);
+      expect(store.unbanRequests, isEmpty);
+      expect(store.banInboxError, isNull);
+    });
+  });
+
   group('room mod actions', () {
     late FakeTwitchModerationService moderationService;
 

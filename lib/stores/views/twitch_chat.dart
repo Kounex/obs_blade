@@ -15,6 +15,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_banned_user.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
@@ -342,6 +343,20 @@ abstract class _TwitchChatStore with Store {
   /// Null when nothing is pinned or the fetch hasn't run/failed.
   @observable
   TwitchPinnedMessage? pinnedMessage;
+
+  /// Ban inbox for the effective channel — banned/timed-out users (own
+  /// channel only; Helix serves no other) and pending unban requests.
+  /// Loaded by [refreshBanInbox] when the sheet opens; in-memory only.
+  final ObservableList<TwitchBannedUser> bannedUsers =
+      ObservableList<TwitchBannedUser>();
+  final ObservableList<TwitchUnbanRequest> unbanRequests =
+      ObservableList<TwitchUnbanRequest>();
+
+  /// Ban inbox fetch state — the sheet shows a spinner / error strip.
+  @observable
+  bool banInboxLoading = false;
+  @observable
+  String? banInboxError;
 
   @computed
   bool get isLoggedIn => this.authState == TwitchAuthState.loggedIn;
@@ -1406,6 +1421,83 @@ abstract class _TwitchChatStore with Store {
     return true;
   }
 
+  /// Whether the ban inbox may fetch anything for the selected channel —
+  /// same role/scope gate as the other moderation reads.
+  bool get _canUseBanInbox =>
+      (this.canReadModeration || this.canModerateChats) &&
+      (this.selectedChannelId == null ||
+          this.moderatedChannelIds.contains(this.selectedChannelId));
+
+  /// Ban inbox sheet: load the banned/timed-out users and the pending
+  /// unban requests for the effective channel. The banned-users list is
+  /// own-channel-only (Helix 401s for other channels even with a mod
+  /// token) — for moderated channels only the requests load. Best-effort:
+  /// failures set [banInboxError] and keep the previous lists.
+  @action
+  Future<void> refreshBanInbox() async {
+    if (this.authState != TwitchAuthState.loggedIn ||
+        this.user == null ||
+        !this._canUseBanInbox) {
+      return;
+    }
+    final fetchBans =
+        this.selectedChannelId == null && this.canModerateChats;
+    this.banInboxLoading = true;
+    this.banInboxError = null;
+    try {
+      final token = await this._validAccessToken();
+      final broadcasterId = this.effectiveBroadcasterId;
+      if (fetchBans) {
+        final bans = await this._moderationService.getBannedUsers(
+          accessToken: token,
+          broadcasterId: broadcasterId,
+        );
+        this.bannedUsers
+          ..clear()
+          ..addAll(bans);
+      } else {
+        this.bannedUsers.clear();
+      }
+      final requests = await this._moderationService.getPendingUnbanRequests(
+        accessToken: token,
+        broadcasterId: broadcasterId,
+        moderatorId: this.user!.id,
+      );
+      this.unbanRequests
+        ..clear()
+        ..addAll(requests);
+    } catch (e) {
+      GeneralHelper.advLog('Twitch ban inbox refresh failed — $e');
+      this.banInboxError = 'Could not load bans and requests';
+    } finally {
+      this.banInboxLoading = false;
+    }
+  }
+
+  /// Ban inbox: unban [userId] in the effective channel (also lifts a
+  /// timeout and resolves their pending unban request). Returns whether
+  /// it was applied — never throws; both inbox lists drop the user
+  /// optimistically on success.
+  @action
+  Future<bool> unbanUser(String userId) async {
+    if (!this.canModerateSelectedChannel || this.user == null) return false;
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.unbanUser(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        userId: userId,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch unban failed — $e');
+      return false;
+    }
+    this.bannedUsers.removeWhere((user) => user.userId == userId);
+    this.unbanRequests.removeWhere((request) => request.userId == userId);
+    return true;
+  }
+
   Future<String> _validAccessToken() async {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     if (auth == null) throw const TwitchAuthException('Not logged in');
@@ -1870,6 +1962,10 @@ abstract class _TwitchChatStore with Store {
     this.roomChatSettings = null;
     this.roomShieldModeActive = null;
     this.pinnedMessage = null;
+    this.bannedUsers.clear();
+    this.unbanRequests.clear();
+    this.banInboxLoading = false;
+    this.banInboxError = null;
     this._stopLivePoll();
     this._persistSelectedChannel();
   }

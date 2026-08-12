@@ -544,4 +544,224 @@ void main() {
       );
     });
   });
+
+  group('getBannedUsers', () {
+    test('GETs moderation/banned and parses bans and timeouts', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/banned'
+          '?broadcaster_id=chan-1&first=100',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response(
+          json.encode({
+            'data': [
+              {
+                'user_id': 'bad-1',
+                'user_login': 'troll',
+                'user_name': 'Troll',
+                'created_at': '2026-08-01T10:00:00Z',
+                'expires_at': '',
+                'reason': 'spam',
+                'moderator_id': 'user-1',
+                'moderator_login': 'kounex',
+                'moderator_name': 'Kounex',
+              },
+              {
+                'user_id': 'bad-2',
+                'user_login': 'capslock',
+                'user_name': 'CapsLock',
+                'created_at': '2026-08-02T10:00:00Z',
+                'expires_at': '2026-08-20T10:00:00Z',
+                'reason': 'shouting',
+                'moderator_id': 'user-1',
+                'moderator_login': 'kounex',
+                'moderator_name': 'Kounex',
+              },
+            ],
+            'pagination': {},
+          }),
+          200,
+        );
+      });
+
+      final users = await TwitchModerationService(client: client)
+          .getBannedUsers(accessToken: 'token-1', broadcasterId: 'chan-1');
+
+      expect(users, hasLength(2));
+
+      /// Empty-string expiry = permanent ban.
+      expect(users[0].userId, 'bad-1');
+      expect(users[0].expiresAt, isNull);
+      expect(users[0].isTimeout, isFalse);
+      expect(users[0].reason, 'spam');
+      expect(users[0].moderatorName, 'Kounex');
+
+      expect(users[1].expiresAt, DateTime.utc(2026, 8, 20, 10));
+      expect(users[1].isTimeout, isTrue);
+    });
+
+    test('follows the pagination cursor', () async {
+      final requestedAfters = <String?>[];
+      final client = MockClient((request) async {
+        requestedAfters.add(request.url.queryParameters['after']);
+        if (request.url.queryParameters['after'] == null) {
+          return http.Response(
+            json.encode({
+              'data': [
+                {'user_id': 'bad-1', 'expires_at': ''},
+              ],
+              'pagination': {'cursor': 'page-2'},
+            }),
+            200,
+          );
+        }
+        return http.Response(
+          json.encode({
+            'data': [
+              {'user_id': 'bad-2', 'expires_at': ''},
+            ],
+            'pagination': {},
+          }),
+          200,
+        );
+      });
+
+      final users = await TwitchModerationService(client: client)
+          .getBannedUsers(accessToken: 'token-1', broadcasterId: 'chan-1');
+
+      expect(requestedAfters, [null, 'page-2']);
+      expect(users.map((user) => user.userId), ['bad-1', 'bad-2']);
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 401));
+
+      expect(
+        TwitchModerationService(client: client).getBannedUsers(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+    });
+  });
+
+  group('unbanUser', () {
+    test('DELETEs moderation/bans with the user id', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'DELETE');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/bans'
+          '?broadcaster_id=chan-1&moderator_id=user-1&user_id=bad-1',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response('', 204);
+      });
+
+      await TwitchModerationService(client: client).unbanUser(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        userId: 'bad-1',
+      );
+    });
+
+    test('throws TwitchAuthException with status on non-204', () {
+      final client = MockClient((request) async => http.Response('nope', 400));
+
+      expect(
+        TwitchModerationService(client: client).unbanUser(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+          userId: 'bad-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 400),
+        ),
+      );
+    });
+  });
+
+  group('getPendingUnbanRequests', () {
+    test('GETs moderation/unban_requests with the required status param',
+        () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/unban_requests'
+          '?broadcaster_id=chan-1&moderator_id=user-1&status=pending'
+          '&first=100',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Client-Id'], kTwitchClientId);
+        return http.Response(
+          json.encode({
+            'data': [
+              {
+                'id': 'req-1',
+                'user_id': 'bad-1',
+                'user_login': 'troll',
+                'user_name': 'Troll',
+                'text': 'sorry, will behave',
+                'status': 'pending',
+                'created_at': '2026-08-10T10:00:00Z',
+                'resolved_at': null,
+                'resolution_text': null,
+                'moderator_id': null,
+                'moderator_login': null,
+                'moderator_name': null,
+              },
+            ],
+            'pagination': {},
+          }),
+          200,
+        );
+      });
+
+      final requests = await TwitchModerationService(client: client)
+          .getPendingUnbanRequests(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+      );
+
+      expect(requests, hasLength(1));
+      expect(requests[0].id, 'req-1');
+      expect(requests[0].userName, 'Troll');
+      expect(requests[0].text, 'sorry, will behave');
+      expect(requests[0].status, 'pending');
+      expect(requests[0].createdAt, DateTime.utc(2026, 8, 10, 10));
+      expect(requests[0].resolvedAt, isNull);
+      expect(requests[0].resolutionText, isNull);
+      expect(requests[0].moderatorId, isNull);
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 403));
+
+      expect(
+        TwitchModerationService(client: client).getPendingUnbanRequests(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 403),
+        ),
+      );
+    });
+  });
 }
