@@ -87,7 +87,7 @@ dependencies:
   xml: ^6.5.0
 
   # Splashscreen ios and android
-  flutter_native_splash: ^2.3.6
+  flutter_native_splash: ^2.4.8
 
   # Annotations for the class magic
   freezed_annotation: ^3.1.0
