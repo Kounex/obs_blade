@@ -58,10 +58,26 @@ abstract class ChatMessageFragment with _$ChatMessageFragment {
     required String text,
     ChatFragmentEmote? emote,
     ChatFragmentMention? mention,
+    ChatFragmentGif? gif,
   }) = _ChatMessageFragment;
 
   factory ChatMessageFragment.fromJson(Map<String, Object?> json) =>
       _$ChatMessageFragmentFromJson(json);
+}
+
+/// GIF picker attachment (`type == 'gif'`, added 2026-07) — [text] on the
+/// fragment is the search term / title, [url] is the animated image.
+@Freezed(fromJson: true, toJson: false)
+abstract class ChatFragmentGif with _$ChatFragmentGif {
+  // ignore: invalid_annotation_target
+  @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+  const factory ChatFragmentGif({
+    required String gifId,
+    required String url,
+  }) = _ChatFragmentGif;
+
+  factory ChatFragmentGif.fromJson(Map<String, Object?> json) =>
+      _$ChatFragmentGifFromJson(json);
 }
 
 @Freezed(fromJson: true, toJson: false)

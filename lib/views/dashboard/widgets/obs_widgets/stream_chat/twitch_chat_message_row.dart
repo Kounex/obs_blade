@@ -109,6 +109,10 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   static const double _badgeSize = 18.0;
 
+  /// GIF picker attachments render larger than emotes (Twitch shows them
+  /// at roughly 3 lines of chat) and scale with the emote size setting.
+  static const double _gifSizeFactor = 3.0;
+
   /// Soft on-surface wash — readable on dark/light chat without competing
   /// with announce / first-message chrome.
   static Color holdHighlightColor(BuildContext context) =>
@@ -222,6 +226,16 @@ class TwitchChatMessageRow extends StatelessWidget {
           )
         else if (fragment.type == 'mention' && fragment.mention != null)
           this._mentionSpan(context, fragment)
+        else if (fragment.type == 'gif' && fragment.gif != null)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Image.network(
+              fragment.gif!.url,
+              height: _emoteSize * _gifSizeFactor,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Text(fragment.text),
+            ),
+          )
         else
           ...this._textSpans(context, fragment.text),
     ];

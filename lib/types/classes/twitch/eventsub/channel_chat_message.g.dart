@@ -52,6 +52,15 @@ _ChatMessageFragment _$ChatMessageFragmentFromJson(Map<String, dynamic> json) =>
           : ChatFragmentMention.fromJson(
               json['mention'] as Map<String, dynamic>,
             ),
+      gif: json['gif'] == null
+          ? null
+          : ChatFragmentGif.fromJson(json['gif'] as Map<String, dynamic>),
+    );
+
+_ChatFragmentGif _$ChatFragmentGifFromJson(Map<String, dynamic> json) =>
+    _ChatFragmentGif(
+      gifId: json['gif_id'] as String,
+      url: json['url'] as String,
     );
 
 _ChatFragmentEmote _$ChatFragmentEmoteFromJson(Map<String, dynamic> json) =>

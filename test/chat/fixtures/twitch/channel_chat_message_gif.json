@@ -1,0 +1,37 @@
+{
+  "broadcaster_user_id": "1971641",
+  "broadcaster_user_login": "streamer",
+  "broadcaster_user_name": "streamer",
+  "chatter_user_id": "4145994",
+  "chatter_user_login": "viewer32",
+  "chatter_user_name": "viewer32",
+  "message_id": "dd226a3b-2c4e-4f1a-9b7c-5e6f7a8b9c0d",
+  "message": {
+    "text": "dance",
+    "fragments": [
+      {
+        "type": "gif",
+        "text": "dance",
+        "cheermote": null,
+        "emote": null,
+        "mention": null,
+        "gif": {
+          "gif_id": "3o7TKsO8DGFD5T7ZmA",
+          "url": "https://media.giphy.com/media/3o7TKsO8DGFD5T7ZmA/giphy.gif"
+        }
+      }
+    ]
+  },
+  "color": "#00FF7F",
+  "badges": [],
+  "message_type": "text",
+  "cheer": null,
+  "reply": null,
+  "channel_points_custom_reward_id": null,
+  "source_broadcaster_user_id": null,
+  "source_broadcaster_user_login": null,
+  "source_broadcaster_user_name": null,
+  "source_message_id": null,
+  "source_badges": null,
+  "is_source_only": null
+}

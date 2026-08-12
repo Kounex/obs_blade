@@ -104,6 +104,20 @@ void main() {
       expect(event.message.fragments[1].emote, isNull);
     });
 
+    test('parses gif fragments (2026-07 payload)', () {
+      final event = eventFromFixture('channel_chat_message_gif.json');
+
+      expect(event.message.fragments, hasLength(1));
+      final fragment = event.message.fragments.first;
+      expect(fragment.type, 'gif');
+      expect(fragment.text, 'dance');
+      expect(fragment.gif?.gifId, '3o7TKsO8DGFD5T7ZmA');
+      expect(
+        fragment.gif?.url,
+        'https://media.giphy.com/media/3o7TKsO8DGFD5T7ZmA/giphy.gif',
+      );
+    });
+
     test('parses badges (real docs payload)', () {
       final event = eventFromFixture('channel_chat_message_text.json');
 

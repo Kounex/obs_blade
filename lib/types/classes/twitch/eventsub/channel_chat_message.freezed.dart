@@ -631,7 +631,7 @@ as List<ChatMessageFragment>,
 /// @nodoc
 mixin _$ChatMessageFragment {
 
- String get type; String get text; ChatFragmentEmote? get emote; ChatFragmentMention? get mention;
+ String get type; String get text; ChatFragmentEmote? get emote; ChatFragmentMention? get mention; ChatFragmentGif? get gif;
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -642,16 +642,16 @@ $ChatMessageFragmentCopyWith<ChatMessageFragment> get copyWith => _$ChatMessageF
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote)&&(identical(other.mention, mention) || other.mention == mention));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote)&&(identical(other.mention, mention) || other.mention == mention)&&(identical(other.gif, gif) || other.gif == gif));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,type,text,emote,mention);
+int get hashCode => Object.hash(runtimeType,type,text,emote,mention,gif);
 
 @override
 String toString() {
-  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote, mention: $mention)';
+  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote, mention: $mention, gif: $gif)';
 }
 
 
@@ -662,11 +662,11 @@ abstract mixin class $ChatMessageFragmentCopyWith<$Res>  {
   factory $ChatMessageFragmentCopyWith(ChatMessageFragment value, $Res Function(ChatMessageFragment) _then) = _$ChatMessageFragmentCopyWithImpl;
 @useResult
 $Res call({
- String type, String text, ChatFragmentEmote? emote, ChatFragmentMention? mention
+ String type, String text, ChatFragmentEmote? emote, ChatFragmentMention? mention, ChatFragmentGif? gif
 });
 
 
-$ChatFragmentEmoteCopyWith<$Res>? get emote;$ChatFragmentMentionCopyWith<$Res>? get mention;
+$ChatFragmentEmoteCopyWith<$Res>? get emote;$ChatFragmentMentionCopyWith<$Res>? get mention;$ChatFragmentGifCopyWith<$Res>? get gif;
 
 }
 /// @nodoc
@@ -679,13 +679,14 @@ class _$ChatMessageFragmentCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? text = null,Object? emote = freezed,Object? mention = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? type = null,Object? text = null,Object? emote = freezed,Object? mention = freezed,Object? gif = freezed,}) {
   return _then(_self.copyWith(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,emote: freezed == emote ? _self.emote : emote // ignore: cast_nullable_to_non_nullable
 as ChatFragmentEmote?,mention: freezed == mention ? _self.mention : mention // ignore: cast_nullable_to_non_nullable
-as ChatFragmentMention?,
+as ChatFragmentMention?,gif: freezed == gif ? _self.gif : gif // ignore: cast_nullable_to_non_nullable
+as ChatFragmentGif?,
   ));
 }
 /// Create a copy of ChatMessageFragment
@@ -711,6 +712,18 @@ $ChatFragmentMentionCopyWith<$Res>? get mention {
 
   return $ChatFragmentMentionCopyWith<$Res>(_self.mention!, (value) {
     return _then(_self.copyWith(mention: value));
+  });
+}/// Create a copy of ChatMessageFragment
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ChatFragmentGifCopyWith<$Res>? get gif {
+    if (_self.gif == null) {
+    return null;
+  }
+
+  return $ChatFragmentGifCopyWith<$Res>(_self.gif!, (value) {
+    return _then(_self.copyWith(gif: value));
   });
 }
 }
@@ -794,10 +807,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention,  ChatFragmentGif? gif)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChatMessageFragment() when $default != null:
-return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
+return $default(_that.type,_that.text,_that.emote,_that.mention,_that.gif);case _:
   return orElse();
 
 }
@@ -815,10 +828,10 @@ return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention,  ChatFragmentGif? gif)  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageFragment():
-return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
+return $default(_that.type,_that.text,_that.emote,_that.mention,_that.gif);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -835,10 +848,10 @@ return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String type,  String text,  ChatFragmentEmote? emote,  ChatFragmentMention? mention,  ChatFragmentGif? gif)?  $default,) {final _that = this;
 switch (_that) {
 case _ChatMessageFragment() when $default != null:
-return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
+return $default(_that.type,_that.text,_that.emote,_that.mention,_that.gif);case _:
   return null;
 
 }
@@ -850,13 +863,14 @@ return $default(_that.type,_that.text,_that.emote,_that.mention);case _:
 @JsonSerializable(createToJson: false)
 
 class _ChatMessageFragment implements ChatMessageFragment {
-  const _ChatMessageFragment({required this.type, required this.text, this.emote, this.mention});
+  const _ChatMessageFragment({required this.type, required this.text, this.emote, this.mention, this.gif});
   factory _ChatMessageFragment.fromJson(Map<String, dynamic> json) => _$ChatMessageFragmentFromJson(json);
 
 @override final  String type;
 @override final  String text;
 @override final  ChatFragmentEmote? emote;
 @override final  ChatFragmentMention? mention;
+@override final  ChatFragmentGif? gif;
 
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
@@ -868,16 +882,16 @@ _$ChatMessageFragmentCopyWith<_ChatMessageFragment> get copyWith => __$ChatMessa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote)&&(identical(other.mention, mention) || other.mention == mention));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatMessageFragment&&(identical(other.type, type) || other.type == type)&&(identical(other.text, text) || other.text == text)&&(identical(other.emote, emote) || other.emote == emote)&&(identical(other.mention, mention) || other.mention == mention)&&(identical(other.gif, gif) || other.gif == gif));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,type,text,emote,mention);
+int get hashCode => Object.hash(runtimeType,type,text,emote,mention,gif);
 
 @override
 String toString() {
-  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote, mention: $mention)';
+  return 'ChatMessageFragment(type: $type, text: $text, emote: $emote, mention: $mention, gif: $gif)';
 }
 
 
@@ -888,11 +902,11 @@ abstract mixin class _$ChatMessageFragmentCopyWith<$Res> implements $ChatMessage
   factory _$ChatMessageFragmentCopyWith(_ChatMessageFragment value, $Res Function(_ChatMessageFragment) _then) = __$ChatMessageFragmentCopyWithImpl;
 @override @useResult
 $Res call({
- String type, String text, ChatFragmentEmote? emote, ChatFragmentMention? mention
+ String type, String text, ChatFragmentEmote? emote, ChatFragmentMention? mention, ChatFragmentGif? gif
 });
 
 
-@override $ChatFragmentEmoteCopyWith<$Res>? get emote;@override $ChatFragmentMentionCopyWith<$Res>? get mention;
+@override $ChatFragmentEmoteCopyWith<$Res>? get emote;@override $ChatFragmentMentionCopyWith<$Res>? get mention;@override $ChatFragmentGifCopyWith<$Res>? get gif;
 
 }
 /// @nodoc
@@ -905,13 +919,14 @@ class __$ChatMessageFragmentCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessageFragment
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? text = null,Object? emote = freezed,Object? mention = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? type = null,Object? text = null,Object? emote = freezed,Object? mention = freezed,Object? gif = freezed,}) {
   return _then(_ChatMessageFragment(
 type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,emote: freezed == emote ? _self.emote : emote // ignore: cast_nullable_to_non_nullable
 as ChatFragmentEmote?,mention: freezed == mention ? _self.mention : mention // ignore: cast_nullable_to_non_nullable
-as ChatFragmentMention?,
+as ChatFragmentMention?,gif: freezed == gif ? _self.gif : gif // ignore: cast_nullable_to_non_nullable
+as ChatFragmentGif?,
   ));
 }
 
@@ -939,7 +954,280 @@ $ChatFragmentMentionCopyWith<$Res>? get mention {
   return $ChatFragmentMentionCopyWith<$Res>(_self.mention!, (value) {
     return _then(_self.copyWith(mention: value));
   });
+}/// Create a copy of ChatMessageFragment
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ChatFragmentGifCopyWith<$Res>? get gif {
+    if (_self.gif == null) {
+    return null;
+  }
+
+  return $ChatFragmentGifCopyWith<$Res>(_self.gif!, (value) {
+    return _then(_self.copyWith(gif: value));
+  });
 }
+}
+
+
+/// @nodoc
+mixin _$ChatFragmentGif {
+
+ String get gifId; String get url;
+/// Create a copy of ChatFragmentGif
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatFragmentGifCopyWith<ChatFragmentGif> get copyWith => _$ChatFragmentGifCopyWithImpl<ChatFragmentGif>(this as ChatFragmentGif, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatFragmentGif&&(identical(other.gifId, gifId) || other.gifId == gifId)&&(identical(other.url, url) || other.url == url));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,gifId,url);
+
+@override
+String toString() {
+  return 'ChatFragmentGif(gifId: $gifId, url: $url)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatFragmentGifCopyWith<$Res>  {
+  factory $ChatFragmentGifCopyWith(ChatFragmentGif value, $Res Function(ChatFragmentGif) _then) = _$ChatFragmentGifCopyWithImpl;
+@useResult
+$Res call({
+ String gifId, String url
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatFragmentGifCopyWithImpl<$Res>
+    implements $ChatFragmentGifCopyWith<$Res> {
+  _$ChatFragmentGifCopyWithImpl(this._self, this._then);
+
+  final ChatFragmentGif _self;
+  final $Res Function(ChatFragmentGif) _then;
+
+/// Create a copy of ChatFragmentGif
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? gifId = null,Object? url = null,}) {
+  return _then(_self.copyWith(
+gifId: null == gifId ? _self.gifId : gifId // ignore: cast_nullable_to_non_nullable
+as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ChatFragmentGif].
+extension ChatFragmentGifPatterns on ChatFragmentGif {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ChatFragmentGif value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ChatFragmentGif() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ChatFragmentGif value)  $default,){
+final _that = this;
+switch (_that) {
+case _ChatFragmentGif():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ChatFragmentGif value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ChatFragmentGif() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String gifId,  String url)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ChatFragmentGif() when $default != null:
+return $default(_that.gifId,_that.url);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String gifId,  String url)  $default,) {final _that = this;
+switch (_that) {
+case _ChatFragmentGif():
+return $default(_that.gifId,_that.url);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String gifId,  String url)?  $default,) {final _that = this;
+switch (_that) {
+case _ChatFragmentGif() when $default != null:
+return $default(_that.gifId,_that.url);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
+class _ChatFragmentGif implements ChatFragmentGif {
+  const _ChatFragmentGif({required this.gifId, required this.url});
+  factory _ChatFragmentGif.fromJson(Map<String, dynamic> json) => _$ChatFragmentGifFromJson(json);
+
+@override final  String gifId;
+@override final  String url;
+
+/// Create a copy of ChatFragmentGif
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ChatFragmentGifCopyWith<_ChatFragmentGif> get copyWith => __$ChatFragmentGifCopyWithImpl<_ChatFragmentGif>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ChatFragmentGif&&(identical(other.gifId, gifId) || other.gifId == gifId)&&(identical(other.url, url) || other.url == url));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,gifId,url);
+
+@override
+String toString() {
+  return 'ChatFragmentGif(gifId: $gifId, url: $url)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ChatFragmentGifCopyWith<$Res> implements $ChatFragmentGifCopyWith<$Res> {
+  factory _$ChatFragmentGifCopyWith(_ChatFragmentGif value, $Res Function(_ChatFragmentGif) _then) = __$ChatFragmentGifCopyWithImpl;
+@override @useResult
+$Res call({
+ String gifId, String url
+});
+
+
+
+
+}
+/// @nodoc
+class __$ChatFragmentGifCopyWithImpl<$Res>
+    implements _$ChatFragmentGifCopyWith<$Res> {
+  __$ChatFragmentGifCopyWithImpl(this._self, this._then);
+
+  final _ChatFragmentGif _self;
+  final $Res Function(_ChatFragmentGif) _then;
+
+/// Create a copy of ChatFragmentGif
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? gifId = null,Object? url = null,}) {
+  return _then(_ChatFragmentGif(
+gifId: null == gifId ? _self.gifId : gifId // ignore: cast_nullable_to_non_nullable
+as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
 }
 
 
