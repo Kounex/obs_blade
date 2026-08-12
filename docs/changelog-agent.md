@@ -12,8 +12,15 @@ Running log of upgrade/migration work. Not store release notes.
   not reproducible). Commit 53c3882c.
 - Shared chat: `#channel` source chip on partner-origin messages.
   Cross-channel dedup checked and moot — `switchChannel` keeps only one
-  channel's subs live. Commit aeb42ea4.
-- Gate: `test/chat/` 434 tests green, analyze no new issues.
+  channel's subs live. Commit aeb42ea4; review fix: message-specific
+  compact chip (shared chip grew rows 28→30px), row-height regression
+  test added (c2ed5c00).
+- Dogfood tooling: `kDebugMode`-only "Debug samples" page in the native
+  chat options sheet injects crafted GIF / gigantified / shared-chat
+  events via `TwitchChatStore.debugInjectMessage` (no-op in release) —
+  real shared sessions need two live channels, Twitch CLI payloads are
+  fixed. Commit f875e1ea.
+- Gate: `test/chat/` 438 tests green, analyze no new issues.
 - Test gotcha (worth remembering): a chip's `Text` inflates to a second
   `RichText` — `find.byType(RichText)` in row tests must tolerate or
   filter multiple matches once chrome widgets render inside spans.
