@@ -211,6 +211,15 @@ class TwitchChatMessageRow extends StatelessWidget {
       }
       return this._linkAwareTextSpans(context, this.event.message.text);
     }
+
+    /// Power-up messages: `power_ups_gigantified_emote` blows the emote up
+    /// (same scale as GIF attachments); `power_ups_message_effect` is a
+    /// cosmetic animation we can't reproduce — the content renders as a
+    /// normal message, which matches the wire payload.
+    final gigantified =
+        this.event.messageType == 'power_ups_gigantified_emote';
+    final emoteHeight =
+        gigantified ? _emoteSize * _gifSizeFactor : _emoteSize;
     return [
       for (final fragment in fragments)
         if (fragment.type == 'emote' && fragment.emote != null)
@@ -218,8 +227,8 @@ class TwitchChatMessageRow extends StatelessWidget {
             alignment: PlaceholderAlignment.middle,
             child: Image.network(
               twitchEmoteUrl(fragment.emote!.id),
-              height: _emoteSize,
-              width: _emoteSize,
+              height: emoteHeight,
+              width: emoteHeight,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Text(fragment.text),
             ),
