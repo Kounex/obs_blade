@@ -1353,7 +1353,15 @@ abstract class _TwitchChatStore with Store {
   /// Fetch the pinned message for the effective channel. Best-effort —
   /// failures are only logged and leave [pinnedMessage] unchanged.
   @action
-  Future<void> refreshPinnedMessage() async {
+  Future<void> refreshPinnedMessage() => this._fetchPinnedMessage();
+
+  /// Body of [refreshPinnedMessage], also called straight from
+  /// [pinMessage]: a public action awaiting another public action would
+  /// nest a second `AsyncAction`, and mobx's cached zone binds to whatever
+  /// zone first ran it — under `testWidgets` (fake async) that silently
+  /// parks the refetch outside the flushable zone when the first use
+  /// happened in `setUp`.
+  Future<void> _fetchPinnedMessage() async {
     if (this.authState != TwitchAuthState.loggedIn ||
         this.user == null ||
         !this._canUsePins) {
@@ -1390,7 +1398,7 @@ abstract class _TwitchChatStore with Store {
       GeneralHelper.advLog('Twitch message pin failed — $e');
       return false;
     }
-    await this.refreshPinnedMessage();
+    await this._fetchPinnedMessage();
     return true;
   }
 

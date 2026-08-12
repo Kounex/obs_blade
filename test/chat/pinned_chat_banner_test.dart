@@ -152,4 +152,26 @@ void main() {
     expect(find.byType(PinnedChatBanner), findsNothing);
     expect(find.textContaining('text m1'), findsOneWidget);
   });
+
+  testWidgets('unpin clears the banner in place (no other store event)',
+      (tester) async {
+    store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(PinnedChatBanner), findsOneWidget);
+
+    /// Regression: this must rebuild the view through the pinnedMessage
+    /// observable alone — a stale store .g.dart (missing atoms) left the
+    /// banner on screen until an unrelated timeline event forced a
+    /// rebuild.
+    await store.unpinMessage();
+    await tester.pump();
+
+    expect(store.pinnedMessage, isNull);
+    expect(find.byType(PinnedChatBanner), findsNothing);
+    expect(find.textContaining('text m1'), findsOneWidget);
+  });
 }

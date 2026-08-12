@@ -336,6 +336,60 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
   }
 
+  late final _$pinnedMessageAtom = Atom(
+    name: '_TwitchChatStore.pinnedMessage',
+    context: context,
+  );
+
+  @override
+  TwitchPinnedMessage? get pinnedMessage {
+    _$pinnedMessageAtom.reportRead();
+    return super.pinnedMessage;
+  }
+
+  @override
+  set pinnedMessage(TwitchPinnedMessage? value) {
+    _$pinnedMessageAtom.reportWrite(value, super.pinnedMessage, () {
+      super.pinnedMessage = value;
+    });
+  }
+
+  late final _$banInboxLoadingAtom = Atom(
+    name: '_TwitchChatStore.banInboxLoading',
+    context: context,
+  );
+
+  @override
+  bool get banInboxLoading {
+    _$banInboxLoadingAtom.reportRead();
+    return super.banInboxLoading;
+  }
+
+  @override
+  set banInboxLoading(bool value) {
+    _$banInboxLoadingAtom.reportWrite(value, super.banInboxLoading, () {
+      super.banInboxLoading = value;
+    });
+  }
+
+  late final _$banInboxErrorAtom = Atom(
+    name: '_TwitchChatStore.banInboxError',
+    context: context,
+  );
+
+  @override
+  String? get banInboxError {
+    _$banInboxErrorAtom.reportRead();
+    return super.banInboxError;
+  }
+
+  @override
+  set banInboxError(String? value) {
+    _$banInboxErrorAtom.reportWrite(value, super.banInboxError, () {
+      super.banInboxError = value;
+    });
+  }
+
   late final _$initAsyncAction = AsyncAction(
     '_TwitchChatStore.init',
     context: context,
@@ -512,6 +566,58 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
   }
 
+  late final _$refreshPinnedMessageAsyncAction = AsyncAction(
+    '_TwitchChatStore.refreshPinnedMessage',
+    context: context,
+  );
+
+  @override
+  Future<void> refreshPinnedMessage() {
+    return _$refreshPinnedMessageAsyncAction.run(
+      () => super.refreshPinnedMessage(),
+    );
+  }
+
+  late final _$pinMessageAsyncAction = AsyncAction(
+    '_TwitchChatStore.pinMessage',
+    context: context,
+  );
+
+  @override
+  Future<bool> pinMessage(ChatMessageEvent event) {
+    return _$pinMessageAsyncAction.run(() => super.pinMessage(event));
+  }
+
+  late final _$unpinMessageAsyncAction = AsyncAction(
+    '_TwitchChatStore.unpinMessage',
+    context: context,
+  );
+
+  @override
+  Future<bool> unpinMessage() {
+    return _$unpinMessageAsyncAction.run(() => super.unpinMessage());
+  }
+
+  late final _$refreshBanInboxAsyncAction = AsyncAction(
+    '_TwitchChatStore.refreshBanInbox',
+    context: context,
+  );
+
+  @override
+  Future<void> refreshBanInbox() {
+    return _$refreshBanInboxAsyncAction.run(() => super.refreshBanInbox());
+  }
+
+  late final _$unbanUserAsyncAction = AsyncAction(
+    '_TwitchChatStore.unbanUser',
+    context: context,
+  );
+
+  @override
+  Future<bool> unbanUser(String userId) {
+    return _$unbanUserAsyncAction.run(() => super.unbanUser(userId));
+  }
+
   late final _$_TwitchChatStoreActionController = ActionController(
     name: '_TwitchChatStore',
     context: context,
@@ -596,6 +702,18 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
     try {
       return super.applyIrcFirstMessage(messageId);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void debugInjectMessage(ChatMessageEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.debugInjectMessage',
+    );
+    try {
+      return super.debugInjectMessage(event);
     } finally {
       _$_TwitchChatStoreActionController.endAction(_$actionInfo);
     }
@@ -741,6 +859,9 @@ selectedChannelViewerCount: ${selectedChannelViewerCount},
 lifecycleVersion: ${lifecycleVersion},
 roomChatSettings: ${roomChatSettings},
 roomShieldModeActive: ${roomShieldModeActive},
+pinnedMessage: ${pinnedMessage},
+banInboxLoading: ${banInboxLoading},
+banInboxError: ${banInboxError},
 isLoggedIn: ${isLoggedIn}
     ''';
   }
