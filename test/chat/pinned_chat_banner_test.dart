@@ -101,7 +101,8 @@ void main() {
     expect(find.byIcon(CupertinoIcons.xmark), findsOneWidget);
   });
 
-  testWidgets('the unpin button unpins via the store', (tester) async {
+  testWidgets('the unpin button confirms, then unpins via the store',
+      (tester) async {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     expect(store.pinnedMessage?.messageId, 'msg-pinned');
@@ -110,9 +111,66 @@ void main() {
     await tester.tap(find.byIcon(CupertinoIcons.xmark));
     await tester.pumpAndSettle();
 
+    expect(find.text('Unpin this message?'), findsOneWidget);
+    expect(moderationService.unpinCalls, 0);
+
+    await tester.tap(find.text('Unpin'));
+    await tester.pumpAndSettle();
+
     expect(moderationService.unpinCalls, 1);
     expect(moderationService.lastUnpinMessageId, 'msg-pinned');
     expect(store.pinnedMessage, isNull);
+  });
+
+  testWidgets('cancelling the unpin confirmation keeps the pin',
+      (tester) async {
+    await pumpBanner(tester);
+    await tester.tap(find.byIcon(CupertinoIcons.xmark));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(moderationService.unpinCalls, 0);
+    expect(store.pinnedMessage?.messageId, 'msg-pinned');
+    expect(find.text('Unpin this message?'), findsNothing);
+  });
+
+  testWidgets('collapsed shows one muted line; tapping expands to active',
+      (tester) async {
+    await pumpBanner(tester);
+
+    final context = tester.element(find.byType(PinnedChatBanner));
+    final theme = Theme.of(context);
+    RichText bannerText() => tester
+        .widgetList<RichText>(find.byType(RichText))
+        .firstWhere((rich) => rich.text.toPlainText().contains('Chatter:'));
+
+    /// Text.rich wraps the given span in a root span carrying the merged
+    /// default style — the banner's name/body spans live two levels down.
+    TextSpan outerSpan() =>
+        (bannerText().text as TextSpan).children!.first as TextSpan;
+    TextSpan nameSpan() => outerSpan().children!.first as TextSpan;
+    TextSpan bodySpan() => outerSpan().children!.last as TextSpan;
+
+    /// Collapsed: one line, muted name and body.
+    expect(bannerText().maxLines, 1);
+    expect(nameSpan().style?.color, theme.textTheme.bodySmall?.color);
+    expect(bodySpan().style?.color, theme.textTheme.bodySmall?.color);
+
+    await tester.tap(find.textContaining('remember the giveaway'));
+    await tester.pump();
+
+    /// Expanded: no line cap, accent name, normal-contrast body.
+    expect(bannerText().maxLines, isNull);
+    expect(nameSpan().style?.color, theme.colorScheme.secondary);
+    expect(bodySpan().style?.color, theme.textTheme.bodyMedium?.color);
+
+    await tester.tap(find.textContaining('remember the giveaway'));
+    await tester.pump();
+
+    expect(bannerText().maxLines, 1);
+    expect(nameSpan().style?.color, theme.textTheme.bodySmall?.color);
   });
 
   testWidgets('non-mods get no unpin button', (tester) async {

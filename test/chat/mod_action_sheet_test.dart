@@ -330,7 +330,7 @@ void main() {
     );
   });
 
-  testWidgets('Pin message pins directly when nothing is pinned yet',
+  testWidgets('Pin message asks before pinning when nothing is pinned yet',
       (tester) async {
     final event = chatMessage('m1', 'u1');
     store.appendChatMessageForTest(event);
@@ -344,7 +344,13 @@ void main() {
     await tester.tap(find.text('Pin message'));
     await tester.pumpAndSettle();
 
-    /// No confirmation when no pin gets replaced.
+    /// Even a fresh pin confirms — it is room-visible.
+    expect(find.text('Pin this message?'), findsOneWidget);
+    expect(moderationService.pinCalls, 0);
+
+    await tester.tap(find.text('Pin').last);
+    await tester.pumpAndSettle();
+
     expect(moderationService.pinCalls, 1);
     expect(moderationService.lastPinMessageId, 'm1');
     expect(store.pinnedMessage?.messageId, 'm1');
@@ -377,7 +383,8 @@ void main() {
     expect(find.byType(ModActionSheet), findsNothing);
   });
 
-  testWidgets('the pinned message offers Unpin message and unpins directly',
+  testWidgets(
+      'the pinned message offers Unpin message and unpins after confirmation',
       (tester) async {
     final event = chatMessage('msg-pinned', 'u1');
     store.appendChatMessageForTest(event);
@@ -395,7 +402,13 @@ void main() {
     await tester.tap(find.text('Unpin message'));
     await tester.pumpAndSettle();
 
-    /// No confirmation for unpin.
+    /// Unpin confirms too — it drops a room-visible pin.
+    expect(find.text('Unpin this message?'), findsOneWidget);
+    expect(moderationService.unpinCalls, 0);
+
+    await tester.tap(find.text('Unpin').last);
+    await tester.pumpAndSettle();
+
     expect(moderationService.unpinCalls, 1);
     expect(moderationService.lastUnpinMessageId, 'msg-pinned');
     expect(store.pinnedMessage, isNull);

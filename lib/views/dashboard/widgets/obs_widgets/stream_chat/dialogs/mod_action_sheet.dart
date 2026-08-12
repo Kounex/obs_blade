@@ -252,8 +252,9 @@ class _ModActionSheetState extends State<ModActionSheet> {
   }
 
   /// Pin row between Reply and Delete: "Unpin message" when [event] is
-  /// the pinned one, else "Pin message" — replacing a different active pin
-  /// asks for confirmation first (Helix auto-replaces). [pinnedMessage] is
+  /// the pinned one, else "Pin message". Both directions ask for
+  /// confirmation — a pin is room-visible, and replacing an active pin
+  /// (Helix auto-replaces) drops someone else's pin. [pinnedMessage] is
   /// read once at build; the banner refreshes from the store afterwards.
   Widget _pinRow(BuildContext context, ChatMessageEvent event) {
     final pinned = this._store.pinnedMessage;
@@ -264,9 +265,13 @@ class _ModActionSheetState extends State<ModActionSheet> {
           context,
           icon: CupertinoIcons.pin_slash,
           label: 'Unpin message',
-          onTap: () => this._run(
-            () => this._store.unpinMessage(),
-            'Could not unpin the message',
+          onTap: () => this._confirmThenRun(
+            title: 'Unpin this message?',
+            body: 'Remove the pinned message from the top of chat?',
+            okText: 'Unpin',
+            destructive: false,
+            action: () => this._store.unpinMessage(),
+            failureText: 'Could not unpin the message',
           ),
         ),
       );
@@ -277,19 +282,16 @@ class _ModActionSheetState extends State<ModActionSheet> {
         context,
         icon: CupertinoIcons.pin,
         label: 'Pin message',
-        onTap: pinned == null
-            ? () => this._run(
-                  () => this._store.pinMessage(event),
-                  'Could not pin the message',
-                )
-            : () => this._confirmThenRun(
-                  title: 'Pin this message?',
-                  body: 'Replace the currently pinned message?',
-                  okText: 'Pin',
-                  destructive: false,
-                  action: () => this._store.pinMessage(event),
-                  failureText: 'Could not pin the message',
-                ),
+        onTap: () => this._confirmThenRun(
+          title: 'Pin this message?',
+          body: pinned == null
+              ? 'Pin this message to the top of chat for everyone?'
+              : 'Replace the currently pinned message?',
+          okText: 'Pin',
+          destructive: false,
+          action: () => this._store.pinMessage(event),
+          failureText: 'Could not pin the message',
+        ),
       ),
     );
   }
