@@ -2,8 +2,9 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS fix
-pass on the wave 1+2 dogfood remarks; pushed, workstation clone pulled).
+Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS wrap-up;
+waves 1+2 dogfood-approved, release install on the phone, both clones
+current).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,35 +55,27 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Chat roadmap waves 1+2 shipped** (`master`, everything pushed; both
-clones current). Wave 1: GIF fragments, gigantified power-up emotes,
-shared-chat source chip, debug sample injector. Wave 2: pinned messages
-(banner + mod-sheet Pin/Unpin) and the ban inbox ("Bans & requests…"
-sheet — banned users own-channel-only, unban, read-only pending unban
-requests). Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
-+ `changelog-agent.md` (2026-08-13 entries).
-
-**First dogfood pass done; four remark fixes shipped** (see
-`changelog-agent.md` 2026-08-13 "Dogfood fixes"): pin banner was
-non-reactive (stale store codegen — regen + nested-`AsyncAction` test
-gotcha), unreadable snackbar contrast (global theme fix), GIF debug
-sample pointed at a dead giphy id, shared-chat chips now colored per
-origin channel. Round 2: GIF sample content was a spinner GIF (swapped),
-pin banner is now tap-to-expand (muted 1-liner ↔ active full text), and
-pin/unpin confirm everywhere.
+**Chat roadmap waves 1+2 shipped and dogfood-approved** (`master`,
+everything pushed; both clones current). Wave 1: GIF fragments,
+gigantified power-up emotes, shared-chat source chip (now colored per
+origin channel), debug sample injector. Wave 2: pinned messages
+(tap-to-expand banner, confirmed pin/unpin) and the ban inbox ("Bans &
+requests…" sheet). Two dogfood fix rounds landed along the way —
+stale-codegen reactivity, snackbar contrast, GIF sample, chip colors,
+banner UX, pin confirmations; details in
+[`chat-native-roadmap.md`](chat-native-roadmap.md) +
+[`changelog-agent.md`](changelog-agent.md) (2026-08-13 entries). A
+release build of current `master` is installed on the maintainer's
+phone for untethered use.
 
 **Immediate next threads:**
 
-1. **User dogfood continues** on the workstation (physical device) —
-   re-check pins/ban-inbox plus the new chip colors against a real
-   channel; the chat options sheet's "Debug samples" page (kDebugMode)
-   covers the hard-to-stage rendering cases.
-2. **Wave 3 — mod tooling bundle** (one deliberate scope upgrade, forces
+1. **Wave 3 — mod tooling bundle** (one deliberate scope upgrade, forces
    re-login once): warn users, unban-request approve/deny queue, AutoMod v2
    queue; fold in the deferred Wave 2 read surfaces (blocked terms,
    warnings, mods/VIPs) where they pair with a manage action. Build order
    and scopes: `chat-native-roadmap.md` § Wave 3.
-3. Replies + availability/entitlement gate remain open (gate decision
+2. Replies + availability/entitlement gate remain open (gate decision
    gates Wave 4).
 
 Process notes: `AGENTS.md` session-start checklist is now resume-proof
