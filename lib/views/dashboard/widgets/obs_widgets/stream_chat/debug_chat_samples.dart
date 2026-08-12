@@ -46,9 +46,11 @@ List<({String label, String description, ChatMessageEvent event})>
               type: 'gif',
               text: 'dance',
               gif: ChatFragmentGif(
-                gifId: '3o7TKsO8DGFD5T7ZmA',
+                /// Must be a live giphy id — a dead one silently falls
+                /// back to the fragment text via the row's errorBuilder.
+                gifId: '3oEjI6SIIHBdRxXI40',
                 url:
-                    'https://media.giphy.com/media/3o7TKsO8DGFD5T7ZmA/giphy.gif',
+                    'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif',
               ),
             ),
           ],
