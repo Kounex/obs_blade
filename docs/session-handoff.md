@@ -2,8 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-09 evening**
-(workstation wrap-up; dogfood OK; push `master`).
+Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS wrap-up;
+chat roadmap waves 1+2 shipped and pushed; workstation clone current).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,23 +54,32 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Native chat dogfood wave closed** on workstation (user happy with
-current behavior). Shipped since last handoff baton:
+**Chat roadmap waves 1+2 shipped** (`master` @ `33138ddb`, everything
+pushed; both clones current). Wave 1: GIF fragments, gigantified power-up
+emotes, shared-chat source chip, debug sample injector. Wave 2: pinned
+messages (banner + mod-sheet Pin/Unpin) and the ban inbox ("Bans &
+requests…" sheet — banned users own-channel-only, unban, read-only pending
+unban requests). Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
++ `changelog-agent.md` (2026-08-13 entries).
 
-- Channel Mod room sheet + adaptive bar entry; when shield doesn’t fit →
-  combined options chip + featured Mod card in Options (mod-gated only).
-  Spec: [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md).
-- Notice meta chips + announcement dual-rail chrome.
-  Spec: [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md).
-- EventSub `session_reconnect` open-before-close; mid-`selectChannel`
-  buffering so rows aren’t dropped.
-- Mod long-press hold wash without eating username/link taps (local wash).
-- Shared `NativeChatTextField`; InputDialog always uses validation
-  controller.
+**Immediate next threads:**
 
-**Next product threads** (no active WIP): replies; availability/entitlement
-gate; anything left on the multi-chat dogfood checklist in
-`changelog-agent.md`. Default process tier **S**.
+1. **User dogfood of waves 1+2** on the workstation (physical device) —
+   pins/ban-inbox against a real channel; the chat options sheet's "Debug
+   samples" page (kDebugMode) covers the hard-to-stage rendering cases.
+2. **Wave 3 — mod tooling bundle** (one deliberate scope upgrade, forces
+   re-login once): warn users, unban-request approve/deny queue, AutoMod v2
+   queue; fold in the deferred Wave 2 read surfaces (blocked terms,
+   warnings, mods/VIPs) where they pair with a manage action. Build order
+   and scopes: `chat-native-roadmap.md` § Wave 3.
+3. Replies + availability/entitlement gate remain open (gate decision
+   gates Wave 4).
+
+Process notes: `AGENTS.md` session-start checklist is now resume-proof
+(run it anyway). Default process tier **S**. Test gotchas that cost real
+time this wave (fake-async real I/O → `tester.runAsync`; spinner sheets +
+`pumpAndSettle` → bounded pumps; no Observer in sheets) are recorded in
+`changelog-agent.md`.
 
 **Cursor note:** visual companion under Cursor needs
 `visual-companion-cursor` (foreground `--foreground` start) — bare
@@ -92,6 +101,7 @@ in `docs/private/maintainer-workflow.md`.
 |---|---|
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
+| [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1+2 shipped, 3 next |
 | [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |
