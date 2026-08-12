@@ -13,24 +13,30 @@ Repo: `Kounex/obs_blade` (**public**) · branches: `master`, `redesign`, `foss`,
 > committed. See `docs/session-handoff.md`'s hygiene section for how that
 > stays in sync across machines despite not being in git.
 
-## Start here (next session)
+## Start here — every session, no exceptions
 
-→ **[`docs/session-handoff.md`](docs/session-handoff.md)** — reset at every
-handoff, holds only current state + immediate next steps. Read it before
-trusting anything below to still be current.
+Run this checklist before **any** other work — fresh session, resumed
+session, and after a context compaction alike ("I'm just continuing the
+TODO list" is exactly how this gets skipped; a continuation is still a
+session start):
 
-→ **If `docs/private/` exists in your checkout, you're on a maintainer
-machine: also read `docs/private/maintainer-workflow.md` before doing
-anything** (machine topology, dogfood handoff rule, private-doc sync
-duties — they apply to you). If `docs/private/` is absent, you're in an
-external contributor clone and can ignore everything about it.
+1. **`git fetch --all`** — diff your branch against its remote counterpart
+   and skim recent log. This file and the handoff doc are only as current
+   as whoever last updated them.
+2. **Maintainer machine check:** if `docs/private/` exists in your
+   checkout, read **[`docs/private/maintainer-workflow.md`](docs/private/maintainer-workflow.md)**
+   (gitignored, maintainer machines only: machine topology, SDK locations,
+   dogfood handoff rule, private-doc sync duties) and verify the private
+   docs are in sync (checksum commands in that file).
+   If `docs/private/` is absent, you're in an external contributor clone —
+   skip this step entirely.
+3. **Read [`docs/session-handoff.md`](docs/session-handoff.md)** — reset
+   at every handoff, holds only current state + immediate next steps.
+   Read it before trusting anything below to still be current.
 
 ## Agent constraints
 
 - **500k+ live users** — treat persistence and release paths carefully.
-- **`git fetch --all` before trusting this file or the handoff doc** — both
-  are only as current as whoever last updated them remembered to make them.
-  Diff your branch against its remote counterpart and skim recent log first.
 - **Commit per verified unit** — after each finished, tested/analyzed piece
   of work, commit it as a small, logically-scoped commit without waiting to
   be asked. **Push when the user asks, and always at wrap-up/handoff** —
@@ -39,14 +45,6 @@ external contributor clone and can ignore everything about it.
   `master` (includes "On Air" redesign; pull/fetch before editing — see the
   handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
-
-### Maintainer's agent setup
-
-Maintainer-specific setup (machine topology, SDK locations, dogfood and
-private-doc sync workflow) lives in `docs/private/maintainer-workflow.md`
-— gitignored, kept only on the maintainer's machines. External
-contributors can ignore it entirely: everything needed to build and
-contribute is in this file and the tracked `docs/`.
 
 ## Quick map
 
