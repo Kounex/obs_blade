@@ -18,7 +18,6 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_m
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 /// Formats [ChatMessageEvent.receivedAt] for the user-card message list
 /// (Twitch-style `12:29 PM`).
@@ -579,7 +578,7 @@ class TwitchChatMessageRow extends StatelessWidget {
                 alignment: PlaceholderAlignment.middle,
                 child: Padding(
                   padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
-                  child: NativeChatStatusChip(
+                  child: _SourceChannelChip(
                     label: '#$sourceName',
                     color: Theme.of(context).textTheme.bodySmall?.color ??
                         Colors.grey,
@@ -603,6 +602,39 @@ class TwitchChatMessageRow extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Source-channel chip for shared-chat partner messages — same visual
+/// language as [NativeChatStatusChip] but without its vertical padding,
+/// so it stays inside the text line height and never grows the row.
+class _SourceChannelChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SourceChannelChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      decoration: BoxDecoration(
+        color: this.color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(
+          color: this.color.withValues(alpha: 0.55),
+          width: 1.0,
+        ),
+      ),
+      child: Text(
+        this.label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: this.color,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+            ),
+      ),
+    );
+  }
 }
 
 /// Long-press + hold-wash without a competing [GestureDetector].

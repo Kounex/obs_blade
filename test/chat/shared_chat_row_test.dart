@@ -7,7 +7,6 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -65,10 +64,6 @@ void main() {
       (tester) async {
     await pumpRow(tester, _event(sourceId: 'b2', sourceName: 'Partner'));
 
-    final chip = tester.widget<NativeChatStatusChip>(
-      find.byType(NativeChatStatusChip),
-    );
-    expect(chip.label, '#Partner');
     expect(find.text('#Partner'), findsOneWidget);
     expect(
       tester
@@ -81,13 +76,23 @@ void main() {
   testWidgets('a same-channel message shows no chip', (tester) async {
     await pumpRow(tester, _event());
 
-    expect(find.byType(NativeChatStatusChip), findsNothing);
+    expect(find.textContaining('#'), findsNothing);
   });
 
   testWidgets('a source id matching the viewed channel shows no chip',
       (tester) async {
     await pumpRow(tester, _event(sourceId: 'b1', sourceName: 'Viewer'));
 
-    expect(find.byType(NativeChatStatusChip), findsNothing);
+    expect(find.textContaining('#'), findsNothing);
+  });
+
+  testWidgets('the chip does not change the row height', (tester) async {
+    await pumpRow(tester, _event());
+    final withoutChip = tester.getSize(find.byType(TwitchChatMessageRow));
+
+    await pumpRow(tester, _event(sourceId: 'b2', sourceName: 'Partner'));
+    final withChip = tester.getSize(find.byType(TwitchChatMessageRow));
+
+    expect(withChip.height, withoutChip.height);
   });
 }
