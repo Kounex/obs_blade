@@ -67,7 +67,9 @@ requests). Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
 non-reactive (stale store codegen — regen + nested-`AsyncAction` test
 gotcha), unreadable snackbar contrast (global theme fix), GIF debug
 sample pointed at a dead giphy id, shared-chat chips now colored per
-origin channel.
+origin channel. Round 2: GIF sample content was a spinner GIF (swapped),
+pin banner is now tap-to-expand (muted 1-liner ↔ active full text), and
+pin/unpin confirm everywhere.
 
 **Immediate next threads:**
 

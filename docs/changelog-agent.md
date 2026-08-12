@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-08-13 — Dogfood fixes, round 2 (GIF sample content, pin banner UX)
+
+- GIF debug sample rendered as a white square with a gray spinner — the
+  rendering was fine; the chosen giphy id *is* an iOS-style spinner on
+  white. Swapped to the computer-kid gif (visually confirmed animating).
+  Commit 5dc1f778. Lesson: eyeball sample media, not just its 200/CTYPE.
+- Pin banner rework (dogfood: "looks disabled"): collapsed = muted single
+  line; tap anywhere toggles expanded (full text, accent name,
+  normal-contrast body, chevron affordance; resets when the pinned
+  message changes). Commit 5f963b0e.
+- Pin + unpin now confirm everywhere (banner ✕ and mod sheet, both
+  directions) — room-visible actions. Same commit.
+- Test gotcha (worth remembering): `Text.rich(span)` wraps `span` in a
+  root span carrying the merged default text style, so the RichText's
+  `text.children` are `[span]` — span-level assertions in widget tests
+  must walk one level deeper.
+- Gate: `test/chat/` 493 tests green (1m31s), analyze no new issues.
+
 ## 2026-08-13 — Dogfood fixes for waves 1+2
 
 - Tier S, in-session, from maintainer dogfood remarks on the physical
