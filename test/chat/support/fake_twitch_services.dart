@@ -116,6 +116,7 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
   bool connectCalled = false;
   String? lastAccessToken;
   bool? lastIncludeModeration;
+  bool? lastIncludeAutoMod;
   String? lastUserId;
   String? lastBroadcasterId;
   int switchChannelCalls = 0;
@@ -143,12 +144,14 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
     required String userId,
     required String broadcasterId,
     bool includeModeration = false,
+    bool includeAutoMod = false,
   }) async {
     this.connectCalled = true;
     this.lastAccessToken = accessToken;
     this.lastUserId = userId;
     this.lastBroadcasterId = broadcasterId;
     this.lastIncludeModeration = includeModeration;
+    this.lastIncludeAutoMod = includeAutoMod;
   }
 
   @override

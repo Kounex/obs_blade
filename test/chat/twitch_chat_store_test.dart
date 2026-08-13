@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/automod_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
@@ -60,7 +61,7 @@ void main() {
     badgeStore = TwitchBadgeStore(service: badgeService);
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           eventSubService,
       badgeStoreResolver: () => badgeStore,
     );
@@ -493,7 +494,7 @@ void main() {
       store = TwitchChatStore(
         authService: authService,
         eventSubFactory:
-            (_, __, ___, ____, _____, ______, onStateChanged, onRevoked) {
+            (_, __, ___, ____, _____, ______, _______, ________, onStateChanged, onRevoked) {
           emitState = onStateChanged;
           emitRevoked = onRevoked;
           return eventSubService;
@@ -549,7 +550,7 @@ void main() {
       messageService = FakeTwitchMessageService();
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         messageService: messageService,
@@ -721,7 +722,7 @@ void main() {
       await Hive.openBox(HiveKeys.Settings.name);
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         emoteStoreResolver: () => emoteStore,
@@ -779,7 +780,7 @@ void main() {
           const ['user:read:chat', 'user:write:chat', 'user:read:emotes'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         userEmoteStoreResolver: () => userEmoteStore,
@@ -1045,6 +1046,8 @@ void main() {
     late void Function(ChatClearUserMessagesEvent) emitPurge;
     late void Function(ChatClearEvent) emitClear;
     late void Function(ChannelModerateEvent) emitModerate;
+    late void Function(AutoModMessageHoldEvent) emitAutoModHold;
+    late void Function(AutoModMessageUpdateEvent) emitAutoModUpdate;
 
     /// A fresh store whose factory captures the lifecycle callbacks the
     /// store hands to its EventSub service (chatConnectedAt-group pattern).
@@ -1053,11 +1056,14 @@ void main() {
         authService: authService,
         eventSubFactory: (onChatMessage, onChatNotification, onMessageDelete,
             onClearUserMessages, onChatClear, onChannelModerate,
+            onAutoModMessageHold, onAutoModMessageUpdate,
             onStateChanged, onRevoked) {
           emitDelete = onMessageDelete;
           emitPurge = onClearUserMessages;
           emitClear = onChatClear;
           emitModerate = onChannelModerate;
+          emitAutoModHold = onAutoModMessageHold;
+          emitAutoModUpdate = onAutoModMessageUpdate;
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
@@ -1145,7 +1151,7 @@ void main() {
           scopes ?? const ['user:read:chat', 'user:write:chat'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, onStateChanged, ________) {
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, onStateChanged, __________) {
           emitState = onStateChanged;
           return eventSubService;
         },
@@ -1184,7 +1190,7 @@ void main() {
 
       final restarted = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         channelService: channelService,
@@ -1479,7 +1485,7 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         moderationService: moderationService,
@@ -1611,7 +1617,7 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         moderationService: moderationService,
@@ -1783,7 +1789,7 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         moderationService: moderationService,
@@ -1891,6 +1897,236 @@ void main() {
     });
   });
 
+  group('wave 3 mod tooling', () {
+    late FakeTwitchModerationService moderationService;
+    late void Function(AutoModMessageHoldEvent) emitHold;
+    late void Function(AutoModMessageUpdateEvent) emitUpdate;
+
+    const wave3Scopes = [
+      'user:read:chat',
+      'user:write:chat',
+      'moderator:manage:chat_messages',
+      'moderator:manage:banned_users',
+      'moderator:manage:warnings',
+      'moderator:manage:unban_requests',
+      'moderator:manage:automod',
+      ...kTwitchModerationScopes,
+    ];
+
+    AutoModMessageHoldEvent holdEvent(String id) => AutoModMessageHoldEvent(
+          messageId: id,
+          userId: 'u-bad',
+          userLogin: 'troll',
+          userName: 'Troll',
+          message: const AutoModMessageContent(text: 'bad message'),
+          reason: 'automod',
+          automod: const AutoModClassification(category: 'aggressive', level: 3),
+          heldAt: DateTime.utc(2026, 8, 13, 9, 59),
+        );
+
+    setUp(() {
+      moderationService = FakeTwitchModerationService();
+    });
+
+    /// Own channel with the full wave-3 bundle by default.
+    Future<void> login({List<String>? scopes}) async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes = scopes ?? wave3Scopes;
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, onAutoModHold,
+            onAutoModUpdate, _________, __________) {
+          emitHold = onAutoModHold;
+          emitUpdate = onAutoModUpdate;
+          return eventSubService;
+        },
+        badgeStoreResolver: () => badgeStore,
+        moderationService: moderationService,
+      );
+      await store.startLogin();
+      await pumpEventQueue();
+    }
+
+    test('the manage getters follow the token scopes', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        'user:write:chat',
+        'moderator:manage:chat_messages',
+        'moderator:manage:banned_users',
+        ...kTwitchModerationScopes,
+      ]);
+      expect(store.canWarnUsers, isFalse);
+      expect(store.canManageUnbanRequests, isFalse);
+      expect(store.canManageAutoMod, isFalse);
+      expect(eventSubService.lastIncludeAutoMod, isFalse);
+    });
+
+    test('connectChat passes includeAutoMod with manage:automod', () async {
+      await login();
+
+      expect(store.canWarnUsers, isTrue);
+      expect(store.canManageUnbanRequests, isTrue);
+      expect(store.canManageAutoMod, isTrue);
+      expect(eventSubService.lastIncludeAutoMod, isTrue);
+    });
+
+    test('resolveUnbanRequest approval drops the request and the ban',
+        () async {
+      await login();
+      await store.refreshBanInbox();
+
+      final ok = await store.resolveUnbanRequest('req-1', approved: true);
+
+      expect(ok, isTrue);
+      expect(moderationService.resolveUnbanRequestCalls, 1);
+      expect(moderationService.lastResolveUnbanRequestId, 'req-1');
+      expect(moderationService.lastResolveUnbanApproved, isTrue);
+      expect(store.unbanRequests, isEmpty);
+      expect(store.bannedUsers, isEmpty);
+    });
+
+    test('resolveUnbanRequest denial keeps the ban list entry', () async {
+      await login();
+      await store.refreshBanInbox();
+
+      final ok = await store.resolveUnbanRequest('req-1', approved: false);
+
+      expect(ok, isTrue);
+      expect(store.unbanRequests, isEmpty);
+      expect(store.bannedUsers, hasLength(1));
+    });
+
+    test('resolveUnbanRequest failure keeps the lists', () async {
+      await login();
+      await store.refreshBanInbox();
+      moderationService.resolveUnbanRequestThrows =
+          const TwitchAuthException('down');
+
+      final ok = await store.resolveUnbanRequest('req-1', approved: true);
+
+      expect(ok, isFalse);
+      expect(store.unbanRequests, hasLength(1));
+      expect(store.bannedUsers, hasLength(1));
+    });
+
+    test('resolveUnbanRequest is gated without the manage scope', () async {
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:manage:chat_messages',
+        'moderator:manage:banned_users',
+        ...kTwitchModerationScopes,
+      ]);
+
+      expect(await store.resolveUnbanRequest('req-1', approved: true), isFalse);
+      expect(moderationService.resolveUnbanRequestCalls, 0);
+    });
+
+    test('warnUser warns with the trimmed reason', () async {
+      await login();
+
+      final ok = await store.warnUser('bad-1', '  spoiling movies  ');
+
+      expect(ok, isTrue);
+      expect(moderationService.warnCalls, 1);
+      expect(moderationService.lastWarnUserId, 'bad-1');
+      expect(moderationService.lastWarnReason, 'spoiling movies');
+    });
+
+    test('warnUser failure returns false', () async {
+      await login();
+      moderationService.warnThrows = const TwitchAuthException('down');
+
+      expect(await store.warnUser('bad-1', 'spam'), isFalse);
+    });
+
+    test('warnUser is gated without the manage scope or an empty reason',
+        () async {
+      await login(scopes: const [
+        'user:read:chat',
+        'moderator:manage:chat_messages',
+        'moderator:manage:banned_users',
+        ...kTwitchModerationScopes,
+      ]);
+
+      expect(await store.warnUser('bad-1', 'spam'), isFalse);
+
+      await login();
+      expect(await store.warnUser('bad-1', '   '), isFalse);
+      expect(moderationService.warnCalls, 0);
+    });
+
+    test('fetchUserWarnings returns the list; gated reads return null',
+        () async {
+      await login();
+
+      final warnings = await store.fetchUserWarnings('bad-1');
+      expect(warnings, hasLength(1));
+      expect(warnings!.single.reason, 'spoiling movies');
+      expect(moderationService.lastWarningsUserId, 'bad-1');
+
+      await login(scopes: const ['user:read:chat']);
+      expect(await store.fetchUserWarnings('bad-1'), isNull);
+    });
+
+    test('automod holds queue (deduped), updates remove', () async {
+      await login();
+
+      emitHold(holdEvent('msg-held-1'));
+      emitHold(holdEvent('msg-held-1'));
+      emitHold(holdEvent('msg-held-2'));
+
+      expect(store.autoModQueue.map((held) => held.messageId),
+          ['msg-held-1', 'msg-held-2']);
+
+      emitUpdate(const AutoModMessageUpdateEvent(
+          messageId: 'msg-held-1', status: 'approved'));
+      expect(store.autoModQueue.map((held) => held.messageId),
+          ['msg-held-2']);
+
+      /// An update for an unknown id is a no-op.
+      emitUpdate(const AutoModMessageUpdateEvent(
+          messageId: 'msg-held-9', status: 'expired'));
+      expect(store.autoModQueue, hasLength(1));
+    });
+
+    test('resolveAutoModMessage removes the row on success only', () async {
+      await login();
+      emitHold(holdEvent('msg-held-1'));
+
+      moderationService.autoModThrows = const TwitchAuthException('down');
+      expect(await store.resolveAutoModMessage('msg-held-1', allow: true),
+          isFalse);
+      expect(store.autoModQueue, hasLength(1));
+
+      moderationService.autoModThrows = null;
+      expect(await store.resolveAutoModMessage('msg-held-1', allow: true),
+          isTrue);
+
+      /// The failed attempt above counted too — the fake records before
+      /// throwing, like every fake in the support file.
+      expect(moderationService.autoModCalls, 2);
+      expect(moderationService.lastAutoModMessageId, 'msg-held-1');
+      expect(moderationService.lastAutoModAllow, isTrue);
+      expect(store.autoModQueue, isEmpty);
+    });
+
+    test('the queue dies with a channel switch and with logout', () async {
+      await login();
+      emitHold(holdEvent('msg-held-1'));
+      store.moderatedChannelIds.add('chan-mod');
+
+      await store.selectChannel('chan-mod');
+      await pumpEventQueue();
+      expect(store.autoModQueue, isEmpty);
+
+      emitHold(holdEvent('msg-held-2'));
+      expect(store.autoModQueue, hasLength(1));
+
+      await store.logout();
+      expect(store.autoModQueue, isEmpty);
+    });
+  });
+
   group('room mod actions', () {
     late FakeTwitchModerationService moderationService;
 
@@ -1908,7 +2144,7 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
         moderationService: moderationService,

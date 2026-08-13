@@ -46,7 +46,7 @@ void main() {
       await harness.init();
       store = TwitchChatStore(
         authService: FakeTwitchAuthService(),
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             FakeTwitchEventSubService(),
         badgeStoreResolver: () =>
             TwitchBadgeStore(service: FakeTwitchBadgeService()),

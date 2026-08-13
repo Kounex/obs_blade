@@ -566,18 +566,6 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
   }
 
-  late final _$refreshPinnedMessageAsyncAction = AsyncAction(
-    '_TwitchChatStore.refreshPinnedMessage',
-    context: context,
-  );
-
-  @override
-  Future<void> refreshPinnedMessage() {
-    return _$refreshPinnedMessageAsyncAction.run(
-      () => super.refreshPinnedMessage(),
-    );
-  }
-
   late final _$pinMessageAsyncAction = AsyncAction(
     '_TwitchChatStore.pinMessage',
     context: context,
@@ -616,6 +604,42 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   @override
   Future<bool> unbanUser(String userId) {
     return _$unbanUserAsyncAction.run(() => super.unbanUser(userId));
+  }
+
+  late final _$resolveUnbanRequestAsyncAction = AsyncAction(
+    '_TwitchChatStore.resolveUnbanRequest',
+    context: context,
+  );
+
+  @override
+  Future<bool> resolveUnbanRequest(String requestId, {required bool approved}) {
+    return _$resolveUnbanRequestAsyncAction.run(
+      () => super.resolveUnbanRequest(requestId, approved: approved),
+    );
+  }
+
+  late final _$warnUserAsyncAction = AsyncAction(
+    '_TwitchChatStore.warnUser',
+    context: context,
+  );
+
+  @override
+  Future<bool> warnUser(String targetUserId, String reason) {
+    return _$warnUserAsyncAction.run(
+      () => super.warnUser(targetUserId, reason),
+    );
+  }
+
+  late final _$resolveAutoModMessageAsyncAction = AsyncAction(
+    '_TwitchChatStore.resolveAutoModMessage',
+    context: context,
+  );
+
+  @override
+  Future<bool> resolveAutoModMessage(String messageId, {required bool allow}) {
+    return _$resolveAutoModMessageAsyncAction.run(
+      () => super.resolveAutoModMessage(messageId, allow: allow),
+    );
   }
 
   late final _$_TwitchChatStoreActionController = ActionController(
@@ -678,6 +702,42 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
     );
     try {
       return super.banUser(targetUserId);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<void> refreshPinnedMessage() {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.refreshPinnedMessage',
+    );
+    try {
+      return super.refreshPinnedMessage();
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void applyAutoModMessageHold(AutoModMessageHoldEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyAutoModMessageHold',
+    );
+    try {
+      return super.applyAutoModMessageHold(event);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void applyAutoModMessageUpdate(AutoModMessageUpdateEvent event) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.applyAutoModMessageUpdate',
+    );
+    try {
+      return super.applyAutoModMessageUpdate(event);
     } finally {
       _$_TwitchChatStoreActionController.endAction(_$actionInfo);
     }

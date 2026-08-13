@@ -11,6 +11,7 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/automod_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_moderate_event.dart';
@@ -21,6 +22,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_drop_reason.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_warning.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
@@ -101,6 +103,8 @@ abstract class _TwitchChatStore with Store {
     void Function(ChatClearUserMessagesEvent) onClearUserMessages,
     void Function(ChatClearEvent) onChatClear,
     void Function(ChannelModerateEvent) onChannelModerate,
+    void Function(AutoModMessageHoldEvent) onAutoModMessageHold,
+    void Function(AutoModMessageUpdateEvent) onAutoModMessageUpdate,
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
   ) _eventSubFactory;
@@ -140,6 +144,8 @@ abstract class _TwitchChatStore with Store {
       void Function(ChatClearUserMessagesEvent),
       void Function(ChatClearEvent),
       void Function(ChannelModerateEvent),
+      void Function(AutoModMessageHoldEvent),
+      void Function(AutoModMessageUpdateEvent),
       void Function(TwitchEventSubState),
       void Function(String),
     )? eventSubFactory,
@@ -155,6 +161,7 @@ abstract class _TwitchChatStore with Store {
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onChatNotification, onMessageDelete,
                     onClearUserMessages, onChatClear, onChannelModerate,
+                    onAutoModMessageHold, onAutoModMessageUpdate,
                     onStateChanged, onRevoked) =>
                 TwitchEventSubService(
                   onChatMessage: onChatMessage,
@@ -163,6 +170,8 @@ abstract class _TwitchChatStore with Store {
                   onClearUserMessages: onClearUserMessages,
                   onChatClear: onChatClear,
                   onChannelModerate: onChannelModerate,
+                  onAutoModMessageHold: onAutoModMessageHold,
+                  onAutoModMessageUpdate: onAutoModMessageUpdate,
                   onStateChanged: onStateChanged,
                   onRevoked: onRevoked,
                 )),
@@ -358,6 +367,14 @@ abstract class _TwitchChatStore with Store {
   @observable
   String? banInboxError;
 
+  /// AutoMod queue for the effective channel — held messages arrive via
+  /// `automod.message.hold` v2 (the ONLY source; Helix has no "list held
+  /// messages" GET) and leave via `automod.message.update` (resolved by
+  /// us or another mod, or expired) or a local allow/deny. In-memory
+  /// only; dies with a channel switch or logout.
+  final ObservableList<AutoModMessageHoldEvent> autoModQueue =
+      ObservableList<AutoModMessageHoldEvent>();
+
   @computed
   bool get isLoggedIn => this.authState == TwitchAuthState.loggedIn;
 
@@ -435,6 +452,32 @@ abstract class _TwitchChatStore with Store {
   bool get canSendAnnouncements =>
       this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
             'moderator:manage:announcements',
+          ) ??
+      false;
+
+  /// Whether the persisted token can warn users (Wave 3). Same
+  /// deliberately plain (non-reactive) pattern as [canWriteChat] —
+  /// pre-upgrade tokens get the re-login CTA on the gated row.
+  bool get canWarnUsers =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:manage:warnings',
+          ) ??
+      false;
+
+  /// Whether the persisted token can approve/deny unban requests
+  /// (Wave 3). Same deliberately plain pattern as [canWarnUsers].
+  bool get canManageUnbanRequests =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:manage:unban_requests',
+          ) ??
+      false;
+
+  /// Whether the persisted token can work the AutoMod queue — both the
+  /// allow/deny Helix call and the `automod.message.*` v2 subscriptions
+  /// need `moderator:manage:automod`. Same deliberately plain pattern.
+  bool get canManageAutoMod =>
+      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
+            'moderator:manage:automod',
           ) ??
       false;
 
@@ -629,6 +672,8 @@ abstract class _TwitchChatStore with Store {
         (event) => this.applyClearUserMessages(event.targetUserId),
         (_) => this.applyChatClear(),
         (event) => this.applyChannelModerate(event),
+        (event) => this.applyAutoModMessageHold(event),
+        (event) => this.applyAutoModMessageUpdate(event),
         this._onEventSubState,
         this._onEventSubRevoked,
       );
@@ -637,6 +682,12 @@ abstract class _TwitchChatStore with Store {
         userId: this.user!.id,
         broadcasterId: this.effectiveBroadcasterId,
         includeModeration: this.canReadModeration,
+
+        /// Scope-only gate, mirroring includeModeration: the pair is
+        /// channel-scoped (re-created on every switchChannel), so a
+        /// connect-time role check would go stale — a 403 on a channel
+        /// the user doesn't mod is the best-effort degrade path.
+        includeAutoMod: this.canManageAutoMod,
       );
 
       await this._connectIrcSidecar(token);
@@ -993,6 +1044,7 @@ abstract class _TwitchChatStore with Store {
       this.chatNotifications.clear();
       this._chatterColors.clear();
       this.pinnedMessage = null;
+      this.autoModQueue.clear();
       if (buffer != null) {
         this.messages.addAll(buffer.messages);
         this._deletedMessageIds.addAll(buffer.deletedMessageIds);
@@ -1506,6 +1558,140 @@ abstract class _TwitchChatStore with Store {
     return true;
   }
 
+  /// Ban inbox: approve or deny the pending unban request [requestId] in
+  /// the effective channel (Wave 3 manage scope). Returns whether it was
+  /// applied — never throws; the request leaves the inbox optimistically
+  /// on success, and an approval also drops the user from the ban list.
+  @action
+  Future<bool> resolveUnbanRequest(String requestId,
+      {required bool approved}) async {
+    if (!this.canManageUnbanRequests ||
+        !this.canModerateSelectedChannel ||
+        this.user == null) {
+      return false;
+    }
+    String? resolvedUserId;
+    for (final request in this.unbanRequests) {
+      if (request.id == requestId) resolvedUserId = request.userId;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.resolveUnbanRequest(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        requestId: requestId,
+        approved: approved,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch unban-request resolve failed — $e');
+      return false;
+    }
+    this.unbanRequests.removeWhere((request) => request.id == requestId);
+    if (approved && resolvedUserId != null) {
+      this.bannedUsers.removeWhere((user) => user.userId == resolvedUserId);
+    }
+    return true;
+  }
+
+  /// Mod action sheet: warn [targetUserId] in the effective channel with
+  /// [reason] (Wave 3 manage scope). Returns whether it was applied —
+  /// never throws; the sheet surfaces a snackbar on `false`.
+  @action
+  Future<bool> warnUser(String targetUserId, String reason) async {
+    final trimmed = reason.trim();
+    if (!this.canWarnUsers ||
+        !this.canModerateSelectedChannel ||
+        this.user == null ||
+        trimmed.isEmpty) {
+      return false;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.warnUser(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        userId: targetUserId,
+        reason: trimmed,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch warn failed — $e');
+      return false;
+    }
+    return true;
+  }
+
+  /// User card: warnings issued to [userId] in the effective channel,
+  /// newest first. Read-only (the read scope is in the always-held
+  /// bundle) — returns null on failure so the card can hide the section.
+  Future<List<TwitchWarning>?> fetchUserWarnings(String userId) async {
+    if (!this.canReadModeration ||
+        this.user == null ||
+        (this.selectedChannelId != null &&
+            !this.moderatedChannelIds.contains(this.selectedChannelId))) {
+      return null;
+    }
+    try {
+      final token = await this._validAccessToken();
+      return await this._moderationService.getWarnings(
+        accessToken: token,
+        broadcasterId: this.effectiveBroadcasterId,
+        moderatorId: this.user!.id,
+        userId: userId,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch warnings fetch failed — $e');
+      return null;
+    }
+  }
+
+  /// AutoMod queue: allow or deny the held message [messageId] (Wave 3
+  /// manage scope). Returns whether it was applied — never throws; the
+  /// row leaves [autoModQueue] optimistically on success (the
+  /// `automod.message.update` echo then lands as a no-op).
+  @action
+  Future<bool> resolveAutoModMessage(String messageId,
+      {required bool allow}) async {
+    if (!this.canManageAutoMod ||
+        !this.canModerateSelectedChannel ||
+        this.user == null) {
+      return false;
+    }
+    try {
+      final token = await this._validAccessToken();
+      await this._moderationService.handleAutoModMessage(
+        accessToken: token,
+        moderatorId: this.user!.id,
+        messageId: messageId,
+        allow: allow,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch automod resolve failed — $e');
+      return false;
+    }
+    this.autoModQueue.removeWhere((held) => held.messageId == messageId);
+    return true;
+  }
+
+  /// `automod.message.hold` v2 — queue the held message (deduped by
+  /// message id: Twitch redelivers after socket reconnects).
+  @action
+  void applyAutoModMessageHold(AutoModMessageHoldEvent event) {
+    if (!this._moderationKeyIsNew(
+        '${this.effectiveBroadcasterIdSafe}:automod-hold:${event.messageId}')) {
+      return;
+    }
+    this.autoModQueue.add(event);
+  }
+
+  /// `automod.message.update` v2 — the held message was resolved (by any
+  /// mod) or expired. Idempotent remove; no dedup key needed.
+  @action
+  void applyAutoModMessageUpdate(AutoModMessageUpdateEvent event) {
+    this.autoModQueue.removeWhere((held) => held.messageId == event.messageId);
+  }
+
   Future<String> _validAccessToken() async {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     if (auth == null) throw const TwitchAuthException('Not logged in');
@@ -1954,6 +2140,7 @@ abstract class _TwitchChatStore with Store {
     this.systemNotices.clear();
     this.chatNotifications.clear();
     this._chatterColors.clear();
+    this.autoModQueue.clear();
     this._arrivalSeq = 0;
   }
 
@@ -1972,6 +2159,7 @@ abstract class _TwitchChatStore with Store {
     this.pinnedMessage = null;
     this.bannedUsers.clear();
     this.unbanRequests.clear();
+    this.autoModQueue.clear();
     this.banInboxLoading = false;
     this.banInboxError = null;
     this._stopLivePoll();

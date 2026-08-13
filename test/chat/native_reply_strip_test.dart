@@ -46,7 +46,7 @@ void main() {
     authService.tokenScopes = const ['user:read:chat', 'user:write:chat'];
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           FakeTwitchEventSubService(),
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),

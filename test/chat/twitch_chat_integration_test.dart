@@ -52,7 +52,7 @@ void main() {
     await Hive.openBox(HiveKeys.Settings.name);
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           FakeTwitchEventSubService(),
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );

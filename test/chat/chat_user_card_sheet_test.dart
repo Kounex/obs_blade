@@ -62,7 +62,7 @@ void main() {
 
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           eventSubService,
       badgeStoreResolver: () => TwitchBadgeStore(service: badgeService),
     );

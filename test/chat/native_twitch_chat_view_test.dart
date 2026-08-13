@@ -139,7 +139,7 @@ void main() {
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________) =>
+      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           FakeTwitchEventSubService(),
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
