@@ -11,9 +11,11 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/automod_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/automod_queue_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_bans_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_mod_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_text_field.dart';
@@ -49,6 +51,11 @@ const _clearOnlyScopes = [
   'user:write:chat',
   'moderator:manage:chat_messages',
   'moderator:manage:banned_users',
+];
+
+const _automodScopes = [
+  ..._fullRoomScopes,
+  'moderator:manage:automod',
 ];
 
 void main() {
@@ -302,6 +309,13 @@ void main() {
     expect(moderationService.lastAnnounceColor, 'blue');
     expect(find.byType(ChannelModSheet), findsNothing);
   });
+
+  testWidgets('AutoMod row stays hidden without the manage scope',
+      (tester) async {
+    await openSheet(tester);
+
+    expect(find.textContaining('AutoMod'), findsNothing);
+  });
   });
 
   group('clear-only scopes', () {
@@ -334,6 +348,41 @@ void main() {
       expect(moderationService.clearCalls, 1);
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(find.byType(ChannelModSheet), findsNothing);
+    });
+  });
+
+  group('automod manage scope', () {
+    setUp(() => harnessSetUp(scopes: _automodScopes));
+    tearDown(harnessTearDown);
+
+    testWidgets('AutoMod row opens the queue sheet', (tester) async {
+      await openSheet(tester);
+
+      expect(find.text('AutoMod'), findsOneWidget);
+      expect(find.text('AutoMod queue…'), findsOneWidget);
+
+      await tapVisible(tester, find.text('AutoMod queue…'));
+      await settle(tester);
+
+      expect(find.byType(AutoModQueueSheet), findsOneWidget);
+      expect(find.text('No held messages'), findsOneWidget);
+    });
+
+    testWidgets('the row shows the live queue count', (tester) async {
+      store.applyAutoModMessageHold(
+        const AutoModMessageHoldEvent(
+          messageId: 'am-1',
+          userId: 'u-1',
+          userLogin: 'shady',
+          userName: 'Shady',
+          message: AutoModMessageContent(text: 'held text'),
+          reason: 'automod',
+        ),
+      );
+
+      await openSheet(tester);
+
+      expect(find.text('AutoMod queue (1)…'), findsOneWidget);
     });
   });
 }

@@ -2,13 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/classes/twitch/eventsub/channel_chat_message.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../chat_type_brand.dart';
 import '../native_chat_chrome.dart';
+import '../native_chat_text_field.dart';
+import '../twitch_device_code_dialog.dart';
 
 /// Opens the mod action sheet for [event] (multi-chat) — shown when a live
 /// message is tapped in a channel the user moderates
@@ -71,10 +75,16 @@ const List<(String, int)> kModTimeoutPresets = [
   ('1 week', 604800),
 ];
 
-/// Mod actions for one chat message: delete it, or timeout/ban its author.
-/// "Timeout…" swaps to a preset step. Final actions (delete / timeout
-/// duration / ban) ask for confirmation first. On failure the local state
-/// is untouched and [onFailure] explains via snackbar.
+/// Twitch caps a warning reason at 500 chars (same as announcements).
+const int kWarnReasonMaxLength = 500;
+
+/// Mod actions for one chat message: delete it, or timeout/warn/ban its
+/// author. "Timeout…" swaps to a preset step, "Warn…" to a reason-compose
+/// step (its send is the confirm). Final actions (delete / timeout
+/// duration / ban) ask for confirmation first. The Warn row needs the
+/// Wave 3 manage scope — a pre-upgrade token gets the re-login flow on
+/// tap. On failure the local state is untouched and [onFailure] explains
+/// via snackbar.
 class ModActionSheet extends StatefulWidget {
   final ChatMessageEvent event;
 
@@ -99,11 +109,20 @@ class ModActionSheet extends StatefulWidget {
 
 class _ModActionSheetState extends State<ModActionSheet> {
   bool _timeoutStep = false;
+  bool _warnStep = false;
 
   /// Re-entrancy guard — a double-tap must not fire two Helix calls.
   bool _running = false;
 
+  final TextEditingController _warnController = TextEditingController();
+
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
+
+  @override
+  void dispose() {
+    this._warnController.dispose();
+    super.dispose();
+  }
 
   Future<void> _run(
     Future<bool> Function() action,
@@ -140,6 +159,16 @@ class _ModActionSheetState extends State<ModActionSheet> {
         },
       ),
     );
+  }
+
+  /// Same scope-gate idiom as the channel mod sheet: a pre-upgrade token
+  /// keeps the row, but tapping it starts the re-login device flow.
+  void _requireScopeOr(bool can, VoidCallback whenAllowed) {
+    if (!can) {
+      startTwitchLogin(context);
+      return;
+    }
+    whenAllowed();
   }
 
   @override
@@ -182,6 +211,8 @@ class _ModActionSheetState extends State<ModActionSheet> {
                           ),
                         ),
                       ),
+                  ] else if (this._warnStep) ...[
+                    this._buildWarnCompose(context),
                   ] else ...[
                     if (this.widget.onReply != null)
                       Padding(
@@ -224,6 +255,18 @@ class _ModActionSheetState extends State<ModActionSheet> {
                         label: 'Timeout…',
                         onTap: () =>
                             this.setState(() => this._timeoutStep = true),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      child: this._actionRow(
+                        context,
+                        icon: CupertinoIcons.exclamationmark_bubble,
+                        label: 'Warn…',
+                        onTap: () => this._requireScopeOr(
+                          this._store.canWarnUsers,
+                          () => this.setState(() => this._warnStep = true),
+                        ),
                       ),
                     ),
                     this._actionRow(
@@ -297,12 +340,14 @@ class _ModActionSheetState extends State<ModActionSheet> {
   }
 
   /// Same header idiom as native chat options: chevron left of the title
-  /// on the timeout step (not an action-row "Back" card).
+  /// on the timeout/warn steps (not an action-row "Back" card).
   Widget _titleRow(BuildContext context, String chatterName) {
     final title = this._timeoutStep
         ? 'Timeout $chatterName'
-        : 'Moderate $chatterName';
-    if (!this._timeoutStep) {
+        : this._warnStep
+            ? 'Warn $chatterName'
+            : 'Moderate $chatterName';
+    if (!this._timeoutStep && !this._warnStep) {
       return Text(title, style: nativeChatSheetTitleStyle(context));
     }
     return Row(
@@ -311,7 +356,10 @@ class _ModActionSheetState extends State<ModActionSheet> {
           haptic: true,
           onTap: this._running
               ? null
-              : () => this.setState(() => this._timeoutStep = false),
+              : () => this.setState(() {
+                    this._timeoutStep = false;
+                    this._warnStep = false;
+                  }),
           child: const Padding(
             padding: EdgeInsets.only(right: AppSpacing.sm),
             child: Icon(CupertinoIcons.chevron_back, size: 20.0),
@@ -321,6 +369,87 @@ class _ModActionSheetState extends State<ModActionSheet> {
           child: Text(title, style: nativeChatSheetTitleStyle(context)),
         ),
       ],
+    );
+  }
+
+  /// Warn-compose step — same idiom as the channel mod sheet's announce
+  /// compose (field + send chip; the send IS the confirm). The warned
+  /// user must acknowledge the warning in chat before chatting again.
+  Widget _buildWarnCompose(BuildContext context) {
+    final text = this._warnController.text;
+    final canSend = !this._running &&
+        text.trim().isNotEmpty &&
+        text.length <= kWarnReasonMaxLength;
+    final accent = ChatType.Twitch.brandColor ??
+        Theme.of(context).cupertinoOverrideTheme?.primaryColor ??
+        Theme.of(context).colorScheme.primary;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: NativeChatTextField(
+            controller: this._warnController,
+            hintText: 'Reason for the warning…',
+            minLines: 1,
+            maxLines: 5,
+            maxLength: kWarnReasonMaxLength,
+            textInputAction: TextInputAction.send,
+            focusBorderColor: accent,
+            onChanged: (_) => this.setState(() {}),
+            onSubmitted: canSend ? (_) => this._sendWarn() : null,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Pressable(
+          haptic: true,
+          onTap: canSend ? this._sendWarn : null,
+          child: Container(
+            constraints: const BoxConstraints(
+              minWidth: kMinInteractiveDimensionCupertino,
+              minHeight: kMinInteractiveDimensionCupertino,
+            ),
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: kNativeChatDockControlSize,
+              height: kNativeChatDockControlSize,
+              decoration: BoxDecoration(
+                color:
+                    canSend ? accent : accent.withValues(alpha: 0.35),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: this._running
+                  ? (StylingHelper.isApple(context)
+                      ? const CupertinoActivityIndicator(radius: 8.0)
+                      : const SizedBox(
+                          width: 16.0,
+                          height: 16.0,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0,
+                            color: Colors.white,
+                          ),
+                        ))
+                  : const Icon(
+                      CupertinoIcons.paperplane_fill,
+                      size: 17.0,
+                      color: Colors.white,
+                    ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _sendWarn() {
+    final event = this.widget.event;
+    this._run(
+      () => this._store.warnUser(
+            event.chatterUserId,
+            this._warnController.text,
+          ),
+      'Could not warn the user',
     );
   }
 

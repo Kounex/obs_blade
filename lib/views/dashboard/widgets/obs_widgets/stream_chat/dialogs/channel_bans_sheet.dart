@@ -29,8 +29,10 @@ void showChannelBansSheet(BuildContext context) =>
 
 /// Ban inbox: pending unban requests and (own channel only — Helix serves
 /// no other) the banned/timed-out user list, each with an Unban action.
-/// Approving/denying a request properly is a separate scope — Unban here
-/// simply unbans the requester, which also resolves their request.
+/// With the Wave 3 `moderator:manage:unban_requests` scope, request rows
+/// also offer Approve (unbans + resolves) and Deny; pre-upgrade tokens
+/// keep the plain Unban pill (a separate, already-held scope — unbanning
+/// the requester resolves their request too).
 class ChannelBansSheet extends StatefulWidget {
   /// Failure snackbar hook — hosted by the caller's context.
   final void Function(String message) onFailure;
@@ -79,6 +81,38 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
           if (!this.mounted) return;
           this.setState(() => this._runningUserId = null);
           if (!ok) this.widget.onFailure('Could not unban $userName');
+        },
+      ),
+    );
+  }
+
+  /// Approve/deny a pending unban request (Wave 3 manage scope). Same
+  /// confirm + running-guard idiom as [_confirmUnban]; the request drops
+  /// from the inbox optimistically on success (an approval also unbans).
+  void _confirmResolve(TwitchUnbanRequest request, {required bool approved}) {
+    if (this._runningUserId != null) return;
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: ConfirmationDialog(
+        title: approved
+            ? 'Approve ${request.userName}\'s request?'
+            : 'Deny ${request.userName}\'s request?',
+        body: approved
+            ? '${request.userName} is unbanned and the request is marked '
+                'approved.'
+            : 'The ban stays in place and the request is marked denied.',
+        okText: approved ? 'Approve' : 'Deny',
+        noText: 'Cancel',
+        isYesDestructive: !approved,
+        onOk: (_) async {
+          this.setState(() => this._runningUserId = request.userId);
+          final ok = await this._store.resolveUnbanRequest(
+            request.id,
+            approved: approved,
+          );
+          if (!this.mounted) return;
+          this.setState(() => this._runningUserId = null);
+          if (!ok) this.widget.onFailure('Could not update the request');
         },
       ),
     );
@@ -221,6 +255,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
           if (request.createdAt != null)
             'Requested ${this._formatDate(request.createdAt!)}',
         ],
+        request: request,
       );
 
   Widget _banRow(BuildContext context, TwitchBannedUser ban) =>
@@ -237,14 +272,18 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
         ],
       );
 
-  /// Inbox row card: name + info lines, trailing Unban pill.
+  /// Inbox row card: name + info lines, trailing action pill(s) — Unban
+  /// everywhere; a request row with the Wave 3 manage scope gets
+  /// Approve/Deny instead.
   Widget _inboxRowCard(
     BuildContext context, {
     required String userId,
     required String userName,
     required List<String> lines,
+    TwitchUnbanRequest? request,
   }) {
     final running = this._runningUserId == userId;
+    final busy = this._runningUserId != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: Container(
@@ -285,41 +324,90 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Pressable(
-              haptic: true,
-              onTap: running || this._runningUserId != null
-                  ? null
-                  : () => this._confirmUnban(userId, userName),
-              child: Container(
+            if (running)
+              Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.xs,
                 ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.secondary,
-                  borderRadius: AppRadius.pill,
-                ),
-                child: running
-                    ? (StylingHelper.isApple(context)
-                        ? const CupertinoActivityIndicator(radius: 7.0)
-                        : const SizedBox(
-                            width: 14.0,
-                            height: 14.0,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              color: Colors.white,
-                            ),
-                          ))
-                    : Text(
-                        'Unban',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.white),
+                child: StylingHelper.isApple(context)
+                    ? const CupertinoActivityIndicator(radius: 7.0)
+                    : const SizedBox(
+                        width: 14.0,
+                        height: 14.0,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          color: Colors.white,
+                        ),
                       ),
+              )
+            else if (request != null && this._store.canManageUnbanRequests) ...[
+              this._pill(
+                context,
+                label: 'Deny',
+                filled: false,
+                onTap: busy
+                    ? null
+                    : () =>
+                        this._confirmResolve(request, approved: false),
               ),
-            ),
+              const SizedBox(width: AppSpacing.xs),
+              this._pill(
+                context,
+                label: 'Approve',
+                filled: true,
+                onTap: busy
+                    ? null
+                    : () => this._confirmResolve(request, approved: true),
+              ),
+            ] else
+              this._pill(
+                context,
+                label: 'Unban',
+                filled: true,
+                onTap: busy
+                    ? null
+                    : () => this._confirmUnban(userId, userName),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Trailing pill button — filled = accent background (primary action),
+  /// otherwise a bordered neutral pill (Deny).
+  Widget _pill(
+    BuildContext context, {
+    required String label,
+    required bool filled,
+    required VoidCallback? onTap,
+  }) {
+    final accent = Theme.of(context).colorScheme.secondary;
+    return Pressable(
+      haptic: true,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: filled ? accent : Colors.transparent,
+          borderRadius: AppRadius.pill,
+          border: filled
+              ? null
+              : Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+                ),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: filled
+                    ? Colors.white
+                    : Theme.of(context).textTheme.bodySmall?.color,
+              ),
         ),
       ),
     );

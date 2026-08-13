@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
@@ -14,6 +15,7 @@ import '../chat_type_brand.dart';
 import '../native_chat_chrome.dart';
 import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
+import 'automod_queue_sheet.dart';
 import 'channel_bans_sheet.dart';
 
 /// Opens the channel-level Mod actions sheet (clear / modes / shield /
@@ -421,6 +423,23 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
             () => showChannelBansSheet(context),
           ),
         ),
+
+        /// Wave 3: the queue only exists with the manage scope (the
+        /// EventSub pair requires it) — pre-upgrade tokens never see the
+        /// row. The count live-updates while the sheet is open.
+        if (this._store.canManageAutoMod) ...[
+          this._sectionHeader(context, 'AutoMod'),
+          Observer(
+            builder: (context) => this._actionRow(
+              context,
+              icon: CupertinoIcons.exclamationmark_shield,
+              label: this._store.autoModQueue.isEmpty
+                  ? 'AutoMod queue…'
+                  : 'AutoMod queue (${this._store.autoModQueue.length})…',
+              onTap: () => showAutoModQueueSheet(context),
+            ),
+          ),
+        ],
         this._sectionHeader(context, 'Announce'),
         this._actionRow(
           context,

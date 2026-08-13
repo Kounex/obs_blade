@@ -13,6 +13,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_warning.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
@@ -98,6 +99,11 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   DateTime? _followedAt;
   TwitchSelfSubscription? _selfSub;
 
+  /// Warnings issued to this user in the effective channel (mod-only read
+  /// surface; the read scope is in the always-held bundle). Null = hidden
+  /// (not a mod, or the fetch failed).
+  List<TwitchWarning>? _warnings;
+
   List<ChatMessageEvent> get _bufferedMessages =>
       this._store.messagesForChatter(this.widget.userId);
 
@@ -158,10 +164,21 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
         );
       }
 
+      /// Mod-only: warnings for this user in the effective channel (the
+      /// store gates role + read bundle; failure/not-a-mod → null → the
+      /// section hides).
+      Future<List<TwitchWarning>?> warningsFuture =
+          Future<List<TwitchWarning>?>.value(null);
+      if (!this._isSelf && broadcasterId != null) {
+        warningsFuture =
+            this._store.fetchUserWarnings(this.widget.userId);
+      }
+
       final results = await Future.wait<Object?>([
         userFuture,
         followFuture,
         subFuture,
+        warningsFuture,
       ]);
 
       if (!mounted) return;
@@ -169,6 +186,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
         this._helixUser = results[0] as TwitchUser?;
         this._followedAt = results[1] as DateTime?;
         this._selfSub = results[2] as TwitchSelfSubscription?;
+        this._warnings = results[3] as List<TwitchWarning>?;
       });
     } catch (_) {
       // Omit Helix rows — buffer/header still render.
@@ -389,6 +407,18 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
         label:
             '${this._tierLabel(sub.tier)} — Subscribed for ${this._monthsLabel(sub.months)}',
       ));
+    }
+    if (this._warnings case final warnings?) {
+      for (final warning in warnings.take(3)) {
+        final when = warning.warnedAt;
+        rows.add(this._factRow(
+          context,
+          icon: CupertinoIcons.exclamationmark_triangle,
+          label: 'Warned'
+              '${when != null ? ' ${this._formatFactDate(when)}' : ''}'
+              '${warning.reason.isNotEmpty ? ' — ${warning.reason}' : ''}',
+        ));
+      }
     }
 
     if (rows.isEmpty) return const SizedBox.shrink();

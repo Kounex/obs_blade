@@ -95,6 +95,15 @@ void main() {
     }
   });
 
+  /// Grants extra scopes on the persisted token. No save(): the box serves
+  /// this same in-memory instance on get(), and a Hive write (real I/O)
+  /// would never complete inside testWidgets' fake async zone.
+  void grantScopes(List<String> extra) {
+    final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
+    final auth = authBox.get(TwitchAuth.kBoxKey)!;
+    auth.scopes = [...auth.scopes, ...extra];
+  }
+
   testWidgets('renders the request and ban rows for the own channel',
       (tester) async {
     await openSheet(tester);
@@ -176,5 +185,89 @@ void main() {
 
     expect(find.text('No pending unban requests'), findsOneWidget);
     expect(find.text('No banned users'), findsOneWidget);
+  });
+
+  testWidgets('without the manage scope a request row keeps the plain '
+      'Unban pill', (tester) async {
+    await openSheet(tester);
+
+    expect(find.text('Approve'), findsNothing);
+    expect(find.text('Deny'), findsNothing);
+
+    /// One Unban on the request row, one on the banned-user row.
+    expect(find.text('Unban'), findsNWidgets(2));
+  });
+
+  testWidgets('Approve confirms, then resolves the request and lifts the '
+      'ban', (tester) async {
+    grantScopes(const ['moderator:manage:unban_requests']);
+    await openSheet(tester);
+
+    expect(find.text('Approve'), findsOneWidget);
+    expect(find.text('Deny'), findsOneWidget);
+
+    /// The banned-user row keeps its Unban pill.
+    expect(find.text('Unban'), findsOneWidget);
+
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("Approve Troll's request?"), findsOneWidget);
+    expect(moderationService.resolveUnbanRequestCalls, 0);
+
+    await tester.tap(find.text('Approve').last);
+    await tester.pumpAndSettle();
+
+    expect(moderationService.resolveUnbanRequestCalls, 1);
+    expect(moderationService.lastResolveUnbanRequestId, 'req-1');
+    expect(moderationService.lastResolveUnbanApproved, isTrue);
+
+    /// An approval drops the request AND the ban.
+    expect(find.text('Troll'), findsNothing);
+    expect(find.text('No pending unban requests'), findsOneWidget);
+    expect(find.text('No banned users'), findsOneWidget);
+  });
+
+  testWidgets('Deny resolves the request but keeps the ban', (tester) async {
+    grantScopes(const ['moderator:manage:unban_requests']);
+    await openSheet(tester);
+
+    await tester.tap(find.text('Deny'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("Deny Troll's request?"), findsOneWidget);
+
+    await tester.tap(find.text('Deny').last);
+    await tester.pumpAndSettle();
+
+    expect(moderationService.resolveUnbanRequestCalls, 1);
+    expect(moderationService.lastResolveUnbanApproved, isFalse);
+
+    expect(find.text('sorry, will behave'), findsNothing);
+    expect(find.text('No pending unban requests'), findsOneWidget);
+
+    /// The ban stays in place.
+    expect(find.text('Troll'), findsOneWidget);
+    expect(find.text('Permanent ban'), findsOneWidget);
+  });
+
+  testWidgets('a failed resolve keeps the request and shows a snackbar',
+      (tester) async {
+    grantScopes(const ['moderator:manage:unban_requests']);
+    moderationService.resolveUnbanRequestThrows = Exception('boom');
+
+    await openSheet(tester);
+    await tester.tap(find.text('Approve'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Approve').last);
+    await tester.pumpAndSettle();
+
+    expect(moderationService.resolveUnbanRequestCalls, 1);
+    expect(find.text('sorry, will behave'), findsOneWidget);
+    expect(find.text('Could not update the request'), findsOneWidget);
+
+    /// Drain the snackbar's dismiss timer so no timer outlives the test.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:intl/intl.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
@@ -12,6 +13,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/chat_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
@@ -46,6 +48,7 @@ void main() {
   late FakeTwitchEventSubService eventSubService;
   late FakeTwitchBadgeService badgeService;
   late FakeTwitchUserService userService;
+  late FakeTwitchModerationService moderationService;
   late TwitchChatStore store;
 
   setUp(() async {
@@ -59,12 +62,14 @@ void main() {
     eventSubService = FakeTwitchEventSubService();
     badgeService = FakeTwitchBadgeService();
     userService = FakeTwitchUserService();
+    moderationService = FakeTwitchModerationService();
 
     store = TwitchChatStore(
       authService: authService,
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           eventSubService,
       badgeStoreResolver: () => TwitchBadgeStore(service: badgeService),
+      moderationService: moderationService,
     );
     store.authState = TwitchAuthState.loggedIn;
     store.user = const TwitchUser(
@@ -105,6 +110,15 @@ void main() {
       tempDir.deleteSync(recursive: true);
     }
   });
+
+  /// Grants extra scopes on the persisted token. No save(): the box serves
+  /// this same in-memory instance on get(), and a Hive write (real I/O)
+  /// would never complete inside testWidgets' fake async zone.
+  void grantScopes(List<String> extra) {
+    final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
+    final auth = authBox.get(TwitchAuth.kBoxKey)!;
+    auth.scopes = [...auth.scopes, ...extra];
+  }
 
   Future<void> openCard(
     WidgetTester tester, {
@@ -233,5 +247,42 @@ void main() {
     await tester.tap(find.text('Log out'));
     await tester.pumpAndSettle();
     expect(loggedOut, isTrue);
+  });
+
+  testWidgets('mod view lists the user\'s warnings (newest channel '
+      'warnings first)', (tester) async {
+    grantScopes(kTwitchModerationScopes);
+
+    await openCard(tester, userId: 'viewer-1');
+    await tester.pumpAndSettle();
+
+    expect(moderationService.getWarningsCalls, 1);
+    expect(moderationService.lastWarningsUserId, 'viewer-1');
+
+    final expectedDate = DateFormat.yMMMMd()
+        .format(FakeTwitchModerationService.warningSample.warnedAt!.toLocal());
+    expect(
+      find.text('Warned $expectedDate — spoiling movies'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the self card hides the warnings section', (tester) async {
+    grantScopes(kTwitchModerationScopes);
+
+    await openCard(tester, userId: 'self-1');
+    await tester.pumpAndSettle();
+
+    expect(moderationService.getWarningsCalls, 0);
+    expect(find.textContaining('Warned'), findsNothing);
+  });
+
+  testWidgets('without the moderation read bundle the section stays hidden',
+      (tester) async {
+    await openCard(tester, userId: 'viewer-1');
+    await tester.pumpAndSettle();
+
+    expect(moderationService.getWarningsCalls, 0);
+    expect(find.textContaining('Warned'), findsNothing);
   });
 }

@@ -11,8 +11,11 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/mod_action_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_text_field.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
@@ -98,6 +101,15 @@ void main() {
       tempDir.deleteSync(recursive: true);
     }
   });
+
+  /// Grants extra scopes on the persisted token. No save(): the box serves
+  /// this same in-memory instance on get(), and a Hive write (real I/O)
+  /// would never complete inside testWidgets' fake async zone.
+  void grantScopes(List<String> extra) {
+    final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
+    final auth = authBox.get(TwitchAuth.kBoxKey)!;
+    auth.scopes = [...auth.scopes, ...extra];
+  }
 
   testWidgets('delete hits the service, tombstones and closes the sheet',
       (tester) async {
@@ -413,5 +425,114 @@ void main() {
     expect(moderationService.lastUnpinMessageId, 'msg-pinned');
     expect(store.pinnedMessage, isNull);
     expect(find.byType(ModActionSheet), findsNothing);
+  });
+
+  testWidgets('Warn… composes a reason; the send is the confirm',
+      (tester) async {
+    grantScopes(const ['moderator:manage:warnings']);
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+
+    await openSheet(tester, event);
+
+    expect(find.text('Warn…'), findsOneWidget);
+
+    await tester.tap(find.text('Warn…'));
+    await tester.pumpAndSettle();
+
+    /// Compose step: chevron back in the title, no confirm dialog.
+    expect(find.byIcon(CupertinoIcons.chevron_back), findsOneWidget);
+    expect(find.text('Warn Useru1'), findsOneWidget);
+
+    /// Empty reason → send disabled.
+    await tester.tap(find.byIcon(CupertinoIcons.paperplane_fill));
+    await tester.pumpAndSettle();
+    expect(moderationService.warnCalls, 0);
+    expect(find.byType(ModActionSheet), findsOneWidget);
+
+    /// The chevron returns to the action list without warning.
+    await tester.tap(find.byIcon(CupertinoIcons.chevron_back));
+    await tester.pumpAndSettle();
+    expect(find.text('Moderate Useru1'), findsOneWidget);
+    expect(moderationService.warnCalls, 0);
+
+    await tester.tap(find.text('Warn…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(NativeChatTextField),
+        matching: find.byType(TextField),
+      ),
+      '  spoiling movies  ',
+    );
+    await tester.pump();
+    await tester.tap(find.byIcon(CupertinoIcons.paperplane_fill));
+    await tester.pumpAndSettle();
+
+    expect(moderationService.warnCalls, 1);
+    expect(moderationService.lastWarnUserId, 'u1');
+    expect(moderationService.lastWarnBroadcasterId, 'user-1');
+
+    /// The store trims the reason before posting.
+    expect(moderationService.lastWarnReason, 'spoiling movies');
+    expect(find.byType(ModActionSheet), findsNothing);
+  });
+
+  testWidgets('a failed warn closes the sheet and shows a snackbar',
+      (tester) async {
+    grantScopes(const ['moderator:manage:warnings']);
+    moderationService.warnThrows = Exception('boom');
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+
+    await openSheet(tester, event);
+    await tester.tap(find.text('Warn…'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(NativeChatTextField),
+        matching: find.byType(TextField),
+      ),
+      'spam',
+    );
+    await tester.pump();
+    await tester.tap(find.byIcon(CupertinoIcons.paperplane_fill));
+    await tester.pumpAndSettle();
+
+    expect(moderationService.warnCalls, 1);
+    expect(find.byType(ModActionSheet), findsNothing);
+    expect(find.text('Could not warn the user'), findsOneWidget);
+
+    /// Drain the snackbar's dismiss timer so no timer outlives the test.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('Warn… without the manage scope starts the re-login flow',
+      (tester) async {
+    /// Next device-code poll fails so the re-login dialog stays open.
+    authService.failPollWith = const TwitchAuthException('denied');
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+
+    await openSheet(tester, event);
+    await tester.tap(find.text('Warn…'));
+
+    /// Bounded pumps, not pumpAndSettle — the device-code dialog keeps a
+    /// poll/timer alive and never lets the frame scheduler settle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(moderationService.warnCalls, 0);
+
+    /// Still the action list — no compose step without the scope.
+    expect(find.text('Moderate Useru1'), findsOneWidget);
+    expect(find.byType(TwitchDeviceCodeDialog), findsOneWidget);
+
+    Navigator.of(tester.element(find.byType(TwitchDeviceCodeDialog))).pop();
+    store.cancelLogin();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
   });
 }
