@@ -2,7 +2,56 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
-## 2026-08-13 — Dogfood fixes, round 2 (GIF sample content, pin banner UX)
+## 2026-08-13 — Native chat: roadmap wave 3 (mod tooling bundle)
+
+- Tier S, in-session. Roadmap: `docs/chat-native-roadmap.md` wave 3 — one
+  deliberate scope upgrade (`kTwitchManageModToolingScopes` =
+  `moderator:manage:warnings`/`unban_requests`/`automod`) folded into
+  `kTwitchChatScopes`; pre-upgrade tokens keep working, gated rows start the
+  re-login flow (`_requireScopeOr` idiom, same as wave 2's modes).
+- Helix surface (`TwitchModerationService`): `warnUser` (POST
+  /moderation/warnings), `resolveUnbanRequest` (PUT /moderation/unban_requests
+  — an approval also lifts the ban), `getWarnings` (paginated GET, read scope
+  already held), `handleAutoModMessage` (POST /moderation/automod/message,
+  204, body `user_id` = the *moderator*). New `TwitchWarning` DTO. Commit
+  7aba0e3c.
+- EventSub `automod.message.hold/.update` **v2** (v1 is legacy with a
+  different `message` shape — the sub pins version 2): freezed DTOs, service
+  callbacks, channel-scoped pair (`moderator_user_id: self`, re-created per
+  `switchChannel`). Commit 1fa79ab5.
+- Store: `canWarnUsers`/`canManageUnbanRequests`/`canManageAutoMod` (plain
+  live-box reads, same pattern as `canModerateChats`), never-throw
+  `warnUser`/`resolveUnbanRequest` (optimistic removal; approval drops the
+  ban)/`resolveAutoModMessage` (optimistic; the update echo lands as a no-op),
+  `fetchUserWarnings` (plain async, null → card hides the section),
+  `ObservableList<AutoModMessageHoldEvent> autoModQueue` with deduped hold /
+  idempotent remove, cleared on channel switch + lifecycle resets.
+  `connectChat` passes `includeAutoMod: canManageAutoMod` — scope-only gate,
+  mirroring `includeModeration` (a connect-time role check would go stale
+  across switches; a 403 on a non-modded channel is the degrade path).
+  Commit 38ed2a77.
+- UI: "Warn…" row in the mod action sheet (compose step, send IS the
+  confirm, 500-char cap); Approve/Deny pills on unban-request rows
+  (pre-upgrade tokens keep plain Unban); `AutoModQueueSheet` (pure Observer
+  over the store queue — no Helix list endpoint exists, holds arrive via
+  EventSub only) behind an "AutoMod queue (N)…" row in the channel mod
+  sheet; warnings section (up to 3) on the chat user card, mod view +
+  non-self only. Commit 046441db.
+- **Gotcha (typedef widening touchpoints):** adding EventSub callbacks means
+  widening the store's `eventSubFactory` typedef *and every lambda at every
+  construction site* (tests use `(_, __, …, __________) => …`) — grep for
+  the factory param when the count changes, sed is your friend. The widened
+  lambdas trip `unnecessary_underscores` infos; accepted (matches the other
+  chat test files).
+- **Gotcha (fake counters record failed attempts):** the fakes increment
+  `warnCalls`/`autoModCalls`/… *before* throwing — failure tests assert
+  `calls == 1` plus the kept row, not `calls == 0`.
+- **Gotcha (device-code dialog never settles):** the re-login dialog keeps a
+  poll/timer alive — `pumpAndSettle` after tapping a gated row times out;
+  use bounded pumps (same idiom as the spinner sheets).
+- Gate: `test/chat/ test/websocket/ test/persistence/` 571 green, analyze
+  0 errors / infos ~baseline.
+
 
 - GIF debug sample rendered as a white square with a gray spinner — the
   rendering was fine; the chosen giphy id *is* an iOS-style spinner on

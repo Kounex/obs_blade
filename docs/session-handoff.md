@@ -3,8 +3,7 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS wrap-up;
-waves 1+2 dogfood-approved, release install on the phone, both clones
-current).
+wave 3 mod-tooling bundle shipped, pending dogfood).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -55,34 +54,32 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Chat roadmap waves 1+2 shipped and dogfood-approved** (`master`,
-everything pushed; both clones current). Wave 1: GIF fragments,
-gigantified power-up emotes, shared-chat source chip (now colored per
-origin channel), debug sample injector. Wave 2: pinned messages
-(tap-to-expand banner, confirmed pin/unpin) and the ban inbox ("Bans &
-requests…" sheet). Two dogfood fix rounds landed along the way —
-stale-codegen reactivity, snackbar contrast, GIF sample, chip colors,
-banner UX, pin confirmations; details in
-[`chat-native-roadmap.md`](chat-native-roadmap.md) +
-[`changelog-agent.md`](changelog-agent.md) (2026-08-13 entries). A
-release build of current `master` is installed on the maintainer's
-phone for untethered use.
+**Chat roadmap wave 3 shipped on `master`** (mod tooling bundle, one
+deliberate scope upgrade — `moderator:manage:warnings`/`unban_requests`/
+`automod`): warn-from-mod-sheet, unban-request approve/deny in the ban
+inbox, live AutoMod queue sheet (EventSub v2 holds), warnings read surface
+on the user card. Pre-upgrade tokens keep working and get the re-login CTA
+on the gated rows. Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
+§ Wave 3 + [`changelog-agent.md`](changelog-agent.md) (2026-08-13 entry).
+**Not yet dogfooded** — pull on the workstation, run the app against a live
+modded channel (warn ack flow, AutoMod hold arrivals, approve/deny), then
+update the release install on the phone.
+
+Waves 1+2 shipped earlier the same day and are dogfood-approved; a release
+build of that `master` is installed on the maintainer's phone (predates
+wave 3).
 
 **Immediate next threads:**
 
-1. **Wave 3 — mod tooling bundle** (one deliberate scope upgrade, forces
-   re-login once): warn users, unban-request approve/deny queue, AutoMod v2
-   queue; fold in the deferred Wave 2 read surfaces (blocked terms,
-   warnings, mods/VIPs) where they pair with a manage action. Build order
-   and scopes: `chat-native-roadmap.md` § Wave 3.
-2. Replies + availability/entitlement gate remain open (gate decision
-   gates Wave 4).
+1. **Dogfood wave 3** (above) — especially the once-only re-login the new
+   scopes force, and AutoMod holds arriving while the queue sheet is open.
+2. Availability/entitlement gate decision — gates Wave 4 (roadmap § Wave 4).
 
 Process notes: `AGENTS.md` session-start checklist is now resume-proof
 (run it anyway). Default process tier **S**. Test gotchas that cost real
-time this wave (fake-async real I/O → `tester.runAsync`; spinner sheets +
-`pumpAndSettle` → bounded pumps; no Observer in sheets) are recorded in
-`changelog-agent.md`.
+time (fake-async real I/O → `tester.runAsync`; spinner/device-code sheets +
+`pumpAndSettle` → bounded pumps; typedef widening touchpoints; fake counters
+record failed attempts) are recorded in `changelog-agent.md`.
 
 **Cursor note:** visual companion under Cursor needs
 `visual-companion-cursor` (foreground `--foreground` start) — bare
@@ -104,7 +101,7 @@ in `docs/private/maintainer-workflow.md`.
 |---|---|
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
-| [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1+2 shipped, 3 next |
+| [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |

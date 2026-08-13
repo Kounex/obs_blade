@@ -2,8 +2,8 @@
 
 Audit of the Twitch API surface (Helix + EventSub) against the native chat
 implementation, to decide what else is worth building. Verified against live
-dev.twitch.tv docs on **2026-08-12**. Status snapshot: native chat dogfood wave
-closed (see `session-handoff.md`); replies shipped both directions; only the
+dev.twitch.tv docs on **2026-08-12**. Status snapshot: waves 1–3 shipped (see
+`session-handoff.md`); replies shipped both directions; only the
 availability/entitlement gate remains on the old checklist.
 
 Code anchors: `lib/utils/twitch/`, `lib/stores/views/twitch_*.dart`,
@@ -63,21 +63,37 @@ The token already carries everything these need — no re-login flow.
   moderators/VIPs: pure read surfaces with no action attached; revisit with
   Wave 3 where their manage counterparts land.
 
-## Wave 3 — mod tooling (one scope-upgrade bundle)
+## Wave 3 — mod tooling (one scope-upgrade bundle) — **SHIPPED 2026-08-13**
 
-Best phone-form-factor features Twitch's API offers; ship as one bundle so the
-silent scope upgrade happens once.
+Best phone-form-factor features Twitch's API offers; shipped as one bundle so
+the silent scope upgrade happens once (`kTwitchManageModToolingScopes` —
+`moderator:manage:warnings`/`unban_requests`/`automod` — folded into
+`kTwitchChatScopes`; pre-upgrade tokens keep working and get the re-login CTA
+on the gated rows).
 
-- **Warn users** — `POST /helix/moderation/warnings` +
-  `channel.warning.send/.acknowledge`; `moderator:manage:warnings`.
-- **Unban-request inbox** — `GET/PUT /helix/moderation/unban_requests` +
-  EventSub create/resolve; `moderator:manage:unban_requests` (read part already
-  held). Approve/deny queue.
-- **AutoMod queue** — `automod.message.hold/.update` **v2** +
-  `POST /helix/moderation/automod/message`; `moderator:manage:automod`.
-- Optional: suspicious-user flagging (`moderator:read/manage:suspicious_users`,
-  Add/Remove GA since 2026-02). Note: no "list suspicious users" endpoint —
-  events only.
+- **Warn users** ✅ — `POST /helix/moderation/warnings`; "Warn…" row in the
+  mod action sheet swaps to a reason-compose step (the send is the confirm,
+  500-char cap). The warned user must acknowledge in chat before chatting
+  again — no local ack surface needed. `channel.warning.send/.acknowledge`
+  EventSub subs deliberately not taken (the confirm toast is enough).
+- **Unban-request approve/deny** ✅ — `PUT /helix/moderation/unban_requests`;
+  request rows in the "Bans & requests…" sheet gain Approve/Deny pills
+  (approve also lifts the ban, both confirm; optimistic removal). Pre-upgrade
+  tokens keep the plain Unban pill. EventSub create/resolve subs deliberately
+  not taken — the sheet refreshes on open.
+- **AutoMod queue** ✅ — `automod.message.hold/.update` **v2** (channel-scoped
+  pair, re-created per switch; `moderator_user_id: self`) feed a live
+  `autoModQueue` on the store; "AutoMod queue (N)…" row in the channel mod
+  sheet opens the queue sheet with Allow/Deny confirms
+  (`POST /helix/moderation/automod/message`). Rows: message + "AutoMod ·
+  category · level N · time" (or "Blocked term"). The update echo is an
+  idempotent remove.
+- **Warnings read surface** ✅ — `GET /helix/moderation/warnings` (read scope
+  already in the held bundle) lists up to 3 recent warnings on the chat user
+  card, mod view only, non-self only.
+- Cut: blocked-terms and mods/VIPs lists (pure reads, no paired manage action
+  surfaced), suspicious-user flagging (events only, no list endpoint),
+  shield-button AutoMod badge.
 
 ## Wave 4 — streamer actions (needs the entitlement decision first)
 
@@ -130,8 +146,7 @@ wave rather than before it.
 
 1. ~~Wave 1 (correctness)~~ — shipped 2026-08-13
 2. ~~Wave 2 (free — pins + unban + ban-list inbox)~~ — shipped 2026-08-13
-3. Wave 3 (mod tooling bundle — one scope upgrade; fold in the deferred
-   Wave 2 read surfaces where they pair with a manage action)
+3. ~~Wave 3 (mod tooling bundle — one scope upgrade)~~ — shipped 2026-08-13
 4. Entitlement gate decision, then Wave 4
 
 ## Sources
