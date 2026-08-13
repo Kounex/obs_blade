@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/automod_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
@@ -47,6 +48,8 @@ void main() {
   late List<ChatClearUserMessagesEvent> purges;
   late List<ChatClearEvent> clears;
   late List<(String, String)> moderationDeletes;
+  late List<AutoModMessageHoldEvent> autoModHolds;
+  late List<AutoModMessageUpdateEvent> autoModUpdates;
 
   String welcome(String sessionId) => json.encode({
         'metadata': {
@@ -137,6 +140,22 @@ void main() {
         sleep: (_) async {},
       );
 
+  TwitchEventSubService autoModServiceWith(MockClient client) =>
+      TwitchEventSubService(
+        onChatMessage: messages.add,
+        onAutoModMessageHold: autoModHolds.add,
+        onAutoModMessageUpdate: autoModUpdates.add,
+        onStateChanged: states.add,
+        onRevoked: revocations.add,
+        client: client,
+        channelFactory: (uri) {
+          final channel = FakeWebSocketChannel();
+          channels.add(channel);
+          return channel;
+        },
+        sleep: (_) async {},
+      );
+
   setUp(() {
     channels = [];
     states = [];
@@ -146,6 +165,8 @@ void main() {
     purges = [];
     clears = [];
     moderationDeletes = [];
+    autoModHolds = [];
+    autoModUpdates = [];
   });
 
   test('welcome subscribes to message + lifecycle types with the session id',
@@ -747,6 +768,208 @@ void main() {
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-11',
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=sub-6',
       ]);
+    });
+  });
+
+  group('automod v2', () {
+    String autoModNotification(String type, Map<String, Object?> event) =>
+        json.encode({
+          'metadata': {
+            'message_id': 'am-1',
+            'message_type': 'notification',
+            'message_timestamp': '2026-08-13T10:00:00.000Z',
+            'subscription_type': type,
+            'subscription_version': '2',
+          },
+          'payload': {
+            'subscription': {'type': type},
+            'event': event,
+          },
+        });
+
+    test('includeAutoMod appends v2 hold/update subs for the selected channel',
+        () async {
+      final bodies = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        bodies.add(json.decode(request.body) as Map<String, dynamic>);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-${bodies.length}'}
+            ],
+          }),
+          202,
+        );
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-9',
+          includeAutoMod: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+
+      expect(bodies.map((body) => body['type']), [
+        'channel.chat.message',
+        'channel.chat.notification',
+        'channel.chat.message_delete',
+        'channel.chat.clear_user_messages',
+        'channel.chat.clear',
+        'automod.message.hold',
+        'automod.message.update',
+      ]);
+      for (final body in bodies.sublist(5)) {
+        expect(body['version'], '2');
+        expect(body['condition'],
+            {'broadcaster_user_id': 'chan-9', 'moderator_user_id': 'user-1'});
+      }
+    });
+
+    test('hold and update notifications dispatch parsed events', () async {
+      final client = MockClient((request) async =>
+          http.Response(json.encode({'data': [{'id': 'sub-1'}]}), 202));
+
+      final service = autoModServiceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-9',
+          includeAutoMod: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+
+      channels.single.incoming.add(autoModNotification('automod.message.hold', {
+        'broadcaster_user_id': 'chan-9',
+        'user_id': 'u-bad',
+        'user_login': 'troll',
+        'user_name': 'Troll',
+        'message_id': 'msg-held-1',
+        'message': {
+          'text': 'This is a bad message',
+          'fragments': [
+            {'type': 'text', 'text': 'This is a bad message'},
+          ],
+        },
+        'reason': 'automod',
+        'automod': {
+          'category': 'aggressive',
+          'level': 3,
+          'boundaries': [
+            {'start_pos': 0, 'end_pos': 10},
+          ],
+        },
+        'blocked_term': null,
+        'held_at': '2026-08-13T09:59:00Z',
+      }));
+      channels.single.incoming
+          .add(autoModNotification('automod.message.update', {
+        'broadcaster_user_id': 'chan-9',
+        'moderator_user_id': 'user-1',
+        'moderator_user_login': 'kounex',
+        'moderator_user_name': 'Kounex',
+        'user_id': 'u-bad',
+        'user_login': 'troll',
+        'user_name': 'Troll',
+        'message_id': 'msg-held-1',
+        'message': {
+          'text': 'This is a bad message',
+          'fragments': [],
+        },
+        'reason': 'automod',
+        'automod': null,
+        'blocked_term': null,
+        'status': 'approved',
+        'held_at': '2026-08-13T09:59:00Z',
+      }));
+      await pumpEventQueue();
+
+      expect(autoModHolds, hasLength(1));
+      final hold = autoModHolds.single;
+      expect(hold.messageId, 'msg-held-1');
+      expect(hold.userId, 'u-bad');
+      expect(hold.userName, 'Troll');
+      expect(hold.message.text, 'This is a bad message');
+      expect(hold.reason, 'automod');
+      expect(hold.automod?.category, 'aggressive');
+      expect(hold.automod?.level, 3);
+      expect(hold.heldAt, DateTime.utc(2026, 8, 13, 9, 59));
+
+      expect(autoModUpdates, hasLength(1));
+      expect(autoModUpdates.single.messageId, 'msg-held-1');
+      expect(autoModUpdates.single.status, 'approved');
+    });
+
+    test('a failing automod POST degrades the queue, not chat', () async {
+      var posts = 0;
+      final client = MockClient((request) async {
+        posts++;
+        if (posts >= 6) return http.Response('Forbidden', 403);
+        return http.Response(
+            json.encode({
+              'data': [
+                {'id': 'sub-$posts'}
+              ],
+            }),
+            202);
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-9',
+          includeAutoMod: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+
+      expect(posts, 7);
+      expect(revocations, isEmpty);
+      expect(states, contains(TwitchEventSubState.connected));
+    });
+
+    test('switchChannel tears the automod subs down and re-creates them for '
+        'the new channel', () async {
+      final deletedUrls = <String>[];
+      final bodies = <Map<String, dynamic>>[];
+      final client = MockClient((request) async {
+        if (request.method == 'DELETE') {
+          deletedUrls.add(request.url.toString());
+          return http.Response('', 204);
+        }
+        bodies.add(json.decode(request.body) as Map<String, dynamic>);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'id': 'sub-${bodies.length}'}
+            ],
+          }),
+          202,
+        );
+      });
+
+      final service = serviceWith(client);
+      await service.connect(
+          accessToken: 'token-1',
+          userId: 'user-1',
+          broadcasterId: 'chan-1',
+          includeAutoMod: true);
+      channels.single.incoming.add(welcome('session-1'));
+      await pumpEventQueue();
+      expect(bodies, hasLength(7));
+
+      await service.switchChannel('chan-2');
+
+      /// All 7 subs are channel-scoped — the automod pair included.
+      expect(deletedUrls, hasLength(7));
+      expect(bodies, hasLength(14));
+      for (final body in bodies.sublist(12)) {
+        expect(body['version'], '2');
+        expect(body['condition'],
+            {'broadcaster_user_id': 'chan-2', 'moderator_user_id': 'user-1'});
+      }
+      expect(states.last, TwitchEventSubState.connected);
     });
   });
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:obs_blade/types/classes/twitch/eventsub/automod_events.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/chat_lifecycle_events.dart';
@@ -48,6 +49,13 @@ class TwitchEventSubService {
   /// uses `moderator_user_id`).
   static const String _kModerateType = 'channel.moderate';
 
+  /// `automod.message.hold/.update` v2 — the AutoMod queue pair, created
+  /// per selected channel when [connect] passes `includeAutoMod` (the
+  /// token must carry `moderator:manage:automod`; the moderator condition
+  /// slot pins the session user, valid for any channel they moderate).
+  static const String _kAutoModHoldType = 'automod.message.hold';
+  static const String _kAutoModUpdateType = 'automod.message.update';
+
   final http.Client _client;
   final WebSocketChannel Function(Uri) _channelFactory;
   final Future<void> Function(Duration) _sleep;
@@ -67,6 +75,11 @@ class TwitchEventSubService {
   /// `channel.moderate` v2 — delete / timeout / ban (tombstone markers +
   /// delete actor reveal). Optional; a null callback skips parsing.
   final void Function(ChannelModerateEvent event)? onChannelModerate;
+
+  /// `automod.message.hold/.update` v2 — AutoMod queue arrivals and
+  /// resolutions. Optional; a null callback skips parsing.
+  final void Function(AutoModMessageHoldEvent event)? onAutoModMessageHold;
+  final void Function(AutoModMessageUpdateEvent event)? onAutoModMessageUpdate;
 
   final void Function(TwitchEventSubState state) onStateChanged;
 
@@ -94,6 +107,7 @@ class TwitchEventSubService {
   /// added channel after a multi-chat [switchChannel].
   String? _broadcasterId;
   bool _includeModeration = false;
+  bool _includeAutoMod = false;
   String? _sessionId;
 
   /// Channel-scoped ids created on the current session (message +
@@ -115,6 +129,8 @@ class TwitchEventSubService {
     this.onClearUserMessages,
     this.onChatClear,
     this.onChannelModerate,
+    this.onAutoModMessageHold,
+    this.onAutoModMessageUpdate,
     required this.onStateChanged,
     required this.onRevoked,
     http.Client? client,
@@ -129,11 +145,13 @@ class TwitchEventSubService {
     required String userId,
     required String broadcasterId,
     bool includeModeration = false,
+    bool includeAutoMod = false,
   }) async {
     this._accessToken = accessToken;
     this._userId = userId;
     this._broadcasterId = broadcasterId;
     this._includeModeration = includeModeration;
+    this._includeAutoMod = includeAutoMod;
     this._disposed = false;
     this._reconnectAttempts = 0;
     this._openSocket(Uri.parse(_wsUrl));
@@ -297,6 +315,24 @@ class TwitchEventSubService {
           if (callback != null) {
             callback(
               ChannelModerateEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
+            );
+          }
+        case 'automod.message.hold':
+          final callback = this.onAutoModMessageHold;
+          if (callback != null) {
+            callback(
+              AutoModMessageHoldEvent.fromJson(
+                envelope.payload['event'] as Map<String, Object?>,
+              ),
+            );
+          }
+        case 'automod.message.update':
+          final callback = this.onAutoModMessageUpdate;
+          if (callback != null) {
+            callback(
+              AutoModMessageUpdateEvent.fromJson(
                 envelope.payload['event'] as Map<String, Object?>,
               ),
             );
@@ -500,8 +536,68 @@ class TwitchEventSubService {
         );
       }
     }
+    if (this._includeAutoMod) {
+      created.addAll(await this._createAutoModSubscriptions());
+    }
     this._subscriptionIds = created;
     return true;
+  }
+
+  /// `automod.message.hold/.update` v2 for the CURRENT [_broadcasterId] —
+  /// channel-scoped (unlike the own-channel `channel.moderate` sub), so
+  /// the queue follows [switchChannel]: the moderator condition slot is
+  /// the session user, valid for any channel they moderate. Best-effort:
+  /// failures degrade the queue, never chat. Returns the created ids.
+  Future<List<String>> _createAutoModSubscriptions() async {
+    final token = this._accessToken;
+    final userId = this._userId;
+    final broadcasterId = this._broadcasterId;
+    final sessionId = this._sessionId;
+    if (token == null ||
+        userId == null ||
+        broadcasterId == null ||
+        sessionId == null) {
+      return const [];
+    }
+
+    final created = <String>[];
+    for (final type in const [_kAutoModHoldType, _kAutoModUpdateType]) {
+      try {
+        final response = await this._client.post(
+          Uri.parse(_subscriptionsUrl),
+          headers: {
+            ...TwitchAuthService.helixHeaders(token),
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'type': type,
+            'version': '2',
+            'condition': {
+              'broadcaster_user_id': broadcasterId,
+              'moderator_user_id': userId,
+            },
+            'transport': {'method': 'websocket', 'session_id': sessionId},
+          }),
+        );
+
+        if (response.statusCode == 202) {
+          final data =
+              (json.decode(response.body) as Map<String, dynamic>)['data'];
+          final id = (data as List).first['id'] as String?;
+          if (id != null) created.add(id);
+        } else {
+          GeneralHelper.advLog(
+            'Twitch EventSub: automod subscription $type failed '
+            '(${response.statusCode}) — queue degraded this session',
+          );
+        }
+      } catch (e) {
+        GeneralHelper.advLog(
+          'Twitch EventSub: automod subscription $type failed — $e',
+        );
+      }
+    }
+    return created;
   }
 
   /// `channel.moderate` v2 — own-channel only (both condition slots are
