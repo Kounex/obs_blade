@@ -24,6 +24,17 @@ const List<String> kTwitchModerationScopes = <String>[
   'moderator:read:vips',
 ];
 
+/// Wave 3 mod-tooling manage bundle — warn users, resolve unban requests,
+/// and work the AutoMod queue (the `automod.message.*` v2 subscriptions
+/// also require `moderator:manage:automod`). One deliberate scope upgrade:
+/// pre-upgrade tokens keep working read-only and get the re-login CTA on
+/// the gated rows.
+const List<String> kTwitchManageModToolingScopes = <String>[
+  'moderator:manage:warnings',
+  'moderator:manage:unban_requests',
+  'moderator:manage:automod',
+];
+
 /// Chat scopes requested in the device flow — read incoming chat, send
 /// messages as the authenticated user, list the emotes they can use
 /// (emote picker), and read their own channel's moderation actions
@@ -43,6 +54,7 @@ const List<String> kTwitchChatScopes = <String>[
   'moderator:manage:chat_settings',
   'moderator:manage:shield_mode',
   'moderator:manage:announcements',
+  ...kTwitchManageModToolingScopes,
   ...kTwitchModerationScopes,
 ];
 

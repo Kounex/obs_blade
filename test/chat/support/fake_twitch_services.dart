@@ -14,6 +14,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user_emote.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_warning.dart';
 import 'package:obs_blade/utils/twitch/third_party_emote_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_badge_service.dart';
@@ -507,6 +508,10 @@ class FakeTwitchModerationService extends TwitchModerationService {
   Object? getBansThrows;
   Object? unbanThrows;
   Object? unbanRequestsThrows;
+  Object? resolveUnbanRequestThrows;
+  Object? warnThrows;
+  Object? getWarningsThrows;
+  Object? autoModThrows;
 
   int deleteCalls = 0;
   int banCalls = 0;
@@ -522,6 +527,10 @@ class FakeTwitchModerationService extends TwitchModerationService {
   int getBansCalls = 0;
   int unbanCalls = 0;
   int unbanRequestsCalls = 0;
+  int resolveUnbanRequestCalls = 0;
+  int warnCalls = 0;
+  int getWarningsCalls = 0;
+  int autoModCalls = 0;
   String? lastDeleteBroadcasterId;
   String? lastDeleteModeratorId;
   String? lastDeleteMessageId;
@@ -552,6 +561,17 @@ class FakeTwitchModerationService extends TwitchModerationService {
   String? lastPinMessageId;
   String? lastUnpinMessageId;
   String? lastUnbanUserId;
+  String? lastResolveUnbanRequestId;
+  bool? lastResolveUnbanApproved;
+  String? lastWarnBroadcasterId;
+  String? lastWarnModeratorId;
+  String? lastWarnUserId;
+  String? lastWarnReason;
+  String? lastWarningsBroadcasterId;
+  String? lastWarningsUserId;
+  String? lastAutoModModeratorId;
+  String? lastAutoModMessageId;
+  bool? lastAutoModAllow;
 
   /// Sample pinned message returned by [getPinnedChatMessage] when
   /// [pinnedMessageResult] is left untouched — assign a custom one (or
@@ -599,9 +619,22 @@ class FakeTwitchModerationService extends TwitchModerationService {
     text: 'sorry, will behave',
   );
 
+  /// Warning sample for the user-card warnings section.
+  static final warningSample = TwitchWarning(
+    userId: 'bad-1',
+    userLogin: 'troll',
+    userName: 'Troll',
+    moderatorName: 'Kounex',
+    reason: 'spoiling movies',
+    warnedAt: DateTime.utc(2026, 8, 12),
+  );
+
   /// Ban inbox results — assigned into the store by the refresh.
   List<TwitchBannedUser> bannedUsersResult = const [bannedSample];
   List<TwitchUnbanRequest> unbanRequestsResult = const [unbanRequestSample];
+
+  /// Warnings returned by [getWarnings].
+  List<TwitchWarning> warningsResult = [warningSample];
 
   TwitchChatSettings chatSettings = const TwitchChatSettings(
     emoteMode: false,
@@ -842,6 +875,85 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.unbanRequestsCalls++;
     if (this.unbanRequestsThrows != null) throw this.unbanRequestsThrows!;
     return List.of(this.unbanRequestsResult);
+  }
+
+  @override
+  Future<void> resolveUnbanRequest({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String requestId,
+    required bool approved,
+    String? resolutionText,
+  }) async {
+    this.resolveUnbanRequestCalls++;
+    this.lastResolveUnbanRequestId = requestId;
+    this.lastResolveUnbanApproved = approved;
+    if (this.resolveUnbanRequestThrows != null) {
+      throw this.resolveUnbanRequestThrows!;
+    }
+
+    /// Mirror Helix: the request leaves the pending list, and an approval
+    /// also lifts the ban.
+    final matches = this
+        .unbanRequestsResult
+        .where((request) => request.id == requestId)
+        .toList();
+    final resolvedUserId = matches.isEmpty ? null : matches.first.userId;
+    this.unbanRequestsResult = this
+        .unbanRequestsResult
+        .where((request) => request.id != requestId)
+        .toList();
+    if (approved && resolvedUserId != null) {
+      this.bannedUsersResult = this
+          .bannedUsersResult
+          .where((user) => user.userId != resolvedUserId)
+          .toList();
+    }
+  }
+
+  @override
+  Future<void> warnUser({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String userId,
+    required String reason,
+  }) async {
+    this.warnCalls++;
+    this.lastWarnBroadcasterId = broadcasterId;
+    this.lastWarnModeratorId = moderatorId;
+    this.lastWarnUserId = userId;
+    this.lastWarnReason = reason;
+    if (this.warnThrows != null) throw this.warnThrows!;
+  }
+
+  @override
+  Future<List<TwitchWarning>> getWarnings({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String userId,
+  }) async {
+    this.getWarningsCalls++;
+    this.lastWarningsBroadcasterId = broadcasterId;
+    this.lastWarningsUserId = userId;
+    if (this.getWarningsThrows != null) throw this.getWarningsThrows!;
+    return List.of(this.warningsResult);
+  }
+
+  @override
+  Future<void> handleAutoModMessage({
+    required String accessToken,
+    required String moderatorId,
+    required String messageId,
+    required bool allow,
+  }) async {
+    this.autoModCalls++;
+    this.lastAutoModModeratorId = moderatorId;
+    this.lastAutoModMessageId = messageId;
+    this.lastAutoModAllow = allow;
+    if (this.autoModThrows != null) throw this.autoModThrows!;
   }
 }
 

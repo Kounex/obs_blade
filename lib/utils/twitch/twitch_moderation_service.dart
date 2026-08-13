@@ -4,14 +4,16 @@ import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_banned_user.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_warning.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 
 /// Helix mod actions for the multi-chat mod action sheet — delete a
 /// message, timeout or ban a user, clear chat, chat modes, Shield Mode,
-/// announcements, message pins, and the ban inbox (banned users, unban,
-/// pending unban requests) — in any channel the logged-in user moderates
-/// (the banned-users list is the exception: Helix only serves the token
-/// user's own channel there).
+/// announcements, message pins, the ban inbox (banned users, unban,
+/// pending unban requests incl. approve/deny), warnings (warn + list),
+/// and the AutoMod queue (allow/deny held messages) — in any channel the
+/// logged-in user moderates (the banned-users list is the exception:
+/// Helix only serves the token user's own channel there).
 /// Requires a user access token with `moderator:manage:chat_messages`
 /// (delete / clear / pins), `moderator:manage:banned_users` (timeout/ban/
 /// unban), `moderator:manage:chat_settings` (modes),
@@ -21,6 +23,9 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 /// `moderator:read:chat_messages`, the ban list `moderator:manage:
 /// banned_users` (or `moderation:read`, not requested), and unban
 /// requests `moderator:read:unban_requests` — all in the held bundles.
+/// The Wave 3 additions need `kTwitchManageModToolingScopes`:
+/// `moderator:manage:warnings` (warn), `moderator:manage:unban_requests`
+/// (approve/deny), and `moderator:manage:automod` (queue).
 ///
 /// [client] is injectable for tests — no real HTTP in unit tests.
 class TwitchModerationService {
@@ -430,8 +435,7 @@ class TwitchModerationService {
   }
 
   /// Pending unban requests in [broadcasterId]'s channel (newest first;
-  /// 100 per page, up to 3 pages like [getBannedUsers]). Read-only —
-  /// approving/denying a request is a separate scope and not exposed.
+  /// 100 per page, up to 3 pages like [getBannedUsers]).
   Future<List<TwitchUnbanRequest>> getPendingUnbanRequests({
     required String accessToken,
     required String broadcasterId,
@@ -468,5 +472,147 @@ class TwitchModerationService {
       if (cursor == null || rows.isEmpty) break;
     }
     return requests;
+  }
+
+  /// Approve or deny the unban request [requestId] in [broadcasterId]'s
+  /// channel (Helix 200, returns the updated request). Approving unbans
+  /// the user. Requires `moderator:manage:unban_requests`.
+  Future<void> resolveUnbanRequest({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String requestId,
+    required bool approved,
+    String? resolutionText,
+  }) async {
+    final response = await this._client.put(
+      Uri.parse('$kTwitchHelixBase/moderation/unban_requests')
+          .replace(queryParameters: {
+        'broadcaster_id': broadcasterId,
+        'moderator_id': moderatorId,
+        'unban_request_id': requestId,
+      }),
+      headers: {
+        ...TwitchAuthService.helixHeaders(accessToken),
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'status': approved ? 'approved' : 'denied',
+        if (resolutionText != null && resolutionText.isNotEmpty)
+          'resolution_text': resolutionText,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw TwitchAuthException(
+        'Resolving a Twitch unban request failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+  }
+
+  /// Warn [userId] in [broadcasterId]'s channel with [reason] (Helix
+  /// 200). The warned user must acknowledge the warning before chatting
+  /// again. Requires `moderator:manage:warnings`.
+  Future<void> warnUser({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String userId,
+    required String reason,
+  }) async {
+    final response = await this._client.post(
+      Uri.parse('$kTwitchHelixBase/moderation/warnings')
+          .replace(queryParameters: {
+        'broadcaster_id': broadcasterId,
+        'moderator_id': moderatorId,
+      }),
+      headers: {
+        ...TwitchAuthService.helixHeaders(accessToken),
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'data': {'user_id': userId, 'reason': reason},
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw TwitchAuthException(
+        'Warning a Twitch user failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+  }
+
+  /// Warnings issued to [userId] in [broadcasterId]'s channel, newest
+  /// first (100 per page, up to 3 pages like [getBannedUsers]). Read-only
+  /// — needs only `moderator:read:warnings` from the held bundle.
+  Future<List<TwitchWarning>> getWarnings({
+    required String accessToken,
+    required String broadcasterId,
+    required String moderatorId,
+    required String userId,
+  }) async {
+    final warnings = <TwitchWarning>[];
+    String? cursor;
+    for (var page = 0; page < 3; page++) {
+      final response = await this._client.get(
+        Uri.parse('$kTwitchHelixBase/moderation/warnings')
+            .replace(queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+          'user_id': userId,
+          'first': '100',
+          if (cursor != null) 'after': cursor,
+        }),
+        headers: TwitchAuthService.helixHeaders(accessToken),
+      );
+      if (response.statusCode != 200) {
+        throw TwitchAuthException(
+          'Fetching Twitch warnings failed (${response.statusCode})',
+          cause: response.body,
+          statusCode: response.statusCode,
+        );
+      }
+      final data = json.decode(response.body) as Map<String, Object?>;
+      final rows = data['data'] as List<Object?>? ?? const [];
+      warnings.addAll(rows.map(
+        (row) => TwitchWarning.fromHelixJson(row as Map<String, Object?>),
+      ));
+      cursor = (data['pagination'] as Map<String, Object?>?)?['cursor']
+          as String?;
+      if (cursor == null || rows.isEmpty) break;
+    }
+    return warnings;
+  }
+
+  /// Allow or deny the held AutoMod message [messageId] (Helix 204).
+  /// `user_id` in the body is the resolving moderator, not the author.
+  /// Requires `moderator:manage:automod`.
+  Future<void> handleAutoModMessage({
+    required String accessToken,
+    required String moderatorId,
+    required String messageId,
+    required bool allow,
+  }) async {
+    final response = await this._client.post(
+      Uri.parse('$kTwitchHelixBase/moderation/automod/message'),
+      headers: {
+        ...TwitchAuthService.helixHeaders(accessToken),
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'user_id': moderatorId,
+        'msg_id': messageId,
+        'action': allow ? 'ALLOW' : 'DENY',
+      }),
+    );
+    if (response.statusCode != 204) {
+      throw TwitchAuthException(
+        'Resolving a held AutoMod message failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
   }
 }

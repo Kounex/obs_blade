@@ -764,4 +764,275 @@ void main() {
       );
     });
   });
+
+  group('resolveUnbanRequest', () {
+    test('PUTs moderation/unban_requests with the resolution status',
+        () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'PUT');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/unban_requests'
+          '?broadcaster_id=chan-1&moderator_id=user-1'
+          '&unban_request_id=req-1',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Content-Type'], 'application/json');
+        expect(json.decode(request.body), {'status': 'approved'});
+        return http.Response(json.encode({'data': []}), 200);
+      });
+
+      await TwitchModerationService(client: client).resolveUnbanRequest(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        requestId: 'req-1',
+        approved: true,
+      );
+    });
+
+    test('sends denied plus the resolution text', () async {
+      final client = MockClient((request) async {
+        expect(json.decode(request.body), {
+          'status': 'denied',
+          'resolution_text': 'ban stays',
+        });
+        return http.Response(json.encode({'data': []}), 200);
+      });
+
+      await TwitchModerationService(client: client).resolveUnbanRequest(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        requestId: 'req-1',
+        approved: false,
+        resolutionText: 'ban stays',
+      );
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 401));
+
+      expect(
+        TwitchModerationService(client: client).resolveUnbanRequest(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+          requestId: 'req-1',
+          approved: true,
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+    });
+  });
+
+  group('warnUser', () {
+    test('POSTs moderation/warnings with user id and reason', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/warnings'
+          '?broadcaster_id=chan-1&moderator_id=user-1',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Content-Type'], 'application/json');
+        expect(json.decode(request.body), {
+          'data': {'user_id': 'bad-1', 'reason': 'spoiling movies'},
+        });
+        return http.Response(json.encode({'data': []}), 200);
+      });
+
+      await TwitchModerationService(client: client).warnUser(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        userId: 'bad-1',
+        reason: 'spoiling movies',
+      );
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 403));
+
+      expect(
+        TwitchModerationService(client: client).warnUser(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+          userId: 'bad-1',
+          reason: 'spoiling movies',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 403),
+        ),
+      );
+    });
+  });
+
+  group('getWarnings', () {
+    test('GETs moderation/warnings filtered by user id', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/warnings'
+          '?broadcaster_id=chan-1&moderator_id=user-1&user_id=bad-1'
+          '&first=100',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        return http.Response(
+          json.encode({
+            'data': [
+              {
+                'user_id': 'bad-1',
+                'user_login': 'troll',
+                'user_name': 'Troll',
+                'moderator_id': 'user-1',
+                'moderator_login': 'kounex',
+                'moderator_name': 'Kounex',
+                'reason': 'spoiling movies',
+                'warned_at': '2026-08-12T10:00:00Z',
+              },
+            ],
+            'pagination': {},
+          }),
+          200,
+        );
+      });
+
+      final warnings = await TwitchModerationService(client: client)
+          .getWarnings(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        userId: 'bad-1',
+      );
+
+      expect(warnings, hasLength(1));
+      expect(warnings[0].userId, 'bad-1');
+      expect(warnings[0].reason, 'spoiling movies');
+      expect(warnings[0].moderatorName, 'Kounex');
+      expect(warnings[0].warnedAt, DateTime.utc(2026, 8, 12, 10));
+    });
+
+    test('follows the pagination cursor', () async {
+      final requestedAfters = <String?>[];
+      final client = MockClient((request) async {
+        requestedAfters.add(request.url.queryParameters['after']);
+        if (request.url.queryParameters['after'] == null) {
+          return http.Response(
+            json.encode({
+              'data': [
+                {'user_id': 'bad-1'},
+              ],
+              'pagination': {'cursor': 'page-2'},
+            }),
+            200,
+          );
+        }
+        return http.Response(
+          json.encode({
+            'data': [
+              {'user_id': 'bad-2'},
+            ],
+            'pagination': {},
+          }),
+          200,
+        );
+      });
+
+      final warnings = await TwitchModerationService(client: client)
+          .getWarnings(
+        accessToken: 'token-1',
+        broadcasterId: 'chan-1',
+        moderatorId: 'user-1',
+        userId: 'bad-1',
+      );
+
+      expect(requestedAfters, [null, 'page-2']);
+      expect(warnings.map((warning) => warning.userId), ['bad-1', 'bad-2']);
+    });
+
+    test('throws TwitchAuthException with status on non-200', () {
+      final client = MockClient((request) async => http.Response('nope', 401));
+
+      expect(
+        TwitchModerationService(client: client).getWarnings(
+          accessToken: 'token-1',
+          broadcasterId: 'chan-1',
+          moderatorId: 'user-1',
+          userId: 'bad-1',
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 401),
+        ),
+      );
+    });
+  });
+
+  group('handleAutoModMessage', () {
+    test('POSTs moderation/automod/message with the resolution action',
+        () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/automod/message',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        expect(request.headers['Content-Type'], 'application/json');
+        expect(json.decode(request.body), {
+          'user_id': 'user-1',
+          'msg_id': 'msg-held-1',
+          'action': 'ALLOW',
+        });
+        return http.Response('', 204);
+      });
+
+      await TwitchModerationService(client: client).handleAutoModMessage(
+        accessToken: 'token-1',
+        moderatorId: 'user-1',
+        messageId: 'msg-held-1',
+        allow: true,
+      );
+    });
+
+    test('sends DENY when allow is false', () async {
+      final client = MockClient((request) async {
+        expect((json.decode(request.body) as Map<String, dynamic>)['action'],
+            'DENY');
+        return http.Response('', 204);
+      });
+
+      await TwitchModerationService(client: client).handleAutoModMessage(
+        accessToken: 'token-1',
+        moderatorId: 'user-1',
+        messageId: 'msg-held-1',
+        allow: false,
+      );
+    });
+
+    test('throws TwitchAuthException with status on non-204', () {
+      final client = MockClient((request) async => http.Response('nope', 400));
+
+      expect(
+        TwitchModerationService(client: client).handleAutoModMessage(
+          accessToken: 'token-1',
+          moderatorId: 'user-1',
+          messageId: 'msg-held-1',
+          allow: true,
+        ),
+        throwsA(
+          isA<TwitchAuthException>()
+              .having((e) => e.statusCode, 'statusCode', 400),
+        ),
+      );
+    });
+  });
 }
