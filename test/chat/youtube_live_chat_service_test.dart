@@ -119,6 +119,27 @@ void main() {
       );
     });
 
+    test(
+      '403 userRateLimitExceeded maps to YouTubeRateLimitedException '
+      '(transient throttle, not quota exhaustion)',
+      () {
+        final client = MockClient(
+          (request) async => errorBody(403, 'userRateLimitExceeded'),
+        );
+
+        expect(
+          serviceWith(client).listMessages('chat-1', null, apiKey: 'k'),
+          throwsA(
+            isA<YouTubeRateLimitedException>().having(
+              (e) => e,
+              'not a quota stop',
+              isNot(isA<YouTubeQuotaExceededException>()),
+            ),
+          ),
+        );
+      },
+    );
+
     test('403 liveChatEnded maps to YouTubeChatEndedException', () {
       final client = MockClient(
         (request) async => errorBody(403, 'liveChatEnded'),

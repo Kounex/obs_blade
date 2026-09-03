@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_device_code.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 
 const kTestDeviceCode = YouTubeDeviceCode(
@@ -26,6 +30,7 @@ void main() {
           'https://oauth2.googleapis.com/device/code',
         );
         expect(request.bodyFields['client_id'], kYouTubeOAuthClientId);
+        expect(request.bodyFields.containsKey('client_secret'), isFalse);
         expect(
           request.bodyFields['scope'],
           'https://www.googleapis.com/auth/youtube',
@@ -68,7 +73,7 @@ void main() {
         tokenCalls++;
         expect(request.url.toString(), 'https://oauth2.googleapis.com/token');
         expect(request.bodyFields['client_id'], kYouTubeOAuthClientId);
-        expect(request.bodyFields['code'], 'dev-code-123');
+        expect(request.bodyFields['device_code'], 'dev-code-123');
         expect(
           request.bodyFields['grant_type'],
           'urn:ietf:params:oauth:grant-type:device_code',
@@ -76,7 +81,7 @@ void main() {
         if (tokenCalls < 3) {
           return http.Response(
             json.encode({'error': 'authorization_pending'}),
-            400,
+            428,
           );
         }
         return http.Response(
@@ -166,7 +171,7 @@ void main() {
     test('cancellation aborts polling', () {
       final client = MockClient(
         (request) async =>
-            http.Response(json.encode({'error': 'authorization_pending'}), 400),
+            http.Response(json.encode({'error': 'authorization_pending'}), 428),
       );
 
       expect(
@@ -188,6 +193,7 @@ void main() {
           expect(request.bodyFields['grant_type'], 'refresh_token');
           expect(request.bodyFields['refresh_token'], 'old-refresh');
           expect(request.bodyFields['client_id'], kYouTubeOAuthClientId);
+          expect(request.bodyFields.containsKey('client_secret'), isFalse);
           return http.Response(
             json.encode({
               'access_token': 'access-new',
@@ -250,5 +256,72 @@ void main() {
         kYouTubeOAuthClientId,
       );
     });
+  });
+
+  group('client secret seam', () {
+    late Directory tempDir;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('youtube_auth_secret');
+      Hive.init(tempDir.path);
+      final settings = await Hive.openBox(HiveKeys.Settings.name);
+      await settings.put(SettingsKeys.YouTubeOAuthClientId.name, 'client-1');
+      await settings.put(
+        SettingsKeys.YouTubeOAuthClientSecret.name,
+        'secret-1',
+      );
+    });
+
+    tearDown(() async {
+      await Hive.close();
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test(
+      'configured client id + secret are sent on device-code, token poll '
+      'and refresh requests',
+      () async {
+        var calls = 0;
+        final client = MockClient((request) async {
+          calls++;
+          expect(request.bodyFields['client_id'], 'client-1');
+          expect(request.bodyFields['client_secret'], 'secret-1');
+          if (request.url.path.endsWith('/device/code')) {
+            return http.Response(
+              json.encode({
+                'device_code': 'dev-code-123',
+                'user_code': 'ABCD-EFGH',
+                'verification_url': 'https://www.google.com/device',
+                'expires_in': 1800,
+                'interval': 5,
+              }),
+              200,
+            );
+          }
+          return http.Response(
+            json.encode({
+              'access_token': 'access-1',
+              'refresh_token': 'refresh-1',
+              'expires_in': 3600,
+              'scope': 'https://www.googleapis.com/auth/youtube',
+            }),
+            200,
+          );
+        });
+        final service = serviceWith(client);
+
+        await service.requestDeviceCode();
+        await service.pollForToken(
+          kTestDeviceCode,
+          onPending: () {},
+          isCancelled: () => false,
+        );
+        await service.refreshToken('refresh-1');
+
+        expect(calls, 3);
+      },
+    );
   });
 }

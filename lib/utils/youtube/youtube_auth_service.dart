@@ -14,6 +14,14 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 /// docs/youtube-native-chat-audit.md.
 const String kYouTubeOAuthClientId = '';
 
+/// App-owned Google OAuth client secret paired with
+/// [kYouTubeOAuthClientId]. Google's device flow for "TVs and Limited
+/// Input" clients requires a client secret on token polling/refresh —
+/// empty until an app-owned client exists, BYO via
+/// [SettingsKeys.YouTubeOAuthClientSecret]. See
+/// docs/youtube-native-chat-audit.md.
+const String kYouTubeOAuthClientSecret = '';
+
 /// App-owned YouTube Data API key for native chat reads. Empty for now —
 /// see docs/youtube-native-chat-audit.md; the BYO key
 /// ([SettingsKeys.YouTubeApiKey]) is the only working path.
@@ -77,6 +85,19 @@ class YouTubeAuthService {
       YouTubeAuthService._settingsValue(SettingsKeys.YouTubeOAuthClientId) ??
       kYouTubeOAuthClientId;
 
+  /// OAuth client secret resolution — `null` when none is configured
+  /// (public/installed-app clients don't have one). The user's own secret
+  /// ([SettingsKeys.YouTubeOAuthClientSecret]) wins over the app-owned
+  /// [kYouTubeOAuthClientSecret] constant.
+  String? resolveClientSecret() {
+    final configured =
+        YouTubeAuthService._settingsValue(
+          SettingsKeys.YouTubeOAuthClientSecret,
+        ) ??
+        kYouTubeOAuthClientSecret;
+    return configured.isNotEmpty ? configured : null;
+  }
+
   /// Kick off the device flow: the user authorizes
   /// [YouTubeDeviceCode.userCode] at [YouTubeDeviceCode.verificationUrl].
   Future<YouTubeDeviceCode> requestDeviceCode() async {
@@ -84,6 +105,7 @@ class YouTubeAuthService {
       Uri.parse(_kDeviceCodeUrl),
       body: {
         'client_id': this.resolveClientId(),
+        'client_secret': ?this.resolveClientSecret(),
         'scope': kYouTubeChatScopes.join(' '),
       },
     );
@@ -122,7 +144,8 @@ class YouTubeAuthService {
         Uri.parse(_kTokenUrl),
         body: {
           'client_id': this.resolveClientId(),
-          'code': deviceCode.deviceCode,
+          'client_secret': ?this.resolveClientSecret(),
+          'device_code': deviceCode.deviceCode,
           'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
         },
       );
@@ -168,6 +191,7 @@ class YouTubeAuthService {
       Uri.parse(_kTokenUrl),
       body: {
         'client_id': this.resolveClientId(),
+        'client_secret': ?this.resolveClientSecret(),
         'grant_type': 'refresh_token',
         'refresh_token': refreshToken,
       },

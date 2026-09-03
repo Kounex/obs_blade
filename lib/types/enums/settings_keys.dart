@@ -63,6 +63,13 @@ enum SettingsKeys {
   /// exists)
   YouTubeOAuthClientId,
 
+  /// [String]: The user's own Google OAuth client secret paired with
+  /// [YouTubeOAuthClientId] - Google's device flow for TVs/limited-input
+  /// clients requires one. Falls back to the app-owned
+  /// `kYouTubeOAuthClientSecret` constant (empty until an app-owned
+  /// client exists)
+  YouTubeOAuthClientSecret,
+
   /// [String]: The label (map key of [YouTubeUsernames] - stable across
   /// re-edits) of the currently selected native YouTube chat channel
   SelectedYouTubeNativeChannelId,
@@ -298,6 +305,7 @@ enum SettingsKeys {
         SettingsKeys.SelectedYouTubeUsername: 'selected-youtube-username',
         SettingsKeys.YouTubeApiKey: 'youtube-api-key',
         SettingsKeys.YouTubeOAuthClientId: 'youtube-oauth-client-id',
+        SettingsKeys.YouTubeOAuthClientSecret: 'youtube-oauth-client-secret',
         SettingsKeys.SelectedYouTubeNativeChannelId:
             'selected-youtube-native-channel-id',
         SettingsKeys.OwncastUsernames: 'owncast-usernames',

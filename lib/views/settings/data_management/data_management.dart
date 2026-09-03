@@ -186,6 +186,8 @@ class DataManagementView extends StatelessWidget {
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.YouTubeOAuthClientId.name);
                   Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.YouTubeOAuthClientSecret.name);
+                  Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.SelectedYouTubeNativeChannelId.name);
                   Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
 

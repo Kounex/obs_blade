@@ -56,6 +56,17 @@ class YouTubeQuotaExceededException extends YouTubeApiException {
   });
 }
 
+/// Transient per-user throttling (`userRateLimitExceeded`) — the poll
+/// loop should back off briefly and retry instead of stopping until the
+/// midnight-PT quota reset.
+class YouTubeRateLimitedException extends YouTubeApiException {
+  const YouTubeRateLimitedException(
+    super.message, {
+    super.cause,
+    super.statusCode,
+  });
+}
+
 /// 401/403 that isn't quota — missing credentials, insufficient
 /// permission (e.g. a mod action without being a mod), or a dead token.
 class YouTubeForbiddenException extends YouTubeApiException {
@@ -290,10 +301,19 @@ class YouTubeLiveChatService {
         statusCode: response.statusCode,
       );
     }
+
+    /// Transient per-user throttling — the poll loop should back off
+    /// briefly and retry, not treat it as project-quota exhaustion.
+    if (reason == 'userRateLimitExceeded') {
+      return YouTubeRateLimitedException(
+        message,
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
     if (reason == 'quotaExceeded' ||
         reason == 'dailyLimitExceeded' ||
-        reason == 'rateLimitExceeded' ||
-        reason == 'userRateLimitExceeded') {
+        reason == 'rateLimitExceeded') {
       return YouTubeQuotaExceededException(
         message,
         cause: response.body,
