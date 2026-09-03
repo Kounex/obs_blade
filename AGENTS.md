@@ -115,6 +115,7 @@ handoff.
 | [`docs/dashboard-store-websocket-audit.md`](docs/dashboard-store-websocket-audit.md) | DashboardStore events/responses/batches |
 | [`docs/chat-webview-audit.md`](docs/chat-webview-audit.md) | Twitch/YouTube/Owncast chat strategy |
 | [`docs/chat-native-roadmap.md`](docs/chat-native-roadmap.md) | Native chat: unexploited Twitch API surface + build order |
+| [`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md) | Native YouTube chat: API feasibility, quota reality, build plan |
 | [`docs/upgrade-plan.md`](docs/upgrade-plan.md) | Flutter / package upgrade status |
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
