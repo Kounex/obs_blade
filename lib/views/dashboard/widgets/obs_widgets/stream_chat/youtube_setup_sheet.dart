@@ -140,7 +140,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
 
   /// Persist the three settings keys (empty fields delete their key) and
   /// re-initialize the store so the pane picks the configuration up.
-  void _save() {
+  void _persist() {
     if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return;
     final settings = Hive.box(HiveKeys.Settings.name);
     void write(SettingsKeys key, String value) {
@@ -162,10 +162,18 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
       store.reloadChannels();
       unawaited(store.init());
     }
+  }
+
+  void _save() {
+    this._persist();
     if (this.mounted) Navigator.of(this.context).pop();
   }
 
   void _signIn() {
+    /// Connect-without-Save must persist first — otherwise startLogin's
+    /// !isConfigured guard bounces back to unconfigured and the
+    /// device-code dialog spins forever.
+    this._persist();
     Navigator.of(this.context).pop();
     startYouTubeLogin(this.widget.hostContext);
   }

@@ -3,7 +3,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
@@ -167,6 +170,67 @@ void main() {
       expect(settingsBox().get(SettingsKeys.YouTubeApiKey.name), isNull);
     } finally {
       await closeHiveInZone(tester);
+    }
+  });
+
+  testWidgets(
+      'Connect without Save persists the fields and starts the device flow',
+      (tester) async {
+    final store = YouTubeChatStore(
+      authService: FakeYouTubeAuthService(),
+      chatService: chatService,
+      sleep: (duration) async {},
+    );
+    try {
+      /// runAsync: box opens are real I/O — they never complete in the
+      /// fake-async zone.
+      await tester.runAsync(
+          () => Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name));
+      GetIt.instance.registerSingleton<YouTubeChatStore>(store);
+
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+
+      await tester.enterText(
+          find.byType(NativeChatTextField).at(0), 'fresh-key');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('youtube-setup-test-key')));
+      await tester.pump();
+      expect(
+          find.byKey(const Key('youtube-setup-key-valid')), findsOneWidget);
+
+      /// The collapsed tile's fields are clipped to zero size — taps miss
+      /// them and enterText would land in the still-focused key field.
+      await tester.tap(find.text('Advanced: sign-in (optional)'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find.byType(NativeChatTextField).at(1), 'fresh-client');
+      await tester.enterText(
+          find.byType(NativeChatTextField).at(2), 'fresh-secret');
+      await tester.pump();
+
+      /// No Save tap — Connect must persist on its own, otherwise
+      /// startLogin's !isConfigured guard bounces to unconfigured and the
+      /// device-code dialog spins forever (review finding).
+      await tester.ensureVisible(find.byKey(const Key('youtube-setup-sign-in')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('youtube-setup-sign-in')));
+      await tester.pump();
+
+      expect(
+          settingsBox().get(SettingsKeys.YouTubeApiKey.name), 'fresh-key');
+      expect(settingsBox().get(SettingsKeys.YouTubeOAuthClientId.name),
+          'fresh-client');
+      expect(settingsBox().get(SettingsKeys.YouTubeOAuthClientSecret.name),
+          'fresh-secret');
+      expect(store.authState, isNot(YouTubeAuthState.unconfigured));
+    } finally {
+      unawaited(store.dispose());
+
+      /// GetIt reset only after the close dance — its pumps rebuild the
+      /// sheet's Observer, which still reads the registered store.
+      await closeHiveInZone(tester);
+      await GetIt.instance.reset();
     }
   });
 }
