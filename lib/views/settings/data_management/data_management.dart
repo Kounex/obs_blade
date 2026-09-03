@@ -10,6 +10,7 @@ import '../../../models/hidden_scene.dart';
 import '../../../models/hidden_scene_item.dart';
 import '../../../models/past_stream_data.dart';
 import '../../../models/twitch_auth.dart';
+import '../../../models/youtube_auth.dart';
 import '../../../shared/design/design.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/shared/tabs.dart';
@@ -32,6 +33,7 @@ class DataManagementView extends StatelessWidget {
     await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
     await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
     await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
+    await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
 
     /// Since the Hive-SettingsBox also contains the information whether the user
     /// purchased Blacksmith or not, we save the current value before clearing the whole box
@@ -179,6 +181,13 @@ class DataManagementView extends StatelessWidget {
                       .delete(SettingsKeys.SelectedYouTubeUsername.name);
                   Hive.box(HiveKeys.Settings.name)
                       .delete(SettingsKeys.YouTubeUsernames.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.YouTubeApiKey.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.YouTubeOAuthClientId.name);
+                  Hive.box(HiveKeys.Settings.name)
+                      .delete(SettingsKeys.SelectedYouTubeNativeChannelId.name);
+                  Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
 
                   Hive.box<AppLog>(HiveKeys.AppLog.name).add(
                     AppLog(

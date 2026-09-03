@@ -1,0 +1,28 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-milestone-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBEG1lbWJlci1taWxlc3RvbmUtMQ",
+  "snippet": {
+    "type": "memberMilestoneChatEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCLoyalMember",
+    "publishedAt": "2026-09-03T10:17:00.000Z",
+    "hasDisplayContent": true,
+    "displayMessage": "6 months already, wow!",
+    "memberMilestoneChatDetails": {
+      "userComment": "6 months already, wow!",
+      "memberMonth": 6,
+      "memberLevelName": "Gold Member"
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCLoyalMember",
+    "channelUrl": "http://www.youtube.com/channel/UCLoyalMember",
+    "displayName": "Loyal Member",
+    "profileImageUrl": "https://yt3.ggpht.com/loyal-member=s88-c-k",
+    "isVerified": false,
+    "isChatOwner": false,
+    "isChatSponsor": true,
+    "isChatModerator": false
+  }
+}

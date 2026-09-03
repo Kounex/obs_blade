@@ -1,0 +1,39 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-poll-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBCHBvbGwtZXZlbnQtMQ",
+  "snippet": {
+    "type": "pollEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCStreamerChannel",
+    "publishedAt": "2026-09-03T10:18:00.000Z",
+    "hasDisplayContent": true,
+    "displayMessage": "Which game next?",
+    "pollDetails": {
+      "metadata": {
+        "questionText": "Which game next?",
+        "options": [
+          {
+            "optionText": "Minecraft",
+            "tally": "42"
+          },
+          {
+            "optionText": "Stardew Valley",
+            "tally": "17"
+          }
+        ],
+        "status": "active"
+      }
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCStreamerChannel",
+    "channelUrl": "http://www.youtube.com/channel/UCStreamerChannel",
+    "displayName": "Streamer",
+    "profileImageUrl": "https://yt3.ggpht.com/streamer=s88-c-k",
+    "isVerified": true,
+    "isChatOwner": true,
+    "isChatSponsor": false,
+    "isChatModerator": false
+  }
+}

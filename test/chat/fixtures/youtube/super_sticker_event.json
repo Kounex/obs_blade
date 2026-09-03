@@ -1,0 +1,34 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-sticker-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBDnN1cGVyLXN0aWNrZXItMQ",
+  "snippet": {
+    "type": "superStickerEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCStickerFan",
+    "publishedAt": "2026-09-03T10:16:30.000Z",
+    "hasDisplayContent": true,
+    "displayMessage": "sent a Super Sticker",
+    "superStickerDetails": {
+      "superStickerMetadata": {
+        "stickerId": "sticker-lemon-cat-01",
+        "altText": "A lemon cat waving hello",
+        "language": "en"
+      },
+      "amountMicros": "1990000",
+      "currency": "EUR",
+      "amountDisplayString": "€1.99",
+      "tier": 1
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCStickerFan",
+    "channelUrl": "http://www.youtube.com/channel/UCStickerFan",
+    "displayName": "Sticker Fan",
+    "profileImageUrl": "https://yt3.ggpht.com/sticker-fan=s88-c-k",
+    "isVerified": false,
+    "isChatOwner": false,
+    "isChatSponsor": false,
+    "isChatModerator": false
+  }
+}

@@ -32,6 +32,9 @@ enum HiveKeys {
 
   /// Returns the single [TwitchAuth] record (key: TwitchAuth.kBoxKey)
   TwitchAuth,
+
+  /// Returns the single [YouTubeAuth] record (key: YouTubeAuth.kBoxKey)
+  YouTubeAuth,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -47,5 +50,6 @@ extension HiveKeysFunctions on HiveKeys {
         HiveKeys.Hotkey: 'hotkey',
         HiveKeys.Settings: 'settings',
         HiveKeys.TwitchAuth: 'twitch-auth',
+        HiveKeys.YouTubeAuth: 'youtube-auth',
       }[this]!;
 }

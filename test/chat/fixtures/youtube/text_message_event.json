@@ -1,0 +1,26 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-text-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBCXRleHQtbXNnLTE",
+  "snippet": {
+    "type": "textMessageEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCChatterOne",
+    "publishedAt": "2026-09-03T10:15:30.000Z",
+    "hasDisplayContent": true,
+    "displayMessage": "hello from live chat!",
+    "textMessageDetails": {
+      "messageText": "hello from live chat!"
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCChatterOne",
+    "channelUrl": "http://www.youtube.com/channel/UCChatterOne",
+    "displayName": "Chatter One",
+    "profileImageUrl": "https://yt3.ggpht.com/chatter-one=s88-c-k",
+    "isVerified": false,
+    "isChatOwner": false,
+    "isChatSponsor": true,
+    "isChatModerator": false
+  }
+}

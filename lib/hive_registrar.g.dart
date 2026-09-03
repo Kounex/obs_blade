@@ -18,6 +18,7 @@ import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/models/purchased_tip.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/models/youtube_auth.dart';
 
 extension HiveRegistrar on HiveInterface {
   void registerAdapters() {
@@ -36,6 +37,7 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(PurchasedTipAdapter());
     registerAdapter(SceneItemTypeAdapter());
     registerAdapter(TwitchAuthAdapter());
+    registerAdapter(YouTubeAuthAdapter());
   }
 }
 
@@ -56,5 +58,6 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(PurchasedTipAdapter());
     registerAdapter(SceneItemTypeAdapter());
     registerAdapter(TwitchAuthAdapter());
+    registerAdapter(YouTubeAuthAdapter());
   }
 }

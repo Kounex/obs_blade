@@ -52,6 +52,21 @@ enum SettingsKeys {
   /// [String]: The currently selected youtube username to use for the youtube chat
   SelectedYouTubeUsername,
 
+  /// [String]: The user's own YouTube Data API key (BYO) for native
+  /// YouTube chat reads - falls back to the app-owned `kYouTubeApiKey`
+  /// constant (empty until an app-owned key exists)
+  YouTubeApiKey,
+
+  /// [String]: The user's own Google OAuth client id for the YouTube
+  /// device flow sign-in - falls back to the app-owned
+  /// `kYouTubeOAuthClientId` constant (empty until an app-owned client
+  /// exists)
+  YouTubeOAuthClientId,
+
+  /// [String]: The label (map key of [YouTubeUsernames] - stable across
+  /// re-edits) of the currently selected native YouTube chat channel
+  SelectedYouTubeNativeChannelId,
+
   /// [Map<String, String>]: All entered owncast users to see the chat from
   /// key: username (just for the user of this app to recognize)
   /// value: owncast chat domain + protocol
@@ -281,6 +296,10 @@ enum SettingsKeys {
         SettingsKeys.SelectedTwitchUsername: 'selected-twitch-username',
         SettingsKeys.YouTubeUsernames: 'youtube-usernames',
         SettingsKeys.SelectedYouTubeUsername: 'selected-youtube-username',
+        SettingsKeys.YouTubeApiKey: 'youtube-api-key',
+        SettingsKeys.YouTubeOAuthClientId: 'youtube-oauth-client-id',
+        SettingsKeys.SelectedYouTubeNativeChannelId:
+            'selected-youtube-native-channel-id',
         SettingsKeys.OwncastUsernames: 'owncast-usernames',
         SettingsKeys.SelectedOwncastUsername: 'selected-owncast-username',
         SettingsKeys.TwitchChatBadgeBroadcaster:

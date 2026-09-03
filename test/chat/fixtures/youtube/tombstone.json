@@ -1,0 +1,10 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-tombstone-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBCXRleHQtbXNnLTE",
+  "snippet": {
+    "type": "tombstone",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "publishedAt": "2026-09-03T10:15:30.000Z"
+  }
+}

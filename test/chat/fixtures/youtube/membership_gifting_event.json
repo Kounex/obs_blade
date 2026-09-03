@@ -1,0 +1,27 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-gifting-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBEW1lbWJlcnNoaXAtZ2lmdGluZy0x",
+  "snippet": {
+    "type": "membershipGiftingEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCGenerousGifter",
+    "publishedAt": "2026-09-03T10:17:30.000Z",
+    "hasDisplayContent": true,
+    "displayMessage": "gifted 5 memberships",
+    "membershipGiftingDetails": {
+      "giftMembershipsCount": 5,
+      "giftMembershipsLevelName": "Gold Member"
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCGenerousGifter",
+    "channelUrl": "http://www.youtube.com/channel/UCGenerousGifter",
+    "displayName": "Generous Gifter",
+    "profileImageUrl": "https://yt3.ggpht.com/generous-gifter=s88-c-k",
+    "isVerified": false,
+    "isChatOwner": false,
+    "isChatSponsor": true,
+    "isChatModerator": false
+  }
+}

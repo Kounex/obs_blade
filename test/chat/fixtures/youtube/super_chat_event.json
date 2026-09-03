@@ -1,0 +1,30 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-superchat-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBDXN1cGVyLWNoYXQtMQ",
+  "snippet": {
+    "type": "superChatEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCBigSpender",
+    "publishedAt": "2026-09-03T10:16:00.000Z",
+    "hasDisplayContent": true,
+    "displayMessage": "Great stream, keep it up!",
+    "superChatDetails": {
+      "amountMicros": "5000000",
+      "currency": "USD",
+      "amountDisplayString": "$5.00",
+      "userComment": "Great stream, keep it up!",
+      "tier": 2
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCBigSpender",
+    "channelUrl": "http://www.youtube.com/channel/UCBigSpender",
+    "displayName": "Big Spender",
+    "profileImageUrl": "https://yt3.ggpht.com/big-spender=s88-c-k",
+    "isVerified": false,
+    "isChatOwner": false,
+    "isChatSponsor": false,
+    "isChatModerator": false
+  }
+}

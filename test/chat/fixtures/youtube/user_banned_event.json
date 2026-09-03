@@ -1,0 +1,32 @@
+{
+  "kind": "youtube#liveChatMessage",
+  "etag": "etag-ban-1",
+  "id": "LCC.ChwKHzBtaWQtYWJjZGVmZ2hpamtsbW5vcBIBDXVzZXItYmFubmVkLTE",
+  "snippet": {
+    "type": "userBannedEvent",
+    "liveChatId": "Cg0KC3ZpZGVvLWlkLTE",
+    "authorChannelId": "UCModeratorOne",
+    "publishedAt": "2026-09-03T10:18:30.000Z",
+    "hasDisplayContent": false,
+    "userBannedDetails": {
+      "bannedUserDetails": {
+        "channelId": "UCTrollUser",
+        "channelUrl": "http://www.youtube.com/channel/UCTrollUser",
+        "displayName": "Troll User",
+        "profileImageUrl": "https://yt3.ggpht.com/troll-user=s88-c-k"
+      },
+      "banType": "temporary",
+      "banDurationSeconds": 300
+    }
+  },
+  "authorDetails": {
+    "channelId": "UCModeratorOne",
+    "channelUrl": "http://www.youtube.com/channel/UCModeratorOne",
+    "displayName": "Moderator One",
+    "profileImageUrl": "https://yt3.ggpht.com/moderator-one=s88-c-k",
+    "isVerified": false,
+    "isChatOwner": false,
+    "isChatSponsor": false,
+    "isChatModerator": true
+  }
+}
