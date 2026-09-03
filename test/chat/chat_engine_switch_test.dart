@@ -48,24 +48,21 @@ void main() {
   testWidgets('renders nothing for platforms without a native engine',
       (tester) async {
     await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.YouTube)));
-    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsNothing);
-
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
         settingsBox: settingsBox(), chatType: ChatType.Owncast)));
     expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
         findsNothing);
   });
 
-  testWidgets('Twitch shows both segments', (tester) async {
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
+  testWidgets('Twitch and YouTube show both segments', (tester) async {
+    for (final chatType in [ChatType.Twitch, ChatType.YouTube]) {
+      await tester.pumpWidget(wrap(ChatEngineSwitch(
+          settingsBox: settingsBox(), chatType: chatType)));
 
-    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsOneWidget);
-    expect(find.text('WebView'), findsOneWidget);
-    expect(find.text('Native'), findsOneWidget);
+      expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+          findsOneWidget);
+      expect(find.text('WebView'), findsOneWidget);
+      expect(find.text('Native'), findsOneWidget);
+    }
   });
 
   testWidgets('tapping a segment persists the engine', (tester) async {

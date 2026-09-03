@@ -16,6 +16,7 @@ import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../stores/views/twitch_chat.dart';
+import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
@@ -28,7 +29,10 @@ import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
 import 'native_reply_strip.dart';
 import 'native_twitch_chat_view.dart';
+import 'native_youtube_chat_view.dart';
 import 'twitch_device_code_dialog.dart';
+import 'youtube_device_code_dialog.dart';
+import 'youtube_setup_sheet.dart';
 
 /// Maps the Twitch store's connection state (+ login) onto the chat
 /// window's platform-agnostic status.
@@ -46,6 +50,25 @@ NativeChatConnectionStatus twitchChatWindowStatus(
     TwitchChatConnectionState.failed => NativeChatConnectionStatus.failed,
     TwitchChatConnectionState.disconnected =>
       NativeChatConnectionStatus.offline,
+  };
+}
+
+/// Maps the YouTube store's connection state onto the chat window's
+/// platform-agnostic status. Unlike Twitch, reads don't need a sign-in —
+/// the gate is API-key configuration, and a video without an active live
+/// chat is `offline` (a normal state, not a failure).
+NativeChatConnectionStatus youTubeChatWindowStatus(
+  YouTubeChatConnectionState state,
+  bool isConfigured,
+) {
+  if (!isConfigured) return NativeChatConnectionStatus.offline;
+  return switch (state) {
+    YouTubeChatConnectionState.connected => NativeChatConnectionStatus.live,
+    YouTubeChatConnectionState.connecting =>
+      NativeChatConnectionStatus.connecting,
+    YouTubeChatConnectionState.error => NativeChatConnectionStatus.failed,
+    YouTubeChatConnectionState.idle => NativeChatConnectionStatus.offline,
+    YouTubeChatConnectionState.offline => NativeChatConnectionStatus.offline,
   };
 }
 
@@ -236,6 +259,7 @@ class _StreamChatState extends State<StreamChat>
               SettingsKeys.SelectedOwncastUsername,
               SettingsKeys.YouTubeUsernames,
               SettingsKeys.OwncastUsernames,
+              SettingsKeys.YouTubeApiKey,
             ],
             builder: (context, settingsBox, child) {
               ChatType chatType = settingsBox.get(
@@ -259,12 +283,92 @@ class _StreamChatState extends State<StreamChat>
                 _syncWebController(_urlForChatType(chatType, settingsBox));
               }
 
-              /// Native Twitch chat takes over the slot when the native
-              /// engine is selected, wrapped in the chat window (pane +
-              /// status row + connection sheet). Logged out, the content is
-              /// the connect prompt. The WebView engine keeps the legacy
-              /// path regardless of the login state.
               if (nativeEngine) {
+                /// Native YouTube chat: API-key gated reads (signed-out
+                /// timelines work — the input docks a read-only strip with
+                /// a sign-in affordance), device-flow sign-in for writes.
+                /// Unconfigured (no API key) shows the setup CTA.
+                if (chatType == ChatType.YouTube) {
+                  return Observer(
+                    builder: (_) {
+                      final youTubeStore = GetIt.instance<YouTubeChatStore>();
+                      final configured = youTubeStore.authState !=
+                          YouTubeAuthState.unconfigured;
+                      final signedIn = youTubeStore.isSignedInState;
+                      final channelTitle = youTubeStore.selfChannelTitle;
+
+                      return NativeChatWindow(
+                        chatType: chatType,
+                        status: youTubeChatWindowStatus(
+                          youTubeStore.chatConnection,
+                          configured,
+                        ),
+                        statusDetail: youTubeStore.chatError,
+                        accountLabel: channelTitle,
+                        channelIsLive: youTubeStore.chatConnection ==
+                            YouTubeChatConnectionState.connected,
+                        onRetry: youTubeStore.connectChat,
+                        onConnect: () => configured
+                            ? startYouTubeLogin(context)
+                            : showYouTubeSetupSheet(context),
+                        onLogout: signedIn
+                            ? () => ModalHandler.showBaseDialog(
+                                  context: context,
+                                  dialogWidget: ConfirmationDialog(
+                                    title: 'Disconnect YouTube?',
+                                    body:
+                                        'Connected as ${channelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
+                                    okText: 'Disconnect',
+                                    isYesDestructive: true,
+                                    onOk: (_) => youTubeStore.logout(),
+                                  ),
+                                )
+                            : null,
+                        child: configured
+                            ? NativeYouTubeChatView(
+                                /// Fresh scroll state per channel — avoids
+                                /// carrying a stuck/overscrolled controller
+                                /// across multi-chat switches.
+                                key: ValueKey(
+                                  youTubeStore.selectedChannelLabel,
+                                ),
+                              )
+                            : StaggeredEntrance(
+                                child: _ChatEmptyState(
+                                  chatType: chatType,
+                                  nativeConnectPrompt: true,
+                                  promptBody:
+                                      'Native YouTube chat reads through the official YouTube Data API and needs a free Google Cloud API key — set it up to see chat here.',
+                                  connectLabel: 'Set up YouTube chat',
+                                  onConnectTap: () =>
+                                      showYouTubeSetupSheet(context),
+                                ),
+                              ),
+                        input: configured
+                            ? NativeChatInput(
+                                controller: this._chatInputController,
+                                focusNode: this._chatInputFocusNode,
+                                canSend: signedIn && youTubeStore.canWrite,
+                                inFlight: youTubeStore.sendingChat,
+                                errorText: youTubeStore.sendChatError,
+                                accentColor: chatType.brandColor ??
+                                    Theme.of(context).colorScheme.secondary,
+                                onSend: youTubeStore.sendChatMessage,
+                                onRelogin: () => startYouTubeLogin(context),
+                                lockedHintText: 'Chat is read-only',
+                                lockedActionText: 'Sign in to chat',
+                              )
+                            : null,
+                      );
+                    },
+                  );
+                }
+
+                /// Native Twitch chat takes over the slot when the native
+                /// engine is selected, wrapped in the chat window (pane +
+                /// status row + connection sheet). Logged out, the content is
+                /// the connect prompt. The WebView engine keeps the legacy
+                /// path regardless of the login state.
                 return Observer(
                   builder: (_) {
                     final twitchStore = GetIt.instance<TwitchChatStore>();
@@ -458,16 +562,23 @@ class _ChatBrandIcon extends StatelessWidget {
 }
 
 /// Shown while no username is selected for the active platform - or, with
-/// [nativeConnectPrompt], while the native Twitch engine is selected but
-/// no account is connected (then the "Connect Twitch" pill lives here -
-/// it belongs to native mode exclusively)
+/// [nativeConnectPrompt], while a native engine is selected but its
+/// prerequisite is missing (Twitch: no account connected, YouTube: no API
+/// key configured - the pill then opens the setup sheet). [promptBody],
+/// [connectLabel] and [onConnectTap] override the Twitch defaults.
 class _ChatEmptyState extends StatelessWidget {
   final ChatType chatType;
   final bool nativeConnectPrompt;
+  final String? promptBody;
+  final String? connectLabel;
+  final VoidCallback? onConnectTap;
 
   const _ChatEmptyState({
     required this.chatType,
     this.nativeConnectPrompt = false,
+    this.promptBody,
+    this.connectLabel,
+    this.onConnectTap,
   });
 
   @override
@@ -497,9 +608,10 @@ class _ChatEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              this.nativeConnectPrompt
-                  ? 'Connect your Twitch account to see your chat natively.'
-                  : 'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.',
+              this.promptBody ??
+                  (this.nativeConnectPrompt
+                      ? 'Connect your Twitch account to see your chat natively.'
+                      : 'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.'),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -507,7 +619,7 @@ class _ChatEmptyState extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               Pressable(
                 haptic: true,
-                onTap: () => startTwitchLogin(context),
+                onTap: this.onConnectTap ?? () => startTwitchLogin(context),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.lg,
@@ -518,7 +630,7 @@ class _ChatEmptyState extends StatelessWidget {
                     borderRadius: AppRadius.pill,
                   ),
                   child: Text(
-                    'Connect Twitch',
+                    this.connectLabel ?? 'Connect Twitch',
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium

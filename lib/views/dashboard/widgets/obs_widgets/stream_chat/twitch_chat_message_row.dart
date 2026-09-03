@@ -530,7 +530,7 @@ class TwitchChatMessageRow extends StatelessWidget {
       /// long-press in the arena (that was eating author/link taps).
       /// Hold wash is painted locally so the list parent never rebuilds
       /// mid-press (that disposed [Pressable] and killed username taps).
-      child = _ModLongPressListener(
+      child = ChatRowLongPressListener(
         highlighted: this.highlighted,
         onLongPress: this.onMessageLongPress!,
         child: padded,
@@ -645,23 +645,26 @@ class _SourceChannelChip extends StatelessWidget {
 /// Uses pointer timers only so child [Pressable] taps (author / mention /
 /// links) are never delayed or cancelled by a parent long-press recognizer.
 /// Wash is local [setState] on a stable [ColoredBox] — never a parent list
-/// rebuild that would dispose nested tap targets mid-gesture.
-class _ModLongPressListener extends StatefulWidget {
+/// rebuild that would dispose nested tap targets mid-gesture. Shared by the
+/// Twitch and YouTube message rows.
+class ChatRowLongPressListener extends StatefulWidget {
   final Widget child;
   final VoidCallback onLongPress;
   final bool highlighted;
 
-  const _ModLongPressListener({
+  const ChatRowLongPressListener({
+    super.key,
     required this.child,
     required this.onLongPress,
     this.highlighted = false,
   });
 
   @override
-  State<_ModLongPressListener> createState() => _ModLongPressListenerState();
+  State<ChatRowLongPressListener> createState() =>
+      ChatRowLongPressListenerState();
 }
 
-class _ModLongPressListenerState extends State<_ModLongPressListener> {
+class ChatRowLongPressListenerState extends State<ChatRowLongPressListener> {
   static const Duration _highlightDelay = Duration(milliseconds: 140);
   static const Duration _longPressDelay = Duration(milliseconds: 500);
   static const double _moveSlop = 18.0;

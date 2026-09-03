@@ -8,9 +8,11 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
+import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_username_bar.dart';
@@ -24,6 +26,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
+import 'support/fake_youtube_services.dart';
 
 Widget wrap(Widget child) => MaterialApp(
       theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
@@ -41,6 +44,7 @@ void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
   late TwitchChatStore store;
+  late YouTubeChatStore youTubeStore;
 
   Box<dynamic> settingsBox() => Hive.box(HiveKeys.Settings.name);
 
@@ -49,6 +53,7 @@ void main() {
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
+    await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
     await Hive.openBox(HiveKeys.Settings.name);
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
@@ -57,6 +62,12 @@ void main() {
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
+    youTubeStore = YouTubeChatStore(
+      authService: FakeYouTubeAuthService(),
+      chatService: FakeYouTubeLiveChatService(),
+      sleep: (duration) async {},
+    );
+    GetIt.instance.registerSingleton<YouTubeChatStore>(youTubeStore);
     GetIt.instance.registerSingleton<DashboardStore>(DashboardStore());
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
         ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
@@ -68,6 +79,7 @@ void main() {
     /// whose subscription was created inside a widget test's FakeAsync
     /// zone (its future only dispatches through that zone)
     store.dispose();
+    youTubeStore.dispose();
     await GetIt.instance.reset();
     await harness.close();
     if (tempDir.existsSync()) {
@@ -239,7 +251,7 @@ void main() {
   });
 
   testWidgets(
-      'username bar shows the engine switch and connect pill only for Twitch in native mode',
+      'username bar shows the engine switch and per-platform account pill for Twitch and YouTube in native mode',
       (tester) async {
     await tester.runAsync(() async {
       await settingsBox()
@@ -254,14 +266,18 @@ void main() {
         findsOneWidget);
     expect(find.text('Connect Twitch'), findsOneWidget);
 
+    /// YouTube passed the native gate in Task 4 — the switch stays, the
+    /// account control swaps to the YouTube one (unconfigured, since no
+    /// API key is set: the "Set up YouTube" pill)
     await tester.runAsync(() async {
       await settingsBox()
           .put(SettingsKeys.SelectedChatType.name, ChatType.YouTube);
     });
     await tester.pumpAndSettle();
     expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsNothing);
+        findsOneWidget);
     expect(find.text('Connect Twitch'), findsNothing);
+    expect(find.text('Set up YouTube'), findsOneWidget);
   });
 
   testWidgets(

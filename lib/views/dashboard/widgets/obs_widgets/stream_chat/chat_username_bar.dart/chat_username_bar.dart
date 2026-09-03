@@ -7,6 +7,7 @@ import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
+import '../../../../../../stores/views/youtube_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../channel_mod_button.dart';
@@ -17,6 +18,9 @@ import 'native_channel_dropdown.dart';
 import 'twitch_account_control.dart';
 import 'username_action_row.dart';
 import 'username_dropdown.dart';
+import 'youtube_account_control.dart';
+import 'youtube_chat_options_sheet.dart';
+import 'youtube_native_channel_dropdown.dart';
 
 /// Chat control section. The platform dropdown is the single major
 /// control; everything else hangs off the selected chat engine
@@ -88,23 +92,40 @@ class ChatUsernameBar extends StatelessWidget {
                           settingsBox: settingsBox,
                         ),
                       ] else
+                        /// Native-mode channel dropdown slot — per
+                        /// platform. Twitch gates on login; YouTube reads
+                        /// work signed-out, so it gates on configuration.
                         Observer(
-                          builder: (_) => GetIt
+                          builder: (_) {
+                            final showDropdown = switch (chatType) {
+                              ChatType.Twitch => GetIt
                                   .instance<TwitchChatStore>()
-                                  .isLoggedIn
+                                  .isLoggedIn,
+                              ChatType.YouTube => GetIt
+                                      .instance<YouTubeChatStore>()
+                                      .authState !=
+                                  YouTubeAuthState.unconfigured,
+                              _ => false,
+                            };
 
-                              /// Inner Column: [NativeChannelDropdown] roots
-                              /// in a Flexible (like [UsernameDropdown]), so
-                              /// it needs a direct Flex ancestor
-                              ? const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(height: AppSpacing.sm),
-                                    NativeChannelDropdown(),
-                                  ],
-                                )
-                              : const SizedBox.shrink(),
+                            /// Inner Column: the channel dropdowns root
+                            /// in a Flexible (like [UsernameDropdown]), so
+                            /// they need a direct Flex ancestor
+                            return showDropdown
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(height: AppSpacing.sm),
+                                      if (chatType == ChatType.YouTube)
+                                        const YouTubeNativeChannelDropdown()
+                                      else
+                                        const NativeChannelDropdown(),
+                                    ],
+                                  )
+                                : const SizedBox.shrink();
+                          },
                         ),
                     ],
                   ),
@@ -143,6 +164,10 @@ class ChatUsernameBar extends StatelessWidget {
 /// Native right cluster: optional Mod shield (fit-gated) + options + account.
 /// Shield shows when moderating and the cluster fits; otherwise Mod folds
 /// into a combined options chip ([NativeChatOptionsButton.modFoldedIntoOptions]).
+///
+/// YouTube dispatches to its own minimal cluster (options + account) — no
+/// shield: YouTube has no cheap "am I a mod" lookup, so mod actions live on
+/// the per-message long-press only (plan §7).
 class _NativeRightCluster extends StatelessWidget {
   final ChatType chatType;
 
@@ -150,6 +175,17 @@ class _NativeRightCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (this.chatType == ChatType.YouTube) {
+      return const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          YouTubeChatOptionsButton(),
+          SizedBox(width: AppSpacing.sm),
+          Flexible(child: YouTubeAccountControl()),
+        ],
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return Observer(

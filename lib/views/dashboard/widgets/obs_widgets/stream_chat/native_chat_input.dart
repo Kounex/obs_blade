@@ -54,6 +54,12 @@ class NativeChatInput extends StatefulWidget {
   /// Starts the re-login flow from the read-only strip
   final VoidCallback onRelogin;
 
+  /// Lock-strip copy when [canSend] is false — Twitch's defaults describe
+  /// the scope-upgrade case; YouTube overrides them for its signed-out
+  /// read-only state.
+  final String lockedHintText;
+  final String lockedActionText;
+
   const NativeChatInput({
     super.key,
     required this.canSend,
@@ -66,6 +72,8 @@ class NativeChatInput extends StatefulWidget {
     this.focusNode,
     this.leading,
     this.contextStrip,
+    this.lockedHintText = 'Logged in read-only',
+    this.lockedActionText = 'Re-login to chat',
   });
 
   @override
@@ -109,7 +117,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
             ),
             const SizedBox(width: AppSpacing.xs),
             Text(
-              'Logged in read-only',
+              this.widget.lockedHintText,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const Spacer(),
@@ -122,7 +130,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Re-login to chat',
+                  this.widget.lockedActionText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: this.widget.accentColor,
                         fontWeight: FontWeight.w600,

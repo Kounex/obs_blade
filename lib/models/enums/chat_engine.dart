@@ -6,7 +6,7 @@ import 'chat_type.dart';
 part 'chat_engine.g.dart';
 
 /// Which implementation renders the stream chat: the classic WebView embed
-/// or a native client. A native engine exists only for Twitch today - see
+/// or a native client. A native engine exists for Twitch and YouTube - see
 /// [nativeChatAvailableFor].
 @HiveType(typeId: TypeIDs.ChatEngine)
 enum ChatEngine {
@@ -28,4 +28,5 @@ extension ChatEngineFunctions on ChatEngine {
 /// [chatType]. The engine switch's visibility and every engine read go
 /// through here, so the future entitlement gate (and the auto-switch on
 /// login it brings) has exactly one call site to extend.
-bool nativeChatAvailableFor(ChatType chatType) => chatType == ChatType.Twitch;
+bool nativeChatAvailableFor(ChatType chatType) =>
+    chatType == ChatType.Twitch || chatType == ChatType.YouTube;

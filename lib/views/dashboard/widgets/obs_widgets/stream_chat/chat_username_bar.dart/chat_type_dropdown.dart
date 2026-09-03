@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
+import '../../../../../../models/enums/chat_engine.dart';
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
@@ -71,6 +72,14 @@ class ChatTypeDropdown extends StatelessWidget {
                 )
                 .toList(),
             onChanged: (chatType) => chatType == ChatType.YouTube &&
+
+                    /// The beta warning covers the WebView embed — the
+                    /// native engine doesn't use it, so no warning there.
+                    this.settingsBox.get(
+                          SettingsKeys.SelectedChatEngine.name,
+                          defaultValue: ChatEngine.webView,
+                        ) !=
+                        ChatEngine.native &&
                     !Hive.box(HiveKeys.Settings.name).get(
                         SettingsKeys.DontShowYouTubeChatBetaWarning.name,
                         defaultValue: false)
