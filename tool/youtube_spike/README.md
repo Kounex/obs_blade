@@ -21,7 +21,7 @@ throwaway/test project key.
 
 ## Setup
 
-Prerequisites: Dart SDK ≥ 3.4, `protoc`, and the Dart protoc plugin:
+Prerequisites: Dart SDK ≥ 3.8 (grpc 5.x requires it), `protoc`, and the Dart protoc plugin:
 
 ```bash
 apt install protobuf-compiler            # or your platform's equivalent

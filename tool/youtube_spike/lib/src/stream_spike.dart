@@ -102,14 +102,21 @@ Future<StreamStats> runStreamSpike({
       } catch (e) {
         stats.errors++;
         log('stream: error: $e');
+        // Quota exhaustion (RESOURCE_EXHAUSTED) won't heal within a run —
+        // stop instead of backing off forever and wasting the measurement.
+        if (e is GrpcError && e.code == StatusCode.resourceExhausted) {
+          log('stream: RESOURCE_EXHAUSTED — quota likely exhausted, '
+              'stopping run');
+          break;
+        }
       }
-
-      if (stats.endedByStream) break;
 
       final lifetime = DateTime.now().difference(connectedAt);
       stats.connectionLifetimes.add(lifetime);
       log('stream: connection #${stats.connections} lived '
           '${lifetime.inSeconds} s');
+
+      if (stats.endedByStream) break;
       if (lifetime >= healthyThreshold) backoff = const Duration(seconds: 1);
 
       if (DateTime.now().difference(startedAt) >= duration ||
