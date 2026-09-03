@@ -20,36 +20,51 @@ import '../../../utils/routing_helper.dart';
 import 'widgets/data_block.dart';
 import 'widgets/data_entry.dart';
 
+/// Clears every persisted box while preserving the purchase entitlements.
+///
+/// Since the Hive-SettingsBox also contains the information whether the user
+/// purchased Blacksmith / Pro or not, we save the current values before
+/// clearing the whole box and re-set them. Worst case here (without doing it)
+/// would lead to reset the purchase status - it would have been re-set though
+/// on a restart since purchases get restored from the store on startup
+/// (blacksmith: App Store check; pro: once-per-install cold-start restore).
+Future<void> deleteAllUserDataPreservingEntitlements() async {
+  await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
+  await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).clear();
+  await Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
+  await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
+  await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
+  await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
+  await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
+  await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
+
+  bool boughtBlacksmith = Hive.box(HiveKeys.Settings.name).get(
+    SettingsKeys.BoughtBlacksmith.name,
+    defaultValue: false,
+  );
+  bool boughtPro = Hive.box(HiveKeys.Settings.name).get(
+    SettingsKeys.BoughtPro.name,
+    defaultValue: false,
+  );
+  await Hive.box(HiveKeys.Settings.name).clear();
+
+  Hive.box(HiveKeys.Settings.name).put(
+    SettingsKeys.BoughtBlacksmith.name,
+    boughtBlacksmith,
+  );
+  Hive.box(HiveKeys.Settings.name).put(
+    SettingsKeys.BoughtPro.name,
+    boughtPro,
+  );
+}
+
 class DataManagementView extends StatelessWidget {
   const DataManagementView({
     super.key,
   });
 
   Future<void> _deleteAll(BuildContext context) async {
-    await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
-    await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).clear();
-    await Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
-    await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
-    await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
-    await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
-    await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
-    await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
-
-    /// Since the Hive-SettingsBox also contains the information whether the user
-    /// purchased Blacksmith or not, we save the current value before clearing the whole box
-    /// and re-setting it. Worst case here (without doing it) would lead to reset the Blacksmith
-    /// status - it would have been re-set though on a restart since I'm also checking
-    /// the information from the App Store on startup
-    bool boughtBlacksmith = Hive.box(HiveKeys.Settings.name).get(
-      SettingsKeys.BoughtBlacksmith.name,
-      defaultValue: false,
-    );
-    await Hive.box(HiveKeys.Settings.name).clear();
-
-    Hive.box(HiveKeys.Settings.name).put(
-      SettingsKeys.BoughtBlacksmith.name,
-      boughtBlacksmith,
-    );
+    await deleteAllUserDataPreservingEntitlements();
 
     GetIt.instance<TabsStore>().setActiveTab(Tabs.Home);
 

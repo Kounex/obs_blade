@@ -19,6 +19,22 @@ enum SettingsKeys {
   /// here additionally
   BoughtBlacksmith,
 
+  /// [bool]: If the user has bought Pro (any of the pro product ids - subscription
+  /// or lifetime). Set in [PurchaseBase] on purchased/restored events; lapsed
+  /// subscription enforcement is a documented limitation (needs server-side
+  /// receipt validation - backend wave)
+  BoughtPro,
+
+  /// [bool]: Debug-only override which unlocks Pro without a purchase - consumed
+  /// ONLY under kDebugMode (see [ProStore.isPro]) so it can never grant the
+  /// entitlement in release builds
+  ProDebugOverride,
+
+  /// [bool]: Guard so the cold-start `restorePurchases()` (reinstall recovery -
+  /// `queryPastPurchases` was removed in in_app_purchase 3.3.0) fires only
+  /// once per install
+  ProColdStartRestoreDone,
+
   /// ******************************************************************************
   /// Actively set by user via settings page or using the app
   /// ******************************************************************************
@@ -294,6 +310,9 @@ enum SettingsKeys {
         // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
         SettingsKeys.HasUserSeenIntro202208: 'has-user-seen-intro-202208',
         SettingsKeys.BoughtBlacksmith: 'bought-blacksmith',
+        SettingsKeys.BoughtPro: 'bought-pro',
+        SettingsKeys.ProDebugOverride: 'pro-debug-override',
+        SettingsKeys.ProColdStartRestoreDone: 'pro-cold-start-restore-done',
         SettingsKeys.TrueDark: 'true-dark',
         SettingsKeys.ReduceSmearing: 'reduce-smearing',
         SettingsKeys.EnforceTabletMode: 'enforce-tablet-mode',

@@ -8,6 +8,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/models/hotkey.dart';
 import 'package:obs_blade/models/past_record_data.dart';
+import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
@@ -78,6 +79,12 @@ void _initializeStores() {
   /// Shared stores used app-wide
   GetIt.instance.registerLazySingleton<NetworkStore>(() => NetworkStore());
   GetIt.instance.registerLazySingleton<TabsStore>(() => TabsStore());
+  GetIt.instance.registerLazySingleton<ProStore>(
+    /// Fire-and-forget [init] — cold-start restore must not
+    /// block store creation.
+    () => ProStore()..init(),
+    dispose: (store) => store.dispose(),
+  );
 
   /// View stores designated for specific views
   GetIt.instance.registerLazySingleton<IntroStore>(() => IntroStore());

@@ -14,9 +14,29 @@ import 'types/enums/settings_keys.dart';
 import 'utils/general_helper.dart';
 import 'utils/modal_handler.dart';
 import 'utils/overlay_handler.dart';
+import 'utils/pro_ids.dart';
+
+/// Applies a pro purchase/restored event to the settings box. Returns
+/// true when the caller should surface the restored InfoDialog — only on
+/// an explicit (paywall-button) restore; the cold-start restore and fresh
+/// purchases stay silent.
+@visibleForTesting
+bool applyProPurchaseToSettings({
+  required PurchaseDetails purchaseDetails,
+  required Box<dynamic> settingsBox,
+  required bool explicitRestore,
+}) {
+  settingsBox.put(SettingsKeys.BoughtPro.name, true);
+  return purchaseDetails.status == PurchaseStatus.restored && explicitRestore;
+}
 
 class PurchaseBase extends StatefulWidget {
   final Widget child;
+
+  /// Set via [ProStore.restore] when the user explicitly tapped "Restore
+  /// purchases" so the restored handler knows to show the success
+  /// InfoDialog; cold-start restores leave this false and stay silent.
+  static bool restoreTriggeredExplicitly = false;
 
   const PurchaseBase({
     super.key,
@@ -51,13 +71,13 @@ class _PurchaseBaseState extends State<PurchaseBase> {
   }
 
   void _handlePurchase(
-      PurchaseDetails purchaseDetails, ProductDetails inAppDetails) {
+      PurchaseDetails purchaseDetails, ProductDetails? inAppDetails) {
     /// If a purchase contains tip in its productID, it is a consumable
     /// and therefore not persistent. The App Stores will only persist
     /// non-consumables (one time "upgrades"). Thats why it will be persisted
     /// manually in Hive so it's at least possible to retrieve them
     /// from an app installation
-    if (purchaseDetails.productID.contains('tip')) {
+    if (purchaseDetails.productID.contains('tip') && inAppDetails != null) {
       Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).put(
         purchaseDetails.purchaseID,
         PurchasedTip(
@@ -69,9 +89,38 @@ class _PurchaseBaseState extends State<PurchaseBase> {
         ),
       );
     } else {
-      /// If a purchase is explicily blacksmith, set the flag in the settings box
-      /// to true to be able to check that offline as well later on
-      if (purchaseDetails.productID.contains('blacksmith')) {
+      /// If a purchase is a pro product (subscription or lifetime), set the
+      /// entitlement flag in the settings box. The store products don't
+      /// exist store-side yet, so this branch must work with
+      /// [inAppDetails] being null (empty productDetails).
+      if (isProProductId(purchaseDetails.productID)) {
+        bool showRestoredDialog = applyProPurchaseToSettings(
+          purchaseDetails: purchaseDetails,
+          settingsBox: Hive.box<dynamic>(HiveKeys.Settings.name),
+          explicitRestore: PurchaseBase.restoreTriggeredExplicitly,
+        );
+        PurchaseBase.restoreTriggeredExplicitly = false;
+
+        /// Same idiom as the blacksmith restored branch below: the user
+        /// tapped Restore, the restore worked — inform them via dialog.
+        if (showRestoredDialog) {
+          Future.delayed(
+            const Duration(seconds: 1),
+            () {
+              OverlayHandler.closeAnyOverlay();
+              ModalHandler.showBaseDialog(
+                context: RoutingHelper.tabBaseKey.currentContext!,
+                barrierDismissible: true,
+                dialogWidget: const InfoDialog(
+                  body: 'Your Pro purchase has been restored!\n\nEnjoy!',
+                ),
+              );
+            },
+          );
+        }
+      } else if (purchaseDetails.productID.contains('blacksmith')) {
+        /// If a purchase is explicily blacksmith, set the flag in the settings box
+        /// to true to be able to check that offline as well later on
         if (purchaseDetails.status == PurchaseStatus.restored) {
           /// If we get the restored status from the purchase stream, it means
           /// that the user clicked on restore and therefore called the restorePurchases
@@ -120,10 +169,12 @@ class _PurchaseBaseState extends State<PurchaseBase> {
       GeneralHelper.advLog(
           '${purchaseDetails.productID} - ${purchaseDetails.status}');
       try {
-        ProductDetails inAppDetails = (await InAppPurchase.instance
+        /// Product ids which don't exist store-side (pro ids right now)
+        /// yield an empty productDetails list — `.first` would throw and the
+        /// entitlement flag would silently never set, so guard for it.
+        List<ProductDetails> productDetails = (await InAppPurchase.instance
                 .queryProductDetails({purchaseDetails.productID}))
-            .productDetails
-            .first;
+            .productDetails;
         if (purchaseDetails.status == PurchaseStatus.pending) {
           _showPendingUI();
         } else {
@@ -131,9 +182,11 @@ class _PurchaseBaseState extends State<PurchaseBase> {
           if (purchaseDetails.status == PurchaseStatus.error) {
             // _handleError(purchaseDetails.error!);
           } else if (purchaseDetails.status == PurchaseStatus.purchased) {
-            _handlePurchase(purchaseDetails, inAppDetails);
+            _handlePurchase(purchaseDetails,
+                productDetails.isEmpty ? null : productDetails.first);
           } else if (purchaseDetails.status == PurchaseStatus.restored) {
-            _handlePurchase(purchaseDetails, inAppDetails);
+            _handlePurchase(purchaseDetails,
+                productDetails.isEmpty ? null : productDetails.first);
           }
           if (purchaseDetails.pendingCompletePurchase) {
             await InAppPurchase.instance.completePurchase(purchaseDetails);
