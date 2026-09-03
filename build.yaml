@@ -1,0 +1,8 @@
+targets:
+  $default:
+    sources:
+      exclude:
+        # Standalone tool packages (own pubspec + generated protobuf
+        # sources) — not part of the app build and must not be scanned
+        # by the app's build_runner.
+        - tool/**

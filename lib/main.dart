@@ -35,6 +35,7 @@ import 'stores/views/intro.dart';
 import 'stores/views/logs.dart';
 import 'stores/views/statistics.dart';
 import 'stores/views/twitch_chat.dart';
+import 'stores/views/youtube_chat.dart';
 import 'types/enums/hive_keys.dart';
 import 'utils/general_helper.dart';
 
@@ -98,6 +99,12 @@ void _initializeStores() {
     /// Fire-and-forget [init] — cold-start token validation must not
     /// block store creation.
     () => TwitchChatStore()..init(),
+    dispose: (store) => store.dispose(),
+  );
+  GetIt.instance.registerLazySingleton<YouTubeChatStore>(
+    /// Fire-and-forget [init] — cold-start session pickup must not
+    /// block store creation.
+    () => YouTubeChatStore()..init(),
     dispose: (store) => store.dispose(),
   );
 }

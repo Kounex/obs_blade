@@ -183,6 +183,31 @@ class YouTubeAuthService {
     throw const YouTubeAuthException('Device code expired');
   }
 
+  /// `channels.list?part=snippet&mine=true` — title of the channel the
+  /// token belongs to (display only, stored on the YouTubeAuth record).
+  /// Mirrors TwitchAuthService.fetchOwnUser.
+  Future<String?> fetchOwnChannelTitle(String accessToken) async {
+    final response = await this._client.get(
+      Uri.parse(
+        'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+      ),
+      headers: {'Authorization': 'Bearer $accessToken'},
+    );
+    if (response.statusCode != 200) {
+      throw YouTubeAuthException(
+        'Fetching the YouTube channel failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    final items =
+        (json.decode(response.body) as Map<String, dynamic>)['items'];
+    if (items is! List || items.isEmpty) return null;
+    final snippet = (items.first as Map<String, dynamic>)['snippet'];
+    if (snippet is! Map<String, dynamic>) return null;
+    return snippet['title'] as String?;
+  }
+
   /// Exchange a refresh token for a new token pair. Google only returns a
   /// new refresh token when access was originally granted with
   /// `access_type=offline` re-consent — keep the stored one when absent.
