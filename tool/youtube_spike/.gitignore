@@ -1,0 +1,7 @@
+.dart_tool/
+.packages
+pubspec.lock
+
+# Fetched proto + protoc output — regenerate via ./setup.sh
+proto/
+lib/src/generated/

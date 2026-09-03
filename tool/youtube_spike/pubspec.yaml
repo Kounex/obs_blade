@@ -1,0 +1,12 @@
+name: youtube_spike
+description: >-
+  Quota spike tool: measures YouTube live chat read paths (REST
+  liveChatMessages.list polling vs gRPC streamList) against a real chat.
+publish_to: none
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+dependencies:
+  args: ^2.5.0
+  grpc: ^5.1.0
+  http: ^1.2.0
+  protobuf: ^6.0.0
