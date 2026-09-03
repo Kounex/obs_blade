@@ -404,13 +404,17 @@ abstract class _YouTubeChatStore with Store {
     this._pollFlow++;
     runInAction(() {
       this.chatConnection = YouTubeChatConnectionState.idle;
+      this.chatError = null;
+      this.chatQuotaExhausted = false;
+      this.sendChatError = null;
+      this.moderationError = null;
     });
   }
 
   /// The read transport: resolve the selected video's `activeLiveChatId`
   /// (cached in the channel buffer), then poll `liveChatMessages.list`,
-  /// honoring each page's `pollingIntervalMillis` and threading the page
-  /// token. Ends on: chat ended/offlineAt (→ offline, no error), project
+  /// honoring each page's `pollingIntervalMillis` (net of the elapsed
+  /// request duration) and threading the page token. Ends on: chat ended/offlineAt (→ offline, no error), project
   /// quota exhaustion (→ error + [chatQuotaExhausted]), other API errors
   /// (→ error); transient rate limiting backs off and retries. A bumped
   /// [_pollFlow] (selectChannel / logout / dispose) cancels the loop.
@@ -468,8 +472,11 @@ abstract class _YouTubeChatStore with Store {
 
     int lastIntervalMillis = 5000;
     int backoffMillis = 0;
+    final callStopwatch = Stopwatch();
     while (!superseded()) {
       YouTubeLiveChatPage page;
+      callStopwatch.reset();
+      callStopwatch.start();
       try {
         page = await this._chatService.listMessages(
           buffer.liveChatId!,
@@ -531,7 +538,12 @@ abstract class _YouTubeChatStore with Store {
         return;
       }
 
-      await this._sleep(Duration(milliseconds: page.pollingIntervalMillis));
+      // Net-of-call pacing: the server interval spans response to next
+      // request, so subtract the elapsed request time (floor at 0).
+      final waitMillis =
+          page.pollingIntervalMillis - callStopwatch.elapsedMilliseconds;
+      await this
+          ._sleep(Duration(milliseconds: waitMillis > 0 ? waitMillis : 0));
     }
   }
 
@@ -763,9 +775,11 @@ abstract class _YouTubeChatStore with Store {
   }
 
   /// Delete [messageId] in the selected channel's live chat (owner/mod
-  /// only — a 403 surfaces via [moderationError], plan §7). On success the
-  /// tombstone applies locally and the poll echo is pre-marked so it lands
-  /// as a no-op. Returns whether it was applied — never throws.
+  /// only — a 403 surfaces via [moderationError], plan §7). Returns
+  /// whether the server accepted the delete — never throws. On success
+  /// the tombstone applies locally when the id is buffered (a stale or
+  /// already-evicted id is still a successful delete) and the poll echo
+  /// is pre-marked so it lands as a no-op.
   @action
   Future<bool> deleteMessage(String messageId) async {
     if (!this.canWrite) return false;

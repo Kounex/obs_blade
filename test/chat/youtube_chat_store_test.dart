@@ -291,12 +291,12 @@ void main() {
 
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
       expect(store.messages.map((m) => m.id), ['m1']);
-      // Default interval 5s → first backoff 10s; success resets it and
-      // the page's own 2s interval drives the next wait.
-      expect(sleepLog, [
-        const Duration(seconds: 10),
-        const Duration(seconds: 2),
-      ]);
+      // Default interval 5s → first backoff 10s (exact — backoffs are
+      // not netted); success resets it and the page's own 2s interval
+      // drives the next wait, net of the elapsed request time.
+      expect(sleepLog[0], const Duration(seconds: 10));
+      expect(sleepLog[1].inMilliseconds,
+          inInclusiveRange(1, 2000));
     });
 
     test('repeated rate limiting caps the backoff at 60s', () async {
@@ -322,6 +322,9 @@ void main() {
           const Duration(seconds: 60),
         ],
       );
+      // The post-success wait is the page's 1s interval net of the
+      // elapsed request time.
+      expect(sleepLog[4].inMilliseconds, inInclusiveRange(0, 1000));
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
     });
   });
@@ -598,6 +601,43 @@ void main() {
       expect(store.messages, isEmpty);
       expect(store.chatConnection, YouTubeChatConnectionState.idle);
       expect(authService.revokedToken, 'access-1');
+    });
+
+    test('logout clears stale error state', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses
+          .add(const YouTubeQuotaExceededException('Listing chat failed'));
+      await store.init();
+      await until(() => store.chatQuotaExhausted);
+      expect(store.chatError, isNotNull);
+
+      await store.logout();
+
+      expect(store.chatError, isNull);
+      expect(store.chatQuotaExhausted, isFalse);
+      expect(store.sendChatError, isNull);
+      expect(store.moderationError, isNull);
+    });
+
+    test('external auth-box wipe clears stale error state', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses
+          .add(const YouTubeQuotaExceededException('Listing chat failed'));
+      await store.init();
+      await until(() => store.chatQuotaExhausted);
+      expect(store.chatError, isNotNull);
+
+      await authBox().delete(YouTubeAuth.kBoxKey);
+      await until(() => store.chatError == null);
+
+      expect(store.authState, YouTubeAuthState.signedOut);
+      expect(store.chatError, isNull);
+      expect(store.chatQuotaExhausted, isFalse);
+      expect(store.chatConnection, YouTubeChatConnectionState.idle);
     });
   });
 }
