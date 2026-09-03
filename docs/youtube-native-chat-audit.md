@@ -104,7 +104,14 @@ scalable read path but its quota cost is undocumented — the spike tool
 | AutoMod queue / warn / unban requests / shield / chat modes | **no API surface at all** | ❌ cut (wave-3 Twitch features have no YouTube analog) |
 | Multi-chat (multiple videos) | per-video `liveChatId` buffers | ✅ same store pattern |
 
-## What we build (this wave)
+## What we build (this wave) — **SHIPPED 2026-09-03**
+
+Plan: [`superpowers/specs/2026-09-03-youtube-native-chat-plan.md`](superpowers/specs/2026-09-03-youtube-native-chat-plan.md).
+All five items landed (see `changelog-agent.md` 2026-09-03 entry for commits):
+spike tool (pending a real-key measurement run), core layer,
+`YouTubeChatStore`, UI + setup sheet, gates. Remaining before any
+default-on/app-owned-key rollout: run the spike on a busy chat and record
+the streamList quota numbers here.
 
 1. **Spike tool** (`tool/youtube_spike/`) — Dart CLI: takes API key + video
    id, runs `streamList` and/or REST polling against a busy chat, prints

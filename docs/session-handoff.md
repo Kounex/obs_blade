@@ -2,8 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-08-13** (NAS wrap-up;
-wave 3 mod-tooling bundle shipped, pending dogfood).
+Read this first after `AGENTS.md`. Last reset: **2026-09-03** (NAS wrap-up;
+native YouTube chat wave shipped, pending spike run + dogfood).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,32 +54,39 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Chat roadmap wave 3 shipped on `master`** (mod tooling bundle, one
-deliberate scope upgrade — `moderator:manage:warnings`/`unban_requests`/
-`automod`): warn-from-mod-sheet, unban-request approve/deny in the ban
-inbox, live AutoMod queue sheet (EventSub v2 holds), warnings read surface
-on the user card. Pre-upgrade tokens keep working and get the re-login CTA
-on the gated rows. Details: [`chat-native-roadmap.md`](chat-native-roadmap.md)
-§ Wave 3 + [`changelog-agent.md`](changelog-agent.md) (2026-08-13 entry).
-**Not yet dogfooded** — pull on the workstation, run the app against a live
-modded channel (warn ack flow, AutoMod hold arrivals, approve/deny), then
-update the release install on the phone.
+**Native YouTube chat wave shipped on `master`** (2026-09-03): engine
+selectable in the chat bar (WebView↔Native), REST-poll timeline (Super
+Chat/Sticker/membership/poll rows, tombstones, ban events), device-flow
+sign-in for send + delete/timeout/ban, BYO-API-key setup sheet (reads are
+BYO — quota is per-GCP-project), spike tool `tool/youtube_spike/` for the
+gRPC `streamList` quota question. Details:
+[`youtube-native-chat-audit.md`](youtube-native-chat-audit.md) +
+[`changelog-agent.md`](changelog-agent.md) (2026-09-03 entry) + plan
+`superpowers/specs/2026-09-03-youtube-native-chat-plan.md`.
+**Not yet run against a live chat** — no GCP key exists yet.
 
-Waves 1+2 shipped earlier the same day and are dogfood-approved; a release
-build of that `master` is installed on the maintainer's phone (predates
-wave 3).
+Twitch wave 3 (mod tooling) shipped 2026-08-13 and was still **not
+dogfooded** at that handoff; confirm before it goes stale.
 
 **Immediate next threads:**
 
-1. **Dogfood wave 3** (above) — especially the once-only re-login the new
-   scopes force, and AutoMod holds arriving while the queue sheet is open.
-2. Availability/entitlement gate decision — gates Wave 4 (roadmap § Wave 4).
+1. **GCP project setup** (maintainer, off-repo): create throwaway key →
+   run the spike ≥30 min on a busy chat → record units/connection-hour in
+   the audit doc. That number decides app-owned-key/default-on viability.
+   OAuth client (TV/limited-input type) registration details belong in
+   `private/backend-architecture.md` — **deferred: macbook was unreachable
+   at wrap-up, private-doc sync would have stranded state on one machine.
+   Sync first, then write it.**
+2. **Dogfood YouTube native** on the workstation: real key + sign-in,
+   poll cadence on a busy chat, Super Chat rendering, mod actions.
+3. Twitch wave-3 dogfood (above), then availability/entitlement gate
+   decision — gates Twitch wave 4 AND YouTube polish.
 
-Process notes: `AGENTS.md` session-start checklist is now resume-proof
-(run it anyway). Default process tier **S**. Test gotchas that cost real
-time (fake-async real I/O → `tester.runAsync`; spinner/device-code sheets +
-`pumpAndSettle` → bounded pumps; typedef widening touchpoints; fake counters
-record failed attempts) are recorded in `changelog-agent.md`.
+Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
+anyway). Default process tier **S**. Test gotchas are in
+`changelog-agent.md`; new this wave: root `build.yaml` excludes `tool/**`
+(standalone tool pb files broke app codegen), fake-client request-shape
+tests can mirror a production bug (cross-check vendor docs).
 
 **Cursor note:** visual companion under Cursor needs
 `visual-companion-cursor` (foreground `--foreground` start) — bare

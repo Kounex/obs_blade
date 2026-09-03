@@ -105,6 +105,20 @@ bundle, pre-upgrade tokens get the re-login CTA on the gated rows. Next:
 availability/entitlement gate decision (gates wave 4) — see chat audit +
 handoff.
 
+**YouTube chat:** a native engine ships next to the WebView embed
+(`nativeChatAvailableFor` covers `ChatType.YouTube`; plan/audit:
+[`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md)).
+Reads poll `liveChatMessages.list` with a **user-supplied API key**
+(Settings → YouTube setup sheet — quota is per-GCP-project, so no app-owned
+default key until the `streamList` spike says otherwise); writes/mod
+(delete/timeout/ban) ride Google OAuth **device flow** (BYO OAuth client
+id/secret in the setup sheet's advanced section). `YouTubeChatStore`
+mirrors `TwitchChatStore` (per-video buffers, tombstone/ban reconcile, echo
+dedup). No badge artwork/pins/AutoMod/emotes — the API doesn't expose
+them. Channel entries are **per-video** (a new stream = new video id =
+re-edit). Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
+quota question before any default-on rollout.
+
 ## Docs index
 
 | Doc | Use when |
@@ -135,6 +149,11 @@ handoff.
 - **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
   `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.
+- **YouTube chat quota spike:** `tool/youtube_spike/` (standalone Dart
+  package, own pubspec; run `setup.sh` first — fetches Google's
+  `stream_list.proto` + protoc). Measures REST-poll vs gRPC `streamList`
+  read cost against a real chat with a throwaway API key. Protocol:
+  `tool/youtube_spike/README.md`.
 - **Visual-QA screenshots (macOS, booted sim):**
   `tool/visual_qa/capture_screenshots.sh` — runs
   `integration_test/screenshot_walk_test.dart`, writes PNGs to

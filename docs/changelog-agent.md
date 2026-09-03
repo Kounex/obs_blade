@@ -2,6 +2,61 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-03 — Native YouTube chat engine (full wave)
+
+- Tier L (multi-subsystem: types/services/store/UI/persistence). SDD per
+  `docs/superpowers/plan-defect-checklist.md` §1–§4: plan
+  `docs/superpowers/specs/2026-09-03-youtube-native-chat-plan.md`, one
+  verifier pass (6 amendments landed pre-dispatch), per-task reviews
+  (caught 1 Critical: Google device-flow token poll needs `device_code`,
+  not Twitch's `code` — fixture had mirrored the bug).
+- Feasibility first: `docs/youtube-native-chat-audit.md` (commit ad264dc4)
+  — quota is per-GCP-project (~3.6k units/user-hour polling vs 10k/day
+  default) so reads are BYO-API-key; gRPC `streamList` quota cost is
+  undocumented → spike before any default-on rollout.
+- Spike tool `tool/youtube_spike/` (standalone package; setup.sh extracts
+  `stream_list.proto` from the guide page — Google serves no raw proto —
+  and patches its missing duration.proto import): poll vs gRPC modes,
+  EOF/lifetime accounting, GCP-console quota measurement protocol.
+  Commits 3bd115c2, be884526. Not yet run against a live chat (no key).
+- Core layer: `YouTubeChatMessage` freezed DTO (13 `snippet.type`s +
+  `unknown` fallback), `YouTubeAuthService` (Google device flow, scope
+  `auth/youtube`, BYO client id+secret via settings with empty app-level
+  constants), `YouTubeLiveChatService` (list/insert/delete/bans/
+  `getActiveLiveChatId`; quota vs rate-limit vs forbidden exception split),
+  `YouTubeAuth` Hive model (typeId 15, box `youtube-auth`), settings keys
+  `YouTubeApiKey`/`YouTubeOAuthClientId`/`YouTubeOAuthClientSecret`/
+  `SelectedYouTubeNativeChannelId`, data-management clear covers them.
+  Commits d3702797, c60fe6e8.
+- `YouTubeChatStore` mirrors `TwitchChatStore`: per-video buffers keyed by
+  label with liveChatId/pageToken resume on switch-back, poll loop honoring
+  `pollingIntervalMillis` net of call duration, rate-limit backoff (×2 to
+  60s), quota stop, tombstone/ban reconcile + echo dedup, sign-in-gated
+  send, optimistic mod actions. Commits aca65a58, 81542250.
+- UI: `nativeChatAvailableFor` += YouTube; `stream_chat.dart` native branch
+  dispatches per platform (Twitch path byte-identical — verified in
+  review); YouTube timeline/row (icon badges — API has no artwork —,
+  Super Chat tier cards, sticker alt-text, poll/gift/milestone notices,
+  tombstones), device-code dialog, account control, options sheet, forked
+  channel dropdown, mod action sheet (delete/timeout presets/ban), setup
+  sheet (key probe, advanced BYO OAuth client, per-video staleness copy).
+  Beta warning suppressed when engine == Native. Commits 2d14b647,
+  022489b0.
+- **Gotcha (root codegen + tool packages):** `build.yaml` now excludes
+  `tool/**` — the spike's gitignored pb files on disk broke the app's
+  build_runner (`$pb.GrpcServiceName` unresolvable). Any future standalone
+  tool with generated code hits this without the exclusion.
+- **Gotcha (fixture mirrors bug):** review caught the auth test asserting
+  the same wrong param name as production — fake-client tests only prove
+  the client sends what the test expects; cross-check request shapes
+  against vendor docs, not just self-consistency.
+- Gate: `test/chat/ test/websocket/ test/persistence/` 649 green in one
+  run (load-flake files move run-to-run — `flutter_tester` WebSocket
+  connect — each passes in isolation), analyze 0 errors / 8 pre-existing
+  warnings / infos ~baseline (+1 from the spike's local pb files).
+- Not dogfooded: needs a real GCP API key + OAuth client. Spike run +
+  dogfood are the next threads (see handoff).
+
 ## 2026-08-13 — Native chat: roadmap wave 3 (mod tooling bundle)
 
 - Tier S, in-session. Roadmap: `docs/chat-native-roadmap.md` wave 3 — one
