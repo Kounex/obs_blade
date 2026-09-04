@@ -10,10 +10,11 @@ from the legacy direct-IAP path to RevenueCat automatically
 products for you — see its README for creds-by-path setup, then:
 
 ```bash
-dart run tool/provisioning/bin/provision.dart asc-products \
-  --key-path <asc-key.p8> --key-id <id> --issuer-id <id> --app-id <numeric>
-dart run tool/provisioning/bin/provision.dart play-products \
-  --service-account-json <svc.json>
+# With creds exported (e.g. from ~/.localrc — see the tool README):
+dart run tool/provisioning/bin/provision.dart asc-products
+dart run tool/provisioning/bin/provision.dart play-products
+# …or pass --key-path/--key-id/--issuer-id/--app-id /
+# --service-account-json explicitly; flags win over env.
 ```
 
 Both are idempotent (re-runs are no-ops), create the exact ids from

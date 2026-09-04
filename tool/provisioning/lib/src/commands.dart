@@ -12,14 +12,24 @@ import 'gcp_youtube.dart';
 import 'play_payloads.dart';
 import 'play_provisioner.dart';
 
+/// Resolves a credential/config value: explicit CLI flag wins, else the
+/// environment variable (the maintainer keeps these in `~/.localrc`,
+/// sourced into zsh). Pure so it is unit-testable.
+String? argOrEnv(String? argValue, String? envValue) {
+  if (argValue != null && argValue.isNotEmpty) return argValue;
+  if (envValue != null && envValue.isNotEmpty) return envValue;
+  return null;
+}
+
 /// `provision gcp-youtube` — GCP project + YouTube Data API v3 + restricted
 /// API key for the youtube_spike quota measurement.
 class GcpYoutubeCommand extends Command<int> {
   GcpYoutubeCommand() {
     argParser
       ..addOption('project-id',
-          help: 'GCP project id to create or reuse.',
-          defaultsTo: 'obs-blade-youtube')
+          help: 'GCP project id to create or reuse. Falls back to '
+              '\$GCP_PROJECT_ID, then the default.',
+          defaultsTo: null)
       ..addOption('key-display-name',
           help: 'Display name of the API key (used to find it again on '
               're-runs).',
@@ -41,6 +51,9 @@ class GcpYoutubeCommand extends Command<int> {
   Future<int> run() async {
     final args = argResults!;
     final dryRun = args['dry-run'] as bool;
+    final projectId = argOrEnv(args['project-id'] as String?,
+            Platform.environment['GCP_PROJECT_ID']) ??
+        'obs-blade-youtube';
 
     if (!dryRun) {
       final which = await Process.run('which', ['gcloud']);
@@ -53,7 +66,7 @@ class GcpYoutubeCommand extends Command<int> {
     }
 
     final provisioner = GcpYoutubeProvisioner(
-      projectId: args['project-id'] as String,
+      projectId: projectId,
       keyDisplayName: args['key-display-name'] as String,
       dryRun: dryRun,
       gcloud: realGcloudRunner,
@@ -68,7 +81,7 @@ class GcpYoutubeCommand extends Command<int> {
     }
 
     if (dryRun) {
-      _printGcpManualSteps(args['project-id'] as String);
+      _printGcpManualSteps(projectId);
       return 0;
     }
 
@@ -85,7 +98,7 @@ class GcpYoutubeCommand extends Command<int> {
       print('(Shown once here — it is retrievable any time via '
           '`gcloud services api-keys list/get-key-string`.)');
     }
-    _printGcpManualSteps(args['project-id'] as String);
+    _printGcpManualSteps(projectId);
     return 0;
   }
 
@@ -108,12 +121,16 @@ class AscProductsCommand extends Command<int> {
   AscProductsCommand() {
     argParser
       ..addOption('key-path',
-          help: 'Path to the App Store Connect API .p8 private key.')
-      ..addOption('key-id', help: 'App Store Connect API key id.')
-      ..addOption('issuer-id', help: 'App Store Connect API issuer id (UUID).')
+          help: 'Path to the App Store Connect API .p8 private key. '
+              'Falls back to \$ASC_KEY_PATH.')
+      ..addOption('key-id',
+          help: 'App Store Connect API key id. Falls back to \$ASC_KEY_ID.')
+      ..addOption('issuer-id',
+          help: 'App Store Connect API issuer id (UUID). Falls back to '
+              '\$ASC_ISSUER_ID.')
       ..addOption('app-id',
           help: 'Numeric App Store Connect app id (App Information → '
-              'Apple ID).')
+              'Apple ID). Falls back to \$ASC_APP_ID.')
       ..addOption('yearly-price-usd',
           help: 'US price for pro_yearly.', defaultsTo: '24.99')
       ..addOption('monthly-price-usd',
@@ -136,9 +153,10 @@ class AscProductsCommand extends Command<int> {
     final args = argResults!;
     final dryRun = args['dry-run'] as bool;
 
-    final appId = args['app-id'] as String?;
+    final appId = argOrEnv(
+        args['app-id'] as String?, Platform.environment['ASC_APP_ID']);
     if (appId == null) {
-      stderr.writeln('Missing required --app-id.');
+      stderr.writeln('Missing required --app-id (or \$ASC_APP_ID).');
       return 64;
     }
 
@@ -146,16 +164,26 @@ class AscProductsCommand extends Command<int> {
     if (dryRun) {
       client = DryRunApiClient(serviceName: 'asc');
     } else {
-      final keyPath = args['key-path'] as String?;
-      final keyId = args['key-id'] as String?;
-      final issuerId = args['issuer-id'] as String?;
+      final env = Platform.environment;
+      final keyPath =
+          argOrEnv(args['key-path'] as String?, env['ASC_KEY_PATH']);
+      final keyId = argOrEnv(args['key-id'] as String?, env['ASC_KEY_ID']);
+      final issuerId =
+          argOrEnv(args['issuer-id'] as String?, env['ASC_ISSUER_ID']);
       if (keyPath == null || keyId == null || issuerId == null) {
         stderr.writeln(
             'Missing credentials: --key-path, --key-id and --issuer-id are '
-            'required (unless --dry-run).');
+            'required (unless --dry-run). Set them via flags or the '
+            'ASC_KEY_PATH / ASC_KEY_ID / ASC_ISSUER_ID env vars '
+            '(e.g. exported from ~/.localrc).');
         return 64;
       }
-      final pem = await File(keyPath).readAsString();
+      final pemFile = File(keyPath);
+      if (!pemFile.existsSync()) {
+        stderr.writeln('ASC key file not found: $keyPath');
+        return 64;
+      }
+      final pem = await pemFile.readAsString();
       final token = buildAscJwt(
           privateKeyPem: pem, keyId: keyId, issuerId: issuerId);
       client = HttpApiClient(
@@ -204,7 +232,8 @@ class PlayProductsCommand extends Command<int> {
   PlayProductsCommand() {
     argParser
       ..addOption('service-account-json',
-          help: 'Path to the Play API service-account JSON key.')
+          help: 'Path to the Play API service-account JSON key. Falls back '
+              'to \$GOOGLE_APPLICATION_CREDENTIALS.')
       ..addOption('package-name',
           help: 'Android applicationId. Defaults to the one in '
               'android/app/build.gradle.')
@@ -249,13 +278,20 @@ class PlayProductsCommand extends Command<int> {
     if (dryRun) {
       client = DryRunApiClient(serviceName: 'play');
     } else {
-      final saPath = args['service-account-json'] as String?;
+      final saPath = argOrEnv(args['service-account-json'] as String?,
+          Platform.environment['GOOGLE_APPLICATION_CREDENTIALS']);
       if (saPath == null) {
-        stderr.writeln('Missing --service-account-json (unless --dry-run).');
+        stderr.writeln('Missing --service-account-json (unless --dry-run). '
+            'Or export GOOGLE_APPLICATION_CREDENTIALS (e.g. from ~/.localrc).');
+        return 64;
+      }
+      final saFile = File(saPath);
+      if (!saFile.existsSync()) {
+        stderr.writeln('Service-account JSON not found: $saPath');
         return 64;
       }
       final credentials = ServiceAccountCredentials.fromJson(
-          jsonDecode(await File(saPath).readAsString()));
+          jsonDecode(await saFile.readAsString()));
       final authClient = await clientViaServiceAccount(
           credentials, ['https://www.googleapis.com/auth/androidpublisher']);
       client = HttpApiClient(

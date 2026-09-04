@@ -41,11 +41,27 @@ outside the repo (e.g. `~/.config/obs-blade/…`, `chmod 600`); the `.gitignore`
 here additionally covers `creds/`, `*.p8` and service-account JSON in case you
 keep them locally anyway.
 
-| Command | Credential | Where to get it |
-|---|---|---|
-| `gcp-youtube` | gcloud user login | `gcloud auth login` (needs permission to create projects, or pre-create the project in the console) |
-| `asc-products` | `.p8` key + key id + issuer id | <https://appstoreconnect.apple.com/access/integrations/api> → "Generate API Key" (role: Admin or App Manager) — the `.p8` downloads once, the key id and team-level issuer id are shown on the same page |
-| `play-products` | service-account JSON | Play Console → Setup → API access → link/create a GCP service account → "Manage service accounts" → create JSON key. Grant the account **Admin** (or at least "Manage orders and subscriptions" + app access) in Play Console |
+**Preferred: environment variables.** Every credential flag falls back to an
+env var, so you can export them once from your shell init (the maintainer uses
+`~/.localrc`, sourced into zsh) and run the commands flag-free:
+
+```bash
+# ~/.localrc
+export ASC_KEY_PATH="$HOME/.config/obs-blade/asc-key.p8"
+export ASC_KEY_ID="…"
+export ASC_ISSUER_ID="…"
+export ASC_APP_ID="…"                         # numeric App Store Connect app id
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
+export GCP_PROJECT_ID="obs-blade-youtube"     # optional, has a sane default
+```
+
+An explicit flag always wins over the env var.
+
+| Command | Credential | Env fallback | Where to get it |
+|---|---|---|---|
+| `gcp-youtube` | gcloud user login | `GCP_PROJECT_ID` (project only; auth is gcloud's own) | `gcloud auth login` (needs permission to create projects, or pre-create the project in the console) |
+| `asc-products` | `.p8` key + key id + issuer id | `ASC_KEY_PATH` / `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_APP_ID` | <https://appstoreconnect.apple.com/access/integrations/api> → "Generate API Key" (role: Admin or App Manager) — the `.p8` downloads once, the key id and team-level issuer id are shown on the same page |
+| `play-products` | service-account JSON | `GOOGLE_APPLICATION_CREDENTIALS` (the Google-standard var) | Play Console → Setup → API access → link/create a GCP service account → "Manage service accounts" → create JSON key. Grant the account **Admin** (or at least "Manage orders and subscriptions" + app access) in Play Console |
 
 ## `gcp-youtube`
 
