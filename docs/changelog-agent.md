@@ -2,6 +2,65 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-04 — Pro subscription gate for native chat (full wave)
+
+- Tier L (IAP/entitlement/persistence + new paywall surface + chat-surface
+  gating). SDD per checklist: plan
+  `docs/superpowers/specs/2026-09-04-pro-subscription-gate-plan.md`,
+  verifier pass (3 amendment clusters — biggest: `queryPastPurchases` was
+  REMOVED in in_app_purchase 3.3.0; cold-start restore goes through
+  `restorePurchases()` + the purchase stream, silent vs explicit split),
+  per-task reviews (caught: cold-start guard flag was burned before the
+  restore succeeded — a transient error would have spent the
+  once-per-install reinstall recovery).
+- Strategy binding (`docs/private/monetization-strategy.md`): WebView chat
+  + all OBS control stay free forever; sub paired with lifetime buy-out;
+  entry points are user-initiated taps only; foss branch strips additively.
+- Entitlement core: `lib/utils/pro_ids.dart` (`pro_yearly`/`pro_monthly`/
+  `pro_lifetime` — final ids, products not yet created store-side),
+  `ProPurchaseService` + injectable `ProPurchaseGateway` seam,
+  `ProStore` (MobX; `isPro` = `BoughtPro` box flag ‖ kDebugMode debug
+  override; lazy `loadProducts`; guarded once-per-install cold-start
+  restore, flag set only after success), `PurchaseBase` pro branch
+  (explicit-restore dialog vs silent cold-start via armed-in-flight flag,
+  disarmed in `finally`; empty-`productDetails` guard so a purchase with a
+  missing product record still unlocks), `_deleteAll` preserves `BoughtPro`
+  alongside `BoughtBlacksmith`. Commits cb84febe, 6bb67f9.
+- Paywall (`lib/views/pro/`, full-screen route `Pro` on Home + Settings tab
+  navigators): hero, benefit cards (carousel + worm on phone, 2×2 grid on
+  tablet), yearly-hero/monthly/lifetime pricing from live `ProductDetails`
+  with an intentional placeholder state ("Price shown at purchase", buy →
+  friendly not-live-yet toast — the shipping state until store products
+  exist), explicit restore, terms/privacy links, confetti on the
+  not-Pro→Pro edge only, already-Pro thank-you/manage state, hidden debug
+  override (long-press hero logo, kDebugMode). Commit 454388c2.
+- Gating: `Observer` over `ProStore.isPro` at all three gate sites (no
+  rebuildKeys — entitlement read combines flag + debug override); engine
+  switch lock badge (`JamIcons.padlock`) + tap intercept (box put skipped);
+  single entitlement guard atop `stream_chat.dart`'s native dispatch
+  (extracted `_buildNativeChatSlot`, dispatch verbatim — review-verified);
+  username-bar native cluster hidden when not Pro (legacy persisted
+  `SelectedChatEngine=native` users get the upsell pane, no dead-end login
+  pills); settings "OBS Blade Pro" row (Active/Inactive). Whole-`test/chat/`
+  impact pass: native-mode tests seed `BoughtPro` in the real box with a
+  fake-gateway ProStore. Commit 20e79e9b.
+- **Gotcha (in_app_purchase 3.x):** no `queryPastPurchases` — reinstall
+  recovery = guarded `restorePurchases()`; restored events also arrive
+  spontaneously on iOS, so dialog-vs-silent must key on an armed flag, not
+  the event.
+- **Gotcha (release-mode-only gating untestable):** `kDebugMode`-gated
+  behavior (debug override gesture, `setDebugOverride` no-op) can't be
+  tested for release in unit tests — pin the store-level guard and accept
+  the UI path as debug-verified.
+- Known limitation (planned, not a bug): lapsed subscriptions are not
+  detectable client-side; receipt validation belongs to the RevenueCat/
+  backend wave.
+- Gate: `test/chat/ test/websocket/ test/persistence/ test/pro/` 698 green
+  in one run (two load-flake files, different again — each passes in
+  isolation), analyze 0 errors / 8 pre-existing warnings / infos ~baseline.
+- Store-side TODO (maintainer, no app change needed): create the three
+  products with the exact ids; then sandbox purchase/restore dogfood.
+
 ## 2026-09-03 — Native YouTube chat engine (full wave)
 
 - Tier L (multi-subsystem: types/services/store/UI/persistence). SDD per

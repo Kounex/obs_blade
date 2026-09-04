@@ -119,6 +119,24 @@ them. Channel entries are **per-video** (a new stream = new video id =
 re-edit). Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
 quota question before any default-on rollout.
 
+**Monetization (Pro):** native chat engines are gated behind the **Pro
+entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only
+override via long-press on the paywall hero). Product ids
+(`lib/utils/pro_ids.dart`): `pro_yearly` / `pro_monthly` (subs) +
+`pro_lifetime` (non-consumable) — **not yet created store-side**; the
+paywall (`lib/views/pro/`, full-screen route `Pro` on Home + Settings tab
+navigators) renders a deliberate placeholder state until they are. Wiring
+to ship: create the products in App Store Connect / Play Console with
+those exact ids — no app-code changes needed. Gates live at the chat-bar
+engine switch (lock badge + intercept), the native chat pane (upsell),
+and the username-bar cluster — all `Observer`s over `ProStore.isPro`;
+WebView chat stays free forever (strategy:
+`docs/private/monetization-strategy.md`). Restore = cold-start guarded
+`restorePurchases()` + explicit button. Known limitation: lapsed
+subscriptions aren't detectable client-side — receipt validation is the
+backend wave's job. foss branch: strip this additively (same pattern as
+tips/blacksmith).
+
 ## Docs index
 
 | Doc | Use when |

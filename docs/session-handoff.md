@@ -2,8 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-03** (NAS wrap-up;
-native YouTube chat wave shipped, pending spike run + dogfood).
+Read this first after `AGENTS.md`. Last reset: **2026-09-04** (NAS wrap-up;
+Pro subscription gate wave shipped, pending store products + dogfood).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,39 +54,48 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Native YouTube chat wave shipped on `master`** (2026-09-03): engine
-selectable in the chat bar (WebView↔Native), REST-poll timeline (Super
-Chat/Sticker/membership/poll rows, tombstones, ban events), device-flow
-sign-in for send + delete/timeout/ban, BYO-API-key setup sheet (reads are
-BYO — quota is per-GCP-project), spike tool `tool/youtube_spike/` for the
-gRPC `streamList` quota question. Details:
-[`youtube-native-chat-audit.md`](youtube-native-chat-audit.md) +
-[`changelog-agent.md`](changelog-agent.md) (2026-09-03 entry) + plan
-`superpowers/specs/2026-09-03-youtube-native-chat-plan.md`.
-**Not yet run against a live chat** — no GCP key exists yet.
+**Pro subscription gate wave shipped on `master`** (2026-09-04): native
+chat engines (Twitch + YouTube) are entitlement-gated — chat-bar engine
+switch lock badge + intercept, native-pane upsell, username-bar cluster
+hidden, settings "OBS Blade Pro" row. Full-screen paywall at route `Pro`
+(both tab navigators): benefits browser, yearly/monthly/lifetime pricing
+from live `ProductDetails` with a deliberate placeholder state (the state
+every user sees until products exist), explicit + guarded cold-start
+restore, debug entitlement override (long-press hero, kDebugMode).
+Entitlement = `ProStore.isPro` (`BoughtPro` box flag + debug override).
+Details: plan `superpowers/specs/2026-09-04-pro-subscription-gate-plan.md`
++ [`changelog-agent.md`](changelog-agent.md) (2026-09-04 entry).
+**Store products don't exist yet** — everything degrades gracefully;
+nothing user-facing charges.
 
-Twitch wave 3 (mod tooling) shipped 2026-08-13 and was still **not
-dogfooded** at that handoff; confirm before it goes stale.
+Native YouTube chat wave shipped 2026-09-03 (see changelog); **not yet
+run against a live chat** — no GCP key exists. Twitch wave 3 dogfood also
+still open since 2026-08-13.
 
 **Immediate next threads:**
 
-1. **GCP project setup** (maintainer, off-repo): create throwaway key →
-   run the spike ≥30 min on a busy chat → record units/connection-hour in
-   the audit doc. That number decides app-owned-key/default-on viability.
-   OAuth client (TV/limited-input type) registration details belong in
-   `private/backend-architecture.md` — **deferred: macbook was unreachable
-   at wrap-up, private-doc sync would have stranded state on one machine.
-   Sync first, then write it.**
-2. **Dogfood YouTube native** on the workstation: real key + sign-in,
-   poll cadence on a busy chat, Super Chat rendering, mod actions.
-3. Twitch wave-3 dogfood (above), then availability/entitlement gate
-   decision — gates Twitch wave 4 AND YouTube polish.
+1. **Store setup** (maintainer, off-repo): create `pro_yearly` /
+   `pro_monthly` (subscriptions) + `pro_lifetime` (non-consumable) in App
+   Store Connect + Play Console with those exact ids — no app-code change
+   needed; the paywall lights up with live prices. Then sandbox-test a
+   purchase + restore + the not-Pro → Pro live unlock.
+2. **Dogfood the Pro gate** on the workstation via the debug override
+   (long-press paywall hero): gate flip mid-session, legacy persisted
+   `SelectedChatEngine=native` boot path, settings row states.
+3. YouTube threads from 2026-09-03: GCP key → spike run (decides
+   app-owned-key viability); OAuth client note into
+   `private/backend-architecture.md` (**still deferred — macbook
+   unreachable both wrap-ups; sync private docs first**); YouTube native
+   dogfood.
+4. Known limitation to plan around: lapsed subscriptions are NOT
+   detectable client-side (`in_app_purchase` has no expiry API) —
+   receipt validation belongs to the RevenueCat/backend wave
+   (monetization-strategy: "entitlements bought, not built").
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in
-`changelog-agent.md`; new this wave: root `build.yaml` excludes `tool/**`
-(standalone tool pb files broke app codegen), fake-client request-shape
-tests can mirror a production bug (cross-check vendor docs).
+`changelog-agent.md`. `test/pro/` is the purchase/entitlement suite home
+(no precedent existed before this wave).
 
 **Cursor note:** visual companion under Cursor needs
 `visual-companion-cursor` (foreground `--foreground` start) — bare
@@ -96,7 +105,7 @@ Superpowers `start-server.sh` dies when the shell exits.
 
 ```bash
 git checkout master && git pull
-flutter test test/chat/ test/websocket/ test/persistence/
+flutter test test/chat/ test/websocket/ test/persistence/ test/pro/
 ```
 
 Maintainer: machine-specific verify, simulator, and visual-QA commands are
