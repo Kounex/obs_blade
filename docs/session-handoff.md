@@ -74,11 +74,14 @@ still open since 2026-08-13.
 
 **Immediate next threads:**
 
-1. **Store setup** (maintainer, off-repo): create `pro_yearly` /
-   `pro_monthly` (subscriptions) + `pro_lifetime` (non-consumable) in App
-   Store Connect + Play Console with those exact ids — no app-code change
-   needed; the paywall lights up with live prices. Then sandbox-test a
-   purchase + restore + the not-Pro → Pro live unlock.
+1. **Take Pro live** (maintainer, dashboard-only): follow
+   [`revenuecat-setup.md`](revenuecat-setup.md) — RC account, store
+   products (`pro_yearly`/`pro_monthly`/`pro_lifetime`), entitlement
+   `pro`, two public SDK keys into `lib/utils/revenuecat_config.dart`.
+   The app auto-switches to RC when keys are present; legacy direct-IAP
+   path stays as fallback. **Attach `pro_lifetime` to the `pro`
+   entitlement before flipping** or pre-RC lifetime buyers strand.
+   Then sandbox-test purchase/restore/expiry-revocation.
 2. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.
@@ -87,10 +90,9 @@ still open since 2026-08-13.
    `private/backend-architecture.md` (**still deferred — macbook
    unreachable both wrap-ups; sync private docs first**); YouTube native
    dogfood.
-4. Known limitation to plan around: lapsed subscriptions are NOT
-   detectable client-side (`in_app_purchase` has no expiry API) —
-   receipt validation belongs to the RevenueCat/backend wave
-   (monetization-strategy: "entitlements bought, not built").
+4. Revisit-commented test: `test/pro/revenuecat_pro_gateway_test.dart`'s
+   empty-keys→legacy selection test needs a fixture tweak once real keys
+   land.
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in

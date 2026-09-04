@@ -126,15 +126,20 @@ override via long-press on the paywall hero). Product ids
 `pro_lifetime` (non-consumable) — **not yet created store-side**; the
 paywall (`lib/views/pro/`, full-screen route `Pro` on Home + Settings tab
 navigators) renders a deliberate placeholder state until they are. Wiring
-to ship: create the products in App Store Connect / Play Console with
-those exact ids — no app-code changes needed. Gates live at the chat-bar
+to ship: **RevenueCat** (`purchases_flutter`, entitlement `pro`) — full
+checklist in [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md)
+(create products with the exact ids, attach to the entitlement, paste two
+public SDK keys into `lib/utils/revenuecat_config.dart`; the app
+auto-switches from the legacy direct-IAP fallback when keys are present).
+Gates live at the chat-bar
 engine switch (lock badge + intercept), the native chat pane (upsell),
 and the username-bar cluster — all `Observer`s over `ProStore.isPro`;
 WebView chat stays free forever (strategy:
-`docs/private/monetization-strategy.md`). Restore = cold-start guarded
-`restorePurchases()` + explicit button. Known limitation: lapsed
-subscriptions aren't detectable client-side — receipt validation is the
-backend wave's job. foss branch: strip this additively (same pattern as
+`docs/private/monetization-strategy.md`). Restore = RC restore / cold-start
+guarded `restorePurchases()` (legacy path) + explicit button. Once RC keys
+land, CustomerInfo entitlement state is the truth (lapsed subscriptions
+revoke — the direct-IAP blind spot is fixed); `BoughtPro` is the offline
+mirror. foss branch: strip this additively (same pattern as
 tips/blacksmith).
 
 ## Docs index
@@ -148,6 +153,7 @@ tips/blacksmith).
 | [`docs/chat-webview-audit.md`](docs/chat-webview-audit.md) | Twitch/YouTube/Owncast chat strategy |
 | [`docs/chat-native-roadmap.md`](docs/chat-native-roadmap.md) | Native chat: unexploited Twitch API surface + build order |
 | [`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md) | Native YouTube chat: API feasibility, quota reality, build plan |
+| [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md) | Pro subscription: RevenueCat dashboard/store wiring checklist |
 | [`docs/upgrade-plan.md`](docs/upgrade-plan.md) | Flutter / package upgrade status |
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |

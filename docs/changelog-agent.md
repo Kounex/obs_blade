@@ -2,6 +2,36 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-04 — RevenueCat migration (Pro entitlement backend swap)
+
+- Tier M (focused migration on the wave-old seam). One implementer + one
+  end review (approve; 4 non-blocking minors noted in review).
+- `purchases_flutter: ^10.11.0` added (lockfile diff: the plugin entry
+  only). New `ProPurchaseBackend` seam (`lib/utils/pro_purchase_backend.dart`)
+  with `RevenueCatProGateway` (`lib/utils/revenuecat_pro_gateway.dart`) +
+  `InAppPurchaseProBackend` legacy adapter; platform-neutral `ProProduct`
+  replaces `ProductDetails` across `ProStore.products` + the paywall
+  (pure type rename there). Selection: explicit injection > RC when
+  configured > legacy IAP.
+- Config gate: `lib/utils/revenuecat_config.dart` — `kProEntitlementId =
+  'pro'`, empty `kRevenueCatAppleApiKey`/`kRevenueCatGoogleApiKey`
+  (platform-mapped; macOS → Apple key; other platforms → legacy).
+  **Empty keys = today's behavior, byte-safe** (review-verified).
+- RC path: `Purchases.configure` (idempotent, self-healing), CustomerInfo
+  fetch + listener mirror entitlement state into `BoughtPro` **both
+  directions** — inactive overwrites stale-true, fixing the
+  direct-IAP lapsed-subscription blind spot without a server.
+  Buy mirrors immediately; restore returns entitlement-active and shows
+  the dialog directly; purchase-cancelled → false, no error toast.
+  `purchase_base.dart`'s pro branch is guarded off when RC is configured
+  (tips/blacksmith stay on direct IAP).
+- Wiring checklist for the maintainer (dashboard + keys, no app code):
+  **`docs/revenuecat-setup.md`** — incl. the legacy `pro_lifetime`
+  migration edge (attach it to the `pro` entitlement or pre-RC lifetime
+  buyers strand) and the revisit-commented empty-keys selection test
+  (`test/pro/revenuecat_pro_gateway_test.dart`).
+- Commit 278c54e1. Gate: see wrap-up entry above (same run).
+
 ## 2026-09-04 — Pro subscription gate for native chat (full wave)
 
 - Tier L (IAP/entitlement/persistence + new paywall surface + chat-surface
