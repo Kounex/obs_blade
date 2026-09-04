@@ -83,10 +83,16 @@ void main() {
       expect(client.count('POST', 'v1/inAppPurchaseLocalizations'), 1);
       expect(client.count('POST', 'v1/inAppPurchasePriceSchedules'), 1);
 
-      // Prices were attached to the right price points.
-      final yearlyPrice =
-          client.bodies['POST v1/subscriptionPrices']!.entries;
-      expect(yearlyPrice, isNotEmpty);
+      // Prices were attached to the right price points — yearly first,
+      // then monthly (subscription spec order).
+      final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
+      expect(priceBodies, hasLength(2));
+      String pricePointOf(Map<String, Object?> body) =>
+          ((((body['data'] as Map)['relationships'] as Map)[
+                      'subscriptionPricePoint'] as Map)['data'] as Map)['id']
+              as String;
+      expect(pricePointOf(priceBodies[0]), 'pp-y');
+      expect(pricePointOf(priceBodies[1]), 'pp-m');
     });
 
     test('is a no-op when everything already exists', () async {

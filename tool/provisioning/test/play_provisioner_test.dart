@@ -149,6 +149,12 @@ void main() {
       expect(ok, isTrue);
       expect(client.count('PATCH',
           'androidpublisher/v3/applications/$pkg/subscriptions/pro'), 1);
+      final patchRequest = client.requests
+          .singleWhere((r) => r.startsWith('PATCH '));
+      expect(patchRequest, contains('updateMask=basePlans'));
+      expect(patchRequest, isNot(contains('listings')),
+          reason: 'resume PATCH must not touch console-customized '
+              'listing text');
       expect(
           client.count(
               'POST',

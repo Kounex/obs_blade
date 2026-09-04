@@ -55,17 +55,16 @@ Map<String, Object?> subscriptionCreate({
     };
 
 /// Body for PATCH .../applications/{packageName}/subscriptions/{productId}
-/// (updateMask: basePlans,listings) — used when the subscription product
-/// already exists but base plans are missing. Existing base plans are
-/// carried over verbatim so nothing else is touched.
+/// (updateMask: basePlans) — used when the subscription product already
+/// exists but base plans are missing. Existing base plans are carried over
+/// verbatim; listings are deliberately not sent (nor masked) so re-runs
+/// don't clobber console-customized listing text.
 Map<String, Object?> subscriptionPatch({
   required List<Map<String, Object?>> existingBasePlans,
   required List<BasePlanSpec> missing,
-  required String title,
   String regionCode = 'US',
 }) =>
     {
-      'listings': [_subscriptionListing(title)],
       'basePlans': [
         ...existingBasePlans,
         ...missing.map((spec) => _basePlan(spec, regionCode)),

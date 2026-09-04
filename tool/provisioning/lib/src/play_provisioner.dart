@@ -87,11 +87,13 @@ class PlayProvisioner {
           subscriptionPatch(
             existingBasePlans: existingBasePlans,
             missing: missing,
-            title: subscriptionTitle,
             regionCode: regionCode,
           ),
           {
-            'updateMask': 'basePlans,listings',
+            // basePlans only — `listings` stays untouched so re-runs don't
+            // clobber console-customized listing text. (The full listing is
+            // set on initial create instead.)
+            'updateMask': 'basePlans',
             'regionsVersion.version': regionsVersion,
           },
         );
@@ -173,8 +175,14 @@ class PlayProvisioner {
     final option = options.where(
         (o) => o['purchaseOptionId'] == purchaseOptionId).firstOrNull;
     final state = option?['state'] as String? ?? 'DRAFT';
-    if (state == 'ACTIVE' || state == 'INACTIVE_PUBLISHED') {
-      _log('purchase option $purchaseOptionId already $state — skipping');
+    if (state == 'ACTIVE') {
+      _log('purchase option $purchaseOptionId already ACTIVE — skipping');
+      return true;
+    }
+    if (state == 'INACTIVE_PUBLISHED') {
+      _log('purchase option $purchaseOptionId is INACTIVE_PUBLISHED '
+          '(was live, then deactivated) — skipping; reactivate manually '
+          'if this was deliberate');
       return true;
     }
     try {

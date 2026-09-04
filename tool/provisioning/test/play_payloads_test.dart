@@ -69,7 +69,7 @@ void main() {
   });
 
   group('subscriptionPatch', () {
-    test('carries existing base plans and appends missing ones', () {
+    test('carries existing base plans, appends missing, omits listings', () {
       final existing = [
         {'basePlanId': 'pro-yearly', 'state': 'ACTIVE'}
       ];
@@ -81,12 +81,14 @@ void main() {
               billingPeriodDuration: 'P1M',
               priceUsd: '4.99'),
         ],
-        title: 'Pro',
       );
       final plans = body['basePlans'] as List;
       expect(plans, hasLength(2));
       expect((plans.first as Map)['basePlanId'], 'pro-yearly');
       expect((plans.last as Map)['basePlanId'], 'pro-monthly');
+      expect(body.containsKey('listings'), isFalse,
+          reason: 'resume PATCH must not clobber console-customized '
+              'listing text');
     });
   });
 

@@ -5,7 +5,17 @@ import 'package:provisioning/src/api_client.dart';
 /// reads as "does not exist" to the provisioners.
 class FakeApiClient extends ApiClient {
   final requests = <String>[];
-  final bodies = <String, Map<String, Object?>>{};
+
+  /// Request bodies in insertion order: (method, path, body). Multiple
+  /// POSTs to the same path (e.g. two subscription prices) each keep
+  /// their entry.
+  final bodies = <({String method, String path, Map<String, Object?> body})>[];
+
+  /// All bodies posted to [path], in request order.
+  List<Map<String, Object?>> bodiesFor(String method, String path) => bodies
+      .where((b) => b.method == method && b.path == path)
+      .map((b) => b.body)
+      .toList();
   final _responses = <String, List<ApiResponse>>{};
 
   void on(String method, String path, ApiResponse response) =>
@@ -35,7 +45,7 @@ class FakeApiClient extends ApiClient {
   Future<ApiResponse> post(String path, Map<String, Object?> body,
       [Map<String, String> query = const {}]) async {
     requests.add(_key('POST', path, query));
-    bodies[_key('POST', path, query)] = body;
+    bodies.add((method: 'POST', path: path, body: body));
     return _next('POST', path);
   }
 
@@ -43,7 +53,7 @@ class FakeApiClient extends ApiClient {
   Future<ApiResponse> patch(String path, Map<String, Object?> body,
       [Map<String, String> query = const {}]) async {
     requests.add(_key('PATCH', path, query));
-    bodies[_key('PATCH', path, query)] = body;
+    bodies.add((method: 'PATCH', path: path, body: body));
     return _next('PATCH', path);
   }
 
