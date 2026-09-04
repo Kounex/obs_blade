@@ -325,6 +325,20 @@ class SettingsView extends StatelessWidget {
                     ),
                     blockEntries: [
                       BlockEntry(
+                        leading: CupertinoIcons.bolt_fill,
+                        title: 'OBS Blade Pro',
+                        navigateTo: SettingsTabRoutingKeys.Pro,
+                        navigateToResult: Text(
+                          (settingsBox.get(
+                                SettingsKeys.BoughtPro.name,
+                                defaultValue: false,
+                              )
+                              as bool)
+                              ? 'Active'
+                              : 'Inactive',
+                        ),
+                      ),
+                      BlockEntry(
                         leading: CupertinoIcons.hammer_fill,
                         title: 'Blacksmith',
                         navigateToResult: Text(

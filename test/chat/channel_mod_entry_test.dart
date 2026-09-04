@@ -8,17 +8,20 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_engine.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/channel_mod_button.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_username_bar.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_mod_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart';
 
 import '../persistence/support/hive_test_harness.dart';
+import '../pro/support/fake_pro_purchase_gateway.dart';
 import 'support/fake_twitch_services.dart';
 
 const _modScopes = [
@@ -51,6 +54,7 @@ void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
   late TwitchChatStore store;
+  late ProStore proStore;
 
   Box<dynamic> settingsBox() => Hive.box(HiveKeys.Settings.name);
   Box<TwitchAuth> authBox() => Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -76,6 +80,18 @@ void main() {
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
+
+    /// Entitlement: the username bar's native cluster is Pro-gated, so
+    /// seed the real flag and register the real store reading it. The
+    /// cold-start restore is skipped so no store call fires.
+    await settingsBox().put(SettingsKeys.BoughtPro.name, true);
+    await settingsBox()
+        .put(SettingsKeys.ProColdStartRestoreDone.name, true);
+    proStore = ProStore(
+      service: ProPurchaseService(gateway: FakeProPurchaseGateway()),
+    )..init();
+    GetIt.instance.registerSingleton<ProStore>(proStore);
+
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
@@ -88,6 +104,7 @@ void main() {
 
   tearDown(() async {
     store.dispose();
+    proStore.dispose();
     await GetIt.instance.reset();
     await harness.close();
     if (tempDir.existsSync()) {

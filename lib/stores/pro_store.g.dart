@@ -86,6 +86,24 @@ mixin _$ProStore on _ProStore, Store {
     });
   }
 
+  late final _$productsLoadedAtom = Atom(
+    name: '_ProStore.productsLoaded',
+    context: context,
+  );
+
+  @override
+  bool get productsLoaded {
+    _$productsLoadedAtom.reportRead();
+    return super.productsLoaded;
+  }
+
+  @override
+  set productsLoaded(bool value) {
+    _$productsLoadedAtom.reportWrite(value, super.productsLoaded, () {
+      super.productsLoaded = value;
+    });
+  }
+
   late final _$loadProductsAsyncAction = AsyncAction(
     '_ProStore.loadProducts',
     context: context,
@@ -137,6 +155,7 @@ boughtPro: ${boughtPro},
 debugOverride: ${debugOverride},
 pending: ${pending},
 lastError: ${lastError},
+productsLoaded: ${productsLoaded},
 isPro: ${isPro}
     ''';
   }

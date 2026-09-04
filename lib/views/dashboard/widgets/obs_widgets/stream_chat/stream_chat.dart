@@ -14,13 +14,17 @@ import '../../../../../models/enums/chat_engine.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/hive_builder.dart';
+import '../../../../../stores/pro_store.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
+import '../../../../../utils/routing_helper.dart';
 import '../../../../../utils/styling_helper.dart';
+import '../../../../pro/widgets/pro_benefits.dart';
+import '../../../../settings/widgets/accent_icon_tile.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
 import 'chat_emote_picker.dart';
@@ -284,174 +288,18 @@ class _StreamChatState extends State<StreamChat>
               }
 
               if (nativeEngine) {
-                /// Native YouTube chat: API-key gated reads (signed-out
-                /// timelines work — the input docks a read-only strip with
-                /// a sign-in affordance), device-flow sign-in for writes.
-                /// Unconfigured (no API key) shows the setup CTA.
-                if (chatType == ChatType.YouTube) {
-                  return Observer(
-                    builder: (_) {
-                      final youTubeStore = GetIt.instance<YouTubeChatStore>();
-                      final configured = youTubeStore.authState !=
-                          YouTubeAuthState.unconfigured;
-                      final signedIn = youTubeStore.isSignedInState;
-                      final channelTitle = youTubeStore.selfChannelTitle;
-
-                      return NativeChatWindow(
-                        chatType: chatType,
-                        status: youTubeChatWindowStatus(
-                          youTubeStore.chatConnection,
-                          configured,
-                        ),
-                        statusDetail: youTubeStore.chatError,
-                        accountLabel: channelTitle,
-                        channelIsLive: youTubeStore.chatConnection ==
-                            YouTubeChatConnectionState.connected,
-                        onRetry: youTubeStore.connectChat,
-                        onConnect: () => configured
-                            ? startYouTubeLogin(context)
-                            : showYouTubeSetupSheet(context),
-                        onLogout: signedIn
-                            ? () => ModalHandler.showBaseDialog(
-                                  context: context,
-                                  dialogWidget: ConfirmationDialog(
-                                    title: 'Disconnect YouTube?',
-                                    body:
-                                        'Connected as ${channelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
-                                    okText: 'Disconnect',
-                                    isYesDestructive: true,
-                                    onOk: (_) => youTubeStore.logout(),
-                                  ),
-                                )
-                            : null,
-                        child: configured
-                            ? NativeYouTubeChatView(
-                                /// Fresh scroll state per channel — avoids
-                                /// carrying a stuck/overscrolled controller
-                                /// across multi-chat switches.
-                                key: ValueKey(
-                                  youTubeStore.selectedChannelLabel,
-                                ),
-                              )
-                            : StaggeredEntrance(
-                                child: _ChatEmptyState(
-                                  chatType: chatType,
-                                  nativeConnectPrompt: true,
-                                  promptBody:
-                                      'Native YouTube chat reads through the official YouTube Data API and needs a free Google Cloud API key — set it up to see chat here.',
-                                  connectLabel: 'Set up YouTube chat',
-                                  onConnectTap: () =>
-                                      showYouTubeSetupSheet(context),
-                                ),
-                              ),
-                        input: configured
-                            ? NativeChatInput(
-                                controller: this._chatInputController,
-                                focusNode: this._chatInputFocusNode,
-                                canSend: signedIn && youTubeStore.canWrite,
-                                inFlight: youTubeStore.sendingChat,
-                                errorText: youTubeStore.sendChatError,
-                                accentColor: chatType.brandColor ??
-                                    Theme.of(context).colorScheme.secondary,
-                                onSend: youTubeStore.sendChatMessage,
-                                onRelogin: () => startYouTubeLogin(context),
-                                lockedHintText: 'Chat is read-only',
-                                lockedActionText: 'Sign in to chat',
-                              )
-                            : null,
-                      );
-                    },
-                  );
-                }
-
-                /// Native Twitch chat takes over the slot when the native
-                /// engine is selected, wrapped in the chat window (pane +
-                /// status row + connection sheet). Logged out, the content is
-                /// the connect prompt. The WebView engine keeps the legacy
-                /// path regardless of the login state.
+                /// Pro entitlement gate: Observer over [ProStore.isPro] -
+                /// the entitlement read combines the box flag + debug
+                /// override, which the HiveBuilder rebuildKeys can't
+                /// express. Not-Pro renders the upsell pane instead of
+                /// every login/setup CTA; the WebView engine (legacy
+                /// stack below) stays free forever.
                 return Observer(
-                  builder: (_) {
-                    final twitchStore = GetIt.instance<TwitchChatStore>();
-                    final loggedIn = twitchStore.isLoggedIn;
-                    final displayName = twitchStore.user?.displayName ??
-                        twitchStore.user?.login;
-
-                    return NativeChatWindow(
-                      chatType: chatType,
-                      status: twitchChatWindowStatus(
-                        twitchStore.chatConnection,
-                        loggedIn,
-                      ),
-                      statusDetail: twitchStore.chatError,
-                      accountLabel: displayName,
-                      connectedAt: twitchStore.chatConnectedAt,
-                      channelIsLive:
-                          loggedIn && twitchStore.selectedChannelIsLive,
-                      channelViewerCount: loggedIn &&
-                              twitchStore.selectedChannelIsLive
-                          ? twitchStore.selectedChannelViewerCount
-                          : null,
-                      channelIsMod: loggedIn &&
-                          twitchStore.canModerateSelectedChannel,
-                      onRetry: twitchStore.connectChat,
-                      onConnect: () => startTwitchLogin(context),
-                      onLogout: () => ModalHandler.showBaseDialog(
-                        context: context,
-                        dialogWidget: ConfirmationDialog(
-                          title: 'Disconnect Twitch?',
-                          body:
-                              'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
-                          okText: 'Disconnect',
-                          isYesDestructive: true,
-                          onOk: (_) => twitchStore.logout(),
+                  builder: (context) => GetIt.instance<ProStore>().isPro
+                      ? this._buildNativeChatSlot(context, chatType)
+                      : StaggeredEntrance(
+                          child: _ChatProUpsell(chatType: chatType),
                         ),
-                      ),
-                      selfUserId: loggedIn ? twitchStore.user?.id : null,
-                      child: loggedIn
-                          ? NativeTwitchChatView(
-                              /// Fresh scroll state per channel — avoids
-                              /// carrying a stuck/overscrolled controller
-                              /// across multi-chat switches. Null-safe:
-                              /// logged-in shells may not have [user] yet.
-                              key: ValueKey(
-                                twitchStore.effectiveBroadcasterIdSafe,
-                              ),
-                              onReplyTargetSet: () =>
-                                  this._chatInputFocusNode.requestFocus(),
-                            )
-                          : StaggeredEntrance(
-                              child: _ChatEmptyState(
-                                chatType: chatType,
-                                nativeConnectPrompt: true,
-                              ),
-                            ),
-                      input: loggedIn
-                          ? NativeChatInput(
-                              controller: this._chatInputController,
-                              focusNode: this._chatInputFocusNode,
-                              leading: ChatEmotePickerButton(
-                                controller: this._chatInputController,
-                                focusNode: this._chatInputFocusNode,
-                                canReadEmotes: twitchStore.canReadEmotes,
-                                accentColor: chatType.brandColor ??
-                                    Theme.of(context).colorScheme.secondary,
-                                onRelogin: () => startTwitchLogin(context),
-                              ),
-                              contextStrip: NativeReplyStrip(
-                                accentColor: chatType.brandColor ??
-                                    Theme.of(context).colorScheme.secondary,
-                              ),
-                              canSend: twitchStore.canWriteChat,
-                              inFlight: twitchStore.sendingChat,
-                              errorText: twitchStore.sendChatError,
-                              accentColor: chatType.brandColor ??
-                                  Theme.of(context).colorScheme.secondary,
-                              onSend: twitchStore.sendChatMessage,
-                              onRelogin: () => startTwitchLogin(context),
-                            )
-                          : null,
-                    );
-                  },
                 );
               }
 
@@ -462,6 +310,178 @@ class _StreamChatState extends State<StreamChat>
         ),
         if (this.widget.usernameRowBeneath) usernameBar,
       ],
+    );
+  }
+
+  /// The native engine slot (Pro-gated by the caller): per-platform
+  /// dispatch onto the Twitch / YouTube native chat windows. Verbatim the
+  /// behavior before the entitlement gate existed.
+  Widget _buildNativeChatSlot(BuildContext context, ChatType chatType) {
+    /// Native YouTube chat: API-key gated reads (signed-out
+    /// timelines work — the input docks a read-only strip with
+    /// a sign-in affordance), device-flow sign-in for writes.
+    /// Unconfigured (no API key) shows the setup CTA.
+    if (chatType == ChatType.YouTube) {
+      return Observer(
+        builder: (_) {
+          final youTubeStore = GetIt.instance<YouTubeChatStore>();
+          final configured =
+              youTubeStore.authState != YouTubeAuthState.unconfigured;
+          final signedIn = youTubeStore.isSignedInState;
+          final channelTitle = youTubeStore.selfChannelTitle;
+
+          return NativeChatWindow(
+            chatType: chatType,
+            status: youTubeChatWindowStatus(
+              youTubeStore.chatConnection,
+              configured,
+            ),
+            statusDetail: youTubeStore.chatError,
+            accountLabel: channelTitle,
+            channelIsLive: youTubeStore.chatConnection ==
+                YouTubeChatConnectionState.connected,
+            onRetry: youTubeStore.connectChat,
+            onConnect: () => configured
+                ? startYouTubeLogin(context)
+                : showYouTubeSetupSheet(context),
+            onLogout: signedIn
+                ? () => ModalHandler.showBaseDialog(
+                      context: context,
+                      dialogWidget: ConfirmationDialog(
+                        title: 'Disconnect YouTube?',
+                        body:
+                            'Connected as ${channelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
+                        okText: 'Disconnect',
+                        isYesDestructive: true,
+                        onOk: (_) => youTubeStore.logout(),
+                      ),
+                    )
+                : null,
+            child: configured
+                ? NativeYouTubeChatView(
+                    /// Fresh scroll state per channel — avoids
+                    /// carrying a stuck/overscrolled controller
+                    /// across multi-chat switches.
+                    key: ValueKey(
+                      youTubeStore.selectedChannelLabel,
+                    ),
+                  )
+                : StaggeredEntrance(
+                    child: _ChatEmptyState(
+                      chatType: chatType,
+                      nativeConnectPrompt: true,
+                      promptBody:
+                          'Native YouTube chat reads through the official YouTube Data API and needs a free Google Cloud API key — set it up to see chat here.',
+                      connectLabel: 'Set up YouTube chat',
+                      onConnectTap: () => showYouTubeSetupSheet(context),
+                    ),
+                  ),
+            input: configured
+                ? NativeChatInput(
+                    controller: this._chatInputController,
+                    focusNode: this._chatInputFocusNode,
+                    canSend: signedIn && youTubeStore.canWrite,
+                    inFlight: youTubeStore.sendingChat,
+                    errorText: youTubeStore.sendChatError,
+                    accentColor: chatType.brandColor ??
+                        Theme.of(context).colorScheme.secondary,
+                    onSend: youTubeStore.sendChatMessage,
+                    onRelogin: () => startYouTubeLogin(context),
+                    lockedHintText: 'Chat is read-only',
+                    lockedActionText: 'Sign in to chat',
+                  )
+                : null,
+          );
+        },
+      );
+    }
+
+    /// Native Twitch chat takes over the slot when the native
+    /// engine is selected, wrapped in the chat window (pane +
+    /// status row + connection sheet). Logged out, the content is
+    /// the connect prompt. The WebView engine keeps the legacy
+    /// path regardless of the login state.
+    return Observer(
+      builder: (_) {
+        final twitchStore = GetIt.instance<TwitchChatStore>();
+        final loggedIn = twitchStore.isLoggedIn;
+        final displayName =
+            twitchStore.user?.displayName ?? twitchStore.user?.login;
+
+        return NativeChatWindow(
+          chatType: chatType,
+          status: twitchChatWindowStatus(
+            twitchStore.chatConnection,
+            loggedIn,
+          ),
+          statusDetail: twitchStore.chatError,
+          accountLabel: displayName,
+          connectedAt: twitchStore.chatConnectedAt,
+          channelIsLive: loggedIn && twitchStore.selectedChannelIsLive,
+          channelViewerCount: loggedIn && twitchStore.selectedChannelIsLive
+              ? twitchStore.selectedChannelViewerCount
+              : null,
+          channelIsMod:
+              loggedIn && twitchStore.canModerateSelectedChannel,
+          onRetry: twitchStore.connectChat,
+          onConnect: () => startTwitchLogin(context),
+          onLogout: () => ModalHandler.showBaseDialog(
+            context: context,
+            dialogWidget: ConfirmationDialog(
+              title: 'Disconnect Twitch?',
+              body:
+                  'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
+              okText: 'Disconnect',
+              isYesDestructive: true,
+              onOk: (_) => twitchStore.logout(),
+            ),
+          ),
+          selfUserId: loggedIn ? twitchStore.user?.id : null,
+          child: loggedIn
+              ? NativeTwitchChatView(
+                  /// Fresh scroll state per channel — avoids
+                  /// carrying a stuck/overscrolled controller
+                  /// across multi-chat switches. Null-safe:
+                  /// logged-in shells may not have [user] yet.
+                  key: ValueKey(
+                    twitchStore.effectiveBroadcasterIdSafe,
+                  ),
+                  onReplyTargetSet: () =>
+                      this._chatInputFocusNode.requestFocus(),
+                )
+              : StaggeredEntrance(
+                  child: _ChatEmptyState(
+                    chatType: chatType,
+                    nativeConnectPrompt: true,
+                  ),
+                ),
+          input: loggedIn
+              ? NativeChatInput(
+                  controller: this._chatInputController,
+                  focusNode: this._chatInputFocusNode,
+                  leading: ChatEmotePickerButton(
+                    controller: this._chatInputController,
+                    focusNode: this._chatInputFocusNode,
+                    canReadEmotes: twitchStore.canReadEmotes,
+                    accentColor: chatType.brandColor ??
+                        Theme.of(context).colorScheme.secondary,
+                    onRelogin: () => startTwitchLogin(context),
+                  ),
+                  contextStrip: NativeReplyStrip(
+                    accentColor: chatType.brandColor ??
+                        Theme.of(context).colorScheme.secondary,
+                  ),
+                  canSend: twitchStore.canWriteChat,
+                  inFlight: twitchStore.sendingChat,
+                  errorText: twitchStore.sendChatError,
+                  accentColor: chatType.brandColor ??
+                      Theme.of(context).colorScheme.secondary,
+                  onSend: twitchStore.sendChatMessage,
+                  onRelogin: () => startTwitchLogin(context),
+                )
+              : null,
+        );
+      },
     );
   }
 
@@ -639,6 +659,99 @@ class _ChatEmptyState extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact Pro upsell for the chat slot when a native engine is selected
+/// without the entitlement (incl. legacy persisted `SelectedChatEngine`
+/// users) - a taste of the benefits plus the "Explore Pro" entry into the
+/// paywall. Never auto-presented: the user picked the native engine first.
+class _ChatProUpsell extends StatelessWidget {
+  final ChatType chatType;
+
+  const _ChatProUpsell({required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accent = Theme.of(context).colorScheme.secondary;
+
+    /// Top-aligned (like [_ChatEmptyState]) so the pane sits inside the
+    /// actually visible area of the dashboard scroll view
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(
+          top: AppSpacing.xl,
+          left: AppSpacing.xl,
+          right: AppSpacing.xl,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AccentIconTile(
+              icon: CupertinoIcons.bolt_fill,
+              size: 64.0,
+              iconSize: 32.0,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Native ${this.chatType.text} Chat',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Native chat is part of OBS Blade Pro.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            /// Compact benefit taste - titles only; the paywall carries
+            /// the full copy
+            for (final ProBenefit benefit in kProBenefits.take(3))
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(benefit.icon, size: 16.0, color: accent),
+                    const SizedBox(width: AppSpacing.sm),
+                    Flexible(
+                      child: Text(
+                        benefit.title,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: AppSpacing.md),
+            Pressable(
+              haptic: true,
+              onTap: () => Navigator.of(context)
+                  .pushNamed(HomeTabRoutingKeys.Pro.route),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
+                decoration: BoxDecoration(
+                  color: accent,
+                  borderRadius: AppRadius.pill,
+                ),
+                child: Text(
+                  'Explore Pro',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: Colors.white),
+                ),
+              ),
+            ),
           ],
         ),
       ),

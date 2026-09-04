@@ -70,11 +70,17 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
 
   @override
   Widget build(BuildContext context) {
+    /// The carousel is fixed-height (PageView needs a bound), so grow it
+    /// with the text scale - clamped, so accessibility sizes enlarge the
+    /// cards without the carousel eating the whole paywall
+    final double textScale =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.4);
+
     return ResponsiveWidgetWrapper(
       mobileWidget: Column(
         children: [
           SizedBox(
-            height: 216.0,
+            height: 216.0 * textScale,
             child: PageView.builder(
               controller: this._pageController,
               itemCount: kProBenefits.length,

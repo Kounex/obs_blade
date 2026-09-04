@@ -9,27 +9,42 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/icons/jam_icons.dart';
+import 'package:obs_blade/utils/pro_purchase_service.dart';
+import 'package:obs_blade/utils/routing_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_username_bar.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/twitch_account_control.dart';
 import 'package:obs_blade/models/enums/chat_engine.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/username_action_row.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/username_dropdown.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_twitch_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
 
 import '../persistence/support/hive_test_harness.dart';
+import '../pro/support/fake_pro_purchase_gateway.dart';
 import 'support/fake_twitch_services.dart';
 import 'support/fake_youtube_services.dart';
 
-Widget wrap(Widget child) => MaterialApp(
+Widget wrap(Widget child, {bool withProRoute = false}) => MaterialApp(
       theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
+
+      /// The Pro gate entry points push the paywall route - register it so
+      /// the not-Pro tests can assert the push
+      routes: withProRoute
+          ? {
+              HomeTabRoutingKeys.Pro.route: (_) =>
+                  const Scaffold(body: Text('PAYWALL')),
+            }
+          : const {},
 
       /// The test font's full-em glyphs are much wider than production
       /// fonts — at 1.0 the selected 'YouTube ᵇᵉᵗᵃ' dropdown item
@@ -45,6 +60,7 @@ void main() {
   late HiveTestHarness harness;
   late TwitchChatStore store;
   late YouTubeChatStore youTubeStore;
+  late ProStore proStore;
 
   Box<dynamic> settingsBox() => Hive.box(HiveKeys.Settings.name);
 
@@ -55,6 +71,19 @@ void main() {
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
     await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
     await Hive.openBox(HiveKeys.Settings.name);
+
+    /// Entitlement: native engines are Pro-gated (Observer over
+    /// [ProStore.isPro] at each gate site), so seed the real flag and
+    /// register the real store reading it - native-mode tests run as Pro.
+    /// The cold-start restore is skipped so no store call fires.
+    await settingsBox().put(SettingsKeys.BoughtPro.name, true);
+    await settingsBox()
+        .put(SettingsKeys.ProColdStartRestoreDone.name, true);
+    proStore = ProStore(
+      service: ProPurchaseService(gateway: FakeProPurchaseGateway()),
+    )..init();
+    GetIt.instance.registerSingleton<ProStore>(proStore);
+
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
@@ -80,12 +109,21 @@ void main() {
     /// zone (its future only dispatches through that zone)
     store.dispose();
     youTubeStore.dispose();
+    proStore.dispose();
     await GetIt.instance.reset();
     await harness.close();
     if (tempDir.existsSync()) {
       tempDir.deleteSync(recursive: true);
     }
   });
+
+  /// Flip the entitlement off through the real box write - the ProStore
+  /// watcher picks it up, the next pump rebuilds the gate Observers
+  Future<void> revokePro(WidgetTester tester) async {
+    await tester
+        .runAsync(() => settingsBox().put(SettingsKeys.BoughtPro.name, false));
+    await tester.pump();
+  }
 
   testWidgets('slot shows the native view for Twitch when logged in',
       (tester) async {
@@ -440,6 +478,80 @@ void main() {
     }
     await tester.pump();
     expect(closed, isTrue);
+  });
+
+  testWidgets(
+      'not-Pro native mode shows the Pro upsell pane instead of the login CTAs',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+    });
+
+    await tester.pumpWidget(wrap(const StreamChat()));
+    await revokePro(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NativeTwitchChatView), findsNothing);
+    expect(find.text('Native chat is part of OBS Blade Pro.'), findsOneWidget);
+    expect(find.text('Explore Pro'), findsOneWidget);
+
+    /// Neither the pane's connect prompt nor the bar's account pill - a
+    /// legacy persisted native engine must not surface dead-end login CTAs
+    expect(
+      find.text('Connect your Twitch account to see your chat natively.'),
+      findsNothing,
+    );
+    expect(find.text('Connect Twitch'), findsNothing);
+  });
+
+  testWidgets('Explore Pro in the upsell pane pushes the paywall route',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+    });
+
+    await tester.pumpWidget(wrap(const StreamChat(), withProRoute: true));
+    await revokePro(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Explore Pro'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('PAYWALL'), findsOneWidget);
+  });
+
+  testWidgets('username bar hides the native cluster when not Pro',
+      (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+      await settingsBox()
+          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+    });
+
+    await tester.pumpWidget(wrap(const ChatUsernameBar()));
+    await revokePro(tester);
+    await tester.pumpAndSettle();
+
+    /// The engine switch stays (the lock badge is the affordance) but the
+    /// native cluster is gone - no dead-end login pill, no options gear
+    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsOneWidget);
+    expect(find.byIcon(JamIcons.padlock), findsOneWidget);
+    expect(find.byType(TwitchAccountControl), findsNothing);
+    expect(find.byType(NativeChatOptionsButton), findsNothing);
+
+    /// The WebView-mode username controls are NOT swapped in either - the
+    /// pane upsell is the not-Pro native-mode experience
+    expect(find.byType(UsernameActionRow), findsNothing);
+    expect(find.byType(UsernameDropdown), findsNothing);
   });
 
   testWidgets('tapping the code copies it and confirms inline',

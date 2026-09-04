@@ -55,6 +55,12 @@ abstract class _ProStore with Store {
   @observable
   String? lastError;
 
+  /// True once the first [loadProducts] completed — distinguishes the
+  /// initial product load (paywall shows skeleton rows) from later pending
+  /// states like a restore, where the current pricing cards stay put.
+  @observable
+  bool productsLoaded = false;
+
   /// Fire-and-forget — cold-start restore must not block store creation.
   void init() {
     Box<dynamic> settingsBox = Hive.box<dynamic>(HiveKeys.Settings.name);
@@ -140,6 +146,7 @@ abstract class _ProStore with Store {
       );
       this.lastError = e.toString();
     } finally {
+      this.productsLoaded = true;
       this.pending = false;
     }
   }

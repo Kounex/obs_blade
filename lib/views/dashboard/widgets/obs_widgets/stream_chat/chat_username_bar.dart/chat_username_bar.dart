@@ -6,6 +6,7 @@ import '../../../../../../models/enums/chat_engine.dart';
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
+import '../../../../../../stores/pro_store.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../stores/views/youtube_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
@@ -34,6 +35,12 @@ import 'youtube_native_channel_dropdown.dart';
 /// control: login/logout, connected account) - never the username
 /// controls. While logged in, the multi-chat channel dropdown
 /// ([NativeChannelDropdown]) takes the username dropdown's slot.
+///
+/// Native engines are a Pro entitlement: without [ProStore.isPro] the
+/// native cluster (channel dropdown, options, account control) stays
+/// hidden - legacy users with a persisted native engine must not get
+/// dead-end login pills; the pane's Pro upsell is their experience and
+/// the engine switch (lock badge) is the way out.
 class ChatUsernameBar extends StatelessWidget {
   const ChatUsernameBar({
     super.key,
@@ -95,8 +102,14 @@ class ChatUsernameBar extends StatelessWidget {
                         /// Native-mode channel dropdown slot — per
                         /// platform. Twitch gates on login; YouTube reads
                         /// work signed-out, so it gates on configuration.
+                        /// Both gate on the Pro entitlement: without it
+                        /// the slot stays empty (no dead-end controls).
                         Observer(
                           builder: (_) {
+                            if (!GetIt.instance<ProStore>().isPro) {
+                              return const SizedBox.shrink();
+                            }
+
                             final showDropdown = switch (chatType) {
                               ChatType.Twitch => GetIt
                                   .instance<TwitchChatStore>()
@@ -145,7 +158,14 @@ class ChatUsernameBar extends StatelessWidget {
                       const SizedBox(height: AppSpacing.sm),
                     ],
                     if (nativeMode)
-                      _NativeRightCluster(chatType: chatType)
+                      /// Native cluster hidden without the entitlement -
+                      /// login pills / options would be dead ends while
+                      /// the pane shows the Pro upsell
+                      Observer(
+                        builder: (_) => GetIt.instance<ProStore>().isPro
+                            ? _NativeRightCluster(chatType: chatType)
+                            : const SizedBox.shrink(),
+                      )
                     else
                       UsernameActionRow(
                         settingsBox: settingsBox,

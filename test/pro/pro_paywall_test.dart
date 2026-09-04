@@ -14,6 +14,7 @@ import 'package:obs_blade/utils/pro_ids.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/views/pro/pro_paywall.dart';
 import 'package:obs_blade/views/settings/widgets/accent_icon_tile.dart';
+import 'package:obs_blade/views/settings/widgets/support_dialog/support_skeleton.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -189,6 +190,29 @@ void main() {
     expect(gateway.lastBoughtProduct!.id, kProYearlyId);
   });
 
+  testWidgets('restore keeps the placeholder cards instead of swapping '
+      'to skeleton rows', (tester) async {
+    /// Restore hangs in flight so the pending state is observable - the
+    /// pricing section must keep its cards (skeletons are reserved for
+    /// the initial product load)
+    final ProStore store = _HangingRestoreProStore(
+      service: ProPurchaseService(gateway: gateway),
+    );
+    stores.add(store);
+    await pumpPaywall(tester, store..init());
+
+    expect(find.text('Price shown at purchase'), findsNWidgets(3));
+
+    await tester.ensureVisible(find.text('Restore purchases'));
+    await tester.pump();
+    await tester.tap(find.text('Restore purchases'));
+    await tester.pump();
+
+    expect(store.pending, isTrue);
+    expect(find.byType(SupportSkeleton), findsNothing);
+    expect(find.text('Price shown at purchase'), findsNWidgets(3));
+  });
+
   testWidgets('restore tap triggers an explicit restore', (tester) async {
     /// The dialog flag is armed only while the restore call is in flight
     /// (disarmed on completion when no pro event consumes it) — capture it
@@ -290,5 +314,17 @@ class _NoIoDebugProStore extends ProStore {
   @override
   void setDebugOverride(bool value) {
     runInAction(() => this.debugOverride = value);
+  }
+}
+
+/// [ProStore] whose restore never completes - keeps the paywall in the
+/// restoring (pending) state so the pricing section's behavior during a
+/// restore is assertable
+class _HangingRestoreProStore extends ProStore {
+  _HangingRestoreProStore({super.service});
+
+  @override
+  Future<void> restore({required bool explicit}) async {
+    runInAction(() => this.pending = true);
   }
 }

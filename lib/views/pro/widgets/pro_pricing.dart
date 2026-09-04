@@ -11,7 +11,9 @@ import '../../../utils/pro_ids.dart';
 import '../../settings/widgets/support_dialog/support_skeleton.dart';
 
 /// Pricing section of the paywall. States (Observer over [ProStore]):
-/// - loading: skeleton rows while the store answers
+/// - loading: skeleton rows while the store answers the FIRST product
+///   query ([ProStore.productsLoaded]) - a restore also flips `pending`,
+///   but keeps the current cards instead of falling back to skeletons
 /// - store unreachable / products missing (the expected state until the
 ///   products exist store-side): placeholder cards — "price shown at
 ///   purchase" copy, buy tap explains instead of charging
@@ -71,7 +73,12 @@ class ProPricing extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
-        if (this.store.pending && this.store.products.isEmpty) {
+        /// Skeleton only for the initial product load - a restore flips
+        /// `pending` too, but the current cards (placeholders or priced)
+        /// stay put while it runs
+        if (this.store.pending &&
+            this.store.products.isEmpty &&
+            !this.store.productsLoaded) {
           return const SupportSkeleton(rows: 3);
         }
 
