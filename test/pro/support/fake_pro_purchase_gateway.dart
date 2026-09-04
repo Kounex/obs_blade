@@ -25,6 +25,11 @@ class FakeProPurchaseGateway implements ProPurchaseGateway {
   ProductDetails? lastBoughtProduct;
   bool buyResult = true;
 
+  /// Synchronous hook fired inside [restorePurchases] — lets tests assert
+  /// state (e.g. the explicit-restore dialog flag) while the restore call
+  /// is still in flight.
+  void Function()? onRestore;
+
   @override
   Stream<List<PurchaseDetails>> get purchaseStream =>
       this.purchaseController.stream;
@@ -65,6 +70,7 @@ class FakeProPurchaseGateway implements ProPurchaseGateway {
   @override
   Future<void> restorePurchases() async {
     this.restoreCalls++;
+    this.onRestore?.call();
     if (this.restoreError != null) throw this.restoreError!;
   }
 

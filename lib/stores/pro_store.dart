@@ -105,8 +105,12 @@ abstract class _ProStore with Store {
       /// no network) — the next launch retries.
       if (!await this._service.isStoreAvailable()) return;
 
-      await settingsBox.put(SettingsKeys.ProColdStartRestoreDone.name, true);
       await this._service.restore();
+
+      /// Mark the shot spent only AFTER a successful restore — a transient
+      /// restore error must not burn the once-per-install recovery this
+      /// exists for; the next launch retries.
+      await settingsBox.put(SettingsKeys.ProColdStartRestoreDone.name, true);
     } catch (e) {
       GeneralHelper.advLog(
         'Pro cold-start restore failed — $e',
@@ -161,6 +165,11 @@ abstract class _ProStore with Store {
 
   /// Explicit restore (paywall button): sets the flag [PurchaseBase] reads
   /// to show the restored InfoDialog. The cold-start restore never sets it.
+  /// The flag is armed only for the duration of the restore call — a
+  /// restored pro event consumes it ([PurchaseBase._handlePurchase]), and
+  /// if the restore completes without one (nothing to restore), it is
+  /// disarmed here so a later spontaneous `restored` event can't show the
+  /// dialog unprovoked.
   @action
   Future<void> restore({required bool explicit}) async {
     this.pending = true;
@@ -171,7 +180,6 @@ abstract class _ProStore with Store {
     try {
       await this._service.restore();
     } catch (e) {
-      PurchaseBase.restoreTriggeredExplicitly = false;
       GeneralHelper.advLog(
         'Pro restore failed — $e',
         includeInLogs: true,
@@ -179,6 +187,9 @@ abstract class _ProStore with Store {
       );
       this.lastError = e.toString();
     } finally {
+      if (explicit) {
+        PurchaseBase.restoreTriggeredExplicitly = false;
+      }
       this.pending = false;
     }
   }

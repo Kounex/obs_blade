@@ -190,6 +190,13 @@ void main() {
   });
 
   testWidgets('restore tap triggers an explicit restore', (tester) async {
+    /// The dialog flag is armed only while the restore call is in flight
+    /// (disarmed on completion when no pro event consumes it) — capture it
+    /// mid-flight via the gateway hook.
+    bool? armedInFlight;
+    gateway.onRestore = () =>
+        armedInFlight = PurchaseBase.restoreTriggeredExplicitly;
+
     await pumpPaywall(tester, newStore()..init());
 
     await tester.ensureVisible(find.text('Restore purchases'));
@@ -198,7 +205,8 @@ void main() {
     await tester.pump();
 
     expect(gateway.restoreCalls, 1);
-    expect(PurchaseBase.restoreTriggeredExplicitly, isTrue);
+    expect(armedInFlight, isTrue);
+    expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
   });
 
   testWidgets('purchase event flips the paywall to the unlocked state',

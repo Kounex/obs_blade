@@ -181,13 +181,27 @@ void main() {
   });
 
   group('restore', () {
-    test('explicit restore arms the PurchaseBase dialog flag', () async {
+    test(
+        'explicit restore arms the dialog flag in flight and disarms it when '
+        'the restore completes without a pro event', () async {
       final store = newStore()..init();
+
+      /// Let the cold-start restore finish first so only the explicit
+      /// restore is in flight for the flag assertions.
+      await until(() => gateway.restoreCalls > 0);
+
+      bool? armedInFlight;
+      gateway.onRestore = () =>
+          armedInFlight = PurchaseBase.restoreTriggeredExplicitly;
 
       await store.restore(explicit: true);
 
-      expect(gateway.restoreCalls, 1);
-      expect(PurchaseBase.restoreTriggeredExplicitly, isTrue);
+      expect(gateway.restoreCalls, 2);
+      expect(armedInFlight, isTrue);
+
+      /// No pro restored event consumed the flag — it must be disarmed so a
+      /// later spontaneous restored event can't show the dialog unprovoked.
+      expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
     });
 
     test('silent restore leaves the dialog flag alone', () async {
@@ -195,18 +209,17 @@ void main() {
 
       await store.restore(explicit: false);
 
-      expect(gateway.restoreCalls, 1);
       expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
     });
 
-    test('restore error resets the dialog flag and records lastError',
+    test('restore error disarms the dialog flag and records lastError',
         () async {
-      gateway.restoreError = StateError('restore failed');
       final store = newStore()..init();
+      await until(() => gateway.restoreCalls > 0);
 
+      gateway.restoreError = StateError('restore failed');
       await store.restore(explicit: true);
 
-      expect(gateway.restoreCalls, 1);
       expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
       expect(store.lastError, contains('restore failed'));
     });
@@ -224,9 +237,10 @@ void main() {
         isTrue,
       );
 
-      /// A second store (next app launch) must not restore again.
+      /// A second store (next app launch) must not restore again — the
+      /// guard short-circuits before any store call.
       newStore().init();
-      await until(() => gateway.isAvailableCalls > 1);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
       expect(gateway.restoreCalls, 1);
     });
 
@@ -250,12 +264,30 @@ void main() {
       expect(gateway.restoreCalls, 1);
     });
 
-    test('restore error is swallowed and logged (no crash)', () async {
+    test('restore error leaves the guard flag unset (retried next launch)',
+        () async {
       gateway.restoreError = StateError('boom');
       newStore().init();
-
       await until(() => gateway.restoreCalls > 0);
+
       expect(gateway.restoreCalls, 1);
+      expect(
+        settingsBox()
+            .get(SettingsKeys.ProColdStartRestoreDone.name, defaultValue: false),
+        isFalse,
+      );
+
+      /// Next launch: the transient error is gone, the restore retried and
+      /// the guard flag set only now.
+      gateway.restoreError = null;
+      newStore().init();
+      await until(() => gateway.restoreCalls > 1);
+
+      expect(
+        settingsBox()
+            .get(SettingsKeys.ProColdStartRestoreDone.name, defaultValue: false),
+        isTrue,
+      );
     });
   });
 }

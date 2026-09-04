@@ -36,6 +36,8 @@ class PurchaseBase extends StatefulWidget {
   /// Set via [ProStore.restore] when the user explicitly tapped "Restore
   /// purchases" so the restored handler knows to show the success
   /// InfoDialog; cold-start restores leave this false and stay silent.
+  /// Armed only while an explicit restore call is in flight — consumed by
+  /// a restored pro event, disarmed by [ProStore.restore] otherwise.
   static bool restoreTriggeredExplicitly = false;
 
   const PurchaseBase({
