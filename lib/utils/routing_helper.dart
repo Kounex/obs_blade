@@ -5,6 +5,7 @@ import '../tab_base.dart';
 import '../views/dashboard/dashboard.dart';
 import '../views/home/home.dart';
 import '../views/intro/intro.dart';
+import '../views/pro/pro_paywall.dart';
 import '../views/settings/about/about.dart';
 import '../views/settings/custom_theme/custom_theme.dart';
 import '../views/settings/dashboard_customisation/order/order.dart';
@@ -72,12 +73,14 @@ extension TabsFunctions on Tabs {
 /// Routing keys for the home tab
 enum HomeTabRoutingKeys implements RoutingKeys {
   Landing,
-  Dashboard;
+  Dashboard,
+  Pro;
 
   @override
   String get route => '${AppRoutingKeys.Tabs.route}/home${{
         HomeTabRoutingKeys.Landing: '',
         HomeTabRoutingKeys.Dashboard: '/dashboard',
+        HomeTabRoutingKeys.Pro: '/pro',
       }[this]!}';
 }
 
@@ -104,7 +107,8 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
   Logs,
   LogDetail,
   DashboardCustomisation,
-  DashboardCustomisationOrder;
+  DashboardCustomisationOrder,
+  Pro;
 
   @override
   String get route => '$AppRoutingKeys.Tabs.route/settings${{
@@ -120,6 +124,7 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
             '/dashboard-customisation',
         SettingsTabRoutingKeys.DashboardCustomisationOrder:
             '/dashboard-customisation/order',
+        SettingsTabRoutingKeys.Pro: '/pro',
       }[this]!}';
 }
 
@@ -130,6 +135,7 @@ class RoutingHelper {
   static Map<String, Widget Function(BuildContext)> homeTabRoutes = {
     HomeTabRoutingKeys.Landing.route: (_) => const HomeView(),
     HomeTabRoutingKeys.Dashboard.route: (_) => const DashboardView(),
+    HomeTabRoutingKeys.Pro.route: (_) => const ProPaywallView(),
   };
 
   static Map<String, Widget Function(BuildContext)> statisticsTabRoutes = {
@@ -152,6 +158,7 @@ class RoutingHelper {
         const DashboardCustomisationView(),
     SettingsTabRoutingKeys.DashboardCustomisationOrder.route: (_) =>
         const DashboardCustomisationOrderView(),
+    SettingsTabRoutingKeys.Pro.route: (_) => const ProPaywallView(),
   };
 
   static Map<String, Widget Function(BuildContext)> appRoutes = {
