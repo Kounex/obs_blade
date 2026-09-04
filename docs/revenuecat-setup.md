@@ -10,7 +10,8 @@ from the legacy direct-IAP path to RevenueCat automatically
 products for you — see its README for creds-by-path setup, then:
 
 ```bash
-# With creds exported (e.g. from ~/.localrc — see the tool README):
+# With creds exported (e.g. from ~/.localrc — collection walkthrough:
+# tool/provisioning/CREDENTIALS.md):
 dart run tool/provisioning/bin/provision.dart asc-products
 dart run tool/provisioning/bin/provision.dart play-products
 # …or pass --key-path/--key-id/--issuer-id/--app-id /

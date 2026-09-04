@@ -43,7 +43,9 @@ keep them locally anyway.
 
 **Preferred: environment variables.** Every credential flag falls back to an
 env var, so you can export them once from your shell init (the maintainer uses
-`~/.localrc`, sourced into zsh) and run the commands flag-free:
+`~/.localrc`, sourced into zsh) and run the commands flag-free. **Step-by-step
+walkthrough for collecting each one: [`CREDENTIALS.md`](CREDENTIALS.md).**
+The block to collect:
 
 ```bash
 # ~/.localrc
