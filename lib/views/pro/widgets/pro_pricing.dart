@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/button.dart';
@@ -8,6 +7,7 @@ import '../../../shared/general/base/card.dart';
 import '../../../shared/general/responsive_widget_wrapper.dart';
 import '../../../stores/pro_store.dart';
 import '../../../utils/pro_ids.dart';
+import '../../../utils/pro_product.dart';
 import '../../settings/widgets/support_dialog/support_skeleton.dart';
 
 /// Pricing section of the paywall. States (Observer over [ProStore]):
@@ -17,7 +17,7 @@ import '../../settings/widgets/support_dialog/support_skeleton.dart';
 /// - store unreachable / products missing (the expected state until the
 ///   products exist store-side): placeholder cards — "price shown at
 ///   purchase" copy, buy tap explains instead of charging
-/// - priced: live [ProductDetails], yearly framed as the best value
+/// - priced: live [ProProduct]s, yearly framed as the best value
 class ProPricing extends StatelessWidget {
   final ProStore store;
 
@@ -44,7 +44,7 @@ class ProPricing extends StatelessWidget {
     ),
   ];
 
-  void _buy(BuildContext context, _ProOffer offer, ProductDetails? product) {
+  void _buy(BuildContext context, _ProOffer offer, ProProduct? product) {
     if (product == null) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -62,8 +62,8 @@ class ProPricing extends StatelessWidget {
     this.store.buy(product);
   }
 
-  ProductDetails? _productFor(String productId) {
-    for (final ProductDetails product in this.store.products) {
+  ProProduct? _productFor(String productId) {
+    for (final ProProduct product in this.store.products) {
       if (product.id == productId) return product;
     }
     return null;
@@ -150,12 +150,12 @@ class _ProPriceCard extends StatelessWidget {
   final _ProOffer offer;
 
   /// Null while the product doesn't exist store-side (placeholder state)
-  final ProductDetails? product;
+  final ProProduct? product;
 
   /// A store call is in flight - buys disabled to prevent double taps
   final bool pending;
 
-  final void Function(ProductDetails? product) onBuy;
+  final void Function(ProProduct? product) onBuy;
 
   const _ProPriceCard({
     required this.offer,
@@ -211,7 +211,7 @@ class _ProPriceCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            this.product?.price ?? 'Price shown at purchase',
+            this.product?.priceString ?? 'Price shown at purchase',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.xs),

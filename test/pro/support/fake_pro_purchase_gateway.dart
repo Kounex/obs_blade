@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:obs_blade/utils/pro_product.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 
 /// Fake [ProPurchaseGateway] — counters record every call (including
@@ -90,6 +91,20 @@ ProductDetails fakeProduct(
       rawPrice: rawPrice,
       currencyCode: 'EUR',
       currencySymbol: '€',
+    );
+
+/// Paywall/store-facing wrapper around [fakeProduct] — mirrors what the
+/// IAP backend produces from live store details.
+ProProduct fakeProProduct(
+  String id, {
+  String price = '€9.99',
+  double rawPrice = 9.99,
+}) =>
+    ProProduct(
+      id: id,
+      title: 'Pro ($id)',
+      priceString: price,
+      storeObject: fakeProduct(id, price: price, rawPrice: rawPrice),
     );
 
 PurchaseDetails fakePurchase(String productId, PurchaseStatus status) =>

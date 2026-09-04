@@ -117,7 +117,7 @@ mixin _$ProStore on _ProStore, Store {
   late final _$buyAsyncAction = AsyncAction('_ProStore.buy', context: context);
 
   @override
-  Future<bool> buy(ProductDetails product) {
+  Future<bool> buy(ProProduct product) {
     return _$buyAsyncAction.run(() => super.buy(product));
   }
 

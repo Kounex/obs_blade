@@ -42,9 +42,7 @@ void main() {
 
   test('buy wraps the product in a PurchaseParam (non-consumable path)',
       () async {
-    final product = fakeProduct(kProLifetimeId);
-
-    expect(await service.buy(product), isTrue);
+    expect(await service.buy(fakeProProduct(kProLifetimeId)), isTrue);
     expect(gateway.buyCalls, 1);
     expect(gateway.lastBoughtProduct?.id, kProLifetimeId);
   });
@@ -60,7 +58,7 @@ void main() {
 
   test('purchaseStream is exposed from the gateway', () async {
     final events = <List<PurchaseDetails>>[];
-    final sub = service.purchaseStream.listen(events.add);
+    final sub = service.purchaseStream!.listen(events.add);
 
     gateway.purchaseController
         .add([fakePurchase(kProYearlyId, PurchaseStatus.purchased)]);

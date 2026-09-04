@@ -15,6 +15,7 @@ import 'utils/general_helper.dart';
 import 'utils/modal_handler.dart';
 import 'utils/overlay_handler.dart';
 import 'utils/pro_ids.dart';
+import 'utils/revenuecat_config.dart';
 
 /// Applies a pro purchase/restored event to the settings box. Returns
 /// true when the caller should surface the restored InfoDialog — only on
@@ -28,6 +29,30 @@ bool applyProPurchaseToSettings({
 }) {
   settingsBox.put(SettingsKeys.BoughtPro.name, true);
   return purchaseDetails.status == PurchaseStatus.restored && explicitRestore;
+}
+
+/// The "Pro restored" InfoDialog — shown on an explicit (paywall-button)
+/// restore that surfaced an active entitlement. Legacy path: called from
+/// [_PurchaseBaseState._handlePurchase] when a restored pro event arrives
+/// armed; RevenueCat path: called directly by `ProStore.restore` (no
+/// purchase-stream events exist there).
+void showProRestoredDialog() {
+  Future.delayed(
+    const Duration(seconds: 1),
+    () {
+      /// Null in unit tests / headless states — skip the dialog rather
+      /// than crash.
+      if (RoutingHelper.tabBaseKey.currentContext == null) return;
+      OverlayHandler.closeAnyOverlay();
+      ModalHandler.showBaseDialog(
+        context: RoutingHelper.tabBaseKey.currentContext!,
+        barrierDismissible: true,
+        dialogWidget: const InfoDialog(
+          body: 'Your Pro purchase has been restored!\n\nEnjoy!',
+        ),
+      );
+    },
+  );
 }
 
 class PurchaseBase extends StatefulWidget {
@@ -95,7 +120,13 @@ class _PurchaseBaseState extends State<PurchaseBase> {
       /// entitlement flag in the settings box. The store products don't
       /// exist store-side yet, so this branch must work with
       /// [inAppDetails] being null (empty productDetails).
-      if (isProProductId(purchaseDetails.productID)) {
+      ///
+      /// Dead while RevenueCat is configured: RC's CustomerInfo is the
+      /// single source of truth for the pro entitlement then, and pro
+      /// purchases no longer ride this IAP stream. Tips and blacksmith
+      /// below stay on direct IAP regardless.
+      if (isProProductId(purchaseDetails.productID) &&
+          !revenueCatConfigured) {
         bool showRestoredDialog = applyProPurchaseToSettings(
           purchaseDetails: purchaseDetails,
           settingsBox: Hive.box<dynamic>(HiveKeys.Settings.name),
@@ -106,19 +137,7 @@ class _PurchaseBaseState extends State<PurchaseBase> {
         /// Same idiom as the blacksmith restored branch below: the user
         /// tapped Restore, the restore worked — inform them via dialog.
         if (showRestoredDialog) {
-          Future.delayed(
-            const Duration(seconds: 1),
-            () {
-              OverlayHandler.closeAnyOverlay();
-              ModalHandler.showBaseDialog(
-                context: RoutingHelper.tabBaseKey.currentContext!,
-                barrierDismissible: true,
-                dialogWidget: const InfoDialog(
-                  body: 'Your Pro purchase has been restored!\n\nEnjoy!',
-                ),
-              );
-            },
-          );
+          showProRestoredDialog();
         }
       } else if (purchaseDetails.productID.contains('blacksmith')) {
         /// If a purchase is explicily blacksmith, set the flag in the settings box

@@ -156,9 +156,8 @@ void main() {
   group('buy', () {
     test('buy delegates to the gateway and toggles pending', () async {
       final store = newStore()..init();
-      final product = fakeProduct(kProYearlyId);
 
-      final result = await store.buy(product);
+      final result = await store.buy(fakeProProduct(kProYearlyId));
 
       expect(result, isTrue);
       expect(gateway.buyCalls, 1);
@@ -171,7 +170,7 @@ void main() {
       gateway.buyError = StateError('buy failed');
       final store = newStore()..init();
 
-      final result = await store.buy(fakeProduct(kProYearlyId));
+      final result = await store.buy(fakeProProduct(kProYearlyId));
 
       expect(result, isFalse);
       expect(gateway.buyCalls, 1);
