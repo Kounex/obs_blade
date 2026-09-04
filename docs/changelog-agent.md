@@ -2,6 +2,37 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-04 — Provisioning automation (GCP + store products)
+
+- Tier M. `tool/provisioning/` (standalone package, creds-by-path,
+  `--dry-run` everywhere, idempotent check-then-create):
+  - `gcp-youtube` — gcloud shell-out: create/reuse project, enable
+    YouTube Data API v3, create a restricted API key (GA
+    `gcloud services api-keys`, chmod-600 `--out-file`). OAuth consent
+    screen + TV client stay console-only (no Google API exists).
+  - `asc-products` — ASC API with ES256 JWT from a `.p8`: subscription
+    group "Pro", `pro_yearly`/`pro_monthly`, `pro_lifetime` IAP, en-US
+    localizations, and **pricing is fully automatable** (pricePoints +
+    subscriptionPrices / inAppPurchasePriceSchedules, US base territory).
+  - `play-products` — androidpublisher v3 via service account:
+    subscription `pro` + base plans `pro-yearly`/`pro-monthly` (RFC-1034 —
+    no underscores on Play; RC mapping `pro:pro-yearly` documented in the
+    README + CLI output), `pro_lifetime` one-time via
+    `oneTimeProducts:batchUpdate allowMissing` (Play has no plain create),
+    DRAFT→activate calls, `--package-name` auto-read from build.gradle.
+- Review minors fixed: fake-client body collision made the price assert
+  near-vacuous (now insertion-ordered, both price bodies asserted);
+  Play resume PATCH narrowed to `updateMask=basePlans` (was clobbering
+  console-edited listing text); deactivated purchase-option skip now logs
+  a reactivate hint. Commits 6bbfd6b8, 024c8083. 24/24 tool tests green.
+- **Gotcha (blind API tooling):** verify payload shapes against the
+  vendors' machine-readable sources (Apple's OpenAPI spec zip, Play's
+  discovery doc) — the HTML docs are JS-rendered/stale; both reviewers
+  found the live schemas matched.
+- Docs are now script-first: `docs/revenuecat-setup.md` (store products)
+  and `docs/youtube-native-chat-audit.md` (GCP key) lead with the
+  commands; the manual walkthroughs remain as verification checklists.
+
 ## 2026-09-04 — RevenueCat migration (Pro entitlement backend swap)
 
 - Tier M (focused migration on the wave-old seam). One implementer + one

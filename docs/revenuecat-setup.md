@@ -6,6 +6,23 @@ except pasting two API keys. When the keys are filled, the app switches
 from the legacy direct-IAP path to RevenueCat automatically
 (`revenueCatConfigured` in `lib/utils/revenuecat_config.dart`).
 
+**Scripted path (preferred):** `tool/provisioning/` creates the store
+products for you — see its README for creds-by-path setup, then:
+
+```bash
+dart run tool/provisioning/bin/provision.dart asc-products \
+  --key-path <asc-key.p8> --key-id <id> --issuer-id <id> --app-id <numeric>
+dart run tool/provisioning/bin/provision.dart play-products \
+  --service-account-json <svc.json>
+```
+
+Both are idempotent (re-runs are no-ops), create the exact ids from
+`lib/utils/pro_ids.dart` (Play uses subscription `pro` + base plans
+`pro-yearly`/`pro-monthly` — the RevenueCat package mapping is in the tool
+README), and set US base prices. **Console-only remainder:** paid-apps
+agreement + tax/banking, and product review submission. The manual
+walkthrough below doubles as the verification checklist afterwards.
+
 ## 1. RevenueCat account + project
 
 1. Create a RevenueCat account → new project "OBS Blade".

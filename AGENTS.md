@@ -178,6 +178,12 @@ tips/blacksmith).
   `stream_list.proto` + protoc). Measures REST-poll vs gRPC `streamList`
   read cost against a real chat with a throwaway API key. Protocol:
   `tool/youtube_spike/README.md`.
+- **Provisioning automation:** `tool/provisioning/` (standalone package,
+  creds-by-path, `--dry-run`, idempotent) — `gcp-youtube` (GCP project +
+  YouTube API + restricted key), `asc-products` (subscription group +
+  subs + IAP + US pricing via ASC API), `play-products` (Play
+  subscription + base plans + one-time product). Usage + creds
+  acquisition: `tool/provisioning/README.md`.
 - **Visual-QA screenshots (macOS, booted sim):**
   `tool/visual_qa/capture_screenshots.sh` — runs
   `integration_test/screenshot_walk_test.dart`, writes PNGs to

@@ -74,25 +74,23 @@ still open since 2026-08-13.
 
 **Immediate next threads:**
 
-1. **Take Pro live** (maintainer, dashboard-only): follow
-   [`revenuecat-setup.md`](revenuecat-setup.md) — RC account, store
-   products (`pro_yearly`/`pro_monthly`/`pro_lifetime`), entitlement
-   `pro`, two public SDK keys into `lib/utils/revenuecat_config.dart`.
-   The app auto-switches to RC when keys are present; legacy direct-IAP
-   path stays as fallback. **Attach `pro_lifetime` to the `pro`
-   entitlement before flipping** or pre-RC lifetime buyers strand.
+1. **Take Pro live** (maintainer): store products are scripted — run
+   `tool/provisioning/` `asc-products` + `play-products` (creds: ASC `.p8`
+   API key, Play service-account JSON; see its README), then the
+   RevenueCat dashboard part of [`revenuecat-setup.md`](revenuecat-setup.md)
+   (entitlement `pro`, offering, two public SDK keys into
+   `lib/utils/revenuecat_config.dart`). **Attach `pro_lifetime` to the
+   `pro` entitlement before flipping** or pre-RC lifetime buyers strand.
    Then sandbox-test purchase/restore/expiry-revocation.
 2. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.
-3. YouTube threads from 2026-09-03: GCP key → spike run (decides
-   app-owned-key viability); OAuth client note into
-   `private/backend-architecture.md` (**still deferred — macbook
-   unreachable both wrap-ups; sync private docs first**); YouTube native
-   dogfood.
-4. Revisit-commented test: `test/pro/revenuecat_pro_gateway_test.dart`'s
-   empty-keys→legacy selection test needs a fixture tweak once real keys
-   land.
+3. YouTube: GCP key is scripted too — `gcloud auth login` once on the
+   NAS, then `tool/provisioning` `gcp-youtube`, then run the spike
+   (`tool/youtube_spike/`, ≥30 min busy chat, record units into
+   `youtube-native-chat-audit.md`). OAuth consent screen + TV client stay
+   console-only. The `private/backend-architecture.md` OAuth note is
+   **still deferred — macbook unreachable; sync private docs first**.
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in

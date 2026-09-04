@@ -113,6 +113,13 @@ spike tool (pending a real-key measurement run), core layer,
 default-on/app-owned-key rollout: run the spike on a busy chat and record
 the streamList quota numbers here.
 
+**Getting the GCP key is scripted** (2026-09-04): `tool/provisioning/`
+`gcp-youtube` — `gcloud auth login`, then one command creates the project,
+enables YouTube Data API v3, and writes a restricted API key (chmod 600).
+Console-only remainder: OAuth consent screen + "TVs and Limited Input"
+client (no Google API exists for those). Then run the spike per
+`tool/youtube_spike/README.md`.
+
 1. **Spike tool** (`tool/youtube_spike/`) — Dart CLI: takes API key + video
    id, runs `streamList` and/or REST polling against a busy chat, prints
    quota deltas measured from the GCP quota side + message counts/latency.
