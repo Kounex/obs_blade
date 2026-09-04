@@ -1,0 +1,15 @@
+name: provisioning
+description: >-
+  Provisioning automation for OBS Blade: GCP/YouTube API key setup,
+  App Store Connect products (Pro subscriptions + lifetime IAP) and
+  Google Play products (subscription base plans + one-time product).
+publish_to: none
+environment:
+  sdk: "^3.8.0"
+dependencies:
+  args: ^2.5.0
+  dart_jsonwebtoken: ^2.14.0
+  googleapis_auth: ^1.6.0
+  http: ^1.2.0
+dev_dependencies:
+  test: ^1.25.0

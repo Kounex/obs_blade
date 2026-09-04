@@ -1,0 +1,11 @@
+.dart_tool/
+.packages
+pubspec.lock
+
+# Local credentials + tool output (API keys, .p8 files, service-account
+# JSON, generated key files). Never commit any of these.
+creds/
+out/
+*.p8
+*service-account*.json
+*api-key*.txt
