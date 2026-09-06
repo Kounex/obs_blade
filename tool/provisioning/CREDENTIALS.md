@@ -94,11 +94,45 @@ client for native sign-in.
 3. Nothing else to collect: `provision gcp-youtube` creates the project,
    enables the API, and writes the restricted API key to a chmod-600 file
    (`--out-file`).
-4. **Console-only afterwards** (no API exists): OAuth consent screen +
-   an OAuth client of type **"TVs and Limited Input devices"** — the tool
-   prints deep links at the end of its run. That client's id/secret are
-   what the in-app YouTube sign-in uses
+4. **Console-only afterwards** (no API exists for these): the OAuth
+   consent screen + an OAuth client for the device flow. The tool prints
+   both deep links (with the project pre-selected) at the end of its run.
+   The client's id/secret are what the in-app YouTube sign-in uses
    (`docs/youtube-native-chat-audit.md`).
+
+   **a) OAuth consent screen** — APIs & Services → OAuth consent screen:
+
+   - **User Type: External** — end users sign in with their own Google
+     accounts; Internal only works for Workspace orgs.
+   - App name `OBS Blade`, your user-support and developer-contact
+     emails. No logo/domains needed to get going.
+   - **Scopes → Add or remove scopes** → filter for YouTube Data API v3 →
+     add `.../auth/youtube` ("Manage your YouTube account"). That single
+     scope covers send/delete/ban. Do **not** add `youtube.force-ssl` —
+     the device flow explicitly rejects it; `youtube` and
+     `youtube.readonly` are the allowed pair.
+   - **Publishing status stays "Testing" for now.** In Testing only
+     listed **test users** can complete the sign-in — add your own
+     Google account(s) under "Test users", otherwise you'll get
+     `access_denied` / "app is blocked" at sign-in and think the flow is
+     broken.
+   - Going to production later means OAuth **app verification** (brand +
+     sensitive-scope review — free, but plan weeks). All YouTube scopes
+     are sensitive, not restricted, so **no paid CASA assessment**.
+
+   **b) OAuth client** — APIs & Services → Credentials → **Create
+   Credentials → OAuth client ID**:
+
+   - **Application type: "TVs and Limited Input devices"** — the only
+     type that enables the device-authorization flow
+     (`oauth2.googleapis.com/device/code`). Google steers phones to the
+     installed-app flow; the device flow is off-label for this use but
+     functional, and gives the Twitch-style device-code UX.
+   - Name: e.g. `obs-blade-youtube-device`.
+   - Copy the resulting **client id + client secret** into a chmod-600
+     file, e.g. `~/.config/obs-blade/youtube-oauth-client.txt`. The app
+     consumes them via Settings → YouTube setup sheet → advanced section
+     (BYO client), not via env var.
 
 ---
 
