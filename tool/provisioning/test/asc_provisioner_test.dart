@@ -181,6 +181,83 @@ void main() {
           greaterThanOrEqualTo(6));
     });
 
+    test('finds price points beyond the first page (cursor pagination)',
+        () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      client.on('POST', 'v1/subscriptionGroups',
+          ApiResponse(201, {'data': _resource('subscriptionGroups', 'g1')}));
+      client.on('POST', 'v1/subscriptions',
+          ApiResponse(201, {'data': _resource('subscriptions', 's1')}));
+      client.on('POST', 'v1/subscriptions',
+          ApiResponse(201, {'data': _resource('subscriptions', 's2')}));
+      // Yearly's 24.99 point sits on page 2 of 4 (ASC USA has ~800 points,
+      // paged at 200) — page 1 must not satisfy the lookup.
+      client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource('subscriptionPricePoints', 'pp-y-early',
+                  {'customerPrice': '4.99'})
+            ],
+            'meta': {
+              'paging': {'total': 800, 'nextCursor': 'AMg', 'limit': 200}
+            },
+          }));
+      client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource('subscriptionPricePoints', 'pp-y',
+                  {'customerPrice': '24.99'})
+            ],
+          }));
+      client.on(
+          'GET',
+          'v1/subscriptions/s2/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource('subscriptionPricePoints', 'pp-m',
+                  {'customerPrice': '4.99'})
+            ]
+          }));
+      client.on('POST', 'v2/inAppPurchases',
+          ApiResponse(201, {'data': _resource('inAppPurchases', 'i1')}));
+      client.on('GET', 'v2/inAppPurchases/i1/iapPriceSchedule',
+          ApiResponse(404, null));
+      client.on(
+          'GET',
+          'v2/inAppPurchases/i1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource(
+                  'inAppPurchasePricePoints', 'pp-l', {'customerPrice': '79.99'})
+            ]
+          }));
+
+      final provisioner =
+          AscProvisioner(client: client, appId: '1234', log: logs.add);
+      final ok = await provisioner.run(
+          subscriptions: subs, lifetimePriceUsd: '79.99');
+
+      expect(ok, isTrue);
+      final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
+      String pricePointOf(Map<String, Object?> body) =>
+          ((((body['data'] as Map)['relationships'] as Map)[
+                      'subscriptionPricePoint'] as Map)['data'] as Map)['id']
+              as String;
+      expect(pricePointOf(priceBodies[0]), 'pp-y');
+      // The second request carried the cursor from page 1.
+      expect(
+          client.requests.any((r) =>
+              r.startsWith('GET v1/subscriptions/s1/pricePoints') &&
+              r.contains('cursor=AMg')),
+          isTrue);
+    });
+
     test('reports failure with console link when price point is missing',
         () async {
       final client = FakeApiClient();

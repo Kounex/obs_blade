@@ -197,17 +197,30 @@ class AscProvisioner {
   }
 
   Future<String?> _findSubscriptionPricePoint(
-      String subscriptionId, String priceUsd) async {
+      String subscriptionId, String priceUsd) =>
+      _findPricePoint('v1/subscriptions/$subscriptionId/pricePoints', priceUsd);
+
+  /// ASC returns ~800 price points per territory, paged at 200 — scan all
+  /// pages via meta.paging.nextCursor. `include=territory` matches every
+  /// known-working implementation and keeps the ids usable for writes.
+  Future<String?> _findPricePoint(String path, String priceUsd) async {
     final wanted = normalizePrice(priceUsd);
-    final points = await client.get(
-        'v1/subscriptions/$subscriptionId/pricePoints', {
-      'filter[territory]': territoryId,
-      'limit': '200',
-    });
-    for (final point in points.dataList) {
-      final attrs = point['attributes'] as Map<String, Object?>?;
-      if (attrs?['customerPrice'] == wanted) return point['id'] as String;
-    }
+    String? cursor;
+    do {
+      final points = await client.get(path, {
+        'filter[territory]': territoryId,
+        'limit': '200',
+        'include': 'territory',
+        if (cursor != null) 'cursor': cursor,
+      });
+      for (final point in points.dataList) {
+        final attrs = point['attributes'] as Map<String, Object?>?;
+        if (attrs?['customerPrice'] == wanted) return point['id'] as String;
+      }
+      final meta = points.json['meta'];
+      final paging = meta is Map ? meta['paging'] : null;
+      cursor = paging is Map ? paging['nextCursor'] as String? : null;
+    } while (cursor != null);
     return null;
   }
 
@@ -256,17 +269,8 @@ class AscProvisioner {
       _log('  price schedule already exists — skipping');
       return true;
     }
-    final wanted = normalizePrice(priceUsd);
-    final points =
-        await client.get('v2/inAppPurchases/$iapId/pricePoints', {
-      'filter[territory]': territoryId,
-      'limit': '200',
-    });
-    String? pointId;
-    for (final point in points.dataList) {
-      final attrs = point['attributes'] as Map<String, Object?>?;
-      if (attrs?['customerPrice'] == wanted) pointId = point['id'] as String;
-    }
+    final pointId = await _findPricePoint(
+        'v2/inAppPurchases/$iapId/pricePoints', priceUsd);
     if (pointId == null) {
       if (client.isDryRun) {
         _log('  would look up the $territoryId price point for USD '
