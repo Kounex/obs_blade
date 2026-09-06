@@ -258,6 +258,64 @@ void main() {
           isTrue);
     });
 
+    test('a failing price POST is reported and the run continues', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      client.on('POST', 'v1/subscriptionGroups',
+          ApiResponse(201, {'data': _resource('subscriptionGroups', 'g1')}));
+      client.on('POST', 'v1/subscriptions',
+          ApiResponse(201, {'data': _resource('subscriptions', 's1')}));
+      client.on('POST', 'v1/subscriptions',
+          ApiResponse(201, {'data': _resource('subscriptions', 's2')}));
+      for (final s in ['s1', 's2']) {
+        client.on(
+            'GET',
+            'v1/subscriptions/$s/pricePoints',
+            ApiResponse(200, {
+              'data': [
+                _resource('subscriptionPricePoints', 'pp-$s',
+                    {'customerPrice': s == 's1' ? '24.99' : '4.99'})
+              ]
+            }));
+      }
+      // Every price POST 409s (account-level block, e.g. missing Paid Apps
+      // agreement) — the run must still reach the IAP.
+      client.onThrow(
+          'POST',
+          'v1/subscriptionPrices',
+          ApiException('POST', 'https://x/v1/subscriptionPrices', 409,
+              'ENTITY_ERROR.RELATIONSHIP.INVALID'));
+      client.onThrow(
+          'POST',
+          'v1/subscriptionPrices',
+          ApiException('POST', 'https://x/v1/subscriptionPrices', 409,
+              'ENTITY_ERROR.RELATIONSHIP.INVALID'));
+      client.on('POST', 'v2/inAppPurchases',
+          ApiResponse(201, {'data': _resource('inAppPurchases', 'i1')}));
+      client.on('GET', 'v2/inAppPurchases/i1/iapPriceSchedule',
+          ApiResponse(404, null));
+      client.on(
+          'GET',
+          'v2/inAppPurchases/i1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource(
+                  'inAppPurchasePricePoints', 'pp-l', {'customerPrice': '79.99'})
+            ]
+          }));
+
+      final provisioner =
+          AscProvisioner(client: client, appId: '1234', log: logs.add);
+      final ok = await provisioner.run(
+          subscriptions: subs, lifetimePriceUsd: '79.99');
+
+      expect(ok, isFalse);
+      // Both subscription prices failed but the IAP was still fully done.
+      expect(client.count('POST', 'v1/inAppPurchasePriceSchedules'), 1);
+      expect(logs.where((l) => l.contains('Paid Apps')).length, 2);
+    });
+
     test('reports failure with console link when price point is missing',
         () async {
       final client = FakeApiClient();

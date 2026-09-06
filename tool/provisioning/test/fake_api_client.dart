@@ -17,11 +17,18 @@ class FakeApiClient extends ApiClient {
       .map((b) => b.body)
       .toList();
   final _responses = <String, List<ApiResponse>>{};
+  final _errors = <String, List<Exception>>{};
 
   void on(String method, String path, ApiResponse response) =>
       _responses.putIfAbsent('$method $path', () => []).add(response);
 
+  /// Script an exception (e.g. ApiException) instead of a response.
+  void onThrow(String method, String path, Exception error) =>
+      _errors.putIfAbsent('$method $path', () => []).add(error);
+
   ApiResponse _next(String method, String path) {
+    final errors = _errors['$method $path'];
+    if (errors != null && errors.isNotEmpty) throw errors.removeAt(0);
     final queue = _responses['$method $path'];
     if (queue == null || queue.isEmpty) return ApiResponse(200, {'data': []});
     return queue.removeAt(0);

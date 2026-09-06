@@ -183,13 +183,26 @@ class AscProvisioner {
           'subscriptions (subscription id $subscriptionId)');
       return false;
     }
-    await client.post(
-        'v1/subscriptionPrices',
-        subscriptionPriceCreate(
-          subscriptionId: subscriptionId,
-          pricePointId: pointId,
-          territoryId: territoryId,
-        ));
+    try {
+      await client.post(
+          'v1/subscriptionPrices',
+          subscriptionPriceCreate(
+            subscriptionId: subscriptionId,
+            pricePointId: pointId,
+            territoryId: territoryId,
+          ));
+    } on ApiException catch (e) {
+      // A 409 here with "error occurred while processing the pricing
+      // information" on a subscription's FIRST price almost always means an
+      // account-level block (Paid Apps agreement / tax / banking not
+      // active) — the payload and price point are not the problem.
+      _log('  ERROR: setting the $territoryId price failed: $e\n'
+          '  If this is the subscription\'s first price, check App Store '
+          'Connect → Business → Agreements, Tax, and Banking — the Paid Apps '
+          'agreement (incl. bank account + tax forms) must be Active before '
+          'pricing works.');
+      return false;
+    }
     _log('  set $territoryId price USD ${spec.priceUsd} '
         '(price point $pointId) — other territories follow the base '
         'territory price automatically');
@@ -284,13 +297,24 @@ class AscProvisioner {
           'in-app-purchases (IAP id $iapId)');
       return false;
     }
-    await client.post(
-        'v1/inAppPurchasePriceSchedules',
-        inAppPurchasePriceScheduleCreate(
-          inAppPurchaseId: iapId,
-          pricePointId: pointId,
-          baseTerritoryId: territoryId,
-        ));
+    try {
+      await client.post(
+          'v1/inAppPurchasePriceSchedules',
+          inAppPurchasePriceScheduleCreate(
+            inAppPurchaseId: iapId,
+            pricePointId: pointId,
+            baseTerritoryId: territoryId,
+          ));
+    } on ApiException catch (e) {
+      // See _ensureSubscriptionPrice: a 409 on the first price is usually an
+      // account-level block (Paid Apps agreement / tax / banking).
+      _log('  ERROR: setting the $territoryId price failed: $e\n'
+          '  If this is the IAP\'s first price, check App Store Connect → '
+          'Business → Agreements, Tax, and Banking — the Paid Apps agreement '
+          '(incl. bank account + tax forms) must be Active before pricing '
+          'works.');
+      return false;
+    }
     _log('  set $territoryId price USD $priceUsd (price point $pointId) — '
         'other territories follow the base territory price automatically');
     return true;
