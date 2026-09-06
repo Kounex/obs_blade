@@ -49,8 +49,10 @@ void main() {
       );
       expect(body['packageName'], 'com.kounex.obsBlade');
       expect(body['productId'], 'pro');
-      final listing = (body['listings'] as List).single as Map;
-      expect(listing['languageCode'], 'en-US');
+      final listings = body['listings'] as List;
+      // en-GB first: Play requires a listing in the app's default language.
+      expect(listings.map((l) => (l as Map)['languageCode']),
+          ['en-GB', 'en-US']);
       final plans = body['basePlans'] as List;
       expect(plans, hasLength(2));
       final yearly = plans.first as Map;

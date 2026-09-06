@@ -32,11 +32,16 @@ Map<String, Object?> _basePlan(BasePlanSpec spec, String regionCode) => {
       ],
     };
 
-Map<String, Object?> _subscriptionListing(String title) => {
-      'languageCode': 'en-US',
+Map<String, Object?> _listing(String title, String languageCode) => {
+      'languageCode': languageCode,
       'title': title,
       'description': 'OBS Blade Pro',
     };
+
+/// Play requires a listing in the app's default language (en-GB for OBS
+/// Blade); en-US is included for the US storefront.
+List<Map<String, Object?>> _listings(String title) =>
+    [_listing(title, 'en-GB'), _listing(title, 'en-US')];
 
 /// Body for POST .../applications/{packageName}/subscriptions.
 Map<String, Object?> subscriptionCreate({
@@ -49,7 +54,7 @@ Map<String, Object?> subscriptionCreate({
     {
       'packageName': packageName,
       'productId': productId,
-      'listings': [_subscriptionListing(title)],
+      'listings': _listings(title),
       'basePlans':
           basePlans.map((spec) => _basePlan(spec, regionCode)).toList(),
     };
@@ -103,13 +108,7 @@ Map<String, Object?> oneTimeProductUpsert({
           'oneTimeProduct': {
             'packageName': packageName,
             'productId': productId,
-            'listings': [
-              {
-                'languageCode': 'en-US',
-                'title': title,
-                'description': 'OBS Blade Pro',
-              }
-            ],
+            'listings': _listings(title),
             'purchaseOptions': [
               {
                 'purchaseOptionId': purchaseOptionId,
