@@ -54,7 +54,7 @@ export ASC_KEY_ID="…"
 export ASC_ISSUER_ID="…"
 export ASC_APP_ID="…"                         # numeric App Store Connect app id
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
-export GCP_PROJECT_ID="obs-blade-youtube"     # optional, has a sane default
+export GCP_PROJECT_ID="obs-blade"               # optional, has a sane default
 ```
 
 An explicit flag always wins over the env var.
@@ -70,11 +70,12 @@ An explicit flag always wins over the env var.
 ```bash
 dart run bin/provision.dart gcp-youtube --dry-run
 dart run bin/provision.dart gcp-youtube \
-    --project-id obs-blade-youtube \
+    --project-id obs-blade \
     --out-file ~/.config/obs-blade/youtube-api-key.txt
 ```
 
-Creates-or-reuses the project (`--project-id`, default `obs-blade-youtube`),
+Creates-or-reuses the project (`--project-id`, default `obs-blade` — the
+shared project the Play API setup also uses),
 enables `youtube.googleapis.com`, and creates an API key restricted to the
 YouTube Data API v3 (`--api-target=service=youtube.googleapis.com`). Re-runs
 find the key by its display name and reuse it.

@@ -15,7 +15,7 @@ export ASC_KEY_ID="…"
 export ASC_ISSUER_ID="…"
 export ASC_APP_ID="…"
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
-export GCP_PROJECT_ID="obs-blade-youtube"
+export GCP_PROJECT_ID="obs-blade"
 ```
 
 Prep: `mkdir -p ~/.config/obs-blade` and make sure `~/.localrc` itself is
@@ -53,8 +53,9 @@ Covers: the subscription group "Pro", `pro_yearly` / `pro_monthly`,
 Covers: Play subscription `pro` (base plans `pro-yearly` / `pro-monthly`)
 and one-time product `pro_lifetime`.
 
-1. In the **GCP console**, pick or create a project (this is separate
-   from the YouTube GCP project — reusing one is fine too) and enable
+1. In the **GCP console**, pick or create a project (default `obs-blade`
+   — the same project Track 3 uses for the YouTube API, one shared
+   project for both) and enable
    the **Google Play Developer API** for it:
    <https://console.developers.google.com/apis/api/androidpublisher.googleapis.com>
 2. GCP → **IAM & Admin → Service Accounts**:
@@ -85,9 +86,11 @@ Covers: the YouTube Data API key for the quota spike + (later) the OAuth
 client for native sign-in.
 
 1. `gcloud auth login` (one time per machine).
-2. Pick a project id — globally unique across all of GCP. Default
-   `obs-blade-youtube` is fine if unclaimed; otherwise choose another and
-   export it as `GCP_PROJECT_ID`.
+2. Default project id is `obs-blade` — the same project the Play API
+   setup uses, so both APIs live in one shared GCP project. If it's
+   already created (Track 2), nothing to do; if you ever want a
+   different one, export it as `GCP_PROJECT_ID` (must be globally
+   unique across all of GCP).
 3. Nothing else to collect: `provision gcp-youtube` creates the project,
    enables the API, and writes the restricted API key to a chmod-600 file
    (`--out-file`).

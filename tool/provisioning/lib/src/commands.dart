@@ -53,7 +53,7 @@ class GcpYoutubeCommand extends Command<int> {
     final dryRun = args['dry-run'] as bool;
     final projectId = argOrEnv(args['project-id'] as String?,
             Platform.environment['GCP_PROJECT_ID']) ??
-        'obs-blade-youtube';
+        'obs-blade';
 
     if (!dryRun) {
       final which = await Process.run('which', ['gcloud']);
