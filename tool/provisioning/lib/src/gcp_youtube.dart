@@ -130,20 +130,35 @@ class GcpYoutubeProvisioner {
         '--project', projectId,
         '--format=json',
       ], what: 'api-keys create');
-      // With --format=json the long-running operation resolves to the key
-      // resource itself (has `name` + `uid`); fall back to list lookup.
+      // With --format=json the result may be the key resource itself (has
+      // `name` + `uid`) or just the long-running operation — in that case
+      // (and on any empty name) re-list by display name, with a few retries
+      // since key creation is eventually consistent.
       final decoded = jsonDecode(created.stdout);
       keyName = decoded is Map ? decoded['name'] as String? ?? '' : '';
-      if (keyName.isEmpty) {
-        final relist = await _run([
-          'services', 'api-keys', 'list',
-          '--project', projectId,
-          '--filter', 'displayName:$keyDisplayName',
-          '--format=json',
-        ], what: 'api-keys list');
-        keyName =
-            ((jsonDecode(relist.stdout) as List).first as Map)['name']
-                as String;
+      var unresolved =
+          keyName.isEmpty || keyName.contains('/operations/');
+      if (unresolved) {
+        for (var attempt = 1; attempt <= 5 && unresolved; attempt++) {
+          await Future.delayed(Duration(seconds: 2 * attempt));
+          final relist = await _run([
+            'services', 'api-keys', 'list',
+            '--project', projectId,
+            '--filter', 'displayName:$keyDisplayName',
+            '--format=json',
+          ], what: 'api-keys list');
+          final listed = jsonDecode(relist.stdout) as List;
+          if (listed.isNotEmpty) {
+            keyName = (listed.first as Map)['name'] as String;
+            unresolved = false;
+          }
+        }
+        if (unresolved) {
+          throw GcpException('api-keys list (post-create)', const [],
+              const GcloudResult(1, '', 'key not visible after create'),
+              hint: 'The key was created but is not listed yet — re-run '
+                  'this command; it reuses the existing key.');
+        }
       }
       _log('created API key "$keyDisplayName" restricted to '
           '$youtubeService ($keyName)');
