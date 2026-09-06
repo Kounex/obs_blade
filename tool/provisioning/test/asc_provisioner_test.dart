@@ -1,8 +1,16 @@
+import 'dart:convert';
+
 import 'package:provisioning/src/api_client.dart';
 import 'package:provisioning/src/asc_provisioner.dart';
 import 'package:test/test.dart';
 
 import 'fake_api_client.dart';
+
+/// base64url-encoded JSON id in Apple's price-point format
+/// (`{"s":…,"t":…,"p":tier}`) — the provisioner compares the embedded tier.
+String fakePointId(String tier, {String s = 'i1'}) => base64Url
+    .encode(utf8.encode('{"s":"$s","t":"USA","p":"$tier"}'))
+    .replaceAll('=', '');
 
 const subs = [
   SubscriptionSpec(
@@ -165,15 +173,34 @@ void main() {
                     'subscriptionLocalizations', 'l-$s', {'locale': 'en-US'})
               ]
             }));
+        // Current price with its point included, matching the wanted price.
         client.on(
             'GET',
             'v1/subscriptions/$s/prices',
             ApiResponse(200, {
-              'data': [_resource('subscriptionPrices', 'p-$s')]
+              'data': [
+                {
+                  'type': 'subscriptionPrices',
+                  'id': 'p-$s',
+                  'attributes': {'startDate': null},
+                  'relationships': {
+                    'subscriptionPricePoint': {
+                      'data': {
+                        'type': 'subscriptionPricePoints',
+                        'id': 'pp-$s'
+                      }
+                    }
+                  },
+                }
+              ],
+              'included': [
+                _resource('subscriptionPricePoints', 'pp-$s',
+                    {'customerPrice': s == 's1' ? '24.99' : '4.99'})
+              ],
             }));
         client.on(
             'GET',
-            'v1/subscriptions/$s/availability',
+            'v1/subscriptionAvailabilities/$s',
             ApiResponse(200, {
               'data': _resource('subscriptionAvailabilities', 'a-$s')
             }));
@@ -199,7 +226,26 @@ void main() {
           'GET',
           'v2/inAppPurchases/i1/iapPriceSchedule',
           ApiResponse(200, {
-            'data': _resource('inAppPurchasePriceSchedules', 'sched1')
+            'data': {
+              'type': 'inAppPurchasePriceSchedules',
+              'id': 'sched1',
+              'relationships': {
+                'manualPrices': {
+                  'data': [
+                    {'type': 'inAppPurchasePrices', 'id': fakePointId('10417')}
+                  ]
+                }
+              },
+            }
+          }));
+      client.on(
+          'GET',
+          'v2/inAppPurchases/i1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource('inAppPurchasePricePoints', fakePointId('10417'),
+                  {'customerPrice': '79.99'})
+            ]
           }));
 
       final provisioner =
@@ -346,6 +392,189 @@ void main() {
       // Both subscription prices failed but the IAP was still fully done.
       expect(client.count('POST', 'v1/inAppPurchasePriceSchedules'), 1);
       expect(logs.where((l) => l.contains('Paid Apps')).length, 2);
+    });
+
+    test('creates a price change when the current price differs', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      client.on(
+          'GET',
+          'v1/apps/1234/subscriptionGroups',
+          ApiResponse(200, {
+            'data': [
+              _resource('subscriptionGroups', 'g1', {'referenceName': 'Pro'})
+            ]
+          }));
+      client.on(
+          'GET',
+          'v1/subscriptionGroups/g1/subscriptionGroupLocalizations',
+          ApiResponse(200, {
+            'data': [
+              _resource(
+                  'subscriptionGroupLocalizations', 'gl1', {'locale': 'en-US'})
+            ]
+          }));
+      for (var i = 0; i < 2; i++) {
+        client.on(
+            'GET',
+            'v1/subscriptionGroups/g1/subscriptions',
+            ApiResponse(200, {
+              'data': [
+                _resource('subscriptions', 's1', {'productId': 'pro_yearly'}),
+                _resource('subscriptions', 's2', {'productId': 'pro_monthly'}),
+              ]
+            }));
+      }
+      for (final s in ['s1', 's2']) {
+        client.on(
+            'GET',
+            'v1/subscriptions/$s/subscriptionLocalizations',
+            ApiResponse(200, {
+              'data': [
+                _resource(
+                    'subscriptionLocalizations', 'l-$s', {'locale': 'en-US'})
+              ]
+            }));
+        client.on(
+            'GET',
+            'v1/subscriptionAvailabilities/$s',
+            ApiResponse(200, {
+              'data': _resource('subscriptionAvailabilities', 'a-$s')
+            }));
+      }
+      // Yearly: current 24.99, wanted 49.99 → change. Monthly: matches.
+      client.on(
+          'GET',
+          'v1/subscriptions/s1/prices',
+          ApiResponse(200, {
+            'data': [
+              {
+                'type': 'subscriptionPrices',
+                'id': 'p-s1',
+                'attributes': {'startDate': null},
+                'relationships': {
+                  'subscriptionPricePoint': {
+                    'data': {'type': 'subscriptionPricePoints', 'id': 'pp-old'}
+                  }
+                },
+              }
+            ],
+            'included': [
+              _resource(
+                  'subscriptionPricePoints', 'pp-old', {'customerPrice': '24.99'})
+            ],
+          }));
+      client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource('subscriptionPricePoints', 'pp-new',
+                  {'customerPrice': '49.99'})
+            ]
+          }));
+      client.on(
+          'GET',
+          'v1/subscriptions/s2/prices',
+          ApiResponse(200, {
+            'data': [
+              {
+                'type': 'subscriptionPrices',
+                'id': 'p-s2',
+                'attributes': {'startDate': null},
+                'relationships': {
+                  'subscriptionPricePoint': {
+                    'data': {'type': 'subscriptionPricePoints', 'id': 'pp-m'}
+                  }
+                },
+              }
+            ],
+            'included': [
+              _resource(
+                  'subscriptionPricePoints', 'pp-m', {'customerPrice': '4.99'})
+            ],
+          }));
+      client.on(
+          'GET',
+          'v1/apps/1234/inAppPurchasesV2',
+          ApiResponse(200, {
+            'data': [
+              _resource('inAppPurchases', 'i1', {'productId': 'pro_lifetime'})
+            ]
+          }));
+      client.on(
+          'GET',
+          'v2/inAppPurchases/i1/inAppPurchaseLocalizations',
+          ApiResponse(200, {
+            'data': [
+              _resource(
+                  'inAppPurchaseLocalizations', 'il1', {'locale': 'en-US'})
+            ]
+          }));
+      // IAP: schedule at tier 10417 (79.99), wanted 99.99 (tier 10477).
+      client.on(
+          'GET',
+          'v2/inAppPurchases/i1/iapPriceSchedule',
+          ApiResponse(200, {
+            'data': {
+              'type': 'inAppPurchasePriceSchedules',
+              'id': 'sched1',
+              'relationships': {
+                'manualPrices': {
+                  'data': [
+                    {'type': 'inAppPurchasePrices', 'id': fakePointId('10417')}
+                  ]
+                }
+              },
+            }
+          }));
+      client.on(
+          'GET',
+          'v2/inAppPurchases/i1/pricePoints',
+          ApiResponse(200, {
+            'data': [
+              _resource('inAppPurchasePricePoints', fakePointId('10477'),
+                  {'customerPrice': '99.99'})
+            ]
+          }));
+
+      const updatedSubs = [
+        SubscriptionSpec(
+            productId: 'pro_yearly',
+            name: 'Pro — Yearly',
+            subscriptionPeriod: 'ONE_YEAR',
+            priceUsd: '49.99'),
+        SubscriptionSpec(
+            productId: 'pro_monthly',
+            name: 'Pro — Monthly',
+            subscriptionPeriod: 'ONE_MONTH',
+            priceUsd: '4.99'),
+      ];
+      final provisioner =
+          AscProvisioner(client: client, appId: '1234', log: logs.add);
+      final ok = await provisioner.run(
+          subscriptions: updatedSubs, lifetimePriceUsd: '99.99');
+
+      expect(ok, isTrue);
+      // Yearly got a price change with the new point; monthly was skipped.
+      final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
+      expect(priceBodies, hasLength(1));
+      expect(
+          ((((priceBodies.first['data'] as Map)['relationships'] as Map)[
+                      'subscriptionPricePoint'] as Map)['data'] as Map)['id'],
+          'pp-new');
+      // The IAP schedule was re-posted with the new point (create-or-replace).
+      final scheduleBodies =
+          client.bodiesFor('POST', 'v1/inAppPurchasePriceSchedules');
+      expect(scheduleBodies, hasLength(1));
+      final included = scheduleBodies.first['included'] as List;
+      expect(
+          (((included.first as Map)['relationships']
+                      as Map)['inAppPurchasePricePoint'] as Map)['data'],
+          {'type': 'inAppPurchasePricePoints', 'id': fakePointId('10477')});
+      expect(logs.any((l) => l.contains('price differs')), isTrue);
+      expect(logs.any((l) => l.contains('different price')), isTrue);
     });
 
     test('reports failure with console link when price point is missing',

@@ -1,4 +1,5 @@
 import 'package:provisioning/src/api_client.dart';
+import 'package:provisioning/src/money.dart';
 import 'package:provisioning/src/play_payloads.dart';
 import 'package:provisioning/src/play_provisioner.dart';
 import 'package:test/test.dart';
@@ -21,6 +22,35 @@ Map<String, Object?> _subscription(List<Map<String, Object?>> plans) => {
       'productId': 'pro',
       'packageName': pkg,
       'basePlans': plans,
+    };
+
+Map<String, Object?> _plan(String id, String state, String priceUsd) => {
+      'basePlanId': id,
+      'state': state,
+      'regionalConfigs': [
+        {
+          'regionCode': 'US',
+          'newSubscriberAvailability': true,
+          'price': moneyFromDecimal(priceUsd),
+        }
+      ],
+    };
+
+Map<String, Object?> _oneTimeProduct(String state, String priceUsd) => {
+      'productId': 'pro_lifetime',
+      'purchaseOptions': [
+        {
+          'purchaseOptionId': 'pro-lifetime',
+          'state': state,
+          'regionalPricingAndAvailabilityConfigs': [
+            {
+              'regionCode': 'US',
+              'availability': 'AVAILABLE',
+              'price': moneyFromDecimal(priceUsd),
+            }
+          ],
+        }
+      ],
     };
 
 void main() {
@@ -93,18 +123,13 @@ void main() {
         client.on(
             'GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
             ApiResponse(200, _subscription([
-              {'basePlanId': 'pro-yearly', 'state': 'ACTIVE'},
-              {'basePlanId': 'pro-monthly', 'state': 'ACTIVE'},
+              _plan('pro-yearly', 'ACTIVE', '24.99'),
+              _plan('pro-monthly', 'ACTIVE', '4.99'),
             ])));
       }
       client.on(
           'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(200, {
-            'productId': 'pro_lifetime',
-            'purchaseOptions': [
-              {'purchaseOptionId': 'pro-lifetime', 'state': 'ACTIVE'}
-            ],
-          }));
+          ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')));
 
       final provisioner = PlayProvisioner(
           client: client, packageName: pkg, log: logs.add);
@@ -168,6 +193,69 @@ void main() {
               'basePlans/pro-yearly:activate'),
           0,
           reason: 'already-active base plan must not be re-activated');
+    });
+    test('updates prices when they drift from the wanted values', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      // Yearly at the old 24.99, monthly already correct; scripted twice
+      // (check + activation re-read).
+      for (var i = 0; i < 2; i++) {
+        client.on(
+            'GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+            ApiResponse(200, _subscription([
+              _plan('pro-yearly', 'ACTIVE', '24.99'),
+              _plan('pro-monthly', 'ACTIVE', '4.99'),
+            ])));
+      }
+      // Lifetime at the old 79.99, then re-read after the update.
+      client.on(
+          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+          ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')));
+      client.on(
+          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+          ApiResponse(200, _oneTimeProduct('ACTIVE', '99.99')));
+
+      const updatedPlans = [
+        BasePlanSpec(
+            basePlanId: 'pro-yearly',
+            billingPeriodDuration: 'P1Y',
+            priceUsd: '49.99'),
+        BasePlanSpec(
+            basePlanId: 'pro-monthly',
+            billingPeriodDuration: 'P1M',
+            priceUsd: '4.99'),
+      ];
+      final provisioner = PlayProvisioner(
+          client: client, packageName: pkg, log: logs.add);
+      final ok = await provisioner.run(
+          basePlans: updatedPlans, lifetimePriceUsd: '99.99');
+
+      expect(ok, isTrue);
+      final patches = client.bodiesFor('PATCH',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro');
+      expect(patches, hasLength(1));
+      final patchedPlans = patches.first['basePlans'] as List;
+      final yearly = patchedPlans
+          .whereType<Map>()
+          .firstWhere((b) => b['basePlanId'] == 'pro-yearly');
+      final yearlyUs = (yearly['regionalConfigs'] as List)
+          .whereType<Map>()
+          .firstWhere((c) => c['regionCode'] == 'US');
+      expect((yearlyUs['price'] as Map)['units'], '49');
+      // Monthly plan carried over untouched.
+      final monthly = patchedPlans
+          .whereType<Map>()
+          .firstWhere((b) => b['basePlanId'] == 'pro-monthly');
+      expect(((monthly['regionalConfigs'] as List).first as Map)['price'],
+          moneyFromDecimal('4.99'));
+      // One-time product updated via the same batchUpdate upsert.
+      expect(
+          client.count('POST',
+              'androidpublisher/v3/applications/$pkg/oneTimeProducts:batchUpdate'),
+          1);
+      expect(logs.any((l) => l.contains('updated prices')), isTrue);
+      expect(logs.any((l) => l.contains('updated one-time product')), isTrue);
     });
   });
 }

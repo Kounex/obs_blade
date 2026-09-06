@@ -43,6 +43,39 @@ Map<String, Object?> _listing(String title, String languageCode) => {
 List<Map<String, Object?>> _listings(String title) =>
     [_listing(title, 'en-GB'), _listing(title, 'en-US')];
 
+/// True when [configs] (a base plan's `regionalConfigs` or a purchase
+/// option's `regionalPricingAndAvailabilityConfigs`) already carries
+/// [priceUsd] for [regionCode].
+bool priceConfigsMatch(
+    List<Object?>? configs, String regionCode, String priceUsd) {
+  for (final c in (configs ?? const []).whereType<Map<String, Object?>>()) {
+    if (c['regionCode'] == regionCode) {
+      final price = c['price'] as Map<String, Object?>?;
+      final wanted = moneyFromDecimal(priceUsd);
+      return price?['units'] == wanted['units'] &&
+          price?['nanos'] == wanted['nanos'];
+    }
+  }
+  return false;
+}
+
+/// Copy of [existingPlan] with the regional config for [regionCode] set to
+/// [spec]'s price; other regions and plan fields stay untouched.
+Map<String, Object?> basePlanWithPrice(Map<String, Object?> existingPlan,
+    BasePlanSpec spec, String regionCode) {
+  final configs = ((existingPlan['regionalConfigs'] as List?) ?? const [])
+      .whereType<Map<String, Object?>>()
+      .where((c) => c['regionCode'] != regionCode)
+      .map((c) => Map<String, Object?>.of(c))
+      .toList();
+  configs.add({
+    'regionCode': regionCode,
+    'newSubscriberAvailability': true,
+    'price': moneyFromDecimal(spec.priceUsd),
+  });
+  return {...existingPlan, 'regionalConfigs': configs};
+}
+
 /// Body for POST .../applications/{packageName}/subscriptions.
 Map<String, Object?> subscriptionCreate({
   required String packageName,

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'asc_payloads.dart';
 import 'api_client.dart';
 import 'money.dart';
@@ -163,8 +165,9 @@ class AscProvisioner {
   /// set — Apple answers a generic 409 on the price POST otherwise.
   /// Defaults to all current territories plus future ones.
   Future<void> _ensureSubscriptionAvailability(String subscriptionId) async {
+    // The availability resource shares the subscription's id.
     final existing = await client.getOrNull(
-        'v1/subscriptions/$subscriptionId/availability');
+        'v1/subscriptionAvailabilities/$subscriptionId');
     if (existing?.dataObject != null) {
       _log('  territory availability already set — skipping');
       return;
@@ -185,10 +188,24 @@ class AscProvisioner {
     final existing = await client.get('v1/subscriptions/$subscriptionId/prices', {
       'filter[territory]': territoryId,
       'limit': '50',
+      'include': 'subscriptionPricePoint',
     });
     if (existing.dataList.isNotEmpty) {
-      _log('  price already set for $territoryId — skipping');
-      return true;
+      // The current price is the one without a startDate.
+      final current = existing.dataList.firstWhere(
+          (p) =>
+              (p['attributes'] as Map<String, Object?>?)?['startDate'] == null,
+          orElse: () => existing.dataList.first);
+      final currentPointId = (((current['relationships']
+                  as Map<String, Object?>?)?['subscriptionPricePoint']
+              as Map<String, Object?>?)?['data'] as Map<String, Object?>?)?['id'];
+      final currentPrice = _includedPricePointPrice(existing, currentPointId);
+      if (currentPrice == normalizePrice(spec.priceUsd!)) {
+        _log('  price already USD $currentPrice for $territoryId — skipping');
+        return true;
+      }
+      _log('  price differs (have USD $currentPrice, want USD '
+          '${spec.priceUsd}) — creating a price change');
     }
     final pointId =
         await _findSubscriptionPricePoint(subscriptionId, spec.priceUsd!);
@@ -234,6 +251,37 @@ class AscProvisioner {
   Future<String?> _findSubscriptionPricePoint(
       String subscriptionId, String priceUsd) =>
       _findPricePoint('v1/subscriptions/$subscriptionId/pricePoints', priceUsd);
+
+  /// customerPrice of the price point with [pointId] in the response's
+  /// `included` section (from a prices fetch with
+  /// `include=subscriptionPricePoint`).
+  String? _includedPricePointPrice(ApiResponse response, Object? pointId) {
+    final included = response.json['included'];
+    if (included is! List) return null;
+    for (final item in included.whereType<Map<String, Object?>>()) {
+      if (item['id'] == pointId) {
+        return (item['attributes']
+            as Map<String, Object?>?)?['customerPrice'] as String?;
+      }
+    }
+    return null;
+  }
+
+  /// Apple's price point / manual price ids are base64url-encoded JSON with
+  /// an embedded tier (`{"s":…,"t":…,"p":"10477"}`). inAppPurchasePrices has
+  /// no read endpoint, so comparing the `p` field is the only way to check
+  /// an IAP's current price against a wanted price point. Returns null when
+  /// the id doesn't decode (callers then treat the price as different).
+  static String? _priceTierOf(String? id) {
+    if (id == null) return null;
+    try {
+      final padded = id + '=' * ((4 - id.length % 4) % 4);
+      final decoded = jsonDecode(utf8.decode(base64Url.decode(padded)));
+      return decoded is Map ? decoded['p'] as String? : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// ASC returns ~800 price points per territory, paged at 200 — scan all
   /// pages via meta.paging.nextCursor. `include=territory` matches every
@@ -298,14 +346,33 @@ class AscProvisioner {
   }
 
   Future<bool> _ensureIapPrice(String iapId, String priceUsd) async {
-    final schedule =
-        await client.getOrNull('v2/inAppPurchases/$iapId/iapPriceSchedule');
-    if (schedule != null && schedule.dataObject != null) {
-      _log('  price schedule already exists — skipping');
-      return true;
-    }
+    // include=manualPrices: the only way to read the current base price —
+    // inAppPurchasePrices has no direct read/write operations (403).
+    final schedule = await client
+        .getOrNull('v2/inAppPurchases/$iapId/iapPriceSchedule', {
+      'include': 'manualPrices',
+    });
     final pointId = await _findPricePoint(
         'v2/inAppPurchases/$iapId/pricePoints', priceUsd);
+    if (schedule != null && schedule.dataObject != null) {
+      final manualPrices = (((schedule.dataObject!['relationships']
+              as Map<String, Object?>?)?['manualPrices']
+          as Map<String, Object?>?)?['data'] as List?)?.whereType<Map<String, Object?>>();
+      final currentId = manualPrices == null || manualPrices.isEmpty
+          ? null
+          : manualPrices.first['id'] as String?;
+      // The point tier is only comparable via the id's embedded `p` field;
+      // undecodable ids are treated as different (safe: the re-POST
+      // replaces the schedule).
+      final currentTier = _priceTierOf(currentId);
+      final wantedTier = _priceTierOf(pointId);
+      if (currentTier != null && currentTier == wantedTier) {
+        _log('  price schedule already at USD $priceUsd — skipping');
+        return true;
+      }
+      _log('  price schedule exists with a different price — replacing it '
+          '(re-POSTing the schedule is create-or-replace)');
+    }
     if (pointId == null) {
       if (client.isDryRun) {
         _log('  would look up the $territoryId price point for USD '

@@ -132,11 +132,11 @@ class AscProductsCommand extends Command<int> {
           help: 'Numeric App Store Connect app id (App Information → '
               'Apple ID). Falls back to \$ASC_APP_ID.')
       ..addOption('yearly-price-usd',
-          help: 'US price for pro_yearly.', defaultsTo: '24.99')
+          help: 'US price for pro_yearly.', defaultsTo: '49.99')
       ..addOption('monthly-price-usd',
           help: 'US price for pro_monthly.', defaultsTo: '4.99')
       ..addOption('lifetime-price-usd',
-          help: 'US price for pro_lifetime.', defaultsTo: '79.99');
+          help: 'US price for pro_lifetime.', defaultsTo: '99.99');
     addDryRunFlag(argParser);
   }
 
@@ -241,12 +241,12 @@ class PlayProductsCommand extends Command<int> {
           help: 'Subscription product id holding the base plans.',
           defaultsTo: 'pro')
       ..addOption('yearly-price-usd',
-          help: 'US price for the yearly base plan.', defaultsTo: '24.99')
+          help: 'US price for the yearly base plan.', defaultsTo: '49.99')
       ..addOption('monthly-price-usd',
           help: 'US price for the monthly base plan.', defaultsTo: '4.99')
       ..addOption('lifetime-price-usd',
           help: 'US price for the lifetime one-time product.',
-          defaultsTo: '79.99')
+          defaultsTo: '99.99')
       ..addFlag('activate',
           help: 'Activate base plans / the purchase option after creation.',
           defaultsTo: true);

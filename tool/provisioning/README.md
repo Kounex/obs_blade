@@ -108,10 +108,15 @@ non-consumable IAP **pro_lifetime** ("Pro — Lifetime", + en-US localization).
 
 **Pricing is automated for the US base territory.** With
 `--yearly-price-usd` / `--monthly-price-usd` / `--lifetime-price-usd`
-(defaults 24.99 / 4.99 / 79.99) the tool looks up the matching
+(defaults 49.99 / 4.99 / 99.99) the tool looks up the matching
 `subscriptionPricePoints` / `inAppPurchasePricePoints` entry for territory
 `USA` and sets it via `POST /v1/subscriptionPrices` (immediate price change)
 resp. `POST /v1/inAppPurchasePriceSchedules` (base territory + manual price).
+Re-runs compare the current price and create a price change / re-post the
+schedule when it drifted, so adjusting prices is just a re-run with new
+flags. New subscriptions are also made available in all current + future
+territories (`POST /v1/subscriptionAvailabilities`) — a hard prerequisite
+for setting the starting price via the API.
 All other territories follow the base territory price automatically under
 Apple's current pricing system — customize in the console if you want to
 deviate. If a price point can't be matched, the product still gets created
@@ -137,12 +142,15 @@ dart run bin/provision.dart play-products \
 Creates, if missing: subscription product **`pro`** (`--subscription-id`)
 with base plans **pro-yearly** (`P1Y`) and **pro-monthly** (`P1M`), each with
 a US regional price (`--yearly-price-usd` / `--monthly-price-usd`, defaults
-24.99 / 4.99), plus one-time product **pro_lifetime** with purchase option
-`pro-lifetime` at `--lifetime-price-usd` (default 79.99). New base plans and
+49.99 / 4.99), plus one-time product **pro_lifetime** with purchase option
+`pro-lifetime` at `--lifetime-price-usd` (default 99.99). Listings are sent
+in en-GB (the app's default language — Play rejects creates without it) and
+en-US. New base plans and
 purchase options are created DRAFT by Play and then activated via the
 dedicated activate endpoints (skip with `--no-activate`). Re-runs pick up
 missing base plans on an existing subscription via PATCH
-(`updateMask=basePlans,listings`).
+(`updateMask=basePlans`) and update drifted prices the same way (one-time
+products via the same batchUpdate upsert).
 
 > Play naming constraints: base plan and purchase option ids are RFC-1034
 > (lowercase + hyphens — no underscores), so the Play side uses

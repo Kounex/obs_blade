@@ -79,13 +79,32 @@ class PlayProvisioner {
       final missing = basePlans
           .where((spec) => !existingIds.contains(spec.basePlanId))
           .toList();
-      if (missing.isEmpty) {
-        _log('all base plans already exist — skipping');
+      // Existing plans whose US price drifted from the wanted price.
+      final drifted = basePlans.where((spec) {
+        final plan = existingBasePlans
+            .where((b) => b['basePlanId'] == spec.basePlanId)
+            .firstOrNull;
+        return plan != null &&
+            !priceConfigsMatch(plan['regionalConfigs'] as List?,
+                regionCode, spec.priceUsd);
+      }).toList();
+      if (missing.isEmpty && drifted.isEmpty) {
+        _log('all base plans already exist with matching prices — skipping');
       } else {
+        final corrected = [
+          for (final b in existingBasePlans)
+            drifted.any((s) => s.basePlanId == b['basePlanId'])
+                ? basePlanWithPrice(
+                    b,
+                    basePlans.firstWhere(
+                        (s) => s.basePlanId == b['basePlanId']),
+                    regionCode)
+                : b,
+        ];
         await client.patch(
           path,
           subscriptionPatch(
-            existingBasePlans: existingBasePlans,
+            existingBasePlans: corrected,
             missing: missing,
             regionCode: regionCode,
           ),
@@ -97,8 +116,14 @@ class PlayProvisioner {
             'regionsVersion.version': regionsVersion,
           },
         );
-        _log('added missing base plans: '
-            '${missing.map((b) => b.basePlanId).join(', ')}');
+        if (missing.isNotEmpty) {
+          _log('added missing base plans: '
+              '${missing.map((b) => b.basePlanId).join(', ')}');
+        }
+        if (drifted.isNotEmpty) {
+          _log('updated prices for base plans: ${drifted.map((b) =>
+              '${b.basePlanId} → USD ${b.priceUsd}').join(', ')}');
+        }
       }
     }
 
@@ -145,8 +170,37 @@ class PlayProvisioner {
     final path = '$_apps/oneTimeProducts/$lifetimeProductId';
     var product = await client.getOrNull(path);
     if (product != null) {
-      _log('one-time product $lifetimeProductId already exists — skipping '
-          'create');
+      final existingOption = ((product.json['purchaseOptions'] as List?) ??
+              const [])
+          .whereType<Map<String, Object?>>()
+          .where((o) => o['purchaseOptionId'] == purchaseOptionId)
+          .firstOrNull;
+      final priceMatches = existingOption != null &&
+          priceConfigsMatch(
+              existingOption['regionalPricingAndAvailabilityConfigs']
+                  as List?,
+              regionCode,
+              priceUsd);
+      if (priceMatches) {
+        _log('one-time product $lifetimeProductId already exists with '
+            'matching price — skipping');
+      } else {
+        // Same call as the create: batchUpdate with allowMissing upserts
+        // listings + purchase options, so it also serves as a price update.
+        await client.post(
+          '$_apps/oneTimeProducts:batchUpdate',
+          oneTimeProductUpsert(
+            packageName: packageName,
+            productId: lifetimeProductId,
+            purchaseOptionId: purchaseOptionId,
+            title: 'Pro — Lifetime',
+            priceUsd: priceUsd,
+            regionCode: regionCode,
+          ),
+        );
+        _log('updated one-time product $lifetimeProductId to USD $priceUsd');
+        product = await client.getOrNull(path);
+      }
     } else {
       await client.post(
         '$_apps/oneTimeProducts:batchUpdate',
