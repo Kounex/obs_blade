@@ -63,7 +63,7 @@ An explicit flag always wins over the env var.
 |---|---|---|---|
 | `gcp-youtube` | gcloud user login | `GCP_PROJECT_ID` (project only; auth is gcloud's own) | `gcloud auth login` (needs permission to create projects, or pre-create the project in the console) |
 | `asc-products` | `.p8` key + key id + issuer id | `ASC_KEY_PATH` / `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_APP_ID` | <https://appstoreconnect.apple.com/access/integrations/api> → "Generate API Key" (role: Admin or App Manager) — the `.p8` downloads once, the key id and team-level issuer id are shown on the same page |
-| `play-products` | service-account JSON | `GOOGLE_APPLICATION_CREDENTIALS` (the Google-standard var) | Play Console → Setup → API access → link/create a GCP service account → "Manage service accounts" → create JSON key. Grant the account **Admin** (or at least "Manage orders and subscriptions" + app access) in Play Console |
+| `play-products` | service-account JSON | `GOOGLE_APPLICATION_CREDENTIALS` (the Google-standard var) | GCP: enable the Google Play Developer API, create a service account + JSON key. Play Console → **Users and permissions** → "Invite new users" with the service-account email → grant the OBS Blade app **Admin** (or at least "Manage orders and subscriptions"). Details: [`CREDENTIALS.md`](CREDENTIALS.md) Track 2 |
 
 ## `gcp-youtube`
 

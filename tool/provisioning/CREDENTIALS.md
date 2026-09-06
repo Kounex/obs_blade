@@ -53,20 +53,21 @@ Covers: the subscription group "Pro", `pro_yearly` / `pro_monthly`,
 Covers: Play subscription `pro` (base plans `pro-yearly` / `pro-monthly`)
 and one-time product `pro_lifetime`.
 
-1. Play Console → **Setup → API access**.
-2. If no Google Cloud project is linked yet, link/create one there
-   (this is separate from the YouTube GCP project — linking the same one
-   is fine too).
-3. Under **Service accounts**, follow "Learn how to create service
-   accounts" → it jumps you to the GCP console:
+1. In the **GCP console**, pick or create a project (this is separate
+   from the YouTube GCP project — reusing one is fine too) and enable
+   the **Google Play Developer API** for it:
+   <https://console.developers.google.com/apis/api/androidpublisher.googleapis.com>
+2. GCP → **IAM & Admin → Service Accounts**:
    - Create service account, name e.g. `play-provisioning`. No GCP roles
      needed (Play authorizes it, not GCP IAM).
    - Open the service account → **Keys → Add key → Create new key →
      JSON**. The JSON downloads.
-4. **Back in Play Console** (this step is what actually grants power):
-   API access → the new service account appears → **Grant access** →
-   scope it to the OBS Blade app with **Admin** (or minimal: "Manage
-   orders and subscriptions"). Save.
+3. **Play Console → Users and permissions** (top-level left sidebar;
+   the old "Setup → API access" page no longer exists) → **Invite new
+   users** → paste the service account's `client_email` from the JSON →
+   under **App permissions** add the OBS Blade app with **Admin** (or
+   minimal: "Manage orders and subscriptions"). Send the invite — the
+   service account activates itself on first API use.
 5. Lock down the file:
 
    ```bash
