@@ -109,6 +109,35 @@ Map<String, Object?> inAppPurchaseLocalizationCreate({
       }
     };
 
+/// POST /v1/subscriptionAvailabilities — SubscriptionAvailabilityCreateRequest
+/// ("Modify the Territory Availability of a Subscription", API 3.0+). New
+/// subscriptions are made available in every current and future territory —
+/// the App Store Connect web default — which is also a hard prerequisite for
+/// setting the starting price via POST /v1/subscriptionPrices (without it,
+/// Apple rejects the price point relationship with a generic 409).
+Map<String, Object?> subscriptionAvailabilityCreate({
+  required String subscriptionId,
+  required List<String> territoryIds,
+  bool availableInNewTerritories = true,
+}) =>
+    {
+      'data': {
+        'type': 'subscriptionAvailabilities',
+        'attributes': {
+          'availableInNewTerritories': availableInNewTerritories
+        },
+        'relationships': {
+          'subscription': rel('subscriptions', subscriptionId),
+          'availableTerritories': {
+            'data': [
+              for (final id in territoryIds)
+                {'type': 'territories', 'id': id}
+            ]
+          },
+        },
+      }
+    };
+
 /// POST /v1/subscriptionPrices — SubscriptionPriceCreateRequest ("Create a
 /// Subscription Price Change"). Omitting startDate applies the price
 /// immediately.

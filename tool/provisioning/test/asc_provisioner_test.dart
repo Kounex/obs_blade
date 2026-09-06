@@ -34,6 +34,18 @@ void main() {
           ApiResponse(201, {'data': _resource('subscriptions', 's1')}));
       client.on('POST', 'v1/subscriptions',
           ApiResponse(201, {'data': _resource('subscriptions', 's2')}));
+      // Territories list is fetched once per subscription (availability).
+      for (var i = 0; i < 2; i++) {
+        client.on(
+            'GET',
+            'v1/territories',
+            ApiResponse(200, {
+              'data': [
+                _resource('territories', 'USA'),
+                _resource('territories', 'DEU'),
+              ]
+            }));
+      }
       client.on(
           'GET',
           'v1/subscriptions/s1/pricePoints',
@@ -79,9 +91,23 @@ void main() {
       expect(client.count('POST', 'v1/subscriptions'), 2);
       expect(client.count('POST', 'v1/subscriptionLocalizations'), 2);
       expect(client.count('POST', 'v1/subscriptionPrices'), 2);
+      expect(client.count('POST', 'v1/subscriptionAvailabilities'), 2);
       expect(client.count('POST', 'v2/inAppPurchases'), 1);
       expect(client.count('POST', 'v1/inAppPurchaseLocalizations'), 1);
       expect(client.count('POST', 'v1/inAppPurchasePriceSchedules'), 1);
+
+      // Availability covers all listed territories plus future ones.
+      final availabilityBodies =
+          client.bodiesFor('POST', 'v1/subscriptionAvailabilities');
+      final availabilityData =
+          (availabilityBodies.first['data'] as Map)['relationships'] as Map;
+      final territoryData = (availabilityData['availableTerritories']
+          as Map)['data'] as List;
+      expect(territoryData.map((t) => (t as Map)['id']), ['USA', 'DEU']);
+      expect(
+          ((availabilityBodies.first['data'] as Map)['attributes']
+              as Map)['availableInNewTerritories'],
+          isTrue);
 
       // Prices were attached to the right price points — yearly first,
       // then monthly (subscription spec order).
@@ -144,6 +170,12 @@ void main() {
             'v1/subscriptions/$s/prices',
             ApiResponse(200, {
               'data': [_resource('subscriptionPrices', 'p-$s')]
+            }));
+        client.on(
+            'GET',
+            'v1/subscriptions/$s/availability',
+            ApiResponse(200, {
+              'data': _resource('subscriptionAvailabilities', 'a-$s')
             }));
       }
       client.on(

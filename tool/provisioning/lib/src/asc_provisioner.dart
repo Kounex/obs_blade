@@ -60,6 +60,7 @@ class AscProvisioner {
     for (final spec in subscriptions) {
       final subId = await _ensureSubscription(groupId, spec);
       await _ensureSubscriptionLocalization(subId, spec.name);
+      await _ensureSubscriptionAvailability(subId);
       if (spec.priceUsd != null) {
         ok = await _ensureSubscriptionPrice(subId, spec) && ok;
       }
@@ -156,6 +157,27 @@ class AscProvisioner {
         subscriptionLocalizationCreate(
             subscriptionId: subscriptionId, name: name, locale: locale));
     _log('  created localization $locale ("$name")');
+  }
+
+  /// Territory availability must exist before the starting price can be
+  /// set — Apple answers a generic 409 on the price POST otherwise.
+  /// Defaults to all current territories plus future ones.
+  Future<void> _ensureSubscriptionAvailability(String subscriptionId) async {
+    final existing = await client.getOrNull(
+        'v1/subscriptions/$subscriptionId/availability');
+    if (existing?.dataObject != null) {
+      _log('  territory availability already set — skipping');
+      return;
+    }
+    final territories = await client.get('v1/territories', {'limit': '200'});
+    final ids =
+        territories.dataList.map((t) => t['id'] as String).toList();
+    await client.post(
+        'v1/subscriptionAvailabilities',
+        subscriptionAvailabilityCreate(
+            subscriptionId: subscriptionId, territoryIds: ids));
+    _log('  made available in ${ids.isEmpty ? 'all' : '${ids.length}'} '
+        'territories (+ future territories)');
   }
 
   Future<bool> _ensureSubscriptionPrice(
