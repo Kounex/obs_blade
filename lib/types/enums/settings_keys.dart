@@ -298,8 +298,9 @@ enum SettingsKeys {
   /// to see this warning again
   DontShowRecordStopMessage,
 
-  /// [bool]: If the user attempts to leave a tip without having purchased Blacksmith
-  /// and doesn't want to see this warning again
+  /// [bool]: Dead — belonged to the removed "consider Blacksmith before
+  /// tipping" nudge (Blacksmith is no longer sold). Key kept so existing
+  /// settings boxes keep decoding.
   DontShowConsiderBlacksmithBeforeTip,
 
   /// [bool]: If the user saw the message regarding the technical preview state of
