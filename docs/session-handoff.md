@@ -2,8 +2,9 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-04** (NAS wrap-up;
-Pro subscription gate wave shipped, pending store products + dogfood).
+Read this first after `AGENTS.md`. Last reset: **2026-09-07** (store
+products provisioned + priced, Android toolchain migrated, Google package
+verification in review; RevenueCat dashboard wiring in progress).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -54,43 +55,68 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Pro subscription gate wave shipped on `master`** (2026-09-04): native
-chat engines (Twitch + YouTube) are entitlement-gated — chat-bar engine
-switch lock badge + intercept, native-pane upsell, username-bar cluster
-hidden, settings "OBS Blade Pro" row. Full-screen paywall at route `Pro`
-(both tab navigators): benefits browser, yearly/monthly/lifetime pricing
-from live `ProductDetails` with a deliberate placeholder state (the state
-every user sees until products exist), explicit + guarded cold-start
-restore, debug entitlement override (long-press hero, kDebugMode).
-Entitlement = `ProStore.isPro` (`BoughtPro` box flag + debug override).
-Details: plan `superpowers/specs/2026-09-04-pro-subscription-gate-plan.md`
-+ [`changelog-agent.md`](changelog-agent.md) (2026-09-04 entry).
-**Store products don't exist yet** — everything degrades gracefully;
-nothing user-facing charges.
+**Store products are live (2026-09-07)** — provisioned via
+`tool/provisioning/` on both stores with locked pricing **$4.99/mo,
+$49.99/yr, $99.99 lifetime**: ASC group "Pro" + `pro_yearly` /
+`pro_monthly` / `pro_lifetime` (localized, available in all territories,
+prices set); Play subscription `pro` (base plans `pro-yearly` /
+`pro-monthly` ACTIVE) + one-time `pro_lifetime` ACTIVE. Console-only
+remainder: **product review submission** on both stores (they're not
+submitted for review yet — required before they can sell).
 
-Native YouTube chat wave shipped 2026-09-03 (see changelog); **not yet
-run against a live chat** — no GCP key exists. Twitch wave 3 dogfood also
-still open since 2026-08-13.
+**RevenueCat dashboard wiring in progress** — app code is done; follow
+[`revenuecat-setup.md`](revenuecat-setup.md) §1–4 (project, store
+connections, entitlement `pro` + offering, paste the two public SDK keys
+into `lib/utils/revenuecat_config.dart`), then §5 verification
+(`test/pro/` + sandbox dogfood). **Attach `pro_lifetime` to the `pro`
+entitlement before flipping** or pre-RC lifetime buyers strand.
+
+**Android toolchain migrated to Flutter 3.47 minimums** (2026-09-07):
+Gradle 8.14 / AGP 8.11.1 / KGP 2.2.20, `namespace` replaces manifest
+`package=`, compile/target SDK follow `flutter.*`. `build appbundle
+--release` + `build apk --release` verified on the workstation — the
+upgrade-plan "Android not yet built" deferral is cleared *build-wise*;
+runtime/device testing is still open. Non-blocking warnings: KGP 2.3.20
+recommended; NDK bump to 28.2.13676358 suggested (integration_test).
+JDK 17 installed via brew (`openjdk@17`) + `flutter config --jdk-dir` —
+machine note added to `private/maintainer-workflow.md`.
+
+**Google developer verification — package registration
+`com.kounex.obsBlade` IN REVIEW** (2026-09-07): justification route with
+the registered upload key (`A6:24:…`, local `android-release.jks`); the
+eligible legacy app-signing key `25:F7:…` is Google-managed and a
+Play-signed universal APK failed verification because the signing key was
+**upgraded** — SDK 33+ installs are signed by `82:04:…` instead. **After
+the review resolves (either way):** delete
+`android/app/src/main/assets/adi-registration.properties` (untracked,
+holds the one-time registration token) and discard the Play
+internal-track draft release `3.3.0 (2026090701)`. Pubspec build number
+stays bumped to `2026090701` to avoid versionCode collisions.
+
+**Creds consolidated (2026-09-07):** `~/.config/obs-blade` is now a
+symlink → `~/NASync/obs-blade` (Syncthing-backed) holding `asc-key.p8`,
+`SubscriptionKey_QJ5A6U8X72.p8`, `play-svc.json`, `youtube-api-key.txt`,
+`android-release.jks`/`.pem`; env vars in `~/.localrc`. Provisioning tool
+bugs fixed (pagination, ASC subscription availability, price updates) —
+suite at 34 tests.
 
 **Immediate next threads:**
 
-1. **Take Pro live** (maintainer): store products are scripted — run
-   `tool/provisioning/` `asc-products` + `play-products` (creds: ASC `.p8`
-   API key, Play service-account JSON; see its README), then the
-   RevenueCat dashboard part of [`revenuecat-setup.md`](revenuecat-setup.md)
-   (entitlement `pro`, offering, two public SDK keys into
-   `lib/utils/revenuecat_config.dart`). **Attach `pro_lifetime` to the
-   `pro` entitlement before flipping** or pre-RC lifetime buyers strand.
-   Then sandbox-test purchase/restore/expiry-revocation.
+1. **Finish RevenueCat** (maintainer, browser): `revenuecat-setup.md`
+   §1–4, then hand the public keys to the agent → §5 verify. Also:
+   **Apple Small Business Program enrollment** (developer site, cuts
+   commission to 15%) was explained; Play's 15%/10% tiers are automatic.
+   Then submit ASC + Play products for review.
 2. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.
-3. YouTube: GCP key is scripted too — `gcloud auth login` once on the
-   NAS, then `tool/provisioning` `gcp-youtube`, then run the spike
-   (`tool/youtube_spike/`, ≥30 min busy chat, record units into
-   `youtube-native-chat-audit.md`). OAuth consent screen + TV client stay
-   console-only. The `private/backend-architecture.md` OAuth note is
-   **still deferred — macbook unreachable; sync private docs first**.
+3. **Android runtime smoke** (emulator/device) now that the toolchain
+   builds — dashboard + chat basics.
+4. YouTube: GCP key exists (`~/.config/obs-blade/youtube-api-key.txt`);
+   run the spike (`tool/youtube_spike/`, ≥30 min busy chat, record units
+   into `youtube-native-chat-audit.md`). OAuth consent screen + TV client
+   stay console-only. The `private/backend-architecture.md` OAuth note is
+   **still deferred — sync private docs first**.
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in
