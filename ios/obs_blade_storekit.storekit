@@ -63,13 +63,81 @@
       "productID" : "tip_3",
       "referenceName" : "Tip 3",
       "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "99.99",
+      "familyShareable" : false,
+      "internalID" : "A1B2C303",
+      "localizations" : [
+        {
+          "description" : "OBS Blade Pro — lifetime unlock",
+          "displayName" : "Pro — Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "pro_lifetime",
+      "referenceName" : "Pro — Lifetime",
+      "type" : "NonConsumable"
     }
   ],
   "settings" : {
     "_askToBuyEnabled" : false
   },
   "subscriptionGroups" : [
+    {
+      "id" : "A1B2C300",
+      "localizations" : [
+        {
+          "displayName" : "Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
 
+          ],
+          "code" : "",
+          "displayPrice" : "49.99",
+          "familyShareable" : false,
+          "groupID" : "A1B2C300",
+          "internalID" : "A1B2C301",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "OBS Blade Pro — yearly",
+              "displayName" : "Pro — Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro — Yearly"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "code" : "",
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupID" : "A1B2C300",
+          "internalID" : "A1B2C302",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "OBS Blade Pro — monthly",
+              "displayName" : "Pro — Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro — Monthly"
+        }
+      ]
+    }
   ],
   "version" : {
     "major" : 2,
