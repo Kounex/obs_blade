@@ -133,7 +133,17 @@ class AscProvisioner {
           spec.productId) {
         _log('subscription ${spec.productId} already exists '
             '(id ${sub['id']}) — skipping');
-        return sub['id'] as String;
+        final id = sub['id'] as String;
+        final referenceName =
+            (sub['attributes'] as Map<String, Object?>?)?['name'];
+        if (referenceName != spec.name) {
+          await client.patch(
+              'v1/subscriptions/$id',
+              subscriptionUpdate(id: id, name: spec.name));
+          _log('  reference name drifted ("$referenceName") — patched to '
+              '"${spec.name}"');
+        }
+        return id;
       }
     }
     final created = await client.post(
@@ -429,7 +439,16 @@ class AscProvisioner {
           lifetimeProductId) {
         _log('in-app purchase $lifetimeProductId already exists '
             '(id ${iap['id']}) — skipping');
-        return iap['id'] as String;
+        final id = iap['id'] as String;
+        final referenceName =
+            (iap['attributes'] as Map<String, Object?>?)?['name'];
+        if (referenceName != lifetimeName) {
+          await client.patch('v2/inAppPurchases/$id',
+              inAppPurchaseUpdate(id: id, name: lifetimeName));
+          _log('  reference name drifted ("$referenceName") — patched to '
+              '"$lifetimeName"');
+        }
+        return id;
       }
     }
     final created = await client.post(

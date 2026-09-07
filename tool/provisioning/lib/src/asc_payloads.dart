@@ -93,6 +93,21 @@ Map<String, Object?> subscriptionLocalizationUpdate({
       }
     };
 
+/// PATCH /v1/subscriptions/{id} — reconciles the internal reference name
+/// (the localization PATCH above only covers the customer-facing display
+/// name; the reference name is what the ASC lists show).
+Map<String, Object?> subscriptionUpdate({
+  required String id,
+  required String name,
+}) =>
+    {
+      'data': {
+        'type': 'subscriptions',
+        'id': id,
+        'attributes': {'name': name},
+      }
+    };
+
 /// POST /v2/inAppPurchases — InAppPurchaseV2CreateRequest.
 Map<String, Object?> inAppPurchaseCreate({
   required String appId,
@@ -147,6 +162,20 @@ Map<String, Object?> inAppPurchaseLocalizationUpdate({
         'type': 'inAppPurchaseLocalizations',
         'id': id,
         'attributes': {'name': name, 'description': description},
+      }
+    };
+
+/// PATCH /v2/inAppPurchases/{id} — reconciles the internal reference name,
+/// same rationale as [subscriptionUpdate].
+Map<String, Object?> inAppPurchaseUpdate({
+  required String id,
+  required String name,
+}) =>
+    {
+      'data': {
+        'type': 'inAppPurchases',
+        'id': id,
+        'attributes': {'name': name},
       }
     };
 

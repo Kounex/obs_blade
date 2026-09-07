@@ -75,7 +75,9 @@ ApiResponse currentPrice(String subId, String pointId, String customerPrice) =>
 /// pass [s1LocAttributes] / [s2LocAttributes] to script drift.
 void scriptExistingSubs(FakeApiClient client,
     {Map<String, Object?>? s1LocAttributes,
-    Map<String, Object?>? s2LocAttributes}) {
+    Map<String, Object?>? s2LocAttributes,
+    String? s1ReferenceName,
+    String? s2ReferenceName}) {
   client.on(
       'GET',
       'v1/apps/1234/subscriptionGroups',
@@ -99,8 +101,14 @@ void scriptExistingSubs(FakeApiClient client,
         'v1/subscriptionGroups/g1/subscriptions',
         ApiResponse(200, {
           'data': [
-            _resource('subscriptions', 's1', {'productId': 'pro_yearly'}),
-            _resource('subscriptions', 's2', {'productId': 'pro_monthly'}),
+            _resource('subscriptions', 's1', {
+              'productId': 'pro_yearly',
+              'name': s1ReferenceName ?? subs[0].name,
+            }),
+            _resource('subscriptions', 's2', {
+              'productId': 'pro_monthly',
+              'name': s2ReferenceName ?? subs[1].name,
+            }),
           ]
         }));
   }
@@ -129,13 +137,18 @@ void scriptExistingSubs(FakeApiClient client,
 /// the matching point available. [iapLocAttributes] overrides the
 /// (default: matching) localization attributes.
 void scriptExistingIap(FakeApiClient client, String tier, String price,
-    {Map<String, Object?>? iapLocAttributes, bool scriptPricePoints = true}) {
+    {Map<String, Object?>? iapLocAttributes,
+    bool scriptPricePoints = true,
+    String? iapReferenceName}) {
   client.on(
       'GET',
       'v1/apps/1234/inAppPurchasesV2',
       ApiResponse(200, {
         'data': [
-          _resource('inAppPurchases', 'i1', {'productId': 'pro_lifetime'})
+          _resource('inAppPurchases', 'i1', {
+            'productId': 'pro_lifetime',
+            'name': iapReferenceName ?? AscProvisioner.lifetimeName,
+          })
         ]
       }));
   client.on(
@@ -374,6 +387,47 @@ void main() {
       expect(iapAttrs['name'], 'Pro - Lifetime');
       expect(iapAttrs['description'], 'Lifetime Pro Access');
       expect(logs.where((l) => l.contains('drifted')).length, 2);
+    });
+
+    test('PATCHes drifted reference names (subscriptions + IAP)', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      scriptExistingSubs(client,
+          s1ReferenceName: 'Pro — Yearly', s2ReferenceName: 'Pro — Monthly');
+      scriptAvailability(client, 's1', ['USA']);
+      scriptAvailability(client, 's2', ['USA']);
+      client.on('GET', 'v1/subscriptions/s1/prices',
+          currentPrice('s1', 'pp-s1', '24.99'));
+      client.on('GET', 'v1/subscriptions/s2/prices',
+          currentPrice('s2', 'pp-s2', '4.99'));
+      scriptExistingIap(client, '10417', '79.99',
+          iapReferenceName: 'Pro — Lifetime');
+
+      final provisioner =
+          AscProvisioner(client: client, appId: '1234', log: logs.add);
+      final ok = await provisioner.run(
+          subscriptions: subs, lifetimePriceUsd: '79.99');
+
+      expect(ok, isTrue);
+      final s1Patch = client.bodiesFor('PATCH', 'v1/subscriptions/s1');
+      expect(s1Patch, hasLength(1));
+      expect(((s1Patch.single['data'] as Map)['attributes'] as Map)['name'],
+          'Pro - Yearly');
+      expect((s1Patch.single['data'] as Map)['type'], 'subscriptions');
+      expect(
+          client.bodiesFor('PATCH', 'v1/subscriptions/s2'), hasLength(1));
+      final iapPatch = client.bodiesFor('PATCH', 'v2/inAppPurchases/i1');
+      expect(iapPatch, hasLength(1));
+      expect(((iapPatch.single['data'] as Map)['attributes'] as Map)['name'],
+          'Pro - Lifetime');
+      expect((iapPatch.single['data'] as Map)['type'], 'inAppPurchases');
+      // Localizations match (fixtures default to spec values) — no
+      // localization PATCHes.
+      expect(
+          client.requests.where((r) => r.contains('Localizations') &&
+              r.startsWith('PATCH')),
+          isEmpty);
     });
 
     test('prices every territory with nominal parity, skips matching ones',
