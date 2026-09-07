@@ -4,7 +4,7 @@ import '../../../../shared/design/design.dart';
 
 /// Placeholder bars shown while the store answers the ProductDetails
 /// request. Gently breathes until the priced content replaces it via an
-/// AnimatedSwitcher (see tips_content.dart / blacksmith_content.dart).
+/// AnimatedSwitcher (see tips_content.dart).
 class SupportSkeleton extends StatefulWidget {
   final int rows;
 

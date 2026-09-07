@@ -116,10 +116,19 @@ class InAppPurchaseProBackend implements ProPurchaseBackend {
 class ProPurchaseService {
   final ProPurchaseBackend _backend;
 
+  /// Direct-IAP gateway kept alongside a RevenueCat backend: blacksmith
+  /// (no longer sold, restore-only for legacy buyers) restores arrive on
+  /// the plugin's purchase stream, not in RC's CustomerInfo, so the
+  /// paywall's explicit restore also fires [restoreLegacyPurchases].
+  final ProPurchaseGateway _legacyGateway;
+
   ProPurchaseService({
     ProPurchaseGateway? gateway,
     ProPurchaseBackend? backend,
-  }) : this._backend = backend ??
+    ProPurchaseGateway? legacyGateway,
+  })  : this._legacyGateway =
+            legacyGateway ?? gateway ?? InAppPurchaseGateway(),
+        this._backend = backend ??
             (gateway != null
                 ? InAppPurchaseProBackend(gateway: gateway)
                 : revenueCatConfigured
@@ -161,4 +170,12 @@ class ProPurchaseService {
   /// True when the restore surfaced an active entitlement (RevenueCat
   /// only — the legacy path reports via the purchase stream).
   Future<bool> restore() => this._backend.restore();
+
+  /// Restore on the direct IAP plugin stream — blacksmith (restore-only
+  /// legacy product) restores arrive there for [PurchaseBase] to pick up,
+  /// independent of which backend handles the pro entitlement. Fired
+  /// alongside the RevenueCat restore from the paywall so legacy
+  /// blacksmith buyers can still recover their themes on a new device.
+  Future<void> restoreLegacyPurchases() =>
+      this._legacyGateway.restorePurchases();
 }

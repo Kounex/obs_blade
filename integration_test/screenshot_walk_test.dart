@@ -39,12 +39,12 @@ import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_previe
 import 'package:obs_blade/views/home/home.dart';
 import 'package:obs_blade/views/home/widgets/connect_box/connect_form/connect_form.dart';
 import 'package:obs_blade/views/intro/intro.dart';
+import 'package:obs_blade/views/pro/pro_paywall.dart';
 import 'package:obs_blade/views/settings/about/about.dart';
 import 'package:obs_blade/views/settings/custom_theme/custom_theme.dart';
 import 'package:obs_blade/views/settings/custom_theme/widgets/add_edit_theme/add_edit_theme.dart';
 import 'package:obs_blade/views/settings/logs/widgets/log_grid/log_tile.dart';
 import 'package:obs_blade/views/settings/settings.dart';
-import 'package:obs_blade/views/settings/widgets/support_dialog/support_dialog.dart';
 import 'package:obs_blade/views/statistics/statistics.dart';
 
 const String kObsWsPassword = String.fromEnvironment('OBS_WS_PASSWORD');
@@ -391,8 +391,8 @@ void main() {
       _pushInTab(Tabs.Settings, SettingsTabRoutingKeys.CustomTheme.route);
       await _shot(tester, '24_settings_custom_theme', settleMs: 2200);
 
-      // Add/Edit theme editor. Without the Blacksmith purchase this shows the
-      // support dialog instead - captured and dismissed without buying.
+      // Add/Edit theme editor. Without the unlock (legacy blacksmith or Pro)
+      // tapping it pushes the Pro paywall instead - captured and popped.
       final bool addThemeTapped = await _scrollUntilHittable(
             tester,
             find.text('Add Theme'),
@@ -432,16 +432,16 @@ void main() {
             warnOnMissing: 'theme editor close button',
           );
           await _pump(tester, 800);
-        } else if (find.byType(SupportDialog).evaluate().isNotEmpty) {
-          await _shot(tester, '25_theme_editor_locked_by_blacksmith',
-              settleMs: 900);
-          await _dismissBarrierDialog(tester);
+        } else if (find.byType(ProPaywallView).evaluate().isNotEmpty) {
+          await _shot(tester, '25_theme_editor_locked_by_pro', settleMs: 900);
+          _popInTab(Tabs.Settings);
+          await _pump(tester, 1000);
           // ignore: avoid_print
           print(
-              'INFO: theme editor requires the Blacksmith purchase - editor shots skipped');
+              'INFO: theme editor requires Pro (or legacy blacksmith) - editor shots skipped');
         } else {
           // ignore: avoid_print
-          print('WARN: neither theme editor nor support dialog appeared');
+          print('WARN: neither theme editor nor Pro paywall appeared');
         }
       }
       _popInTab(Tabs.Settings);

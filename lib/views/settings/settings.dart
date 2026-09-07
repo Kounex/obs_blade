@@ -341,6 +341,12 @@ class SettingsView extends StatelessWidget {
                       BlockEntry(
                         leading: CupertinoIcons.hammer_fill,
                         title: 'Blacksmith',
+
+                        /// No longer sold (restore-only for legacy buyers) —
+                        /// the row shows the legacy ownership state and
+                        /// leads to the Pro paywall, which also restores
+                        /// blacksmith via the direct-IAP plugin stream.
+                        navigateTo: SettingsTabRoutingKeys.Pro,
                         navigateToResult: Text(
                           (settingsBox.get(
                                     SettingsKeys.BoughtBlacksmith.name,
@@ -349,15 +355,6 @@ class SettingsView extends StatelessWidget {
                                   as bool)
                               ? 'Active'
                               : 'Inactive',
-                        ),
-                        onTap: () => ModalHandler.showBaseDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          dialogWidget: const SupportDialog(
-                            title: 'Blacksmith',
-                            icon: CupertinoIcons.hammer_fill,
-                            type: SupportType.Blacksmith,
-                          ),
                         ),
                       ),
                       BlockEntry(
@@ -369,7 +366,6 @@ class SettingsView extends StatelessWidget {
                           dialogWidget: const SupportDialog(
                             title: 'Tips',
                             icon: CupertinoIcons.gift_fill,
-                            type: SupportType.Tips,
                           ),
                         ),
                       ),

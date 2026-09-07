@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
 import '../../../shared/design/design.dart';
@@ -10,13 +10,25 @@ import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/themed/cupertino_button.dart';
 import '../../../shared/general/themed/cupertino_scaffold.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../stores/pro_store.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
 import '../../../utils/built_in_themes.dart';
 import '../../../utils/modal_handler.dart';
-import '../widgets/support_dialog/support_dialog.dart';
+import '../../../utils/routing_helper.dart';
 import 'widgets/add_edit_theme/add_edit_theme.dart';
 import 'widgets/custom_theme_list/custom_theme_list.dart';
+
+/// Custom themes are unlocked for legacy blacksmith owners (offline-
+/// friendly Hive flag — blacksmith is no longer sold but its restore path
+/// is kept) and for Pro ([ProStore.isPro], live mid-session). Blacksmith
+/// is intentionally NOT folded into the Pro entitlement — the two unlocks
+/// stand alone.
+@visibleForTesting
+bool customThemesUnlocked(Box<dynamic> settingsBox, {ProStore? proStore}) =>
+    (settingsBox.get(SettingsKeys.BoughtBlacksmith.name, defaultValue: false)
+        as bool) ||
+    (proStore ?? GetIt.instance<ProStore>()).isPro;
 
 class CustomThemeView extends StatefulWidget {
   const CustomThemeView({
@@ -28,34 +40,18 @@ class CustomThemeView extends StatefulWidget {
 }
 
 class _CustomThemeViewState extends State<CustomThemeView> {
-  bool _fromBlacksmithDialog = false;
-
-  void _openAddTheme(BuildContext context) {
-    Hive.box(HiveKeys.Settings.name).get(
-      SettingsKeys.BoughtBlacksmith.name,
-      defaultValue: false,
-    )
-        ? ModalHandler.showBaseCupertinoBottomSheet(
-            context: context,
-            modalWidgetBuilder: (context, scrollController) => AddEditTheme(
-              scrollController: scrollController,
-            ),
-          )
-        : ModalHandler.showBaseDialog<bool?>(
-            context: context,
-            barrierDismissible: true,
-            dialogWidget: const SupportDialog(
-              title: 'Blacksmith',
-              icon: CupertinoIcons.hammer_fill,
-              type: SupportType.Blacksmith,
-            ),
-          ).then(
-            (clickedOnForgeTheme) {
-              if (clickedOnForgeTheme != null && clickedOnForgeTheme) {
-                _openAddTheme(context);
-              }
-            },
-          );
+  void _openAddTheme(BuildContext context, {required bool unlocked}) {
+    if (unlocked) {
+      ModalHandler.showBaseCupertinoBottomSheet(
+        context: context,
+        modalWidgetBuilder: (context, scrollController) => AddEditTheme(
+          scrollController: scrollController,
+        ),
+      );
+    } else {
+      /// Blacksmith is no longer sold — the upsell is the Pro paywall.
+      Navigator.of(context).pushNamed(SettingsTabRoutingKeys.Pro.route);
+    }
   }
 
   @override
@@ -73,19 +69,10 @@ class _CustomThemeViewState extends State<CustomThemeView> {
         hiveKey: HiveKeys.Settings,
         rebuildKeys: const [
           SettingsKeys.ActiveCustomThemeUUID,
-          SettingsKeys.CustomTheme
+          SettingsKeys.CustomTheme,
+          SettingsKeys.BoughtBlacksmith
         ],
         builder: (context, settingsBox, child) {
-          bool? openAddTheme = (ModalRoute.of(context)?.settings.arguments
-              as Map?)?['blacksmith'];
-          if (openAddTheme != null && openAddTheme && !_fromBlacksmithDialog) {
-            _fromBlacksmithDialog = true;
-            Future.delayed(
-              ModalHandler.transitionDelayDuration,
-              () => _openAddTheme(context),
-            );
-          }
-
           /// Explicit [AnimatedTheme] on the activation surface: the
           /// MaterialApp subtree is not keyed, so its implicit crossfade
           /// already plays app-wide - this re-wraps the editor itself so
@@ -148,7 +135,14 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                     trailingTitleWidget: ThemedCupertinoButton(
                       text: 'Add Theme',
                       padding: const EdgeInsets.all(0),
-                      onPressed: () => _openAddTheme(context),
+
+                      /// Evaluated at tap time (not at build), so the gate
+                      /// picks up a mid-session Pro purchase / blacksmith
+                      /// restore without a rebuild.
+                      onPressed: () => _openAddTheme(
+                        context,
+                        unlocked: customThemesUnlocked(settingsBox),
+                      ),
                     ),
                     bottomPadding: 12.0,
                     paddingChild: const EdgeInsets.all(0),

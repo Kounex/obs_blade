@@ -56,6 +56,12 @@ void main() {
     await until(() => gateway.restoreCalls == 2);
   });
 
+  test('restoreLegacyPurchases delegates to the legacy direct-IAP gateway',
+      () async {
+    await service.restoreLegacyPurchases();
+    expect(gateway.restoreCalls, 1);
+  });
+
   test('purchaseStream is exposed from the gateway', () async {
     final events = <List<PurchaseDetails>>[];
     final sub = service.purchaseStream!.listen(events.add);

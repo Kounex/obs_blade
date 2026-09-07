@@ -148,13 +148,17 @@ void main() {
     late Directory tempDir;
     late HiveTestHarness harness;
     late FakeProPurchaseBackend backend;
+    late FakeProPurchaseGateway legacyGateway;
     late List<ProStore> stores;
 
     Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
     ProStore newStore() {
       final store = ProStore(
-        service: ProPurchaseService(backend: backend),
+        service: ProPurchaseService(
+          backend: backend,
+          legacyGateway: legacyGateway,
+        ),
       );
       stores.add(store);
       return store;
@@ -167,6 +171,7 @@ void main() {
       await harness.init();
       await harness.openAllBoxes();
       backend = FakeProPurchaseBackend();
+      legacyGateway = FakeProPurchaseGateway();
       stores = [];
       PurchaseBase.restoreTriggeredExplicitly = false;
     });
@@ -176,6 +181,7 @@ void main() {
         store.dispose();
       }
       await backend.close();
+      await legacyGateway.close();
       await harness.close();
       if (tempDir.existsSync()) {
         tempDir.deleteSync(recursive: true);
@@ -268,6 +274,45 @@ void main() {
       expect(backend.restoreCalls, 1);
       expect(store.isPro, isTrue);
       expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
+    });
+
+    test('explicit restore also fires the legacy direct-IAP restore '
+        '(blacksmith is restore-only, not part of the RC entitlement)',
+        () async {
+      backend.entitlement = false;
+      final store = newStore()..init();
+      await until(() => backend.fetchEntitlementCalls > 0);
+
+      await store.restore(explicit: true);
+
+      expect(backend.restoreCalls, 1);
+      expect(legacyGateway.restoreCalls, 1);
+    });
+
+    test('silent restore does not fire the legacy direct-IAP restore',
+        () async {
+      backend.entitlement = false;
+      final store = newStore()..init();
+      await until(() => backend.fetchEntitlementCalls > 0);
+
+      await store.restore(explicit: false);
+
+      expect(backend.restoreCalls, 1);
+      expect(legacyGateway.restoreCalls, 0);
+    });
+
+    test('a failing legacy restore does not mask the pro restore result',
+        () async {
+      backend.entitlement = false;
+      final store = newStore()..init();
+      await until(() => backend.fetchEntitlementCalls > 0);
+
+      backend.restoreResult = true;
+      legacyGateway.restoreError = StateError('plugin restore failed');
+      await store.restore(explicit: true);
+
+      expect(store.isPro, isTrue);
+      expect(store.lastError, isNull);
     });
 
     test('restore error disarms the dialog flag and records lastError',

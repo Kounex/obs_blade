@@ -32,8 +32,10 @@ walkthrough below doubles as the verification checklist afterwards.
    (applicationId from `android/app/build.gradle`).
 3. Connect the stores:
    - **App Store:** App Store Connect API key (in-app purchase key) +
-     shared secret if prompted; enable App Store Server Notifications V2
-     with the RevenueCat URL so renewals/refunds reach RC.
+     App-Specific Shared Secret (optional but recommended — only needed to
+     read legacy receipts; there is nothing to migrate, see §3); enable
+     App Store Server Notifications V2 with the RevenueCat URL so
+     renewals/refunds reach RC.
    - **Google Play:** Play service-account JSON + Real-time developer
      notifications topic wired to RC.
 
@@ -57,11 +59,17 @@ rationale: `docs/private/monetization-strategy.md`.
 - Create the default **Offering** with three packages pointing at those
   products. The paywall matches packages by `storeProduct.identifier`
   against the three ids and renders yearly as the hero.
-- **Legacy-buyer migration (important):** anyone who bought
-  `pro_lifetime` via direct IAP before the RC flip is picked up ONLY if
-  `pro_lifetime` is attached to the `pro` entitlement — RC's
-  `restorePurchases` syncs the store receipt and grants it. Double-check
-  this linkage before shipping the keys, or those buyers strand.
+- **Legacy products (important):** the real legacy product is
+  **blacksmith** (one-time IAP, unlocked custom themes) — there are NO
+  pre-RC `pro_lifetime` buyers to migrate (the pro products were created
+  store-side on 2026-09-07 and the paywall never shipped with working
+  direct IAP). Blacksmith is intentionally NOT migrated into the `pro`
+  entitlement: it is no longer sold, and legacy buyers keep their themes
+  via the kept direct-IAP restore path (the paywall's Restore purchases
+  also fires `InAppPurchase.restorePurchases()` so blacksmith `restored`
+  events still reach `PurchaseBase`). Attaching `pro_lifetime` to the
+  `pro` entitlement is still required — for all FUTURE lifetime buyers.
+  Double-check this linkage before shipping the keys.
 
 ## 4. API keys → app
 
@@ -99,8 +107,10 @@ validated server-side). macOS uses the Apple key too.
 - **foss branch:** strip `purchases_flutter` alongside the existing IAP
   strip — all RC code is additive; with empty keys the app never touches
   the SDK.
-- Tips + Blacksmith stay on direct `in_app_purchase` (`PurchaseBase`) —
-  only the `pro_*` ids moved to RC.
+- Tips stay unchanged on direct `in_app_purchase` (`PurchaseBase`).
+  Blacksmith is no longer sold — restore-only legacy on the same direct
+  IAP stream (the paywall's Restore purchases fires the plugin restore
+  alongside RC's). Only the `pro_*` ids moved to RC.
 - If `Purchases.configure` fails at cold start (offline), it self-heals
   on next `init()`/launch; a CustomerInfo event between configure and
   listener attach is dropped (broadcast) — the initial fetch covers it.

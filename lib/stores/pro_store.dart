@@ -251,7 +251,10 @@ abstract class _ProStore with Store {
   ///
   /// RevenueCat path: no purchase-stream event exists, so an explicit
   /// restore that comes back with an active entitlement shows the same
-  /// dialog directly.
+  /// dialog directly. The explicit restore also fires a direct-IAP
+  /// plugin restore alongside — blacksmith (legacy, restore-only) is not
+  /// part of the RC entitlement and its restored events only surface on
+  /// the plugin stream handled by [PurchaseBase].
   @action
   Future<void> restore({required bool explicit}) async {
     this.pending = true;
@@ -261,12 +264,27 @@ abstract class _ProStore with Store {
     }
     try {
       final bool restoredActive = await this._service.restore();
-      if (explicit &&
-          restoredActive &&
-          this._service.handlesEntitlement) {
-        await Hive.box<dynamic>(HiveKeys.Settings.name)
-            .put(SettingsKeys.BoughtPro.name, true);
-        showProRestoredDialog();
+      if (explicit && this._service.handlesEntitlement) {
+        /// RC's restore syncs only the pro entitlement — blacksmith (no
+        /// longer sold, restore-only for legacy buyers) restores arrive
+        /// on the direct IAP stream, so fire the plugin restore
+        /// alongside. [PurchaseBase] picks the restored event up, sets
+        /// `BoughtBlacksmith` and shows its own restored dialog. A
+        /// failing plugin restore must not mask the pro restore result.
+        try {
+          await this._service.restoreLegacyPurchases();
+        } catch (e) {
+          GeneralHelper.advLog(
+            'Legacy IAP restore failed — $e',
+            includeInLogs: true,
+            level: LogLevel.Error,
+          );
+        }
+        if (restoredActive) {
+          await Hive.box<dynamic>(HiveKeys.Settings.name)
+              .put(SettingsKeys.BoughtPro.name, true);
+          showProRestoredDialog();
+        }
       }
     } catch (e) {
       GeneralHelper.advLog(
