@@ -45,8 +45,9 @@ walkthrough below doubles as the verification checklist afterwards.
 | `pro_monthly` | same subscription group | attach |
 | `pro_lifetime` | non-consumable (Play: one-time product) | attach |
 
-Pricing per `docs/private/monetization-strategy.md` (Pro tier:
-~$14.99–24.99/yr, lifetime ~$59.99–79.99; monthly at your discretion).
+Pricing is locked and already provisioned store-side (2026-09): **$4.99/mo,
+$49.99/yr, $99.99 lifetime** — the defaults in `tool/provisioning`. Strategy
+rationale: `docs/private/monetization-strategy.md`.
 
 ## 3. Entitlement + offering (dashboard)
 
