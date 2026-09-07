@@ -46,6 +46,10 @@ class AscProvisioner {
   final String territoryId;
   final void Function(String) _log;
 
+  /// Memoized Apple tiers of the reference (USA) price points, keyed by
+  /// `subscriptionId|price` — see [_referenceTier].
+  final _referenceTiers = <String, String?>{};
+
   static const groupReferenceName = 'Pro';
   static const lifetimeProductId = 'pro_lifetime';
   static const lifetimeName = 'Pro - Lifetime';
@@ -92,15 +96,17 @@ class AscProvisioner {
     for (final group in existing.dataList) {
       final attrs = group['attributes'] as Map<String, Object?>?;
       if (attrs?['referenceName'] == groupReferenceName) {
-        _log('subscription group "$groupReferenceName" already exists '
-            '(id ${group['id']}) — skipping');
+        _log(
+          'subscription group "$groupReferenceName" already exists '
+          '(id ${group['id']}) — skipping',
+        );
         return group['id'] as String;
       }
     }
     final created = await client.post(
-        'v1/subscriptionGroups',
-        subscriptionGroupCreate(
-            appId: appId, referenceName: groupReferenceName));
+      'v1/subscriptionGroups',
+      subscriptionGroupCreate(appId: appId, referenceName: groupReferenceName),
+    );
     final id = created.dataObject?['id'] as String?;
     _log('created subscription group "$groupReferenceName" (id $id)');
     return id!;
@@ -108,75 +114,98 @@ class AscProvisioner {
 
   Future<void> _ensureGroupLocalization(String groupId) async {
     final existing = await client.get(
-        'v1/subscriptionGroups/$groupId/subscriptionGroupLocalizations',
-        {'limit': '200'});
-    if (existing.dataList.any((l) =>
-        (l['attributes'] as Map<String, Object?>?)?['locale'] == locale)) {
+      'v1/subscriptionGroups/$groupId/subscriptionGroupLocalizations',
+      {'limit': '200'},
+    );
+    if (existing.dataList.any(
+      (l) => (l['attributes'] as Map<String, Object?>?)?['locale'] == locale,
+    )) {
       _log('group localization $locale already exists — skipping');
       return;
     }
     await client.post(
-        'v1/subscriptionGroupLocalizations',
-        subscriptionGroupLocalizationCreate(
-            groupId: groupId, name: groupReferenceName, locale: locale));
+      'v1/subscriptionGroupLocalizations',
+      subscriptionGroupLocalizationCreate(
+        groupId: groupId,
+        name: groupReferenceName,
+        locale: locale,
+      ),
+    );
     _log('created group localization $locale ("$groupReferenceName")');
   }
 
-  Future<String> _ensureSubscription(String groupId, SubscriptionSpec spec) async {
+  Future<String> _ensureSubscription(
+    String groupId,
+    SubscriptionSpec spec,
+  ) async {
     final existing = await client.get(
-        'v1/subscriptionGroups/$groupId/subscriptions', {
-      'filter[productId]': spec.productId,
-      'limit': '200',
-    });
+      'v1/subscriptionGroups/$groupId/subscriptions',
+      {'filter[productId]': spec.productId, 'limit': '200'},
+    );
     for (final sub in existing.dataList) {
       if ((sub['attributes'] as Map<String, Object?>?)?['productId'] ==
           spec.productId) {
-        _log('subscription ${spec.productId} already exists '
-            '(id ${sub['id']}) — skipping');
+        _log(
+          'subscription ${spec.productId} already exists '
+          '(id ${sub['id']}) — skipping',
+        );
         final id = sub['id'] as String;
         final referenceName =
             (sub['attributes'] as Map<String, Object?>?)?['name'];
         if (referenceName != spec.name) {
           await client.patch(
-              'v1/subscriptions/$id',
-              subscriptionUpdate(id: id, name: spec.name));
-          _log('  reference name drifted ("$referenceName") — patched to '
-              '"${spec.name}"');
+            'v1/subscriptions/$id',
+            subscriptionUpdate(id: id, name: spec.name),
+          );
+          _log(
+            '  reference name drifted ("$referenceName") — patched to '
+            '"${spec.name}"',
+          );
         }
         return id;
       }
     }
     final created = await client.post(
-        'v1/subscriptions',
-        subscriptionCreate(
-          groupId: groupId,
-          productId: spec.productId,
-          name: spec.name,
-          subscriptionPeriod: spec.subscriptionPeriod,
-        ));
+      'v1/subscriptions',
+      subscriptionCreate(
+        groupId: groupId,
+        productId: spec.productId,
+        name: spec.name,
+        subscriptionPeriod: spec.subscriptionPeriod,
+      ),
+    );
     final id = created.dataObject?['id'] as String?;
-    _log('created subscription ${spec.productId} '
-        '(${spec.subscriptionPeriod}, id $id)');
+    _log(
+      'created subscription ${spec.productId} '
+      '(${spec.subscriptionPeriod}, id $id)',
+    );
     return id!;
   }
 
   Future<void> _ensureSubscriptionLocalization(
-      String subscriptionId, SubscriptionSpec spec) async {
+    String subscriptionId,
+    SubscriptionSpec spec,
+  ) async {
     final existing = await client.get(
-        'v1/subscriptions/$subscriptionId/subscriptionLocalizations',
-        {'limit': '200'});
+      'v1/subscriptions/$subscriptionId/subscriptionLocalizations',
+      {'limit': '200'},
+    );
     final loc = existing.dataList
-        .where((l) =>
-            (l['attributes'] as Map<String, Object?>?)?['locale'] == locale)
+        .where(
+          (l) =>
+              (l['attributes'] as Map<String, Object?>?)?['locale'] == locale,
+        )
         .firstOrNull;
     if (loc == null) {
       await client.post(
-          'v1/subscriptionLocalizations',
-          subscriptionLocalizationCreate(
-              subscriptionId: subscriptionId,
-              name: spec.name,
-              description: spec.description,
-              locale: locale));
+        'v1/subscriptionLocalizations',
+        subscriptionLocalizationCreate(
+          subscriptionId: subscriptionId,
+          name: spec.name,
+          description: spec.description,
+          locale: locale,
+        ),
+      );
       _log('  created localization $locale ("${spec.name}")');
       return;
     }
@@ -187,13 +216,17 @@ class AscProvisioner {
       return;
     }
     await client.patch(
-        'v1/subscriptionLocalizations/${loc['id']}',
-        subscriptionLocalizationUpdate(
-            id: loc['id'] as String,
-            name: spec.name,
-            description: spec.description));
-    _log('  updated localization $locale → "${spec.name}" / '
-        '"${spec.description}" (drifted from spec)');
+      'v1/subscriptionLocalizations/${loc['id']}',
+      subscriptionLocalizationUpdate(
+        id: loc['id'] as String,
+        name: spec.name,
+        description: spec.description,
+      ),
+    );
+    _log(
+      '  updated localization $locale → "${spec.name}" / '
+      '"${spec.description}" (drifted from spec)',
+    );
   }
 
   /// Returns the territory ids the subscription is available in, creating the
@@ -208,18 +241,18 @@ class AscProvisioner {
   /// response only carries relationship links (verified live: 175
   /// territories, paged via the standard meta.paging.nextCursor).
   Future<List<String>> _subscriptionTerritoryIds(String subscriptionId) async {
-    final existing = await client
-        .getOrNull('v1/subscriptionAvailabilities/$subscriptionId');
+    final existing = await client.getOrNull(
+      'v1/subscriptionAvailabilities/$subscriptionId',
+    );
     if (existing?.dataObject != null) {
       final ids = <String>[];
       String? cursor;
       do {
         final page = await client.get(
-            'v1/subscriptionAvailabilities/$subscriptionId/'
-            'availableTerritories', {
-          'limit': '200',
-          if (cursor != null) 'cursor': cursor,
-        });
+          'v1/subscriptionAvailabilities/$subscriptionId/'
+          'availableTerritories',
+          {'limit': '200', if (cursor != null) 'cursor': cursor},
+        );
         ids.addAll(page.dataList.map((t) => t['id'] as String));
         final meta = page.json['meta'];
         final paging = meta is Map ? meta['paging'] : null;
@@ -231,11 +264,16 @@ class AscProvisioner {
     final territories = await client.get('v1/territories', {'limit': '200'});
     final ids = territories.dataList.map((t) => t['id'] as String).toList();
     await client.post(
-        'v1/subscriptionAvailabilities',
-        subscriptionAvailabilityCreate(
-            subscriptionId: subscriptionId, territoryIds: ids));
-    _log('  made available in ${ids.isEmpty ? 'all' : '${ids.length}'} '
-        'territories (+ future territories)');
+      'v1/subscriptionAvailabilities',
+      subscriptionAvailabilityCreate(
+        subscriptionId: subscriptionId,
+        territoryIds: ids,
+      ),
+    );
+    _log(
+      '  made available in ${ids.isEmpty ? 'all' : '${ids.length}'} '
+      'territories (+ future territories)',
+    );
     return ids;
   }
 
@@ -245,28 +283,43 @@ class AscProvisioner {
   /// auto-derived territory prices (unlike IAP price schedules), so each
   /// territory needs its own POST /v1/subscriptionPrices.
   ///
-  /// Idempotent: a territory whose current price (the record without a
-  /// startDate) already matches the nominal is skipped. Territories without
-  /// an exact nominal price point are collected, warned about and reported
-  /// in a summary — they don't fail the run.
-  Future<bool> _ensureTerritoryPrices(String subscriptionId,
-      SubscriptionSpec spec, List<String> territories) async {
+  /// Idempotent: a territory whose current price point is already the one
+  /// we'd pick is skipped. Territories without an exact nominal price point
+  /// (JPY, SEK, KRW, …) fall back to the point with the SAME Apple tier as
+  /// the USA point for the nominal price — tiers are Apple's global price
+  /// matrix, so the same tier is the equalized, locally conventional price
+  /// in every storefront ($4.99 → ¥660 / 64 kr / ₹210 / …, verified live).
+  /// Fallbacks are summarized at the end.
+  Future<bool> _ensureTerritoryPrices(
+    String subscriptionId,
+    SubscriptionSpec spec,
+    List<String> territories,
+  ) async {
     if (territories.isEmpty) {
       if (client.isDryRun) {
-        _log('  would set the nominal-parity price USD ${spec.priceUsd} in '
-            'every available territory — territories and price points are '
-            'not simulated in dry-run');
+        _log(
+          '  would set the nominal-parity price USD ${spec.priceUsd} in '
+          'every available territory — territories and price points are '
+          'not simulated in dry-run',
+        );
         return true;
       }
-      _log('  ERROR: no territories found for ${spec.productId} — cannot '
-          'set prices');
+      _log(
+        '  ERROR: no territories found for ${spec.productId} — cannot '
+        'set prices',
+      );
       return false;
     }
     final skipped = <String>[];
+    final fallbacks = <String, String>{};
     var ok = true;
     for (final territory in territories) {
-      final result =
-          await _ensureTerritoryPrice(subscriptionId, spec, territory);
+      final (:result, :fallbackPrice) = await _ensureTerritoryPrice(
+        subscriptionId,
+        spec,
+        territory,
+      );
+      if (fallbackPrice != null) fallbacks[territory] = fallbackPrice;
       switch (result) {
         case _TerritoryPriceResult.ok:
           break;
@@ -276,79 +329,163 @@ class AscProvisioner {
           ok = false;
       }
     }
+    if (fallbacks.isNotEmpty) {
+      _log(
+        '  ${spec.productId}: no ${normalizePrice(spec.priceUsd!)} point in '
+        '${fallbacks.length} territories — equalized tier price '
+        '(set or already current): '
+        '${fallbacks.entries.map((e) => '${e.key}→${e.value}').join(', ')}',
+      );
+    }
     if (skipped.isNotEmpty) {
-      _log('  WARNING: ${spec.productId}: no ${normalizePrice(spec.priceUsd!)} '
-          'price point in ${skipped.length} territories — skipped: '
-          '${skipped.join(', ')}');
+      _log(
+        '  WARNING: ${spec.productId}: no usable price point at all in '
+        '${skipped.length} territories — skipped: ${skipped.join(', ')}',
+      );
     }
     return ok;
   }
 
-  Future<_TerritoryPriceResult> _ensureTerritoryPrice(
-      String subscriptionId, SubscriptionSpec spec, String territory) {
-    return _retry429(() =>
-        _ensureTerritoryPriceOnce(subscriptionId, spec, territory));
+  Future<({_TerritoryPriceResult result, String? fallbackPrice})>
+  _ensureTerritoryPrice(
+    String subscriptionId,
+    SubscriptionSpec spec,
+    String territory,
+  ) {
+    return _retry429(
+      () => _ensureTerritoryPriceOnce(subscriptionId, spec, territory),
+    );
   }
 
-  Future<_TerritoryPriceResult> _ensureTerritoryPriceOnce(
-      String subscriptionId, SubscriptionSpec spec, String territory) async {
+  /// Sets the current price for one territory. Exact nominal point wins;
+  /// when none exists, falls back to the point with the same Apple tier as
+  /// the reference (USA) point for the nominal price — the equalized,
+  /// locally conventional price (see [_findSameTierPricePoint]).
+  /// Idempotent: skips when the current price point is already the one we'd
+  /// pick — for fallback territories that means comparing point ids, since
+  /// the nominal string never matches there. Returns the fallback price
+  /// string when the fallback was used (set or already current), so callers
+  /// can summarize it.
+  Future<({_TerritoryPriceResult result, String? fallbackPrice})>
+  _ensureTerritoryPriceOnce(
+    String subscriptionId,
+    SubscriptionSpec spec,
+    String territory,
+  ) async {
     final wanted = normalizePrice(spec.priceUsd!);
-    final existing =
-        await client.get('v1/subscriptions/$subscriptionId/prices', {
-      'filter[territory]': territory,
-      'limit': '50',
-      'include': 'subscriptionPricePoint',
-    });
+    String? currentPointId;
+    final existing = await client
+        .get('v1/subscriptions/$subscriptionId/prices', {
+          'filter[territory]': territory,
+          'limit': '50',
+          'include': 'subscriptionPricePoint',
+        });
     if (existing.dataList.isNotEmpty) {
       // The current price is the one without a startDate.
       final current = existing.dataList.firstWhere(
-          (p) =>
-              (p['attributes'] as Map<String, Object?>?)?['startDate'] == null,
-          orElse: () => existing.dataList.first);
-      final currentPointId = (((current['relationships']
-                  as Map<String, Object?>?)?['subscriptionPricePoint']
-              as Map<String, Object?>?)?['data'] as Map<String, Object?>?)?['id'];
+        (p) => (p['attributes'] as Map<String, Object?>?)?['startDate'] == null,
+        orElse: () => existing.dataList.first,
+      );
+      currentPointId =
+          (((current['relationships']
+                          as Map<String, Object?>?)?['subscriptionPricePoint']
+                      as Map<String, Object?>?)?['data']
+                  as Map<String, Object?>?)?['id']
+              as String?;
       final currentPrice = _includedPricePointPrice(existing, currentPointId);
       if (currentPrice == wanted) {
         _log('  $territory: price already $wanted — skipping');
-        return _TerritoryPriceResult.ok;
+        return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
       }
-      _log('  $territory: price differs (have $currentPrice, want $wanted) — '
-          'creating a price change');
+      _log(
+        '  $territory: price differs (have $currentPrice, want $wanted) — '
+        'creating a price change',
+      );
     }
+    final path = 'v1/subscriptions/$subscriptionId/pricePoints';
     final pointId = await _findPricePoint(
-        'v1/subscriptions/$subscriptionId/pricePoints', spec.priceUsd!,
-        territory: territory);
+      path,
+      spec.priceUsd!,
+      territory: territory,
+    );
     if (pointId == null) {
       if (client.isDryRun) {
-        _log('  $territory: would look up the $wanted price point and POST '
-            'it — price points are not simulated in dry-run');
-        return _TerritoryPriceResult.ok;
+        _log(
+          '  $territory: would look up the $wanted price point (or the '
+          'equalized-tier one) and POST it — price points are not '
+          'simulated in dry-run',
+        );
+        return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
       }
-      return _TerritoryPriceResult.noPricePoint;
+      final tier = await _referenceTier(subscriptionId, spec.priceUsd!);
+      final match = tier == null
+          ? null
+          : await _findSameTierPricePoint(path, tier, territory: territory);
+      if (match == null) {
+        return (
+          result: _TerritoryPriceResult.noPricePoint,
+          fallbackPrice: null,
+        );
+      }
+      if (currentPointId == match.id) {
+        _log(
+          '  $territory: no $wanted point — already at the equalized '
+          'tier price ${match.price} — skipping',
+        );
+        return (result: _TerritoryPriceResult.ok, fallbackPrice: match.price);
+      }
+      if (!await _postTerritoryPrice(subscriptionId, match.id, territory)) {
+        return (result: _TerritoryPriceResult.failed, fallbackPrice: null);
+      }
+      _log(
+        '  $territory: no $wanted point — set the equalized tier price '
+        '${match.price} (price point ${match.id})',
+      );
+      return (result: _TerritoryPriceResult.ok, fallbackPrice: match.price);
     }
+    if (currentPointId == pointId) {
+      _log('  $territory: price already $wanted — skipping');
+      return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
+    }
+    if (!await _postTerritoryPrice(subscriptionId, pointId, territory)) {
+      return (result: _TerritoryPriceResult.failed, fallbackPrice: null);
+    }
+    _log('  $territory: set price $wanted (price point $pointId)');
+    return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
+  }
+
+  /// POSTs the current-price record for one territory. Returns false (after
+  /// logging) on API errors instead of throwing so one bad territory
+  /// doesn't abort the run.
+  Future<bool> _postTerritoryPrice(
+    String subscriptionId,
+    String pointId,
+    String territory,
+  ) async {
     try {
       await client.post(
-          'v1/subscriptionPrices',
-          subscriptionPriceCreate(
-            subscriptionId: subscriptionId,
-            pricePointId: pointId,
-            territoryId: territory,
-          ));
+        'v1/subscriptionPrices',
+        subscriptionPriceCreate(
+          subscriptionId: subscriptionId,
+          pricePointId: pointId,
+          territoryId: territory,
+        ),
+      );
+      return true;
     } on ApiException catch (e) {
       // A 409 here with "error occurred while processing the pricing
       // information" on a subscription's FIRST price almost always means an
       // account-level block (Paid Apps agreement / tax / banking not
       // active) — the payload and price point are not the problem.
-      _log('  ERROR: setting the $territory price failed: $e\n'
-          '  If this is the subscription\'s first price, check App Store '
-          'Connect → Business → Agreements, Tax, and Banking — the Paid Apps '
-          'agreement (incl. bank account + tax forms) must be Active before '
-          'pricing works.');
-      return _TerritoryPriceResult.failed;
+      _log(
+        '  ERROR: setting the $territory price failed: $e\n'
+        '  If this is the subscription\'s first price, check App Store '
+        'Connect → Business → Agreements, Tax, and Banking — the Paid Apps '
+        'agreement (incl. bank account + tax forms) must be Active before '
+        'pricing works.',
+      );
+      return false;
     }
-    _log('  $territory: set price $wanted (price point $pointId)');
-    return _TerritoryPriceResult.ok;
   }
 
   /// Retries once after a short wait on HTTP 429 (ASC rate limit).
@@ -371,8 +508,8 @@ class AscProvisioner {
     if (included is! List) return null;
     for (final item in included.whereType<Map<String, Object?>>()) {
       if (item['id'] == pointId) {
-        return (item['attributes']
-            as Map<String, Object?>?)?['customerPrice'] as String?;
+        return (item['attributes'] as Map<String, Object?>?)?['customerPrice']
+            as String?;
       }
     }
     return null;
@@ -400,8 +537,11 @@ class AscProvisioner {
   ///
   /// Points come back sorted ascending by customerPrice (verified live), so
   /// the scan stops early once a point exceeds the target price.
-  Future<String?> _findPricePoint(String path, String priceUsd,
-      {String? territory}) async {
+  Future<String?> _findPricePoint(
+    String path,
+    String priceUsd, {
+    String? territory,
+  }) async {
     final wanted = normalizePrice(priceUsd);
     final target = double.parse(wanted);
     String? cursor;
@@ -429,6 +569,64 @@ class AscProvisioner {
     return null;
   }
 
+  /// Fallback for territories without a literal nominal price point (JPY,
+  /// SEK, KRW, … have no 4.99/49.99): the point with the SAME Apple tier as
+  /// [tier] (the tier of the reference — USA — point for the nominal
+  /// price). Tiers are Apple's global price matrix: the same tier maps to
+  /// the equalized, locally conventional price in every storefront
+  /// ($4.99 → ¥660 / 64 kr / ₹210 / …, verified live). Points come back
+  /// sorted ascending by customerPrice and tiers increase with price, so
+  /// the scan early-exits once a point's tier passes the target.
+  Future<({String id, String price})?> _findSameTierPricePoint(
+    String path,
+    String tier, {
+    String? territory,
+  }) async {
+    final targetTier = int.tryParse(tier);
+    String? cursor;
+    do {
+      final points = await client.get(path, {
+        'filter[territory]': territory ?? territoryId,
+        'limit': '200',
+        'include': 'territory',
+        if (cursor != null) 'cursor': cursor,
+      });
+      for (final point in points.dataList) {
+        final pointTier = _priceTierOf(point['id'] as String?);
+        if (pointTier == null) continue;
+        if (pointTier == tier) {
+          final raw =
+              (point['attributes'] as Map<String, Object?>?)?['customerPrice']
+                  as String?;
+          if (raw != null) return (id: point['id'] as String, price: raw);
+        }
+        final numeric = int.tryParse(pointTier);
+        if (targetTier != null && numeric != null && numeric > targetTier) {
+          return null; // tiers ascend with price — the tier can't come later
+        }
+      }
+      final meta = points.json['meta'];
+      final paging = meta is Map ? meta['paging'] : null;
+      cursor = paging is Map ? paging['nextCursor'] as String? : null;
+    } while (cursor != null);
+    return null;
+  }
+
+  /// The Apple tier of the reference (USA) price point for [priceUsd] —
+  /// cached per subscription, since every territory fallback needs it.
+  Future<String?> _referenceTier(String subscriptionId, String priceUsd) async {
+    final key = '$subscriptionId|${normalizePrice(priceUsd)}';
+    if (_referenceTiers.containsKey(key)) return _referenceTiers[key];
+    final pointId = await _findPricePoint(
+      'v1/subscriptions/$subscriptionId/pricePoints',
+      priceUsd,
+      territory: territoryId,
+    );
+    final tier = _priceTierOf(pointId);
+    _referenceTiers[key] = tier;
+    return tier;
+  }
+
   Future<String> _ensureInAppPurchase() async {
     final existing = await client.get('v1/apps/$appId/inAppPurchasesV2', {
       'filter[productId]': lifetimeProductId,
@@ -437,24 +635,34 @@ class AscProvisioner {
     for (final iap in existing.dataList) {
       if ((iap['attributes'] as Map<String, Object?>?)?['productId'] ==
           lifetimeProductId) {
-        _log('in-app purchase $lifetimeProductId already exists '
-            '(id ${iap['id']}) — skipping');
+        _log(
+          'in-app purchase $lifetimeProductId already exists '
+          '(id ${iap['id']}) — skipping',
+        );
         final id = iap['id'] as String;
         final referenceName =
             (iap['attributes'] as Map<String, Object?>?)?['name'];
         if (referenceName != lifetimeName) {
-          await client.patch('v2/inAppPurchases/$id',
-              inAppPurchaseUpdate(id: id, name: lifetimeName));
-          _log('  reference name drifted ("$referenceName") — patched to '
-              '"$lifetimeName"');
+          await client.patch(
+            'v2/inAppPurchases/$id',
+            inAppPurchaseUpdate(id: id, name: lifetimeName),
+          );
+          _log(
+            '  reference name drifted ("$referenceName") — patched to '
+            '"$lifetimeName"',
+          );
         }
         return id;
       }
     }
     final created = await client.post(
-        'v2/inAppPurchases',
-        inAppPurchaseCreate(
-            appId: appId, productId: lifetimeProductId, name: lifetimeName));
+      'v2/inAppPurchases',
+      inAppPurchaseCreate(
+        appId: appId,
+        productId: lifetimeProductId,
+        name: lifetimeName,
+      ),
+    );
     final id = created.dataObject?['id'] as String?;
     _log('created non-consumable IAP $lifetimeProductId (id $id)');
     return id!;
@@ -462,20 +670,25 @@ class AscProvisioner {
 
   Future<void> _ensureIapLocalization(String iapId) async {
     final existing = await client.get(
-        'v2/inAppPurchases/$iapId/inAppPurchaseLocalizations',
-        {'limit': '200'});
+      'v2/inAppPurchases/$iapId/inAppPurchaseLocalizations',
+      {'limit': '200'},
+    );
     final loc = existing.dataList
-        .where((l) =>
-            (l['attributes'] as Map<String, Object?>?)?['locale'] == locale)
+        .where(
+          (l) =>
+              (l['attributes'] as Map<String, Object?>?)?['locale'] == locale,
+        )
         .firstOrNull;
     if (loc == null) {
       await client.post(
-          'v1/inAppPurchaseLocalizations',
-          inAppPurchaseLocalizationCreate(
-              inAppPurchaseId: iapId,
-              name: lifetimeName,
-              description: lifetimeDescription,
-              locale: locale));
+        'v1/inAppPurchaseLocalizations',
+        inAppPurchaseLocalizationCreate(
+          inAppPurchaseId: iapId,
+          name: lifetimeName,
+          description: lifetimeDescription,
+          locale: locale,
+        ),
+      );
       _log('  created localization $locale ("$lifetimeName")');
       return;
     }
@@ -486,28 +699,37 @@ class AscProvisioner {
       return;
     }
     await client.patch(
-        'v1/inAppPurchaseLocalizations/${loc['id']}',
-        inAppPurchaseLocalizationUpdate(
-            id: loc['id'] as String,
-            name: lifetimeName,
-            description: lifetimeDescription));
-    _log('  updated localization $locale → "$lifetimeName" / '
-        '"$lifetimeDescription" (drifted from spec)');
+      'v1/inAppPurchaseLocalizations/${loc['id']}',
+      inAppPurchaseLocalizationUpdate(
+        id: loc['id'] as String,
+        name: lifetimeName,
+        description: lifetimeDescription,
+      ),
+    );
+    _log(
+      '  updated localization $locale → "$lifetimeName" / '
+      '"$lifetimeDescription" (drifted from spec)',
+    );
   }
 
   Future<bool> _ensureIapPrice(String iapId, String priceUsd) async {
     // include=manualPrices: the only way to read the current base price —
     // inAppPurchasePrices has no direct read/write operations (403).
-    final schedule = await client
-        .getOrNull('v2/inAppPurchases/$iapId/iapPriceSchedule', {
-      'include': 'manualPrices',
-    });
+    final schedule = await client.getOrNull(
+      'v2/inAppPurchases/$iapId/iapPriceSchedule',
+      {'include': 'manualPrices'},
+    );
     final pointId = await _findPricePoint(
-        'v2/inAppPurchases/$iapId/pricePoints', priceUsd);
+      'v2/inAppPurchases/$iapId/pricePoints',
+      priceUsd,
+    );
     if (schedule != null && schedule.dataObject != null) {
-      final manualPrices = (((schedule.dataObject!['relationships']
-              as Map<String, Object?>?)?['manualPrices']
-          as Map<String, Object?>?)?['data'] as List?)?.whereType<Map<String, Object?>>();
+      final manualPrices =
+          (((schedule.dataObject!['relationships']
+                          as Map<String, Object?>?)?['manualPrices']
+                      as Map<String, Object?>?)?['data']
+                  as List?)
+              ?.whereType<Map<String, Object?>>();
       final currentId = manualPrices == null || manualPrices.isEmpty
           ? null
           : manualPrices.first['id'] as String?;
@@ -520,42 +742,53 @@ class AscProvisioner {
         _log('  price schedule already at USD $priceUsd — skipping');
         return true;
       }
-      _log('  price schedule exists with a different price — replacing it '
-          '(re-POSTing the schedule is create-or-replace)');
+      _log(
+        '  price schedule exists with a different price — replacing it '
+        '(re-POSTing the schedule is create-or-replace)',
+      );
     }
     if (pointId == null) {
       if (client.isDryRun) {
-        _log('  would look up the $territoryId price point for USD '
-            '$priceUsd and POST the price schedule — price points are not '
-            'simulated in dry-run');
+        _log(
+          '  would look up the $territoryId price point for USD '
+          '$priceUsd and POST the price schedule — price points are not '
+          'simulated in dry-run',
+        );
         return true;
       }
-      _log('  ERROR: no $territoryId price point for USD $priceUsd on '
-          '$lifetimeProductId. Set the price manually: '
-          'https://appstoreconnect.apple.com/apps/$appId/distribution/'
-          'in-app-purchases (IAP id $iapId)');
+      _log(
+        '  ERROR: no $territoryId price point for USD $priceUsd on '
+        '$lifetimeProductId. Set the price manually: '
+        'https://appstoreconnect.apple.com/apps/$appId/distribution/'
+        'in-app-purchases (IAP id $iapId)',
+      );
       return false;
     }
     try {
       await client.post(
-          'v1/inAppPurchasePriceSchedules',
-          inAppPurchasePriceScheduleCreate(
-            inAppPurchaseId: iapId,
-            pricePointId: pointId,
-            baseTerritoryId: territoryId,
-          ));
+        'v1/inAppPurchasePriceSchedules',
+        inAppPurchasePriceScheduleCreate(
+          inAppPurchaseId: iapId,
+          pricePointId: pointId,
+          baseTerritoryId: territoryId,
+        ),
+      );
     } on ApiException catch (e) {
       // See _ensureSubscriptionPrice: a 409 on the first price is usually an
       // account-level block (Paid Apps agreement / tax / banking).
-      _log('  ERROR: setting the $territoryId price failed: $e\n'
-          '  If this is the IAP\'s first price, check App Store Connect → '
-          'Business → Agreements, Tax, and Banking — the Paid Apps agreement '
-          '(incl. bank account + tax forms) must be Active before pricing '
-          'works.');
+      _log(
+        '  ERROR: setting the $territoryId price failed: $e\n'
+        '  If this is the IAP\'s first price, check App Store Connect → '
+        'Business → Agreements, Tax, and Banking — the Paid Apps agreement '
+        '(incl. bank account + tax forms) must be Active before pricing '
+        'works.',
+      );
       return false;
     }
-    _log('  set $territoryId price USD $priceUsd (price point $pointId) — '
-        'other territories follow the base territory price automatically');
+    _log(
+      '  set $territoryId price USD $priceUsd (price point $pointId) — '
+      'other territories follow the base territory price automatically',
+    );
     return true;
   }
 }

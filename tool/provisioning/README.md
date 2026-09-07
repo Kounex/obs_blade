@@ -13,8 +13,9 @@ Three subcommands of one entrypoint:
 - **`asc-products`** — App Store Connect: subscription group "Pro",
   subscriptions `pro_yearly` + `pro_monthly`, non-consumable `pro_lifetime`,
   en-US localizations (drift-reconciled via PATCH) and **nominal-parity
-  subscription pricing in every available territory** (US base price for the
-  IAP, whose schedule auto-equalizes the other territories).
+  subscription pricing in every available territory** (equalized-tier
+  fallback where no nominal point exists; US base price for the IAP, whose
+  schedule auto-equalizes the other territories).
 - **`play-products`** — Google Play: one subscription product (`pro`)
   containing the `pro-yearly` + `pro-monthly` base plans, plus the
   `pro_lifetime` one-time product, with US pricing; base plans / purchase
@@ -123,9 +124,17 @@ without a `startDate`) against the USD nominal string — then sets the price
 point whose `customerPrice` equals it ('4.99' → 4.99 EUR in DEU, 4.99 GBP in
 GBR, …) via `POST /v1/subscriptionPrices`. Subscriptions get no auto-derived
 territory prices, so this per-territory pass is what lifts them out of
-`MISSING_METADATA`. Territories without an exact nominal price point are
-skipped with a warning and summarized at the end (they don't fail the run).
-Re-runs skip every territory already at parity.
+`MISSING_METADATA`. Territories without an exact nominal price point
+(JPY, SEK, KRW, … have no 4.99/49.99) fall back to the point with the
+**same Apple tier as the USA nominal point** — tiers are Apple's global
+price matrix (the `p` field embedded in the base64url point id), so the
+same tier is the equalized, locally conventional price in every storefront
+($4.99 → ¥660 / 64 kr / ₹210 / …, verified live). Fallback territories are
+summarized at the end. A territory whose scan finds neither an exact point
+nor the reference tier is skipped with a warning (it doesn't fail the
+run). Re-runs skip every territory already at the point the tool would
+pick — for fallback territories that's a point-id comparison, since the
+nominal string never matches there.
 
 The **IAP** (`--lifetime-price-usd`, default 99.99) keeps a USA base price
 via `POST /v1/inAppPurchasePriceSchedules` — its schedule auto-equalizes all
@@ -189,11 +198,16 @@ dart run bin/inspect_products.dart
 
 Read-only verification tool: prints both subscriptions' and the IAP's
 state + en-US localizations, **per-territory subscription price coverage**
-(`territories priced: 175/175 — nominal parity OK`, listing missing or
-off-parity territories), the IAP base-price note, and the Play listings /
-base-plan prices. (The Play section currently fails with a 404 for
-permission reasons — it's caught and printed, the ASC output above it is
-unaffected.)
+(`territories priced: 175/175 — parity OK (nominal or equalized tier)`,
+listing missing or off-parity territories), the IAP base-price note, and
+the Play listings / base-plan prices. (The Play section currently fails
+with a 404 for permission reasons — it's caught and printed, the ASC
+output above it is unaffected.)
+
+`bin/probe_tiers.dart` is a small diagnostic that prints, per product, the
+Apple tier of the USA nominal price point and the local price of that same
+tier in a handful of storefronts — handy when checking what the
+equalized-tier fallback would pick before a run.
 
 ## Safety notes
 
