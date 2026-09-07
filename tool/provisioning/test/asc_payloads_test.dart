@@ -20,7 +20,7 @@ void main() {
       final body = subscriptionCreate(
         groupId: 'g1',
         productId: 'pro_yearly',
-        name: 'Pro — Yearly',
+        name: 'Pro - Yearly',
         subscriptionPeriod: 'ONE_YEAR',
       );
       final data = body['data'] as Map<String, Object?>;
@@ -39,19 +39,50 @@ void main() {
   group('subscriptionLocalizationCreate', () {
     test('matches SubscriptionLocalizationCreateRequest', () {
       final body = subscriptionLocalizationCreate(
-          subscriptionId: 's1', name: 'Pro — Yearly', locale: 'en-US');
+          subscriptionId: 's1',
+          name: 'Pro - Yearly',
+          description: 'Yearly Pro Subscription',
+          locale: 'en-US');
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'subscriptionLocalizations');
-      expect((data['attributes'] as Map)['locale'], 'en-US');
+      final attrs = data['attributes'] as Map;
+      expect(attrs['locale'], 'en-US');
+      expect(attrs['name'], 'Pro - Yearly');
+      expect(attrs['description'], 'Yearly Pro Subscription');
       final sub = (data['relationships'] as Map)['subscription'] as Map;
       expect((sub['data'] as Map)['id'], 's1');
+    });
+  });
+
+  group('subscriptionLocalizationUpdate', () {
+    test('PATCHes name + description with the resource id', () {
+      final body = subscriptionLocalizationUpdate(
+          id: 'l1', name: 'Pro - Yearly', description: 'Yearly Pro Subscription');
+      final data = body['data'] as Map<String, Object?>;
+      expect(data['type'], 'subscriptionLocalizations');
+      expect(data['id'], 'l1');
+      expect(data['attributes'],
+          {'name': 'Pro - Yearly', 'description': 'Yearly Pro Subscription'});
+      expect(data.containsKey('relationships'), isFalse);
+    });
+  });
+
+  group('inAppPurchaseLocalizationUpdate', () {
+    test('PATCHes name + description with the resource id', () {
+      final body = inAppPurchaseLocalizationUpdate(
+          id: 'il1', name: 'Pro - Lifetime', description: 'Lifetime Pro Access');
+      final data = body['data'] as Map<String, Object?>;
+      expect(data['type'], 'inAppPurchaseLocalizations');
+      expect(data['id'], 'il1');
+      expect(data['attributes'],
+          {'name': 'Pro - Lifetime', 'description': 'Lifetime Pro Access'});
     });
   });
 
   group('inAppPurchaseCreate', () {
     test('matches InAppPurchaseV2CreateRequest', () {
       final body = inAppPurchaseCreate(
-          appId: '1234', productId: 'pro_lifetime', name: 'Pro — Lifetime');
+          appId: '1234', productId: 'pro_lifetime', name: 'Pro - Lifetime');
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'inAppPurchases');
       final attrs = data['attributes'] as Map;

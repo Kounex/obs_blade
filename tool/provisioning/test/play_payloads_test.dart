@@ -100,7 +100,7 @@ void main() {
         packageName: 'com.kounex.obsBlade',
         productId: 'pro_lifetime',
         purchaseOptionId: 'pro-lifetime',
-        title: 'Pro — Lifetime',
+        title: 'Pro - Lifetime',
         priceUsd: '79.99',
       );
       final request = (body['requests'] as List).single as Map;

@@ -146,7 +146,8 @@ class AscProductsCommand extends Command<int> {
   final description =
       'Create/reuse the App Store Connect Pro subscription group, the '
       'pro_yearly/pro_monthly subscriptions and the pro_lifetime '
-      'non-consumable, with en-US localizations and US base pricing.';
+      'non-consumable, with en-US localizations (drift-reconciled) and '
+      'nominal-parity pricing in every available territory.';
 
   @override
   Future<int> run() async {
@@ -197,13 +198,15 @@ class AscProductsCommand extends Command<int> {
         subscriptions: [
           SubscriptionSpec(
             productId: 'pro_yearly',
-            name: 'Pro — Yearly',
+            name: 'Pro - Yearly',
+            description: 'Yearly Pro Subscription',
             subscriptionPeriod: 'ONE_YEAR',
             priceUsd: args['yearly-price-usd'] as String,
           ),
           SubscriptionSpec(
             productId: 'pro_monthly',
-            name: 'Pro — Monthly',
+            name: 'Pro - Monthly',
+            description: 'Monthly Pro Subscription',
             subscriptionPeriod: 'ONE_MONTH',
             priceUsd: args['monthly-price-usd'] as String,
           ),

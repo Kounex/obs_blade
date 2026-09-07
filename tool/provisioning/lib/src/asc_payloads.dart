@@ -62,13 +62,34 @@ Map<String, Object?> subscriptionCreate({
 Map<String, Object?> subscriptionLocalizationCreate({
   required String subscriptionId,
   required String name,
+  required String description,
   required String locale,
 }) =>
     {
       'data': {
         'type': 'subscriptionLocalizations',
-        'attributes': {'name': name, 'locale': locale},
+        'attributes': {
+          'name': name,
+          'description': description,
+          'locale': locale,
+        },
         'relationships': {'subscription': rel('subscriptions', subscriptionId)},
+      }
+    };
+
+/// PATCH /v1/subscriptionLocalizations/{id} — drift reconcile: only sent when
+/// the live name/description differ from the spec. Attribute casing verified
+/// live (`name` / `description`, both writable).
+Map<String, Object?> subscriptionLocalizationUpdate({
+  required String id,
+  required String name,
+  required String description,
+}) =>
+    {
+      'data': {
+        'type': 'subscriptionLocalizations',
+        'id': id,
+        'attributes': {'name': name, 'description': description},
       }
     };
 
@@ -97,15 +118,35 @@ Map<String, Object?> inAppPurchaseCreate({
 Map<String, Object?> inAppPurchaseLocalizationCreate({
   required String inAppPurchaseId,
   required String name,
+  required String description,
   required String locale,
 }) =>
     {
       'data': {
         'type': 'inAppPurchaseLocalizations',
-        'attributes': {'name': name, 'locale': locale},
+        'attributes': {
+          'name': name,
+          'description': description,
+          'locale': locale,
+        },
         'relationships': {
           'inAppPurchaseV2': rel('inAppPurchases', inAppPurchaseId)
         },
+      }
+    };
+
+/// PATCH /v1/inAppPurchaseLocalizations/{id} — drift reconcile, same shape
+/// as [subscriptionLocalizationUpdate].
+Map<String, Object?> inAppPurchaseLocalizationUpdate({
+  required String id,
+  required String name,
+  required String description,
+}) =>
+    {
+      'data': {
+        'type': 'inAppPurchaseLocalizations',
+        'id': id,
+        'attributes': {'name': name, 'description': description},
       }
     };
 

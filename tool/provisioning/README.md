@@ -12,7 +12,9 @@ Three subcommands of one entrypoint:
   `gcloud services api-keys` surface).
 - **`asc-products`** — App Store Connect: subscription group "Pro",
   subscriptions `pro_yearly` + `pro_monthly`, non-consumable `pro_lifetime`,
-  en-US localizations and US base prices.
+  en-US localizations (drift-reconciled via PATCH) and **nominal-parity
+  subscription pricing in every available territory** (US base price for the
+  IAP, whose schedule auto-equalizes the other territories).
 - **`play-products`** — Google Play: one subscription product (`pro`)
   containing the `pro-yearly` + `pro-monthly` base plans, plus the
   `pro_lifetime` one-time product, with US pricing; base plans / purchase
@@ -102,25 +104,39 @@ dart run bin/provision.dart asc-products \
 ```
 
 Creates, if missing: subscription group **"Pro"** (+ en-US localization),
-subscriptions **pro_yearly** (`ONE_YEAR`, "Pro — Yearly") and **pro_monthly**
-(`ONE_MONTH`, "Pro — Monthly") (+ en-US localizations), and the
-non-consumable IAP **pro_lifetime** ("Pro — Lifetime", + en-US localization).
+subscriptions **pro_yearly** (`ONE_YEAR`, "Pro - Yearly" / "Yearly Pro
+Subscription") and **pro_monthly** (`ONE_MONTH`, "Pro - Monthly" / "Monthly
+Pro Subscription") (+ en-US localizations), and the non-consumable IAP
+**pro_lifetime** ("Pro - Lifetime" / "Lifetime Pro Access", + en-US
+localization). Existing localizations whose name or description drifted from
+these canonical values are reconciled via `PATCH
+/v1/subscriptionLocalizations/{id}` resp. `/v1/inAppPurchaseLocalizations/{id}`
+— re-runs converge instead of fighting manual console edits.
 
-**Pricing is automated for the US base territory.** With
-`--yearly-price-usd` / `--monthly-price-usd` / `--lifetime-price-usd`
-(defaults 49.99 / 4.99 / 99.99) the tool looks up the matching
-`subscriptionPricePoints` / `inAppPurchasePricePoints` entry for territory
-`USA` and sets it via `POST /v1/subscriptionPrices` (immediate price change)
-resp. `POST /v1/inAppPurchasePriceSchedules` (base territory + manual price).
-Re-runs compare the current price and create a price change / re-post the
-schedule when it drifted, so adjusting prices is just a re-run with new
-flags. New subscriptions are also made available in all current + future
-territories (`POST /v1/subscriptionAvailabilities`) — a hard prerequisite
-for setting the starting price via the API.
-All other territories follow the base territory price automatically under
-Apple's current pricing system — customize in the console if you want to
-deviate. If a price point can't be matched, the product still gets created
-and the tool prints the console deep-link and exits non-zero.
+**Subscription pricing is automated for EVERY available territory with
+nominal parity.** With `--yearly-price-usd` / `--monthly-price-usd`
+(defaults 49.99 / 4.99) the tool reads the territory list from
+`GET /v1/subscriptionAvailabilities/{id}/availableTerritories` (the
+availability resource shares the subscription's id) and, per territory,
+compares the current price (the `GET /v1/subscriptions/{id}/prices` record
+without a `startDate`) against the USD nominal string — then sets the price
+point whose `customerPrice` equals it ('4.99' → 4.99 EUR in DEU, 4.99 GBP in
+GBR, …) via `POST /v1/subscriptionPrices`. Subscriptions get no auto-derived
+territory prices, so this per-territory pass is what lifts them out of
+`MISSING_METADATA`. Territories without an exact nominal price point are
+skipped with a warning and summarized at the end (they don't fail the run).
+Re-runs skip every territory already at parity.
+
+The **IAP** (`--lifetime-price-usd`, default 99.99) keeps a USA base price
+via `POST /v1/inAppPurchasePriceSchedules` — its schedule auto-equalizes all
+other territories, so no per-territory pass is needed there. Re-runs compare
+the current price and create a price change / re-post the schedule when it
+drifted, so adjusting prices is just a re-run with new flags. New
+subscriptions are also made available in all current + future territories
+(`POST /v1/subscriptionAvailabilities`) — a hard prerequisite for setting
+any price via the API. If the IAP base price point can't be matched, the
+product still gets created and the tool prints the console deep-link and
+exits non-zero.
 
 **Manual afterwards:** review the products in App Store Connect and submit
 them with the next app version (API-created products start in
@@ -163,6 +179,21 @@ Products; extend regional pricing beyond US there if wanted), then wire the
 products into the RevenueCat entitlement `pro` with store ids
 `pro:pro-yearly`, `pro:pro-monthly`, `pro_lifetime` — see
 `docs/revenuecat-setup.md` §3.
+
+## Inspecting live state
+
+```bash
+source ~/.localrc   # ASC_* + GOOGLE_APPLICATION_CREDENTIALS
+dart run bin/inspect_products.dart
+```
+
+Read-only verification tool: prints both subscriptions' and the IAP's
+state + en-US localizations, **per-territory subscription price coverage**
+(`territories priced: 175/175 — nominal parity OK`, listing missing or
+off-parity territories), the IAP base-price note, and the Play listings /
+base-plan prices. (The Play section currently fails with a 404 for
+permission reasons — it's caught and printed, the ASC output above it is
+unaffected.)
 
 ## Safety notes
 
