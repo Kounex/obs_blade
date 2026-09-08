@@ -14,9 +14,8 @@ class ApiResponse {
 
   bool get isSuccess => statusCode >= 200 && statusCode < 300;
 
-  Map<String, Object?> get json => body is Map<String, Object?>
-      ? body as Map<String, Object?>
-      : const {};
+  Map<String, Object?> get json =>
+      body is Map<String, Object?> ? body as Map<String, Object?> : const {};
 
   /// JSON:API `data` member — list for collection endpoints, map (or null)
   /// for single-resource endpoints.
@@ -55,20 +54,27 @@ abstract class ApiClient {
   /// that cannot be simulated offline (e.g. price points).
   bool get isDryRun => false;
 
-  Future<ApiResponse> get(String path,
-      [Map<String, String> query = const {}]);
+  Future<ApiResponse> get(String path, [Map<String, String> query = const {}]);
 
-  Future<ApiResponse> post(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]);
+  Future<ApiResponse> post(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]);
 
-  Future<ApiResponse> patch(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]);
+  Future<ApiResponse> patch(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]);
 
   Future<ApiResponse> delete(String path);
 
   /// Like [get], but returns null on 404 instead of throwing.
-  Future<ApiResponse?> getOrNull(String path,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse?> getOrNull(
+    String path, [
+    Map<String, String> query = const {},
+  ]) async {
     final response = await get(path, query);
     return response.statusCode == 404 ? null : response;
   }
@@ -76,11 +82,8 @@ abstract class ApiClient {
 
 /// Real HTTP transport against a JSON API base URL with a Bearer token.
 class HttpApiClient extends ApiClient {
-  HttpApiClient({
-    required this.baseUrl,
-    this.token,
-    http.Client? client,
-  }) : _client = client ?? http.Client();
+  HttpApiClient({required this.baseUrl, this.token, http.Client? client})
+    : _client = client ?? http.Client();
 
   final String baseUrl;
 
@@ -89,38 +92,52 @@ class HttpApiClient extends ApiClient {
   final String? token;
   final http.Client _client;
 
-  Uri _uri(String path, Map<String, String> query) =>
-      Uri.parse('$baseUrl/$path')
-          .replace(queryParameters: query.isEmpty ? null : query);
+  Uri _uri(String path, Map<String, String> query) => Uri.parse(
+    '$baseUrl/$path',
+  ).replace(queryParameters: query.isEmpty ? null : query);
 
   Map<String, String> get _headers => {
-        if (token != null) 'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      };
+    if (token != null) 'Authorization': 'Bearer $token',
+    'Content-Type': 'application/json',
+  };
 
   @override
-  Future<ApiResponse> get(String path,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> get(
+    String path, [
+    Map<String, String> query = const {},
+  ]) async {
     final url = _uri(path, query);
     final response = await _client.get(url, headers: _headers);
     return _checked('GET', url, response);
   }
 
   @override
-  Future<ApiResponse> post(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> post(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]) async {
     final url = _uri(path, query);
-    final response =
-        await _client.post(url, headers: _headers, body: jsonEncode(body));
+    final response = await _client.post(
+      url,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
     return _checked('POST', url, response);
   }
 
   @override
-  Future<ApiResponse> patch(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> patch(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]) async {
     final url = _uri(path, query);
-    final response =
-        await _client.patch(url, headers: _headers, body: jsonEncode(body));
+    final response = await _client.patch(
+      url,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
     return _checked('PATCH', url, response);
   }
 
@@ -142,8 +159,12 @@ class HttpApiClient extends ApiClient {
     }
     final wrapped = ApiResponse(response.statusCode, body);
     if (!wrapped.isSuccess && response.statusCode != 404) {
-      throw ApiException(method, url.toString(), response.statusCode,
-          _errorDetail(body) ?? response.reasonPhrase ?? '');
+      throw ApiException(
+        method,
+        url.toString(),
+        response.statusCode,
+        _errorDetail(body) ?? response.reasonPhrase ?? '',
+      );
     }
     return wrapped;
   }
@@ -152,8 +173,7 @@ class HttpApiClient extends ApiClient {
     if (body is Map && body['errors'] is List) {
       return (body['errors'] as List)
           .whereType<Map>()
-          .map((e) => '${e['code'] ?? e['title']}: ${e['detail'] ?? ''}'
-              .trim())
+          .map((e) => '${e['code'] ?? e['title']}: ${e['detail'] ?? ''}'.trim())
           .join('; ');
     }
     if (body is Map && body['error'] is Map) {
@@ -172,7 +192,7 @@ class HttpApiClient extends ApiClient {
 /// log a note and let the orchestrator skip the dependent call.
 class DryRunApiClient extends ApiClient {
   DryRunApiClient({required this.serviceName, void Function(String)? log})
-      : _log = log ?? print;
+    : _log = log ?? print;
 
   final String serviceName;
   final void Function(String) _log;
@@ -180,8 +200,12 @@ class DryRunApiClient extends ApiClient {
   @override
   bool get isDryRun => true;
 
-  void _print(String method, String path, Map<String, String> query,
-      [Map<String, Object?>? body]) {
+  void _print(
+    String method,
+    String path,
+    Map<String, String> query, [
+    Map<String, Object?>? body,
+  ]) {
     final q = query.isEmpty
         ? ''
         : '?${query.entries.map((e) => '${e.key}=${e.value}').join('&')}';
@@ -192,32 +216,45 @@ class DryRunApiClient extends ApiClient {
   }
 
   @override
-  Future<ApiResponse> get(String path,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> get(
+    String path, [
+    Map<String, String> query = const {},
+  ]) async {
     _print('GET', path, query);
     // Report "empty" so every create path is exercised.
     return ApiResponse(200, {'data': <Object?>[]});
   }
 
   @override
-  Future<ApiResponse?> getOrNull(String path,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse?> getOrNull(
+    String path, [
+    Map<String, String> query = const {},
+  ]) async {
     _print('GET', path, query);
     return null; // pretend it does not exist yet
   }
 
   @override
-  Future<ApiResponse> post(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> post(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]) async {
     _print('POST', path, query, body);
     return ApiResponse(201, {
-      'data': {'type': body['data'] is Map ? (body['data'] as Map)['type'] : 'unknown', 'id': 'DRY-RUN-ID'}
+      'data': {
+        'type': body['data'] is Map ? (body['data'] as Map)['type'] : 'unknown',
+        'id': 'DRY-RUN-ID',
+      },
     });
   }
 
   @override
-  Future<ApiResponse> patch(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> patch(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]) async {
     _print('PATCH', path, query, body);
     return ApiResponse(200, const {});
   }

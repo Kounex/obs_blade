@@ -46,6 +46,24 @@ Future<void> main() async {
     }
     print('---');
   }
+  // Shape probe: Google's per-region converted prices for a USD nominal.
+  final conv = await authClient.post(
+    Uri.parse('$base/pricing:convertRegionPrices'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'price': {'currencyCode': 'USD', 'units': '4', 'nanos': 990000000},
+    }),
+  );
+  print('POST /pricing:convertRegionPrices -> ${conv.statusCode}');
+  final convJson = jsonDecode(conv.body) as Map<String, Object?>;
+  print('  top-level keys: ${convJson.keys.toList()}');
+  print('  regionVersion: ${convJson['regionVersion']}');
+  final regions =
+      (convJson['convertedRegionPrices'] as Map<String, Object?>?) ?? {};
+  print('  regions: ${regions.length}');
+  for (final r in ['US', 'DE', 'GB', 'JP', 'CH', 'KR', 'IN']) {
+    print('  $r: ${regions[r]}');
+  }
   if (editId != null) {
     final del = await authClient.delete(Uri.parse('$base/edits/$editId'));
     print('DELETE /edits/$editId -> ${del.statusCode} (cleanup)');

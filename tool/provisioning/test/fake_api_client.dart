@@ -42,23 +42,31 @@ class FakeApiClient extends ApiClient {
   }
 
   @override
-  Future<ApiResponse> get(String path,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> get(
+    String path, [
+    Map<String, String> query = const {},
+  ]) async {
     requests.add(_key('GET', path, query));
     return _next('GET', path);
   }
 
   @override
-  Future<ApiResponse> post(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> post(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]) async {
     requests.add(_key('POST', path, query));
     bodies.add((method: 'POST', path: path, body: body));
     return _next('POST', path);
   }
 
   @override
-  Future<ApiResponse> patch(String path, Map<String, Object?> body,
-      [Map<String, String> query = const {}]) async {
+  Future<ApiResponse> patch(
+    String path,
+    Map<String, Object?> body, [
+    Map<String, String> query = const {},
+  ]) async {
     requests.add(_key('PATCH', path, query));
     bodies.add((method: 'PATCH', path: path, body: body));
     return _next('PATCH', path);
@@ -72,7 +80,6 @@ class FakeApiClient extends ApiClient {
 
   /// Counts requests to an exact endpoint (query string ignored), so
   /// `.../subscriptions` does not match `.../subscriptions/pro/...`.
-  int count(String method, String path) => requests
-      .where((r) => r.split('?').first == '$method $path')
-      .length;
+  int count(String method, String path) =>
+      requests.where((r) => r.split('?').first == '$method $path').length;
 }

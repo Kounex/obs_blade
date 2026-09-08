@@ -1,4 +1,5 @@
 import 'api_client.dart';
+import 'money.dart';
 import 'play_payloads.dart';
 
 /// Idempotently creates the Play side of Pro: one subscription product
@@ -33,7 +34,79 @@ class PlayProvisioner {
   static const subscriptionTitle = 'Pro';
   static const lifetimeTitle = 'Pro - Lifetime';
 
+  /// Currencies that get the USD nominal verbatim (4.99 → 4.99 EUR / GBP /
+  /// USD) instead of Google's FX-converted price — the "western parity" the
+  /// App Store side also uses.
+  static const nominalParityCurrencies = {'EUR', 'GBP', 'USD'};
+
   String get _apps => 'androidpublisher/v3/applications/$packageName';
+
+  /// Memoized per-nominal region price tables — see [_regionPrices].
+  final _regionPriceCache = <String, RegionPriceTable>{};
+
+  /// The wanted price for EVERY Play region for a USD nominal: Play's own
+  /// `pricing:convertRegionPrices` table (already conventionally rounded
+  /// per market, e.g. ¥840 / ₹550), with nominal parity for
+  /// [nominalParityCurrencies] (€4.99 / £4.99 / $4.99). Pinning the table
+  /// explicitly stops Play's auto-conversion from drifting with FX rates.
+  /// The table's `regionVersion` must accompany every write using it —
+  /// Play rejects regions whose currency changed since the older version
+  /// (e.g. BG is EUR in 2025/03 but BGN in 2022/02).
+  Future<RegionPriceTable> _regionPrices(String priceUsd) async {
+    final cached = _regionPriceCache[priceUsd];
+    if (cached != null) return cached;
+    final nominal = moneyFromDecimal(priceUsd);
+    RegionPriceTable fallback() =>
+        (prices: {regionCode: nominal}, regionsVersion: regionsVersion);
+    if (client.isDryRun) {
+      _log(
+        '  would pin prices in every Play region for USD $priceUsd '
+        '(convertRegionPrices table + EUR/GBP/USD nominal parity) — not '
+        'simulated in dry-run; using $regionCode only',
+      );
+      return _regionPriceCache[priceUsd] = fallback();
+    }
+    final res = await client.post('$_apps/pricing:convertRegionPrices', {
+      'price': nominal,
+    });
+    final converted =
+        (res.json['convertedRegionPrices'] as Map<String, Object?>?) ?? {};
+    if (converted.isEmpty) {
+      _log(
+        '  WARNING: convertRegionPrices returned no regions for USD '
+        '$priceUsd — falling back to $regionCode only',
+      );
+      return _regionPriceCache[priceUsd] = fallback();
+    }
+    final tableVersion =
+        ((res.json['regionVersion'] as Map<String, Object?>?)?['version']
+            as String?) ??
+        regionsVersion;
+    final prices = <String, Map<String, Object?>>{};
+    for (final entry in converted.entries) {
+      final price =
+          (entry.value as Map<String, Object?>?)?['price']
+              as Map<String, Object?>?;
+      final currency = price?['currencyCode'] as String?;
+      if (price == null || currency == null) continue;
+      prices[entry.key] = nominalParityCurrencies.contains(currency)
+          ? moneyFromDecimal(priceUsd, currencyCode: currency)
+          : {
+              'currencyCode': currency,
+              'units': '${price['units'] ?? '0'}',
+              'nanos': price['nanos'] ?? 0,
+            };
+    }
+    _log(
+      '  region price table for USD $priceUsd: ${prices.length} regions '
+      '(regions version $tableVersion; EUR/GBP/USD at nominal parity, rest '
+      'Google-converted)',
+    );
+    return _regionPriceCache[priceUsd] = (
+      prices: prices,
+      regionsVersion: tableVersion,
+    );
+  }
 
   Future<bool> run({
     required List<BasePlanSpec> basePlans,
@@ -47,6 +120,15 @@ class PlayProvisioner {
 
   Future<bool> _ensureSubscription(List<BasePlanSpec> basePlans) async {
     final path = '$_apps/subscriptions/$subscriptionProductId';
+    final tables = <String, RegionPriceTable>{
+      for (final spec in basePlans)
+        spec.basePlanId: await _regionPrices(spec.priceUsd),
+    };
+    final pricesByPlan = <String, RegionPrices>{
+      for (final e in tables.entries) e.key: e.value.prices,
+    };
+    // All tables share the same version (same convertRegionPrices surface).
+    final tableRegionsVersion = tables.values.first.regionsVersion;
     final existing = await client.getOrNull(path);
     List<Map<String, Object?>> existingBasePlans;
     if (existing == null) {
@@ -57,11 +139,11 @@ class PlayProvisioner {
           productId: subscriptionProductId,
           title: subscriptionTitle,
           basePlans: basePlans,
-          regionCode: regionCode,
+          pricesByPlan: pricesByPlan,
         ),
         {
           'productId': subscriptionProductId,
-          'regionsVersion.version': regionsVersion,
+          'regionsVersion.version': tableRegionsVersion,
         },
       );
       _log(
@@ -83,16 +165,16 @@ class PlayProvisioner {
       final missing = basePlans
           .where((spec) => !existingIds.contains(spec.basePlanId))
           .toList();
-      // Existing plans whose US price drifted from the wanted price.
+      // Existing plans whose per-region prices drifted from the wanted
+      // table (or only carry the legacy single-region config).
       final drifted = basePlans.where((spec) {
         final plan = existingBasePlans
             .where((b) => b['basePlanId'] == spec.basePlanId)
             .firstOrNull;
         return plan != null &&
-            !priceConfigsMatch(
+            !regionPricesMatch(
               plan['regionalConfigs'] as List?,
-              regionCode,
-              spec.priceUsd,
+              pricesByPlan[spec.basePlanId]!,
             );
       }).toList();
       if (missing.isEmpty && drifted.isEmpty) {
@@ -101,12 +183,9 @@ class PlayProvisioner {
         final corrected = [
           for (final b in existingBasePlans)
             drifted.any((s) => s.basePlanId == b['basePlanId'])
-                ? basePlanWithPrice(
+                ? basePlanWithRegionPrices(
                     b,
-                    basePlans.firstWhere(
-                      (s) => s.basePlanId == b['basePlanId'],
-                    ),
-                    regionCode,
+                    pricesByPlan[b['basePlanId'] as String]!,
                   )
                 : b,
         ];
@@ -115,14 +194,14 @@ class PlayProvisioner {
           subscriptionPatch(
             existingBasePlans: corrected,
             missing: missing,
-            regionCode: regionCode,
+            pricesByPlan: pricesByPlan,
           ),
           {
             // basePlans only — `listings` stays untouched so re-runs don't
             // clobber console-customized listing text. (The full listing is
             // set on initial create instead.)
             'updateMask': 'basePlans',
-            'regionsVersion.version': regionsVersion,
+            'regionsVersion.version': tableRegionsVersion,
           },
         );
         if (missing.isNotEmpty) {
@@ -133,7 +212,8 @@ class PlayProvisioner {
         }
         if (drifted.isNotEmpty) {
           _log(
-            'updated prices for base plans: ${drifted.map((b) => '${b.basePlanId} → USD ${b.priceUsd}').join(', ')}',
+            'updated prices for base plans: ${drifted.map((b) => '${b.basePlanId} → USD ${b.priceUsd} '
+                '(${pricesByPlan[b.basePlanId]!.length} regions)').join(', ')}',
           );
         }
       }
@@ -182,6 +262,8 @@ class PlayProvisioner {
 
   Future<bool> _ensureOneTimeProduct(String priceUsd) async {
     final path = '$_apps/oneTimeProducts/$lifetimeProductId';
+    final table = await _regionPrices(priceUsd);
+    final prices = table.prices;
     var product = await client.getOrNull(path);
     if (product != null) {
       final existingOption =
@@ -191,10 +273,9 @@ class PlayProvisioner {
               .firstOrNull;
       final priceMatches =
           existingOption != null &&
-          priceConfigsMatch(
+          regionPricesMatch(
             existingOption['regionalPricingAndAvailabilityConfigs'] as List?,
-            regionCode,
-            priceUsd,
+            prices,
           );
       // Listings are only written by the upsert below, so a drifted title
       // (e.g. an old em-dash) must also trigger it.
@@ -222,13 +303,13 @@ class PlayProvisioner {
             productId: lifetimeProductId,
             purchaseOptionId: purchaseOptionId,
             title: lifetimeTitle,
-            priceUsd: priceUsd,
-            regionCode: regionCode,
+            prices: prices,
+            regionsVersion: table.regionsVersion,
           ),
         );
         _log(
           'updated one-time product $lifetimeProductId'
-          '${priceMatches ? '' : ' to USD $priceUsd'}'
+          '${priceMatches ? '' : ' to USD $priceUsd (${prices.length} regions)'}'
           '${titleDrifted ? ' (listing title → "$lifetimeTitle")' : ''}',
         );
         product = await client.getOrNull(path);
@@ -241,8 +322,8 @@ class PlayProvisioner {
           productId: lifetimeProductId,
           purchaseOptionId: purchaseOptionId,
           title: lifetimeTitle,
-          priceUsd: priceUsd,
-          regionCode: regionCode,
+          prices: prices,
+          regionsVersion: table.regionsVersion,
         ),
       );
       _log(

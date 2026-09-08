@@ -26,17 +26,26 @@ String? argOrEnv(String? argValue, String? envValue) {
 class GcpYoutubeCommand extends Command<int> {
   GcpYoutubeCommand() {
     argParser
-      ..addOption('project-id',
-          help: 'GCP project id to create or reuse. Falls back to '
-              '\$GCP_PROJECT_ID, then the default.',
-          defaultsTo: null)
-      ..addOption('key-display-name',
-          help: 'Display name of the API key (used to find it again on '
-              're-runs).',
-          defaultsTo: 'obs-blade-youtube')
-      ..addOption('out-file',
-          help: 'Write the API key to this file (chmod 600) instead of '
-              'printing it to stdout.');
+      ..addOption(
+        'project-id',
+        help:
+            'GCP project id to create or reuse. Falls back to '
+            '\$GCP_PROJECT_ID, then the default.',
+        defaultsTo: null,
+      )
+      ..addOption(
+        'key-display-name',
+        help:
+            'Display name of the API key (used to find it again on '
+            're-runs).',
+        defaultsTo: 'obs-blade-youtube',
+      )
+      ..addOption(
+        'out-file',
+        help:
+            'Write the API key to this file (chmod 600) instead of '
+            'printing it to stdout.',
+      );
     addDryRunFlag(argParser);
   }
 
@@ -51,8 +60,11 @@ class GcpYoutubeCommand extends Command<int> {
   Future<int> run() async {
     final args = argResults!;
     final dryRun = args['dry-run'] as bool;
-    final projectId = argOrEnv(args['project-id'] as String?,
-            Platform.environment['GCP_PROJECT_ID']) ??
+    final projectId =
+        argOrEnv(
+          args['project-id'] as String?,
+          Platform.environment['GCP_PROJECT_ID'],
+        ) ??
         'obs-blade';
 
     if (!dryRun) {
@@ -95,8 +107,10 @@ class GcpYoutubeCommand extends Command<int> {
     } else {
       // Printed exactly once, nowhere else.
       print('API key: $key');
-      print('(Shown once here — it is retrievable any time via '
-          '`gcloud services api-keys list/get-key-string`.)');
+      print(
+        '(Shown once here — it is retrievable any time via '
+        '`gcloud services api-keys list/get-key-string`.)',
+      );
     }
     _printGcpManualSteps(projectId);
     return 0;
@@ -105,11 +119,15 @@ class GcpYoutubeCommand extends Command<int> {
   void _printGcpManualSteps(String projectId) {
     print('');
     print('Manual remainder (console-only, cannot be scripted):');
-    print('  1. OAuth consent screen: https://console.cloud.google.com/'
-        'apis/credentials/consent?project=$projectId');
-    print('  2. OAuth "TVs and limited input devices" client for the device '
-        'flow: https://console.cloud.google.com/apis/credentials'
-        '?project=$projectId');
+    print(
+      '  1. OAuth consent screen: https://console.cloud.google.com/'
+      'apis/credentials/consent?project=$projectId',
+    );
+    print(
+      '  2. OAuth "TVs and limited input devices" client for the device '
+      'flow: https://console.cloud.google.com/apis/credentials'
+      '?project=$projectId',
+    );
     print('  See docs/youtube-native-chat-audit.md for why.');
   }
 }
@@ -120,23 +138,43 @@ class GcpYoutubeCommand extends Command<int> {
 class AscProductsCommand extends Command<int> {
   AscProductsCommand() {
     argParser
-      ..addOption('key-path',
-          help: 'Path to the App Store Connect API .p8 private key. '
-              'Falls back to \$ASC_KEY_PATH.')
-      ..addOption('key-id',
-          help: 'App Store Connect API key id. Falls back to \$ASC_KEY_ID.')
-      ..addOption('issuer-id',
-          help: 'App Store Connect API issuer id (UUID). Falls back to '
-              '\$ASC_ISSUER_ID.')
-      ..addOption('app-id',
-          help: 'Numeric App Store Connect app id (App Information → '
-              'Apple ID). Falls back to \$ASC_APP_ID.')
-      ..addOption('yearly-price-usd',
-          help: 'US price for pro_yearly.', defaultsTo: '49.99')
-      ..addOption('monthly-price-usd',
-          help: 'US price for pro_monthly.', defaultsTo: '4.99')
-      ..addOption('lifetime-price-usd',
-          help: 'US price for pro_lifetime.', defaultsTo: '99.99');
+      ..addOption(
+        'key-path',
+        help:
+            'Path to the App Store Connect API .p8 private key. '
+            'Falls back to \$ASC_KEY_PATH.',
+      )
+      ..addOption(
+        'key-id',
+        help: 'App Store Connect API key id. Falls back to \$ASC_KEY_ID.',
+      )
+      ..addOption(
+        'issuer-id',
+        help:
+            'App Store Connect API issuer id (UUID). Falls back to '
+            '\$ASC_ISSUER_ID.',
+      )
+      ..addOption(
+        'app-id',
+        help:
+            'Numeric App Store Connect app id (App Information → '
+            'Apple ID). Falls back to \$ASC_APP_ID.',
+      )
+      ..addOption(
+        'yearly-price-usd',
+        help: 'US price for pro_yearly.',
+        defaultsTo: '49.99',
+      )
+      ..addOption(
+        'monthly-price-usd',
+        help: 'US price for pro_monthly.',
+        defaultsTo: '4.99',
+      )
+      ..addOption(
+        'lifetime-price-usd',
+        help: 'US price for pro_lifetime.',
+        defaultsTo: '99.99',
+      );
     addDryRunFlag(argParser);
   }
 
@@ -155,7 +193,9 @@ class AscProductsCommand extends Command<int> {
     final dryRun = args['dry-run'] as bool;
 
     final appId = argOrEnv(
-        args['app-id'] as String?, Platform.environment['ASC_APP_ID']);
+      args['app-id'] as String?,
+      Platform.environment['ASC_APP_ID'],
+    );
     if (appId == null) {
       stderr.writeln('Missing required --app-id (or \$ASC_APP_ID).');
       return 64;
@@ -166,17 +206,22 @@ class AscProductsCommand extends Command<int> {
       client = DryRunApiClient(serviceName: 'asc');
     } else {
       final env = Platform.environment;
-      final keyPath =
-          argOrEnv(args['key-path'] as String?, env['ASC_KEY_PATH']);
+      final keyPath = argOrEnv(
+        args['key-path'] as String?,
+        env['ASC_KEY_PATH'],
+      );
       final keyId = argOrEnv(args['key-id'] as String?, env['ASC_KEY_ID']);
-      final issuerId =
-          argOrEnv(args['issuer-id'] as String?, env['ASC_ISSUER_ID']);
+      final issuerId = argOrEnv(
+        args['issuer-id'] as String?,
+        env['ASC_ISSUER_ID'],
+      );
       if (keyPath == null || keyId == null || issuerId == null) {
         stderr.writeln(
-            'Missing credentials: --key-path, --key-id and --issuer-id are '
-            'required (unless --dry-run). Set them via flags or the '
-            'ASC_KEY_PATH / ASC_KEY_ID / ASC_ISSUER_ID env vars '
-            '(e.g. exported from ~/.localrc).');
+          'Missing credentials: --key-path, --key-id and --issuer-id are '
+          'required (unless --dry-run). Set them via flags or the '
+          'ASC_KEY_PATH / ASC_KEY_ID / ASC_ISSUER_ID env vars '
+          '(e.g. exported from ~/.localrc).',
+        );
         return 64;
       }
       final pemFile = File(keyPath);
@@ -186,9 +231,14 @@ class AscProductsCommand extends Command<int> {
       }
       final pem = await pemFile.readAsString();
       final token = buildAscJwt(
-          privateKeyPem: pem, keyId: keyId, issuerId: issuerId);
+        privateKeyPem: pem,
+        keyId: keyId,
+        issuerId: issuerId,
+      );
       client = HttpApiClient(
-          baseUrl: 'https://api.appstoreconnect.apple.com', token: token);
+        baseUrl: 'https://api.appstoreconnect.apple.com',
+        token: token,
+      );
     }
 
     final provisioner = AscProvisioner(client: client, appId: appId);
@@ -221,10 +271,14 @@ class AscProductsCommand extends Command<int> {
     print('');
     print('Manual remainder (console-only):');
     print('  - Review + submit the new products with the next app version:');
-    print('    https://appstoreconnect.apple.com/apps/$appId/distribution/'
-        'subscriptionGroups');
-    print('  - Attach all three products to the RevenueCat entitlement '
-        '`pro` (see docs/revenuecat-setup.md §3).');
+    print(
+      '    https://appstoreconnect.apple.com/apps/$appId/distribution/'
+      'subscriptionGroups',
+    );
+    print(
+      '  - Attach all three products to the RevenueCat entitlement '
+      '`pro` (see docs/revenuecat-setup.md §3).',
+    );
     return ok ? 0 : 1;
   }
 }
@@ -234,25 +288,43 @@ class AscProductsCommand extends Command<int> {
 class PlayProductsCommand extends Command<int> {
   PlayProductsCommand() {
     argParser
-      ..addOption('service-account-json',
-          help: 'Path to the Play API service-account JSON key. Falls back '
-              'to \$GOOGLE_APPLICATION_CREDENTIALS.')
-      ..addOption('package-name',
-          help: 'Android applicationId. Defaults to the one in '
-              'android/app/build.gradle.')
-      ..addOption('subscription-id',
-          help: 'Subscription product id holding the base plans.',
-          defaultsTo: 'pro')
-      ..addOption('yearly-price-usd',
-          help: 'US price for the yearly base plan.', defaultsTo: '49.99')
-      ..addOption('monthly-price-usd',
-          help: 'US price for the monthly base plan.', defaultsTo: '4.99')
-      ..addOption('lifetime-price-usd',
-          help: 'US price for the lifetime one-time product.',
-          defaultsTo: '99.99')
-      ..addFlag('activate',
-          help: 'Activate base plans / the purchase option after creation.',
-          defaultsTo: true);
+      ..addOption(
+        'service-account-json',
+        help:
+            'Path to the Play API service-account JSON key. Falls back '
+            'to \$GOOGLE_APPLICATION_CREDENTIALS.',
+      )
+      ..addOption(
+        'package-name',
+        help:
+            'Android applicationId. Defaults to the one in '
+            'android/app/build.gradle.',
+      )
+      ..addOption(
+        'subscription-id',
+        help: 'Subscription product id holding the base plans.',
+        defaultsTo: 'pro',
+      )
+      ..addOption(
+        'yearly-price-usd',
+        help: 'US price for the yearly base plan.',
+        defaultsTo: '49.99',
+      )
+      ..addOption(
+        'monthly-price-usd',
+        help: 'US price for the monthly base plan.',
+        defaultsTo: '4.99',
+      )
+      ..addOption(
+        'lifetime-price-usd',
+        help: 'US price for the lifetime one-time product.',
+        defaultsTo: '99.99',
+      )
+      ..addFlag(
+        'activate',
+        help: 'Activate base plans / the purchase option after creation.',
+        defaultsTo: true,
+      );
     addDryRunFlag(argParser);
   }
 
@@ -281,11 +353,15 @@ class PlayProductsCommand extends Command<int> {
     if (dryRun) {
       client = DryRunApiClient(serviceName: 'play');
     } else {
-      final saPath = argOrEnv(args['service-account-json'] as String?,
-          Platform.environment['GOOGLE_APPLICATION_CREDENTIALS']);
+      final saPath = argOrEnv(
+        args['service-account-json'] as String?,
+        Platform.environment['GOOGLE_APPLICATION_CREDENTIALS'],
+      );
       if (saPath == null) {
-        stderr.writeln('Missing --service-account-json (unless --dry-run). '
-            'Or export GOOGLE_APPLICATION_CREDENTIALS (e.g. from ~/.localrc).');
+        stderr.writeln(
+          'Missing --service-account-json (unless --dry-run). '
+          'Or export GOOGLE_APPLICATION_CREDENTIALS (e.g. from ~/.localrc).',
+        );
         return 64;
       }
       final saFile = File(saPath);
@@ -294,9 +370,11 @@ class PlayProductsCommand extends Command<int> {
         return 64;
       }
       final credentials = ServiceAccountCredentials.fromJson(
-          jsonDecode(await saFile.readAsString()));
-      final authClient = await clientViaServiceAccount(
-          credentials, ['https://www.googleapis.com/auth/androidpublisher']);
+        jsonDecode(await saFile.readAsString()),
+      );
+      final authClient = await clientViaServiceAccount(credentials, [
+        'https://www.googleapis.com/auth/androidpublisher',
+      ]);
       client = HttpApiClient(
         baseUrl: 'https://androidpublisher.googleapis.com',
         client: authClient, // injects/refreshes the Authorization header
@@ -333,20 +411,26 @@ class PlayProductsCommand extends Command<int> {
 
     print('');
     print('Manual remainder (console-only):');
-    print('  - Review the products + prices in Play Console → Monetize → '
-        'Products (other territories default off the US price — extend '
-        'there if wanted).');
-    print('  - Attach the products to the RevenueCat entitlement `pro` '
-        '(Play store ids: `${args['subscription-id']}:pro-yearly`, '
-        '`${args['subscription-id']}:pro-monthly`, `pro_lifetime` — see '
-        'docs/revenuecat-setup.md §3).');
+    print(
+      '  - Review the products + prices in Play Console → Monetize → '
+      'Products (prices are pinned per region — Google-converted with '
+      'EUR/GBP/USD at nominal parity).',
+    );
+    print(
+      '  - Attach the products to the RevenueCat entitlement `pro` '
+      '(Play store ids: `${args['subscription-id']}:pro-yearly`, '
+      '`${args['subscription-id']}:pro-monthly`, `pro_lifetime` — see '
+      'docs/revenuecat-setup.md §3).',
+    );
     return ok ? 0 : 1;
   }
 }
 
 void addDryRunFlag(ArgParser parser) {
-  parser.addFlag('dry-run',
-      help: 'Print every request/command without sending anything.');
+  parser.addFlag(
+    'dry-run',
+    help: 'Print every request/command without sending anything.',
+  );
 }
 
 /// Reads the applicationId from android/app/build.gradle, walking up from
@@ -356,26 +440,30 @@ String readApplicationId() {
   while (true) {
     final gradle = File('${dir.path}/android/app/build.gradle');
     if (gradle.existsSync()) {
-      final match = RegExp('''applicationId\\s+["']([^"']+)["']''')
-          .firstMatch(gradle.readAsStringSync());
+      final match = RegExp(
+        '''applicationId\\s+["']([^"']+)["']''',
+      ).firstMatch(gradle.readAsStringSync());
       if (match != null) return match.group(1)!;
-      throw StateError(
-          'No applicationId found in ${gradle.path}');
+      throw StateError('No applicationId found in ${gradle.path}');
     }
     final parent = dir.parent;
     if (parent.path == dir.path) {
       throw StateError(
-          'Could not find android/app/build.gradle above ${Directory.current.path}');
+        'Could not find android/app/build.gradle above ${Directory.current.path}',
+      );
     }
     dir = parent;
   }
 }
 
 CommandRunner<int> buildRunner() {
-  final runner = CommandRunner<int>(
-      'provision', 'OBS Blade store/GCP provisioning automation.')
-    ..addCommand(GcpYoutubeCommand())
-    ..addCommand(AscProductsCommand())
-    ..addCommand(PlayProductsCommand());
+  final runner =
+      CommandRunner<int>(
+          'provision',
+          'OBS Blade store/GCP provisioning automation.',
+        )
+        ..addCommand(GcpYoutubeCommand())
+        ..addCommand(AscProductsCommand())
+        ..addCommand(PlayProductsCommand());
   return runner;
 }

@@ -8,9 +8,10 @@ Future<void> main() async {
   final asc = HttpApiClient(
     baseUrl: 'https://api.appstoreconnect.apple.com',
     token: buildAscJwt(
-        privateKeyPem: pem,
-        keyId: env['ASC_KEY_ID']!,
-        issuerId: env['ASC_ISSUER_ID']!),
+      privateKeyPem: pem,
+      keyId: env['ASC_KEY_ID']!,
+      issuerId: env['ASC_ISSUER_ID']!,
+    ),
   );
   for (final id in ['6809188674', '6809188664']) {
     final r = await asc.get('v1/subscriptions/$id');

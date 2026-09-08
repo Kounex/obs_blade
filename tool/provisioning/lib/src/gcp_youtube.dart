@@ -29,8 +29,8 @@ class GcpYoutubeProvisioner {
     this.keyDisplayName = 'obs-blade-youtube',
     this.dryRun = false,
     void Function(String)? log,
-  })  : _gcloud = gcloud,
-        _log = log ?? print;
+  }) : _gcloud = gcloud,
+       _log = log ?? print;
 
   final String projectId;
   final String keyDisplayName;
@@ -80,40 +80,57 @@ class GcpYoutubeProvisioner {
         describe.stderr.contains('not authorized') ||
         describe.stderr.contains('Re-authenticate') ||
         describe.stderr.contains('login')) {
-      throw GcpException('projects describe', args, describe,
-          hint: 'Run `gcloud auth login` first, then re-run this command.');
+      throw GcpException(
+        'projects describe',
+        args,
+        describe,
+        hint: 'Run `gcloud auth login` first, then re-run this command.',
+      );
     }
-    await _run(['projects', 'create', projectId],
-        what: 'projects create');
+    await _run(['projects', 'create', projectId], what: 'projects create');
     _log('created project $projectId');
   }
 
   Future<void> _enableYoutubeApi() async {
     // `services enable` is itself idempotent (no-op when already enabled).
-    await _run(
-        ['services', 'enable', youtubeService, '--project', projectId],
-        what: 'services enable');
+    await _run([
+      'services',
+      'enable',
+      youtubeService,
+      '--project',
+      projectId,
+    ], what: 'services enable');
     _log('enabled $youtubeService on $projectId');
   }
 
   Future<String?> _ensureApiKey() async {
     if (dryRun) {
-      _log('[dry-run] gcloud services api-keys list '
-          '--project $projectId '
-          '--filter="displayName:$keyDisplayName" --format=json');
-      _log('[dry-run] gcloud services api-keys create '
-          '--display-name=$keyDisplayName '
-          '--api-target=service=$youtubeService '
-          '--project $projectId --format=json  # if list is empty');
-      _log('[dry-run] gcloud services api-keys get-key-string <name> '
-          '--project $projectId --format=json');
+      _log(
+        '[dry-run] gcloud services api-keys list '
+        '--project $projectId '
+        '--filter="displayName:$keyDisplayName" --format=json',
+      );
+      _log(
+        '[dry-run] gcloud services api-keys create '
+        '--display-name=$keyDisplayName '
+        '--api-target=service=$youtubeService '
+        '--project $projectId --format=json  # if list is empty',
+      );
+      _log(
+        '[dry-run] gcloud services api-keys get-key-string <name> '
+        '--project $projectId --format=json',
+      );
       return null;
     }
 
     final list = await _run([
-      'services', 'api-keys', 'list',
-      '--project', projectId,
-      '--filter', 'displayName:$keyDisplayName',
+      'services',
+      'api-keys',
+      'list',
+      '--project',
+      projectId,
+      '--filter',
+      'displayName:$keyDisplayName',
       '--format=json',
     ], what: 'api-keys list');
     final keys = jsonDecode(list.stdout) as List;
@@ -124,10 +141,15 @@ class GcpYoutubeProvisioner {
       _log('API key "$keyDisplayName" already exists ($keyName) — reusing');
     } else {
       final created = await _run([
-        'services', 'api-keys', 'create',
-        '--display-name', keyDisplayName,
-        '--api-target', 'service=$youtubeService',
-        '--project', projectId,
+        'services',
+        'api-keys',
+        'create',
+        '--display-name',
+        keyDisplayName,
+        '--api-target',
+        'service=$youtubeService',
+        '--project',
+        projectId,
         '--format=json',
       ], what: 'api-keys create');
       // With --format=json the result may be the key resource itself (has
@@ -136,15 +158,18 @@ class GcpYoutubeProvisioner {
       // since key creation is eventually consistent.
       final decoded = jsonDecode(created.stdout);
       keyName = decoded is Map ? decoded['name'] as String? ?? '' : '';
-      var unresolved =
-          keyName.isEmpty || keyName.contains('/operations/');
+      var unresolved = keyName.isEmpty || keyName.contains('/operations/');
       if (unresolved) {
         for (var attempt = 1; attempt <= 5 && unresolved; attempt++) {
           await Future.delayed(Duration(seconds: 2 * attempt));
           final relist = await _run([
-            'services', 'api-keys', 'list',
-            '--project', projectId,
-            '--filter', 'displayName:$keyDisplayName',
+            'services',
+            'api-keys',
+            'list',
+            '--project',
+            projectId,
+            '--filter',
+            'displayName:$keyDisplayName',
             '--format=json',
           ], what: 'api-keys list');
           final listed = jsonDecode(relist.stdout) as List;
@@ -154,19 +179,29 @@ class GcpYoutubeProvisioner {
           }
         }
         if (unresolved) {
-          throw GcpException('api-keys list (post-create)', const [],
-              const GcloudResult(1, '', 'key not visible after create'),
-              hint: 'The key was created but is not listed yet — re-run '
-                  'this command; it reuses the existing key.');
+          throw GcpException(
+            'api-keys list (post-create)',
+            const [],
+            const GcloudResult(1, '', 'key not visible after create'),
+            hint:
+                'The key was created but is not listed yet — re-run '
+                'this command; it reuses the existing key.',
+          );
         }
       }
-      _log('created API key "$keyDisplayName" restricted to '
-          '$youtubeService ($keyName)');
+      _log(
+        'created API key "$keyDisplayName" restricted to '
+        '$youtubeService ($keyName)',
+      );
     }
 
     final keyString = await _run([
-      'services', 'api-keys', 'get-key-string', keyName,
-      '--project', projectId,
+      'services',
+      'api-keys',
+      'get-key-string',
+      keyName,
+      '--project',
+      projectId,
       '--format=json',
     ], what: 'api-keys get-key-string');
     final decoded = jsonDecode(keyString.stdout) as Map;
@@ -184,8 +219,10 @@ class GcpException implements Exception {
 
   @override
   String toString() {
-    final buffer = StringBuffer('gcloud $step failed (exit '
-        '${result.exitCode}): ${result.stderr.trim()}');
+    final buffer = StringBuffer(
+      'gcloud $step failed (exit '
+      '${result.exitCode}): ${result.stderr.trim()}',
+    );
     if (hint != null) buffer.write('\n$hint');
     return buffer.toString();
   }

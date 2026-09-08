@@ -25,8 +25,11 @@ void main() {
           return const GcloudResult(0, '[]', '');
         }
         if (joined.startsWith('services api-keys create')) {
-          return const GcloudResult(0,
-              '{"name": "projects/p1/locations/global/keys/k1"}', '');
+          return const GcloudResult(
+            0,
+            '{"name": "projects/p1/locations/global/keys/k1"}',
+            '',
+          );
         }
         if (joined.startsWith('services api-keys get-key-string')) {
           return const GcloudResult(0, '{"keyString": "AIza-test"}', '');
@@ -35,20 +38,27 @@ void main() {
       };
 
       final provisioner = GcpYoutubeProvisioner(
-          projectId: 'obs-blade-youtube', gcloud: gcloud.call);
+        projectId: 'obs-blade-youtube',
+        gcloud: gcloud.call,
+      );
       final key = await provisioner.run();
 
       expect(key, 'AIza-test');
       expect(
-          gcloud.calls.any((c) => c.join(' ') ==
-              'projects create obs-blade-youtube'),
-          isTrue);
-      final create = gcloud.calls
-          .firstWhere((c) => c.join(' ').startsWith('services api-keys create'));
+        gcloud.calls.any(
+          (c) => c.join(' ') == 'projects create obs-blade-youtube',
+        ),
+        isTrue,
+      );
+      final create = gcloud.calls.firstWhere(
+        (c) => c.join(' ').startsWith('services api-keys create'),
+      );
       expect(create, contains('--api-target'));
       expect(create, contains('service=youtube.googleapis.com'));
-      expect(gcloud.calls.any((c) => c.contains('services') && c.contains('enable')),
-          isTrue);
+      expect(
+        gcloud.calls.any((c) => c.contains('services') && c.contains('enable')),
+        isTrue,
+      );
     });
 
     test('reuses existing project + key (no create calls)', () async {
@@ -59,8 +69,11 @@ void main() {
           return const GcloudResult(0, '{}', '');
         }
         if (joined.startsWith('services api-keys list')) {
-          return const GcloudResult(0,
-              '[{"name": "projects/p1/locations/global/keys/k1"}]', '');
+          return const GcloudResult(
+            0,
+            '[{"name": "projects/p1/locations/global/keys/k1"}]',
+            '',
+          );
         }
         if (joined.startsWith('services api-keys get-key-string')) {
           return const GcloudResult(0, '{"keyString": "AIza-existing"}', '');
@@ -69,63 +82,79 @@ void main() {
       };
 
       final provisioner = GcpYoutubeProvisioner(
-          projectId: 'obs-blade-youtube', gcloud: gcloud.call);
+        projectId: 'obs-blade-youtube',
+        gcloud: gcloud.call,
+      );
       final key = await provisioner.run();
 
       expect(key, 'AIza-existing');
-      expect(gcloud.calls.any((c) => c.contains('create')), isFalse,
-          reason: 're-run must be a no-op apart from reads/enable');
+      expect(
+        gcloud.calls.any((c) => c.contains('create')),
+        isFalse,
+        reason: 're-run must be a no-op apart from reads/enable',
+      );
     });
 
-    test('create returning an operation name falls back to re-listing',
-        () async {
-      final gcloud = FakeGcloud();
-      var listCalls = 0;
-      gcloud.handler = (args) {
-        final joined = args.join(' ');
-        if (joined.startsWith('projects describe')) {
-          return const GcloudResult(0, '{}', '');
-        }
-        if (joined.startsWith('services api-keys list')) {
-          listCalls++;
-          // First list (pre-create) and first post-create re-list see
-          // nothing; the second re-list finds the key (eventual
-          // consistency).
-          if (listCalls >= 3) {
-            return const GcloudResult(0,
-                '[{"name": "projects/p1/locations/global/keys/k9"}]', '');
+    test(
+      'create returning an operation name falls back to re-listing',
+      () async {
+        final gcloud = FakeGcloud();
+        var listCalls = 0;
+        gcloud.handler = (args) {
+          final joined = args.join(' ');
+          if (joined.startsWith('projects describe')) {
+            return const GcloudResult(0, '{}', '');
           }
-          return const GcloudResult(0, '[]', '');
-        }
-        if (joined.startsWith('services api-keys create')) {
-          return const GcloudResult(0,
+          if (joined.startsWith('services api-keys list')) {
+            listCalls++;
+            // First list (pre-create) and first post-create re-list see
+            // nothing; the second re-list finds the key (eventual
+            // consistency).
+            if (listCalls >= 3) {
+              return const GcloudResult(
+                0,
+                '[{"name": "projects/p1/locations/global/keys/k9"}]',
+                '',
+              );
+            }
+            return const GcloudResult(0, '[]', '');
+          }
+          if (joined.startsWith('services api-keys create')) {
+            return const GcloudResult(
+              0,
               '{"name": "projects/p1/locations/global/operations/akmf.p7-1"}',
-              '');
-        }
-        if (joined.startsWith('services api-keys get-key-string')) {
-          return const GcloudResult(0, '{"keyString": "AIza-op"}', '');
-        }
-        return const GcloudResult(0, '', '');
-      };
+              '',
+            );
+          }
+          if (joined.startsWith('services api-keys get-key-string')) {
+            return const GcloudResult(0, '{"keyString": "AIza-op"}', '');
+          }
+          return const GcloudResult(0, '', '');
+        };
 
-      final provisioner = GcpYoutubeProvisioner(
-          projectId: 'obs-blade-youtube', gcloud: gcloud.call);
-      final key = await provisioner.run();
+        final provisioner = GcpYoutubeProvisioner(
+          projectId: 'obs-blade-youtube',
+          gcloud: gcloud.call,
+        );
+        final key = await provisioner.run();
 
-      expect(key, 'AIza-op');
-      final getKeyString = gcloud.calls.firstWhere(
-          (c) => c.join(' ').startsWith('services api-keys get-key-string'));
-      expect(getKeyString, contains('projects/p1/locations/global/keys/k9'));
-    });
+        expect(key, 'AIza-op');
+        final getKeyString = gcloud.calls.firstWhere(
+          (c) => c.join(' ').startsWith('services api-keys get-key-string'),
+        );
+        expect(getKeyString, contains('projects/p1/locations/global/keys/k9'));
+      },
+    );
 
     test('dry-run issues no gcloud calls and returns null', () async {
       final gcloud = FakeGcloud();
       final logs = <String>[];
       final provisioner = GcpYoutubeProvisioner(
-          projectId: 'obs-blade-youtube',
-          gcloud: gcloud.call,
-          dryRun: true,
-          log: logs.add);
+        projectId: 'obs-blade-youtube',
+        gcloud: gcloud.call,
+        dryRun: true,
+        log: logs.add,
+      );
       final key = await provisioner.run();
 
       expect(key, isNull);
@@ -136,14 +165,25 @@ void main() {
     test('auth errors surface the gcloud auth login hint', () async {
       final gcloud = FakeGcloud();
       gcloud.handler = (args) => const GcloudResult(
-          1, '', 'ERROR: (gcloud.projects.describe) PERMISSION_DENIED');
+        1,
+        '',
+        'ERROR: (gcloud.projects.describe) PERMISSION_DENIED',
+      );
 
       final provisioner = GcpYoutubeProvisioner(
-          projectId: 'obs-blade-youtube', gcloud: gcloud.call);
+        projectId: 'obs-blade-youtube',
+        gcloud: gcloud.call,
+      );
       expect(
-          () => provisioner.run(),
-          throwsA(isA<GcpException>()
-              .having((e) => e.hint, 'hint', contains('gcloud auth login'))));
+        () => provisioner.run(),
+        throwsA(
+          isA<GcpException>().having(
+            (e) => e.hint,
+            'hint',
+            contains('gcloud auth login'),
+          ),
+        ),
+      );
     });
   });
 }

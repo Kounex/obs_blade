@@ -4,8 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('subscriptionGroupCreate', () {
     test('matches SubscriptionGroupCreateRequest (spec 4.4.1)', () {
-      final body =
-          subscriptionGroupCreate(appId: '1234', referenceName: 'Pro');
+      final body = subscriptionGroupCreate(appId: '1234', referenceName: 'Pro');
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'subscriptionGroups');
       expect((data['attributes'] as Map)['referenceName'], 'Pro');
@@ -39,10 +38,11 @@ void main() {
   group('subscriptionLocalizationCreate', () {
     test('matches SubscriptionLocalizationCreateRequest', () {
       final body = subscriptionLocalizationCreate(
-          subscriptionId: 's1',
-          name: 'Pro - Yearly',
-          description: 'Yearly Pro Subscription',
-          locale: 'en-US');
+        subscriptionId: 's1',
+        name: 'Pro - Yearly',
+        description: 'Yearly Pro Subscription',
+        locale: 'en-US',
+      );
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'subscriptionLocalizations');
       final attrs = data['attributes'] as Map;
@@ -57,12 +57,17 @@ void main() {
   group('subscriptionLocalizationUpdate', () {
     test('PATCHes name + description with the resource id', () {
       final body = subscriptionLocalizationUpdate(
-          id: 'l1', name: 'Pro - Yearly', description: 'Yearly Pro Subscription');
+        id: 'l1',
+        name: 'Pro - Yearly',
+        description: 'Yearly Pro Subscription',
+      );
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'subscriptionLocalizations');
       expect(data['id'], 'l1');
-      expect(data['attributes'],
-          {'name': 'Pro - Yearly', 'description': 'Yearly Pro Subscription'});
+      expect(data['attributes'], {
+        'name': 'Pro - Yearly',
+        'description': 'Yearly Pro Subscription',
+      });
       expect(data.containsKey('relationships'), isFalse);
     });
   });
@@ -70,19 +75,27 @@ void main() {
   group('inAppPurchaseLocalizationUpdate', () {
     test('PATCHes name + description with the resource id', () {
       final body = inAppPurchaseLocalizationUpdate(
-          id: 'il1', name: 'Pro - Lifetime', description: 'Lifetime Pro Access');
+        id: 'il1',
+        name: 'Pro - Lifetime',
+        description: 'Lifetime Pro Access',
+      );
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'inAppPurchaseLocalizations');
       expect(data['id'], 'il1');
-      expect(data['attributes'],
-          {'name': 'Pro - Lifetime', 'description': 'Lifetime Pro Access'});
+      expect(data['attributes'], {
+        'name': 'Pro - Lifetime',
+        'description': 'Lifetime Pro Access',
+      });
     });
   });
 
   group('inAppPurchaseCreate', () {
     test('matches InAppPurchaseV2CreateRequest', () {
       final body = inAppPurchaseCreate(
-          appId: '1234', productId: 'pro_lifetime', name: 'Pro - Lifetime');
+        appId: '1234',
+        productId: 'pro_lifetime',
+        name: 'Pro - Lifetime',
+      );
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'inAppPurchases');
       final attrs = data['attributes'] as Map;
@@ -94,13 +107,18 @@ void main() {
   group('subscriptionPriceCreate', () {
     test('matches SubscriptionPriceCreateRequest', () {
       final body = subscriptionPriceCreate(
-          subscriptionId: 's1', pricePointId: 'pp1', territoryId: 'USA');
+        subscriptionId: 's1',
+        pricePointId: 'pp1',
+        territoryId: 'USA',
+      );
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'subscriptionPrices');
       final rels = data['relationships'] as Map;
       expect(((rels['subscription'] as Map)['data'] as Map)['id'], 's1');
-      expect(((rels['subscriptionPricePoint'] as Map)['data'] as Map)['id'],
-          'pp1');
+      expect(
+        ((rels['subscriptionPricePoint'] as Map)['data'] as Map)['id'],
+        'pp1',
+      );
       expect(((rels['territory'] as Map)['data'] as Map)['id'], 'USA');
     });
   });
@@ -108,7 +126,10 @@ void main() {
   group('inAppPurchasePriceScheduleCreate', () {
     test('matches InAppPurchasePriceScheduleCreateRequest', () {
       final body = inAppPurchasePriceScheduleCreate(
-          inAppPurchaseId: 'i1', pricePointId: 'pp9', baseTerritoryId: 'USA');
+        inAppPurchaseId: 'i1',
+        pricePointId: 'pp9',
+        baseTerritoryId: 'USA',
+      );
       final data = body['data'] as Map<String, Object?>;
       expect(data['type'], 'inAppPurchasePriceSchedules');
       final rels = data['relationships'] as Map;
@@ -121,9 +142,11 @@ void main() {
       expect(inline['type'], 'inAppPurchasePrices');
       expect(inline['id'], tempId);
       expect(
-          (((inline['relationships'] as Map)['inAppPurchasePricePoint']
-                  as Map)['data'] as Map)['id'],
-          'pp9');
+        (((inline['relationships'] as Map)['inAppPurchasePricePoint']
+                as Map)['data']
+            as Map)['id'],
+        'pp9',
+      );
     });
   });
 }

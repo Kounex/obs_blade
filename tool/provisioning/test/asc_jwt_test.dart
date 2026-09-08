@@ -42,11 +42,10 @@ void main() {
     expect(claims['iat'], now.millisecondsSinceEpoch ~/ 1000);
     // Apple caps token lifetime at 20 minutes; we use 19.
     expect(
-        claims['exp'],
-        now.add(const Duration(minutes: 19)).millisecondsSinceEpoch ~/
-            1000);
+      claims['exp'],
+      now.add(const Duration(minutes: 19)).millisecondsSinceEpoch ~/ 1000,
+    );
     // Lifetime stays within Apple's limit.
-    expect(
-        (claims['exp'] as int) - (claims['iat'] as int), lessThan(20 * 60));
+    expect((claims['exp'] as int) - (claims['iat'] as int), lessThan(20 * 60));
   });
 }

@@ -18,8 +18,13 @@ Three subcommands of one entrypoint:
   schedule auto-equalizes the other territories).
 - **`play-products`** — Google Play: one subscription product (`pro`)
   containing the `pro-yearly` + `pro-monthly` base plans, plus the
-  `pro_lifetime` one-time product, with US pricing; base plans / purchase
-  option are activated after creation.
+  `pro_lifetime` one-time product, with **per-region pricing in all 173
+  Play regions** (Play's own `pricing:convertRegionPrices` table —
+  conventionally rounded per market, e.g. ¥840 / ₹550 — with nominal
+  parity for EUR/GBP/USD, pinned so prices don't drift with FX rates);
+  base plans / purchase option are activated after creation. Writes pass
+  the table's `regionVersion` (e.g. 2025/03) — an older version gets
+  rejected for regions whose currency changed (BG → EUR).
 
 Product ids are final and match `lib/utils/pro_ids.dart`. All commands are
 **idempotent**: they list/get first and only create what is missing, so

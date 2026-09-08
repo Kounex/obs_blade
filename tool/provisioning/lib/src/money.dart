@@ -1,18 +1,24 @@
 /// Price parsing / formatting helpers shared by the ASC and Play sides.
 
-/// Parses a USD price string like `24.99` into Play's `Money` shape.
+/// Parses a price string like `24.99` into Play's `Money` shape
+/// (USD unless [currencyCode] is given).
 ///
 /// Throws [FormatException] on anything that is not `\d+(\.\d{1,2})?`.
-Map<String, Object?> moneyFromDecimal(String price) {
+Map<String, Object?> moneyFromDecimal(
+  String price, {
+  String currencyCode = 'USD',
+}) {
   final match = RegExp(r'^(\d+)(?:\.(\d{1,2}))?$').firstMatch(price.trim());
   if (match == null) {
     throw FormatException(
-        'Invalid price "$price" — expected e.g. 24.99', price);
+      'Invalid price "$price" — expected e.g. 24.99',
+      price,
+    );
   }
   final units = match.group(1)!;
   final fraction = (match.group(2) ?? '').padRight(2, '0');
   final nanos = fraction.isEmpty ? 0 : int.parse(fraction) * 10000000;
-  return {'currencyCode': 'USD', 'units': units, 'nanos': nanos};
+  return {'currencyCode': currencyCode, 'units': units, 'nanos': nanos};
 }
 
 /// Normalizes a price string for comparison against ASC price-point
