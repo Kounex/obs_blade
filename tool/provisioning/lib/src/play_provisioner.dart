@@ -3,9 +3,12 @@ import 'money.dart';
 import 'play_payloads.dart';
 
 /// Idempotently creates the Play side of Pro: one subscription product
-/// holding the yearly + monthly base plans (with US pricing) and the
-/// lifetime one-time product. Base plans are created in DRAFT state (Play
-/// sets `state` itself) and then activated via the dedicated endpoints.
+/// holding the yearly + monthly base plans and the lifetime one-time
+/// product, each with pinned per-region pricing (Apple equalized-tier
+/// parity when `run` gets `appleTables`, else Google-converted with
+/// EUR/GBP/USD nominal parity — see [_regionPrices]). Base plans are
+/// created in DRAFT state (Play sets `state` itself) and then activated
+/// via the dedicated endpoints.
 class PlayProvisioner {
   PlayProvisioner({
     required this.client,
@@ -44,14 +47,22 @@ class PlayProvisioner {
   /// Memoized per-nominal region price tables — see [_regionPrices].
   final _regionPriceCache = <String, RegionPriceTable>{};
 
-  /// The wanted price for EVERY Play region for a USD nominal: Play's own
-  /// `pricing:convertRegionPrices` table (already conventionally rounded
-  /// per market, e.g. ¥840 / ₹550), with nominal parity for
-  /// [nominalParityCurrencies] (€4.99 / £4.99 / $4.99). Pinning the table
-  /// explicitly stops Play's auto-conversion from drifting with FX rates.
-  /// The table's `regionVersion` must accompany every write using it —
-  /// Play rejects regions whose currency changed since the older version
-  /// (e.g. BG is EUR in 2025/03 but BGN in 2022/02).
+  /// Apple's currency → price tables per USD nominal (see
+  /// `AscProvisioner.appleCurrencyPrices`), set by [run]. When a table
+  /// covers a region's currency, that region gets Apple's equalized-tier
+  /// price (exact cross-store parity); uncovered currencies keep Google's
+  /// converted price.
+  Map<String, Map<String, String>> _appleTables = const {};
+
+  /// The wanted price for EVERY Play region for a USD nominal: Apple's
+  /// equalized-tier price per currency when [_appleTables] covers it,
+  /// otherwise Play's own `pricing:convertRegionPrices` table (already
+  /// conventionally rounded per market, e.g. ¥840 / ₹550) with nominal
+  /// parity for [nominalParityCurrencies] (€4.99 / £4.99 / $4.99). Pinning
+  /// the table explicitly stops Play's auto-conversion from drifting with
+  /// FX rates. The table's `regionVersion` must accompany every write
+  /// using it — Play rejects regions whose currency changed since the
+  /// older version (e.g. BG is EUR in 2025/03 but BGN in 2022/02).
   Future<RegionPriceTable> _regionPrices(String priceUsd) async {
     final cached = _regionPriceCache[priceUsd];
     if (cached != null) return cached;
@@ -61,8 +72,9 @@ class PlayProvisioner {
     if (client.isDryRun) {
       _log(
         '  would pin prices in every Play region for USD $priceUsd '
-        '(convertRegionPrices table + EUR/GBP/USD nominal parity) — not '
-        'simulated in dry-run; using $regionCode only',
+        '(Apple equalized tier where available, else convertRegionPrices '
+        '+ EUR/GBP/USD nominal parity) — not simulated in dry-run; using '
+        '$regionCode only',
       );
       return _regionPriceCache[priceUsd] = fallback();
     }
@@ -82,6 +94,8 @@ class PlayProvisioner {
         ((res.json['regionVersion'] as Map<String, Object?>?)?['version']
             as String?) ??
         regionsVersion;
+    final apple = _appleTables[priceUsd];
+    var appleCount = 0;
     final prices = <String, Map<String, Object?>>{};
     for (final entry in converted.entries) {
       final price =
@@ -89,18 +103,29 @@ class PlayProvisioner {
               as Map<String, Object?>?;
       final currency = price?['currencyCode'] as String?;
       if (price == null || currency == null) continue;
-      prices[entry.key] = nominalParityCurrencies.contains(currency)
-          ? moneyFromDecimal(priceUsd, currencyCode: currency)
-          : {
-              'currencyCode': currency,
-              'units': '${price['units'] ?? '0'}',
-              'nanos': price['nanos'] ?? 0,
-            };
+      final applePrice = apple?[currency];
+      if (applePrice != null) {
+        appleCount++;
+        prices[entry.key] = moneyFromDecimal(
+          applePrice,
+          currencyCode: currency,
+        );
+      } else if (apple != null || !nominalParityCurrencies.contains(currency)) {
+        // Apple mode but uncovered currency → Google's converted price;
+        // Google mode → converted price for non-parity currencies.
+        prices[entry.key] = {
+          'currencyCode': currency,
+          'units': '${price['units'] ?? '0'}',
+          'nanos': price['nanos'] ?? 0,
+        };
+      } else {
+        prices[entry.key] = moneyFromDecimal(priceUsd, currencyCode: currency);
+      }
     }
     _log(
       '  region price table for USD $priceUsd: ${prices.length} regions '
-      '(regions version $tableVersion; EUR/GBP/USD at nominal parity, rest '
-      'Google-converted)',
+      '(regions version $tableVersion; '
+      '${apple != null ? '$appleCount at Apple tier prices, rest Google-converted' : 'EUR/GBP/USD at nominal parity, rest Google-converted'})',
     );
     return _regionPriceCache[priceUsd] = (
       prices: prices,
@@ -111,7 +136,13 @@ class PlayProvisioner {
   Future<bool> run({
     required List<BasePlanSpec> basePlans,
     required String lifetimePriceUsd,
+
+    /// Apple's currency → price tables per USD nominal for cross-store
+    /// parity (from `AscProvisioner.appleCurrencyPrices`). When null, pure
+    /// Google-converted pricing with EUR/GBP/USD nominal parity is used.
+    Map<String, Map<String, String>>? appleTables,
   }) async {
+    _appleTables = appleTables ?? const {};
     var ok = true;
     ok = await _ensureSubscription(basePlans) && ok;
     ok = await _ensureOneTimeProduct(lifetimePriceUsd) && ok;

@@ -1361,5 +1361,54 @@ void main() {
         2,
       );
     });
+
+    test('appleCurrencyPrices builds a per-currency table from the '
+        'reference tier', () async {
+      final client = FakeApiClient();
+
+      client.on(
+        'GET',
+        'v1/territories',
+        ApiResponse(200, {
+          'data': [
+            _resource('territories', 'USA', {'currency': 'USD'}),
+            _resource('territories', 'DEU', {'currency': 'EUR'}),
+            _resource('territories', 'FRA', {'currency': 'EUR'}),
+            _resource('territories', 'JPN', {'currency': 'JPY'}),
+          ],
+        }),
+      );
+      const path = 'v1/subscriptions/s1/pricePoints';
+      // FIFO: the reference (USA) lookup finds the USD 4.99 point (tier
+      // 10062), then one scan per currency — USD via USA, EUR via DEU
+      // (FRA shares the currency and gets no own scan), JPY via JPN.
+      for (final price in ['4.99', '4.99', '4.99', '660']) {
+        client.on(
+          'GET',
+          path,
+          ApiResponse(200, {
+            'data': [
+              _resource('subscriptionPricePoints', fakePointId('10062'), {
+                'customerPrice': price,
+              }),
+            ],
+          }),
+        );
+      }
+
+      final provisioner = AscProvisioner(
+        client: client,
+        appId: '1234',
+        log: (_) {},
+      );
+      final table = await provisioner.appleCurrencyPrices(
+        pricePointsPath: path,
+        priceUsd: '4.99',
+      );
+
+      expect(table, {'USD': '4.99', 'EUR': '4.99', 'JPY': '660'});
+      // Reference lookup + one scan per distinct currency (EUR once).
+      expect(client.count('GET', path), 4);
+    });
   });
 }

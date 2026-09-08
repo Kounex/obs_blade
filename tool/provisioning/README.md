@@ -19,9 +19,15 @@ Three subcommands of one entrypoint:
 - **`play-products`** — Google Play: one subscription product (`pro`)
   containing the `pro-yearly` + `pro-monthly` base plans, plus the
   `pro_lifetime` one-time product, with **per-region pricing in all 173
-  Play regions** (Play's own `pricing:convertRegionPrices` table —
-  conventionally rounded per market, e.g. ¥840 / ₹550 — with nominal
-  parity for EUR/GBP/USD, pinned so prices don't drift with FX rates);
+  Play regions**. Default `--price-source apple` pins each region to the
+  **equalized Apple tier price of its currency** (exact cross-store
+  parity, e.g. ¥660 / ₹210 — read live from the ASC products' price
+  points, so it needs the `ASC_*` env vars; currencies Apple doesn't
+  cover keep Google's converted price). `--price-source google` pins
+  Play's own `pricing:convertRegionPrices` table (conventionally rounded
+  per market, e.g. ¥840 / ₹550) with nominal parity for EUR/GBP/USD
+  instead. Either way prices are pinned explicitly so they don't drift
+  with FX rates;
   base plans / purchase option are activated after creation. Writes pass
   the table's `regionVersion` (e.g. 2025/03) — an older version gets
   rejected for regions whose currency changed (BG → EUR).
@@ -164,10 +170,16 @@ carries the legacy-buyer migration).
 dart run bin/provision.dart play-products --dry-run
 dart run bin/provision.dart play-products \
     --service-account-json ~/.config/obs-blade/play-service-account.json
+# Play-converted regional prices instead of Apple-parity (no ASC env needed):
+dart run bin/provision.dart play-products --price-source google
 ```
 
 `--package-name` defaults to the `applicationId` read from
 `android/app/build.gradle` (found by walking up from the current directory).
+`--price-source apple` (the default) reads the matching ASC products' price
+points for the equalized-tier currency table and therefore needs the same
+`ASC_KEY_PATH` / `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_APP_ID` environment
+as `asc-products`.
 
 Creates, if missing: subscription product **`pro`** (`--subscription-id`)
 with base plans **pro-yearly** (`P1Y`) and **pro-monthly** (`P1M`), each with
@@ -189,7 +201,8 @@ products via the same batchUpdate upsert).
 > happens in RevenueCat.
 
 **Manual afterwards:** review products/prices in Play Console (Monetize →
-Products; extend regional pricing beyond US there if wanted), then wire the
+Products; regional pricing is already pinned to Apple's equalized tier
+table per currency by default), then wire the
 products into the RevenueCat entitlement `pro` with store ids
 `pro:pro-yearly`, `pro:pro-monthly`, `pro_lifetime` — see
 `docs/revenuecat-setup.md` §3.

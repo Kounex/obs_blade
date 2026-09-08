@@ -568,6 +568,138 @@ void main() {
       );
     });
 
+    test('apple mode: covered currencies use Apple tier prices, uncovered '
+        'fall back to Google-converted', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      // Region price tables: 24.99 (yearly), 4.99 (monthly), 79.99
+      // (lifetime) — fetched in that order. The yearly table adds GB to
+      // probe the uncovered-currency fallback (GBP is a nominal-parity
+      // currency in google mode, but apple mode leaves it to Google).
+      client.on(
+        'POST',
+        'androidpublisher/v3/applications/$pkg/pricing:convertRegionPrices',
+        ApiResponse(200, {
+          'regionVersion': {'version': '2025/03'},
+          'convertedRegionPrices': {
+            'US': {
+              'price': {
+                'currencyCode': 'USD',
+                'units': '9',
+                'nanos': 990000000,
+              },
+            },
+            'DE': {
+              'price': {
+                'currencyCode': 'EUR',
+                'units': '9',
+                'nanos': 490000000,
+              },
+            },
+            'GB': {
+              'price': {
+                'currencyCode': 'GBP',
+                'units': '21',
+                'nanos': 490000000,
+              },
+            },
+            'JP': {
+              'price': {'currencyCode': 'JPY', 'units': '800'},
+            },
+          },
+        }),
+      );
+      scriptConvertPrices(client, '200');
+      scriptConvertPrices(client, '2600');
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+        ApiResponse(404, null),
+      );
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+        ApiResponse(
+          200,
+          _subscription([
+            {'basePlanId': 'pro-yearly', 'state': 'DRAFT'},
+            {'basePlanId': 'pro-monthly', 'state': 'DRAFT'},
+          ]),
+        ),
+      );
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(404, null),
+      );
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(200, {
+          'productId': 'pro_lifetime',
+          'purchaseOptions': [
+            {'purchaseOptionId': 'pro-lifetime', 'state': 'DRAFT'},
+          ],
+        }),
+      );
+
+      final provisioner = PlayProvisioner(
+        client: client,
+        packageName: pkg,
+        log: logs.add,
+      );
+      final ok = await provisioner.run(
+        basePlans: basePlans,
+        lifetimePriceUsd: '79.99',
+        // Only the yearly nominal has an Apple table — monthly/lifetime
+        // stay in google mode.
+        appleTables: const {
+          '24.99': {'USD': '24.99', 'EUR': '24.99', 'JPY': '660'},
+        },
+      );
+
+      expect(ok, isTrue);
+      final createBody = client
+          .bodiesFor(
+            'POST',
+            'androidpublisher/v3/applications/$pkg/subscriptions',
+          )
+          .single;
+      final yearlyPlan = (createBody['basePlans'] as List)
+          .whereType<Map>()
+          .firstWhere((b) => b['basePlanId'] == 'pro-yearly');
+      final yearlyConfigs = {
+        for (final c
+            in (yearlyPlan['regionalConfigs'] as List).whereType<Map>())
+          c['regionCode'] as String: c['price'] as Map,
+      };
+      expect(yearlyConfigs.keys, ['DE', 'GB', 'JP', 'US']);
+      expect(yearlyConfigs['DE'], {
+        'currencyCode': 'EUR',
+        'units': '24',
+        'nanos': 990000000,
+      });
+      expect(yearlyConfigs['US'], {
+        'currencyCode': 'USD',
+        'units': '24',
+        'nanos': 990000000,
+      });
+      // Covered by the Apple table: the equalized ¥660, NOT Google's ¥800.
+      expect(yearlyConfigs['JP'], {
+        'currencyCode': 'JPY',
+        'units': '660',
+        'nanos': 0,
+      });
+      // Uncovered currency: Google's converted price, not nominal parity.
+      expect(yearlyConfigs['GB'], {
+        'currencyCode': 'GBP',
+        'units': '21',
+        'nanos': 490000000,
+      });
+      expect(logs.any((l) => l.contains('at Apple tier prices')), isTrue);
+    });
+
     test('re-applies the listing when its title drifted', () async {
       final client = FakeApiClient();
       final logs = <String>[];

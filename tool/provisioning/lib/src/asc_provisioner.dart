@@ -627,6 +627,53 @@ class AscProvisioner {
     return tier;
   }
 
+  /// Currency → locally conventional price for [priceUsd] across Apple's
+  /// storefronts, derived from the equalized Apple tier of the reference
+  /// ([territoryId]) price point — e.g. USD 4.99 → {USD: 4.99, EUR: 4.99,
+  /// JPY: 660, SEK: 64, …}. Scans one representative territory per currency
+  /// (territories sharing a currency share the tier price). Used to drive
+  /// Play per-region pricing for exact cross-store parity. Returns an empty
+  /// map (with a warning) when the reference tier can't be resolved.
+  Future<Map<String, String>> appleCurrencyPrices({
+    required String pricePointsPath,
+    required String priceUsd,
+  }) async {
+    final table = <String, String>{};
+    final tier = _priceTierOf(
+      await _findPricePoint(pricePointsPath, priceUsd, territory: territoryId),
+    );
+    if (tier == null) {
+      _log(
+        '  WARNING: no reference price point for USD $priceUsd in '
+        '$territoryId — cannot build the Apple currency table',
+      );
+      return table;
+    }
+    final territories = await client.get('v1/territories', {'limit': '200'});
+    final representative = <String, String>{}; // currency → territory id
+    for (final t in territories.dataList) {
+      final currency =
+          (t['attributes'] as Map<String, Object?>?)?['currency'] as String?;
+      final id = t['id'] as String?;
+      if (currency != null && id != null) {
+        representative.putIfAbsent(currency, () => id);
+      }
+    }
+    for (final entry in representative.entries) {
+      final match = await _findSameTierPricePoint(
+        pricePointsPath,
+        tier,
+        territory: entry.value,
+      );
+      if (match != null) table[entry.key] = match.price;
+    }
+    _log(
+      '  Apple currency table for USD $priceUsd: ${table.length} currencies '
+      '(tier $tier)',
+    );
+    return table;
+  }
+
   Future<String> _ensureInAppPurchase() async {
     final existing = await client.get('v1/apps/$appId/inAppPurchasesV2', {
       'filter[productId]': lifetimeProductId,
