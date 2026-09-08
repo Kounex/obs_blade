@@ -136,3 +136,32 @@ introduced **no** regressions (slightly darker than scaffold).
 | E20 | should-fix | Token-debt sweep (211 colors…) unowned/unsequenced | Open decision §6.9 |
 | E21 | note | New token homes (files) unstated | Phase 4 spec |
 | E22 | note | 8-tile orphan row: open decision or oversight? | Confirmed open decision §6.7 |
+
+---
+
+## Gate 2b (2026-09-08) — user-run fresh evaluation vs mock v9
+
+Single agent (UI/UX consistency + accessibility lens), prompt per the evaluation
+brief. Verified all headline v9 fixes (text ladder 5.79/4.76:1, segment label
+9.45:1, PGM tags 4.56:1 + `--program`, ghost 35%, combinable demo states, Edit-
+password routing, neutral mod text, highlight checkbox, neutral benefit tiles,
+duplicate paywall title). Findings — all accepted:
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| F1 | blocker | PGM disappears when program==preview (JS overwrites; shipping rule at `scene_button.dart:50-63` is PGM-wins) | v10: PGM precedence; PVW-green exception ratified (§1.7) |
+| F2 | blocker | Reconnecting blocks input partially: LIVE/REC pills still command-active, keyboard bypasses scrim | v10: full inert (pointer+keyboard, guarded handlers, nav-only live); §5 contract |
+| F3 | blocker | Composition gates remove/merge elements: studioConfig:false drops whole transition row; Transition+Config merged though separately persisted (`dashboard_element.dart:18-22`); constrains tablet composition | v10: split elements, checkbox-only gate, code-order default |
+| F4 | blocker | Switch track 32% measured **2.90:1** — fails the 3:1 bar it was chosen to meet | v10 + §2.6: 35% (3.21:1) |
+| F5 | should-fix | BEST VALUE 4.19:1 after nested tints composite (15% badge on 5% hero) | v10: badge tint 8% (4.59:1); nested-tint rule §2.3 |
+| F6 | should-fix | Eye/mute glyphs don't change with state (class toggle only) | v10: glyph swap + aria labels |
+| F7 | should-fix | Auth actions focusable when hidden (opacity≠inert); targets 89×16/18×20px | v10: visibility-hidden, 44px targets, focus → Manual |
+| F8 | should-fix | Glass bars are flex siblings — content never scrolls beneath them; glass never demonstrated | v10: overlay bars + content insets; §3 "bars float" |
+| F9 | should-fix | Navbar collapses to 25px when action slots empty (Statistics landing, Settings) | v10 + §3: shared 55px min-height |
+| F10 | should-fix | Raw `--accent` text survives (tab labels, transition ghost); QR corners accent (→highlight); auth toast uses emphasized (→standard) | v10 |
+| F11 | note | Favorite-on hardcoded #FFD60A; meters flat green vs documented gradient exception | v10: `--favorite` token + meter gradient; §1.7/§2.2 |
+| F12 | note | Stale mock token notes ("white 5%" cards; 17px/700 claim without caveat) | v10: notes synced |
+
+Verdict recorded: mock not ready for lab/token freeze → v10 batch. Filled-CTA
+restraint, neutral decorative tiles, solid toasts, pair composition: checked,
+clean.
