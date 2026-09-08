@@ -78,17 +78,17 @@ resolves (either way):** delete
 one-time registration token) and discard the Play internal-track draft
 release `3.3.0 (2026090701)`. Pubspec build number stays `2026090701`.
 
-**RevenueCat dashboard (in progress, maintainer):** project + both apps
-exist, Play↔RC link works (monthly imported from Play). Open:
-1. Add `pro_yearly` + `pro_lifetime` in RC — lifetime is a
-   **non-consumable**; attach all three to entitlement `pro` +
-   offering/packages per [`revenuecat-setup.md`](revenuecat-setup.md) §3.
-2. Verify Play RTDN: test notification in Play Console was failing on
+**RevenueCat wired (2026-09-08):** products + entitlement `pro` +
+offering exist dashboard-side, and the public SDK keys are pasted in
+`lib/utils/revenuecat_config.dart` — the app now runs the RevenueCat
+path by default on iOS/Android/macOS (`test/pro/` green, incl. the
+reworked backend-selection fixture). Open:
+1. Verify Play RTDN: test notification in Play Console was failing on
    Pub/Sub permissions (topic `projects/obs-blade/topics/Play-Store-Notifications`);
    service account is admin again — retry, allow propagation time.
-3. Paste the two public SDK keys into `lib/utils/revenuecat_config.dart`
-   → §5 verification (`test/pro/` + sandbox dogfood).
-4. Apple Small Business Program: enroll on the Apple developer site
+2. Sandbox dogfood per [`revenuecat-setup.md`](revenuecat-setup.md) §5
+   (live prices, buy → entitlement, reinstall restore, lapse revokes).
+3. Apple Small Business Program: enroll on the Apple developer site
    (15% commission) if not yet done; Play's tiers are automatic.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses

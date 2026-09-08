@@ -6,13 +6,13 @@ import 'package:flutter/foundation.dart';
 const String kProEntitlementId = 'pro';
 
 /// RevenueCat public SDK keys ("API keys" in the dashboard, one per
-/// store). EMPTY = RevenueCat not configured yet — the app then runs the
+/// store). EMPTY = RevenueCat not configured — the app then runs the
 /// legacy direct-`in_app_purchase` pro path ([revenueCatConfigured] is
-/// false). The maintainer fills these in once the RevenueCat account,
-/// app entries and store-product links exist; no other code change is
-/// needed to flip the app over.
-const String kRevenueCatAppleApiKey = '';
-const String kRevenueCatGoogleApiKey = '';
+/// false). The real keys are filled in on `master`; the foss strip
+/// blanks them again, which keeps the legacy path with no RC SDK
+/// contact.
+const String kRevenueCatAppleApiKey = 'appl_NZGxSIrVfToCjPdOuPbzVqDizTt';
+const String kRevenueCatGoogleApiKey = 'goog_vAmJOhHOtjqXKvfzBrchUfJPEol';
 
 /// The platform's RevenueCat key, or null when there is none for this
 /// platform (key empty, or a platform RevenueCat doesn't serve here —

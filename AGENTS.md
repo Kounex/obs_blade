@@ -125,22 +125,18 @@ override via long-press on the paywall hero). Product ids
 (`lib/utils/pro_ids.dart`): `pro_yearly` / `pro_monthly` (subs) +
 `pro_lifetime` (non-consumable) — **created + priced store-side**
 (2026-09, via `tool/provisioning/`; ASC submitted for review, Play
-ACTIVE), so the paywall (`lib/views/pro/`, full-screen route `Pro` on
-Home + Settings tab navigators) still renders its placeholder state only
-until the RevenueCat keys land. Wiring
-to ship: **RevenueCat** (`purchases_flutter`, entitlement `pro`) — full
-checklist in [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md)
-(products exist with the exact ids; attach them to the entitlement, paste
-two
-public SDK keys into `lib/utils/revenuecat_config.dart`; the app
-auto-switches from the legacy direct-IAP fallback when keys are present).
+ACTIVE), and the RevenueCat keys are pasted
+(`lib/utils/revenuecat_config.dart`) so the app runs the **RevenueCat**
+path (`purchases_flutter`, entitlement `pro`) instead of the legacy
+direct-IAP fallback. Checklist + sandbox dogfood:
+[`docs/revenuecat-setup.md`](docs/revenuecat-setup.md).
 Gates live at the chat-bar
 engine switch (lock badge + intercept), the native chat pane (upsell),
 and the username-bar cluster — all `Observer`s over `ProStore.isPro`;
 WebView chat stays free forever (strategy:
 `docs/private/monetization-strategy.md`). Restore = RC restore / cold-start
-guarded `restorePurchases()` (legacy path) + explicit button. Once RC keys
-land, CustomerInfo entitlement state is the truth (lapsed subscriptions
+guarded `restorePurchases()` (legacy path) + explicit button. On the RC
+path, CustomerInfo entitlement state is the truth (lapsed subscriptions
 revoke — the direct-IAP blind spot is fixed); `BoughtPro` is the offline
 mirror. foss branch: strip this additively (same pattern as
 tips/blacksmith).

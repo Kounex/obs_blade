@@ -92,10 +92,10 @@ validated server-side). macOS uses the Apple key too.
 
 ## 5. Verify
 
-1. `flutter test test/pro/` — note: the "empty keys → legacy
-   selection" test is marked with a revisit comment
-   (`test/pro/revenuecat_pro_gateway_test.dart`); once keys are real it
-   needs a fixture tweak, not a behavior fix.
+1. `flutter test test/pro/` — the backend-selection tests now pin the
+   real-keys default (RevenueCat on iOS/Android/macOS, legacy on
+   key-less platforms like desktop/web — the foss strip's empty-keys
+   state).
 2. Sandbox dogfood (physical device, sandbox tester / license tester):
    - paywall now shows live prices (placeholder state replaced),
    - buy `pro_yearly` → confetti + entitlement → native chat unlocks

@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-08 — RevenueCat keys live
+
+- **RevenueCat path now the default:** maintainer completed the RC
+  dashboard (products `pro_yearly`/`pro_monthly`/`pro_lifetime`,
+  entitlement `pro`, default offering); public SDK keys pasted into
+  `lib/utils/revenuecat_config.dart` → `revenueCatConfigured` true on
+  iOS/Android/macOS, app runs `RevenueCatProGateway` instead of the
+  legacy direct-IAP fallback (empty keys remain the foss strip state).
+- Backend-selection fixture reworked
+  (`test/pro/revenuecat_pro_gateway_test.dart`): pins the real-keys
+  default per platform via `debugDefaultTargetPlatformOverride` (RC on
+  iOS/Android/macOS, legacy on key-less platforms) instead of the old
+  empty-keys pinning test. `test/pro/` 63/63 green.
+- Remaining RC follow-ups (dashboard/maintainer): Play RTDN test
+  notification retry, sandbox dogfood per `revenuecat-setup.md` §5,
+  Apple Small Business Program enrollment.
+
 ## 2026-09-08 — Store pricing parity, ASC review submission prep, paywall fix
 
 - **Pricing finalized, exact cross-store parity** (`tool/provisioning/`,

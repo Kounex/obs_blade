@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/purchase_base.dart';
@@ -131,14 +132,32 @@ void main() {
   });
 
   group('backend selection', () {
-    /// The repo ships with EMPTY RevenueCat keys — this pins the dual-path
-    /// default. Once the maintainer fills the keys in
-    /// `revenuecat_config.dart`, this test SHOULD be revisited (it will
-    /// fail on iOS/Android-typed platforms by design).
-    test('empty keys → RevenueCat not configured, default service uses the '
-        'legacy IAP backend', () {
-      expect(kRevenueCatAppleApiKey, isEmpty);
-      expect(kRevenueCatGoogleApiKey, isEmpty);
+    /// The repo ships with the real RevenueCat keys — store platforms
+    /// default to the RevenueCat backend. The foss strip blanks the keys
+    /// and lands back on the legacy path ([revenueCatConfigured] false).
+    test('keys present → iOS/Android/macOS use the RevenueCat backend', () {
+      expect(kRevenueCatAppleApiKey, startsWith('appl_'));
+      expect(kRevenueCatGoogleApiKey, startsWith('goog_'));
+
+      for (final platform in [
+        TargetPlatform.iOS,
+        TargetPlatform.android,
+        TargetPlatform.macOS,
+      ]) {
+        debugDefaultTargetPlatformOverride = platform;
+        expect(revenueCatConfigured, isTrue, reason: '$platform');
+        expect(ProPurchaseService().handlesEntitlement, isTrue,
+            reason: '$platform');
+      }
+      debugDefaultTargetPlatformOverride = null;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    });
+
+    test('desktop/web-typed platforms (no key) stay on the legacy path',
+        () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+
       expect(revenueCatConfigured, isFalse);
       expect(ProPurchaseService().handlesEntitlement, isFalse);
     });
