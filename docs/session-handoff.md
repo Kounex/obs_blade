@@ -100,9 +100,16 @@ table (incl. CustomTheme re-mapping). **Phase 1 audit COMPLETE** (plan
 screenshots (untracked, contain LAN IPs) in
 `docs/redesign/2026-iteration/before-{phone,tablet}/` — phone set has a
 custom purple theme active, tablet set is the default-theme color
-baseline. **Next: Phase 2** — animated Liquid Glass browser mockups of
-Dashboard / Scenes / Paywall (phone first, tablet Dashboard), offer the
-visual companion at the first mockup. Before Phase 2 "after" captures:
+baseline. **Phase 2 IN PROGRESS** — companion server running (port in
+`.superpowers/brainstorm/`, gotchas:
+[`superpowers/visual-companion-gotchas.md`](superpowers/visual-companion-gotchas.md));
+unified mockup shell `all-views-v4.html` (Connect/Scenes/Paywall/
+Dashboard segments; user naming: "Dashboard" = NOT-connected connect
+view, "Scenes" = connected control surface). Dashboard v2 restraint
+language ratified by user; Scenes/Paywall/Connect v1 awaiting judgment
+calls (neutral sliders, outlined hero logo, compacted wordmark). Full
+Phase 2 state checkpoint: `.superpowers/sdd/progress.md` (gitignored).
+Mockup builder: resume subagent agent-11. Before Phase 2 "after" captures:
 fix the two pre-existing bugs the walk surfaced
 (`text_field_date.dart:29` LateInitializationError + duplicate
 GlobalKey; Tip Jar settings-row hit-test miss). Runner scheme no longer
