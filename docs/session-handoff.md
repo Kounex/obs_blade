@@ -3,9 +3,10 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-09** (4.0
-iteration at v12 mock after Gates 1/2/2b + user polish batch; store
+iteration at v12 mock after Gates 1/2/2b + user polish batch; design lab
+dropped — implementation goes live on branch `4.0-liquid-glass`; store
 products + RevenueCat wired; next: user eyes on v12, then tablet frame →
-design lab → Gate 3).
+branch implementation → Gate 3).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -110,7 +111,10 @@ v10 (Gate 2b) + user-directed batch: neutral cards, borderless auth
 toast, neutral connect-method segment (accent underline was "ai slop"),
 paywall hero dedup (logo carries the wordmark — h2 dropped). **Next,
 in order:** user eyes on v12 → tablet connected-view frame (mock) →
-Flutter design lab (`tool/design_lab/`) → Gate 3 (fresh review, findings
+**implementation in the live app on branch `4.0-liquid-glass`** (design
+lab dropped, user 2026-09-09 — tokens additive-first, per-screen commits,
+unmerged until Gate 3; token-delta §8) → Gate 3 (fresh review of branch
+diff + on-device feel + tokens, findings
 to user first) → Phase 4 spec. Companion server running (port/key in
 `.superpowers/brainstorm/`, gotchas:
 [`superpowers/visual-companion-gotchas.md`](superpowers/visual-companion-gotchas.md)).
@@ -130,8 +134,11 @@ any future non-sliver full-screen tab route.
 1. **Finish RevenueCat** (above) → sandbox dogfood per
    `revenuecat-setup.md` §5.
 2. **4.0 mock loop** (see the 4.0 paragraph): user reviews **v12**, then
-   tablet connected-view frame → Flutter design lab → Gate 3 (findings
-   triaged to the user before applying — standing rule).
+   tablet connected-view frame → branch implementation (`4.0-liquid-glass`)
+   → Gate 3 (findings
+   triaged to the user before applying — standing rule). Color groups must
+   resolve uniformly across elements AND platforms (token-delta §1 rule 8)
+   — the future per-group CustomTheme surface.
 3. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.

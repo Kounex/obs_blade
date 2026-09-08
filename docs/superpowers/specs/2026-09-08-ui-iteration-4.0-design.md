@@ -21,11 +21,14 @@ code** — not the redesign itself (that gets its own spec in Phase 4).
   signature color changes, and CustomTheme slot re-mapping (with
   migration designed explicitly if it happens).
 - **Fidelity strategy:** animated browser mockups for breadth (cheap
-  iteration), a throwaway Flutter design lab for finalists (real
-  springs/scroll/blur on device). Browser → Flutter translation is ~1:1
+  iteration). ~~a throwaway Flutter design lab for finalists~~ **Superseded
+  (user, 2026-09-09):** on-device validation happens **in the live app on a
+  git branch** (see Phase 3) — a shadow-clone lab would drift from the real
+  app ("too many gaps"); the branch gives real widgets/data/navigation with
+  full rollback. Browser → Flutter translation is ~1:1
   for tokens (hex, px, durations, cubic-bezier ↔ `Cubic()`); it degrades
   for gesture physics, platform text rendering, backdrop-blur quality —
-  exactly what the lab exists to validate.
+  exactly what the branch build exists to validate.
 
 ## Phase 1 — Current-state audit (read-only)
 
@@ -55,19 +58,27 @@ code** — not the redesign itself (that gets its own spec in Phase 4).
   tab (local mockup server offered just-in-time when the first mockup is
   ready).
 
-## Phase 3 — Token delta + Flutter design lab
+## Phase 3 — Token delta + implementation branch
 
 - **Token diff:** concrete proposed edits to `app_motion.dart`,
   `app_status_colors.dart` / color defaults, type scale, radii + any new
   Liquid Glass tokens (blur intensities, specular opacity, glass border
   treatment).
-- **Design lab:** throwaway Flutter app in `tool/design_lab/` rendering
-  the three hero surfaces with real app widgets where practical and the
-  new tokens applied — run on device/simulator to judge springs, scroll
-  feel, blur quality.
-- **Legacy-theme toggle:** if the direction implies CustomTheme
-  re-mapping, the lab shows what an existing saved theme renders like
-  under the new mapping before any migration is committed to.
+- **Implementation branch (replaces the throwaway design lab — user
+  decision 2026-09-09):** branch `4.0-liquid-glass` off `master`. Tokens
+  land first as additive ThemeExtensions (zero visual diff, suite green),
+  then screens migrate one per commit, screenshot-verified
+  (`tool/visual_qa/`) against the Phase-1 baseline. Run on device/simulator
+  from the branch to judge springs, scroll feel, blur quality for real.
+  Branch rebases onto `master` frequently and stays unmerged until Gate 3
+  passes; full rollback = abandon the branch.
+- **Color groups (user directive 2026-09-09):** every colored element
+  resolves to a named group token, identically on iOS and Android — no
+  framework-default color leaks. The group set is designed as the future
+  per-group CustomTheme surface (token-delta §1 rule 8).
+- **Legacy-theme toggle:** the branch build shows what an existing saved
+  CustomTheme renders like under the new group mapping before any migration
+  is committed to.
 
 ## Phase 4 — Redesign spec + handoff
 
@@ -78,16 +89,23 @@ code** — not the redesign itself (that gets its own spec in Phase 4).
   rules.
 - That spec goes through the normal pipeline (writing-plans →
   implementation). Phase-1 screenshots serve as the visual baseline.
-- Design lab is deleted or archived once the app adopts the tokens.
+- ~~Design lab is deleted or archived once the app adopts the tokens.~~
+  (Lab dropped 2026-09-09 — the `4.0-liquid-glass` branch IS the validation
+  vehicle; it merges after Gate 3 or is abandoned as the rollback path.)
 
 ## Error handling / risks
 
-- **Browser mockup oversells motion** — mitigated by Phase 3 lab gate;
-  nothing ships that hasn't been felt on device.
+- **Browser mockup oversells motion** — mitigated by the branch build gate;
+  nothing ships that hasn't been felt on device in the real app.
 - **Scope creep into app code during exploration** — hard rule: no edits
-  under `lib/` until the Phase 4 spec is approved.
-- **Mockup/lab drift** — parameters always named as app tokens; the lab
-  imports the real token files where feasible rather than copying values.
+  under `lib/` on `master` until the Phase 4 spec is approved; all 4.0 code
+  lives on the `4.0-liquid-glass` branch.
+- **Mockup/implementation drift** — parameters always named as app tokens;
+  the branch applies the real token files directly (no copied values), and
+  per-screen screenshots are diffed against the Phase-1 baseline.
+- **Branch drift vs `master`** (500k-user hotfixes land there) — rebase the
+  branch frequently; keep it unmerged until Gate 3 so rollback stays
+  trivial.
 - **500k-user compatibility** — CustomTheme migration (if any) is a
   first-class spec section, not an afterthought; persistence hard rules
   from `docs/persistence-risk.md` still apply to any Hive changes.

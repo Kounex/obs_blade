@@ -4,7 +4,8 @@
 or implementer) should be able to read only this file and know what exists, what is
 ratified, what is open, and where every artifact lives. Keep it current — update it
 whenever state moves. Last updated: 2026-09-09 (v12 mock — user-directed
-polish batch on top of Gate 2b's v10 + token delta v3, pre-design-lab).
+polish batch on top of Gate 2b's v10 + token delta v3; implementation route
+changed to live-app branch, pre-implementation).
 
 ## The goal
 
@@ -39,8 +40,18 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
    read as template chrome → neutral thumb + white label, iOS-style), paywall
    hero double naming fixed (the "OBS Blade Pro" h2 dropped — the logo already
    carries the wordmark; the value line steps up as the headline).
-9. **Next:** Flutter design lab (`tool/design_lab/`), tablet connected-view frame,
-   then Gate 3 (fresh review of lab + tokens), Phase 4 spec, implementation.
+9. **Implementation route changed (user, 2026-09-09): NO design-lab shadow
+   clone.** The throwaway `tool/design_lab/` step is dropped — a parallel app
+   would inevitably drift from the real one ("too many gaps"). Instead:
+   implement **in the live app on a git branch** (`4.0-liquid-glass` off
+   `master`, frequent rebases, unmerged until Gate 3) — real widgets/data/
+   navigation on both platforms, full rollback by abandoning the branch.
+   Tokens first (additive ThemeExtensions, zero visual diff), then per-screen
+   migration. Details: token-delta §8.
+10. **Next:** user eyes on v12 → tablet connected-view frame (mock) → branch
+    implementation per token-delta §8 → Gate 3 (fresh review of the branch
+    diff + on-device feel + tokens; findings to user first) → Phase 4 spec →
+    merge.
 
 ## Artifact map
 
@@ -81,8 +92,8 @@ reverted. Taste-affecting changes are the user's call, always.)
 The mock is a **direction artifact, not a blueprint**. Implementation restyles the
 app's real components (`BaseCard`, `BaseIconButton`, settings rows, scene grid…)
 with the new tokens — their actual layouts, icons and sizing stay unless the
-direction explicitly changes them — and the Flutter design lab (on-device) is
-where sizing and feel get judged, not the browser.
+direction explicitly changes them — and the live implementation branch
+(on-device, token-delta §8) is where sizing and feel get judged, not the browser.
 
 **Authoritative (binding, evaluate hard):** color tokens & grammar; material
 rules (glass only on floating layers, specular, toasts solid); motion tokens
@@ -104,6 +115,13 @@ over-weighted; calibrate accordingly.)
   transient affordances; green = streaming-live only; toasts = near-opaque solid.
 - One accent moment per screen; glass only on floating layers; spring release only
   on ≥44pt targets; decorative icon tiles neutral.
+- **Color groups, uniform across elements AND platforms** (user, 2026-09-09 —
+  token-delta §1 rule 8): every colored element resolves to a named group token,
+  identical on iOS/Android, no framework-default leaks; the group set is the
+  future per-group CustomTheme surface.
+- **Implementation route: live app on git branch `4.0-liquid-glass`, NO
+  design-lab shadow clone** (user, 2026-09-09 — token-delta §8). Full rollback
+  = abandon the branch; unmerged until Gate 3 passes.
 - Composition model of the connected view (one view, many states — NOT separate
   pages per feature).
 - **Token values in `token-delta.md` — that doc wins every conflict** (the mock

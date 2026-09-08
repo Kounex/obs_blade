@@ -62,6 +62,23 @@ composite stack, not the base.
    (constant) and brand accent (themable) — distinguished by token, never mixed
    on one element. Favorite/star-on = named `favorite` token (#FFD60A), not a
    hardcoded hex.
+8. **Color groups, uniform everywhere (user directive 2026-09-09).** Every
+   colored element resolves to a **named group token** — accent
+   (brand/selection), highlight (control states/affordances), status constants,
+   text levels, surfaces — and the resolution is **identical on both
+   platforms**: adaptive widgets must resolve the same token on iOS and
+   Android, and no color may come from a framework default
+   (`ColorScheme.fromSwatch` without an explicit `primarySwatch`,
+   `Colors.blue`, M3 fallbacks). *Why:* the group set **is** the future
+   CustomTheme surface — it must be designed so users can later recolor each
+   group, with today's `accentColorHex`/`highlightColorHex` slots becoming two
+   of them. **Known drift the implementation must fix** (found 2026-09-09):
+   mute/visibility icons read `buttonTheme.colorScheme.primary` = Material
+   default blue #2196F3, not the highlight token (`audio_slider.dart`,
+   `scene_item_tile.dart`); switches resolve **red on iOS** (switchTheme →
+   accent) but **blue on Android** (M3 `colorScheme.primary` fallback);
+   `sliderColor = Colors.transparent` under custom themes
+   (`app.dart` ~line 67) makes themed slider thumbs invisible.
 
 ## 2. Color tokens
 
@@ -110,8 +127,8 @@ dark surfaces / toward black for light surfaces.
 White on #FF4654 = 3.36:1 at any weight. Rule: **filled accent CTAs use 17pt/700
 labels** — 17pt bold qualifies as WCAG large text (3:1 bar, passes). Caveat:
 this means Flutter logical pixels (`fontSize: 17, FontWeight.w700` ≈ 17pt);
-CSS-equivalent 17px (=12.75pt) does NOT qualify — the design lab must confirm
-the rendered size reads as intended.
+CSS-equivalent 17px (=12.75pt) does NOT qualify — the on-device branch build
+must confirm the rendered size reads as intended.
 
 ### 2.5 Card color — neutral (user-ratified)
 
@@ -170,7 +187,8 @@ Deltas:
 3. **`StaggeredEntrance` gains optional `scaleFrom` (0.985)** — mock entrances are
    rise **+** 2% scale settle; current widget is rise-only.
 4. **Pane switches: 12px rise + fade at `medium` + `emphasized`** (toasts/hints
-   keep `standard`). Final curve feel is confirmed on-device in the design lab.
+   keep `standard`). Final curve feel is confirmed on-device on the
+   implementation branch.
 
 ### Reduced-motion seam — built from zero (nothing exists in `lib/` today)
 
@@ -268,8 +286,15 @@ Mapping:
 
 ## 8. Verification path
 
-Phase 3b stands up `tool/design_lab/` — a runnable Flutter sandbox rendering these
-tokens as real components (GlassBar over scrolling content, Pressable variants,
-StaggeredEntrance, calm chips, sliders, pills, reconnecting/auth states) for
-on-device feel (springs, blur, scroll, reduced-motion). Gate 3 is a fresh-session
-review of this doc + the lab against the mock before any app code changes.
+~~Phase 3b design lab~~ **superseded (user decision 2026-09-09): no shadow-clone
+lab.** Implementation happens **in the live app on a git branch**
+(`4.0-liquid-glass` off `master`) — maximum fidelity (real widgets, real data,
+real navigation, both platforms), full rollback by abandoning the branch. Order:
+tokens land **first** as additive ThemeExtensions (zero visual diff, suite
+green), then per-screen migration — one screen per commit, screenshot-verified
+(`tool/visual_qa/`) against the Phase-1 baseline set. On-device dogfood from the
+branch (workstation upgrade-install, data preserved) is where springs, blur,
+scroll feel and sizing get judged. The branch rebases onto `master` frequently
+and stays **unmerged until Gate 3 passes**. Gate 3 is a fresh-session review of
+this doc + the branch diff + on-device feel against the mock — findings triaged
+to the user before applying (standing rule).

@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-09 — 4.0: color-group directive + branch replaces design lab
+
+- **Color groups ratified (user directive):** every colored element must
+  resolve to a named group token, identically on iOS/Android — no
+  framework-default leaks — and the group set is the future per-group
+  CustomTheme surface. Added as token-delta §1 rule 8, incl. three known
+  drift items found during the color-logic audit of the shipping app:
+  mute/visibility icons ride Material default blue via
+  `ColorScheme.fromSwatch` (no `primarySwatch`), switches split
+  red(iOS)/blue(Android), `sliderColor = Colors.transparent` under custom
+  themes (`app.dart`).
+- **Implementation route changed (user decision):** the throwaway
+  `tool/design_lab/` step is dropped — implementing happens in the live app
+  on branch `4.0-liquid-glass` (tokens additive-first, per-screen commits,
+  screenshot-verified vs the Phase-1 baseline, unmerged until Gate 3; full
+  rollback = abandon branch). Updated: workflow spec Phase 3 + risks,
+  token-delta §2.4/§4/§8, state-and-plan (next chain, ratified list),
+  handoff. Rationale: a shadow clone would drift from the real app; the
+  branch is maximally real with rollback intact.
+
 ## 2026-09-09 — 4.0 UI iteration: v11–v12 user-directed mock polish
 
 - Context: previous MacBook session (herdr pane, kimi) ran the Gate-2/2b
