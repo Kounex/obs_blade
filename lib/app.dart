@@ -31,10 +31,7 @@ class App extends StatelessWidget {
     Color? canvasColor;
     Color? cardColor;
     Color? indicatorColor;
-    Color? toggleableActiveColor;
-    Color? sliderColor;
     Color? appBarColor;
-    Color? buttonColor;
     Color? tabBarColor;
     Color? dividerColor;
 
@@ -63,10 +60,7 @@ class App extends StatelessWidget {
         canvasColor = activeCustomTheme.cardColorHex.hexToColor();
         cardColor = activeCustomTheme.cardColorHex.hexToColor();
         indicatorColor = activeCustomTheme.highlightColorHex.hexToColor();
-        toggleableActiveColor = activeCustomTheme.accentColorHex.hexToColor();
-        sliderColor = Colors.transparent;
         appBarColor = activeCustomTheme.appBarColorHex.hexToColor();
-        buttonColor = activeCustomTheme.accentColorHex.hexToColor();
         tabBarColor = activeCustomTheme.tabBarColorHex.hexToColor();
         dividerColor = activeCustomTheme.dividerColorHex?.hexToColor();
       }
@@ -78,6 +72,44 @@ class App extends StatelessWidget {
             : ThemeData.dark());
 
     final TextTheme appTextTheme = buildAppTextTheme(baseThemeData.textTheme);
+
+    /// Resolved color groups (token-delta §1 rule 8): accent = brand /
+    /// selection, highlight = interactive control states + transient
+    /// affordances. Every colored element resolves one of these (or a
+    /// status/text extension) - never a framework default.
+    final Color accent = accentColor ?? StylingHelper.accent_color;
+    final Color highlight = hightlightColor ?? StylingHelper.highlight_color;
+
+    Color onGroup(Color group) =>
+        ThemeData.estimateBrightnessForColor(group) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+
+    /// Explicit slots - no `ColorScheme.fromSwatch` (its default blue
+    /// primarySwatch leaked Material #2196F3 into `primary`). Both
+    /// `primary` and `secondary` resolve the highlight group: every
+    /// existing reader of either slot is a control-state / link /
+    /// transient-affordance consumer (switches, sliders, meter highlight,
+    /// chat links). The accent group lives on `buttonTheme.colorScheme`
+    /// (brand/selection consumers read that accessor already).
+    final ColorScheme appColorScheme = ColorScheme(
+      brightness: brightness ?? Brightness.dark,
+      primary: highlight,
+      onPrimary: onGroup(highlight),
+      secondary: highlight,
+      onSecondary: onGroup(highlight),
+      surface: brightness != null && brightness == Brightness.light
+          ? Colors.white
+          : Colors.grey[800]!,
+      onSurface: brightness != null && brightness == Brightness.light
+          ? Colors.black
+          : Colors.white,
+      error: Colors.red[700]!,
+      onError: brightness != null && brightness == Brightness.light
+          ? Colors.white
+          : Colors.black,
+      background: backgroundColor ?? StylingHelper.primary_color,
+    );
 
     /// One label family for every text field (BaseAdaptiveTextField and
     /// plain TextFormField alike): same size/color everywhere, only the
@@ -218,23 +250,18 @@ class App extends StatelessWidget {
       ),
 
       sliderTheme: SliderThemeData(
-        activeTickMarkColor:
-            Colors.transparent, // sliderColor ?? StylingHelper.highlight_color,
-        activeTrackColor:
-            Colors.transparent, //sliderColor ?? StylingHelper.highlight_color,
-        valueIndicatorColor: sliderColor ?? StylingHelper.highlight_color,
-        thumbColor: sliderColor ?? StylingHelper.highlight_color,
+        activeTickMarkColor: Colors.transparent,
+        activeTrackColor: Colors.transparent,
+        valueIndicatorColor: highlight,
+        thumbColor: highlight,
         thumbShape: BorderRoundSliderThumbShape(
           borderColor: StylingHelper.surroundingAwareAccent(
             surroundingColor: cardColor ?? StylingHelper.primary_color,
           ),
         ),
-        overlayColor:
-            (sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
-        inactiveTrackColor:
-            (sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
-        inactiveTickMarkColor: Colors
-            .transparent, //(sliderColor ?? StylingHelper.highlight_color).withOpacity(0.3),
+        overlayColor: highlight.withOpacity(0.3),
+        inactiveTrackColor: highlight.withOpacity(0.3),
+        inactiveTickMarkColor: Colors.transparent,
       ),
 
       tabBarTheme: TabBarThemeData(
@@ -249,11 +276,16 @@ class App extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
       ),
 
+      /// The accent group accessor: brand/selection consumers (filled CTAs,
+      /// selected states) read `buttonTheme.colorScheme!.secondary` all
+      /// over the app - both slots resolve accent so nothing falls back to
+      /// a framework default
       buttonTheme: ButtonThemeData(
-        colorScheme: ColorScheme.fromSwatch(
-          accentColor: buttonColor ?? StylingHelper.accent_color,
+        colorScheme: appColorScheme.copyWith(
+          primary: accent,
+          secondary: accent,
         ),
-        buttonColor: buttonColor ?? StylingHelper.accent_color,
+        buttonColor: accent,
       ),
 
       cupertinoOverrideTheme: CupertinoThemeData(
@@ -270,6 +302,10 @@ class App extends StatelessWidget {
         barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),
+      /// Toggleables unified on the highlight group on both platforms
+      /// (Gate 2b): iOS reads this via [BaseAdaptiveSwitch], the Android
+      /// M3 widgets read the same theme slots - control on-states are
+      /// highlight, never the brand accent
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith<Color?>(
             (Set<MaterialState> states) {
@@ -284,7 +320,7 @@ class App extends StatelessWidget {
             return null;
           }
           if (states.contains(MaterialState.selected)) {
-            return toggleableActiveColor ?? StylingHelper.accent_color;
+            return highlight;
           }
           return null;
         }),
@@ -296,7 +332,7 @@ class App extends StatelessWidget {
             return null;
           }
           if (states.contains(MaterialState.selected)) {
-            return toggleableActiveColor ?? StylingHelper.accent_color;
+            return highlight;
           }
           return null;
         }),
@@ -308,15 +344,12 @@ class App extends StatelessWidget {
             return null;
           }
           if (states.contains(MaterialState.selected)) {
-            return toggleableActiveColor ?? StylingHelper.accent_color;
+            return highlight;
           }
           return null;
         }),
       ),
-      colorScheme: ColorScheme.fromSwatch(
-        accentColor: hightlightColor ?? StylingHelper.highlight_color,
-        brightness: brightness ?? Brightness.dark,
-      ).copyWith(background: backgroundColor ?? StylingHelper.primary_color),
+      colorScheme: appColorScheme,
     );
   }
 

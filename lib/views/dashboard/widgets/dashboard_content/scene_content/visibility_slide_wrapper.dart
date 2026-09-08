@@ -120,7 +120,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
 
         final Color actionColor = hiddenSceneItem != null
             ? Theme.of(context).extension<AppStatusColors>()!.recording
-            : Theme.of(context).buttonTheme.colorScheme!.primary;
+            : Theme.of(context).colorScheme.secondary;
 
         return Observer(
           builder: (context) => Offstage(

@@ -208,7 +208,7 @@ class _AudioSliderState extends State<AudioSlider> {
                         : Icons.volume_up,
                     color: this.widget.input.inputMuted
                         ? theme.extension<AppStatusColors>()!.recording
-                        : theme.buttonTheme.colorScheme!.primary,
+                        : highlight,
                   ),
                 ),
               ),
