@@ -3,8 +3,8 @@
 **Purpose of this doc:** cold-start briefing. A fresh agent (evaluator, reviewer,
 or implementer) should be able to read only this file and know what exists, what is
 ratified, what is open, and where every artifact lives. Keep it current — update it
-whenever state moves. Last updated: 2026-09-08 (Gate 2 complete, v9 mock + token
-delta v2, pre-design-lab).
+whenever state moves. Last updated: 2026-09-09 (v12 mock — user-directed
+polish batch on top of Gate 2b's v10 + token delta v3, pre-design-lab).
 
 ## The goal
 
@@ -32,14 +32,21 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
    Transition/Config split, bars-float, measured switch/badge fixes) → **v10**
    mock + token delta v3. All rounds itemized in
    [`gate-reports.md`](gate-reports.md).
-8. **Next:** Flutter design lab (`tool/design_lab/`), tablet connected-view frame,
+8. **v11–v12 — user-directed polish** (2026-09-09): card tint reverted to the
+   v7 neutral white-5% (user-ratified; the v8–v10 cool-tint experiment dead),
+   auth-failed toast's left accent bar removed (borderless, red hairline kept),
+   connect-method segment de-accented (the v9 accent underline on the thumb
+   read as template chrome → neutral thumb + white label, iOS-style), paywall
+   hero double naming fixed (the "OBS Blade Pro" h2 dropped — the logo already
+   carries the wordmark; the value line steps up as the headline).
+9. **Next:** Flutter design lab (`tool/design_lab/`), tablet connected-view frame,
    then Gate 3 (fresh review of lab + tokens), Phase 4 spec, implementation.
 
 ## Artifact map
 
 | What | Where |
 |---|---|
-| **Current mock (v10, the thing to evaluate)** | `.superpowers/brainstorm/16464-1788892928/content/all-views-v10.html` (local, gitignored; single-file HTML: 5 views × Current/Liquid Glass variants + shell). ⚠️ The content dir also holds **stale standalone mocks** (`connect-liquid-glass-v1.html`, `dashboard-liquid-glass-v2.html`, …) — superseded, do not evaluate them |
+| **Current mock (v12, the thing to evaluate)** | `.superpowers/brainstorm/16464-1788892928/content/all-views-v12.html` (local, gitignored; single-file HTML: 5 views × Current/Liquid Glass variants + shell). ⚠️ The content dir also holds **stale standalone mocks** (`connect-liquid-glass-v1.html`, `dashboard-liquid-glass-v2.html`, …) and older all-views versions — superseded, do not evaluate them |
 | Settled screenshots (v8; recapture for v9) | `/tmp/obs_verify/v8_*.png` (ephemeral — recapture via the server, recipe in gotchas doc) |
 | **Token delta (THE contract — wins all conflicts)** | `docs/redesign/2026-iteration/token-delta.md` |
 | Gate reports (both rounds, itemized + dispositions) | `docs/redesign/2026-iteration/gate-reports.md` |
@@ -53,7 +60,7 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
 **Viewing the mock:** quick look = open the HTML file directly (`file://` works for
 a static peek). Full evaluation = serve via the visual companion server (start
 instructions + port/key discovery in the gotchas doc). URL shape:
-`http://localhost:<port>/files/all-views-v9.html?key=<key>`. Shell: top segment
+`http://localhost:<port>/files/all-views-v12.html?key=<key>`. Shell: top segment
 switcher (Connect / Scenes / Statistics / Settings / Paywall); per-view
 **Current ↔ Liquid Glass** toggle (evaluate the Liquid Glass side); Connect/Scenes
 **DEMO STATE** toggles (first-run, auth-failed — combinable; reconnecting).

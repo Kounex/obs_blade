@@ -25,10 +25,13 @@ composite stack, not the base.
    state-critical element in the app. Small text *in* a status color may use the
    brightened `…Text` derivative (§2.3) — the constant base stays; the derivative
    is the same precedent as `accentText`.
-2. **Accent = selection & brand moments.** Active tab/segment ink, selected state
+2. **Accent = selection & brand moments.** Active tab ink, selected state
    of navigation controls, the one accent CTA per screen. Selected labels on
-   lightened thumbs use **white text + accent hairline** (raw accent text on a
-   light thumb measured 2.8:1).
+   lightened thumbs use **white text** (raw accent text on a light thumb
+   measured 2.8:1). The v9–v11 accent hairline on the connect-method segment
+   thumb is **reverted (user, v12)** — it read as template chrome; that segment
+   is deliberately neutral, the thumb fill + white label carry selection
+   (iOS-style), and the Connect CTA stays the screen's one accent moment.
 3. **Highlight = interactive control states + transient affordances.** Switch/slider
    on-states, scanner/viewfinder arming, links, nav-back, focus. It never encodes
    *semantic* state (live/rec/program/reachable) — control on/off is not semantic
@@ -202,9 +205,16 @@ Mapping:
   under a blocking scrim is acceptable disabled treatment.)
 - **Auth-failed (connect):** error-card toast with **"Edit password"** action
   (routes to Manual pane **and moves focus there**) + × dismiss; manual-dismiss
-  only. Hidden toasts leave the focus/semantics tree entirely
+  only. **No colored left-edge bar** (v11, user: reads as generic template
+  chrome) — the 1px red-tinted hairline on all four sides carries "error".
+  Hidden toasts leave the focus/semantics tree entirely
   (`Visibility`/`Offstage` semantics — opacity 0 + pointer-events none still
   exposes them). Toast actions honor the 44pt target contract.
+- **Paywall hero (composition):** the logo already contains the OBS BLADE
+  wordmark, so it is the hero's only brand mark — the "OBS Blade Pro" headline
+  beneath it is dropped (v12, user: double naming). The value line ("Native
+  chat, moderation and more — built for your pocket.") steps up as the
+  headline. The settings-row "OBS Blade Pro" product name is unaffected.
 - **Hit-slop contract:** visual glyph sizes stay small, but every icon control
   gets a 44×44 minimum hit area (`BaseIconButton` gains a hard floor); buttons,
   pills and tappable rows get **44pt min-height via padding**. Scene-item
