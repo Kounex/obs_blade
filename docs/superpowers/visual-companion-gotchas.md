@@ -38,9 +38,16 @@ with GET.
 
 ## Server lifecycle
 
-- Start with `--foreground` under a background task (detached/nohup
+- Start script: `~/.kimi-code/plugins/managed/superpowers/skills/brainstorming/scripts/start-server.sh --project-dir <repo-root> --foreground` — run it under a background task (detached/nohup
   children get reaped), then smoke-check with `curl` (expect 200) before
   sharing the URL.
+- Port + session key are discoverable at
+  `.superpowers/brainstorm/<session-id>/state/server-info` (and the server
+  prints them on startup).
+- For a quick static look, the mock HTML also opens fine via `file://` —
+  but anything server-served (e.g. images under `/files/`) will break,
+  and "does it work for the user" must always be verified through the
+  server URL in the real browser.
 - Session dirs persist under `.superpowers/brainstorm/`; restart with the
   same `--project-dir` reuses the port and the user's tab reconnects.
 - The server serves the NEWEST file in the content dir — never reuse
@@ -60,10 +67,14 @@ Reliable capture recipe: inject a settle-override style before
 screenshotting —
 
 ```css
-.stagger{animation:none !important; opacity:1 !important; transform:none !important}
+.stagger, .s-el {animation:none !important; opacity:1 !important; transform:none !important}
 ```
 
-— then screenshot. Also note element `display:none` subtrees never run
+— then screenshot. Cover **every** animated class the mock uses: the 4.0
+shell animates view entrances via `.stagger`, but the Scenes view's
+composed elements via `.s-el` (with `backwards` fill, so throttled items
+sit at opacity 0 — a `.stagger`-only override still yields invisible
+content there). Also note element `display:none` subtrees never run
 CSS animations at all: a view shown later must have its entrance
 replayed explicitly (remove/re-add the animating class after a forced
 reflow) or its items stay at their pre-animation state (e.g. opacity 0).
