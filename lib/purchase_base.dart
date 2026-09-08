@@ -159,7 +159,7 @@ class _PurchaseBaseState extends State<PurchaseBase> {
                 context: RoutingHelper.tabBaseKey.currentContext!,
                 barrierDismissible: true,
                 dialogWidget: const InfoDialog(
-                  body: 'Your Blacksmith purchase has been restored!\n\nEnjoy!',
+                  body: 'Your theme purchase has been restored!\n\nEnjoy!',
                 ),
               );
             },
