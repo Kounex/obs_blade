@@ -30,7 +30,7 @@ class GcpYoutubeCommand extends Command<int> {
         'project-id',
         help:
             'GCP project id to create or reuse. Falls back to '
-            '\$GCP_PROJECT_ID, then the default.',
+            '\$OBS_BLADE_GCP_PROJECT_ID, then the default.',
         defaultsTo: null,
       )
       ..addOption(
@@ -63,7 +63,7 @@ class GcpYoutubeCommand extends Command<int> {
     final projectId =
         argOrEnv(
           args['project-id'] as String?,
-          Platform.environment['GCP_PROJECT_ID'],
+          Platform.environment['OBS_BLADE_GCP_PROJECT_ID'],
         ) ??
         'obs-blade';
 
@@ -142,23 +142,23 @@ class AscProductsCommand extends Command<int> {
         'key-path',
         help:
             'Path to the App Store Connect API .p8 private key. '
-            'Falls back to \$ASC_KEY_PATH.',
+            'Falls back to \$OBS_BLADE_ASC_KEY_PATH.',
       )
       ..addOption(
         'key-id',
-        help: 'App Store Connect API key id. Falls back to \$ASC_KEY_ID.',
+        help: 'App Store Connect API key id. Falls back to \$OBS_BLADE_ASC_KEY_ID.',
       )
       ..addOption(
         'issuer-id',
         help:
             'App Store Connect API issuer id (UUID). Falls back to '
-            '\$ASC_ISSUER_ID.',
+            '\$OBS_BLADE_ASC_ISSUER_ID.',
       )
       ..addOption(
         'app-id',
         help:
             'Numeric App Store Connect app id (App Information → '
-            'Apple ID). Falls back to \$ASC_APP_ID.',
+            'Apple ID). Falls back to \$OBS_BLADE_ASC_APP_ID.',
       )
       ..addOption(
         'yearly-price-usd',
@@ -194,10 +194,10 @@ class AscProductsCommand extends Command<int> {
 
     final appId = argOrEnv(
       args['app-id'] as String?,
-      Platform.environment['ASC_APP_ID'],
+      Platform.environment['OBS_BLADE_ASC_APP_ID'],
     );
     if (appId == null) {
-      stderr.writeln('Missing required --app-id (or \$ASC_APP_ID).');
+      stderr.writeln('Missing required --app-id (or \$OBS_BLADE_ASC_APP_ID).');
       return 64;
     }
 
@@ -208,18 +208,18 @@ class AscProductsCommand extends Command<int> {
       final env = Platform.environment;
       final keyPath = argOrEnv(
         args['key-path'] as String?,
-        env['ASC_KEY_PATH'],
+        env['OBS_BLADE_ASC_KEY_PATH'],
       );
-      final keyId = argOrEnv(args['key-id'] as String?, env['ASC_KEY_ID']);
+      final keyId = argOrEnv(args['key-id'] as String?, env['OBS_BLADE_ASC_KEY_ID']);
       final issuerId = argOrEnv(
         args['issuer-id'] as String?,
-        env['ASC_ISSUER_ID'],
+        env['OBS_BLADE_ASC_ISSUER_ID'],
       );
       if (keyPath == null || keyId == null || issuerId == null) {
         stderr.writeln(
           'Missing credentials: --key-path, --key-id and --issuer-id are '
           'required (unless --dry-run). Set them via flags or the '
-          'ASC_KEY_PATH / ASC_KEY_ID / ASC_ISSUER_ID env vars '
+          'OBS_BLADE_ASC_KEY_PATH / OBS_BLADE_ASC_KEY_ID / OBS_BLADE_ASC_ISSUER_ID env vars '
           '(e.g. exported from ~/.localrc).',
         );
         return 64;
@@ -292,7 +292,7 @@ class PlayProductsCommand extends Command<int> {
         'service-account-json',
         help:
             'Path to the Play API service-account JSON key. Falls back '
-            'to \$GOOGLE_APPLICATION_CREDENTIALS.',
+            'to \$OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS.',
       )
       ..addOption(
         'package-name',
@@ -326,8 +326,8 @@ class PlayProductsCommand extends Command<int> {
             'Where per-region prices come from. `apple` drives every '
             'region from Apple\'s equalized tier table of the matching '
             'ASC products (exact cross-store parity) and needs ASC '
-            'credentials in the environment (\$ASC_KEY_PATH / '
-            '\$ASC_KEY_ID / \$ASC_ISSUER_ID / \$ASC_APP_ID). `google` '
+            'credentials in the environment (\$OBS_BLADE_ASC_KEY_PATH / '
+            '\$OBS_BLADE_ASC_KEY_ID / \$OBS_BLADE_ASC_ISSUER_ID / \$OBS_BLADE_ASC_APP_ID). `google` '
             'uses Play\'s convertRegionPrices table with EUR/GBP/USD '
             'nominal parity.',
         allowed: ['apple', 'google'],
@@ -369,12 +369,12 @@ class PlayProductsCommand extends Command<int> {
     } else {
       final saPath = argOrEnv(
         args['service-account-json'] as String?,
-        Platform.environment['GOOGLE_APPLICATION_CREDENTIALS'],
+        Platform.environment['OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS'],
       );
       if (saPath == null) {
         stderr.writeln(
           'Missing --service-account-json (unless --dry-run). '
-          'Or export GOOGLE_APPLICATION_CREDENTIALS (e.g. from ~/.localrc).',
+          'Or export OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS (e.g. from ~/.localrc).',
         );
         return 64;
       }
@@ -466,21 +466,21 @@ class PlayProductsCommand extends Command<int> {
     required String lifetimePriceUsd,
   }) async {
     final env = Platform.environment;
-    final keyPath = env['ASC_KEY_PATH'];
-    final keyId = env['ASC_KEY_ID'];
-    final issuerId = env['ASC_ISSUER_ID'];
-    final appId = env['ASC_APP_ID'];
+    final keyPath = env['OBS_BLADE_ASC_KEY_PATH'];
+    final keyId = env['OBS_BLADE_ASC_KEY_ID'];
+    final issuerId = env['OBS_BLADE_ASC_ISSUER_ID'];
+    final appId = env['OBS_BLADE_ASC_APP_ID'];
     if (keyPath == null || keyId == null || issuerId == null) {
       stderr.writeln(
         '--price-source apple needs the ASC credentials in the '
-        'environment (ASC_KEY_PATH / ASC_KEY_ID / ASC_ISSUER_ID, e.g. '
+        'environment (OBS_BLADE_ASC_KEY_PATH / OBS_BLADE_ASC_KEY_ID / OBS_BLADE_ASC_ISSUER_ID, e.g. '
         'exported from ~/.localrc). Or use --price-source google.',
       );
       return null;
     }
     if (appId == null) {
       stderr.writeln(
-        '--price-source apple needs \$ASC_APP_ID (App Information → '
+        '--price-source apple needs \$OBS_BLADE_ASC_APP_ID (App Information → '
         'Apple ID). Or use --price-source google.',
       );
       return null;

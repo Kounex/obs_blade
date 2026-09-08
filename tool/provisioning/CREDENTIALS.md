@@ -10,12 +10,12 @@ the three tracks in any order.
 
 ```bash
 # The full block you are collecting:
-export ASC_KEY_PATH="$HOME/.config/obs-blade/asc-key.p8"
-export ASC_KEY_ID="…"
-export ASC_ISSUER_ID="…"
-export ASC_APP_ID="…"
-export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
-export GCP_PROJECT_ID="obs-blade"
+export OBS_BLADE_ASC_KEY_PATH="$HOME/.config/obs-blade/asc-key.p8"
+export OBS_BLADE_ASC_KEY_ID="…"
+export OBS_BLADE_ASC_ISSUER_ID="…"
+export OBS_BLADE_ASC_APP_ID="…"
+export OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
+export OBS_BLADE_GCP_PROJECT_ID="obs-blade"
 ```
 
 Prep: `mkdir -p ~/.config/obs-blade` and make sure `~/.localrc` itself is
@@ -23,7 +23,7 @@ Prep: `mkdir -p ~/.config/obs-blade` and make sure `~/.localrc` itself is
 
 ---
 
-## Track 1 — App Store Connect (`ASC_*`)
+## Track 1 — App Store Connect (`OBS_BLADE_ASC_*`)
 
 Covers: the subscription group "Pro", `pro_yearly` / `pro_monthly`,
 `pro_lifetime`, incl. US pricing.
@@ -35,9 +35,9 @@ Covers: the subscription group "Pro", `pro_yearly` / `pro_monthly`,
 3. **Download the `.p8` immediately** — Apple shows the download exactly
    once. If you lose it, revoke and regenerate (same key id flow, no harm).
 4. On that page, note:
-   - **Key ID** — the 10-char id next to your new key → `ASC_KEY_ID`
+   - **Key ID** — the 10-char id next to your new key → `OBS_BLADE_ASC_KEY_ID`
    - **Issuer ID** — shown at the top of the Integrations page →
-     `ASC_ISSUER_ID` (a UUID)
+     `OBS_BLADE_ASC_ISSUER_ID` (a UUID)
 5. Move the key file and lock it down:
 
    ```bash
@@ -45,10 +45,10 @@ Covers: the subscription group "Pro", `pro_yearly` / `pro_monthly`,
    chmod 600 ~/.config/obs-blade/asc-key.p8
    ```
 
-6. `ASC_APP_ID`: App Store Connect → Apps → **OBS Blade** → App
+6. `OBS_BLADE_ASC_APP_ID`: App Store Connect → Apps → **OBS Blade** → App
    Information → **Apple ID** (the numeric one, not the bundle id).
 
-## Track 2 — Google Play (`GOOGLE_APPLICATION_CREDENTIALS`)
+## Track 2 — Google Play (`OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS`)
 
 Covers: Play subscription `pro` (base plans `pro-yearly` / `pro-monthly`)
 and one-time product `pro_lifetime`.
@@ -80,7 +80,7 @@ and one-time product `pro_lifetime`.
 > ~24 h to take effect (usually minutes). If `play-products` answers
 > 401/403 right after setup, wait and retry — the tool is idempotent.
 
-## Track 3 — GCP / YouTube (`GCP_PROJECT_ID`)
+## Track 3 — GCP / YouTube (`OBS_BLADE_GCP_PROJECT_ID`)
 
 Covers: the YouTube Data API key for the quota spike + (later) the OAuth
 client for native sign-in.
@@ -89,7 +89,7 @@ client for native sign-in.
 2. Default project id is `obs-blade` — the same project the Play API
    setup uses, so both APIs live in one shared GCP project. If it's
    already created (Track 2), nothing to do; if you ever want a
-   different one, export it as `GCP_PROJECT_ID` (must be globally
+   different one, export it as `OBS_BLADE_GCP_PROJECT_ID` (must be globally
    unique across all of GCP).
 3. Nothing else to collect: `provision gcp-youtube` creates the project,
    enables the API, and writes the restricted API key to a chmod-600 file
@@ -142,15 +142,15 @@ Without printing any secret:
 
 ```bash
 source ~/.localrc
-for v in ASC_KEY_PATH ASC_KEY_ID ASC_ISSUER_ID ASC_APP_ID \
-         GOOGLE_APPLICATION_CREDENTIALS GCP_PROJECT_ID; do
+for v in OBS_BLADE_ASC_KEY_PATH OBS_BLADE_ASC_KEY_ID OBS_BLADE_ASC_ISSUER_ID OBS_BLADE_ASC_APP_ID \
+         OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS OBS_BLADE_GCP_PROJECT_ID; do
   if [ -n "${(P)v}" ] 2>/dev/null || eval "[ -n \"\$$v\" ]"; then
     echo "$v: set"
   else
     echo "$v: MISSING"
   fi
 done
-ls -l "$ASC_KEY_PATH" "$GOOGLE_APPLICATION_CREDENTIALS"   # expect -rw-------
+ls -l "$OBS_BLADE_ASC_KEY_PATH" "$OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS"   # expect -rw-------
 ```
 
 Then dry-run the tool (sends nothing, needs no creds) and, when ready,

@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-08 — Provisioning env vars renamed with `OBS_BLADE_` prefix
+
+- All six store-provisioning env vars renamed (`ASC_KEY_PATH`,
+  `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_APP_ID`,
+  `GOOGLE_APPLICATION_CREDENTIALS`, `GCP_PROJECT_ID` → prefixed with
+  `OBS_BLADE_`) so they can't collide with other GCP accounts / standard
+  Google tooling on a multi-account machine. Updated: maintainer
+  `~/.localrc` export block, `tool/provisioning/` (`commands.dart`,
+  `bin/probe_*.dart`, `bin/inspect_products.dart`), `README.md`,
+  `CREDENTIALS.md`. Note: `OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS` is
+  deliberately *not* the Google-standard var — creds are loaded by path
+  and passed to `clientViaServiceAccount` explicitly, nothing relies on
+  ADC auto-discovery. Tool suite 49/49 + analyze green; live
+  `inspect_products.dart` run against both stores verified the renamed
+  vars resolve.
+- Related (no repo change): gcloud multi-account separation uses named
+  configurations (`gcloud config configurations create` /
+  `CLOUDSDK_ACTIVE_CONFIG_NAME=<cfg>` per invocation) — `gcp-youtube`
+  shells out to the gcloud binary, so it inherits the active config.
+
 ## 2026-09-08 — 4.0 UI iteration: workflow spec + Phase 1 audit
 
 - **Workflow spec** (`docs/superpowers/specs/2026-09-08-ui-iteration-4.0-design.md`):

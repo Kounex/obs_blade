@@ -14,17 +14,17 @@ import 'package:provisioning/src/money.dart';
 
 Future<void> main() async {
   final env = Platform.environment;
-  final appId = env['ASC_APP_ID']!;
+  final appId = env['OBS_BLADE_ASC_APP_ID']!;
   const groupId = '22363681'; // "Pro" subscription group
 
   // ---- ASC ----
-  final pem = await File(env['ASC_KEY_PATH']!).readAsString();
+  final pem = await File(env['OBS_BLADE_ASC_KEY_PATH']!).readAsString();
   final asc = HttpApiClient(
     baseUrl: 'https://api.appstoreconnect.apple.com',
     token: buildAscJwt(
       privateKeyPem: pem,
-      keyId: env['ASC_KEY_ID']!,
-      issuerId: env['ASC_ISSUER_ID']!,
+      keyId: env['OBS_BLADE_ASC_KEY_ID']!,
+      issuerId: env['OBS_BLADE_ASC_ISSUER_ID']!,
     ),
   );
 
@@ -218,7 +218,7 @@ Future<void> main() async {
 Future<void> _inspectPlay(Map<String, String> env) async {
   final sa = ServiceAccountCredentials.fromJson(
     jsonDecode(
-      await File(env['GOOGLE_APPLICATION_CREDENTIALS']!).readAsString(),
+      await File(env['OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS']!).readAsString(),
     ),
   );
   final authClient = await clientViaServiceAccount(sa, [

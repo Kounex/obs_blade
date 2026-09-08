@@ -4,13 +4,13 @@ import 'package:provisioning/src/asc_jwt.dart';
 
 Future<void> main() async {
   final env = Platform.environment;
-  final pem = await File(env['ASC_KEY_PATH']!).readAsString();
+  final pem = await File(env['OBS_BLADE_ASC_KEY_PATH']!).readAsString();
   final asc = HttpApiClient(
     baseUrl: 'https://api.appstoreconnect.apple.com',
     token: buildAscJwt(
       privateKeyPem: pem,
-      keyId: env['ASC_KEY_ID']!,
-      issuerId: env['ASC_ISSUER_ID']!,
+      keyId: env['OBS_BLADE_ASC_KEY_ID']!,
+      issuerId: env['OBS_BLADE_ASC_ISSUER_ID']!,
     ),
   );
   for (final id in ['6809188674', '6809188664']) {

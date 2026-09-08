@@ -6,7 +6,7 @@ Future<void> main() async {
   final env = Platform.environment;
   final sa = ServiceAccountCredentials.fromJson(
     jsonDecode(
-      await File(env['GOOGLE_APPLICATION_CREDENTIALS']!).readAsString(),
+      await File(env['OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS']!).readAsString(),
     ),
   );
   final authClient = await clientViaServiceAccount(sa, [

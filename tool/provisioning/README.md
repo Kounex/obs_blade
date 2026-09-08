@@ -22,7 +22,7 @@ Three subcommands of one entrypoint:
   Play regions**. Default `--price-source apple` pins each region to the
   **equalized Apple tier price of its currency** (exact cross-store
   parity, e.g. ¥660 / ₹210 — read live from the ASC products' price
-  points, so it needs the `ASC_*` env vars; currencies Apple doesn't
+  points, so it needs the `OBS_BLADE_ASC_*` env vars; currencies Apple doesn't
   cover keep Google's converted price). `--price-source google` pins
   Play's own `pricing:convertRegionPrices` table (conventionally rounded
   per market, e.g. ¥840 / ₹550) with nominal parity for EUR/GBP/USD
@@ -63,21 +63,21 @@ The block to collect:
 
 ```bash
 # ~/.localrc
-export ASC_KEY_PATH="$HOME/.config/obs-blade/asc-key.p8"
-export ASC_KEY_ID="…"
-export ASC_ISSUER_ID="…"
-export ASC_APP_ID="…"                         # numeric App Store Connect app id
-export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
-export GCP_PROJECT_ID="obs-blade"               # optional, has a sane default
+export OBS_BLADE_ASC_KEY_PATH="$HOME/.config/obs-blade/asc-key.p8"
+export OBS_BLADE_ASC_KEY_ID="…"
+export OBS_BLADE_ASC_ISSUER_ID="…"
+export OBS_BLADE_ASC_APP_ID="…"                         # numeric App Store Connect app id
+export OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/obs-blade/play-svc.json"
+export OBS_BLADE_GCP_PROJECT_ID="obs-blade"               # optional, has a sane default
 ```
 
 An explicit flag always wins over the env var.
 
 | Command | Credential | Env fallback | Where to get it |
 |---|---|---|---|
-| `gcp-youtube` | gcloud user login | `GCP_PROJECT_ID` (project only; auth is gcloud's own) | `gcloud auth login` (needs permission to create projects, or pre-create the project in the console) |
-| `asc-products` | `.p8` key + key id + issuer id | `ASC_KEY_PATH` / `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_APP_ID` | <https://appstoreconnect.apple.com/access/integrations/api> → "Generate API Key" (role: Admin or App Manager) — the `.p8` downloads once, the key id and team-level issuer id are shown on the same page |
-| `play-products` | service-account JSON | `GOOGLE_APPLICATION_CREDENTIALS` (the Google-standard var) | GCP: enable the Google Play Developer API, create a service account + JSON key. Play Console → **Users and permissions** → "Invite new users" with the service-account email → grant the OBS Blade app **Admin** (or at least "Manage orders and subscriptions"). Details: [`CREDENTIALS.md`](CREDENTIALS.md) Track 2 |
+| `gcp-youtube` | gcloud user login | `OBS_BLADE_GCP_PROJECT_ID` (project only; auth is gcloud's own) | `gcloud auth login` (needs permission to create projects, or pre-create the project in the console) |
+| `asc-products` | `.p8` key + key id + issuer id | `OBS_BLADE_ASC_KEY_PATH` / `OBS_BLADE_ASC_KEY_ID` / `OBS_BLADE_ASC_ISSUER_ID` / `OBS_BLADE_ASC_APP_ID` | <https://appstoreconnect.apple.com/access/integrations/api> → "Generate API Key" (role: Admin or App Manager) — the `.p8` downloads once, the key id and team-level issuer id are shown on the same page |
+| `play-products` | service-account JSON | `OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS` (path to the service-account JSON; deliberately *not* the Google-standard unprefixed var, so it can't collide with other GCP accounts on the machine) | GCP: enable the Google Play Developer API, create a service account + JSON key. Play Console → **Users and permissions** → "Invite new users" with the service-account email → grant the OBS Blade app **Admin** (or at least "Manage orders and subscriptions"). Details: [`CREDENTIALS.md`](CREDENTIALS.md) Track 2 |
 
 ## `gcp-youtube`
 
@@ -178,7 +178,7 @@ dart run bin/provision.dart play-products --price-source google
 `android/app/build.gradle` (found by walking up from the current directory).
 `--price-source apple` (the default) reads the matching ASC products' price
 points for the equalized-tier currency table and therefore needs the same
-`ASC_KEY_PATH` / `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_APP_ID` environment
+`OBS_BLADE_ASC_KEY_PATH` / `OBS_BLADE_ASC_KEY_ID` / `OBS_BLADE_ASC_ISSUER_ID` / `OBS_BLADE_ASC_APP_ID` environment
 as `asc-products`.
 
 Creates, if missing: subscription product **`pro`** (`--subscription-id`)
@@ -210,7 +210,7 @@ products into the RevenueCat entitlement `pro` with store ids
 ## Inspecting live state
 
 ```bash
-source ~/.localrc   # ASC_* + GOOGLE_APPLICATION_CREDENTIALS
+source ~/.localrc   # OBS_BLADE_ASC_* + OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS
 dart run bin/inspect_products.dart
 ```
 
