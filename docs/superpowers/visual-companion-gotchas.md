@@ -45,3 +45,25 @@ with GET.
   same `--project-dir` reuses the port and the user's tab reconnects.
 - The server serves the NEWEST file in the content dir — never reuse
   filenames; iterate with `-v2`, `-v3` suffixes.
+- A restart reuses port + session key but NOT the content dir (a new
+  timestamped dir is created) — copy the mock files over manually, and
+  update any bookmarks pointing at `/files/<name>` (filenames survive,
+  the key in the query string survives too).
+
+## Screenshotting mocks in a background browser tab
+
+When driving the user's real browser via kimi-webbridge to capture a
+mock: if the tab is not frontmost, **CSS animations are throttled** —
+entrance animations (opacity/stagger) crawl or stall, and screenshots
+catch half-faded content that looks like a design bug but isn't.
+Reliable capture recipe: inject a settle-override style before
+screenshotting —
+
+```css
+.stagger{animation:none !important; opacity:1 !important; transform:none !important}
+```
+
+— then screenshot. Also note element `display:none` subtrees never run
+CSS animations at all: a view shown later must have its entrance
+replayed explicitly (remove/re-add the animating class after a forced
+reflow) or its items stay at their pre-animation state (e.g. opacity 0).
