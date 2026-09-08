@@ -43,6 +43,15 @@ class ProSalesView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: StylingHelper.platformAwareScrollPhysics,
+
+      /// The tab scaffold extends bodies behind its translucent
+      /// CupertinoTabBar (extendBody) - same bottom clearance
+      /// CustomSliverList gives the sliver-based tab views, so the legal
+      /// row scrolls fully above the bar
+      padding: EdgeInsets.only(
+        bottom: 2 * kBottomNavigationBarHeight +
+            MediaQuery.paddingOf(context).bottom / 2,
+      ),
       child: Center(
         child: BaseConstrainedBox(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
