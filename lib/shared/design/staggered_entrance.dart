@@ -19,6 +19,10 @@ class StaggeredEntrance extends StatefulWidget {
   final Curve curve;
   final double rise;
 
+  /// Optional starting scale the child settles from (e.g. 0.985) - null
+  /// keeps the rise-only behavior
+  final double? scaleFrom;
+
   const StaggeredEntrance({
     super.key,
     required this.child,
@@ -26,6 +30,7 @@ class StaggeredEntrance extends StatefulWidget {
     this.duration = AppMotion.slow,
     this.curve = AppMotion.standard,
     this.rise = 12.0,
+    this.scaleFrom,
   });
 
   @override
@@ -38,6 +43,7 @@ class _StaggeredEntranceState extends State<StaggeredEntrance>
   late final Animation<double> _curved;
 
   Timer? _delayTimer;
+  bool _started = false;
 
   @override
   void initState() {
@@ -47,6 +53,19 @@ class _StaggeredEntranceState extends State<StaggeredEntrance>
       duration: this.widget.duration,
     );
     _curved = CurvedAnimation(parent: _controller, curve: this.widget.curve);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    /// Reduced motion: skip delay and duration, render at the final value
+    if (AppMotion.reduce(context)) {
+      _controller.value = 1.0;
+      return;
+    }
 
     final int clampedIndex =
         this.widget.index.clamp(0, AppMotion.staggerMax).toInt();
@@ -69,13 +88,23 @@ class _StaggeredEntranceState extends State<StaggeredEntrance>
     return AnimatedBuilder(
       animation: _curved,
       child: this.widget.child,
-      builder: (context, child) => Opacity(
-        opacity: _curved.value,
-        child: Transform.translate(
+      builder: (context, child) {
+        Widget current = Transform.translate(
           offset: Offset(0.0, (1.0 - _curved.value) * this.widget.rise),
           child: child,
-        ),
-      ),
+        );
+        if (this.widget.scaleFrom != null) {
+          current = Transform.scale(
+            scale: this.widget.scaleFrom! +
+                (1.0 - this.widget.scaleFrom!) * _curved.value,
+            child: current,
+          );
+        }
+        return Opacity(
+          opacity: _curved.value,
+          child: current,
+        );
+      },
     );
   }
 }

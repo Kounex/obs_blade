@@ -20,12 +20,22 @@ class Pressable extends StatefulWidget {
   /// Fire a light impact haptic on tap (default false)
   final bool haptic;
 
+  /// Pressed scale (0.85-0.97, default 0.97)
+  final double scale;
+
+  /// Spring (overshoot) release. Grammar rule 1.6: only targets >= 44pt get
+  /// the spring - small-icon callers pass false for the standard curve
+  final bool springy;
+
   const Pressable({
     super.key,
     required this.child,
     this.onTap,
     this.haptic = false,
-  });
+    this.scale = 0.97,
+    this.springy = true,
+  }) : assert(scale >= 0.85 && scale <= 0.97,
+            'scale must stay within 0.85-0.97');
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -56,17 +66,20 @@ class _PressableState extends State<Pressable>
     if (!_enabled) return;
     _controller.animateTo(
       1.0,
-      duration: AppMotion.instant,
+      duration: AppMotion.reduce(this.context) ? Duration.zero : AppMotion.instant,
       curve: AppMotion.standard,
     );
   }
 
   void _release() {
     if (!_enabled || _controller.value == 0.0) return;
+    final bool reduce = AppMotion.reduce(this.context);
     _controller.animateBack(
       0.0,
-      duration: AppMotion.fast,
-      curve: AppMotion.spring,
+      duration: reduce ? Duration.zero : AppMotion.fast,
+      curve: this.widget.springy && !reduce
+          ? AppMotion.spring
+          : AppMotion.standard,
     );
   }
 
@@ -82,6 +95,10 @@ class _PressableState extends State<Pressable>
     if (!_enabled) {
       return this.widget.child;
     }
+
+    /// Reduced motion: drop the scale, keep only the instant opacity flash
+    final bool reduce = AppMotion.reduce(context);
+
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (_) => _press(),
@@ -99,10 +116,12 @@ class _PressableState extends State<Pressable>
             final double value = _controller.value;
             return Opacity(
               opacity: (1.0 - 0.12 * value).clamp(0.0, 1.0),
-              child: Transform.scale(
-                scale: 1.0 - 0.03 * value,
-                child: child,
-              ),
+              child: reduce
+                  ? child
+                  : Transform.scale(
+                      scale: 1.0 - (1.0 - this.widget.scale) * value,
+                      child: child,
+                    ),
             );
           },
         ),

@@ -1,4 +1,4 @@
-import 'package:flutter/animation.dart';
+import 'package:flutter/widgets.dart';
 
 /// Motion tokens for the "On Air" design system.
 ///
@@ -23,6 +23,10 @@ class AppMotion {
   /// 700ms - celebration moments
   static const Duration dramatic = Duration(milliseconds: 700);
 
+  /// 3s - infinite ambient loops (LIVE-dot breathe). Always gated, never
+  /// load-bearing
+  static const Duration ambient = Duration(seconds: 3);
+
   /// Delay step between staggered sibling entrances
   static const Duration staggerStep = Duration(milliseconds: 30);
 
@@ -40,4 +44,10 @@ class AppMotion {
 
   /// Exits accelerate away
   static const Curve exit = Curves.easeInCubic;
+
+  /// Reduced-motion seam: true when the OS asks for reduced motion (iOS
+  /// Reduce Motion / Android animator-off). Animations consult this instead
+  /// of any persisted key
+  static bool reduce(BuildContext context) =>
+      MediaQuery.of(context).disableAnimations;
 }
