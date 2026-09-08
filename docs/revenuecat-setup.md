@@ -48,7 +48,12 @@ walkthrough below doubles as the verification checklist afterwards.
 | `pro_lifetime` | non-consumable (Play: one-time product) | attach |
 
 Pricing is locked and already provisioned store-side (2026-09): **$4.99/mo,
-$49.99/yr, $99.99 lifetime** — the defaults in `tool/provisioning`. Strategy
+$49.99/yr, $99.99 lifetime** — the defaults in `tool/provisioning`.
+Per-region pricing is pinned everywhere: ASC 175/175 territories (nominal
+or equalized-tier fallback), Play 173/173 regions — default driven by
+Apple's equalized tier table per currency for exact cross-store parity
+(`play-products --price-source apple`; `--price-source google` keeps
+Play's converted table + EUR/GBP/USD nominal parity). Strategy
 rationale: `docs/private/monetization-strategy.md`.
 
 ## 3. Entitlement + offering (dashboard)
@@ -104,6 +109,14 @@ validated server-side). macOS uses the Apple key too.
 
 ## Notes / gotchas
 
+- **ASC review screenshots (IAP submission):** each product needs a review
+  screenshot that (a) matches a marketing screenshot size *the uploaded
+  app binary supports* and (b) has no alpha channel. A 6.3" simulator shot
+  (1206×2622) gets "dimensions are wrong" — use 1242×2688 (6.5"),
+  flattened. The shot itself is easy: run on any iPhone sim (the scheme
+  has `ios/obs_blade_storekit.storekit` attached, so the paywall renders
+  real names/prices without sandbox) and screenshot the pricing section.
+  One image for all three products is fine; review-only, never public.
 - **foss branch:** strip `purchases_flutter` alongside the existing IAP
   strip — all RC code is additive; with empty keys the app never touches
   the SDK.

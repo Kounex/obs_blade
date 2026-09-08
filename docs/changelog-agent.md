@@ -2,6 +2,49 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-08 — Store pricing parity, ASC review submission prep, paywall fix
+
+- **Pricing finalized, exact cross-store parity** (`tool/provisioning/`,
+  commits 6180d21, 1f5cb5f, b034366, 6560701; tool suite 34 → 49 tests):
+  - ASC: equalized-tier fallback for territories without a nominal price
+    point (same Apple tier as the USA point) — both subscriptions priced
+    175/175 territories, idempotent.
+  - Play API root cause: the old `monetization/*` routes return bare
+    HTML 404 (silently dead) — current routes are
+    `.../subscriptions` / `.../oneTimeProducts`. Fixed + lifetime listing
+    drift (em-dash) reconciled live.
+  - Play per-region pricing for all 173 regions, pinned via the table's
+    `regionVersion` (2025/03 — older versions rejected for
+    currency-changed regions like BG).
+  - `play-products --price-source apple` (new **default**) drives every
+    Play region from the ASC products' equalized tier table per currency
+    (`AscProvisioner.appleCurrencyPrices` — one representative territory
+    scan per currency): 153/173 regions at Apple tier prices (¥660, ₹210,
+    CHF 5.90, …), uncovered currencies keep Google's converted price.
+    `--price-source google` keeps convertRegionPrices + EUR/GBP/USD
+    nominal parity. Live-applied + idempotency-verified.
+- **ASC IAP review screenshot spec (learned the hard way):** must match a
+  marketing screenshot size *the uploaded app binary supports* and carry
+  no alpha. 1206×2622 (6.3", iPhone 17 Pro sim) was rejected —
+  1242×2688 (6.5") flattened RGB works. The paywall shot itself came from
+  the simulator via the scheme-attached `ios/obs_blade_storekit.storekit`
+  (real product names/prices without sandbox). Uploaded to all three
+  products + submitted for review (maintainer, 2026-09-08).
+- **Paywall bottom clearance** (31e9dfb): the sales scroll view now uses
+  the `CustomSliverList` formula (2×kBottomNavigationBarHeight + half the
+  bottom safe area) — the legal row was only reachable via overscroll
+  under the translucent tab bar (`extendBody`).
+- **Google developer verification:** package `com.kounex.obsBlade` is
+  **Registered** (deadline 2026-09-30 moot). Key map verified against
+  local files: A6:24:44 = upload key (`android-release.jks`, in review
+  via justification), 25:F7:E8 = Google app-signing key, 82:04:2C =
+  upgraded signing key for SDK 33+ installs. Cleanup parked until the key
+  review resolves (adi token file + internal-track draft release).
+- Em-dash archaeology: the original provisioning commit (6bbfd6b) created
+  the ASC subscriptions with "Pro — Yearly"; renamed to hyphens in
+  065881b which also added the localization reconcile — live names
+  verified clean via `inspect_products.dart`.
+
 ## 2026-09-04 — Provisioning automation (GCP + store products)
 
 - Tier M. `tool/provisioning/` (standalone package, creds-by-path,

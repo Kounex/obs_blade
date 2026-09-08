@@ -2,9 +2,10 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-07** (store
-products provisioned + priced, Android toolchain migrated, Google package
-verification in review; RevenueCat dashboard wiring in progress).
+Read this first after `AGENTS.md`. Last reset: **2026-09-08** (pricing
+finalized with cross-store parity, ASC products submitted for review,
+Google package Registered; next: finish RevenueCat + drive the 4.0
+release).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -55,77 +56,69 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Store products are live (2026-09-07)** — provisioned via
-`tool/provisioning/` on both stores with locked pricing **$4.99/mo,
-$49.99/yr, $99.99 lifetime**: ASC group "Pro" + `pro_yearly` /
-`pro_monthly` / `pro_lifetime` (localized, available in all territories,
-prices set); Play subscription `pro` (base plans `pro-yearly` /
-`pro-monthly` ACTIVE) + one-time `pro_lifetime` ACTIVE. Console-only
-remainder: **product review submission** on both stores (they're not
-submitted for review yet — required before they can sell).
+**Goal: ship 4.0.** Store products exist on both stores with locked,
+fully regionalized pricing **$4.99/mo, $49.99/yr, $99.99 lifetime**
+(2026-09-08): ASC 175/175 territories (equalized-tier fallback), Play
+173/173 regions — Play is driven by Apple's equalized tier table per
+currency by default (`tool/provisioning`: `play-products
+--price-source apple`; details in `changelog-agent.md` 2026-09-08).
+Tool suite: 49 tests.
 
-**RevenueCat dashboard wiring in progress** — app code is done; follow
-[`revenuecat-setup.md`](revenuecat-setup.md) §1–4 (project, store
-connections, entitlement `pro` + offering, paste the two public SDK keys
-into `lib/utils/revenuecat_config.dart`), then §5 verification
-(`test/pro/` + sandbox dogfood). **Attach `pro_lifetime` to the `pro`
-entitlement before flipping** or pre-RC lifetime buyers strand.
+**ASC products SUBMITTED for review (2026-09-08)** — review screenshots
+uploaded for all three (spec gotcha + how-to in
+[`revenuecat-setup.md`](revenuecat-setup.md) → Notes). Play products are
+ACTIVE; their review rides the next app release. Watch ASC for approval
+(24–48h typical).
 
-**Android toolchain migrated to Flutter 3.47 minimums** (2026-09-07):
-Gradle 8.14 / AGP 8.11.1 / KGP 2.2.20, `namespace` replaces manifest
-`package=`, compile/target SDK follow `flutter.*`. `build appbundle
---release` + `build apk --release` verified on the workstation — the
-upgrade-plan "Android not yet built" deferral is cleared *build-wise*;
-runtime/device testing is still open. Non-blocking warnings: KGP 2.3.20
-recommended; NDK bump to 28.2.13676358 suggested (integration_test).
-JDK 17 installed via brew (`openjdk@17`) + `flutter config --jdk-dir` —
-machine note added to `private/maintainer-workflow.md`.
-
-**Google developer verification — package registration
-`com.kounex.obsBlade` IN REVIEW** (2026-09-07): justification route with
-the registered upload key (`A6:24:…`, local `android-release.jks`); the
-eligible legacy app-signing key `25:F7:…` is Google-managed and a
-Play-signed universal APK failed verification because the signing key was
-**upgraded** — SDK 33+ installs are signed by `82:04:…` instead. **After
-the review resolves (either way):** delete
+**Google developer verification DONE:** `com.kounex.obsBlade` is
+**Registered**. The upload key (A6:24:44, `android-release.jks`) is still
+"in review" (justification route) — additive, blocks nothing. **After it
+resolves (either way):** delete
 `android/app/src/main/assets/adi-registration.properties` (untracked,
-holds the one-time registration token) and discard the Play
-internal-track draft release `3.3.0 (2026090701)`. Pubspec build number
-stays bumped to `2026090701` to avoid versionCode collisions.
+one-time registration token) and discard the Play internal-track draft
+release `3.3.0 (2026090701)`. Pubspec build number stays `2026090701`.
 
-**Creds consolidated (2026-09-07):** `~/.config/obs-blade` is now a
-symlink → `~/NASync/obs-blade` (Syncthing-backed) holding `asc-key.p8`,
-`SubscriptionKey_QJ5A6U8X72.p8`, `play-svc.json`, `youtube-api-key.txt`,
-`android-release.jks`/`.pem`; env vars in `~/.localrc`. Provisioning tool
-bugs fixed (pagination, ASC subscription availability, price updates) —
-suite at 34 tests.
+**RevenueCat dashboard (in progress, maintainer):** project + both apps
+exist, Play↔RC link works (monthly imported from Play). Open:
+1. Add `pro_yearly` + `pro_lifetime` in RC — lifetime is a
+   **non-consumable**; attach all three to entitlement `pro` +
+   offering/packages per [`revenuecat-setup.md`](revenuecat-setup.md) §3.
+2. Verify Play RTDN: test notification in Play Console was failing on
+   Pub/Sub permissions (topic `projects/obs-blade/topics/Play-Store-Notifications`);
+   service account is admin again — retry, allow propagation time.
+3. Paste the two public SDK keys into `lib/utils/revenuecat_config.dart`
+   → §5 verification (`test/pro/` + sandbox dogfood).
+4. Apple Small Business Program: enroll on the Apple developer site
+   (15% commission) if not yet done; Play's tiers are automatic.
 
-**Immediate next threads:**
+**Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
+the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
+any future non-sliver full-screen tab route.
 
-1. **Finish RevenueCat** (maintainer, browser): `revenuecat-setup.md`
-   §1–4, then hand the public keys to the agent → §5 verify. Also:
-   **Apple Small Business Program enrollment** (developer site, cuts
-   commission to 15%) was explained; Play's 15%/10% tiers are automatic.
-   Then submit ASC + Play products for review.
+**Immediate next threads (4.0):**
+
+1. **Finish RevenueCat** (above) → sandbox dogfood per
+   `revenuecat-setup.md` §5.
 2. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.
-3. **Android runtime smoke** (emulator/device) now that the toolchain
-   builds — dashboard + chat basics.
-4. YouTube: GCP key exists (`~/.config/obs-blade/youtube-api-key.txt`);
-   run the spike (`tool/youtube_spike/`, ≥30 min busy chat, record units
-   into `youtube-native-chat-audit.md`). OAuth consent screen + TV client
-   stay console-only. The `private/backend-architecture.md` OAuth note is
+3. **Android runtime smoke** (emulator/device) — toolchain builds since
+   2026-09-07 (Gradle 8.14 / AGP 8.11.1 / KGP 2.2.20); runtime testing
+   still open. Confirm release AABs sign with the upload key
+   (`android/key.properties` → `android-release.jks`, A6:24:44).
+4. Release mechanics: version/changelog, store metadata
+   (`fastlane/metadata`), visual-QA pass
+   (`tool/visual_qa/capture_screenshots.sh`).
+5. YouTube (post-4.0 ok): GCP key exists
+   (`~/.config/obs-blade/youtube-api-key.txt`); run the spike
+   (`tool/youtube_spike/`, ≥30 min busy chat, record units into
+   `youtube-native-chat-audit.md`). OAuth consent screen + TV client stay
+   console-only. The `private/backend-architecture.md` OAuth note is
    **still deferred — sync private docs first**.
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in
-`changelog-agent.md`. `test/pro/` is the purchase/entitlement suite home
-(no precedent existed before this wave).
-
-**Cursor note:** visual companion under Cursor needs
-`visual-companion-cursor` (foreground `--foreground` start) — bare
-Superpowers `start-server.sh` dies when the shell exits.
+`changelog-agent.md`. `test/pro/` is the purchase/entitlement suite home.
 
 ## Verify quickly
 

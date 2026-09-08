@@ -123,12 +123,15 @@ quota question before any default-on rollout.
 entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only
 override via long-press on the paywall hero). Product ids
 (`lib/utils/pro_ids.dart`): `pro_yearly` / `pro_monthly` (subs) +
-`pro_lifetime` (non-consumable) — **not yet created store-side**; the
-paywall (`lib/views/pro/`, full-screen route `Pro` on Home + Settings tab
-navigators) renders a deliberate placeholder state until they are. Wiring
+`pro_lifetime` (non-consumable) — **created + priced store-side**
+(2026-09, via `tool/provisioning/`; ASC submitted for review, Play
+ACTIVE), so the paywall (`lib/views/pro/`, full-screen route `Pro` on
+Home + Settings tab navigators) still renders its placeholder state only
+until the RevenueCat keys land. Wiring
 to ship: **RevenueCat** (`purchases_flutter`, entitlement `pro`) — full
 checklist in [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md)
-(create products with the exact ids, attach to the entitlement, paste two
+(products exist with the exact ids; attach them to the entitlement, paste
+two
 public SDK keys into `lib/utils/revenuecat_config.dart`; the app
 auto-switches from the legacy direct-IAP fallback when keys are present).
 Gates live at the chat-bar
