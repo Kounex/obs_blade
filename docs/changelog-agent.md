@@ -929,3 +929,14 @@ Running log of upgrade/migration work. Not store release notes.
   copy/validation; Owncast trailing-slash normalize. Tests in `test/chat/`.
 - **Session close:** `docs/session-handoff.md` written for next agent; AGENTS.md
   points at it. Chat Phase 1 (native Twitch) parked pending Dev Console creds.
+
+## 2026-09-08 — Visual companion framing-ban learning
+
+Mockup shell failed twice in the user's real browser despite green
+headless verification: headless Chrome loaded `file://` copies, which
+bypass the companion server's `X-Frame-Options: DENY` /
+`frame-ancestors 'none'` headers (and the session-key cookie isn't sent
+for iframe subresources). Fix: merged single-document shell
+(`all-views-v3.html`), verified in the user's real browser via
+kimi-webbridge. Durable lessons documented in
+`docs/superpowers/visual-companion-gotchas.md` (indexed in AGENTS.md).
