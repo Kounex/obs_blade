@@ -2,6 +2,29 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-08 — 4.0 UI iteration: workflow spec + Phase 1 audit
+
+- **Workflow spec** (`docs/superpowers/specs/2026-09-08-ui-iteration-4.0-design.md`):
+  system-wide token evolution, Liquid Glass direction, browser mockups for
+  breadth → Flutter design lab for finalists → redesign spec. No `lib/`
+  edits until the Phase 4 spec.
+- **Phase 1 audit complete** (SDD, 6 tasks, docs-only): phone (38) +
+  tablet (36) screenshot sets in `docs/redesign/2026-iteration/`
+  (gitignored — LAN IPs visible); advisor passes
+  (`animation-opportunities.md`, `motion-audit.md` — 3 HIGH: `easeIn`
+  FullOverlay entrance, off-token StudioModeTransitionButton,
+  ScrollRefreshIcon build side-effects); token sweep (211 hardcoded
+  colors — 62 in stream_chat, 41 durations [upper bound], 16 curves,
+  87 radii); digest `docs/redesign/2026-iteration-audit.md` (11 quick
+  wins / 6 systemic / 8 feel gaps / 6 tablet). Settled contract recorded:
+  never animate native chat message insertion.
+- Capture-surfaced pre-existing bugs (documented, not fixed — read-only
+  wave; block clean "after" captures): `text_field_date.dart:29`
+  LateInitializationError + duplicate GlobalKey; Tip Jar hit-test miss.
+- Tooling note: `capture_screenshots.sh` needs `DEVICE_ID=<udid>` (the
+  `booted` alias fails in `flutter test -d`); iPad QA sim created with
+  devicetype `iPad-Pro-11-inch-M4-16GB`.
+
 ## 2026-09-08 — RevenueCat keys live
 
 - **RevenueCat path now the default:** maintainer completed the RC

@@ -91,6 +91,24 @@ reworked backend-selection fixture). Open:
 3. Apple Small Business Program: enroll on the Apple developer site
    (15% commission) if not yet done; Play's tiers are automatic.
 
+**4.0 UI iteration (2026-09-08):** workflow spec ratified
+([`superpowers/specs/2026-09-08-ui-iteration-4.0-design.md`](superpowers/specs/2026-09-08-ui-iteration-4.0-design.md))
+— system-wide via tokens, **Liquid Glass** direction, everything on the
+table (incl. CustomTheme re-mapping). **Phase 1 audit COMPLETE** (plan
+`superpowers/plans/2026-09-08-ui-iteration-phase1-audit.md`): digest at
+[`redesign/2026-iteration-audit.md`](redesign/2026-iteration-audit.md),
+screenshots (untracked, contain LAN IPs) in
+`docs/redesign/2026-iteration/before-{phone,tablet}/` — phone set has a
+custom purple theme active, tablet set is the default-theme color
+baseline. **Next: Phase 2** — animated Liquid Glass browser mockups of
+Dashboard / Scenes / Paywall (phone first, tablet Dashboard), offer the
+visual companion at the first mockup. Before Phase 2 "after" captures:
+fix the two pre-existing bugs the walk surfaced
+(`text_field_date.dart:29` LateInitializationError + duplicate
+GlobalKey; Tip Jar settings-row hit-test miss). Runner scheme no longer
+has the StoreKit config attached (real sandbox dogfood); re-attach
+temporarily for ASC-style paywall shots.
+
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
 any future non-sliver full-screen tab route.
