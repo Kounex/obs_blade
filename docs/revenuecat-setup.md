@@ -113,10 +113,13 @@ validated server-side). macOS uses the Apple key too.
   screenshot that (a) matches a marketing screenshot size *the uploaded
   app binary supports* and (b) has no alpha channel. A 6.3" simulator shot
   (1206×2622) gets "dimensions are wrong" — use 1242×2688 (6.5"),
-  flattened. The shot itself is easy: run on any iPhone sim (the scheme
-  has `ios/obs_blade_storekit.storekit` attached, so the paywall renders
-  real names/prices without sandbox) and screenshot the pricing section.
+  flattened. The shot itself is easy: temporarily re-attach
+  `ios/obs_blade_storekit.storekit` to the Runner scheme (Run action), run
+  on any iPhone sim — the paywall renders real names/prices without
+  sandbox — and screenshot the pricing section, then detach it again.
   One image for all three products is fine; review-only, never public.
+  The scheme ships WITHOUT the config attached so dogfood runs hit the
+  real Apple sandbox.
 - **foss branch:** strip `purchases_flutter` alongside the existing IAP
   strip — all RC code is additive; with empty keys the app never touches
   the SDK.
