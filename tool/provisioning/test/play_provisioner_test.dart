@@ -9,49 +9,58 @@ import 'fake_api_client.dart';
 const pkg = 'com.kounex.obsBlade';
 const basePlans = [
   BasePlanSpec(
-      basePlanId: 'pro-yearly',
-      billingPeriodDuration: 'P1Y',
-      priceUsd: '24.99'),
+    basePlanId: 'pro-yearly',
+    billingPeriodDuration: 'P1Y',
+    priceUsd: '24.99',
+  ),
   BasePlanSpec(
-      basePlanId: 'pro-monthly',
-      billingPeriodDuration: 'P1M',
-      priceUsd: '4.99'),
+    basePlanId: 'pro-monthly',
+    billingPeriodDuration: 'P1M',
+    priceUsd: '4.99',
+  ),
 ];
 
 Map<String, Object?> _subscription(List<Map<String, Object?>> plans) => {
-      'productId': 'pro',
-      'packageName': pkg,
-      'basePlans': plans,
-    };
+  'productId': 'pro',
+  'packageName': pkg,
+  'basePlans': plans,
+};
 
 Map<String, Object?> _plan(String id, String state, String priceUsd) => {
-      'basePlanId': id,
+  'basePlanId': id,
+  'state': state,
+  'regionalConfigs': [
+    {
+      'regionCode': 'US',
+      'newSubscriberAvailability': true,
+      'price': moneyFromDecimal(priceUsd),
+    },
+  ],
+};
+
+Map<String, Object?> _oneTimeProduct(
+  String state,
+  String priceUsd, {
+  String? title,
+}) => {
+  'productId': 'pro_lifetime',
+  'listings': [
+    {'languageCode': 'en-US', 'title': title ?? PlayProvisioner.lifetimeTitle},
+  ],
+  'purchaseOptions': [
+    {
+      'purchaseOptionId': 'pro-lifetime',
       'state': state,
-      'regionalConfigs': [
+      'regionalPricingAndAvailabilityConfigs': [
         {
           'regionCode': 'US',
-          'newSubscriberAvailability': true,
+          'availability': 'AVAILABLE',
           'price': moneyFromDecimal(priceUsd),
-        }
+        },
       ],
-    };
-
-Map<String, Object?> _oneTimeProduct(String state, String priceUsd) => {
-      'productId': 'pro_lifetime',
-      'purchaseOptions': [
-        {
-          'purchaseOptionId': 'pro-lifetime',
-          'state': state,
-          'regionalPricingAndAvailabilityConfigs': [
-            {
-              'regionCode': 'US',
-              'availability': 'AVAILABLE',
-              'price': moneyFromDecimal(priceUsd),
-            }
-          ],
-        }
-      ],
-    };
+    },
+  ],
+};
 
 void main() {
   group('PlayProvisioner', () {
@@ -61,56 +70,88 @@ void main() {
 
       // Subscription GET -> 404 (missing); after create the re-read shows
       // the two base plans in DRAFT.
-      client.on('GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-          ApiResponse(404, null));
-      client.on('GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-          ApiResponse(200, _subscription([
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+        ApiResponse(404, null),
+      );
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+        ApiResponse(
+          200,
+          _subscription([
             {'basePlanId': 'pro-yearly', 'state': 'DRAFT'},
             {'basePlanId': 'pro-monthly', 'state': 'DRAFT'},
-          ])));
+          ]),
+        ),
+      );
       // One-time product: GET 404, batchUpdate creates, re-read DRAFT.
       client.on(
-          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(404, null));
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(404, null),
+      );
       client.on(
-          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(200, {
-            'productId': 'pro_lifetime',
-            'purchaseOptions': [
-              {'purchaseOptionId': 'pro-lifetime', 'state': 'DRAFT'}
-            ],
-          }));
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(200, {
+          'productId': 'pro_lifetime',
+          'purchaseOptions': [
+            {'purchaseOptionId': 'pro-lifetime', 'state': 'DRAFT'},
+          ],
+        }),
+      );
 
       final provisioner = PlayProvisioner(
-          client: client, packageName: pkg, log: logs.add);
+        client: client,
+        packageName: pkg,
+        log: logs.add,
+      );
       final ok = await provisioner.run(
-          basePlans: basePlans, lifetimePriceUsd: '79.99');
+        basePlans: basePlans,
+        lifetimePriceUsd: '79.99',
+      );
 
       expect(ok, isTrue);
-      expect(client.count('POST',
-          'androidpublisher/v3/applications/$pkg/subscriptions'), 1);
       expect(
-          client.count(
-              'POST',
-              'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
-              'basePlans/pro-yearly:activate'),
-          1);
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/subscriptions',
+        ),
+        1,
+      );
       expect(
-          client.count(
-              'POST',
-              'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
-              'basePlans/pro-monthly:activate'),
-          1);
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
+              'basePlans/pro-yearly:activate',
+        ),
+        1,
+      );
       expect(
-          client.count('POST',
-              'androidpublisher/v3/applications/$pkg/oneTimeProducts:batchUpdate'),
-          1);
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
+              'basePlans/pro-monthly:activate',
+        ),
+        1,
+      );
       expect(
-          client.count(
-              'POST',
-              'androidpublisher/v3/applications/$pkg/oneTimeProducts/'
-              'pro_lifetime/purchaseOptions:batchUpdateStates'),
-          1);
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/oneTimeProducts:batchUpdate',
+        ),
+        1,
+      );
+      expect(
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/oneTimeProducts/'
+              'pro_lifetime/purchaseOptions:batchUpdateStates',
+        ),
+        1,
+      );
     });
 
     test('is a no-op when everything already exists and is active', () async {
@@ -121,20 +162,32 @@ void main() {
       // the post-create state re-read.
       for (var i = 0; i < 2; i++) {
         client.on(
-            'GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-            ApiResponse(200, _subscription([
+          'GET',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+          ApiResponse(
+            200,
+            _subscription([
               _plan('pro-yearly', 'ACTIVE', '24.99'),
               _plan('pro-monthly', 'ACTIVE', '4.99'),
-            ])));
+            ]),
+          ),
+        );
       }
       client.on(
-          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')));
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+      );
 
       final provisioner = PlayProvisioner(
-          client: client, packageName: pkg, log: logs.add);
+        client: client,
+        packageName: pkg,
+        log: logs.add,
+      );
       final ok = await provisioner.run(
-          basePlans: basePlans, lifetimePriceUsd: '79.99');
+        basePlans: basePlans,
+        lifetimePriceUsd: '79.99',
+      );
 
       expect(ok, isTrue);
       expect(client.requests.where((r) => r.startsWith('POST')), isEmpty);
@@ -142,58 +195,96 @@ void main() {
       expect(logs.any((l) => l.contains('already ACTIVE')), isTrue);
     });
 
-    test('patches in a missing base plan on an existing subscription',
-        () async {
-      final client = FakeApiClient();
-      final logs = <String>[];
+    test(
+      'patches in a missing base plan on an existing subscription',
+      () async {
+        final client = FakeApiClient();
+        final logs = <String>[];
 
-      client.on('GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-          ApiResponse(200, _subscription([
-            {'basePlanId': 'pro-yearly', 'state': 'ACTIVE'},
-          ])));
-      // Re-read after patch: both plans, monthly still DRAFT.
-      client.on('GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-          ApiResponse(200, _subscription([
-            {'basePlanId': 'pro-yearly', 'state': 'ACTIVE'},
-            {'basePlanId': 'pro-monthly', 'state': 'DRAFT'},
-          ])));
-      client.on(
-          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        client.on(
+          'GET',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+          ApiResponse(
+            200,
+            _subscription([
+              {'basePlanId': 'pro-yearly', 'state': 'ACTIVE'},
+            ]),
+          ),
+        );
+        // Re-read after patch: both plans, monthly still DRAFT.
+        client.on(
+          'GET',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+          ApiResponse(
+            200,
+            _subscription([
+              {'basePlanId': 'pro-yearly', 'state': 'ACTIVE'},
+              {'basePlanId': 'pro-monthly', 'state': 'DRAFT'},
+            ]),
+          ),
+        );
+        client.on(
+          'GET',
+          'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
           ApiResponse(200, {
             'productId': 'pro_lifetime',
-            'purchaseOptions': [
-              {'purchaseOptionId': 'pro-lifetime', 'state': 'ACTIVE'}
+            'listings': [
+              {'languageCode': 'en-US', 'title': PlayProvisioner.lifetimeTitle},
             ],
-          }));
+            'purchaseOptions': [
+              {'purchaseOptionId': 'pro-lifetime', 'state': 'ACTIVE'},
+            ],
+          }),
+        );
 
-      final provisioner = PlayProvisioner(
-          client: client, packageName: pkg, log: logs.add);
-      final ok = await provisioner.run(
-          basePlans: basePlans, lifetimePriceUsd: '79.99');
+        final provisioner = PlayProvisioner(
+          client: client,
+          packageName: pkg,
+          log: logs.add,
+        );
+        final ok = await provisioner.run(
+          basePlans: basePlans,
+          lifetimePriceUsd: '79.99',
+        );
 
-      expect(ok, isTrue);
-      expect(client.count('PATCH',
-          'androidpublisher/v3/applications/$pkg/subscriptions/pro'), 1);
-      final patchRequest = client.requests
-          .singleWhere((r) => r.startsWith('PATCH '));
-      expect(patchRequest, contains('updateMask=basePlans'));
-      expect(patchRequest, isNot(contains('listings')),
-          reason: 'resume PATCH must not touch console-customized '
-              'listing text');
-      expect(
+        expect(ok, isTrue);
+        expect(
           client.count(
-              'POST',
-              'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
-              'basePlans/pro-monthly:activate'),
-          1);
-      expect(
+            'PATCH',
+            'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+          ),
+          1,
+        );
+        final patchRequest = client.requests.singleWhere(
+          (r) => r.startsWith('PATCH '),
+        );
+        expect(patchRequest, contains('updateMask=basePlans'));
+        expect(
+          patchRequest,
+          isNot(contains('listings')),
+          reason:
+              'resume PATCH must not touch console-customized '
+              'listing text',
+        );
+        expect(
           client.count(
-              'POST',
-              'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
-              'basePlans/pro-yearly:activate'),
+            'POST',
+            'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
+                'basePlans/pro-monthly:activate',
+          ),
+          1,
+        );
+        expect(
+          client.count(
+            'POST',
+            'androidpublisher/v3/applications/$pkg/subscriptions/pro/'
+                'basePlans/pro-yearly:activate',
+          ),
           0,
-          reason: 'already-active base plan must not be re-activated');
-    });
+          reason: 'already-active base plan must not be re-activated',
+        );
+      },
+    );
     test('updates prices when they drift from the wanted values', () async {
       final client = FakeApiClient();
       final logs = <String>[];
@@ -202,60 +293,144 @@ void main() {
       // (check + activation re-read).
       for (var i = 0; i < 2; i++) {
         client.on(
-            'GET', 'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-            ApiResponse(200, _subscription([
+          'GET',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+          ApiResponse(
+            200,
+            _subscription([
               _plan('pro-yearly', 'ACTIVE', '24.99'),
               _plan('pro-monthly', 'ACTIVE', '4.99'),
-            ])));
+            ]),
+          ),
+        );
       }
       // Lifetime at the old 79.99, then re-read after the update.
       client.on(
-          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')));
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+      );
       client.on(
-          'GET', 'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(200, _oneTimeProduct('ACTIVE', '99.99')));
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(200, _oneTimeProduct('ACTIVE', '99.99')),
+      );
 
       const updatedPlans = [
         BasePlanSpec(
-            basePlanId: 'pro-yearly',
-            billingPeriodDuration: 'P1Y',
-            priceUsd: '49.99'),
+          basePlanId: 'pro-yearly',
+          billingPeriodDuration: 'P1Y',
+          priceUsd: '49.99',
+        ),
         BasePlanSpec(
-            basePlanId: 'pro-monthly',
-            billingPeriodDuration: 'P1M',
-            priceUsd: '4.99'),
+          basePlanId: 'pro-monthly',
+          billingPeriodDuration: 'P1M',
+          priceUsd: '4.99',
+        ),
       ];
       final provisioner = PlayProvisioner(
-          client: client, packageName: pkg, log: logs.add);
+        client: client,
+        packageName: pkg,
+        log: logs.add,
+      );
       final ok = await provisioner.run(
-          basePlans: updatedPlans, lifetimePriceUsd: '99.99');
+        basePlans: updatedPlans,
+        lifetimePriceUsd: '99.99',
+      );
 
       expect(ok, isTrue);
-      final patches = client.bodiesFor('PATCH',
-          'androidpublisher/v3/applications/$pkg/subscriptions/pro');
+      final patches = client.bodiesFor(
+        'PATCH',
+        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+      );
       expect(patches, hasLength(1));
       final patchedPlans = patches.first['basePlans'] as List;
-      final yearly = patchedPlans
-          .whereType<Map>()
-          .firstWhere((b) => b['basePlanId'] == 'pro-yearly');
+      final yearly = patchedPlans.whereType<Map>().firstWhere(
+        (b) => b['basePlanId'] == 'pro-yearly',
+      );
       final yearlyUs = (yearly['regionalConfigs'] as List)
           .whereType<Map>()
           .firstWhere((c) => c['regionCode'] == 'US');
       expect((yearlyUs['price'] as Map)['units'], '49');
       // Monthly plan carried over untouched.
-      final monthly = patchedPlans
-          .whereType<Map>()
-          .firstWhere((b) => b['basePlanId'] == 'pro-monthly');
-      expect(((monthly['regionalConfigs'] as List).first as Map)['price'],
-          moneyFromDecimal('4.99'));
+      final monthly = patchedPlans.whereType<Map>().firstWhere(
+        (b) => b['basePlanId'] == 'pro-monthly',
+      );
+      expect(
+        ((monthly['regionalConfigs'] as List).first as Map)['price'],
+        moneyFromDecimal('4.99'),
+      );
       // One-time product updated via the same batchUpdate upsert.
       expect(
-          client.count('POST',
-              'androidpublisher/v3/applications/$pkg/oneTimeProducts:batchUpdate'),
-          1);
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/oneTimeProducts:batchUpdate',
+        ),
+        1,
+      );
       expect(logs.any((l) => l.contains('updated prices')), isTrue);
       expect(logs.any((l) => l.contains('updated one-time product')), isTrue);
+    });
+
+    test('re-applies the listing when its title drifted', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      for (var i = 0; i < 2; i++) {
+        client.on(
+          'GET',
+          'androidpublisher/v3/applications/$pkg/subscriptions/pro',
+          ApiResponse(
+            200,
+            _subscription([
+              _plan('pro-yearly', 'ACTIVE', '24.99'),
+              _plan('pro-monthly', 'ACTIVE', '4.99'),
+            ]),
+          ),
+        );
+      }
+      // Price matches, but the listing still has the old em-dash title —
+      // the upsert must run to fix it. Re-read after the update returns
+      // the corrected listing (ACTIVE, so no activation call).
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(
+          200,
+          _oneTimeProduct('ACTIVE', '79.99', title: 'Pro — Lifetime'),
+        ),
+      );
+      client.on(
+        'GET',
+        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
+        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+      );
+
+      final provisioner = PlayProvisioner(
+        client: client,
+        packageName: pkg,
+        log: logs.add,
+      );
+      final ok = await provisioner.run(
+        basePlans: basePlans,
+        lifetimePriceUsd: '79.99',
+      );
+
+      expect(ok, isTrue);
+      expect(
+        client.count(
+          'POST',
+          'androidpublisher/v3/applications/$pkg/oneTimeProducts:batchUpdate',
+        ),
+        1,
+      );
+      expect(logs.any((l) => l.contains('listing title')), isTrue);
+      // No subscription PATCH, no activation calls — price matched.
+      expect(client.requests.where((r) => r.startsWith('PATCH')), isEmpty);
+      expect(
+        client.requests.where((r) => r.contains('batchUpdateStates')),
+        isEmpty,
+      );
     });
   });
 }

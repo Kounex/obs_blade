@@ -211,10 +211,7 @@ Future<void> main() async {
   try {
     await _inspectPlay(env);
   } on ApiException catch (e) {
-    print(
-      'Play inspection failed (known: service account currently lacks '
-      'read permission): $e',
-    );
+    print('Play inspection failed: $e');
   }
 }
 
@@ -238,7 +235,7 @@ Future<void> _inspectPlay(Map<String, String> env) async {
       : '${price['units']}.${((price['nanos'] ?? 0) ~/ 10000000).toString().padLeft(2, '0')} ${price['currencyCode']}';
 
   final sub = await play.get(
-    'androidpublisher/v3/applications/$pkg/monetization/subscriptions/pro',
+    'androidpublisher/v3/applications/$pkg/subscriptions/pro',
   );
   final subJson = sub.json;
   print('subscription pro:');
@@ -253,14 +250,16 @@ Future<void> _inspectPlay(Map<String, String> env) async {
         .where((r) => ['US', 'DE', 'GB'].contains(r['regionCode']))
         .map((r) => '${r['regionCode']}=${money(r['price'] as Map?)}')
         .join(', ');
+    final period =
+        (bp['autoRenewingBasePlanType'] as Map?)?['billingPeriodDuration'];
     print(
       '  basePlan ${bp['basePlanId']} (${bp['state']}) '
-      '${bp['billingPeriodDuration']}: $regional',
+      '$period: $regional',
     );
   }
 
   final otp = await play.get(
-    'androidpublisher/v3/applications/$pkg/monetization/onetimeproducts/pro_lifetime',
+    'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
   );
   final otpJson = otp.json;
   print('one-time pro_lifetime:');
@@ -270,10 +269,17 @@ Future<void> _inspectPlay(Map<String, String> env) async {
       'description="${l['description']}"',
     );
   }
-  final regional =
-      (otpJson['regionalPricingAndAvailabilityConfigs'] as List? ?? [])
-          .where((r) => ['US', 'DE', 'GB'].contains(r['regionCode']))
-          .map((r) => '${r['regionCode']}=${money(r['price'] as Map?)}')
-          .join(', ');
-  print('  prices: $regional');
+  // Pricing lives on the purchase options in the current one-time product
+  // model.
+  for (final po in (otpJson['purchaseOptions'] as List? ?? [])) {
+    final regional =
+        (po['regionalPricingAndAvailabilityConfigs'] as List? ?? [])
+            .where((r) => ['US', 'DE', 'GB'].contains(r['regionCode']))
+            .map((r) => '${r['regionCode']}=${money(r['price'] as Map?)}')
+            .join(', ');
+    print(
+      '  purchaseOption ${po['purchaseOptionId']} (${po['state']}): '
+      '$regional',
+    );
+  }
 }

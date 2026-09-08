@@ -31,6 +31,7 @@ class PlayProvisioner {
 
   static const regionsVersion = '2022/02';
   static const subscriptionTitle = 'Pro';
+  static const lifetimeTitle = 'Pro - Lifetime';
 
   String get _apps => 'androidpublisher/v3/applications/$packageName';
 
@@ -63,16 +64,19 @@ class PlayProvisioner {
           'regionsVersion.version': regionsVersion,
         },
       );
-      _log('created subscription $subscriptionProductId with base plans '
-          '${basePlans.map((b) => b.basePlanId).join(', ')} (DRAFT)');
+      _log(
+        'created subscription $subscriptionProductId with base plans '
+        '${basePlans.map((b) => b.basePlanId).join(', ')} (DRAFT)',
+      );
       existingBasePlans = const [];
     } else {
-      _log('subscription $subscriptionProductId already exists — skipping '
-          'create');
-      existingBasePlans =
-          ((existing.json['basePlans'] as List?) ?? const [])
-              .whereType<Map<String, Object?>>()
-              .toList();
+      _log(
+        'subscription $subscriptionProductId already exists — skipping '
+        'create',
+      );
+      existingBasePlans = ((existing.json['basePlans'] as List?) ?? const [])
+          .whereType<Map<String, Object?>>()
+          .toList();
       final existingIds = existingBasePlans
           .map((b) => b['basePlanId'] as String?)
           .toSet();
@@ -85,8 +89,11 @@ class PlayProvisioner {
             .where((b) => b['basePlanId'] == spec.basePlanId)
             .firstOrNull;
         return plan != null &&
-            !priceConfigsMatch(plan['regionalConfigs'] as List?,
-                regionCode, spec.priceUsd);
+            !priceConfigsMatch(
+              plan['regionalConfigs'] as List?,
+              regionCode,
+              spec.priceUsd,
+            );
       }).toList();
       if (missing.isEmpty && drifted.isEmpty) {
         _log('all base plans already exist with matching prices — skipping');
@@ -97,8 +104,10 @@ class PlayProvisioner {
                 ? basePlanWithPrice(
                     b,
                     basePlans.firstWhere(
-                        (s) => s.basePlanId == b['basePlanId']),
-                    regionCode)
+                      (s) => s.basePlanId == b['basePlanId'],
+                    ),
+                    regionCode,
+                  )
                 : b,
         ];
         await client.patch(
@@ -117,12 +126,15 @@ class PlayProvisioner {
           },
         );
         if (missing.isNotEmpty) {
-          _log('added missing base plans: '
-              '${missing.map((b) => b.basePlanId).join(', ')}');
+          _log(
+            'added missing base plans: '
+            '${missing.map((b) => b.basePlanId).join(', ')}',
+          );
         }
         if (drifted.isNotEmpty) {
-          _log('updated prices for base plans: ${drifted.map((b) =>
-              '${b.basePlanId} → USD ${b.priceUsd}').join(', ')}');
+          _log(
+            'updated prices for base plans: ${drifted.map((b) => '${b.basePlanId} → USD ${b.priceUsd}').join(', ')}',
+          );
         }
       }
     }
@@ -158,8 +170,10 @@ class PlayProvisioner {
         );
         _log('activated base plan ${spec.basePlanId}');
       } on ApiException catch (e) {
-        _log('ERROR activating base plan ${spec.basePlanId}: $e — activate '
-            'it in Play Console → Monetize → Products → Subscriptions');
+        _log(
+          'ERROR activating base plan ${spec.basePlanId}: $e — activate '
+          'it in Play Console → Monetize → Products → Subscriptions',
+        );
         ok = false;
       }
     }
@@ -170,35 +184,53 @@ class PlayProvisioner {
     final path = '$_apps/oneTimeProducts/$lifetimeProductId';
     var product = await client.getOrNull(path);
     if (product != null) {
-      final existingOption = ((product.json['purchaseOptions'] as List?) ??
-              const [])
-          .whereType<Map<String, Object?>>()
-          .where((o) => o['purchaseOptionId'] == purchaseOptionId)
-          .firstOrNull;
-      final priceMatches = existingOption != null &&
+      final existingOption =
+          ((product.json['purchaseOptions'] as List?) ?? const [])
+              .whereType<Map<String, Object?>>()
+              .where((o) => o['purchaseOptionId'] == purchaseOptionId)
+              .firstOrNull;
+      final priceMatches =
+          existingOption != null &&
           priceConfigsMatch(
-              existingOption['regionalPricingAndAvailabilityConfigs']
-                  as List?,
-              regionCode,
-              priceUsd);
-      if (priceMatches) {
-        _log('one-time product $lifetimeProductId already exists with '
-            'matching price — skipping');
+            existingOption['regionalPricingAndAvailabilityConfigs'] as List?,
+            regionCode,
+            priceUsd,
+          );
+      // Listings are only written by the upsert below, so a drifted title
+      // (e.g. an old em-dash) must also trigger it.
+      final titleDrifted =
+          ((product.json['listings'] as List? ?? const [])
+                      .whereType<Map<String, Object?>>()
+                      .where((l) => l['languageCode'] == 'en-US')
+                      .firstOrNull?['title']
+                  as String? ??
+              '') !=
+          lifetimeTitle;
+      if (priceMatches && !titleDrifted) {
+        _log(
+          'one-time product $lifetimeProductId already exists with '
+          'matching price + listing — skipping',
+        );
       } else {
         // Same call as the create: batchUpdate with allowMissing upserts
-        // listings + purchase options, so it also serves as a price update.
+        // listings + purchase options, so it also serves as a price /
+        // listing update.
         await client.post(
           '$_apps/oneTimeProducts:batchUpdate',
           oneTimeProductUpsert(
             packageName: packageName,
             productId: lifetimeProductId,
             purchaseOptionId: purchaseOptionId,
-            title: 'Pro - Lifetime',
+            title: lifetimeTitle,
             priceUsd: priceUsd,
             regionCode: regionCode,
           ),
         );
-        _log('updated one-time product $lifetimeProductId to USD $priceUsd');
+        _log(
+          'updated one-time product $lifetimeProductId'
+          '${priceMatches ? '' : ' to USD $priceUsd'}'
+          '${titleDrifted ? ' (listing title → "$lifetimeTitle")' : ''}',
+        );
         product = await client.getOrNull(path);
       }
     } else {
@@ -208,35 +240,41 @@ class PlayProvisioner {
           packageName: packageName,
           productId: lifetimeProductId,
           purchaseOptionId: purchaseOptionId,
-          title: 'Pro - Lifetime',
+          title: lifetimeTitle,
           priceUsd: priceUsd,
           regionCode: regionCode,
         ),
       );
-      _log('created one-time product $lifetimeProductId '
-          '(purchase option $purchaseOptionId, USD $priceUsd)');
+      _log(
+        'created one-time product $lifetimeProductId '
+        '(purchase option $purchaseOptionId, USD $priceUsd)',
+      );
       product = await client.getOrNull(path);
     }
 
     if (!activate) {
-      _log('activation disabled (--no-activate) — purchase option stays '
-          'DRAFT');
+      _log(
+        'activation disabled (--no-activate) — purchase option stays '
+        'DRAFT',
+      );
       return true;
     }
-    final options =
-        ((product?.json['purchaseOptions'] as List?) ?? const [])
-            .whereType<Map<String, Object?>>();
-    final option = options.where(
-        (o) => o['purchaseOptionId'] == purchaseOptionId).firstOrNull;
+    final options = ((product?.json['purchaseOptions'] as List?) ?? const [])
+        .whereType<Map<String, Object?>>();
+    final option = options
+        .where((o) => o['purchaseOptionId'] == purchaseOptionId)
+        .firstOrNull;
     final state = option?['state'] as String? ?? 'DRAFT';
     if (state == 'ACTIVE') {
       _log('purchase option $purchaseOptionId already ACTIVE — skipping');
       return true;
     }
     if (state == 'INACTIVE_PUBLISHED') {
-      _log('purchase option $purchaseOptionId is INACTIVE_PUBLISHED '
-          '(was live, then deactivated) — skipping; reactivate manually '
-          'if this was deliberate');
+      _log(
+        'purchase option $purchaseOptionId is INACTIVE_PUBLISHED '
+        '(was live, then deactivated) — skipping; reactivate manually '
+        'if this was deliberate',
+      );
       return true;
     }
     try {
@@ -251,9 +289,11 @@ class PlayProvisioner {
       _log('activated purchase option $purchaseOptionId');
       return true;
     } on ApiException catch (e) {
-      _log('ERROR activating purchase option $purchaseOptionId: $e — '
-          'activate it in Play Console → Monetize → Products → '
-          'One-time products');
+      _log(
+        'ERROR activating purchase option $purchaseOptionId: $e — '
+        'activate it in Play Console → Monetize → Products → '
+        'One-time products',
+      );
       return false;
     }
   }

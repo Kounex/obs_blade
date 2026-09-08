@@ -200,9 +200,11 @@ Read-only verification tool: prints both subscriptions' and the IAP's
 state + en-US localizations, **per-territory subscription price coverage**
 (`territories priced: 175/175 — parity OK (nominal or equalized tier)`,
 listing missing or off-parity territories), the IAP base-price note, and
-the Play listings / base-plan prices. (The Play section currently fails
-with a 404 for permission reasons — it's caught and printed, the ASC
-output above it is unaffected.)
+the Play listings / base-plan prices. Note: the Play endpoints are
+`.../subscriptions` and `.../oneTimeProducts` — the old
+`.../monetization/...` routes were removed server-side and answer with a
+bare HTML 404 (no JSON error), which looks exactly like a permission
+problem but isn't one.
 
 `bin/probe_tiers.dart` is a small diagnostic that prints, per product, the
 Apple tier of the USA nominal price point and the local price of that same
