@@ -107,8 +107,9 @@ corrections or adoption of widgets that already exist.
 - **Settled contracts — explicitly not findings:** scene-button selection fill
   bound to the real OBS transition duration; tab-switch 200ms fade+scale
   (navigator-preservation contract); `FullOverlay` spring scale 0.96→1.0 at
-  250ms; centered modal dialogs; the stats-chart one-shot draw-in. Don't
-  re-litigate these in the redesign.
+  250ms; centered modal dialogs; the stats-chart one-shot draw-in; never
+  animating native chat message insertion (frequency gate — 100+/day in busy
+  channels). Don't re-litigate these in the redesign.
 
 ## Where the 2026 feel is missing
 
