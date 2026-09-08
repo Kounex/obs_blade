@@ -164,8 +164,22 @@ class App extends StatelessWidget {
       ),
 
       /// Semantic status colors (live / recording / warning / reachability) -
-      /// constant across custom themes, they are signal colors, not brand
-      extensions: const [AppStatusColors.standard],
+      /// constant across custom themes, they are signal colors, not brand.
+      /// Text emphasis + `…Text` variants derive from the active accent /
+      /// highlight slots (standard defaults when no custom theme is active);
+      /// glass tokens derive from the appBar slot. Nothing consumes the two
+      /// new extensions yet - purely additive.
+      extensions: [
+        AppStatusColors.standard,
+        accentColor != null && hightlightColor != null
+            ? AppTextColors.derive(
+                accent: accentColor,
+                highlight: hightlightColor,
+                brightness: brightness ?? Brightness.dark,
+              )
+            : AppTextColors.standard,
+        AppGlass.forBar(appBarColor ?? StylingHelper.primary_color),
+      ],
 
       /// Sub-themes which used to leak stock colors - derived from the
       /// active card/highlight slots instead
