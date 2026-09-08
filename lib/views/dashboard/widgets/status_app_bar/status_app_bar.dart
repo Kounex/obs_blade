@@ -26,7 +26,7 @@ class StatusAppBar extends StatelessWidget {
     /// [ThemedCupertinoButton] reads)
     final Color actionColor =
         Theme.of(context).cupertinoOverrideTheme!.primaryColor ??
-            CupertinoColors.activeBlue;
+            Theme.of(context).colorScheme.secondary;
 
     return TransculentSliverAppBar(
       pinned: true,
