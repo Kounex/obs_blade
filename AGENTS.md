@@ -171,8 +171,9 @@ tips/blacksmith).
 ## Tooling
 
 - **Flutter:** `./flutterw` wraps whatever SDK you have (`FLUTTER_ROOT` →
-  `~/flutter` → `vendor/flutter`). Current pinned version: see
-  `docs/upgrade-plan.md`.
+  `~/flutter` → `vendor/flutter` → `flutter` on PATH). No repo-level pin
+  (the old `.flutter` submodule was removed 2026-09-08) — the current
+  Flutter version per machine is tracked in `docs/upgrade-plan.md`.
 - **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
   `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.

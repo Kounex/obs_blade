@@ -16,5 +16,14 @@ if [[ -x "$DIR/vendor/flutter/bin/flutter" ]]; then
   exec flutter "$@"
 fi
 
-echo "flutterw: no Flutter SDK found (set FLUTTER_ROOT or install to ~/flutter)" >&2
+# Fall back to whatever Flutter the machine has on PATH (e.g. a dotfiles
+# or version-manager install). The project's current Flutter version is
+# tracked in docs/upgrade-plan.md — repo-level SDK pinning was dropped
+# (the old .flutter submodule pinned 3.13.9, years below the project's
+# minimum, and this wrapper never used it).
+if command -v flutter >/dev/null 2>&1; then
+  exec flutter "$@"
+fi
+
+echo "flutterw: no Flutter SDK found (set FLUTTER_ROOT, install to ~/flutter, or put flutter on PATH)" >&2
 exit 1
