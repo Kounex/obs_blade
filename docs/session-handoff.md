@@ -2,10 +2,10 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-08** (pricing
-finalized with cross-store parity, ASC products submitted for review,
-Google package Registered; next: finish RevenueCat + drive the 4.0
-release).
+Read this first after `AGENTS.md`. Last reset: **2026-09-09** (4.0
+iteration at v12 mock after Gates 1/2/2b + user polish batch; store
+products + RevenueCat wired; next: user eyes on v12, then tablet frame →
+design lab → Gate 3).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -74,8 +74,10 @@ ACTIVE; their review rides the next app release. Watch ASC for approval
 **Registered**. The upload key (A6:24:44, `android-release.jks`) is still
 "in review" (justification route) — additive, blocks nothing. **After it
 resolves (either way):** delete
-`android/app/src/main/assets/adi-registration.properties` (untracked,
-one-time registration token) and discard the Play internal-track draft
+`android/app/src/main/assets/adi-registration.properties` (one-time
+registration token — **now gitignored** so it can't be committed
+accidentally; still delete it after resolution) and discard the Play
+internal-track draft
 release `3.3.0 (2026090701)`. Pubspec build number stays `2026090701`.
 
 **RevenueCat wired (2026-09-08):** products + entitlement `pro` +
@@ -91,30 +93,33 @@ reworked backend-selection fixture). Open:
 3. Apple Small Business Program: enroll on the Apple developer site
    (15% commission) if not yet done; Play's tiers are automatic.
 
-**4.0 UI iteration (2026-09-08):** workflow spec ratified
+**4.0 UI iteration (2026-09-09):** workflow spec ratified
 ([`superpowers/specs/2026-09-08-ui-iteration-4.0-design.md`](superpowers/specs/2026-09-08-ui-iteration-4.0-design.md))
-— system-wide via tokens, **Liquid Glass** direction, everything on the
-table (incl. CustomTheme re-mapping). **Phase 1 audit COMPLETE** (plan
-`superpowers/plans/2026-09-08-ui-iteration-phase1-audit.md`): digest at
+— system-wide via tokens, **restrained Liquid Glass** direction.
+**Phase 1 audit COMPLETE**: digest at
 [`redesign/2026-iteration-audit.md`](redesign/2026-iteration-audit.md),
 screenshots (untracked, contain LAN IPs) in
-`docs/redesign/2026-iteration/before-{phone,tablet}/` — phone set has a
-custom purple theme active, tablet set is the default-theme color
-baseline. **Phase 2 IN PROGRESS** — companion server running (port in
+`docs/redesign/2026-iteration/before-{phone,tablet}/`. **Phase 2 mockups
+through Gate 2b + user polish: current mock is `all-views-v12.html`**
+(local, gitignored) with token delta v3 as the mock→code contract —
+**read [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
+first**, it is the cold-start briefing (artifact map, ratified grammar,
+gate reports, mock-fidelity calibration, and the standing rule:
+evaluation findings are triaged to the user BEFORE applying). v12 =
+v10 (Gate 2b) + user-directed batch: neutral cards, borderless auth
+toast, neutral connect-method segment (accent underline was "ai slop"),
+paywall hero dedup (logo carries the wordmark — h2 dropped). **Next,
+in order:** user eyes on v12 → tablet connected-view frame (mock) →
+Flutter design lab (`tool/design_lab/`) → Gate 3 (fresh review, findings
+to user first) → Phase 4 spec. Companion server running (port/key in
 `.superpowers/brainstorm/`, gotchas:
-[`superpowers/visual-companion-gotchas.md`](superpowers/visual-companion-gotchas.md));
-unified mockup shell `all-views-v4.html` (Connect/Scenes/Paywall/
-Dashboard segments; user naming: "Dashboard" = NOT-connected connect
-view, "Scenes" = connected control surface). Dashboard v2 restraint
-language ratified by user; Scenes/Paywall/Connect v1 awaiting judgment
-calls (neutral sliders, outlined hero logo, compacted wordmark). Full
-Phase 2 state checkpoint: `.superpowers/sdd/progress.md` (gitignored).
-Mockup builder: resume subagent agent-11. Before Phase 2 "after" captures:
-fix the two pre-existing bugs the walk surfaced
-(`text_field_date.dart:29` LateInitializationError + duplicate
-GlobalKey; Tip Jar settings-row hit-test miss). Runner scheme no longer
-has the StoreKit config attached (real sandbox dogfood); re-attach
-temporarily for ASC-style paywall shots.
+[`superpowers/visual-companion-gotchas.md`](superpowers/visual-companion-gotchas.md)).
+Mock build/polish changelog: `.superpowers/sdd/mockup-dashboard-v1-report.md`
+(gitignored). Pre-existing bugs the Phase-2 walk surfaced (fix before
+"after" captures): `text_field_date.dart:29` LateInitializationError +
+duplicate GlobalKey; Tip Jar settings-row hit-test miss. Runner scheme
+no longer has the StoreKit config attached (real sandbox dogfood);
+re-attach temporarily for ASC-style paywall shots.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
@@ -124,17 +129,20 @@ any future non-sliver full-screen tab route.
 
 1. **Finish RevenueCat** (above) → sandbox dogfood per
    `revenuecat-setup.md` §5.
-2. **Dogfood the Pro gate** on the workstation via the debug override
+2. **4.0 mock loop** (see the 4.0 paragraph): user reviews **v12**, then
+   tablet connected-view frame → Flutter design lab → Gate 3 (findings
+   triaged to the user before applying — standing rule).
+3. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.
-3. **Android runtime smoke** (emulator/device) — toolchain builds since
+4. **Android runtime smoke** (emulator/device) — toolchain builds since
    2026-09-07 (Gradle 8.14 / AGP 8.11.1 / KGP 2.2.20); runtime testing
    still open. Confirm release AABs sign with the upload key
    (`android/key.properties` → `android-release.jks`, A6:24:44).
-4. Release mechanics: version/changelog, store metadata
+5. Release mechanics: version/changelog, store metadata
    (`fastlane/metadata`), visual-QA pass
    (`tool/visual_qa/capture_screenshots.sh`).
-5. YouTube (post-4.0 ok): GCP key exists
+6. YouTube (post-4.0 ok): GCP key exists
    (`~/.config/obs-blade/youtube-api-key.txt`); run the spike
    (`tool/youtube_spike/`, ≥30 min busy chat, record units into
    `youtube-native-chat-audit.md`). OAuth consent screen + TV client stay

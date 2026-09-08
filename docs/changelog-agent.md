@@ -2,6 +2,28 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-09 — 4.0 UI iteration: v11–v12 user-directed mock polish
+
+- Context: previous MacBook session (herdr pane, kimi) ran the Gate-2/2b
+  rounds (→ v10 mock, token delta v3) and was rate-limited mid-batch; this
+  entry closes that batch. All commits from that session were docs-only and
+  are now pushed.
+- **v11** (built by the session's background builder, verified here): card
+  tint reverted to v7 neutral white-5% (user-ratified; cool-tint experiment
+  dead) + auth-failed toast left accent bar removed. Recorded in
+  `state-and-plan.md`, token-delta §2.5/§5.
+- **v12** (this session, served-verified + screenshotted via agent-browser):
+  connect-method segment de-accented (v9 thumb underline read as template
+  chrome → neutral thumb + white label, token-delta §1 rule 2 amended) and
+  paywall hero double naming fixed ("OBS Blade Pro" h2 dropped — logo carries
+  the wordmark, value line is now the headline, token-delta §5).
+- Current mock is `all-views-v12.html` (local, gitignored — per the artifact
+  map in `docs/redesign/2026-iteration/state-and-plan.md`). Next threads
+  unchanged: tablet connected-view frame → Flutter design lab → Gate 3.
+- Hygiene: `android/app/src/main/assets/adi-registration.properties`
+  (AGP-generated, contains a registration id) is now gitignored, not
+  committed.
+
 ## 2026-09-08 — Provisioning env vars renamed with `OBS_BLADE_` prefix
 
 - All six store-provisioning env vars renamed (`ASC_KEY_PATH`,
