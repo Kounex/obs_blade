@@ -27,7 +27,10 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
 6. **Token delta doc** (mock→code contract).
 7. **Gate 2 — three independent fresh-agent evaluations** (design verification;
    measured a11y re-audit; docs-coherence cold-read) of v8 + docs → **v9** mock +
-   token delta v2 + persisted gate reports. All rounds itemized in
+   token delta v2 + persisted gate reports. **Gate 2b — user-run fresh
+   evaluation** of v9 (12 findings: PGM/PVW precedence, full-inert reconnect,
+   Transition/Config split, bars-float, measured switch/badge fixes) → **v10**
+   mock + token delta v3. All rounds itemized in
    [`gate-reports.md`](gate-reports.md).
 8. **Next:** Flutter design lab (`tool/design_lab/`), tablet connected-view frame,
    then Gate 3 (fresh review of lab + tokens), Phase 4 spec, implementation.
@@ -36,7 +39,7 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
 
 | What | Where |
 |---|---|
-| **Current mock (v9, the thing to evaluate)** | `.superpowers/brainstorm/16464-1788892928/content/all-views-v9.html` (local, gitignored; single-file HTML: 5 views × Current/Liquid Glass variants + shell). ⚠️ The content dir also holds **stale standalone mocks** (`connect-liquid-glass-v1.html`, `dashboard-liquid-glass-v2.html`, …) — superseded, do not evaluate them |
+| **Current mock (v10, the thing to evaluate)** | `.superpowers/brainstorm/16464-1788892928/content/all-views-v10.html` (local, gitignored; single-file HTML: 5 views × Current/Liquid Glass variants + shell). ⚠️ The content dir also holds **stale standalone mocks** (`connect-liquid-glass-v1.html`, `dashboard-liquid-glass-v2.html`, …) — superseded, do not evaluate them |
 | Settled screenshots (v8; recapture for v9) | `/tmp/obs_verify/v8_*.png` (ephemeral — recapture via the server, recipe in gotchas doc) |
 | **Token delta (THE contract — wins all conflicts)** | `docs/redesign/2026-iteration/token-delta.md` |
 | Gate reports (both rounds, itemized + dispositions) | `docs/redesign/2026-iteration/gate-reports.md` |
