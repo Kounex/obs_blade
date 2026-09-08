@@ -60,6 +60,26 @@ switcher (Connect / Scenes / Statistics / Settings / Paywall); per-view
 Screenshotting via automation: inject the settle-override from the gotchas doc
 FIRST — background-tab CSS animation throttling otherwise fakes "faded" content.
 
+## Mock fidelity — what the mock IS and IS NOT (read before evaluating)
+
+The mock is a **direction artifact, not a blueprint**. Implementation restyles the
+app's real components (`BaseCard`, `BaseIconButton`, settings rows, scene grid…)
+with the new tokens — their actual layouts, icons and sizing stay unless the
+direction explicitly changes them — and the Flutter design lab (on-device) is
+where sizing and feel get judged, not the browser.
+
+**Authoritative (binding, evaluate hard):** color tokens & grammar; material
+rules (glass only on floating layers, specular, toasts solid); motion tokens
+(durations/curves/stagger); state semantics (reconnecting, auth-failed,
+first-run — WHAT happens and what's interactive); composition model (which
+elements exist, pairing, ordering rules).
+
+**Illustrative (do NOT file as direction defects):** exact px sizes, icon/glyph
+choice, precise spacing and layout, typography scale specifics, mock-only DOM
+architecture. Pixel-level findings are acceptable only as mock-hygiene notes —
+never as blockers. (Gate 2b's px-level items were useful mock hygiene but were
+over-weighted; calibrate accordingly.)
+
 ## What is RATIFIED (do not re-litigate without a genuine defect)
 
 - The restrained Liquid Glass direction itself (user-approved).

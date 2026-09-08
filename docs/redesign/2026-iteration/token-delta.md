@@ -110,13 +110,15 @@ this means Flutter logical pixels (`fontSize: 17, FontWeight.w700` ≈ 17pt);
 CSS-equivalent 17px (=12.75pt) does NOT qualify — the design lab must confirm
 the rendered size reads as intended.
 
-### 2.5 Card color — deliberate identity decision
+### 2.5 Card color — neutral (user-ratified)
 
-Current app card: `#101823` (navy-leaning). **Decision: keep the cool tint.**
-Liquid card base `#181D26` (solid, derived from the theme's card slot — not a
-white-alpha overlay, not a constant). Custom themes keep their card identity;
-glass/text levels derive relative to it (same pattern as
-`StylingHelper.lightenDarkenColor`).
+Liquid card = **white ~5% over the scaffold** (v7 treatment; composite ≈ #2D2D31
+on the default #212123). The v8–v10 cool-tint experiment (#181D26) is **reverted
+by explicit user preference** — a Gate-1 critique had argued neutral was generic,
+but the user ratified the neutral look and it stands. Cards still derive from the
+theme's card slot (custom themes keep their identity); text levels were validated
+against scaffold-luminance backgrounds, which the 5% composite stays within
+tolerance of (re-verified in v11).
 
 ### 2.6 Non-text (3:1) values
 
@@ -249,7 +251,7 @@ Mapping:
 | `--accent` / `--accent-text` | `CustomTheme.accentColorHex` slot / `AppTextColors.accentText` (lerp) | existing slot + new |
 | `--highlight` / `--highlight-text` | `CustomTheme.highlightColorHex` slot / `AppTextColors.highlightText` (lerp) | existing slot + new |
 | `--program` / `--rec` / `--rec-text` / `--live` / `--warn` / `--favorite` | `AppStatusColors.program/.recording/.recordingText/.live/.warning/.favorite` | extension + new fields |
-| liquid card `#181D26` | derived from `CustomTheme.cardColorHex` | existing slot |
+| liquid card (white 5% over scaffold) | derived from `CustomTheme.cardColorHex` | existing slot |
 | glass bar/σ/saturate/specular | `AppGlass.*` | new ThemeExtension |
 | `--d-*` / `--c-*` durations & curves | `AppMotion.*` | existing (1:1) |
 | breathe 3s | `AppMotion.ambient` | new |
