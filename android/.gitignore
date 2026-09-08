@@ -11,3 +11,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Generated at build time; contains a registration id — never commit.
+app/src/main/assets/adi-registration.properties
