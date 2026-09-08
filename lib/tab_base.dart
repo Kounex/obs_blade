@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'stores/shared/tabs.dart';
 import 'utils/routing_helper.dart';
@@ -134,54 +133,50 @@ class _TabBaseState extends State<TabBase> {
       }),
       extendBody: true,
       bottomNavigationBar: Observer(
-        builder: (context) => CupertinoTabBar(
-          backgroundColor: !StylingHelper.isApple(context)
-              ? CupertinoTheme.of(context).barBackgroundColor.withOpacity(1.0)
-              : null,
-          activeColor: Theme.of(context).colorScheme.secondary,
-          currentIndex: tabsStore.activeTab.index,
-          iconSize: 24.0,
-
-          /// Used the standard implementation for [border] as seen
-          /// in [CupertinoTabBar] but adjusted the [darkColor] property
-          /// from 0x29000000 to 0x29FFFFFF (remain opacity but actually
-          /// make the border visible on dark themes)
-          border: const Border(
-            top: BorderSide(
-              color: CupertinoDynamicColor.withBrightness(
-                color: Color(0x4C000000),
-                darkColor: Color(0x29FFFFFF),
-              ),
-              width: 0.0,
-              style: BorderStyle.solid,
-            ),
-          ),
-          onTap: (index) {
-            Tabs tappedTab = Tabs.values[index];
-            if (tabsStore.activeTab == tappedTab) {
-              tabsStore.setPerformTabClickAction(true);
-              if (tabsStore.navigatorKeys[tappedTab]!.currentState!.canPop()) {
-                tabsStore.navigatorKeys[tappedTab]!.currentState!.pop();
-              } else if (_tabScrollController[tappedTab]!.hasClients &&
-                  _tabScrollController[tappedTab]!.offset > 0) {
-                _tabScrollController[tappedTab]!.animateTo(
-                  0.0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeIn,
-                );
+        builder: (context) => GlassBar(
+          contentEdge: GlassBarEdge.top,
+          color: CupertinoTheme.of(context).barBackgroundColor,
+          child: CupertinoTabBar(
+            /// The glass surface (color, blur, top-edge specular) is
+            /// painted by the surrounding [GlassBar] - the bar itself
+            /// stays transparent, and the specular line replaces the old
+            /// hairline border
+            backgroundColor: Colors.transparent,
+            border: const Border(),
+            activeColor: Theme.of(context).colorScheme.secondary,
+            inactiveColor:
+                Theme.of(context).extension<AppTextColors>()!.textTertiary,
+            currentIndex: tabsStore.activeTab.index,
+            iconSize: 24.0,
+            onTap: (index) {
+              Tabs tappedTab = Tabs.values[index];
+              if (tabsStore.activeTab == tappedTab) {
+                tabsStore.setPerformTabClickAction(true);
+                if (tabsStore
+                    .navigatorKeys[tappedTab]!.currentState!
+                    .canPop()) {
+                  tabsStore.navigatorKeys[tappedTab]!.currentState!.pop();
+                } else if (_tabScrollController[tappedTab]!.hasClients &&
+                    _tabScrollController[tappedTab]!.offset > 0) {
+                  _tabScrollController[tappedTab]!.animateTo(
+                    0.0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeIn,
+                  );
+                }
+              } else {
+                tabsStore.setActiveTab(Tabs.values[index]);
               }
-            } else {
-              tabsStore.setActiveTab(Tabs.values[index]);
-            }
-          },
-          items: Tabs.values
-              .map(
-                (tab) => BottomNavigationBarItem(
-                  icon: Icon(tab.icon),
-                  label: tab.name,
-                ),
-              )
-              .toList(),
+            },
+            items: Tabs.values
+                .map(
+                  (tab) => BottomNavigationBarItem(
+                    icon: Icon(tab.icon),
+                    label: tab.name,
+                  ),
+                )
+                .toList(),
+          ),
         ),
       ),
     );

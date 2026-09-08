@@ -1,12 +1,11 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-import '../../../utils/styling_helper.dart';
+import '../../design/glass_bar.dart';
 
 typedef _FlexibleConfigBuilder = _ScrollUnderFlexibleConfig Function(
     BuildContext);
@@ -1177,55 +1176,50 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
       toolbarOpacity: toolbarOpacity,
       isScrolledUnder: isScrolledUnder,
       hasLeading: leading != null || automaticallyImplyLeading,
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: StylingHelper.sigma_blurry,
-            sigmaY: StylingHelper.sigma_blurry,
-          ),
-          child: AppBar(
-            clipBehavior: clipBehavior,
-            leading: leading,
-            automaticallyImplyLeading: automaticallyImplyLeading,
-            title: effectiveTitle,
-            actions: actions,
-            flexibleSpace: (title == null &&
-                    flexibleSpace != null &&
-                    !excludeHeaderSemantics)
-                ? Semantics(
-                    header: true,
-                    child: flexibleSpace,
-                  )
-                : flexibleSpace,
-            bottom: bottom,
-            elevation: isScrolledUnder ? elevation : 0.0,
-            scrolledUnderElevation: scrolledUnderElevation,
-            shadowColor: shadowColor,
-            surfaceTintColor: surfaceTintColor,
-            backgroundColor: StylingHelper.isApple(context)
-                ? backgroundColor
-                : (backgroundColor ??
-                        Theme.of(context).appBarTheme.backgroundColor)
-                    ?.withOpacity(1.0),
-            foregroundColor: foregroundColor,
-            iconTheme: iconTheme,
-            actionsIconTheme: actionsIconTheme,
-            primary: primary,
-            centerTitle: centerTitle,
-            excludeHeaderSemantics: excludeHeaderSemantics,
-            titleSpacing: titleSpacing,
-            shape: shape,
-            toolbarOpacity: toolbarOpacity,
-            bottomOpacity: pinned
-                ? 1.0
-                : clampDouble(visibleMainHeight / _bottomHeight, 0.0, 1.0),
-            toolbarHeight: toolbarHeight,
-            leadingWidth: leadingWidth,
-            toolbarTextStyle: toolbarTextStyle,
-            titleTextStyle: titleTextStyle,
-            systemOverlayStyle: systemOverlayStyle,
-            forceMaterialTransparency: forceMaterialTransparency,
-          ),
+      child: GlassBar(
+        contentEdge: GlassBarEdge.bottom,
+        color: backgroundColor,
+        child: AppBar(
+          clipBehavior: clipBehavior,
+          leading: leading,
+          automaticallyImplyLeading: automaticallyImplyLeading,
+          title: effectiveTitle,
+          actions: actions,
+          flexibleSpace: (title == null &&
+                  flexibleSpace != null &&
+                  !excludeHeaderSemantics)
+              ? Semantics(
+                  header: true,
+                  child: flexibleSpace,
+                )
+              : flexibleSpace,
+          bottom: bottom,
+          elevation: isScrolledUnder ? elevation : 0.0,
+          scrolledUnderElevation: scrolledUnderElevation,
+          shadowColor: shadowColor,
+          surfaceTintColor: surfaceTintColor,
+
+          /// The glass surface (color, blur, specular) is painted by the
+          /// surrounding [GlassBar] - the AppBar itself stays transparent
+          backgroundColor: Colors.transparent,
+          foregroundColor: foregroundColor,
+          iconTheme: iconTheme,
+          actionsIconTheme: actionsIconTheme,
+          primary: primary,
+          centerTitle: centerTitle,
+          excludeHeaderSemantics: excludeHeaderSemantics,
+          titleSpacing: titleSpacing,
+          shape: shape,
+          toolbarOpacity: toolbarOpacity,
+          bottomOpacity: pinned
+              ? 1.0
+              : clampDouble(visibleMainHeight / _bottomHeight, 0.0, 1.0),
+          toolbarHeight: toolbarHeight,
+          leadingWidth: leadingWidth,
+          toolbarTextStyle: toolbarTextStyle,
+          titleTextStyle: titleTextStyle,
+          systemOverlayStyle: systemOverlayStyle,
+          forceMaterialTransparency: forceMaterialTransparency,
         ),
       ),
     );

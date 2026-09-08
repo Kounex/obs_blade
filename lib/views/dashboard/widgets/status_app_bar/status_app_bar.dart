@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
@@ -32,10 +31,10 @@ class StatusAppBar extends StatelessWidget {
     return TransculentSliverAppBar(
       pinned: true,
       elevation: 0,
-      toolbarHeight: kTextTabBarHeight,
-      backgroundColor: !StylingHelper.isApple(context)
-          ? Theme.of(context).appBarTheme.backgroundColor!.withValues(alpha: 1.0)
-          : null,
+
+      /// Shared navbar min content height (token-delta §3) - holds even
+      /// if an action slot ends up empty
+      toolbarHeight: GlassBar.minContentHeight,
       bottom: const PreferredSize(
         preferredSize: Size.fromHeight(44.0),
         child: Column(

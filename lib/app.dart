@@ -199,8 +199,8 @@ class App extends StatelessWidget {
       /// constant across custom themes, they are signal colors, not brand.
       /// Text emphasis + `…Text` variants derive from the active accent /
       /// highlight slots (standard defaults when no custom theme is active);
-      /// glass tokens derive from the appBar slot. Nothing consumes the two
-      /// new extensions yet - purely additive.
+      /// glass tokens derive from the appBar slot and are consumed by
+      /// [GlassBar] (all floating bars).
       extensions: [
         AppStatusColors.standard,
         accentColor != null && hightlightColor != null

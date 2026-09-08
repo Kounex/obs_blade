@@ -12,5 +12,6 @@ export 'app_status_colors.dart';
 export 'app_text_colors.dart';
 export 'app_typography.dart';
 export 'count_up_text.dart';
+export 'glass_bar.dart';
 export 'pressable.dart';
 export 'staggered_entrance.dart';

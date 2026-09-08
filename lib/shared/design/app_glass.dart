@@ -3,8 +3,9 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 /// Glass tokens for the truly floating layers (nav bars, tab bar, sheets) of
-/// the "On Air" design system (token-delta §3). Pure value type - the
-/// `GlassBar` widget consuming these lands in a later wave.
+/// the "On Air" design system (token-delta §3). Pure value type - consumed by
+/// the `GlassBar` widget (glass_bar.dart), which every floating bar goes
+/// through.
 ///
 /// Registered as a [ThemeExtension] in `App._getCurrentTheme` (lib/app.dart),
 /// so consumers can read:
