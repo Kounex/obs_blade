@@ -60,6 +60,15 @@ switcher (Connect / Scenes / Statistics / Settings / Paywall); per-view
 Screenshotting via automation: inject the settle-override from the gotchas doc
 FIRST — background-tab CSS animation throttling otherwise fakes "faded" content.
 
+## Process rule (user-directed, standing)
+
+**Evaluation/critique findings are triaged to the user BEFORE anything is
+applied.** Present findings with a recommendation; the user approves, adjusts or
+rejects; only then build. Applies to mock changes, token/contract changes, and
+doc amendments that follow from findings. (Ratified 2026-09-09 after a Gate-1
+finding — the cool-tint card — was applied without user review and had to be
+reverted. Taste-affecting changes are the user's call, always.)
+
 ## Mock fidelity — what the mock IS and IS NOT (read before evaluating)
 
 The mock is a **direction artifact, not a blueprint**. Implementation restyles the
