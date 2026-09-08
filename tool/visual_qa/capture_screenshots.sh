@@ -18,7 +18,8 @@ OUT_DIR="${OUT_DIR:-/tmp/obs_shots}"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
-# flutterw resolves the SDK itself (FLUTTER_ROOT → ~/flutter → vendor/flutter)
+# Flutter SDK comes from PATH (machine-local install; version per machine
+# is tracked in docs/upgrade-plan.md)
 
 OBS_WS_CONFIG="$HOME/Library/Application Support/obs-studio/plugin_config/obs-websocket/config.json"
 OBS_WS_PASSWORD=""
@@ -65,7 +66,7 @@ echo "[capture] running walkthrough on device $DEVICE_ID ..."
 # --no-uninstall: flutter test uninstalls the app at the end of the run BY
 # DEFAULT, which wipes the simulator data container (learned the hard way -
 # this once destroyed real user data: saved connections, themes, stats).
-bash flutterw test integration_test/screenshot_walk_test.dart \
+flutter test integration_test/screenshot_walk_test.dart \
   -d "$DEVICE_ID" \
   --no-uninstall \
   --dart-define=OBS_WS_PASSWORD="$OBS_WS_PASSWORD" \

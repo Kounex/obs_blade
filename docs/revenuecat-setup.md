@@ -92,7 +92,7 @@ validated server-side). macOS uses the Apple key too.
 
 ## 5. Verify
 
-1. `bash flutterw test test/pro/` — note: the "empty keys → legacy
+1. `flutter test test/pro/` — note: the "empty keys → legacy
    selection" test is marked with a revisit comment
    (`test/pro/revenuecat_pro_gateway_test.dart`); once keys are real it
    needs a fixture tweak, not a behavior fix.

@@ -170,10 +170,10 @@ tips/blacksmith).
 
 ## Tooling
 
-- **Flutter:** `./flutterw` wraps whatever SDK you have (`FLUTTER_ROOT` →
-  `~/flutter` → `vendor/flutter` → `flutter` on PATH). No repo-level pin
-  (the old `.flutter` submodule was removed 2026-09-08) — the current
-  Flutter version per machine is tracked in `docs/upgrade-plan.md`.
+- **Flutter:** plain `flutter` from PATH (machine-local install; make
+  sure `flutter` is on PATH on every machine — e.g. add `~/flutter/bin`
+  where the SDK isn't PATH-installed). The current Flutter version per
+  machine is tracked in `docs/upgrade-plan.md`.
 - **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
   `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.
@@ -201,7 +201,7 @@ tips/blacksmith).
   suite every time — run what the change can actually break, widening as
   you get closer to shipping:
   1. **While iterating:** only the test file(s) covering the code in
-     flight — `bash flutterw test test/chat/twitch_chat_store_test.dart`
+     flight — `flutter test test/chat/twitch_chat_store_test.dart`
      (seconds, not minutes).
   2. **Before committing a unit:** the suite directory matching the area
      touched — chat (`lib/utils/twitch/`, `lib/stores/views/twitch_*`,
@@ -212,7 +212,7 @@ tips/blacksmith).
      `test/shared/` / `test/utils/` files. Cross-cutting changes (design
      system, DI/`main.dart`, routing) → all affected suites.
   3. **Wrap-up, before push/handoff:** the full gate once —
-     `bash flutterw test test/chat/ test/websocket/ test/persistence/` +
+     `flutter test test/chat/ test/websocket/ test/persistence/` +
      analyze. Store cut: full gate + integration tests.
   Two gotchas: don't run `flutter test` concurrently with analyze or
   other Flutter processes (they starve each other and can look hung), and
