@@ -14,7 +14,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/pro_ids.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/views/pro/pro_paywall.dart';
-import 'package:obs_blade/views/settings/widgets/accent_icon_tile.dart';
+import 'package:obs_blade/views/pro/widgets/pro_hero.dart';
 import 'package:obs_blade/views/settings/widgets/support_dialog/support_skeleton.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -284,8 +284,14 @@ void main() {
     final ProStore store = newNoIoDebugStore()..init();
     await pumpPaywall(tester, store);
 
-    /// The hero tile is the first AccentIconTile in tree order
-    await tester.longPress(find.byType(AccentIconTile).first);
+    /// The hero logo (the only GestureDetector inside the hero) carries
+    /// the debug toggle
+    await tester.longPress(
+      find.descendant(
+        of: find.byType(ProHero),
+        matching: find.byType(GestureDetector),
+      ),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
