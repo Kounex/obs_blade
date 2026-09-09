@@ -5,15 +5,14 @@ import 'package:intl/intl.dart';
 import '../../../../../../utils/modal_handler.dart';
 import 'date_picker_sheet.dart';
 
-class TextFieldDate extends StatelessWidget {
+class TextFieldDate extends StatefulWidget {
   final String? placeholder;
   final DateTime? selectedDate;
   final DateTime? minimumDate;
   final DateTime? maximumDate;
   final void Function(DateTime?)? updateDateTime;
 
-  // ignore: prefer_const_constructors_in_immutables
-  TextFieldDate({
+  const TextFieldDate({
     super.key,
     required this.selectedDate,
     required this.updateDateTime,
@@ -22,39 +21,61 @@ class TextFieldDate extends StatelessWidget {
     this.maximumDate,
   });
 
+  @override
+  State<TextFieldDate> createState() => _TextFieldDateState();
+}
+
+class _TextFieldDateState extends State<TextFieldDate> {
   late final TextEditingController _controller;
+
+  String _format(DateTime? date) =>
+      date != null ? DateFormat.yMd('de_DE').format(date) : '';
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _format(widget.selectedDate));
+  }
+
+  @override
+  void didUpdateWidget(TextFieldDate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate != widget.selectedDate) {
+      _controller.text = _format(widget.selectedDate);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    _controller = TextEditingController(
-        text: this.selectedDate != null
-            ? DateFormat.yMd('de_DE').format(this.selectedDate!)
-            : '');
-
     return CupertinoTextField(
       controller: _controller,
 
       /// Only offer clearing once a date is actually selected
-      clearButtonMode: this.selectedDate != null
+      clearButtonMode: widget.selectedDate != null
           ? OverlayVisibilityMode.always
           : OverlayVisibilityMode.never,
-      placeholder: this.placeholder,
+      placeholder: widget.placeholder,
       style: Theme.of(context).textTheme.bodyMedium,
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,
         builder: (context) => DatePickerSheet(
-          selectedDate: this.selectedDate,
-          minimumDate: this.minimumDate,
-          maximumDate: this.maximumDate,
+          selectedDate: widget.selectedDate,
+          minimumDate: widget.minimumDate,
+          maximumDate: widget.maximumDate,
           updateDateTime: (date) {
-            _controller.text =
-                date == null ? '' : DateFormat.yMd('de_DE').format(date);
-            this.updateDateTime?.call(date);
+            _controller.text = _format(date);
+            widget.updateDateTime?.call(date);
           },
         ),
       ),
-      onChanged: (_) => this.updateDateTime?.call(null),
+      onChanged: (_) => widget.updateDateTime?.call(null),
     );
   }
 }
