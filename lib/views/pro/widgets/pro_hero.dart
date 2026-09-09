@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../shared/design/design.dart';
 import '../../../stores/pro_store.dart';
 
-/// Paywall hero: the Pro bolt-in-squircle in the accent color is the
-/// hero's brand mark (user direction - the earlier-mock accent logo
-/// treatment, restored over the plain wordmark image). No product-name
-/// headline next to it (token-delta §5, double naming); the value line
-/// steps up as the headline (~19/600, near-white).
+/// Paywall hero: the Pro bolt-in-squircle on the scene-tile color idiom
+/// (token-delta §2.2) - full-strength accent ring, weak accent tint fill,
+/// accent glyph - with the 'OBS Blade Pro' brand line underneath (the
+/// nav bar above stays back-only, so the name lives here). The value
+/// line follows as the pitch headline (~19/600, near-white).
 ///
 /// Hidden debug toggle: long-press the logo to flip
 /// [ProStore.setDebugOverride] (grants the entitlement locally).
@@ -41,10 +41,6 @@ class ProHero extends StatelessWidget {
     /// The accent group accessor (see app.dart): brand/selection color
     final Color accent =
         Theme.of(context).buttonTheme.colorScheme!.secondary;
-    final Color onAccent =
-        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
-            ? Colors.white
-            : Colors.black;
 
     return Column(
       children: [
@@ -52,26 +48,38 @@ class ProHero extends StatelessWidget {
           onLongPress:
               kDebugMode ? () => this._toggleDebugOverride(context) : null,
           child: Container(
-            width: 72.0,
-            height: 72.0,
+            width: 96.0,
+            height: 96.0,
             decoration: BoxDecoration(
-              color: accent,
+              /// Scene-button idiom: weak tint fill, full-color ring
+              color: accent.withValues(alpha: 0.12),
+              border: Border.all(color: accent, width: 1.5),
               borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
             child: Icon(
               CupertinoIcons.bolt_fill,
-              color: onAccent,
-              size: 36.0,
+              color: accent,
+              size: 48.0,
             ),
           ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'OBS Blade Pro',
+          style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.2,
+                color:
+                    Theme.of(context).extension<AppTextColors>()!.textPrimary,
+              ),
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
           'Native chat, moderation and more — built for your pocket.',
           textAlign: TextAlign.center,
 
-          /// The value line IS the headline (token-delta §5): 19/600,
-          /// near-white, tight tracking
+          /// The value line is the pitch headline (token-delta §5):
+          /// 19/600, near-white, tight tracking
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 fontSize: 19.0,
                 fontWeight: FontWeight.w600,

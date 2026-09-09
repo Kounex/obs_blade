@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:confetti/confetti.dart';
+import 'package:flutter/cupertino.dart'
+    show kMinInteractiveDimensionCupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -54,6 +56,14 @@ class ProUnlockedView extends StatelessWidget {
       children: [
         SingleChildScrollView(
           physics: StylingHelper.platformAwareScrollPhysics,
+
+          /// The body extends behind the translucent nav bar
+          /// (`extendBodyBehindBar` on the wrapper) - the scroll view
+          /// owns the bar's top inset
+          padding: EdgeInsets.only(
+            top: MediaQuery.paddingOf(context).top +
+                kMinInteractiveDimensionCupertino,
+          ),
           child: Center(
             child: BaseConstrainedBox(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),

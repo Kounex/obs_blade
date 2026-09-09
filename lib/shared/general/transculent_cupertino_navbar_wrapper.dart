@@ -21,6 +21,12 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
   final List<Widget> listViewChildren;
   final Widget? customBody;
 
+  /// Lets [customBody] extend behind the translucent bar (the body then
+  /// owns its own top inset) so scrolling content passes underneath and
+  /// the blur is actually visible - matches the listViewChildren path,
+  /// whose scroll view always sits under the bar
+  final bool extendBodyBehindBar;
+
   final Widget? leading;
   final Widget? actions;
 
@@ -33,6 +39,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.showScrollBar = false,
     this.listViewChildren = const [],
     this.customBody,
+    this.extendBodyBehindBar = false,
     this.leading,
     this.actions,
   })  : assert(customBody == null || listViewChildren.isEmpty),
@@ -62,10 +69,12 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
       children: [
         if (this.customBody != null)
           Padding(
-            padding: EdgeInsets.only(
-              top: MediaQuery.paddingOf(context).top +
-                  kMinInteractiveDimensionCupertino,
-            ),
+            padding: this.extendBodyBehindBar
+                ? EdgeInsets.zero
+                : EdgeInsets.only(
+                    top: MediaQuery.paddingOf(context).top +
+                        kMinInteractiveDimensionCupertino,
+                  ),
             child: this.customBody,
           ),
         if (this.customBody == null) customScrollView,

@@ -146,7 +146,13 @@ void main() {
   testWidgets('placeholder buy explains instead of charging', (tester) async {
     await pumpPaywall(tester, newStore()..init());
 
-    await tester.ensureVisible(find.text('Not live yet').first);
+    /// Center-aligned via the Scrollable API: the body extends behind
+    /// the translucent nav bar, so a top-aligned target would sit under
+    /// the bar and eat the tap
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Not live yet').first),
+      alignment: 0.5,
+    );
     await tester.pump();
     await tester.tap(find.text('Not live yet').first);
     await tester.pump();
@@ -188,7 +194,13 @@ void main() {
 
     await pumpPaywall(tester, newStore()..init());
 
-    await tester.ensureVisible(find.text('Choose Yearly'));
+    /// Center-aligned via the Scrollable API: top-aligned would sit
+    /// under the translucent nav bar (the body extends behind it) and
+    /// the bar would eat the tap
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Choose Yearly')),
+      alignment: 0.5,
+    );
     await tester.pump();
     await tester.tap(find.text('Choose Yearly'));
     await tester.pump();

@@ -80,7 +80,10 @@ class _ProPaywallViewState extends State<ProPaywallView> {
       body: Scaffold(
         body: TransculentCupertinoNavBarWrapper(
           /// Back-only bar (token-delta §5, v12): a title here duplicates
-          /// the hero's brand mark - double naming
+          /// the hero's brand mark - double naming. The body extends
+          /// behind the bar so scrolling content makes the blur visible
+          /// (same as the sliver-based views).
+          extendBodyBehindBar: true,
           customBody: Observer(
             builder: (context) => AnimatedSwitcher(
               duration: AppMotion.medium,

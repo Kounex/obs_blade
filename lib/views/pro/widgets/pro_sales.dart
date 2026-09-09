@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart'
+    show kMinInteractiveDimensionCupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -44,11 +46,16 @@ class ProSalesView extends StatelessWidget {
     return SingleChildScrollView(
       physics: StylingHelper.platformAwareScrollPhysics,
 
-      /// The tab scaffold extends bodies behind its translucent
-      /// CupertinoTabBar (extendBody) - same bottom clearance
-      /// CustomSliverList gives the sliver-based tab views, so the legal
-      /// row scrolls fully above the bar
+      /// The body extends behind the translucent nav bar
+      /// (`extendBodyBehindBar` on the wrapper), so the scroll view owns
+      /// the bar's top inset - content scrolling under the bar is what
+      /// makes its blur visible. The tab scaffold extends bodies behind
+      /// its translucent CupertinoTabBar (extendBody) - same bottom
+      /// clearance CustomSliverList gives the sliver-based tab views, so
+      /// the legal row scrolls fully above the bar
       padding: EdgeInsets.only(
+        top: MediaQuery.paddingOf(context).top +
+            kMinInteractiveDimensionCupertino,
         bottom: 2 * kBottomNavigationBarHeight +
             MediaQuery.paddingOf(context).bottom / 2,
       ),
