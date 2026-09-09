@@ -5,7 +5,7 @@ or implementer) should be able to read only this file and know what exists, what
 ratified, what is open, and where every artifact lives. Keep it current — update it
 whenever state moves. Last updated: 2026-09-09 (v12 mock — user-directed
 polish batch on top of Gate 2b's v10 + token delta v3; implementation route
-changed to live-app branch, pre-implementation).
+changed to live-app branch; branch landed with unbuilt-items section).
 
 ## The goal
 
@@ -52,15 +52,98 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
     token layer + color-group wiring (rule-8 drift fixed) + GlassBar on all
     floating bars + per-view migration of Connect, connected/Scenes, Settings,
     Statistics, Paywall — 31 commits on `4.0-liquid-glass`, pushed. Gate green
-    (analyze = baseline, all test suites). Known unbuilt contract items (Gate-3
-    input): §5 reconnecting scrim/inert handlers + auth-failed error-card toast
-    (new functionality, not styling), paywall equivalence line (needs numeric
-    prices in the gateway), reconnect-toast motion/colors, chat-bar frame
-    (§6.3), data-viz slot (§6.5), tablet composition (§6.1). Full itemization:
-    changelog 2026-09-09 branch entry.
+    (analyze = baseline, all test suites). Known unbuilt items — each with
+    what/why/what's-needed — in **"Known unbuilt items" below** (Gate-3 input).
 11. **Next:** user dogfoods the branch (phone + tablet) → tablet connected-view
     frame decision → Gate 3 (fresh review of the branch diff + on-device feel +
     tokens; findings to user first) → Phase 4 spec → merge.
+
+## Known unbuilt items on branch `4.0-liquid-glass` (Gate-3 input)
+
+Everything the token-delta contract calls for that the branch does **not** ship
+yet, with the reason each exists and the reason it is deferred. None of these
+are regressions — they are contract items the styling wave deliberately did not
+absorb, or open decisions that were never ratified for build.
+
+### A. Ratified contract items, deferred (token-delta §5)
+
+1. **Reconnecting: blocking scrim + inert command handlers.**
+   *What:* when the OBS socket drops, the connected view must put an
+   input-blocking scrim over the content area and make every OBS-command
+   control inert — scene tiles, transition, sliders, eye/lock/mute, chat send,
+   **and the LIVE/REC pills** — to pointer *and* keyboard/assistive input
+   (guarded command handlers, not pointer-events alone). A neutral "reconnect
+   status" pill (single pulse on appear) anchors below the pills row. Only
+   navigation (Close, navbar menu, tab bar) stays live.
+   *Why it exists:* an armed green LIVE pill over a dead connection asserts
+   "you're live" when you are not — the worst lie a remote can tell mid-show;
+   and commands fired into a dead socket fail silently, so the UI must not
+   offer them.
+   *Built already:* the neutral **unknown state** for the LIVE/REC pills
+   (gray dot + label, no breathe) rides the existing store observable.
+   *Why deferred:* the scrim + guarded handlers are state/interaction logic
+   across `DashboardStore`'s command paths, not styling — half-guarding them
+   in a styling wave was the risky option.
+   *Needs:* a command-dispatch guard (one choke point), the scrim widget, the
+   status pill, semantics audit.
+
+2. **Auth-failed error-card toast with "Edit password" action.**
+   *What:* on OBS authentication failure, a near-opaque error card with an
+   **"Edit password"** action that routes to the Connect view's Manual pane
+   *and moves focus there*, plus a × dismiss; manual-dismiss only; a 1px
+   red-tinted hairline on all four sides carries "error" (the v11 left-edge
+   bar was killed — user: "generic template chrome"); hidden toasts leave the
+   semantics tree entirely.
+   *Why it exists:* today an auth failure strands the user on a generic
+   message with no path to the one field that fixes it; the action turns a
+   dead end into a one-tap recovery.
+   *Why deferred:* it is **unbuilt functionality** (routing + focus management
+   + semantics), not a restyle of an existing surface — the app has no error
+   toast of this kind at all.
+   *Needs:* new toast widget on the toast contract, route + focus handoff to
+   the Manual pane, a11y pass on show/hide.
+
+3. **Paywall equivalence line ("$4.17/mo" under the yearly price).**
+   *What:* the mock shows the per-month equivalence on the yearly card so
+   BEST VALUE is a number, not an adjective.
+   *Why deferred:* the purchase gateway's `ProProduct` carries only a display
+   `priceString` ("$49.99") — numeric prices are not plumbed through, and
+   parsing a localized currency string is exactly the fragile path we refuse
+   to take.
+   *Needs:* expose numeric price through the gateway (RevenueCat
+   `StoreProduct.price` / `pricePerMonth`; legacy direct-IAP
+   `ProductDetails.rawPrice`), divide, format per locale.
+
+4. **Reconnect toast off-token (motion + colors).**
+   *What:* the existing reconnect toast still animates on a hardcoded
+   500ms/easeOut and uses red/green borders instead of `AppMotion` + status
+   tokens.
+   *Why deferred:* §5 relocates reconnect status to the pill below the pills
+   row (item 1) — re-tokenizing chrome that the same contract then
+   repositions is rework. Resolves together with item 1.
+
+### B. Open decisions (token-delta §6 — never ratified for build, Phase-4 owned)
+
+5. **Chat-bar frame (§6.3).** The densest cluster in the app — engine switch,
+   channel dropdown, emote picker, mod actions, send — was never modeled in
+   the mock, so the branch leaves it alone. Needed before 4.0 sign-off; a
+   design pass of its own in the Phase 4 spec.
+6. **Data-viz color slot (§6.5).** Every statistics chart shares chrome-blue,
+   which encodes nothing. The categorical slot decision (+ axis-label dedupe)
+   is open, so chart colors are deliberately untouched.
+7. **Tablet composition (§6.1).** Tablet layout rules (640 cap vs
+   multi-column, side-by-side pairing, scene-grid breakpoints, carousels →
+   grid, statistics master-detail, landscape) are unmocked and unratified.
+   The branch's tablet requirement was *no regressions* — verified by the
+   iPad walk — not a tablet redesign; that is the biggest Phase-4 item.
+
+### C. Framework ceiling (documented in code, not fixable in-app today)
+
+8. **GlassBar saturate garnish + reduced-transparency fallback.** The glass
+   spec's saturation pass and the accessibility fallback for reduced
+   transparency are not expressible in Flutter 3.44 — no `ImageFilter` color
+   pass over the blur, no `MediaQuery` reduced-transparency flag. Documented
+   in `lib/shared/design/glass_bar.dart`; revisit on an SDK bump.
 
 ## Artifact map
 

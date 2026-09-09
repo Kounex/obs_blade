@@ -53,14 +53,17 @@ Contract: `docs/redesign/2026-iteration/token-delta.md`.
   72px, "OBS Blade Pro" headline dropped, value line is the headline;
   yearly card 5% accent tint only, BEST VALUE badge 8% pill + accentText,
   ONE-TIME neutral; benefits tiles neutralized).
-- **Known gaps / follow-ups for Gate 3:** §5 full reconnecting contract
-  (blocking scrim + inert command handlers) not built (state logic, not
-  styling); auth-failed error-card toast with Edit-password action doesn't
-  exist in the app (§5 contract is unbuilt functionality); paywall
-  equivalence line ("$4.17/mo") not computable from `ProProduct` (display-
-  only priceString); reconnect_toast still has off-token 500ms/easeOut +
-  red/green borders; chat-bar frame untouched (§6.3); data-viz colors
-  untouched (§6.5); tablet composition untouched by design (§6.1).
+- **Known gaps / follow-ups for Gate 3** — each with what/why/what's-needed
+  in `docs/redesign/2026-iteration/state-and-plan.md` → "Known unbuilt
+  items": §5 full reconnecting contract (blocking scrim + inert command
+  handlers; the neutral unknown pill state IS built), auth-failed error-card
+  toast with Edit-password action (unbuilt functionality), paywall
+  equivalence line ("$4.17/mo" — gateway exposes only display priceString),
+  reconnect_toast still off-token (500ms/easeOut + red/green borders;
+  resolves with the §5 work), chat-bar frame (§6.3 open), data-viz colors
+  (§6.5 open), tablet composition (§6.1 open — branch requirement was
+  no-regressions, verified), GlassBar saturate/reduced-transparency
+  inexpressible in Flutter 3.44 (framework ceiling, documented in code).
 - Gate: analyze 465 issues = baseline exactly (zero new);
   test/chat+websocket+persistence+pro green. Visual verification:
   visual-QA screenshot walk on iPhone + iPad sims against local OBS —
