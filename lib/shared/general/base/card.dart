@@ -10,6 +10,9 @@ import 'divider.dart';
 const double kBaseCardMaxWidth = 640.0;
 const double kBaseCardBorderRadius = 12.0;
 
+/// Liquid card (token-delta §2.5): fill = 5% white composed over the
+/// theme's card slot (custom themes keep their identity), 7% white
+/// hairline, [kBaseCardBorderRadius] 12 - solid, no blur, no shadow
 class BaseCard extends StatelessWidget {
   final Widget child;
   final bool centerChild;
@@ -72,7 +75,18 @@ class BaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     CustomTheme? customTheme = StylingHelper.currentCustomTheme();
 
-    final Color cardColor = this.backgroundColor ?? Theme.of(context).cardColor;
+    final bool darkCard =
+        Theme.of(context).cardColor.computeLuminance() <= 0.2;
+
+    /// Liquid card treatment (token-delta §2.5): a 5% white (dark) / black
+    /// (light) wash composed OVER the theme's card slot - custom themes keep
+    /// their identity underneath. An explicit [backgroundColor] override is
+    /// used as-is
+    final Color cardColor = this.backgroundColor ??
+        Color.alphaBlend(
+          (darkCard ? Colors.white : Colors.black).withValues(alpha: 0.05),
+          Theme.of(context).cardColor,
+        );
 
     /// The divider sits directly under the title - inset it to the
     /// title's own horizontal content inset instead of full-bleed
@@ -108,14 +122,14 @@ class BaseCard extends StatelessWidget {
                           .withOpacity(0.6),
                     )
 
-                  /// Derived hairline (top-luminance step) so raised
-                  /// surfaces separate from the scaffold without a
-                  /// hardcoded color
+                  /// Derived hairline (token-delta §2.5: 7% white over the
+                  /// composed card fill) so raised surfaces separate from
+                  /// the scaffold without a hardcoded color
                   : BorderSide(
                       color: (cardColor.computeLuminance() <= 0.2
                               ? Colors.white
                               : Colors.black)
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.07),
                     ),
         ),
         color: cardColor,
