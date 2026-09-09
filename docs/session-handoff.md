@@ -4,9 +4,10 @@
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-09** (4.0
 restrained-Liquid-Glass redesign **implemented on branch
-`4.0-liquid-glass`** — waves 1–3d landed, gates green, phone + tablet
-sim-verified; run the app off that branch on the workstation to see it.
-Store products + RevenueCat wired; next: user eyes on the branch
+`4.0-liquid-glass`** — waves 1–3d + post-review drift-fix batch landed,
+gates green, phone + tablet sim-verified; run the app off that branch on
+the workstation to see it.
+Store products + RevenueCat wired; next: user eyes on the updated branch
 (phone AND tablet) → Gate 3 → merge).
 
 ## Handoff hygiene (read before editing this file)
@@ -117,10 +118,23 @@ green; visual-QA phone + tablet walks verified on the workstation.
 **Read [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
 first** — cold-start briefing (ratified grammar, what shipped, known
 unbuilt items). Detail history: `changelog-agent.md` 2026-09-09 branch
-entry. **Next:** user runs the branch (phone + tablet, incl. **Force
+entry. **Post-review drift-fix batch LANDED (2026-09-09, 5 commits,
+pushed):** user ran the branch, found drift vs the v12 mock (bluish
+cards, scale-press on settings rows, paywall logo/title redundancy) and
+ratified fixes: neutral white-alpha-over-scaffold surfaces for the
+default theme (custom themes keep card-slot identity; new themes also
+start neutral), press-flash instead of scale on settings/stats rows,
+neutral slider theme, highlight-tinted Close pill, paywall = back-only
+bar + accent bolt-squircle logo. Gates: 760 tests green, analyze at
+baseline, sim-verified on the workstation (default theme). Details:
+`changelog-agent.md` 2026-09-09 drift-fix entry. **Next:** user runs the
+updated branch (phone + tablet, incl. **Force
 Tablet Mode** check) → Gate 3 (fresh review of branch diff + on-device
 feel, findings triaged to the user BEFORE applying — standing rule) →
-merge or iterate. Pre-existing bugs fixed on the branch during
+merge or iterate. Doc debt: mock/contract docs still describe the paywall
+wordmark logo + a §2.5 surface wording that contradicts the ratified
+"neutral over scaffold" — amend with a v13 note if the changes stick.
+Pre-existing bugs fixed on the branch during
 verification: `text_field_date.dart` LateInitializationError (crashed
 the tablet walk; now a proper StatefulWidget). Still open from the
 Phase-2 walk: duplicate GlobalKey in the date range; Tip Jar

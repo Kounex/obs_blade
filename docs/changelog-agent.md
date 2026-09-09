@@ -2,6 +2,51 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-09 — 4.0 drift-fix batch: v12 color coding + interaction alignment
+
+User ran the `4.0-liquid-glass` branch and found drift from the ratified
+v12 mock: bluish card surfaces instead of the unified neutral gray ladder,
+scale-press animation on settings rows (mock = highlight flash), paywall
+redundancies (logo next to an app-bar title naming the app). User triaged
+ALL findings with three decisions: **(1)** default-theme surfaces = neutral
+white-alpha-over-scaffold composite (custom themes keep their card-slot
+identity), **(2)** paywall = back-only bar + accent bolt-squircle logo,
+**(3)** newly created custom themes also start from the neutral base.
+Five commits on `4.0-liquid-glass`, gates green at each step:
+
+- `bddb192a` **surfaces:** scaffold resolved once in `lib/app.dart`;
+  `liquidCard` = alphaBlend(white/black 5%, cardColor ?? scaffold) feeding
+  cardColor/canvas/dialogs/snackbar/chips/surface; bars on new
+  `StylingHelper.liquid_bar_color` #1B1B1F (+ `scaffold_color` #212123);
+  `BaseCard` fill = theme.cardColor directly (no double composite);
+  `CustomTheme.basic()` defaults → neutral.
+- `3a82827c` **press flash:** new `lib/shared/design/press_flash.dart`
+  (highlight tint flash, no scale) on settings `BlockEntry` + stats
+  `StatsEntry`, replacing Pressable scale; stats Stream/Recording chips now
+  16% tint + highlightText/recordingText (were solid `Colors.blue[800]`/red).
+- `56e7ce33` **sliders:** sliderTheme in app.dart — hairline track (white
+  10%), highlight-55% fill, neutral knobs (#E8E8EC dark / #1C1C1E light),
+  transparent border; `audio_slider.dart` dropped its solid-highlight
+  override; muted icon textTertiary (was recording-red).
+- `994571fd` **Close pill:** highlightText @15% tint + highlightText label
+  in `status_app_bar.dart` (was accent-tinted).
+- `095e3b6c` **paywall:** dropped the 'OBS Blade Pro' nav-bar title
+  (assert in `transculent_cupertino_navbar_wrapper.dart` relaxed to allow
+  null middle); hero = 72px accent squircle (`AppRadius.xl`) with
+  `CupertinoIcons.bolt_fill`, on-accent ink via estimateBrightness;
+  long-press debug Pro override preserved.
+
+Full gate: 760 tests green (`test/chat/ websocket/ persistence/ pro/
+shared/ utils/`); `flutter analyze` at baseline. Visual verification shots
+(default theme, local OBS + sim) confirmed: neutral cards, red CTA/tab ink,
+blue-tinted Close pill, tinted stats chips, white slider knobs, back-only
+paywall bar with red bolt squircle. Temp verification test deleted after
+the walk. Charts deliberately untouched (token-delta §6.5 open decision).
+Doc-debt note: mock/contract docs still describe the paywall wordmark logo
+— if the accent bolt stays, `state-and-plan.md`/`token-delta.md` need a
+v13 note; §2.5 wording also contradicts the ratified "neutral over
+scaffold" resolution and should be amended.
+
 ## 2026-09-09 — 4.0: branch `4.0-liquid-glass` — token layer + full view migration
 
 Overnight autonomous wave (user directive: implement in the live app on a
