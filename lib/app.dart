@@ -259,18 +259,21 @@ class App extends StatelessWidget {
         side: BorderSide.none,
       ),
 
+      /// Volume slider treatment (token-delta §2, mock variant A):
+      /// neutral hairline track (white 10%), fill = highlight at 55%,
+      /// near-white knob (#E8E8EC, dark themes) - the knob is a neutral
+      /// control element, it doesn't spend the highlight
       sliderTheme: SliderThemeData(
         activeTickMarkColor: Colors.transparent,
-        activeTrackColor: Colors.transparent,
+        activeTrackColor: highlight.withValues(alpha: 0.55),
         valueIndicatorColor: highlight,
-        thumbColor: highlight,
-        thumbShape: BorderRoundSliderThumbShape(
-          borderColor: StylingHelper.surroundingAwareAccent(
-            surroundingColor: liquidCard,
-          ),
+        thumbColor: dark ? const Color(0xFFE8E8EC) : const Color(0xFF1C1C1E),
+        thumbShape: const BorderRoundSliderThumbShape(
+          borderColor: Colors.transparent,
         ),
-        overlayColor: highlight.withOpacity(0.3),
-        inactiveTrackColor: highlight.withOpacity(0.3),
+        overlayColor: highlight.withValues(alpha: 0.3),
+        inactiveTrackColor:
+            (dark ? Colors.white : Colors.black).withValues(alpha: 0.10),
         inactiveTickMarkColor: Colors.transparent,
       ),
 

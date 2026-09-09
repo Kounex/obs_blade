@@ -222,8 +222,12 @@ class _AudioSliderState extends State<AudioSlider> {
                     icon: this.widget.input.inputMuted
                         ? Icons.volume_off
                         : Icons.volume_up,
+
+                    /// Control on-state = highlight; the muted off-state
+                    /// drops to faint text (mock .mute.muted) - red is
+                    /// reserved for recording/program status
                     color: this.widget.input.inputMuted
-                        ? theme.extension<AppStatusColors>()!.recording
+                        ? theme.extension<AppTextColors>()!.textTertiary
                         : highlight,
                   ),
                 ),
@@ -237,9 +241,9 @@ class _AudioSliderState extends State<AudioSlider> {
                     max: 1.0,
                     value: (this.widget.input.inputVolumeMul ?? 0.0),
 
-                    /// Highlight (not the red accent) for the active track -
-                    /// red stays reserved for the muted-state affordance
-                    activeColor: theme.colorScheme.secondary,
+                    /// Track/fill/knob come from the sliderTheme (token-
+                    /// delta §2 variant A: hairline track, highlight 55%
+                    /// fill, neutral knob) - no per-widget color override
                     onChanged: (volume) => NetworkHelper.makeRequest(
                         networkStore.activeSession!.socket,
                         RequestType.SetInputVolume, {
