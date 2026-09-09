@@ -13,7 +13,6 @@ import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../utils/modal_handler.dart';
-import '../../../../utils/styling_helper.dart';
 import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
@@ -73,12 +72,32 @@ class ConnectionBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppStatusColors statusColors =
         Theme.of(context).extension<AppStatusColors>()!;
+    final AppTextColors textColors =
+        Theme.of(context).extension<AppTextColors>()!;
 
-    final Color reachabilityColor = this.connection.reachable == null
-        ? Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey
-        : this.connection.reachable!
-            ? statusColors.reachable
-            : statusColors.unreachable;
+    /// Reachability badge (grammar rule 7 + mock token notes): "Online" is
+    /// NEUTRAL (white-50% dot, dim label, 8% white pill) - green is
+    /// reserved for streaming-live. "Offline" keeps the red signal: dot in
+    /// [AppStatusColors.unreachable], label in [AppStatusColors.recordingText]
+    /// on a 13% same-hue tint
+    final Color reachabilityDotColor;
+    final Color reachabilityLabelColor;
+    final Color reachabilityFillColor;
+    if (this.connection.reachable == null) {
+      reachabilityDotColor = textColors.textOrnament;
+      reachabilityLabelColor = textColors.textTertiary;
+      reachabilityFillColor =
+          Colors.white.withValues(alpha: 0.08);
+    } else if (this.connection.reachable!) {
+      reachabilityDotColor = Colors.white.withValues(alpha: 0.5);
+      reachabilityLabelColor = textColors.textSecondary;
+      reachabilityFillColor = Colors.white.withValues(alpha: 0.08);
+    } else {
+      reachabilityDotColor = statusColors.unreachable;
+      reachabilityLabelColor = statusColors.recordingText;
+      reachabilityFillColor =
+          statusColors.unreachable.withValues(alpha: 0.13);
+    }
 
     final String reachabilityLabel = this.connection.reachable == null
         ? 'Checking'
@@ -119,17 +138,36 @@ class ConnectionBox extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     _ReachabilityPill(
-                      color: reachabilityColor,
+                      dotColor: reachabilityDotColor,
+                      labelColor: reachabilityLabelColor,
+                      fillColor: reachabilityFillColor,
                       label: reachabilityLabel,
                     ),
                     Pressable(
                       onTap: () => this._edit(context),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        child: Icon(
-                          CupertinoIcons.pencil,
-                          size: 18.0,
-                          color: Theme.of(context).textTheme.bodySmall?.color,
+
+                      /// 44x44 hit area (token-delta §5) - visual glyph
+                      /// stays small, transparent expansion carries the
+                      /// floor
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minWidth: 44.0,
+                          minHeight: 44.0,
+                        ),
+                        child: Center(
+                          widthFactor: 1.0,
+                          heightFactor: 1.0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            child: Icon(
+                              CupertinoIcons.pencil,
+                              size: 18.0,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.color,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -176,7 +214,11 @@ class ConnectionBox extends StatelessWidget {
                     final bool connecting =
                         GetIt.instance<NetworkStore>().connectionInProgress;
 
+                    /// Ghost Connect (mock token notes: saved-card buttons
+                    /// are demoted to ghosts - the filled Connect CTA in
+                    /// the connect card is the screen's one accent moment)
                     return BaseButton(
+                      secondary: true,
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
                         vertical: AppSpacing.sm,
@@ -191,13 +233,9 @@ class ConnectionBox extends StatelessWidget {
                                 width: 20.0,
                                 height: 20.0,
                                 child: CupertinoActivityIndicator(
-                                  color:
-                                      StylingHelper.surroundingAwareAccent(
-                                    surroundingColor: Theme.of(context)
-                                        .buttonTheme
-                                        .colorScheme!
-                                        .secondary,
-                                  ),
+                                  color: Theme.of(context)
+                                      .extension<AppTextColors>()!
+                                      .accentText,
                                 ),
                               )
                             : const Text(
@@ -218,22 +256,26 @@ class ConnectionBox extends StatelessWidget {
 }
 
 class _ReachabilityPill extends StatelessWidget {
-  final Color color;
+  final Color dotColor;
+  final Color labelColor;
+  final Color fillColor;
   final String label;
 
   const _ReachabilityPill({
-    required this.color,
+    required this.dotColor,
+    required this.labelColor,
+    required this.fillColor,
     required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(end: this.color),
+      tween: ColorTween(end: this.fillColor),
       duration: AppMotion.medium,
       curve: AppMotion.standard,
-      builder: (context, color, child) {
-        final resolved = color ?? this.color;
+      builder: (context, fillColor, child) {
+        final Color fill = fillColor ?? this.fillColor;
         return Container(
           margin: const EdgeInsets.only(top: AppSpacing.xs),
           padding: const EdgeInsets.symmetric(
@@ -241,7 +283,7 @@ class _ReachabilityPill extends StatelessWidget {
             vertical: AppSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color: resolved.withValues(alpha: 0.16),
+            color: fill,
             borderRadius: AppRadius.pill,
           ),
           child: Row(
@@ -249,13 +291,13 @@ class _ReachabilityPill extends StatelessWidget {
             children: [
               StatusDot(
                 size: 6.0,
-                color: resolved,
+                color: this.dotColor,
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 this.label,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      color: resolved,
+                      color: this.labelColor,
                       fontWeight: FontWeight.w600,
                     ),
               ),

@@ -40,7 +40,10 @@ class QuickConnect extends StatelessWidget {
           /// manual connect cards
           const BaseDivider(),
           const SizedBox(height: AppSpacing.lg),
+          /// Ghost Scan (one accent moment per screen: the filled Connect
+          /// CTA in the connect card - everything else stays neutral/ghost)
           BaseButton(
+            secondary: true,
             onPressed: () =>
                 ModalHandler.showBaseCupertinoBottomSheet<Connection?>(
               context: context,

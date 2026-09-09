@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -26,30 +25,28 @@ class SavedConnections extends StatelessWidget {
       children: [
         Padding(
           /// Aligns with the card content edge above (16 card margin +
-          /// 24 title inset = 40)
+          /// 24 title inset = 40). The bottom spacing carries the
+          /// separation now - the divider underline under section headers
+          /// is retired (hierarchy via type/spacing, v12 direction)
           padding: const EdgeInsets.only(
             top: AppSpacing.md,
+            bottom: AppSpacing.sm,
             left: AppSpacing.xl + AppSpacing.lg,
           ),
 
-          /// Section header: caption scale, uppercase, theme-aware grey
+          /// Section header: caption scale, uppercase, textTertiary
           child: Text(
             'Saved Connections'.toUpperCase(),
             style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  color: Theme.of(context)
+                      .extension<AppTextColors>()!
+                      .textTertiary,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.6,
                 ),
           ),
         ),
-        const SizedBox(height: AppSpacing.xs),
 
-        /// Inset to the caption edge instead of full-bleed (iOS grouped
-        /// separator convention)
-        const Padding(
-          padding: EdgeInsets.only(left: AppSpacing.xl + AppSpacing.lg),
-          child: BaseDivider(),
-        ),
         Flexible(
           fit: FlexFit.loose,
           child: Padding(
@@ -196,7 +193,11 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
                 dotWidth: 6.0,
                 expansionFactor: 3.0,
                 spacing: 6.0,
-                activeDotColor: Theme.of(context).colorScheme.secondary,
+
+                /// Active page dot = selection -> accent (grammar rule 2;
+                /// the accent group lives on the buttonTheme colorScheme)
+                activeDotColor:
+                    Theme.of(context).buttonTheme.colorScheme!.secondary,
                 dotColor: (muted ?? Colors.grey).withValues(alpha: 0.35),
               ),
             ),
@@ -218,6 +219,7 @@ Widget _animatedConnectionBox(
 }) =>
     StaggeredEntrance(
       index: index,
+      scaleFrom: 0.985,
       child: AnimatedSwitcher(
         duration: AppMotion.medium,
         child: ConnectionBox(
