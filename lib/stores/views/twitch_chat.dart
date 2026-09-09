@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
@@ -117,6 +118,13 @@ abstract class _TwitchChatStore with Store {
   final TwitchChannelService _channelService;
   final TwitchModerationService _moderationService;
 
+  /// Pro entitlement read (test seam, same pattern as the store
+  /// resolvers above) - native chat "just doesn't work" without Pro:
+  /// [connectChat] refuses, so neither a persisted engine selection nor
+  /// the cold-start login restore can bring chat up behind the locked
+  /// pane.
+  final bool Function() _isProResolver;
+
   TwitchEventSubService? _eventSub;
   TwitchIrcSidecar? _ircSidecar;
 
@@ -157,6 +165,7 @@ abstract class _TwitchChatStore with Store {
     TwitchMessageService? messageService,
     TwitchChannelService? channelService,
     TwitchModerationService? moderationService,
+    bool Function()? isProResolver,
   })  : _authService = authService ?? TwitchAuthService(),
         _eventSubFactory = eventSubFactory ??
             ((onChatMessage, onChatNotification, onMessageDelete,
@@ -186,7 +195,9 @@ abstract class _TwitchChatStore with Store {
             (() => GetIt.instance<TwitchEmoteStore>()),
         _messageService = messageService ?? TwitchMessageService(),
         _channelService = channelService ?? TwitchChannelService(),
-        _moderationService = moderationService ?? TwitchModerationService();
+        _moderationService = moderationService ?? TwitchModerationService(),
+        _isProResolver = isProResolver ??
+            (() => GetIt.instance<ProStore>().isPro);
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -655,10 +666,13 @@ abstract class _TwitchChatStore with Store {
   }
 
   /// (Re)connect the EventSub session — called after login and by the UI
-  /// retry action.
+  /// retry action. Hard entitlement gate: without Pro the native engine
+  /// never comes up, no matter which entry point asks (persisted engine
+  /// selection, cold-start session restore, UI retry).
   @action
   Future<void> connectChat() async {
     if (this.authState != TwitchAuthState.loggedIn) return;
+    if (!this._isProResolver()) return;
     this.chatError = null;
     this.chatConnection = TwitchChatConnectionState.connecting;
 

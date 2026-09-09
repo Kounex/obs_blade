@@ -64,6 +64,7 @@ void main() {
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           eventSubService,
       badgeStoreResolver: () => badgeStore,
+      isProResolver: () => true,
     );
   });
 
@@ -472,6 +473,26 @@ void main() {
       expect(store.chatError, isNull);
     });
 
+    test('connectChat refuses to connect without the Pro entitlement',
+        () async {
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory: (_, __, ___, ____, _____, ______, _______,
+                ________, _________, __________) =>
+            eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        isProResolver: () => false,
+      );
+      await seedValidAuth();
+      store.authState = TwitchAuthState.loggedIn;
+      store.user = FakeTwitchAuthService.user;
+
+      await store.connectChat();
+
+      expect(eventSubService.connectCalled, isFalse);
+      expect(store.chatConnection, TwitchChatConnectionState.disconnected);
+    });
+
     test('logout clears the badge catalog', () async {
       badgeService.globalSets = [FakeTwitchBadgeService.moderatorSet];
       await badgeStore.fetch(accessToken: 'access-1', broadcasterId: 'user-1');
@@ -500,6 +521,7 @@ void main() {
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
       );
       await store.startLogin();
     }
@@ -553,6 +575,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         messageService: messageService,
       );
       await store.startLogin();
@@ -725,6 +748,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         emoteStoreResolver: () => emoteStore,
       );
       await store.startLogin();
@@ -783,6 +807,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         userEmoteStoreResolver: () => userEmoteStore,
       );
       await store.startLogin();
@@ -1067,6 +1092,7 @@ void main() {
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
       );
       await store.startLogin();
     }
@@ -1156,6 +1182,7 @@ void main() {
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         messageService: messageService,
         channelService: channelService,
       );
@@ -1193,6 +1220,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         channelService: channelService,
       );
       await restarted.init();
@@ -1488,6 +1516,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         moderationService: moderationService,
       );
       await store.startLogin();
@@ -1620,6 +1649,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         moderationService: moderationService,
       );
       await store.startLogin();
@@ -1792,6 +1822,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         moderationService: moderationService,
       );
       await store.startLogin();
@@ -1941,6 +1972,7 @@ void main() {
           return eventSubService;
         },
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         moderationService: moderationService,
       );
       await store.startLogin();
@@ -2147,6 +2179,7 @@ void main() {
         eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
             eventSubService,
         badgeStoreResolver: () => badgeStore,
+        isProResolver: () => true,
         moderationService: moderationService,
       );
       await store.startLogin();

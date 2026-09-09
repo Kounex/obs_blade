@@ -103,6 +103,7 @@ void main() {
     authService.tokenScopes = scopes;
     store = TwitchChatStore(
       authService: authService,
+      isProResolver: () => true,
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           eventSubService,
       badgeStoreResolver: () =>

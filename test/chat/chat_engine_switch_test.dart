@@ -13,24 +13,15 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
-import 'package:obs_blade/utils/routing_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_engine_switch.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import '../pro/support/fake_pro_purchase_gateway.dart';
 
 /// Fixed-width host: the switch sizes `double.infinity` inside the bar's
-/// right column, so it needs a bounded width in isolation. [withProRoute]
-/// registers the paywall route so the not-Pro intercept has somewhere to
-/// push to.
-Widget wrap(Widget child, {bool withProRoute = false}) => MaterialApp(
+/// right column, so it needs a bounded width in isolation.
+Widget wrap(Widget child) => MaterialApp(
       theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
-      routes: withProRoute
-          ? {
-              HomeTabRoutingKeys.Pro.route: (_) =>
-                  const Scaffold(body: Text('PAYWALL')),
-            }
-          : const {},
       home: MediaQuery(
         data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
         child: Scaffold(
@@ -158,20 +149,29 @@ void main() {
   });
 
   testWidgets(
-      'not-Pro tap on Native pushes the paywall and skips the box put',
-      (tester) async {
-    await tester.pumpWidget(wrap(
-      ChatEngineSwitch(
-          settingsBox: settingsBox(), chatType: ChatType.Twitch),
-      withProRoute: true,
-    ));
+      'not-Pro tap on Native still switches the engine (the pane renders '
+      'the locked upsell instead)', (tester) async {
+    await tester.pumpWidget(wrap(ChatEngineSwitch(
+        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
     await revokePro(tester);
 
     await tester.tap(find.text('Native'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('PAYWALL'), findsOneWidget);
-    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name), isNull);
+    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
+        ChatEngine.native);
+
+    /// The tap ran its Hive write in the test's FakeAsync zone - close
+    /// Hive from inside the zone (same dance as the 'tapping a segment
+    /// persists the engine' test above)
+    var closed = false;
+    unawaited(harness.close().then((_) => closed = true));
+    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+    }
+    await tester.pump();
+    expect(closed, isTrue);
   });
 }

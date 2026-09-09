@@ -95,6 +95,7 @@ void main() {
         sleep: (duration) async {
           sleepLog.add(duration);
         },
+        isProResolver: () => true,
       );
 
   /// Configured state: API key + two channels ('A' → video-a-001,
@@ -213,6 +214,29 @@ void main() {
   });
 
   group('polling', () {
+    test('connectChat refuses to poll without the Pro entitlement',
+        () async {
+      configure();
+      store.dispose();
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        sleep: (duration) async {
+          sleepLog.add(duration);
+        },
+        isProResolver: () => false,
+      );
+
+      await store.init();
+      // Give a hypothetical poll loop a beat to (not) start.
+      await Future<void>.delayed(Duration.zero);
+
+      expect(chatService.resolveCalls, 0);
+      expect(chatService.listCalls, 0);
+      expect(
+          store.chatConnection, isNot(YouTubeChatConnectionState.connected));
+    });
+
     test('buffers messages across multiple poll pages, threading the page '
         'token', () async {
       configure();

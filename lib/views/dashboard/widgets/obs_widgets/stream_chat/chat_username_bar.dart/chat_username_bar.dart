@@ -39,8 +39,9 @@ import 'youtube_native_channel_dropdown.dart';
 /// Native engines are a Pro entitlement: without [ProStore.isPro] the
 /// native cluster (channel dropdown, options, account control) stays
 /// hidden - legacy users with a persisted native engine must not get
-/// dead-end login pills; the pane's Pro upsell is their experience and
-/// the engine switch (lock badge) is the way out.
+/// dead-end login pills; the pane's locked Pro upsell is their
+/// experience (the engine switch always applies, the lock badge marks
+/// the gated segment).
 class ChatUsernameBar extends StatelessWidget {
   const ChatUsernameBar({
     super.key,

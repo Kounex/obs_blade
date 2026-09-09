@@ -139,6 +139,7 @@ void main() {
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
+      isProResolver: () => true,
       eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
           FakeTwitchEventSubService(),
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),

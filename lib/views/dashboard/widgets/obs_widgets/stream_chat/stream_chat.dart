@@ -20,6 +20,7 @@ import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
+import '../../../../../utils/icons/jam_icons.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/routing_helper.dart';
 import '../../../../../utils/styling_helper.dart';
@@ -670,10 +671,12 @@ class _ChatEmptyState extends StatelessWidget {
   }
 }
 
-/// Compact Pro upsell for the chat slot when a native engine is selected
+/// Locked pane for the chat slot when a native engine is selected
 /// without the entitlement (incl. legacy persisted `SelectedChatEngine`
-/// users) - a taste of the benefits plus the "Explore Pro" entry into the
-/// paywall. Never auto-presented: the user picked the native engine first.
+/// users - the engine switch no longer intercepts, it switches and lands
+/// here): padlock brand tile, a taste of the benefits, and the
+/// "Explore Pro" entry into the paywall. Never auto-presented: the user
+/// picked the native engine first.
 class _ChatProUpsell extends StatelessWidget {
   final ChatType chatType;
 
@@ -697,9 +700,9 @@ class _ChatProUpsell extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const AccentIconTile(
-              icon: CupertinoIcons.bolt_fill,
+              icon: JamIcons.padlock,
               size: 64.0,
-              iconSize: 32.0,
+              iconSize: 30.0,
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(
@@ -708,7 +711,7 @@ class _ChatProUpsell extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Native chat is part of OBS Blade Pro.',
+              'Native chat is locked — unlock it with OBS Blade Pro.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),

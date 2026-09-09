@@ -3,7 +3,9 @@ import 'dart:collection';
 
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -100,13 +102,22 @@ abstract class _YouTubeChatStore with Store {
   /// the settings load is idempotent per store instance.
   bool _channelsLoaded = false;
 
+  /// Pro entitlement read (test seam) - native chat "just doesn't work"
+  /// without Pro: [connectChat] refuses, so neither a persisted engine
+  /// selection nor the cold-start auto-select can start polling behind
+  /// the locked pane.
+  final bool Function() _isProResolver;
+
   _YouTubeChatStore({
     YouTubeAuthService? authService,
     YouTubeLiveChatService? chatService,
     Future<void> Function(Duration)? sleep,
+    bool Function()? isProResolver,
   })  : _authService = authService ?? YouTubeAuthService(),
         _chatService = chatService ?? YouTubeLiveChatService(),
-        _sleep = sleep ?? Future.delayed;
+        _sleep = sleep ?? Future.delayed,
+        _isProResolver = isProResolver ??
+            (() => GetIt.instance<ProStore>().isPro);
 
   Box<YouTubeAuth> get _authBox =>
       Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
@@ -379,10 +390,14 @@ abstract class _YouTubeChatStore with Store {
   }
 
   /// (Re)start the poll loop for the selected channel — called after
-  /// init/sign-in and by the UI retry action.
+  /// init/sign-in and by the UI retry action. Hard entitlement gate:
+  /// without Pro the native engine never comes up, no matter which entry
+  /// point asks (persisted engine selection, cold-start auto-select, UI
+  /// retry).
   @action
   void connectChat() {
     if (!this.canRead) return;
+    if (!this._isProResolver()) return;
     if (this.selectedChannelLabel == null) {
       this.chatConnection = YouTubeChatConnectionState.idle;
       return;
@@ -643,11 +658,17 @@ abstract class _YouTubeChatStore with Store {
     if (label != null) {
       final buffer = this._channelBuffers.putIfAbsent(label, _ChannelBuffer.new);
       this.messages.addAll(buffer.messages);
-      this.chatConnection = YouTubeChatConnectionState.connecting;
-      this.chatError = null;
-      this.chatQuotaExhausted = false;
-      final flow = this._pollFlow;
-      unawaited(this._pollLoop(label, flow));
+      if (this._isProResolver()) {
+        this.chatConnection = YouTubeChatConnectionState.connecting;
+        this.chatError = null;
+        this.chatQuotaExhausted = false;
+        final flow = this._pollFlow;
+        unawaited(this._pollLoop(label, flow));
+      } else {
+        /// Hard entitlement gate (mirrors [connectChat]): the selection
+        /// is kept, but without Pro no poll loop starts
+        this.chatConnection = YouTubeChatConnectionState.idle;
+      }
     } else {
       this.chatConnection = YouTubeChatConnectionState.idle;
     }

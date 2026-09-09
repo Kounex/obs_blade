@@ -9,7 +9,6 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../stores/pro_store.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/icons/jam_icons.dart';
-import '../../../../../../utils/routing_helper.dart';
 
 /// Manual WebView <-> Native engine toggle for the stream chat. Renders
 /// nothing for platforms without a native engine
@@ -17,10 +16,12 @@ import '../../../../../../utils/routing_helper.dart';
 /// straight to the Settings box - the surrounding HiveBuilder in
 /// `chat_username_bar.dart` rebuilds on the change.
 ///
-/// Native engines are a Pro entitlement: when [ProStore.isPro] is false the
-/// Native segment carries a lock badge and tapping it pushes the Pro
-/// paywall route instead of switching the engine (the box put is skipped).
-/// Pro users get the byte-identical pre-gate behavior.
+/// Native engines are a Pro entitlement: the switch itself is always
+/// usable (the Native segment carries a lock badge while
+/// [ProStore.isPro] is false) - the enforcement lives behind it: the
+/// pane renders the locked Pro upsell instead of chat (stream_chat.dart)
+/// and the stores refuse to connect without the entitlement
+/// (`connectChat` gates on [ProStore.isPro]).
 class ChatEngineSwitch extends StatelessWidget {
   final Box settingsBox;
   final ChatType chatType;
@@ -76,13 +77,10 @@ class ChatEngineSwitch extends StatelessWidget {
             onValueChanged: (selected) {
               if (selected == null) return;
 
-              /// Not Pro: the paywall is the destination, the engine stays
-              if (selected == ChatEngine.native && !isPro) {
-                Navigator.of(context)
-                    .pushNamed(HomeTabRoutingKeys.Pro.route);
-                return;
-              }
-
+              /// The switch always applies - without the entitlement the
+              /// pane renders the locked Pro upsell (and the stores
+              /// refuse to connect), so the paywall is one tap away from
+              /// there instead of intercepting here
               this
                   .settingsBox
                   .put(SettingsKeys.SelectedChatEngine.name, selected);

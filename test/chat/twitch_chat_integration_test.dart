@@ -495,7 +495,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NativeTwitchChatView), findsNothing);
-    expect(find.text('Native chat is part of OBS Blade Pro.'), findsOneWidget);
+    expect(find.text('Native chat is locked — unlock it with OBS Blade Pro.'),
+        findsOneWidget);
     expect(find.text('Explore Pro'), findsOneWidget);
 
     /// Neither the pane's connect prompt nor the bar's account pill - a
