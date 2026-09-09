@@ -22,11 +22,11 @@ class StatusAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    /// Highlight color used for nav bar actions (same source
-    /// [ThemedCupertinoButton] reads)
-    final Color actionColor =
-        Theme.of(context).cupertinoOverrideTheme!.primaryColor ??
-            Theme.of(context).colorScheme.secondary;
+    /// The Close pill spends the brightened highlightText derivative on
+    /// both label and tint (token-delta §2.3, mock close-pill: 15%
+    /// highlightText tint + highlightText label)
+    final Color pillText =
+        Theme.of(context).extension<AppTextColors>()!.highlightText;
 
     return TransculentSliverAppBar(
       pinned: true,
@@ -78,18 +78,12 @@ class StatusAppBar extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: AppRadius.pill,
-                    color: actionColor.withValues(alpha: 0.14),
+                    color: pillText.withValues(alpha: 0.15),
                   ),
                   child: Text(
                     'Close',
-
-                    /// Highlight spent as text resolves the brightened
-                    /// [AppTextColors.highlightText] derivative (§2.3 -
-                    /// the Close pill is on the highlightText list)
                     style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                          color: Theme.of(context)
-                              .extension<AppTextColors>()!
-                              .highlightText,
+                          color: pillText,
                         ),
                   ),
                 ),
