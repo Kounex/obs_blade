@@ -59,24 +59,39 @@ class ProSalesView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.xl),
-              StaggeredEntrance(index: 0, child: ProHero(store: this.store)),
+              StaggeredEntrance(
+                index: 0,
+                scaleFrom: 0.985,
+                child: ProHero(store: this.store),
+              ),
               const SizedBox(height: AppSpacing.lg),
               StaggeredEntrance(
                 index: 1,
+                scaleFrom: 0.985,
                 child: Text(
                   'Everything you already use — OBS control, stats, '
                   'WebView chat — stays free. Forever.',
                   textAlign: TextAlign.center,
+
+                  /// Conversion-critical copy earns the AA level
+                  /// (token-delta §2.1 body copy)
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        fontStyle: FontStyle.italic,
+                        color: Theme.of(context)
+                            .extension<AppTextColors>()!
+                            .textSecondary,
                       ),
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
-              const StaggeredEntrance(index: 2, child: ProBenefitsBrowser()),
+              const StaggeredEntrance(
+                index: 2,
+                scaleFrom: 0.985,
+                child: ProBenefitsBrowser(),
+              ),
               const SizedBox(height: AppSpacing.xl),
               StaggeredEntrance(
                 index: 3,
+                scaleFrom: 0.985,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -85,7 +100,11 @@ class ProSalesView extends StatelessWidget {
                           const EdgeInsets.only(bottom: AppSpacing.md),
                       child: Text(
                         'CHOOSE YOUR PRO',
-                        style: Theme.of(context).textTheme.labelSmall,
+                        style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                              color: Theme.of(context)
+                                  .extension<AppTextColors>()!
+                                  .textTertiary,
+                            ),
                       ),
                     ),
                     ProPricing(store: this.store),
@@ -95,6 +114,7 @@ class ProSalesView extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
               StaggeredEntrance(
                 index: 4,
+                scaleFrom: 0.985,
                 child: Column(
                   children: [
                     Observer(
@@ -120,7 +140,14 @@ class ProSalesView extends StatelessWidget {
                           ),
                           child: Text(
                             '·',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall!
+                                .copyWith(
+                                  color: Theme.of(context)
+                                      .extension<AppTextColors>()!
+                                      .textTertiary,
+                                ),
                           ),
                         ),
                         _LegalLink(
@@ -160,7 +187,11 @@ class _LegalLink extends StatelessWidget {
         child: Text(
           this.text,
           style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: Theme.of(context).buttonTheme.colorScheme!.secondary,
+
+                /// Links are highlight-as-text (token-delta §2.3), not accent
+                color: Theme.of(context)
+                    .extension<AppTextColors>()!
+                    .highlightText,
               ),
         ),
       ),
