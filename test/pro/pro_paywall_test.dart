@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/purchase_base.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -31,6 +32,13 @@ ThemeData _testTheme() => ThemeData(
         colorScheme: ColorScheme.fromSwatch(accentColor: Colors.redAccent),
       ),
       dividerTheme: const DividerThemeData(color: Colors.grey),
+
+      /// Design-system extensions the migrated widgets force-unwrap
+      /// (registered by `App._getCurrentTheme` in real runs)
+      extensions: const [
+        AppStatusColors.standard,
+        AppTextColors.standard,
+      ],
     );
 
 Widget wrap(Widget child, {double width = 400.0}) => MediaQuery(

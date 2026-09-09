@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
@@ -31,6 +32,13 @@ void main() {
           buttonTheme: ButtonThemeData(
             colorScheme: ColorScheme.fromSwatch(accentColor: Colors.redAccent),
           ),
+
+          /// Design-system extensions the migrated widgets force-unwrap
+          /// (registered by `App._getCurrentTheme` in real runs)
+          extensions: const [
+            AppStatusColors.standard,
+            AppTextColors.standard,
+          ],
         ),
         onGenerateRoute: (routeSettings) => MaterialPageRoute(
           builder: (_) => routeSettings.name == SettingsTabRoutingKeys.Pro.route
