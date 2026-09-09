@@ -110,6 +110,7 @@ class StatTileGrid extends StatelessWidget {
             for (int i = 0; i < this.tiles.length; i++)
               StaggeredEntrance(
                 index: i,
+                scaleFrom: 0.985,
                 child: StatTile(
                   label: this.tiles[i].label,
                   text: this.tiles[i].text,

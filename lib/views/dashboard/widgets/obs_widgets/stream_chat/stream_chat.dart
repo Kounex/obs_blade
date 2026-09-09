@@ -298,6 +298,7 @@ class _StreamChatState extends State<StreamChat>
                   builder: (context) => GetIt.instance<ProStore>().isPro
                       ? this._buildNativeChatSlot(context, chatType)
                       : StaggeredEntrance(
+                          scaleFrom: 0.985,
                           child: _ChatProUpsell(chatType: chatType),
                         ),
                 );
@@ -367,6 +368,7 @@ class _StreamChatState extends State<StreamChat>
                     ),
                   )
                 : StaggeredEntrance(
+                    scaleFrom: 0.985,
                     child: _ChatEmptyState(
                       chatType: chatType,
                       nativeConnectPrompt: true,
@@ -450,6 +452,7 @@ class _StreamChatState extends State<StreamChat>
                       this._chatInputFocusNode.requestFocus(),
                 )
               : StaggeredEntrance(
+                  scaleFrom: 0.985,
                   child: _ChatEmptyState(
                     chatType: chatType,
                     nativeConnectPrompt: true,
@@ -548,6 +551,7 @@ class _StreamChatState extends State<StreamChat>
         ],
         if (!chatActive)
           StaggeredEntrance(
+            scaleFrom: 0.985,
             child: _ChatEmptyState(chatType: chatType),
           ),
       ],

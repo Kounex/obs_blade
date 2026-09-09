@@ -18,6 +18,7 @@ class SceneContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget itemsCard = StaggeredEntrance(
       index: this.audioFirst ? 1 : 0,
+      scaleFrom: 0.985,
       child: const BaseCard(
         title: 'Scene Items',
         rightPadding: 12,
@@ -31,6 +32,7 @@ class SceneContent extends StatelessWidget {
 
     final Widget audioCard = StaggeredEntrance(
       index: this.audioFirst ? 0 : 1,
+      scaleFrom: 0.985,
       child: const BaseCard(
         title: 'Audio',
         leftPadding: 12,

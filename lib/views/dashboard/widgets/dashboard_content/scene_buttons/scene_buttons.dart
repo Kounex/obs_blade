@@ -95,6 +95,7 @@ class SceneButtons extends StatelessWidget {
 
             return StaggeredEntrance(
               index: index,
+              scaleFrom: 0.985,
               child: SceneButton(
                 scene: scene,
                 height: size,
