@@ -47,6 +47,8 @@ class ProUnlockedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
+    final AppTextColors textColors =
+        Theme.of(context).extension<AppTextColors>()!;
 
     return Stack(
       children: [
@@ -74,7 +76,9 @@ class ProUnlockedView extends StatelessWidget {
                     'moderation are unlocked. And everything you already '
                     'used stays free, forever.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: textColors.textSecondary,
+                        ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   BaseButton(
@@ -86,7 +90,11 @@ class ProUnlockedView extends StatelessWidget {
                     'Manage or cancel anytime in your store account — '
                     'no hoops, no dark patterns.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
+
+                    /// Reassurance footnote (token-delta §2.1)
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: textColors.textTertiary,
+                        ),
                   ),
                 ],
               ),
