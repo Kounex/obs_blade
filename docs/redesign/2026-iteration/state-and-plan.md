@@ -149,7 +149,7 @@ absorb, or open decisions that were never ratified for build.
 
 | What | Where |
 |---|---|
-| **Current mock (v12, the thing to evaluate)** | `.superpowers/brainstorm/16464-1788892928/content/all-views-v12.html` (local, gitignored; single-file HTML: 5 views × Current/Liquid Glass variants + shell). ⚠️ The content dir also holds **stale standalone mocks** (`connect-liquid-glass-v1.html`, `dashboard-liquid-glass-v2.html`, …) and older all-views versions — superseded, do not evaluate them |
+| **Current mock (v12, the thing to evaluate)** | `.superpowers/brainstorm/63192-1788922769/content/all-views-v12.html` (local, gitignored; single-file HTML: 5 views × Current/Liquid Glass variants + shell). ⚠️ The content dir also holds **stale standalone mocks** (`connect-liquid-glass-v1.html`, `dashboard-liquid-glass-v2.html`, …) and older all-views versions — superseded, do not evaluate them |
 | Settled screenshots (v8; recapture for v9) | `/tmp/obs_verify/v8_*.png` (ephemeral — recapture via the server, recipe in gotchas doc) |
 | **Token delta (THE contract — wins all conflicts)** | `docs/redesign/2026-iteration/token-delta.md` |
 | Gate reports (both rounds, itemized + dispositions) | `docs/redesign/2026-iteration/gate-reports.md` |
