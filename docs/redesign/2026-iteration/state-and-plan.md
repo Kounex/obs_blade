@@ -48,10 +48,19 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
    navigation on both platforms, full rollback by abandoning the branch.
    Tokens first (additive ThemeExtensions, zero visual diff), then per-screen
    migration. Details: token-delta §8.
-10. **Next:** user eyes on v12 → tablet connected-view frame (mock) → branch
-    implementation per token-delta §8 → Gate 3 (fresh review of the branch
-    diff + on-device feel + tokens; findings to user first) → Phase 4 spec →
-    merge.
+10. **Branch implementation landed (2026-09-09, overnight autonomous wave):**
+    token layer + color-group wiring (rule-8 drift fixed) + GlassBar on all
+    floating bars + per-view migration of Connect, connected/Scenes, Settings,
+    Statistics, Paywall — 31 commits on `4.0-liquid-glass`, pushed. Gate green
+    (analyze = baseline, all test suites). Known unbuilt contract items (Gate-3
+    input): §5 reconnecting scrim/inert handlers + auth-failed error-card toast
+    (new functionality, not styling), paywall equivalence line (needs numeric
+    prices in the gateway), reconnect-toast motion/colors, chat-bar frame
+    (§6.3), data-viz slot (§6.5), tablet composition (§6.1). Full itemization:
+    changelog 2026-09-09 branch entry.
+11. **Next:** user dogfoods the branch (phone + tablet) → tablet connected-view
+    frame decision → Gate 3 (fresh review of the branch diff + on-device feel +
+    tokens; findings to user first) → Phase 4 spec → merge.
 
 ## Artifact map
 

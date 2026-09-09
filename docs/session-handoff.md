@@ -3,10 +3,11 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-09** (4.0
-iteration at v12 mock after Gates 1/2/2b + user polish batch; design lab
-dropped — implementation goes live on branch `4.0-liquid-glass`; store
-products + RevenueCat wired; next: user eyes on v12, then tablet frame →
-branch implementation → Gate 3).
+restrained-Liquid-Glass redesign **implemented on branch
+`4.0-liquid-glass`** — waves 1–3d landed, gates green, phone + tablet
+sim-verified; run the app off that branch on the workstation to see it.
+Store products + RevenueCat wired; next: user eyes on the branch
+(phone AND tablet) → Gate 3 → merge).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -98,32 +99,34 @@ reworked backend-selection fixture). Open:
 ([`superpowers/specs/2026-09-08-ui-iteration-4.0-design.md`](superpowers/specs/2026-09-08-ui-iteration-4.0-design.md))
 — system-wide via tokens, **restrained Liquid Glass** direction.
 **Phase 1 audit COMPLETE**: digest at
-[`redesign/2026-iteration-audit.md`](redesign/2026-iteration-audit.md),
-screenshots (untracked, contain LAN IPs) in
-`docs/redesign/2026-iteration/before-{phone,tablet}/`. **Phase 2 mockups
-through Gate 2b + user polish: current mock is `all-views-v12.html`**
-(local, gitignored) with token delta v3 as the mock→code contract —
-**read [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
-first**, it is the cold-start briefing (artifact map, ratified grammar,
-gate reports, mock-fidelity calibration, and the standing rule:
-evaluation findings are triaged to the user BEFORE applying). v12 =
-v10 (Gate 2b) + user-directed batch: neutral cards, borderless auth
-toast, neutral connect-method segment (accent underline was "ai slop"),
-paywall hero dedup (logo carries the wordmark — h2 dropped). **Next,
-in order:** user eyes on v12 → tablet connected-view frame (mock) →
-**implementation in the live app on branch `4.0-liquid-glass`** (design
-lab dropped, user 2026-09-09 — tokens additive-first, per-screen commits,
-unmerged until Gate 3; token-delta §8) → Gate 3 (fresh review of branch
-diff + on-device feel + tokens, findings
-to user first) → Phase 4 spec. Companion server running (port/key in
-`.superpowers/brainstorm/`, gotchas:
-[`superpowers/visual-companion-gotchas.md`](superpowers/visual-companion-gotchas.md)).
-Mock build/polish changelog: `.superpowers/sdd/mockup-dashboard-v1-report.md`
-(gitignored). Pre-existing bugs the Phase-2 walk surfaced (fix before
-"after" captures): `text_field_date.dart:29` LateInitializationError +
-duplicate GlobalKey; Tip Jar settings-row hit-test miss. Runner scheme
-no longer has the StoreKit config attached (real sandbox dogfood);
-re-attach temporarily for ASC-style paywall shots.
+[`redesign/2026-iteration-audit.md`](redesign/2026-iteration-audit.md).
+**Phase 2 mockups COMPLETE: `all-views-v12.html`** (local, gitignored)
+with token delta v3 as the mock→code contract.
+**Phase 3 branch implementation LANDED on `4.0-liquid-glass`** (pushed,
+checked out on the workstation clone — `flutter run` there shows it):
+token layer additive-first (`AppTextColors`, `AppGlass`, extended
+`AppStatusColors`, `AppMotion`, `Pressable`, `StaggeredEntrance`),
+color-group wiring in `lib/app.dart` (highlight = `colorScheme.primary`,
+accent = `buttonTheme.colorScheme!.secondary`; app-bar buttons, switches,
+checkboxes, sliders, mute/visibility all resolve the **highlight** group
+on both platforms — token-delta §1 rule 8; this IS the future per-group
+CustomTheme surface), `GlassBar` on floating bars, per-view migration of
+Connect / Scenes / Settings / Statistics / Paywall, one unit per commit
+(32 commits). Gates: `flutter analyze` at baseline, all four test suites
+green; visual-QA phone + tablet walks verified on the workstation.
+**Read [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
+first** — cold-start briefing (ratified grammar, what shipped, known
+unbuilt items). Detail history: `changelog-agent.md` 2026-09-09 branch
+entry. **Next:** user runs the branch (phone + tablet, incl. **Force
+Tablet Mode** check) → Gate 3 (fresh review of branch diff + on-device
+feel, findings triaged to the user BEFORE applying — standing rule) →
+merge or iterate. Pre-existing bugs fixed on the branch during
+verification: `text_field_date.dart` LateInitializationError (crashed
+the tablet walk; now a proper StatefulWidget). Still open from the
+Phase-2 walk: duplicate GlobalKey in the date range; Tip Jar
+settings-row hit-test miss. Runner scheme no longer has the StoreKit
+config attached (real sandbox dogfood); re-attach temporarily for
+ASC-style paywall shots.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
@@ -133,12 +136,13 @@ any future non-sliver full-screen tab route.
 
 1. **Finish RevenueCat** (above) → sandbox dogfood per
    `revenuecat-setup.md` §5.
-2. **4.0 mock loop** (see the 4.0 paragraph): user reviews **v12**, then
-   tablet connected-view frame → branch implementation (`4.0-liquid-glass`)
-   → Gate 3 (findings
-   triaged to the user before applying — standing rule). Color groups must
-   resolve uniformly across elements AND platforms (token-delta §1 rule 8)
-   — the future per-group CustomTheme surface.
+2. **4.0 branch review** (see the 4.0 paragraph): user runs branch
+   `4.0-liquid-glass` on the workstation — phone AND tablet (Settings →
+   **Force Tablet Mode** for a phone-width device) — then Gate 3 (fresh
+   review of the branch diff + on-device feel; findings triaged to the
+   user before applying — standing rule), then merge or iterate. Color
+   groups resolve uniformly across elements AND platforms (token-delta
+   §1 rule 8) — the future per-group CustomTheme surface.
 3. **Dogfood the Pro gate** on the workstation via the debug override
    (long-press paywall hero): gate flip mid-session, legacy persisted
    `SelectedChatEngine=native` boot path, settings row states.
@@ -163,7 +167,7 @@ anyway). Default process tier **S**. Test gotchas are in
 ## Verify quickly
 
 ```bash
-git checkout master && git pull
+git checkout 4.0-liquid-glass && git pull   # 4.0 work lives here; master is untouched
 flutter test test/chat/ test/websocket/ test/persistence/ test/pro/
 ```
 

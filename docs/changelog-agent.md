@@ -2,6 +2,77 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-09 — 4.0: branch `4.0-liquid-glass` — token layer + full view migration
+
+Overnight autonomous wave (user directive: implement in the live app on a
+branch, no design-lab shadow clone). 31 commits on `4.0-liquid-glass`,
+pushed; the MacBook clone is checked out on it for morning dogfooding.
+Contract: `docs/redesign/2026-iteration/token-delta.md`.
+
+- **Token layer (additive, zero visual diff):** `AppTextColors`
+  ThemeExtension (textPrimary/Secondary/Tertiary/Ornament + accentText/
+  highlightText derived by calibrated lerp — the ratified hexes are pinned
+  in `standard`; a single mechanical lerp can't reproduce them, measured
+  across sRGB/linear/HSL/OKLCH), `AppStatusColors` extended (program,
+  recordingText, favorite, programTagFill), `AppGlass` (barColor/sigma/
+  saturate/specularOpacity, `forBar` factory), `AppMotion.ambient` (3s) +
+  `AppMotion.reduce(context)` reduced-motion seam (MediaQuery
+  disableAnimations, no persisted key), `Pressable(scale:, springy:)`
+  (rule-1.6 opt-out; reduced-motion = opacity flash only),
+  `StaggeredEntrance(scaleFrom:)` + reduced-motion final-value rendering.
+- **Color-group wiring (rule 8):** both `ColorScheme.fromSwatch` sites in
+  `app.dart` replaced with explicit schemes — the Material-default-blue
+  (#2196F3) leak is gone; highlight = `colorScheme.primary`+`.secondary`
+  (all ~45 readers audited, all highlight-semantics), accent =
+  `buttonTheme.colorScheme.secondary`. Switches/checkboxes/radios/sliders
+  unified on highlight on BOTH platforms (were red-iOS/blue-Android);
+  themed slider thumbs no longer transparent; mute/visibility/hide toggles
+  read the highlight group; dropdown underline resolves the divider slot.
+- **GlassBar** (`lib/shared/design/glass_bar.dart`): single glass surface
+  for all floating bars — blur + bar slot @75% + 1px specular edge line;
+  fallbacks: non-Apple 0.9-alpha solid, True Dark specular+alpha. Applied
+  to the forked TransculentSliverAppBar (paint layer only) and the main
+  CupertinoTabBar (specular replaces the custom hairline; inactiveColor
+  explicit textTertiary). Status navbar content height 55pt. NOTE: the
+  saturate garnish and reduced-transparency fallback are not expressible in
+  Flutter 3.44 (no ImageFilter color pass, no MediaQuery flag) — documented
+  in code.
+- **Per-view migration:** Connect (neutral connect-method segment —
+  CupertinoSlidingSegmentedControl exposes no thumb decoration API, so
+  track/thumb/label colors only; ghost CTAs demoted, one accent moment;
+  online pill neutral per rule 7), Scenes/connected (program tally ring +
+  programTagFill PGM tag, inner tab ink accentText, LIVE/REC pills neutral
+  "unknown" state while reconnecting via the existing store observable,
+  semantic audio-meter gradient with hot zone, exposed-control buttons
+  demoted to ghosts, studio-transition button on AppMotion), Settings
+  (section headers type-only, decorative icon tiles neutral via new
+  `DecorativeIconTile`, text levels), Statistics (CardHeader
+  underline/watermark retired, favorite token, calm sort/filter chips,
+  chart colors untouched per open decision §6.5), Paywall (hero
+  double-naming fixed — bolt tile swapped for the real base_logo.png at
+  72px, "OBS Blade Pro" headline dropped, value line is the headline;
+  yearly card 5% accent tint only, BEST VALUE badge 8% pill + accentText,
+  ONE-TIME neutral; benefits tiles neutralized).
+- **Known gaps / follow-ups for Gate 3:** §5 full reconnecting contract
+  (blocking scrim + inert command handlers) not built (state logic, not
+  styling); auth-failed error-card toast with Edit-password action doesn't
+  exist in the app (§5 contract is unbuilt functionality); paywall
+  equivalence line ("$4.17/mo") not computable from `ProProduct` (display-
+  only priceString); reconnect_toast still has off-token 500ms/easeOut +
+  red/green borders; chat-bar frame untouched (§6.3); data-viz colors
+  untouched (§6.5); tablet composition untouched by design (§6.1).
+- Gate: analyze 465 issues = baseline exactly (zero new);
+  test/chat+websocket+persistence+pro green. Visual verification:
+  visual-QA screenshot walk on iPhone + iPad sims against local OBS —
+  both walks "All tests passed" + STATE-CHECK OK; 19 key shots reviewed
+  (incl. the Pro paywall, captured on the iPad sim where Pro isn't
+  unlocked). The iPad walk surfaced the known `text_field_date.dart`
+  LateInitializationError (pre-existing, tablet-width rebuild) — fixed on
+  the branch (ff82ed1e, now a proper StatefulWidget; also stops the
+  per-build controller leak). Phone QA sim carries a custom purple theme
+  (correct group recoloring), iPad QA sim shows the default theme
+  (highlight blue / accent red).
+
 ## 2026-09-09 — 4.0: color-group directive + branch replaces design lab
 
 - **Color groups ratified (user directive):** every colored element must
