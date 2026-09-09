@@ -45,9 +45,11 @@ class StreamingControls extends StatelessWidget {
                     : Icons.live_tv_rounded,
               ),
             ),
-            color: dashboardStore.isLive
-                ? CupertinoColors.destructiveRed
-                : CupertinoColors.activeGreen,
+
+            /// Ghost button (token-delta §2.6): no green/red state fills -
+            /// green is reserved for streaming-live and red for
+            /// recording/program (rule 7), state lives in the LIVE/REC pills
+            secondary: true,
             text: dashboardStore.isLive ? 'Go Offline' : 'Go Live',
           ),
         ),

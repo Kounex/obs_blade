@@ -55,9 +55,10 @@ class ReplayBufferControls extends StatelessWidget {
                       ? CupertinoIcons.stop
                       : CupertinoIcons.reply_thick_solid,
                 ),
-                color: dashboardStore.isReplayBufferActive
-                    ? CupertinoColors.destructiveRed
-                    : CupertinoColors.activeGreen,
+
+                /// Ghost button (token-delta §2.6): no green/red state fills
+                /// (rules 7+8)
+                secondary: true,
                 text: dashboardStore.isReplayBufferActive ? 'Stop' : 'Start',
               ),
             ),
@@ -70,7 +71,9 @@ class ReplayBufferControls extends StatelessWidget {
                         RequestType.SaveReplayBuffer)
                     : null,
                 icon: const Icon(CupertinoIcons.arrow_down_doc_fill),
-                color: CupertinoColors.activeOrange,
+
+                /// Ghost button - was hardcoded Cupertino orange (rule 8)
+                secondary: true,
                 text: 'Save',
               ),
             ),

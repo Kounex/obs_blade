@@ -47,9 +47,11 @@ class RecordingControls extends StatelessWidget {
                       ? CupertinoIcons.stop
                       : CupertinoIcons.recordingtape,
                 ),
-                color: dashboardStore.isRecording
-                    ? CupertinoColors.destructiveRed
-                    : CupertinoColors.activeGreen,
+
+                /// Ghost button (token-delta §2.6): no green/red state fills
+                /// - red is reserved for recording/program state (rule 7),
+                /// which the REC pill carries
+                secondary: true,
                 text: dashboardStore.isRecording ? 'Stop' : 'Start',
               ),
             ),
@@ -67,9 +69,10 @@ class RecordingControls extends StatelessWidget {
                       ? CupertinoIcons.play
                       : CupertinoIcons.pause,
                 ),
-                color: dashboardStore.isRecordingPaused
-                    ? CupertinoColors.activeGreen
-                    : CupertinoColors.activeOrange,
+
+                /// Ghost button - the hardcoded green/orange state fills
+                /// encoded nothing per the color grammar (rules 7+8)
+                secondary: true,
                 text: dashboardStore.isRecordingPaused ? 'Resume' : 'Pause',
               ),
             ),
