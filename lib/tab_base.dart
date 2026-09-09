@@ -143,7 +143,10 @@ class _TabBaseState extends State<TabBase> {
             /// hairline border
             backgroundColor: Colors.transparent,
             border: const Border(),
-            activeColor: Theme.of(context).colorScheme.secondary,
+            /// Grammar rule 2: active tab ink = accent - accent as text/
+            /// glyph spends the accentText variant (token-delta §2.3)
+            activeColor:
+                Theme.of(context).extension<AppTextColors>()!.accentText,
             inactiveColor:
                 Theme.of(context).extension<AppTextColors>()!.textTertiary,
             currentIndex: tabsStore.activeTab.index,
