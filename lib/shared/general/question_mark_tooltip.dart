@@ -29,7 +29,7 @@ class QuestionMarkTooltip extends StatelessWidget {
           padding: const EdgeInsets.all(10.0),
           child: Icon(
             CupertinoIcons.question_circle,
-            color: Theme.of(context).textTheme.bodySmall?.color,
+            color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
           ),
         ));
   }

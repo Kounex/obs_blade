@@ -38,6 +38,7 @@ class SettingsView extends StatelessWidget {
             builder: (context, settingsBox, child) => CustomSliverList(
               children: [
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 0,
                   child: ActionBlock(
                     title: 'General',
@@ -100,6 +101,7 @@ class SettingsView extends StatelessWidget {
                   ),
                 ),
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 1,
                   child: ActionBlock(
                     title: 'Dashboard',
@@ -173,6 +175,7 @@ class SettingsView extends StatelessWidget {
                   ),
                 ),
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 2,
                   child: ActionBlock(
                     title: 'Theme',
@@ -267,6 +270,7 @@ class SettingsView extends StatelessWidget {
                   ),
                 ),
                 const StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 3,
                   child: ActionBlock(
                     title: 'Misc',
@@ -301,23 +305,32 @@ class SettingsView extends StatelessWidget {
                   ),
                 ),
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 4,
                   child: ActionBlock(
                     title: 'Support',
                     descriptionWidget: FutureBuilder<PackageInfo>(
                       future: PackageInfo.fromPlatform(),
                       builder: (context, snapshot) {
+                        final TextStyle versionStyle = Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(
+                              color: Theme.of(context)
+                                  .extension<AppTextColors>()!
+                                  .textTertiary,
+                            );
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Version ',
-                              style: Theme.of(context).textTheme.bodySmall,
+                              style: versionStyle,
                             ),
                             if (snapshot.hasData)
                               Text(
                                 snapshot.data!.version,
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: versionStyle,
                               ),
                           ],
                         );

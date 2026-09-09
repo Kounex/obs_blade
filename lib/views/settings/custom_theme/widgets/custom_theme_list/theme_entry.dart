@@ -83,8 +83,13 @@ class ThemeEntry extends StatelessWidget {
                                         defaultValue: '') ==
                                     this.customTheme.uuid
                                 ? _ActiveBadge(
+
+                                    /// Selection state resolves the accent
+                                    /// group (token-delta rule 2), same slot
+                                    /// [BaseButton] reads
                                     color: Theme.of(context)
-                                        .colorScheme
+                                        .buttonTheme
+                                        .colorScheme!
                                         .secondary,
                                   )
                                 : const SizedBox.shrink(),

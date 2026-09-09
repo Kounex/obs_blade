@@ -27,6 +27,7 @@ class DashboardCustomisationView extends StatelessWidget {
           title: 'Customisation',
           listViewChildren: [
             const StaggeredEntrance(
+              scaleFrom: 0.985,
               index: 0,
               child: ActionBlock(
                 dense: true,
@@ -44,6 +45,7 @@ class DashboardCustomisationView extends StatelessWidget {
               ),
             ),
             StaggeredEntrance(
+              scaleFrom: 0.985,
               index: 1,
               child: ActionBlock(
                 title: 'Features',

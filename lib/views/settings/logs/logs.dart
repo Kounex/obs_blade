@@ -23,9 +23,9 @@ class LogsView extends StatelessWidget {
         title: 'Logs',
         showScrollBar: true,
         listViewChildren: const [
-          StaggeredEntrance(index: 0, child: LogExplanation()),
-          StaggeredEntrance(index: 1, child: LogFilter()),
-          StaggeredEntrance(index: 2, child: LogList()),
+          StaggeredEntrance(scaleFrom: 0.985, index: 0, child: LogExplanation()),
+          StaggeredEntrance(scaleFrom: 0.985, index: 1, child: LogFilter()),
+          StaggeredEntrance(scaleFrom: 0.985, index: 2, child: LogList()),
         ],
       ),
     );

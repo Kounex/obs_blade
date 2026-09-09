@@ -69,7 +69,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
   }
 
   /// Caption-style section header (design system: uppercase, letterspaced,
-  /// theme-aware grey)
+  /// section-label text level per token-delta §2.1)
   Widget _sectionHeader(String title) => Padding(
         padding: const EdgeInsets.only(
           top: AppSpacing.xxl,
@@ -78,7 +78,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
         child: Text(
           title.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).textTheme.bodySmall?.color,
+                color:
+                    Theme.of(context).extension<AppTextColors>()!.textTertiary,
               ),
         ),
       );
@@ -170,6 +171,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   StaggeredEntrance(
+                    scaleFrom: 0.985,
                     index: 0,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,6 +201,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     ),
                   ),
                   StaggeredEntrance(
+                    scaleFrom: 0.985,
                     index: 1,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,6 +215,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     ),
                   ),
                   StaggeredEntrance(
+                    scaleFrom: 0.985,
                     index: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,6 +245,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     ),
                   ),
                   StaggeredEntrance(
+                    scaleFrom: 0.985,
                     index: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

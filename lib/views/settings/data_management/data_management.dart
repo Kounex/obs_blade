@@ -80,6 +80,7 @@ class DataManagementView extends StatelessWidget {
         title: 'Data Management',
         listViewChildren: [
           StaggeredEntrance(
+            scaleFrom: 0.985,
             index: 0,
             child: DataBlock(
               caption: 'Categories',
@@ -248,6 +249,7 @@ class DataManagementView extends StatelessWidget {
             ),
           ),
           StaggeredEntrance(
+            scaleFrom: 0.985,
             index: 1,
             child: DataBlock(
               caption: 'Danger Zone',

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
 /// Rounded-squircle icon tile derived from the active accent color slot -
-/// the "On Air" replacement for the bare monochrome leading icons in
-/// grouped settings rows (also used in subpage / dialog headers).
+/// the accent hero/upsell treatment (Pro paywall hero + benefits, native
+/// chat upsell pane).
+///
+/// Settings rows and settings subpage/dialog headers use the neutral
+/// [DecorativeIconTile] instead (token-delta rule 5: decorative tiles don't
+/// spend the accent) - this tile stays for surfaces where the accent tile
+/// IS the screen's brand moment.
 class AccentIconTile extends StatelessWidget {
   final IconData icon;
 

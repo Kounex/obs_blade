@@ -7,7 +7,7 @@ import '../../../shared/general/base/divider.dart';
 import '../../../shared/general/enumeration_block/enumeration_block.dart';
 import '../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
-import '../widgets/accent_icon_tile.dart';
+import '../widgets/decorative_icon_tile.dart';
 import '../widgets/subpage_header.dart';
 import 'widgets/faq_block.dart';
 
@@ -22,11 +22,12 @@ class FAQView extends StatelessWidget {
         title: 'FAQ | Help',
         listViewChildren: [
           const StaggeredEntrance(
+            scaleFrom: 0.985,
             index: 0,
             child: Padding(
               padding: EdgeInsets.only(top: 12.0),
               child: SubpageHeader(
-                visual: AccentIconTile(
+                visual: DecorativeIconTile(
                   icon: CupertinoIcons.chat_bubble_text_fill,
                   size: 64.0,
                   iconSize: 32.0,
@@ -36,6 +37,7 @@ class FAQView extends StatelessWidget {
             ),
           ),
           const StaggeredEntrance(
+            scaleFrom: 0.985,
             index: 1,
             child: BaseCard(
               child: Column(

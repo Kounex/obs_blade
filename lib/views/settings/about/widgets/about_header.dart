@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../widgets/subpage_header.dart';
 
 class AboutHeader extends StatelessWidget {
@@ -10,7 +11,12 @@ class AboutHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     TextStyle descriptionStyle = Theme.of(
       context,
-    ).textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w300);
+    ).textTheme.bodySmall!.copyWith(
+          fontWeight: FontWeight.w300,
+
+          /// Bylines / version read at the footnote level (token-delta §2.1)
+          color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+        );
 
     return SubpageHeader(
       visual: SizedBox(

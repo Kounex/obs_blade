@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/design/design.dart';
-import '../accent_icon_tile.dart';
+import '../decorative_icon_tile.dart';
 
 class SupportHeader extends StatelessWidget {
   final String title;
@@ -21,7 +21,7 @@ class SupportHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          AccentIconTile(icon: this.icon, size: 44.0, iconSize: 24.0),
+          DecorativeIconTile(icon: this.icon, size: 44.0, iconSize: 24.0),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(

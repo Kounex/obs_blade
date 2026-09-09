@@ -3,7 +3,7 @@ import 'package:obs_blade/utils/routing_helper.dart';
 
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/question_mark_tooltip.dart';
-import '../accent_icon_tile.dart';
+import '../decorative_icon_tile.dart';
 
 const double kblockEntryPadding = 14.0;
 const double kblockEntryIconSize = 32.0;
@@ -81,7 +81,7 @@ class BlockEntry extends StatelessWidget {
                         ? (context, heroSize, child) =>
                               Icon(this.heroPlaceholder)
                         : null,
-                    child: AccentIconTile(
+                    child: DecorativeIconTile(
                       icon: this.leading!,
                       size: kblockEntryIconSize,
                       iconSize: this.leadingSize * 0.66,
@@ -119,14 +119,24 @@ class BlockEntry extends StatelessWidget {
                             child: DefaultTextStyle(
                               style: Theme.of(
                                 context,
-                              ).textTheme.bodySmall!.copyWith(fontSize: 14.0),
+                              ).textTheme.bodySmall!.copyWith(
+                                    fontSize: 14.0,
+
+                                    /// Settings row values sit one emphasis
+                                    /// level down (token-delta §2.1)
+                                    color: Theme.of(context)
+                                        .extension<AppTextColors>()!
+                                        .textSecondary,
+                                  ),
                               child: this.navigateToResult!,
                             ),
                           ),
                         Icon(
                           Icons.chevron_right,
                           size: 20.0,
-                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          color: Theme.of(context)
+                              .extension<AppTextColors>()!
+                              .textTertiary,
                         ),
                       ],
                     )

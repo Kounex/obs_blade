@@ -4,14 +4,14 @@ import '../../../shared/design/design.dart';
 import '../../../shared/general/base/divider.dart';
 
 /// Unified header for the settings subpages (About / FAQ / Privacy Policy):
-/// a leading visual (logo image or an [AccentIconTile]) next to a
+/// a leading visual (logo image or a [DecorativeIconTile]) next to a
 /// scale-token title with a hairline rule and optional bylines below.
 ///
 /// Carries its own horizontal page padding so the group never touches the
 /// screen edge; the loose [Flexible] keeps short titles optically centered
 /// while long titles wrap inside the padded width.
 class SubpageHeader extends StatelessWidget {
-  /// Leading visual - logo image or an [AccentIconTile]
+  /// Leading visual - logo image or a [DecorativeIconTile]
   final Widget visual;
 
   final String title;

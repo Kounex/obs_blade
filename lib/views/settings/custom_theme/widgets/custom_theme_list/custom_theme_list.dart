@@ -36,6 +36,7 @@ class CustomThemeList extends StatelessWidget {
                 children: [
                   for (final (index, theme) in themes.indexed)
                     StaggeredEntrance(
+                      scaleFrom: 0.985,
                       index: index,
                       child: ThemeEntry(
                         customTheme: theme,

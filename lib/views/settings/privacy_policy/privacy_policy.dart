@@ -7,7 +7,7 @@ import '../../../shared/general/social_block.dart';
 import '../../../shared/general/themed/rich_text.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../utils/icons/jam_icons.dart';
-import '../widgets/accent_icon_tile.dart';
+import '../widgets/decorative_icon_tile.dart';
 import '../widgets/subpage_header.dart';
 
 class PrivacyPolicyView extends StatelessWidget {
@@ -21,11 +21,12 @@ class PrivacyPolicyView extends StatelessWidget {
         title: 'Privacy Policy',
         listViewChildren: [
           const StaggeredEntrance(
+            scaleFrom: 0.985,
             index: 0,
             child: Padding(
               padding: EdgeInsets.only(top: 12.0),
               child: SubpageHeader(
-                visual: AccentIconTile(
+                visual: DecorativeIconTile(
                   icon: CupertinoIcons.doc_person_fill,
                   size: 64.0,
                   iconSize: 32.0,
@@ -35,6 +36,7 @@ class PrivacyPolicyView extends StatelessWidget {
             ),
           ),
           StaggeredEntrance(
+            scaleFrom: 0.985,
             index: 1,
             child: BaseCard(
               child: Column(

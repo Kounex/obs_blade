@@ -165,6 +165,7 @@ class LogDetailView extends StatelessWidget {
               listViewChildren: [
                 const SizedBox(height: 12.0),
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 0,
                   child: Center(
                     child: ConstrainedBox(
@@ -202,6 +203,7 @@ class LogDetailView extends StatelessWidget {
                 const SizedBox(height: 4.0),
                 ...mergedLogs.entries.mapIndexed(
                   (mergedLog, index) => StaggeredEntrance(
+                    scaleFrom: 0.985,
                     index: index + 1,
                     child: LogEntry(
                       dateFormatted: mergedLog.key,

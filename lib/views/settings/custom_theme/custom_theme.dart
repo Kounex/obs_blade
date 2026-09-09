@@ -88,6 +88,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
               title: 'Custom Theme',
               listViewChildren: [
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 0,
                   child: BaseCard(
                     bottomPadding: 12.0,
@@ -118,6 +119,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                   ),
                 ),
                 const StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 1,
                   child: BaseCard(
                     title: 'Predefined Themes',
@@ -129,6 +131,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                   ),
                 ),
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 2,
                   child: BaseCard(
                     title: 'Your Themes',

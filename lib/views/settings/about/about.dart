@@ -27,11 +27,13 @@ class AboutView extends StatelessWidget {
             padding: const EdgeInsets.only(top: 12.0),
             child: Column(
               children: [
-                const StaggeredEntrance(index: 0, child: AboutHeader()),
+                const StaggeredEntrance(
+                    scaleFrom: 0.985, index: 0, child: AboutHeader()),
                 // LightDivider(
                 //   height: 32.0,
                 // ),
                 StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: 1,
                   child: BaseCard(
                     child: Column(
