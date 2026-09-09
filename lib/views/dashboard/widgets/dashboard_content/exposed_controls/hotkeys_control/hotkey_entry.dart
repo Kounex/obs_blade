@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
 import '../../../../../../models/hotkey.dart';
+import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/icon_button.dart';
 import '../../../../../../stores/shared/network.dart';
 import '../../../../../../types/enums/request_type.dart';
@@ -21,6 +22,9 @@ class HotkeyEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppStatusColors statusColors =
+        Theme.of(context).extension<AppStatusColors>()!;
+
     return ListTile(
       title: Text(
         this.hotkey.name.split('.').sublist(1).join(),
@@ -39,7 +43,7 @@ class HotkeyEntry extends StatelessWidget {
                 : CupertinoIcons.star,
             backgroundColor: Theme.of(context).colorScheme.surface,
             foregroundColor: this.hotkey.isInBox
-                ? Colors.amber
+                ? statusColors.favorite
                 : Theme.of(context).colorScheme.onSurface,
             iconSize: 18.0,
             buttonSize: 32.0,
