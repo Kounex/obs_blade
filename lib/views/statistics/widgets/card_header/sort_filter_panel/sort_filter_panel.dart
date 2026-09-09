@@ -93,7 +93,9 @@ class SortFilterPanel extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const ExcludeUnnamedCheckbox(),
+                            const Expanded(
+                              child: ExcludeUnnamedCheckbox(),
+                            ),
                             BaseButton(
                               text: 'Default',
                               onPressed: () =>

@@ -39,13 +39,15 @@ class BaseCheckbox extends StatelessWidget {
               : null,
         ),
         if (this.text != null)
-          Transform.translate(
-            offset: const Offset(-2, 0),
-            child: Text(
-              this.text!,
-              style: this.smallText
-                  ? Theme.of(context).textTheme.labelSmall
-                  : null,
+          Flexible(
+            child: Transform.translate(
+              offset: const Offset(-2, 0),
+              child: Text(
+                this.text!,
+                style: this.smallText
+                    ? Theme.of(context).textTheme.labelSmall
+                    : null,
+              ),
             ),
           ),
       ],
