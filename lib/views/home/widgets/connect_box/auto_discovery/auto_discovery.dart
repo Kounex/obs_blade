@@ -119,6 +119,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                           in snapshot.data!.indexed) ...[
                         StaggeredEntrance(
                           index: index,
+                          scaleFrom: 0.985,
                           child: SessionTile(
                             connection: availableObsConnection,
                           ),

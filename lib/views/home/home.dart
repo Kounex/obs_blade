@@ -244,10 +244,12 @@ class _HomeViewState extends State<HomeView> {
               children: const [
                 StaggeredEntrance(
                   index: 0,
+                  scaleFrom: 0.985,
                   child: ConnectBox(),
                 ),
                 StaggeredEntrance(
                   index: 2,
+                  scaleFrom: 0.985,
                   child: SavedConnections(),
                 ),
               ],
