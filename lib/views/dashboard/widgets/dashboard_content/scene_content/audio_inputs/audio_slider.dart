@@ -11,7 +11,6 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import '../../../../../../stores/shared/network.dart';
 import '../../../../../../types/classes/api/input.dart';
 import '../../../../../../types/enums/request_type.dart';
-import '../../../../../../types/extensions/color.dart';
 import '../../../../../../utils/network_helper.dart';
 import '../animated_toggle_icon.dart';
 
@@ -61,9 +60,22 @@ class _AudioSliderState extends State<AudioSlider> {
   Widget build(BuildContext context) {
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
     ThemeData theme = Theme.of(context);
+    final AppStatusColors statusColors =
+        theme.extension<AppStatusColors>()!;
 
-    /// Meter gradient derived from the theme highlight (dB fill)
+    /// Highlight (control slot) for the mute affordance
     Color highlight = theme.colorScheme.secondary;
+
+    final double currentLevel = (this.widget.input.inputLevelsMul != null &&
+            this.widget.input.inputLevelsMul!.isNotEmpty &&
+            this.widget.input.inputLevelsMul!.first.current! > 0)
+        ? _transformMulToLevel(this.widget.input.inputLevelsMul!.first.current!)
+        : 0.0;
+
+    /// Near-clip (~-6dBFS and up) tips the meter into the warning-red `.hot`
+    /// zone - the meter is the ratified rule-7 exception: semantic live
+    /// green as a GRADIENT, never a flat fill
+    final bool meterHot = currentLevel >= 0.9;
 
     return Padding(
       padding: const EdgeInsets.only(
@@ -139,26 +151,30 @@ class _AudioSliderState extends State<AudioSlider> {
                         borderRadius: AppRadius.pill,
                       ),
                     ),
-                    if (this.widget.input.inputLevelsMul != null &&
-                        this.widget.input.inputLevelsMul!.isNotEmpty &&
-                        this.widget.input.inputLevelsMul!.first.current! > 0)
+                    if (currentLevel > 0)
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 50),
                         height: 6.0,
-                        width: constraints.maxWidth *
-                            _transformMulToLevel(this
-                                .widget
-                                .input
-                                .inputLevelsMul!
-                                .first
-                                .current!),
+                        width: constraints.maxWidth * currentLevel,
                         decoration: BoxDecoration(
                           borderRadius: AppRadius.pill,
                           gradient: LinearGradient(
-                            colors: [
-                              highlight.darken(25),
-                              highlight.lighten(10),
-                            ],
+                            colors: meterHot
+                                ? [
+                                    statusColors.live
+                                        .withValues(alpha: 0.75),
+                                    statusColors.live
+                                        .withValues(alpha: 0.75),
+                                    statusColors.recording
+                                        .withValues(alpha: 0.85),
+                                  ]
+                                : [
+                                    statusColors.live
+                                        .withValues(alpha: 0.55),
+                                    statusColors.live
+                                        .withValues(alpha: 0.90),
+                                  ],
+                            stops: meterHot ? const [0.0, 0.7, 1.0] : null,
                           ),
                         ),
                       ),
