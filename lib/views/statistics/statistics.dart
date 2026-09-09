@@ -256,7 +256,6 @@ class _StatisticsViewState extends State<StatisticsView> {
                           bottomPadding: AppSpacing.lg,
                           titlePadding: const EdgeInsets.all(0),
                           titleWidget: const CardHeader(
-                            headerDecorationIcon: CupertinoIcons.time_solid,
                             title: 'Latest Stats',
                             description:
                                 'The freshest statistics from your latest streaming and recording sessions',
@@ -274,6 +273,7 @@ class _StatisticsViewState extends State<StatisticsView> {
                                       .mapIndexed(
                                         (pastStatsData, index) =>
                                             StaggeredEntrance(
+                                          scaleFrom: 0.985,
                                           index: index,
                                           child: StatsEntry(
                                             pastStatsData: pastStatsData!,

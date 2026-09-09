@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
+import '../../../../shared/design/design.dart';
+
 class StatsDateChip extends StatelessWidget {
   final String label;
   final String content;
@@ -13,6 +15,10 @@ class StatsDateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// Session-time rows sit at the dim text level (token-delta §2.1: stat
+    /// keys/values below the entry name)
+    final Color dimText =
+        Theme.of(context).extension<AppTextColors>()!.textSecondary;
     return SizedBox(
       height: 48.0,
       child: Chip(
@@ -42,7 +48,10 @@ class StatsDateChip extends StatelessWidget {
                   child: Text(
                     this.label,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.labelSmall!,
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall!
+                        .copyWith(color: dimText),
                   ),
                 ),
               ),
@@ -52,6 +61,7 @@ class StatsDateChip extends StatelessWidget {
               child: Text(
                 this.content,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                  color: dimText,
                   fontFeatures: [
                     const FontFeature.tabularFigures(),
                   ],

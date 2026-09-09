@@ -57,7 +57,9 @@ class StatTile extends StatelessWidget {
         Text(
           this.label.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                color: Theme.of(context).textTheme.bodySmall!.color,
+                /// Stat keys sit at the dim text level (token-delta §2.1)
+                color:
+                    Theme.of(context).extension<AppTextColors>()!.textSecondary,
               ),
         ),
       ],

@@ -49,7 +49,7 @@ class StatsEntry extends StatelessWidget {
                       key: const ValueKey('starred'),
                       color: Theme.of(context)
                           .extension<AppStatusColors>()!
-                          .warning,
+                          .favorite,
                       size: 28.0,
                     )
                   : const SizedBox(key: ValueKey('unstarred')),
@@ -71,9 +71,8 @@ class StatsEntry extends StatelessWidget {
                                     fontSize: 18.0,
                                     color: this.pastStatsData.name == null
                                         ? Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .color
+                                            .extension<AppTextColors>()!
+                                            .textSecondary
                                         : null,
                                   ),
                           maxLines: 2,
@@ -141,11 +140,13 @@ class StatsEntry extends StatelessWidget {
                 ),
               ),
               !this.usedInDetail
-                  ? const Padding(
-                      padding: EdgeInsets.only(right: 8.0),
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
                       child: Icon(
                         Icons.chevron_right,
-                        color: Colors.grey,
+                        color: Theme.of(context)
+                            .extension<AppTextColors>()!
+                            .textTertiary,
                       ),
                     )
                   : const SizedBox(),

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/icon_button.dart';
@@ -71,7 +72,13 @@ class _OrderButtonState extends State<OrderButton>
 
   @override
   Widget build(BuildContext context) {
+    /// Sort-direction affordance resolves the highlight group (mock
+    /// Statistics sort/filter panel: highlight tint + glyph, token-delta
+    /// rule 3) instead of the former solid accent disc
+    final Color highlight = Theme.of(context).colorScheme.secondary;
     return BaseIconButton(
+      backgroundColor: highlight.withValues(alpha: 0.18),
+      foregroundColor: highlight,
       onTap: () {
         HapticFeedback.lightImpact();
         if (!_controllerDown.isAnimating && !_controllerUp.isAnimating) {

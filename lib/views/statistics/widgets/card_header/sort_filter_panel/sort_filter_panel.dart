@@ -138,7 +138,9 @@ class _PanelSection extends StatelessWidget {
             child: Text(
               this.label.toUpperCase(),
               style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                    color: Theme.of(context).textTheme.bodySmall!.color,
+                    color: Theme.of(context)
+                        .extension<AppTextColors>()!
+                        .textTertiary,
                   ),
             ),
           ),

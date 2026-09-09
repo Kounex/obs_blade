@@ -72,6 +72,7 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) => StaggeredEntrance(
+                  scaleFrom: 0.985,
                   index: index,
                   child: StatsEntry(
                     pastStatsData: visibleEntries[index],

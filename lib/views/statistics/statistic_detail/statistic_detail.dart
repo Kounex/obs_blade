@@ -158,6 +158,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
               child: Column(
                 children: [
                   StaggeredEntrance(
+                    scaleFrom: 0.985,
                     child: BaseCard(
                       child: StatsEntry(
                         pastStatsData: pastStatsData,
@@ -179,6 +180,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                       children: streamCharts
                           .mapIndexed(
                             (streamChart, index) => StaggeredEntrance(
+                              scaleFrom: 0.985,
                               index: index + 1,
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
@@ -212,6 +214,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                     ),
                   ),
                   StaggeredEntrance(
+                    scaleFrom: 0.985,
                     index: streamCharts.length + 1,
                     child: StatsContainer(
                       title: 'Some numbers',

@@ -16,6 +16,7 @@ class StatsEntryPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StaggeredEntrance(
+      scaleFrom: 0.985,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
@@ -25,17 +26,23 @@ class StatsEntryPlaceholder extends StatelessWidget {
               Container(
                 width: 64.0,
                 height: 64.0,
+
+                /// Decorative empty-state disc - neutral per token-delta
+                /// rule 5 (doesn't spend a color group)
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondary
-                      .withValues(alpha: 0.12),
+                  color:
+                      (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black)
+                          .withValues(alpha: 0.07),
                   borderRadius: AppRadius.pill,
                 ),
                 child: Icon(
                   this.icon,
                   size: 30.0,
-                  color: Theme.of(context).colorScheme.secondary,
+                  color: Theme.of(context)
+                      .extension<AppTextColors>()!
+                      .textSecondary,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),

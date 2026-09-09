@@ -128,7 +128,8 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                 ),
                 this.widget.trailing ?? const SizedBox(),
 
-                /// Only the chevron picks up the accent tint while expanding
+                /// Only the chevron picks up the highlight tint while
+                /// expanding (control state, token-delta rule 3)
                 AnimatedBuilder(
                   animation: _animController,
                   builder: (context, _) => RotationTransition(

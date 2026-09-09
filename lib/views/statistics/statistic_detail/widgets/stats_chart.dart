@@ -146,6 +146,9 @@ class _StatsChartState extends State<StatsChart>
         Theme.of(context).textTheme.bodySmall!.copyWith(
               fontSize: 11.0,
               fontWeight: FontWeight.w500,
+
+              /// Axis labels sit at the faint text level (token-delta §2.1)
+              color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
               fontFeatures: const [
                 FontFeature.tabularFigures(),
               ],
