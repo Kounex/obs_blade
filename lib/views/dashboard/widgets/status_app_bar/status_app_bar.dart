@@ -82,8 +82,14 @@ class StatusAppBar extends StatelessWidget {
                   ),
                   child: Text(
                     'Close',
+
+                    /// Highlight spent as text resolves the brightened
+                    /// [AppTextColors.highlightText] derivative (§2.3 -
+                    /// the Close pill is on the highlightText list)
                     style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                          color: actionColor,
+                          color: Theme.of(context)
+                              .extension<AppTextColors>()!
+                              .highlightText,
                         ),
                   ),
                 ),
