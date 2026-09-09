@@ -1,13 +1,14 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/design/design.dart';
 import '../../../stores/pro_store.dart';
-import '../../../utils/styling_helper.dart';
 
-/// Paywall hero: the logo carries the OBS BLADE wordmark, so it is the
-/// hero's only brand mark (token-delta §5) - a product-name headline next
-/// to it would be double naming (v12, user). The value line steps up as
-/// the headline (~19/600, near-white).
+/// Paywall hero: the Pro bolt-in-squircle in the accent color is the
+/// hero's brand mark (user direction - the earlier-mock accent logo
+/// treatment, restored over the plain wordmark image). No product-name
+/// headline next to it (token-delta §5, double naming); the value line
+/// steps up as the headline (~19/600, near-white).
 ///
 /// Hidden debug toggle: long-press the logo to flip
 /// [ProStore.setDebugOverride] (grants the entitlement locally).
@@ -37,14 +38,31 @@ class ProHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// The accent group accessor (see app.dart): brand/selection color
+    final Color accent =
+        Theme.of(context).buttonTheme.colorScheme!.secondary;
+    final Color onAccent =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+
     return Column(
       children: [
         GestureDetector(
           onLongPress:
               kDebugMode ? () => this._toggleDebugOverride(context) : null,
-          child: Image.asset(
-            StylingHelper.brightnessAwareOBSLogo(context),
+          child: Container(
             width: 72.0,
+            height: 72.0,
+            decoration: BoxDecoration(
+              color: accent,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+            ),
+            child: Icon(
+              CupertinoIcons.bolt_fill,
+              color: onAccent,
+              size: 36.0,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),

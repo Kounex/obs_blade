@@ -35,8 +35,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.customBody,
     this.leading,
     this.actions,
-  })  : assert((title != null || titleWidget != null) &&
-            (customBody == null || listViewChildren.isEmpty)),
+  })  : assert(customBody == null || listViewChildren.isEmpty),
         super();
 
   @override
@@ -77,11 +76,13 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
           leading: this.leading,
           previousPageTitle: this.previousTitle,
           middle: this.titleWidget ??
-              Text(
-                this.title!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              (this.title != null
+                  ? Text(
+                      this.title!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : null),
           trailing: this.actions,
         ),
       ],

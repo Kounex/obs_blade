@@ -79,7 +79,8 @@ class _ProPaywallViewState extends State<ProPaywallView> {
       /// Cupertino shell doesn't register one
       body: Scaffold(
         body: TransculentCupertinoNavBarWrapper(
-          title: 'OBS Blade Pro',
+          /// Back-only bar (token-delta §5, v12): a title here duplicates
+          /// the hero's brand mark - double naming
           customBody: Observer(
             builder: (context) => AnimatedSwitcher(
               duration: AppMotion.medium,
