@@ -45,7 +45,10 @@ class SceneContentMobile extends StatelessWidget {
           Material(
             color: theme.cupertinoOverrideTheme!.barBackgroundColor,
             child: TabBar(
-              labelColor: theme.colorScheme.secondary,
+              /// Active tab ink = accent, spent as text ([AppTextColors
+              /// .accentText]) - token-delta rule 2 + §2.3
+              labelColor:
+                  theme.extension<AppTextColors>()!.accentText,
               unselectedLabelColor: theme.textTheme.bodySmall!.color,
               labelStyle: theme.textTheme.titleSmall!
                   .copyWith(fontWeight: FontWeight.w600),
@@ -53,7 +56,7 @@ class SceneContentMobile extends StatelessWidget {
               indicator: UnderlineTabIndicator(
                 borderSide: BorderSide(
                   width: 3.0,
-                  color: theme.colorScheme.secondary,
+                  color: theme.extension<AppTextColors>()!.accentText,
                 ),
                 insets:
                     const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
