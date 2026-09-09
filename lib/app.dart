@@ -80,6 +80,30 @@ class App extends StatelessWidget {
     final Color accent = accentColor ?? StylingHelper.accent_color;
     final Color highlight = hightlightColor ?? StylingHelper.highlight_color;
 
+    final bool dark = brightness != Brightness.light;
+
+    /// Resolved scaffold (True Dark variants collapse to their black base)
+    final Color scaffold = scaffoldBackgroundColor ??
+        (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
+            ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
+                    defaultValue: false)
+                ? StylingHelper.background_reduced_smearing_color
+                : StylingHelper.background_color
+            : StylingHelper.scaffold_color);
+
+    /// Liquid surface ladder (token-delta §2.5): the card fill is a 5%
+    /// white (dark) / black (light) wash composed over the theme's card
+    /// slot - and with no custom theme the slot IS the scaffold, yielding
+    /// the mock's neutral #2D2D31 instead of the legacy blue-navy
+    /// #101823. Custom themes keep their card-slot identity underneath.
+    /// [ThemeData.cardColor] carries the composed fill so every direct
+    /// reader (settings rows, tiles, fields, pills) lands on the same
+    /// neutral tone as [BaseCard]
+    final Color liquidCard = Color.alphaBlend(
+      (dark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+      cardColor ?? scaffold,
+    );
+
     Color onGroup(Color group) =>
         ThemeData.estimateBrightnessForColor(group) == Brightness.dark
             ? Colors.white
@@ -98,17 +122,11 @@ class App extends StatelessWidget {
       onPrimary: onGroup(highlight),
       secondary: highlight,
       onSecondary: onGroup(highlight),
-      surface: brightness != null && brightness == Brightness.light
-          ? Colors.white
-          : Colors.grey[800]!,
-      onSurface: brightness != null && brightness == Brightness.light
-          ? Colors.black
-          : Colors.white,
+      surface: dark ? liquidCard : Colors.white,
+      onSurface: dark ? Colors.white : Colors.black,
       error: Colors.red[700]!,
-      onError: brightness != null && brightness == Brightness.light
-          ? Colors.white
-          : Colors.black,
-      background: backgroundColor ?? StylingHelper.primary_color,
+      onError: dark ? Colors.black : Colors.white,
+      background: backgroundColor ?? scaffold,
     );
 
     /// One label family for every text field (BaseAdaptiveTextField and
@@ -133,15 +151,9 @@ class App extends StatelessWidget {
         );
 
     return baseThemeData.copyWith(
-      scaffoldBackgroundColor: scaffoldBackgroundColor ??
-          (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
-              ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
-                      defaultValue: false)
-                  ? StylingHelper.background_reduced_smearing_color
-                  : StylingHelper.background_color
-              : '212123'.hexToColor()),
-      canvasColor: canvasColor ?? StylingHelper.primary_color,
-      cardColor: cardColor ?? StylingHelper.primary_color,
+      scaffoldBackgroundColor: scaffold,
+      canvasColor: canvasColor ?? scaffold,
+      cardColor: liquidCard,
       indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
@@ -210,21 +222,20 @@ class App extends StatelessWidget {
                 brightness: brightness ?? Brightness.dark,
               )
             : AppTextColors.standard,
-        AppGlass.forBar(appBarColor ?? StylingHelper.primary_color),
+        AppGlass.forBar(appBarColor ?? StylingHelper.liquid_bar_color),
       ],
 
       /// Sub-themes which used to leak stock colors - derived from the
       /// active card/highlight slots instead
       dialogTheme: DialogThemeData(
-        backgroundColor: cardColor ?? StylingHelper.primary_color,
+        backgroundColor: liquidCard,
         elevation: 0.0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: StylingHelper.lightenDarkenColor(
-            cardColor ?? StylingHelper.primary_color, 8),
+        backgroundColor: StylingHelper.lightenDarkenColor(liquidCard, 8),
 
         /// The background above is a near-card tone, so the stock M3
         /// content color can land mid-gray on it — pin the foreground to
@@ -241,8 +252,7 @@ class App extends StatelessWidget {
         ),
       ),
       chipTheme: baseThemeData.chipTheme.copyWith(
-        backgroundColor: StylingHelper.lightenDarkenColor(
-            cardColor ?? StylingHelper.primary_color, 8),
+        backgroundColor: StylingHelper.lightenDarkenColor(liquidCard, 8),
         selectedColor: (hightlightColor ?? StylingHelper.highlight_color)
             .withValues(alpha: 0.24),
         checkmarkColor: hightlightColor ?? StylingHelper.highlight_color,
@@ -256,7 +266,7 @@ class App extends StatelessWidget {
         thumbColor: highlight,
         thumbShape: BorderRoundSliderThumbShape(
           borderColor: StylingHelper.surroundingAwareAccent(
-            surroundingColor: cardColor ?? StylingHelper.primary_color,
+            surroundingColor: liquidCard,
           ),
         ),
         overlayColor: highlight.withOpacity(0.3),
@@ -271,7 +281,7 @@ class App extends StatelessWidget {
       ),
 
       appBarTheme: AppBarTheme(
-        backgroundColor: (appBarColor ?? StylingHelper.primary_color)
+        backgroundColor: (appBarColor ?? StylingHelper.liquid_bar_color)
             .withOpacity(StylingHelper.opacity_blurry),
         surfaceTintColor: Colors.transparent,
       ),
@@ -289,17 +299,11 @@ class App extends StatelessWidget {
       ),
 
       cupertinoOverrideTheme: CupertinoThemeData(
-        scaffoldBackgroundColor: scaffoldBackgroundColor ??
-            (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
-                ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
-                        defaultValue: false)
-                    ? StylingHelper.background_reduced_smearing_color
-                    : StylingHelper.background_color
-                : Colors.grey[900]),
+        scaffoldBackgroundColor: scaffold,
         textTheme: CupertinoTextThemeData(
           primaryColor: hightlightColor ?? StylingHelper.highlight_color,
         ),
-        barBackgroundColor: (tabBarColor ?? StylingHelper.primary_color)
+        barBackgroundColor: (tabBarColor ?? StylingHelper.liquid_bar_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),
       /// Toggleables unified on the highlight group on both platforms

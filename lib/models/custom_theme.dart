@@ -84,9 +84,14 @@ class CustomTheme extends HiveObject {
   CustomTheme.basic()
       : this.uuid = const Uuid().v4(),
         this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch,
-        this.cardColorHex = StylingHelper.primary_color.toHex(),
-        this.appBarColorHex = StylingHelper.primary_color.toHex(),
-        this.tabBarColorHex = StylingHelper.primary_color.toHex(),
+
+        /// Neutral starting point (token-delta §2.5): new themes begin
+        /// from the liquid defaults - card slot = scaffold (the 5% wash
+        /// composes over it), bars = the liquid glass bar tone - instead
+        /// of the legacy blue-navy #101823
+        this.cardColorHex = StylingHelper.scaffold_color.toHex(),
+        this.appBarColorHex = StylingHelper.liquid_bar_color.toHex(),
+        this.tabBarColorHex = StylingHelper.liquid_bar_color.toHex(),
         this.accentColorHex = StylingHelper.accent_color.toHex(),
         this.highlightColorHex = StylingHelper.highlight_color.toHex(),
         this.backgroundColorHex = StylingHelper.background_color.toHex(),

@@ -21,6 +21,15 @@ class StylingHelper {
   static const Color highlight_color = CupertinoColors.systemBlue;
   static const Color background_color = Colors.black;
 
+  /// Default scaffold (token-delta §2.1 mock --scaffold)
+  static const Color scaffold_color = Color(0xff212123);
+
+  /// Liquid glass bar base for the default theme (token-delta §3 - the
+  /// mock's rgba(27,27,31,0.72) glass tone), neutral; replaces the legacy
+  /// blue-navy [primary_color] as the default bar base. Custom themes
+  /// keep their appBar/tabBar slots
+  static const Color liquid_bar_color = Color(0xff1b1b1f);
+
   static const Color background_reduced_smearing_color =
       Color.fromRGBO(5, 5, 5, 1.0);
 
