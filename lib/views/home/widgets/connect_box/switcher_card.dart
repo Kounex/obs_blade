@@ -24,6 +24,23 @@ class SwitcherCard extends StatelessWidget {
   Widget build(BuildContext context) {
     HomeStore homeStore = GetIt.instance<HomeStore>();
 
+    final AppTextColors textColors =
+        Theme.of(context).extension<AppTextColors>()!;
+    final bool darkSurface =
+        Theme.of(context).cardColor.computeLuminance() <= 0.2;
+
+    /// Connect-method segment (v12 user decision): deliberately NEUTRAL -
+    /// no accent edge/underline, selection is carried by the thumb fill +
+    /// white selected label alone (iOS-style)
+    final Color segBackground =
+        (darkSurface ? Colors.white : Colors.black).withValues(alpha: 0.06);
+    final Color segThumb =
+        darkSurface ? Colors.white.withValues(alpha: 0.13) : Colors.white;
+
+    Color segIconColor(ConnectMode mode) => homeStore.connectMode == mode
+        ? textColors.textPrimary
+        : textColors.textSecondary;
+
     return BaseCard(
       paddingChild: this.paddingChild,
       topPadding: AppSpacing.xxl,
@@ -37,7 +54,7 @@ class SwitcherCard extends StatelessWidget {
               end: Offset.zero,
             ).animate(CurvedAnimation(
               parent: animation,
-              curve: AppMotion.standard,
+              curve: AppMotion.emphasized,
             )),
             child: child,
           ),
@@ -59,11 +76,21 @@ class SwitcherCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: CupertinoSlidingSegmentedControl<ConnectMode>(
               groupValue: homeStore.connectMode,
-              children: const {
-                ConnectMode.Autodiscover:
-                    Icon(CupertinoIcons.antenna_radiowaves_left_right),
-                ConnectMode.QR: Icon(CupertinoIcons.qrcode_viewfinder),
-                ConnectMode.Manual: Icon(CupertinoIcons.textformat),
+              backgroundColor: segBackground,
+              thumbColor: segThumb,
+              children: {
+                ConnectMode.Autodiscover: Icon(
+                  CupertinoIcons.antenna_radiowaves_left_right,
+                  color: segIconColor(ConnectMode.Autodiscover),
+                ),
+                ConnectMode.QR: Icon(
+                  CupertinoIcons.qrcode_viewfinder,
+                  color: segIconColor(ConnectMode.QR),
+                ),
+                ConnectMode.Manual: Icon(
+                  CupertinoIcons.textformat,
+                  color: segIconColor(ConnectMode.Manual),
+                ),
               },
               onValueChanged: (mode) => homeStore.setConnectMode(mode!),
             ),
@@ -73,17 +100,39 @@ class SwitcherCard extends StatelessWidget {
           AnimatedSwitcher(
             key: ValueKey(this.title),
             duration: AppMotion.medium,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SizeTransition(
-                sizeFactor: animation.drive(
-                  Tween(begin: 0.75, end: 1.0).chain(
-                    CurveTween(curve: AppMotion.standard),
-                  ),
-                ),
+
+            /// Pane switches (token-delta §4 delta 4): 12px rise + fade at
+            /// medium + emphasized - the size reveal is kept so content
+            /// below doesn't jump; reduced motion = fade-only
+            transitionBuilder: (child, animation) {
+              final CurvedAnimation curved = CurvedAnimation(
+                parent: animation,
+                curve: AppMotion.emphasized,
+              );
+              Widget current = FadeTransition(
+                opacity: curved,
                 child: child,
-              ),
-            ),
+              );
+              if (!AppMotion.reduce(context)) {
+                current = AnimatedBuilder(
+                  animation: curved,
+                  child: current,
+                  builder: (context, child) => Transform.translate(
+                    offset: Offset(0.0, (1.0 - curved.value) * 12.0),
+                    child: child,
+                  ),
+                );
+                current = SizeTransition(
+                  sizeFactor: animation.drive(
+                    Tween(begin: 0.75, end: 1.0).chain(
+                      CurveTween(curve: AppMotion.emphasized),
+                    ),
+                  ),
+                  child: current,
+                );
+              }
+              return current;
+            },
             child: this.child,
           ),
         ],

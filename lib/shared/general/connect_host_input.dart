@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
+import '../design/design.dart';
 import 'question_mark_tooltip.dart';
 
 class ConnectHostInput extends StatefulWidget {
@@ -60,6 +61,18 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
 
   @override
   Widget build(BuildContext context) {
+    final AppTextColors textColors =
+        Theme.of(context).extension<AppTextColors>()!;
+    final bool darkSurface =
+        Theme.of(context).cardColor.computeLuminance() <= 0.2;
+
+    /// Mini-seg (IP / Domain): same neutral grammar as the connect-method
+    /// segment - neutral thumb + white selected label, no accent
+    Color miniSegColor(bool domainMode) =>
+        this.widget.domainMode == domainMode
+            ? textColors.textPrimary
+            : textColors.textSecondary;
+
     return Column(
       children: [
         BaseAdaptiveTextField(
@@ -137,9 +150,20 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                     Expanded(
                       child: CupertinoSlidingSegmentedControl<bool>(
                         groupValue: this.widget.domainMode,
-                        children: const {
-                          false: Text('IP'),
-                          true: Text('Domain'),
+                        backgroundColor: (darkSurface ? Colors.white : Colors.black)
+                            .withValues(alpha: 0.06),
+                        thumbColor: darkSurface
+                            ? Colors.white.withValues(alpha: 0.13)
+                            : Colors.white,
+                        children: {
+                          false: Text(
+                            'IP',
+                            style: TextStyle(color: miniSegColor(false)),
+                          ),
+                          true: Text(
+                            'Domain',
+                            style: TextStyle(color: miniSegColor(true)),
+                          ),
                         },
                         onValueChanged: (domainMode) {
                           FocusManager.instance.primaryFocus?.unfocus();
