@@ -15,6 +15,10 @@ class SelectableBox extends StatelessWidget {
   final Color? colorSelected;
   final Color? colorUnselected;
 
+  /// Optional ring color override for the selected state - falls back to
+  /// [colorSelected] (scene tiles split a tinted fill from a solid ring)
+  final Color? colorSelectedBorder;
+
   final Widget? child;
   final String? text;
 
@@ -30,6 +34,7 @@ class SelectableBox extends StatelessWidget {
     this.selectedStateBoxBorder,
     this.colorSelected,
     this.colorUnselected,
+    this.colorSelectedBorder,
     this.child,
     this.text,
     this.onTap,
@@ -71,7 +76,8 @@ class SelectableBox extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 color: (this.selectedStateBoxBorder ?? this.selected)
-                    ? this.colorSelected ??
+                    ? this.colorSelectedBorder ??
+                        this.colorSelected ??
                         Theme.of(context).buttonTheme.colorScheme!.secondary
 
                     /// Inactive state gets a visible hairline (theme

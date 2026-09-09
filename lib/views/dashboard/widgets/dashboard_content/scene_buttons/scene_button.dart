@@ -3,7 +3,6 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/animator/selectable_box.dart';
 import 'package:obs_blade/shared/design/design.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/shared/network.dart';
@@ -49,17 +48,21 @@ class SceneButton extends StatelessWidget {
 
           /// Broadcast tally language for studio mode: the scene currently
           /// on program gets a red PGM tag, the one sitting in preview a
-          /// green PVW tag (program wins if both point at the same scene)
+          /// green PVW tag (program wins if both point at the same scene).
+          /// PGM references the constant [AppStatusColors.program] - never
+          /// the themable accent/highlight (token-delta rule 1)
+          final bool isProgram =
+              dashboardStore.activeSceneName == this.scene.sceneName;
+          final bool isPreview = studioMode &&
+              dashboardStore.studioModePreviewSceneName ==
+                  this.scene.sceneName;
+
           String? tally;
-          Color tallyColor = statusColors.live;
           if (studioMode) {
-            if (dashboardStore.activeSceneName == this.scene.sceneName) {
+            if (isProgram) {
               tally = 'PGM';
-              tallyColor = statusColors.recording;
-            } else if (dashboardStore.studioModePreviewSceneName ==
-                this.scene.sceneName) {
+            } else if (isPreview) {
               tally = 'PVW';
-              tallyColor = statusColors.live;
             }
           }
 
@@ -90,14 +93,19 @@ class SceneButton extends StatelessWidget {
             child: Stack(
               children: [
                 SelectableBox(
-                  selected:
-                      dashboardStore.activeSceneName == this.scene.sceneName,
-                  selectedStateBoxBorder: (studioMode
-                      ? dashboardStore.studioModePreviewSceneName ==
-                          this.scene.sceneName
-                      : dashboardStore.activeSceneName == this.scene.sceneName),
+                  selected: isProgram,
+                  selectedStateBoxBorder: isProgram || isPreview,
+
+                  /// Program tile: 10% program tint fill + solid program ring
+                  /// (token-delta §2.2) - the fill also carries the OBS
+                  /// transition progress via [SelectableBox.boxAnimation].
+                  /// A preview-only tile gets a neutral ring instead so red
+                  /// stays exclusive to program (rule 7)
                   colorSelected:
-                      Theme.of(context).buttonTheme.colorScheme!.secondary,
+                      statusColors.program.withValues(alpha: 0.10),
+                  colorSelectedBorder: isProgram
+                      ? statusColors.program
+                      : Colors.white.withValues(alpha: 0.55),
                   colorUnselected: Theme.of(context).cardColor,
                   boxAnimation: Duration(
                     milliseconds: dashboardStore
@@ -130,7 +138,7 @@ class SceneButton extends StatelessWidget {
                         ? _TallyChip(
                             key: ValueKey(tally),
                             label: tally,
-                            color: tallyColor,
+                            isProgram: tally == 'PGM',
                           )
                         : const SizedBox(key: ValueKey('no-tally')),
                   ),
@@ -171,9 +179,14 @@ class SceneButton extends StatelessWidget {
                                     : Icons.visibility_off,
                                 key: ValueKey(this.visible),
                                 size: 16.0,
+                                /// Hidden scene = dim glyph (neutral) - red
+                                /// stays exclusive to recording/program
+                                /// (rule 7)
                                 color: this.visible
                                     ? null
-                                    : statusColors.unreachable,
+                                    : Theme.of(context)
+                                        .extension<AppTextColors>()!
+                                        .textTertiary,
                               ),
                             ),
                           )
@@ -190,35 +203,42 @@ class SceneButton extends StatelessWidget {
 }
 
 /// Small broadcast tally tag (PGM / PVW) rendered on scene buttons while
-/// studio mode is active
+/// studio mode is active. PGM follows the token-delta §2.2 tag contract
+/// (darkened [AppStatusColors.programTagFill] + white ≥10px text); PVW is
+/// live green with a dark label for AA (mock v10)
 class _TallyChip extends StatelessWidget {
   final String label;
-  final Color color;
+  final bool isProgram;
 
   const _TallyChip({
     super.key,
     required this.label,
-    required this.color,
+    required this.isProgram,
   });
 
   @override
   Widget build(BuildContext context) {
+    final AppStatusColors statusColors =
+        Theme.of(context).extension<AppStatusColors>()!;
+
     return Container(
       height: 16.0,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs + 2.0),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: this.color.withValues(alpha: 0.92),
+        color: this.isProgram
+            ? statusColors.programTagFill
+            : statusColors.live.withValues(alpha: 0.92),
         borderRadius: AppRadius.pill,
       ),
       child: Text(
         this.label,
         style: Theme.of(context).textTheme.labelSmall!.copyWith(
-              fontSize: 9.0,
-              color: StylingHelper.surroundingAwareAccent(
-                context: context,
-                surroundingColor: this.color,
-              ),
+              fontSize: 10.0,
+              fontWeight: FontWeight.w700,
+              color: this.isProgram
+                  ? Colors.white
+                  : Colors.black.withValues(alpha: 0.78),
             ),
       ),
     );
