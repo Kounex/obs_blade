@@ -2,11 +2,11 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-09** (4.0
+Read this first after `AGENTS.md`. Last reset: **2026-09-10** (4.0
 restrained-Liquid-Glass redesign **implemented on branch
-`4.0-liquid-glass`** — waves 1–3d + post-review drift-fix batch landed,
-gates green, phone + tablet sim-verified; run the app off that branch on
-the workstation to see it.
+`4.0-liquid-glass`** — waves 1–3d + drift-fix rounds 1–2 landed, gates
+green, phone + tablet sim-verified; tree then got a one-time tall-style
+`dart format` pass — 404 files, mechanical).
 Store products + RevenueCat wired; next: user eyes on the updated branch
 (phone AND tablet) → Gate 3 → merge).
 
@@ -132,8 +132,14 @@ tint fill) + 'OBS Blade Pro' brand line, and the native-chat Pro gate
 moved into the stores (`connectChat`/`selectChannel` refuse without the
 entitlement via an `isProResolver` seam) so the chat-bar engine switch
 can switch freely — not-Pro lands on the locked upsell pane instead of a
-paywall intercept. Gates: 760+ tests green (incl. new store-gate tests),
-analyze at baseline, sim-verified. Details:
+paywall intercept. **2026-09-10:** one-time tall-style `dart format`
+pass over `lib`/`test`/`integration_test` (404 files, mechanical — root
+cause + numbers in `changelog-agent.md`), so **`dart format` on changed
+files is now expected, not churn** — the old never-format gotcha is
+retired. **Workflow change (user directive):** no agent-side simulator
+verification anymore — best-effort code + analyze/test gates, the user
+sims the branch. Gates: 762 tests green, analyze at the pre-format
+baseline. Details:
 `changelog-agent.md` 2026-09-09 drift-fix entries. **Next:** user runs the
 updated branch (phone + tablet, incl. **Force
 Tablet Mode** check) → Gate 3 (fresh review of branch diff + on-device
@@ -141,8 +147,6 @@ feel, findings triaged to the user BEFORE applying — standing rule) →
 merge or iterate. Doc debt: mock/contract docs still describe the paywall
 wordmark logo + a §2.5 surface wording that contradicts the ratified
 "neutral over scaffold" — amend with a v13 note if the changes stick.
-Gotcha: **don't run `dart format`** on repo files — the checked-in style
-is not the current SDK formatter's output (massive churn).
 Pre-existing bugs fixed on the branch during
 verification: `text_field_date.dart` LateInitializationError (crashed
 the tablet walk; now a proper StatefulWidget). Still open from the

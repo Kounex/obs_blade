@@ -2,6 +2,29 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-10 — One-time tall-style reformat (404 files) + verification workflow change
+
+Root cause writeup (user asked why `dart format` churns): the pubspec SDK
+floor crossed Dart 3.7 in `c0cb8c12` (2026-07-27), silently flipping the
+formatter to the tall style while the tree stayed short-style — every
+format run since restyled whole files (403/612 drift measured). User
+ratified the one-time migration:
+
+- `dart format lib test integration_test` as one mechanical commit: 404
+  files, ~19.5k insertions / 15.5k deletions, pure formatting, zero
+  behavior change. Gates after: analyze byte-identical to the pre-format
+  baseline (472 issues, all pre-existing — the 17 errors are confined to
+  `tool/youtube_spike`'s unfetched generated protos, the rest are infos),
+  full `flutter test` 762 green.
+- **The "never run `dart format`" gotcha is retired** — the tree now
+  matches the SDK formatter's output; formatting changed files is
+  expected going forward. (`tool/*` standalone packages were left alone.)
+- **Workflow change (user directive):** the agent no longer runs
+  simulator visual verification — best-effort code + analyze/test gates,
+  the user sims the branch themselves.
+- Temp-artifact cleanup: all `/tmp/obs_*` screenshot dirs/logs from the
+  visual-QA and drift-fix rounds (~22 MB) deleted.
+
 ## 2026-09-09 — 4.0 drift-fix round 2: paywall blur/hero + hardened native-chat gate
 
 Second user review pass on `4.0-liquid-glass`, three directives:

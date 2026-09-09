@@ -177,6 +177,11 @@ tips/blacksmith).
   sure `flutter` is on PATH on every machine — e.g. add `~/flutter/bin`
   where the SDK isn't PATH-installed). The current Flutter version per
   machine is tracked in `docs/upgrade-plan.md`.
+- **Format:** the tree is `dart format`-clean on the SDK tall style since
+  2026-09-10 (one-time 404-file migration) — format changed files freely;
+  `tool/*` standalone packages are excluded from that pass.
+- **No agent-side sim verification** (user directive 2026-09-10): ship
+  best-effort code + analyze/test gates; the user runs the simulator.
 - **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
   `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.
