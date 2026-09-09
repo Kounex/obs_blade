@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -34,22 +35,18 @@ class StudioModeTransitionButton extends StatelessWidget {
             final bool studioMode = dashboardStore.studioMode;
 
             return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.medium,
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: CurvedAnimation(
                   parent: animation,
-                  curve: const Interval(
-                    0.4,
-                    1.0,
-                    curve: Curves.easeInQuad,
-                  ),
-                  reverseCurve: Curves.easeOutQuad,
+                  curve: AppMotion.standard,
+                  reverseCurve: AppMotion.exit,
                 ),
                 child: SizeTransition(
                   sizeFactor: CurvedAnimation(
                     parent: animation,
-                    curve: Curves.easeInQuad,
-                    reverseCurve: Curves.easeOutQuad,
+                    curve: AppMotion.standard,
+                    reverseCurve: AppMotion.exit,
                   ),
                   child: child,
                 ),
