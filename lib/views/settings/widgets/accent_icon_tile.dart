@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 /// Rounded-squircle icon tile derived from the active accent color slot -
-/// the accent hero/upsell treatment (Pro paywall hero + benefits, native
-/// chat upsell pane).
+/// the accent hero/upsell treatment (native chat upsell pane).
 ///
 /// Settings rows and settings subpage/dialog headers use the neutral
 /// [DecorativeIconTile] instead (token-delta rule 5: decorative tiles don't
 /// spend the accent) - this tile stays for surfaces where the accent tile
-/// IS the screen's brand moment.
+/// IS the screen's brand moment. The Pro paywall's brand moment is the
+/// logo itself (token-delta §5) and its one accent CTA is the yearly plan,
+/// so the paywall uses neither.
 class AccentIconTile extends StatelessWidget {
   final IconData icon;
 

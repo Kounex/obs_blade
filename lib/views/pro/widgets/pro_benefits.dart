@@ -5,7 +5,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/responsive_widget_wrapper.dart';
-import '../../settings/widgets/accent_icon_tile.dart';
+import '../../settings/widgets/decorative_icon_tile.dart';
 
 /// One browsable Pro benefit. Copy rule (monetization strategy):
 /// honest, no dates promised for unreleased features.
@@ -152,7 +152,13 @@ class ProBenefitCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AccentIconTile(icon: this.benefit.icon, size: 40.0, iconSize: 22.0),
+            /// Decorative tiles are neutral (token-delta rule 5) - the
+            /// paywall's one accent moment is the yearly CTA
+            DecorativeIconTile(
+              icon: this.benefit.icon,
+              size: 40.0,
+              iconSize: 22.0,
+            ),
             const SizedBox(height: AppSpacing.md),
             Text(
               this.benefit.title,
@@ -161,7 +167,11 @@ class ProBenefitCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               this.benefit.body,
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                    color: Theme.of(context)
+                        .extension<AppTextColors>()!
+                        .textSecondary,
+                  ),
             ),
           ],
         ),
