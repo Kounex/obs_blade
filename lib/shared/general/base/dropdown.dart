@@ -49,6 +49,22 @@ class BaseDropdown<T> extends StatelessWidget {
             DropdownButton<T>(
               value: this.value,
               isDense: true,
+
+              /// Rule 8: the stock underline is a hardcoded framework gray
+              /// (#BDBDBD) - resolve the divider group token instead (same
+              /// convention as [BaseDivider])
+              underline: Container(
+                height: 1.0,
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color:
+                          Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                      width: 0.0,
+                    ),
+                  ),
+                ),
+              ),
               onChanged: this.onChanged,
               items: this
                       .items
