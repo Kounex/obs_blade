@@ -17,9 +17,7 @@ import 'result_entry.dart';
 import 'session_tile.dart';
 
 class AutoDiscovery extends StatefulWidget {
-  const AutoDiscovery({
-    super.key,
-  });
+  const AutoDiscovery({super.key});
 
   @override
   _AutoDiscoveryState createState() => _AutoDiscoveryState();
@@ -57,7 +55,10 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.only(
-              top: AppSpacing.lg, right: AppSpacing.lg, left: AppSpacing.lg),
+            top: AppSpacing.lg,
+            right: AppSpacing.lg,
+            left: AppSpacing.lg,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
@@ -69,8 +70,9 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               ),
               const SizedBox(width: 10.0),
               const QuestionMarkTooltip(
-                  message:
-                      'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> WebSocket Server Settings'),
+                message:
+                    'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> WebSocket Server Settings',
+              ),
             ],
           ),
         ),
@@ -85,12 +87,11 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                 focusNode: _portFocusNode,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontFeatures: [
-                    FontFeature.tabularFigures(),
-                  ],
+                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
-                controller:
-                    TextEditingController(text: homeStore.autodiscoverPort),
+                controller: TextEditingController(
+                  text: homeStore.autodiscoverPort,
+                ),
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -130,9 +131,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                     ],
                   );
                 }
-                return ResultEntry(
-                  result: _processResult(snapshot),
-                );
+                return ResultEntry(result: _processResult(snapshot));
               }
               return Fader(
                 child: SizedBox(

@@ -9,9 +9,7 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
 class SceneCollectionControl extends StatelessWidget {
-  const SceneCollectionControl({
-    super.key,
-  });
+  const SceneCollectionControl({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,12 +18,15 @@ class SceneCollectionControl extends StatelessWidget {
     return Observer(
       builder: (context) {
         return BaseDropdown<String>(
-          value: dashboardStore.sceneCollections != null &&
-                  dashboardStore.sceneCollections!
-                      .contains(dashboardStore.currentSceneCollectionName)
+          value:
+              dashboardStore.sceneCollections != null &&
+                  dashboardStore.sceneCollections!.contains(
+                    dashboardStore.currentSceneCollectionName,
+                  )
               ? dashboardStore.currentSceneCollectionName
               : null,
-          items: dashboardStore.sceneCollections
+          items:
+              dashboardStore.sceneCollections
                   ?.map(
                     (sceneCollection) => BaseDropdownItem(
                       value: sceneCollection,

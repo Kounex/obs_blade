@@ -29,14 +29,9 @@ class CustomLogoRow extends StatelessWidget {
       titleWidget: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Custom Logo',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text('Custom Logo', style: Theme.of(context).textTheme.bodyLarge),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 12.0,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Container(
               alignment: Alignment.center,
               height: 128.0,
@@ -47,9 +42,7 @@ class CustomLogoRow extends StatelessWidget {
                         color: Theme.of(context).textTheme.bodySmall!.color!,
                       )
                     : null,
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(8.0),
-                ),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
               ),
               child: this.customTheme.customLogo != null
                   ? Image.memory(
@@ -73,11 +66,11 @@ class CustomLogoRow extends StatelessWidget {
                         ),
                         Text(
                           '- None -',
-                          style:
-                              Theme.of(context).textTheme.bodySmall!.copyWith(
-                                    fontSize: 14.0,
-                                    fontStyle: FontStyle.italic,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall!
+                              .copyWith(
+                                fontSize: 14.0,
+                                fontStyle: FontStyle.italic,
+                              ),
                         ),
                       ],
                     ),
@@ -89,10 +82,12 @@ class CustomLogoRow extends StatelessWidget {
           'You can select your own logo which will be shown inside the app bar in the home tab (instead of the OBS Blade one)',
       buttonText: 'Select',
       onButtonPressed: () {
-        ImagePicker().pickImage(source: ImageSource.gallery).then(
+        ImagePicker()
+            .pickImage(source: ImageSource.gallery)
+            .then(
               (image) => image?.readAsBytes().then(
-                    (imageBytes) => this.onSelectLogo(imageBytes),
-                  ),
+                (imageBytes) => this.onSelectLogo(imageBytes),
+              ),
             );
       },
       resetButtonText: 'Clear',

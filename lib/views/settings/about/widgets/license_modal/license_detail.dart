@@ -8,8 +8,11 @@ class LicenseDetail extends StatelessWidget {
   final String package;
   final List<LicenseEntry> licenseEntries;
 
-  const LicenseDetail(
-      {super.key, required this.package, required this.licenseEntries});
+  const LicenseDetail({
+    super.key,
+    required this.package,
+    required this.licenseEntries,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,8 +21,7 @@ class LicenseDetail extends StatelessWidget {
         previousTitle: 'Packages',
         title: this.package,
         showScrollBar: true,
-        listViewChildren: this
-            .licenseEntries
+        listViewChildren: this.licenseEntries
             .map(
               (licenseEntry) => BaseCard(
                 child: Column(
@@ -30,7 +32,8 @@ class LicenseDetail extends StatelessWidget {
                             padding: const EdgeInsets.only(bottom: 24.0),
                             child: Padding(
                               padding: EdgeInsets.only(
-                                  left: 24.0 * paragraph.indent),
+                                left: 24.0 * paragraph.indent,
+                              ),
                               child: Text(paragraph.text),
                             ),
                           ),

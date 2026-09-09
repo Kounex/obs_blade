@@ -6,8 +6,8 @@ import '../../../../../models/enums/chat_type.dart';
 /// (`null`) - call sites fall back to the theme highlight color there.
 extension ChatTypeBrand on ChatType {
   Color? get brandColor => switch (this) {
-        ChatType.Twitch => const Color(0xFF6441a5),
-        ChatType.YouTube => Colors.red,
-        ChatType.Owncast => null,
-      };
+    ChatType.Twitch => const Color(0xFF6441a5),
+    ChatType.YouTube => Colors.red,
+    ChatType.Owncast => null,
+  };
 }

@@ -15,9 +15,7 @@ import '../../../../../utils/overlay_handler.dart';
 import 'exposed_controls.dart';
 
 class ReplayBufferControls extends StatelessWidget {
-  const ReplayBufferControls({
-    super.key,
-  });
+  const ReplayBufferControls({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +66,8 @@ class ReplayBufferControls extends StatelessWidget {
                 onPressed: dashboardStore.isReplayBufferActive
                     ? () => NetworkHelper.makeRequest(
                         GetIt.instance<NetworkStore>().activeSession!.socket,
-                        RequestType.SaveReplayBuffer)
+                        RequestType.SaveReplayBuffer,
+                      )
                     : null,
                 icon: const Icon(CupertinoIcons.arrow_down_doc_fill),
 

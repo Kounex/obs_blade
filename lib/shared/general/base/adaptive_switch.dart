@@ -27,19 +27,19 @@ class BaseAdaptiveSwitch extends StatelessWidget {
       behavior: HitTestBehavior.deferToChild,
       onPointerDown: !this.enabled && this.disabledChangeInfo != null
           ? (_) => ModalHandler.showBaseDialog(
-                context: context,
-                barrierDismissible: true,
-                dialogWidget: InfoDialog(body: this.disabledChangeInfo!),
-              )
+              context: context,
+              barrierDismissible: true,
+              dialogWidget: InfoDialog(body: this.disabledChangeInfo!),
+            )
           : null,
       child: StylingHelper.isApple(context)
           ? CupertinoSwitch(
               value: this.value,
-              activeColor: this.activeColor ??
-                  Theme.of(context)
-                      .switchTheme
-                      .trackColor!
-                      .resolve({MaterialState.selected}),
+              activeColor:
+                  this.activeColor ??
+                  Theme.of(
+                    context,
+                  ).switchTheme.trackColor!.resolve({MaterialState.selected}),
               onChanged: this.enabled ? this.onChanged : null,
             )
           : Switch(

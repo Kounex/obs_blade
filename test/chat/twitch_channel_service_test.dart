@@ -10,49 +10,54 @@ import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 
 void main() {
   group('searchChannels', () {
-    test('GETs the search endpoint with query/first and parses results',
-        () async {
-      final client = MockClient((request) async {
-        expect(request.method, 'GET');
-        expect(request.url.toString(),
-            'https://api.twitch.tv/helix/search/channels?query=ninja&first=20');
-        expect(request.headers['Authorization'], 'Bearer token-1');
-        expect(request.headers['Client-Id'], kTwitchClientId);
-        return http.Response(
-          json.encode({
-            'data': [
-              {
-                'id': 'chan-1',
-                'broadcaster_login': 'ninja',
-                'display_name': 'Ninja',
-                'game_name': 'Fortnite',
-                'is_live': true,
-              },
-              {
-                'id': 'chan-2',
-                'broadcaster_login': 'ninjascousin',
-                'display_name': 'NinjasCousin',
-                'game_name': '',
-                'is_live': false,
-              },
-            ],
-          }),
-          200,
-        );
-      });
+    test(
+      'GETs the search endpoint with query/first and parses results',
+      () async {
+        final client = MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(
+            request.url.toString(),
+            'https://api.twitch.tv/helix/search/channels?query=ninja&first=20',
+          );
+          expect(request.headers['Authorization'], 'Bearer token-1');
+          expect(request.headers['Client-Id'], kTwitchClientId);
+          return http.Response(
+            json.encode({
+              'data': [
+                {
+                  'id': 'chan-1',
+                  'broadcaster_login': 'ninja',
+                  'display_name': 'Ninja',
+                  'game_name': 'Fortnite',
+                  'is_live': true,
+                },
+                {
+                  'id': 'chan-2',
+                  'broadcaster_login': 'ninjascousin',
+                  'display_name': 'NinjasCousin',
+                  'game_name': '',
+                  'is_live': false,
+                },
+              ],
+            }),
+            200,
+          );
+        });
 
-      final results = await TwitchChannelService(client: client)
-          .searchChannels(accessToken: 'token-1', query: 'ninja');
+        final results = await TwitchChannelService(
+          client: client,
+        ).searchChannels(accessToken: 'token-1', query: 'ninja');
 
-      expect(results, hasLength(2));
-      expect(results[0].id, 'chan-1');
-      expect(results[0].login, 'ninja');
-      expect(results[0].displayName, 'Ninja');
-      expect(results[0].gameName, 'Fortnite');
-      expect(results[0].isLive, isTrue);
-      expect(results[1].isLive, isFalse);
-      expect(results[1].gameName, isEmpty);
-    });
+        expect(results, hasLength(2));
+        expect(results[0].id, 'chan-1');
+        expect(results[0].login, 'ninja');
+        expect(results[0].displayName, 'Ninja');
+        expect(results[0].gameName, 'Fortnite');
+        expect(results[0].isLive, isTrue);
+        expect(results[1].isLive, isFalse);
+        expect(results[1].gameName, isEmpty);
+      },
+    );
 
     test('encodes a query with spaces', () async {
       final client = MockClient((request) async {
@@ -60,8 +65,9 @@ void main() {
         return http.Response(json.encode({'data': []}), 200);
       });
 
-      final results = await TwitchChannelService(client: client)
-          .searchChannels(accessToken: 'token-1', query: 'some one');
+      final results = await TwitchChannelService(
+        client: client,
+      ).searchChannels(accessToken: 'token-1', query: 'some one');
 
       expect(results, isEmpty);
     });
@@ -70,11 +76,15 @@ void main() {
       final client = MockClient((request) async => http.Response('nope', 403));
 
       expect(
-        TwitchChannelService(client: client)
-            .searchChannels(accessToken: 'token-1', query: 'ninja'),
+        TwitchChannelService(
+          client: client,
+        ).searchChannels(accessToken: 'token-1', query: 'ninja'),
         throwsA(
-          isA<TwitchAuthException>()
-              .having((e) => e.statusCode, 'statusCode', 403),
+          isA<TwitchAuthException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            403,
+          ),
         ),
       );
     });
@@ -84,8 +94,10 @@ void main() {
     test('GETs user_id/first=100 and parses refs', () async {
       final client = MockClient((request) async {
         expect(request.method, 'GET');
-        expect(request.url.toString(),
-            'https://api.twitch.tv/helix/moderation/channels?user_id=user-1&first=100');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/moderation/channels?user_id=user-1&first=100',
+        );
         expect(request.headers['Authorization'], 'Bearer token-1');
         expect(request.headers['Client-Id'], kTwitchClientId);
         return http.Response(
@@ -103,8 +115,9 @@ void main() {
         );
       });
 
-      final refs = await TwitchChannelService(client: client)
-          .getModeratedChannels(accessToken: 'token-1', userId: 'user-1');
+      final refs = await TwitchChannelService(
+        client: client,
+      ).getModeratedChannels(accessToken: 'token-1', userId: 'user-1');
 
       expect(refs, hasLength(1));
       expect(refs.single.id, 'chan-1');
@@ -147,8 +160,9 @@ void main() {
         );
       });
 
-      final refs = await TwitchChannelService(client: client)
-          .getModeratedChannels(accessToken: 'token-1', userId: 'user-1');
+      final refs = await TwitchChannelService(
+        client: client,
+      ).getModeratedChannels(accessToken: 'token-1', userId: 'user-1');
 
       expect(refs.map((ref) => ref.id), ['chan-1', 'chan-2']);
       expect(urls, hasLength(2));
@@ -158,11 +172,15 @@ void main() {
       final client = MockClient((request) async => http.Response('nope', 401));
 
       expect(
-        TwitchChannelService(client: client)
-            .getModeratedChannels(accessToken: 'token-1', userId: 'user-1'),
+        TwitchChannelService(
+          client: client,
+        ).getModeratedChannels(accessToken: 'token-1', userId: 'user-1'),
         throwsA(
-          isA<TwitchAuthException>()
-              .having((e) => e.statusCode, 'statusCode', 401),
+          isA<TwitchAuthException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            401,
+          ),
         ),
       );
     });
@@ -170,11 +188,11 @@ void main() {
 
   group('sortChannelPickerRefs', () {
     TwitchChannelRef ref(String id) => TwitchChannelRef(
-          id: id,
-          login: id,
-          displayName: id,
-          addedAt: DateTime.utc(2026, 8, 9),
-        );
+      id: id,
+      login: id,
+      displayName: id,
+      addedAt: DateTime.utc(2026, 8, 9),
+    );
 
     test('orders live, then mod, then the rest — stable within a tier', () {
       final sorted = sortChannelPickerRefs(
@@ -207,40 +225,48 @@ void main() {
         ],
         modIds: {'mod-only', 'live-mod'},
       );
-      expect(
-        sorted.map((r) => r.id),
-        ['live-b', 'live-a', 'live-mod', 'mod-only', 'offline'],
-      );
+      expect(sorted.map((r) => r.id), [
+        'live-b',
+        'live-a',
+        'live-mod',
+        'mod-only',
+        'offline',
+      ]);
     });
   });
 
   group('getLiveBroadcasterIds', () {
-    test('GETs /streams with repeated user_id and returns viewer counts',
-        () async {
-      final client = MockClient((request) async {
-        expect(request.method, 'GET');
-        expect(request.url.path, '/helix/streams');
-        expect(request.url.queryParametersAll['user_id'],
-            ['chan-1', 'chan-2', 'chan-3']);
-        return http.Response(
-          json.encode({
-            'data': [
-              {'user_id': 'chan-1', 'type': 'live', 'viewer_count': 1200},
-              {'user_id': 'chan-3', 'type': 'live', 'viewer_count': 42},
-            ],
-          }),
-          200,
-        );
-      });
+    test(
+      'GETs /streams with repeated user_id and returns viewer counts',
+      () async {
+        final client = MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/helix/streams');
+          expect(request.url.queryParametersAll['user_id'], [
+            'chan-1',
+            'chan-2',
+            'chan-3',
+          ]);
+          return http.Response(
+            json.encode({
+              'data': [
+                {'user_id': 'chan-1', 'type': 'live', 'viewer_count': 1200},
+                {'user_id': 'chan-3', 'type': 'live', 'viewer_count': 42},
+              ],
+            }),
+            200,
+          );
+        });
 
-      final live = await TwitchChannelService(client: client)
-          .getLiveBroadcasterIds(
-        accessToken: 'token-1',
-        broadcasterIds: ['chan-1', 'chan-2', 'chan-3'],
-      );
+        final live = await TwitchChannelService(client: client)
+            .getLiveBroadcasterIds(
+              accessToken: 'token-1',
+              broadcasterIds: ['chan-1', 'chan-2', 'chan-3'],
+            );
 
-      expect(live, {'chan-1': 1200, 'chan-3': 42});
-    });
+        expect(live, {'chan-1': 1200, 'chan-3': 42});
+      },
+    );
 
     test('empty input skips the request', () async {
       var called = false;
@@ -249,11 +275,9 @@ void main() {
         return http.Response('{}', 200);
       });
 
-      final live = await TwitchChannelService(client: client)
-          .getLiveBroadcasterIds(
-        accessToken: 'token-1',
-        broadcasterIds: const [],
-      );
+      final live = await TwitchChannelService(
+        client: client,
+      ).getLiveBroadcasterIds(accessToken: 'token-1', broadcasterIds: const []);
 
       expect(live, isEmpty);
       expect(called, isFalse);
@@ -268,8 +292,11 @@ void main() {
           broadcasterIds: ['chan-1'],
         ),
         throwsA(
-          isA<TwitchAuthException>()
-              .having((e) => e.statusCode, 'statusCode', 401),
+          isA<TwitchAuthException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            401,
+          ),
         ),
       );
     });
@@ -279,8 +306,10 @@ void main() {
     test('GETs user_id/first=100 and parses refs', () async {
       final client = MockClient((request) async {
         expect(request.method, 'GET');
-        expect(request.url.toString(),
-            'https://api.twitch.tv/helix/channels/followed?user_id=user-1&first=100');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/channels/followed?user_id=user-1&first=100',
+        );
         expect(request.headers['Authorization'], 'Bearer token-1');
         return http.Response(
           json.encode({
@@ -298,8 +327,9 @@ void main() {
         );
       });
 
-      final refs = await TwitchChannelService(client: client)
-          .getFollowedChannels(accessToken: 'token-1', userId: 'user-1');
+      final refs = await TwitchChannelService(
+        client: client,
+      ).getFollowedChannels(accessToken: 'token-1', userId: 'user-1');
 
       expect(refs.single.id, 'chan-9');
       expect(refs.single.login, 'fav');
@@ -307,11 +337,14 @@ void main() {
     });
 
     test('empty data yields an empty list', () async {
-      final client = MockClient((request) async =>
-          http.Response(json.encode({'data': [], 'pagination': {}}), 200));
+      final client = MockClient(
+        (request) async =>
+            http.Response(json.encode({'data': [], 'pagination': {}}), 200),
+      );
 
-      final refs = await TwitchChannelService(client: client)
-          .getFollowedChannels(accessToken: 'token-1', userId: 'user-1');
+      final refs = await TwitchChannelService(
+        client: client,
+      ).getFollowedChannels(accessToken: 'token-1', userId: 'user-1');
 
       expect(refs, isEmpty);
     });
@@ -320,11 +353,15 @@ void main() {
       final client = MockClient((request) async => http.Response('nope', 500));
 
       expect(
-        TwitchChannelService(client: client)
-            .getFollowedChannels(accessToken: 'token-1', userId: 'user-1'),
+        TwitchChannelService(
+          client: client,
+        ).getFollowedChannels(accessToken: 'token-1', userId: 'user-1'),
         throwsA(
-          isA<TwitchAuthException>()
-              .having((e) => e.statusCode, 'statusCode', 500),
+          isA<TwitchAuthException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            500,
+          ),
         ),
       );
     });

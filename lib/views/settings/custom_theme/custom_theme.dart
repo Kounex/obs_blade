@@ -31,9 +31,7 @@ bool customThemesUnlocked(Box<dynamic> settingsBox, {ProStore? proStore}) =>
     (proStore ?? GetIt.instance<ProStore>()).isPro;
 
 class CustomThemeView extends StatefulWidget {
-  const CustomThemeView({
-    super.key,
-  });
+  const CustomThemeView({super.key});
 
   @override
   State<CustomThemeView> createState() => _CustomThemeViewState();
@@ -44,9 +42,8 @@ class _CustomThemeViewState extends State<CustomThemeView> {
     if (unlocked) {
       ModalHandler.showBaseCupertinoBottomSheet(
         context: context,
-        modalWidgetBuilder: (context, scrollController) => AddEditTheme(
-          scrollController: scrollController,
-        ),
+        modalWidgetBuilder: (context, scrollController) =>
+            AddEditTheme(scrollController: scrollController),
       );
     } else {
       /// Blacksmith is no longer sold — the upsell is the Pro paywall.
@@ -70,7 +67,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
         rebuildKeys: const [
           SettingsKeys.ActiveCustomThemeUUID,
           SettingsKeys.CustomTheme,
-          SettingsKeys.BoughtBlacksmith
+          SettingsKeys.BoughtBlacksmith,
         ],
         builder: (context, settingsBox, child) {
           /// Explicit [AnimatedTheme] on the activation surface: the
@@ -97,16 +94,20 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                       description:
                           'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
                       trailing: BaseAdaptiveSwitch(
-                        value: settingsBox.get(SettingsKeys.CustomTheme.name,
-                            defaultValue: false),
+                        value: settingsBox.get(
+                          SettingsKeys.CustomTheme.name,
+                          defaultValue: false,
+                        ),
                         onChanged: (customTheme) {
                           settingsBox.put(
                             SettingsKeys.CustomTheme.name,
                             customTheme,
                           );
                           if ((settingsBox.get(
-                                  SettingsKeys.ActiveCustomThemeUUID.name,
-                                  defaultValue: '') as String)
+                                    SettingsKeys.ActiveCustomThemeUUID.name,
+                                    defaultValue: '',
+                                  )
+                                  as String)
                               .isEmpty) {
                             settingsBox.put(
                               SettingsKeys.ActiveCustomThemeUUID.name,
@@ -125,9 +126,7 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                     title: 'Predefined Themes',
                     bottomPadding: 12.0,
                     paddingChild: EdgeInsets.all(0),
-                    child: CustomThemeList(
-                      predefinedThemes: true,
-                    ),
+                    child: CustomThemeList(predefinedThemes: true),
                   ),
                 ),
                 StaggeredEntrance(

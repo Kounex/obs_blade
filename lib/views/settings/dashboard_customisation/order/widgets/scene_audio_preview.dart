@@ -11,8 +11,9 @@ class SceneAudioPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color accent = Theme.of(context).colorScheme.secondary;
-    final Color muted =
-        Theme.of(context).extension<AppStatusColors>()!.recording;
+    final Color muted = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!.recording;
 
     Widget fader({
       required String name,
@@ -37,9 +38,9 @@ class SceneAudioPreview extends StatelessWidget {
                         Container(
                           height: 6.0,
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .disabledColor
-                                .withValues(alpha: 0.35),
+                            color: Theme.of(
+                              context,
+                            ).disabledColor.withValues(alpha: 0.35),
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                         ),
@@ -61,9 +62,7 @@ class SceneAudioPreview extends StatelessWidget {
                       ? CupertinoIcons.speaker_2_fill
                       : CupertinoIcons.speaker_slash_fill,
                   size: 16.0,
-                  color: active
-                      ? Theme.of(context).iconTheme.color
-                      : muted,
+                  color: active ? Theme.of(context).iconTheme.color : muted,
                 ),
               ],
             ),

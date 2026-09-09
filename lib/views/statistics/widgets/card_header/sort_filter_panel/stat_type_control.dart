@@ -5,9 +5,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class StatTypeControl extends StatelessWidget {
-  const StatTypeControl({
-    super.key,
-  });
+  const StatTypeControl({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +19,7 @@ class StatTypeControl extends StatelessWidget {
           padding: const EdgeInsets.all(0),
           children: Map.fromEntries(
             StatType.values.map(
-              (statType) => MapEntry(
-                statType,
-                Text(statType.name),
-              ),
+              (statType) => MapEntry(statType, Text(statType.name)),
             ),
           ),
           onValueChanged: (statType) => statisticsStore.setStatType(statType!),

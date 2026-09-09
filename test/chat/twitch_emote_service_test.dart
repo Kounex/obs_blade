@@ -9,16 +9,16 @@ import 'package:obs_blade/utils/twitch/twitch_emote_service.dart';
 /// Mirrors the Helix `chat/emotes/user` `data[]` shape (we read id, name,
 /// owner_id and keep emote_type/emote_set_id raw).
 Map<String, Object?> emoteEntry(String id, String name, String ownerId) => {
-      'id': id,
-      'name': name,
-      'tier': '1000',
-      'emote_type': 'subscriptions',
-      'emote_set_id': 'set-$id',
-      'owner_id': ownerId,
-      'format': ['static'],
-      'scale_available': ['1', '2', '3'],
-      'theme_mode': ['light', 'dark'],
-    };
+  'id': id,
+  'name': name,
+  'tier': '1000',
+  'emote_type': 'subscriptions',
+  'emote_set_id': 'set-$id',
+  'owner_id': ownerId,
+  'format': ['static'],
+  'scale_available': ['1', '2', '3'],
+  'theme_mode': ['light', 'dark'],
+};
 
 void main() {
   group('fetchUserEmotes', () {
@@ -43,8 +43,9 @@ void main() {
         );
       });
 
-      final emotes = await TwitchEmoteService(client: client)
-          .fetchUserEmotes('token-1', userId: 'user-1', broadcasterId: 'user-1');
+      final emotes = await TwitchEmoteService(
+        client: client,
+      ).fetchUserEmotes('token-1', userId: 'user-1', broadcasterId: 'user-1');
 
       expect(emotes, hasLength(2));
       expect(emotes[0].id, '25');
@@ -76,8 +77,9 @@ void main() {
         );
       });
 
-      final emotes = await TwitchEmoteService(client: client)
-          .fetchUserEmotes('token-1', userId: 'user-1', broadcasterId: 'user-1');
+      final emotes = await TwitchEmoteService(
+        client: client,
+      ).fetchUserEmotes('token-1', userId: 'user-1', broadcasterId: 'user-1');
 
       expect(emotes.map((e) => e.name), ['Kappa', 'PogChamp']);
       expect(urls, hasLength(2));
@@ -88,26 +90,29 @@ void main() {
       final client = MockClient((request) async => http.Response('nope', 401));
 
       expect(
-        TwitchEmoteService(client: client).fetchUserEmotes(
-          'token-1',
-          userId: 'user-1',
-          broadcasterId: 'user-1',
+        TwitchEmoteService(
+          client: client,
+        ).fetchUserEmotes('token-1', userId: 'user-1', broadcasterId: 'user-1'),
+        throwsA(
+          isA<TwitchAuthException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            401,
+          ),
         ),
-        throwsA(isA<TwitchAuthException>()
-            .having((e) => e.statusCode, 'statusCode', 401)),
       );
     });
 
     test('a 200 without a data list throws TwitchAuthException', () {
-      final client = MockClient((request) async =>
-          http.Response(json.encode({'unexpected': true}), 200));
+      final client = MockClient(
+        (request) async =>
+            http.Response(json.encode({'unexpected': true}), 200),
+      );
 
       expect(
-        TwitchEmoteService(client: client).fetchUserEmotes(
-          'token-1',
-          userId: 'user-1',
-          broadcasterId: 'user-1',
-        ),
+        TwitchEmoteService(
+          client: client,
+        ).fetchUserEmotes('token-1', userId: 'user-1', broadcasterId: 'user-1'),
         throwsA(isA<TwitchAuthException>()),
       );
     });

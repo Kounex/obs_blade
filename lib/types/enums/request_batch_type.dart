@@ -41,27 +41,25 @@ enum RequestBatchType {
   FilterDefaultSettings;
 
   List<RequestType> get requestTypes => {
-        RequestBatchType.Input: [
-          RequestType.GetInputVolume,
-          RequestType.GetInputMute,
-          RequestType.GetInputAudioSyncOffset,
-        ],
-        RequestBatchType.Stats: [
-          RequestType.GetStreamStatus,
-          RequestType.GetRecordStatus,
-          RequestType.GetStats,
-        ],
-        RequestBatchType.Screenshot: [
-          RequestType.SaveSourceScreenshot,
-          RequestType.GetSourceScreenshot,
-        ],
-        RequestBatchType.FilterList: [
-          RequestType.GetSourceFilterList,
-        ],
-        RequestBatchType.FilterDefaultSettings: [
-          RequestType.GetSourceFilterDefaultSettings,
-        ],
-      }[this]!;
+    RequestBatchType.Input: [
+      RequestType.GetInputVolume,
+      RequestType.GetInputMute,
+      RequestType.GetInputAudioSyncOffset,
+    ],
+    RequestBatchType.Stats: [
+      RequestType.GetStreamStatus,
+      RequestType.GetRecordStatus,
+      RequestType.GetStats,
+    ],
+    RequestBatchType.Screenshot: [
+      RequestType.SaveSourceScreenshot,
+      RequestType.GetSourceScreenshot,
+    ],
+    RequestBatchType.FilterList: [RequestType.GetSourceFilterList],
+    RequestBatchType.FilterDefaultSettings: [
+      RequestType.GetSourceFilterDefaultSettings,
+    ],
+  }[this]!;
 
   /// Indicates whether we need to persist this request to get the
   /// body of the request once we received the response and mix and match
@@ -69,10 +67,10 @@ enum RequestBatchType {
   /// where the response will have the volume but not the name of the source -
   /// the name of the source is defined in the request payload)
   bool get lookup => {
-        RequestBatchType.Input: true,
-        RequestBatchType.Stats: false,
-        RequestBatchType.Screenshot: false,
-        RequestBatchType.FilterList: true,
-        RequestBatchType.FilterDefaultSettings: true,
-      }[this]!;
+    RequestBatchType.Input: true,
+    RequestBatchType.Stats: false,
+    RequestBatchType.Screenshot: false,
+    RequestBatchType.FilterList: true,
+    RequestBatchType.FilterDefaultSettings: true,
+  }[this]!;
 }

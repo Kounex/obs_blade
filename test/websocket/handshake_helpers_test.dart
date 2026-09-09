@@ -26,10 +26,14 @@ void main() {
 
   group('EventSubscription', () {
     test('appDefault includes All categories and InputVolumeMeters', () {
-      expect(EventSubscription.appDefault & EventSubscription.canvases,
-          EventSubscription.canvases);
-      expect(EventSubscription.appDefault & EventSubscription.inputVolumeMeters,
-          EventSubscription.inputVolumeMeters);
+      expect(
+        EventSubscription.appDefault & EventSubscription.canvases,
+        EventSubscription.canvases,
+      );
+      expect(
+        EventSubscription.appDefault & EventSubscription.inputVolumeMeters,
+        EventSubscription.inputVolumeMeters,
+      );
       expect(EventSubscription.all, 0xfff);
     });
   });
@@ -47,15 +51,17 @@ void main() {
       expect(uri.toString(), 'ws://10.0.0.2:4456');
     });
 
-    test('domain host with baked-in wss scheme keeps scheme and applies port',
-        () {
-      final uri = NetworkHelper.websocketUri(
-        Connection('wss://stream.example.com', 443, null, true),
-      );
-      expect(uri.scheme, 'wss');
-      expect(uri.host, 'stream.example.com');
-      expect(uri.port, 443);
-    });
+    test(
+      'domain host with baked-in wss scheme keeps scheme and applies port',
+      () {
+        final uri = NetworkHelper.websocketUri(
+          Connection('wss://stream.example.com', 443, null, true),
+        );
+        expect(uri.scheme, 'wss');
+        expect(uri.host, 'stream.example.com');
+        expect(uri.port, 443);
+      },
+    );
 
     test('domain host with baked-in ws scheme', () {
       final uri = NetworkHelper.websocketUri(
@@ -105,17 +111,25 @@ void main() {
 
   group('WebSocketCloseCode.fromIdentifier', () {
     test('maps known OBS codes', () {
-      expect(WebSocketCloseCode.fromIdentifier(4009),
-          WebSocketCloseCode.AuthenticationFailed);
-      expect(WebSocketCloseCode.fromIdentifier(4010),
-          WebSocketCloseCode.UnsupportedRpcVersion);
+      expect(
+        WebSocketCloseCode.fromIdentifier(4009),
+        WebSocketCloseCode.AuthenticationFailed,
+      );
+      expect(
+        WebSocketCloseCode.fromIdentifier(4010),
+        WebSocketCloseCode.UnsupportedRpcVersion,
+      );
     });
 
     test('unknown falls back', () {
-      expect(WebSocketCloseCode.fromIdentifier(12345),
-          WebSocketCloseCode.UnknownReason);
-      expect(WebSocketCloseCode.fromIdentifier(null),
-          WebSocketCloseCode.UnknownReason);
+      expect(
+        WebSocketCloseCode.fromIdentifier(12345),
+        WebSocketCloseCode.UnknownReason,
+      );
+      expect(
+        WebSocketCloseCode.fromIdentifier(null),
+        WebSocketCloseCode.UnknownReason,
+      );
     });
   });
 }

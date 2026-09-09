@@ -68,13 +68,11 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
       curve: AppMotion.standard,
       builder: (context, value, child) => Opacity(
         opacity: value,
-        child: Transform.scale(
-          scale: 0.96 + 0.04 * value,
-          child: child,
-        ),
+        child: Transform.scale(scale: 0.96 + 0.04 * value, child: child),
       ),
       child: AlertDialog.adaptive(
-        title: this.widget.titleWidget ??
+        title:
+            this.widget.titleWidget ??
             (this.widget.title != null
                 ? Padding(
                     padding: EdgeInsets.only(
@@ -83,7 +81,8 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
                     child: Text(this.widget.title!),
                   )
                 : null),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24.0) +
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 24.0) +
             EdgeInsets.only(
               top: this.widget.title == null && this.widget.titleWidget == null
                   ? 24.0
@@ -101,11 +100,9 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
             if (this.widget.leftAlignBody)
               Align(
                 alignment: Alignment.centerLeft,
-                child: this.widget.bodyWidget ??
-                    Text(
-                      this.widget.body!,
-                      textAlign: TextAlign.left,
-                    ),
+                child:
+                    this.widget.bodyWidget ??
+                    Text(this.widget.body!, textAlign: TextAlign.left),
               )
             else
               this.widget.bodyWidget ?? Text(this.widget.body!),
@@ -129,9 +126,7 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
               ),
           ],
         ),
-        actions: this
-            .widget
-            .actions
+        actions: this.widget.actions
             ?.map(
               (config) => AdaptiveDialogAction(
                 onPressed: () {

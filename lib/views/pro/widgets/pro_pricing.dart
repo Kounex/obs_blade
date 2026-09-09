@@ -31,11 +31,7 @@ class ProPricing extends StatelessWidget {
       badge: 'BEST VALUE',
       isHero: true,
     ),
-    _ProOffer(
-      productId: kProMonthlyId,
-      title: 'Monthly',
-      cadence: 'per month',
-    ),
+    _ProOffer(productId: kProMonthlyId, title: 'Monthly', cadence: 'per month'),
     _ProOffer(
       productId: kProLifetimeId,
       title: 'Lifetime',
@@ -102,10 +98,10 @@ class ProPricing extends StatelessWidget {
                   'Can\'t reach the store right now — pricing appears once '
                   'your connection is back.',
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        color: Theme.of(context)
-                            .extension<AppTextColors>()!
-                            .textSecondary,
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).extension<AppTextColors>()!.textSecondary,
+                  ),
                 ),
               ),
             ResponsiveWidgetWrapper(
@@ -171,8 +167,9 @@ class _ProPriceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
-    final AppTextColors textColors =
-        Theme.of(context).extension<AppTextColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
     final bool placeholder = this.product == null;
     final bool darkCard = Theme.of(context).cardColor.computeLuminance() <= 0.2;
 
@@ -210,24 +207,24 @@ class _ProPriceCard extends StatelessWidget {
                     vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
-
                     /// Nested-tint rule (token-delta §2.3): the BEST VALUE
                     /// badge sits on the hero card's own 5% tint, so the
                     /// pill drops to 8% accent; non-hero badges (ONE-TIME)
                     /// are demoted to neutral gray
                     color: this.offer.isHero
                         ? accent.withValues(alpha: 0.08)
-                        : (darkCard ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.08),
+                        : (darkCard ? Colors.white : Colors.black).withValues(
+                            alpha: 0.08,
+                          ),
                     borderRadius: AppRadius.pill,
                   ),
                   child: Text(
                     this.offer.badge!,
                     style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                          color: this.offer.isHero
-                              ? textColors.accentText
-                              : textColors.textSecondary,
-                        ),
+                      color: this.offer.isHero
+                          ? textColors.accentText
+                          : textColors.textSecondary,
+                    ),
                   ),
                 ),
             ],
@@ -236,17 +233,17 @@ class _ProPriceCard extends StatelessWidget {
           Text(
             this.product?.priceString ?? 'Price shown at purchase',
             style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: kTabularFigures,
-                ),
+              fontSize: 20.0,
+              fontWeight: FontWeight.w700,
+              fontFeatures: kTabularFigures,
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             this.offer.cadence,
-            style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: textColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall!.copyWith(color: textColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(
@@ -254,10 +251,11 @@ class _ProPriceCard extends StatelessWidget {
             child: Opacity(
               opacity: placeholder ? 0.55 : 1.0,
               child: BaseButton(
-                text: placeholder ? 'Not live yet' : 'Choose ${this.offer.title}',
+                text: placeholder
+                    ? 'Not live yet'
+                    : 'Choose ${this.offer.title}',
                 secondary: !this.offer.isHero,
-                onPressed:
-                    this.pending ? null : () => this.onBuy(this.product),
+                onPressed: this.pending ? null : () => this.onBuy(this.product),
               ),
             ),
           ),

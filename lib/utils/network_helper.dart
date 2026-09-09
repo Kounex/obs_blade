@@ -85,11 +85,7 @@ class NetworkHelper {
       return parsed;
     }
 
-    return Uri(
-      scheme: 'ws',
-      host: rawHost,
-      port: port ?? 4455,
-    );
+    return Uri(scheme: 'ws', host: rawHost, port: port ?? 4455);
   }
 
   /// Initiating an autodiscover process with an isolate function to make this
@@ -98,15 +94,14 @@ class NetworkHelper {
   /// is triggered (therefore [SocketException] is thrown) or if not, there is
   /// an application (most likely OBS in this case) which listens on this port
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
-    if ((await Connectivity().checkConnectivity())
-        .contains(ConnectivityResult.wifi)) {
+    if ((await Connectivity().checkConnectivity()).contains(
+      ConnectivityResult.wifi,
+    )) {
       NetworkStore networkStore = GetIt.instance<NetworkStore>();
       NetworkInfo info = NetworkInfo();
       networkStore.ip = await info.getWifiIP();
 
-      GeneralHelper.advLog(
-        'Autodiscover base IP: ${networkStore.ip}',
-      );
+      GeneralHelper.advLog('Autodiscover base IP: ${networkStore.ip}');
 
       /// Check if the subnet mask is non "default" since it will
       /// change the amount of possible clients and the general client
@@ -140,10 +135,14 @@ class NetworkHelper {
           completer.complete(availableConnections);
         });
 
-        return List.from((await completer.future)
-            .where((connectionScan) =>
-                connectionScan != null && connectionScan.error == null)
-            .map((connectionScan) => connectionScan!.connection));
+        return List.from(
+          (await completer.future)
+              .where(
+                (connectionScan) =>
+                    connectionScan != null && connectionScan.error == null,
+              )
+              .map((connectionScan) => connectionScan!.connection),
+        );
       }
       throw NoNetworkException();
     }
@@ -151,7 +150,8 @@ class NetworkHelper {
   }
 
   static Future<List<Connection>> checkConnectionAvailabilities(
-      List<Connection> connections) async {
+    List<Connection> connections,
+  ) async {
     Completer<List<ConnectionScan?>> completer = Completer();
     ReceivePort receivePort = ReceivePort();
 
@@ -159,8 +159,9 @@ class NetworkHelper {
       'sendPort': receivePort.sendPort,
       'hosts': connections.map((connection) => connection.host).toList(),
       'ports': connections.map((connection) => connection.port).toList(),
-      'isDomains':
-          connections.map((connection) => connection.isDomain).toList(),
+      'isDomains': connections
+          .map((connection) => connection.isDomain)
+          .toList(),
       'timeout': const Duration(milliseconds: 5000),
     });
 
@@ -169,8 +170,11 @@ class NetworkHelper {
       completer.complete(availableConnections);
     });
 
-    List<ConnectionScan> connectionScans = List.from((await completer.future)
-        .where((connectionScan) => connectionScan != null));
+    List<ConnectionScan> connectionScans = List.from(
+      (await completer.future).where(
+        (connectionScan) => connectionScan != null,
+      ),
+    );
 
     connectionScans
         .where((connectionScan) => connectionScan.error != null)
@@ -182,9 +186,11 @@ class NetworkHelper {
           ),
         );
 
-    return List.from(connectionScans
-        .where((connectionScan) => connectionScan.error == null)
-        .map((connectionScan) => connectionScan.connection));
+    return List.from(
+      connectionScans
+          .where((connectionScan) => connectionScan.error == null)
+          .map((connectionScan) => connectionScan.connection),
+    );
   }
 
   static void _isolateFullScanIPs(Map<String, dynamic> arguments) async {
@@ -197,11 +203,13 @@ class NetworkHelper {
     String cutIP = (ip.split('.')..removeLast()).join('.');
 
     for (int k = 0; k < 256; k++) {
-      availableConnections.add(_singleScan({
-        'address': '$cutIP.${k.toString()}',
-        'port': port,
-        'timeout': timeout,
-      }));
+      availableConnections.add(
+        _singleScan({
+          'address': '$cutIP.${k.toString()}',
+          'port': port,
+          'timeout': timeout,
+        }),
+      );
     }
 
     /// It's important to start and collect all scans (which return a [Future]
@@ -218,7 +226,8 @@ class NetworkHelper {
   }
 
   static void _isolateFullScanConnections(
-      Map<String, dynamic> arguments) async {
+    Map<String, dynamic> arguments,
+  ) async {
     SendPort sendPort = arguments['sendPort'];
     List<String> hosts = List.from(arguments['hosts']);
     List<int?> ports = List.from(arguments['ports']);
@@ -228,29 +237,27 @@ class NetworkHelper {
     List<Future<ConnectionScan?>> availableConnections = [];
 
     for (int i = 0; i < hosts.length; i++) {
-      availableConnections.add(_singleScan({
-        'address': hosts[i],
-        'port': ports[i],
-        'isDomain': isDomains[i],
-        'timeout': timeout,
-      }));
+      availableConnections.add(
+        _singleScan({
+          'address': hosts[i],
+          'port': ports[i],
+          'isDomain': isDomains[i],
+          'timeout': timeout,
+        }),
+      );
     }
 
     sendPort.send(await Future.wait(availableConnections));
   }
 
   static Future<ConnectionScan?> _singleScan(
-      Map<String, dynamic> arguments) async {
+    Map<String, dynamic> arguments,
+  ) async {
     String address = arguments['address'];
     int? port = arguments['port'];
     bool? isDomain = arguments['isDomain'];
     ConnectionScan connectionScan = ConnectionScan(
-      Connection(
-        address,
-        port,
-        null,
-        isDomain,
-      ),
+      Connection(address, port, null, isDomain),
     );
     Duration timeout = arguments['timeout'];
     SendPort? sendPort = arguments['sendPort'];
@@ -307,8 +314,8 @@ class NetworkHelper {
       NetworkHelper._requestBodyByUUID.remove(uuid);
 
   static Iterable<RequestBatchObject>? getRequestBatchBodyForUUID(
-          String uuid) =>
-      NetworkHelper._requestBatchByUUID.remove(uuid);
+    String uuid,
+  ) => NetworkHelper._requestBatchByUUID.remove(uuid);
 
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
@@ -319,9 +326,7 @@ class NetworkHelper {
     bool customContent = false,
   ]) {
     if (request != RequestType.GetSourceScreenshot) {
-      GeneralHelper.advLog(
-        'Outgoing: $request',
-      );
+      GeneralHelper.advLog('Outgoing: $request');
     }
 
     String requestUUID = const Uuid().v4();
@@ -343,9 +348,7 @@ class NetworkHelper {
               : {
                   'requestType': request.name,
                   'requestId': requestUUID,
-                  'requestData': {
-                    if (fields != null) ...fields,
-                  },
+                  'requestData': {if (fields != null) ...fields},
                 },
         ),
       ),
@@ -361,9 +364,7 @@ class NetworkHelper {
     List<RequestBatchObject> batch,
   ) {
     if (batchRequest != RequestBatchType.Stats) {
-      GeneralHelper.advLog(
-        'Outgoing Batch: $batchRequest',
-      );
+      GeneralHelper.advLog('Outgoing Batch: $batchRequest');
     }
 
     String requestUUID = const Uuid().v4();
@@ -372,19 +373,13 @@ class NetworkHelper {
       NetworkHelper._requestBatchByUUID[requestUUID] = batch;
     }
 
-    channel.sink.add(
-      json.encode(
-        _requestBatchObject(requestUUID, batch),
-      ),
-    );
+    channel.sink.add(json.encode(_requestBatchObject(requestUUID, batch)));
   }
 
-  static Map<String, dynamic> _requestObject(Map<String, dynamic> body,
-          [WebSocketOpCode op = WebSocketOpCode.Request]) =>
-      {
-        'op': op.identifier,
-        'd': body,
-      };
+  static Map<String, dynamic> _requestObject(
+    Map<String, dynamic> body, [
+    WebSocketOpCode op = WebSocketOpCode.Request,
+  ]) => {'op': op.identifier, 'd': body};
 
   static Map<String, dynamic> _requestBatchObject(
     String uuid,
@@ -392,24 +387,21 @@ class NetworkHelper {
     bool haltOnFailure = false,
     RequestBatchExecutionType executionType =
         RequestBatchExecutionType.SerialRealtime,
-  ]) =>
-      {
-        'op': WebSocketOpCode.RequestBatch.identifier,
-        'd': {
-          'requestId': uuid,
-          'haltOnFailure': haltOnFailure,
-          'executionType': executionType.identifier,
-          'requests': batch
-              .map(
-                (batchEntry) => _requestObject(
-                  {
-                    'requestType': batchEntry.type.name,
-                    'requestId': batchEntry.uuid,
-                    'requestData': batchEntry.body,
-                  },
-                )['d'],
-              )
-              .toList(),
-        },
-      };
+  ]) => {
+    'op': WebSocketOpCode.RequestBatch.identifier,
+    'd': {
+      'requestId': uuid,
+      'haltOnFailure': haltOnFailure,
+      'executionType': executionType.identifier,
+      'requests': batch
+          .map(
+            (batchEntry) => _requestObject({
+              'requestType': batchEntry.type.name,
+              'requestId': batchEntry.uuid,
+              'requestData': batchEntry.body,
+            })['d'],
+          )
+          .toList(),
+    },
+  };
 }

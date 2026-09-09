@@ -91,13 +91,13 @@ class TwitchAuthService {
   TwitchAuthService({
     http.Client? client,
     Future<void> Function(Duration)? sleep,
-  })  : _client = client ?? http.Client(),
-        _sleep = sleep ?? Future.delayed;
+  }) : _client = client ?? http.Client(),
+       _sleep = sleep ?? Future.delayed;
 
   static Map<String, String> helixHeaders(String accessToken) => {
-        'Authorization': 'Bearer $accessToken',
-        'Client-Id': kTwitchClientId,
-      };
+    'Authorization': 'Bearer $accessToken',
+    'Client-Id': kTwitchClientId,
+  };
 
   /// Kick off the device flow: the user authorizes [TwitchDeviceCode.userCode]
   /// at [TwitchDeviceCode.verificationUri].
@@ -129,8 +129,9 @@ class TwitchAuthService {
     required bool Function() isCancelled,
   }) async {
     int interval = deviceCode.interval;
-    final deadline =
-        DateTime.now().add(Duration(seconds: deviceCode.expiresIn));
+    final deadline = DateTime.now().add(
+      Duration(seconds: deviceCode.expiresIn),
+    );
 
     while (DateTime.now().isBefore(deadline)) {
       if (isCancelled()) {
@@ -240,7 +241,8 @@ class TwitchAuthService {
     final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
     if (data is! List || data.isEmpty) {
       throw const TwitchAuthException(
-          'Fetching the Twitch user returned no data');
+        'Fetching the Twitch user returned no data',
+      );
     }
     return TwitchUser.fromJson(data.first as Map<String, Object?>);
   }

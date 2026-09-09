@@ -7,24 +7,23 @@ class StatsDateChip extends StatelessWidget {
   final String label;
   final String content;
 
-  const StatsDateChip({
-    super.key,
-    required this.label,
-    required this.content,
-  });
+  const StatsDateChip({super.key, required this.label, required this.content});
 
   @override
   Widget build(BuildContext context) {
     /// Session-time rows sit at the dim text level (token-delta §2.1: stat
     /// keys/values below the entry name)
-    final Color dimText =
-        Theme.of(context).extension<AppTextColors>()!.textSecondary;
+    final Color dimText = Theme.of(
+      context,
+    ).extension<AppTextColors>()!.textSecondary;
     return SizedBox(
       height: 48.0,
       child: Chip(
         labelPadding: const EdgeInsets.all(2.0),
-        backgroundColor:
-            StylingHelper.lightenDarkenColor(Theme.of(context).cardColor, 10),
+        backgroundColor: StylingHelper.lightenDarkenColor(
+          Theme.of(context).cardColor,
+          10,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(64.0),
         ),
@@ -48,10 +47,9 @@ class StatsDateChip extends StatelessWidget {
                   child: Text(
                     this.label,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall!
-                        .copyWith(color: dimText),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall!.copyWith(color: dimText),
                   ),
                 ),
               ),
@@ -62,9 +60,7 @@ class StatsDateChip extends StatelessWidget {
                 this.content,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
                   color: dimText,
-                  fontFeatures: [
-                    const FontFeature.tabularFigures(),
-                  ],
+                  fontFeatures: [const FontFeature.tabularFigures()],
                 ),
               ),
             ),

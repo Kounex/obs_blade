@@ -34,8 +34,10 @@ class Pressable extends StatefulWidget {
     this.haptic = false,
     this.scale = 0.97,
     this.springy = true,
-  }) : assert(scale >= 0.85 && scale <= 0.97,
-            'scale must stay within 0.85-0.97');
+  }) : assert(
+         scale >= 0.85 && scale <= 0.97,
+         'scale must stay within 0.85-0.97',
+       );
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -50,10 +52,7 @@ class _PressableState extends State<Pressable>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.instant,
-    );
+    _controller = AnimationController(vsync: this, duration: AppMotion.instant);
   }
 
   @override
@@ -66,7 +65,9 @@ class _PressableState extends State<Pressable>
     if (!_enabled) return;
     _controller.animateTo(
       1.0,
-      duration: AppMotion.reduce(this.context) ? Duration.zero : AppMotion.instant,
+      duration: AppMotion.reduce(this.context)
+          ? Duration.zero
+          : AppMotion.instant,
       curve: AppMotion.standard,
     );
   }

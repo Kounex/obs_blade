@@ -54,14 +54,15 @@ void main() {
 
   Future<void> pumpRow(WidgetTester tester, ChatMessageEvent event) =>
       tester.pumpWidget(
-        _wrap(TwitchChatMessageRow(
-          event: event,
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
+        _wrap(
+          TwitchChatMessageRow(
+            event: event,
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ),
       );
 
-  testWidgets('a partner-channel message shows a source chip',
-      (tester) async {
+  testWidgets('a partner-channel message shows a source chip', (tester) async {
     await pumpRow(tester, _event(sourceId: 'b2', sourceName: 'Partner'));
 
     expect(find.text('#Partner'), findsOneWidget);
@@ -79,8 +80,9 @@ void main() {
     expect(find.textContaining('#'), findsNothing);
   });
 
-  testWidgets('a source id matching the viewed channel shows no chip',
-      (tester) async {
+  testWidgets('a source id matching the viewed channel shows no chip', (
+    tester,
+  ) async {
     await pumpRow(tester, _event(sourceId: 'b1', sourceName: 'Viewer'));
 
     expect(find.textContaining('#'), findsNothing);

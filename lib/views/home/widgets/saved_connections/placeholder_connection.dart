@@ -34,11 +34,7 @@ class PlaceholderConnection extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    CupertinoIcons.link,
-                    size: 36.0,
-                    color: muted,
-                  ),
+                  Icon(CupertinoIcons.link, size: 36.0, color: muted),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     'No saved connections',
@@ -49,9 +45,9 @@ class PlaceholderConnection extends StatelessWidget {
                   Text(
                     'Connect once, then save it here.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: muted,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],
               ),

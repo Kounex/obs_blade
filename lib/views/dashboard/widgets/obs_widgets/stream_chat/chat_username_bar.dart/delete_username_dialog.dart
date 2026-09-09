@@ -9,14 +9,18 @@ class DeleteUsernameDialog extends StatelessWidget {
   final Box settingsBox;
   final String username;
 
-  const DeleteUsernameDialog(
-      {super.key, required this.settingsBox, required this.username});
+  const DeleteUsernameDialog({
+    super.key,
+    required this.settingsBox,
+    required this.username,
+  });
 
   @override
   Widget build(BuildContext context) {
-    ChatType chatType = this
-        .settingsBox
-        .get(SettingsKeys.SelectedChatType.name, defaultValue: ChatType.Twitch);
+    ChatType chatType = this.settingsBox.get(
+      SettingsKeys.SelectedChatType.name,
+      defaultValue: ChatType.Twitch,
+    );
 
     return ConfirmationDialog(
       title: 'Delete ${chatType.text} Username',
@@ -25,43 +29,55 @@ class DeleteUsernameDialog extends StatelessWidget {
       isYesDestructive: true,
       onOk: (_) {
         if (chatType == ChatType.Twitch) {
-          List<String> twitchUsernames = this
-              .settingsBox
-              .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[]);
+          List<String> twitchUsernames = this.settingsBox.get(
+            SettingsKeys.TwitchUsernames.name,
+            defaultValue: <String>[],
+          );
           twitchUsernames.removeAt(twitchUsernames.indexOf(this.username));
-          this
-              .settingsBox
-              .put(SettingsKeys.TwitchUsernames.name, twitchUsernames);
-          this.settingsBox.put(SettingsKeys.SelectedTwitchUsername.name,
-              twitchUsernames.isNotEmpty ? twitchUsernames.last : null);
+          this.settingsBox.put(
+            SettingsKeys.TwitchUsernames.name,
+            twitchUsernames,
+          );
+          this.settingsBox.put(
+            SettingsKeys.SelectedTwitchUsername.name,
+            twitchUsernames.isNotEmpty ? twitchUsernames.last : null,
+          );
         } else if (chatType == ChatType.YouTube) {
-          Map<String, String> youtubeUsernames = Map<String, String>.from((this
-              .settingsBox
-              .get(SettingsKeys.YouTubeUsernames.name,
-                  defaultValue: <String, String>{})));
+          Map<String, String> youtubeUsernames = Map<String, String>.from(
+            (this.settingsBox.get(
+              SettingsKeys.YouTubeUsernames.name,
+              defaultValue: <String, String>{},
+            )),
+          );
           youtubeUsernames.remove(this.username);
-          this
-              .settingsBox
-              .put(SettingsKeys.YouTubeUsernames.name, youtubeUsernames);
           this.settingsBox.put(
-              SettingsKeys.SelectedYouTubeUsername.name,
-              youtubeUsernames.isNotEmpty
-                  ? youtubeUsernames[youtubeUsernames.keys.last]
-                  : null);
+            SettingsKeys.YouTubeUsernames.name,
+            youtubeUsernames,
+          );
+          this.settingsBox.put(
+            SettingsKeys.SelectedYouTubeUsername.name,
+            youtubeUsernames.isNotEmpty
+                ? youtubeUsernames[youtubeUsernames.keys.last]
+                : null,
+          );
         } else if (chatType == ChatType.Owncast) {
-          Map<String, String> owncastUsernames = Map<String, String>.from((this
-              .settingsBox
-              .get(SettingsKeys.OwncastUsernames.name,
-                  defaultValue: <String, String>{})));
+          Map<String, String> owncastUsernames = Map<String, String>.from(
+            (this.settingsBox.get(
+              SettingsKeys.OwncastUsernames.name,
+              defaultValue: <String, String>{},
+            )),
+          );
           owncastUsernames.remove(this.username);
-          this
-              .settingsBox
-              .put(SettingsKeys.OwncastUsernames.name, owncastUsernames);
           this.settingsBox.put(
-              SettingsKeys.SelectedOwncastUsername.name,
-              owncastUsernames.isNotEmpty
-                  ? owncastUsernames[owncastUsernames.keys.last]
-                  : null);
+            SettingsKeys.OwncastUsernames.name,
+            owncastUsernames,
+          );
+          this.settingsBox.put(
+            SettingsKeys.SelectedOwncastUsername.name,
+            owncastUsernames.isNotEmpty
+                ? owncastUsernames[owncastUsernames.keys.last]
+                : null,
+          );
         }
       },
     );

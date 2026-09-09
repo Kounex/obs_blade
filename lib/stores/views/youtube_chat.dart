@@ -113,11 +113,11 @@ abstract class _YouTubeChatStore with Store {
     YouTubeLiveChatService? chatService,
     Future<void> Function(Duration)? sleep,
     bool Function()? isProResolver,
-  })  : _authService = authService ?? YouTubeAuthService(),
-        _chatService = chatService ?? YouTubeLiveChatService(),
-        _sleep = sleep ?? Future.delayed,
-        _isProResolver = isProResolver ??
-            (() => GetIt.instance<ProStore>().isPro);
+  }) : _authService = authService ?? YouTubeAuthService(),
+       _chatService = chatService ?? YouTubeLiveChatService(),
+       _sleep = sleep ?? Future.delayed,
+       _isProResolver =
+           isProResolver ?? (() => GetIt.instance<ProStore>().isPro);
 
   Box<YouTubeAuth> get _authBox =>
       Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
@@ -188,8 +188,7 @@ abstract class _YouTubeChatStore with Store {
 
   /// Whether a YouTube Data API key resolves non-empty (BYO setting wins
   /// over the app-owned constant). Gates the whole feature.
-  bool get isConfigured =>
-      YouTubeLiveChatService.resolveApiKey().isNotEmpty;
+  bool get isConfigured => YouTubeLiveChatService.resolveApiKey().isNotEmpty;
 
   /// Reads (polling) need only the API key — no sign-in required.
   bool get canRead => this.isConfigured;
@@ -229,10 +228,9 @@ abstract class _YouTubeChatStore with Store {
   /// data management clearing the YouTube box — reset the feature even
   /// when [init] never ran for this instance.
   void _ensureAuthBoxWatcher() {
-    this._authBoxSub ??= this
-        ._authBox
-        .watch(key: YouTubeAuth.kBoxKey)
-        .listen((event) {
+    this._authBoxSub ??= this._authBox.watch(key: YouTubeAuth.kBoxKey).listen((
+      event,
+    ) {
       if (event.deleted && this.authState != YouTubeAuthState.signedOut) {
         this._resetToSignedOut();
       }
@@ -271,7 +269,8 @@ abstract class _YouTubeChatStore with Store {
           e.statusCode == 401 ||
           e.statusCode == 403) {
         await this._handleInvalidAuth(
-            'YouTube session expired — please sign in again');
+          'YouTube session expired — please sign in again',
+        );
       } else {
         GeneralHelper.advLog('YouTube token refresh on init failed — $e');
         this.authState = YouTubeAuthState.signedOut;
@@ -333,8 +332,9 @@ abstract class _YouTubeChatStore with Store {
       /// the sign-in.
       String? channelTitle;
       try {
-        channelTitle =
-            await this._authService.fetchOwnChannelTitle(token.accessToken);
+        channelTitle = await this._authService.fetchOwnChannelTitle(
+          token.accessToken,
+        );
       } catch (e) {
         GeneralHelper.advLog('YouTube channel title fetch failed — $e');
       }
@@ -437,7 +437,8 @@ abstract class _YouTubeChatStore with Store {
     final buffer = this._channelBuffers.putIfAbsent(label, _ChannelBuffer.new);
     final apiKey = YouTubeLiveChatService.resolveApiKey();
 
-    bool superseded() => flow != this._pollFlow || label != this.selectedChannelLabel;
+    bool superseded() =>
+        flow != this._pollFlow || label != this.selectedChannelLabel;
 
     if (buffer.liveChatId == null) {
       final videoId = this._selectedVideoId;
@@ -507,7 +508,8 @@ abstract class _YouTubeChatStore with Store {
           backoffMillis = kMaxBackoffMillis;
         }
         GeneralHelper.advLog(
-            'YouTube chat rate limited — backing off ${backoffMillis}ms');
+          'YouTube chat rate limited — backing off ${backoffMillis}ms',
+        );
         await this._sleep(Duration(milliseconds: backoffMillis));
         continue;
       } on YouTubeQuotaExceededException {
@@ -545,8 +547,9 @@ abstract class _YouTubeChatStore with Store {
       });
 
       if (page.offlineAt != null ||
-          page.messages
-              .any((m) => m.type == YouTubeChatMessageType.chatEnded)) {
+          page.messages.any(
+            (m) => m.type == YouTubeChatMessageType.chatEnded,
+          )) {
         runInAction(() {
           this.chatConnection = YouTubeChatConnectionState.offline;
         });
@@ -557,8 +560,9 @@ abstract class _YouTubeChatStore with Store {
       // request, so subtract the elapsed request time (floor at 0).
       final waitMillis =
           page.pollingIntervalMillis - callStopwatch.elapsedMilliseconds;
-      await this
-          ._sleep(Duration(milliseconds: waitMillis > 0 ? waitMillis : 0));
+      await this._sleep(
+        Duration(milliseconds: waitMillis > 0 ? waitMillis : 0),
+      );
     }
   }
 
@@ -592,11 +596,11 @@ abstract class _YouTubeChatStore with Store {
   @action
   void _applyTombstone(String label, YouTubeChatMessage tombstone) {
     if (!this._moderationKeyIsNew('$label:delete:${tombstone.id}')) return;
-    final index =
-        this.messages.indexWhere((message) => message.id == tombstone.id);
+    final index = this.messages.indexWhere(
+      (message) => message.id == tombstone.id,
+    );
     if (index < 0) return;
-    this.messages[index] =
-        this.messages[index].copyWith(isTombstoned: true);
+    this.messages[index] = this.messages[index].copyWith(isTombstoned: true);
   }
 
   /// `userBannedEvent` — tombstone every buffered message of the banned
@@ -624,8 +628,8 @@ abstract class _YouTubeChatStore with Store {
     this._appliedModerationOrder.addLast(key);
     while (this._appliedModerationOrder.length > _kMaxAppliedModerationKeys) {
       this._appliedModerationKeys.remove(
-            this._appliedModerationOrder.removeFirst(),
-          );
+        this._appliedModerationOrder.removeFirst(),
+      );
     }
     return true;
   }
@@ -656,7 +660,10 @@ abstract class _YouTubeChatStore with Store {
 
     this.messages.clear();
     if (label != null) {
-      final buffer = this._channelBuffers.putIfAbsent(label, _ChannelBuffer.new);
+      final buffer = this._channelBuffers.putIfAbsent(
+        label,
+        _ChannelBuffer.new,
+      );
       this.messages.addAll(buffer.messages);
       if (this._isProResolver()) {
         this.chatConnection = YouTubeChatConnectionState.connecting;
@@ -701,8 +708,9 @@ abstract class _YouTubeChatStore with Store {
     this._channelsLoaded = true;
     this.channels.addAll(this._readChannelsFromSettings());
     try {
-      final selected = Hive.box(HiveKeys.Settings.name)
-          .get(SettingsKeys.SelectedYouTubeNativeChannelId.name);
+      final selected = Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.SelectedYouTubeNativeChannelId.name);
       if (selected is String &&
           this.channels.any((channel) => channel.label == selected)) {
         this.selectedChannelLabel = selected;
@@ -807,10 +815,7 @@ abstract class _YouTubeChatStore with Store {
     this.moderationError = null;
     try {
       final token = await this._validAccessToken();
-      await this._chatService.delete(
-        accessToken: token,
-        messageId: messageId,
-      );
+      await this._chatService.delete(accessToken: token, messageId: messageId);
     } on YouTubeApiException catch (e) {
       GeneralHelper.advLog('YouTube message delete failed — $e');
       this.moderationError = e.message;
@@ -822,11 +827,11 @@ abstract class _YouTubeChatStore with Store {
     }
     final label = this.selectedChannelLabel ?? '';
     this._moderationKeyIsNew('$label:delete:$messageId');
-    final index =
-        this.messages.indexWhere((message) => message.id == messageId);
+    final index = this.messages.indexWhere(
+      (message) => message.id == messageId,
+    );
     if (index >= 0) {
-      this.messages[index] =
-          this.messages[index].copyWith(isTombstoned: true);
+      this.messages[index] = this.messages[index].copyWith(isTombstoned: true);
     }
     return true;
   }
@@ -900,8 +905,8 @@ abstract class _YouTubeChatStore with Store {
       auth
         ..accessToken = token.accessToken
         ..refreshToken = token.refreshToken ?? auth.refreshToken
-        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch +
-            token.expiresIn * 1000;
+        ..expiresAtMs =
+            DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000;
       if (token.scope.isNotEmpty) auth.scopes = token.scope;
       await auth.save();
     }

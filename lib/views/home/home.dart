@@ -23,9 +23,7 @@ import 'widgets/refresher_app_bar/refresher_app_bar.dart';
 import 'widgets/saved_connections/saved_connections.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({
-    super.key,
-  });
+  const HomeView({super.key});
 
   @override
   _HomeViewState createState() => _HomeViewState();
@@ -91,8 +89,9 @@ class _HomeViewState extends State<HomeView> {
             context: context,
             barrierDismissible: true,
             dialogWidget: const InfoDialog(
-                body:
-                    'Your connection to OBS has been lost and the app was not able to reconnect.'),
+              body:
+                  'Your connection to OBS has been lost and the app was not able to reconnect.',
+            ),
           ).then(
             (_) => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
           );
@@ -103,49 +102,52 @@ class _HomeViewState extends State<HomeView> {
     /// Once we recognize a connection attempt inside our reaction ([connectionInProgress] is true)
     /// we will check whether the connection was successfull or not and display overlays and / or
     /// route to the [DashboardView]
-    _disposers.add(mob_x
-        .reaction((_) => GetIt.instance<NetworkStore>().connectionInProgress,
-            (bool connectionInProgress) {
-      NetworkStore networkStore = GetIt.instance<NetworkStore>();
+    _disposers.add(
+      mob_x.reaction(
+        (_) => GetIt.instance<NetworkStore>().connectionInProgress,
+        (bool connectionInProgress) {
+          NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
-      if (connectionInProgress) {
-        OverlayHandler.showStatusOverlay(
-          context: context,
-          showDuration: const Duration(seconds: 5),
-          content: BaseProgressIndicator(
-            text: 'Connecting...',
-          ),
-        );
-      } else if (!connectionInProgress) {
-        if ((networkStore.connectionClodeCode ??
-                WebSocketCloseCode.UnknownReason) ==
-            WebSocketCloseCode.DontClose) {
-          // Success morph: Connecting… → check draw → Dashboard.
-          // Fire-and-forget — reaction must stay sync.
-          this._completeSuccessfulConnect();
-        }
-
-        /// Auth failures are shown on the password field in ConnectForm —
-        /// no generic overlay.
-        else if (networkStore.lastConnectionResult?.isAuthenticationFailure ==
-                true ||
-            networkStore.connectionClodeCode ==
-                WebSocketCloseCode.AuthenticationFailed) {
-          OverlayHandler.closeAnyOverlay(immediately: true);
-        } else {
-          final message = networkStore.lastConnectionResult?.userMessage ??
-              'Couldn\'t connect to a WebSocket.';
-          OverlayHandler.showStatusOverlay(
-            context: context,
-            replaceIfActive: true,
-            content: BaseResult(
-              icon: BaseResultIcon.Negative,
-              text: message,
-            ),
-          );
-        }
-      }
-    }));
+          if (connectionInProgress) {
+            OverlayHandler.showStatusOverlay(
+              context: context,
+              showDuration: const Duration(seconds: 5),
+              content: BaseProgressIndicator(text: 'Connecting...'),
+            );
+          } else if (!connectionInProgress) {
+            if ((networkStore.connectionClodeCode ??
+                    WebSocketCloseCode.UnknownReason) ==
+                WebSocketCloseCode.DontClose) {
+              // Success morph: Connecting… → check draw → Dashboard.
+              // Fire-and-forget — reaction must stay sync.
+              this._completeSuccessfulConnect();
+            }
+            /// Auth failures are shown on the password field in ConnectForm —
+            /// no generic overlay.
+            else if (networkStore
+                        .lastConnectionResult
+                        ?.isAuthenticationFailure ==
+                    true ||
+                networkStore.connectionClodeCode ==
+                    WebSocketCloseCode.AuthenticationFailed) {
+              OverlayHandler.closeAnyOverlay(immediately: true);
+            } else {
+              final message =
+                  networkStore.lastConnectionResult?.userMessage ??
+                  'Couldn\'t connect to a WebSocket.';
+              OverlayHandler.showStatusOverlay(
+                context: context,
+                replaceIfActive: true,
+                content: BaseResult(
+                  icon: BaseResultIcon.Negative,
+                  text: message,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
   }
 
   /// Replaces the connecting spinner with [BaseResult] Positive (stroke-drawn
@@ -228,17 +230,15 @@ class _HomeViewState extends State<HomeView> {
           /// for the first group and [BouncingScrollPhysics] for the second
           // physics: StylingHelper.platformAwareScrollPhysics,
           slivers: [
-            const RefresherAppBar(
-              expandedHeight: 192.0,
-            ),
+            const RefresherAppBar(expandedHeight: 192.0),
             CustomSliverList(
-
               /// Bottom rest position must clear the translucent tab bar:
               /// keeps the shared default clearance (2x bar height) and
               /// adds the full safe-area inset + margin instead of half
               /// the inset, so the last card never rests behind the bar's
               /// blur. Top side (pull-to-refresh) is untouched.
-              customBottomPadding: 2 * kBottomNavigationBarHeight +
+              customBottomPadding:
+                  2 * kBottomNavigationBarHeight +
                   MediaQuery.paddingOf(context).bottom +
                   AppSpacing.xl,
               children: const [

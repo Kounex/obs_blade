@@ -19,7 +19,8 @@ void main() {
 
   setUp(() async {
     tempDir = Directory(
-        '${Directory.systemTemp.path}/purchase_base_pro_test_${DateTime.now().microsecondsSinceEpoch}');
+      '${Directory.systemTemp.path}/purchase_base_pro_test_${DateTime.now().microsecondsSinceEpoch}',
+    );
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await harness.openAllBoxes();
@@ -44,11 +45,9 @@ void main() {
       expect(showDialog, isFalse);
     });
 
-    test('restored + explicit restore → sets BoughtPro, dialog requested',
-        () {
+    test('restored + explicit restore → sets BoughtPro, dialog requested', () {
       final showDialog = applyProPurchaseToSettings(
-        purchaseDetails:
-            fakePurchase(kProLifetimeId, PurchaseStatus.restored),
+        purchaseDetails: fakePurchase(kProLifetimeId, PurchaseStatus.restored),
         settingsBox: settingsBox(),
         explicitRestore: true,
       );

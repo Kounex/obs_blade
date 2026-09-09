@@ -21,14 +21,14 @@ import '../pro/support/fake_pro_purchase_gateway.dart';
 /// Fixed-width host: the switch sizes `double.infinity` inside the bar's
 /// right column, so it needs a bounded width in isolation.
 Widget wrap(Widget child) => MaterialApp(
-      theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
-      home: MediaQuery(
-        data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
-        child: Scaffold(
-          body: Center(child: SizedBox(width: 280.0, child: child)),
-        ),
-      ),
-    );
+  theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
+  home: MediaQuery(
+    data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
+    child: Scaffold(
+      body: Center(child: SizedBox(width: 280.0, child: child)),
+    ),
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -47,8 +47,7 @@ void main() {
     /// (the gate widgets read it through [ProStore.isPro]) and skip the
     /// cold-start restore. Native-mode tests run as Pro.
     await settingsBox().put(SettingsKeys.BoughtPro.name, true);
-    await settingsBox()
-        .put(SettingsKeys.ProColdStartRestoreDone.name, true);
+    await settingsBox().put(SettingsKeys.ProColdStartRestoreDone.name, true);
 
     proStore = ProStore(
       service: ProPurchaseService(gateway: FakeProPurchaseGateway()),
@@ -68,46 +67,69 @@ void main() {
   /// Flip the entitlement off through the real box write - the store's
   /// watcher picks it up, the next pump rebuilds the Observer
   Future<void> revokePro(WidgetTester tester) async {
-    await tester
-        .runAsync(() => settingsBox().put(SettingsKeys.BoughtPro.name, false));
+    await tester.runAsync(
+      () => settingsBox().put(SettingsKeys.BoughtPro.name, false),
+    );
     await tester.pump();
   }
 
-  testWidgets('renders nothing for platforms without a native engine',
-      (tester) async {
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Owncast)));
-    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsNothing);
+  testWidgets('renders nothing for platforms without a native engine', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        ChatEngineSwitch(
+          settingsBox: settingsBox(),
+          chatType: ChatType.Owncast,
+        ),
+      ),
+    );
+    expect(
+      find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+      findsNothing,
+    );
   });
 
   testWidgets('Twitch and YouTube show both segments', (tester) async {
     for (final chatType in [ChatType.Twitch, ChatType.YouTube]) {
-      await tester.pumpWidget(wrap(ChatEngineSwitch(
-          settingsBox: settingsBox(), chatType: chatType)));
+      await tester.pumpWidget(
+        wrap(ChatEngineSwitch(settingsBox: settingsBox(), chatType: chatType)),
+      );
 
-      expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-          findsOneWidget);
+      expect(
+        find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsOneWidget,
+      );
       expect(find.text('WebView'), findsOneWidget);
       expect(find.text('Native'), findsOneWidget);
     }
   });
 
   testWidgets('tapping a segment persists the engine', (tester) async {
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
+    await tester.pumpWidget(
+      wrap(
+        ChatEngineSwitch(settingsBox: settingsBox(), chatType: ChatType.Twitch),
+      ),
+    );
 
     await tester.tap(find.text('Native'));
     await tester.pump();
-    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
-        ChatEngine.native);
+    expect(
+      settingsBox().get(SettingsKeys.SelectedChatEngine.name),
+      ChatEngine.native,
+    );
 
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
+    await tester.pumpWidget(
+      wrap(
+        ChatEngineSwitch(settingsBox: settingsBox(), chatType: ChatType.Twitch),
+      ),
+    );
     await tester.tap(find.text('WebView'));
     await tester.pump();
-    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
-        ChatEngine.webView);
+    expect(
+      settingsBox().get(SettingsKeys.SelectedChatEngine.name),
+      ChatEngine.webView,
+    );
 
     /// The taps ran their Hive writes in the test's FakeAsync zone, and
     /// the Completers Hive created for its write queue only dispatch
@@ -125,53 +147,73 @@ void main() {
     for (var i = 0; i < 10 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
     }
     await tester.pump();
     expect(closed, isTrue);
   });
 
-  testWidgets('Pro users see no lock badge on the Native segment',
-      (tester) async {
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
+  testWidgets('Pro users see no lock badge on the Native segment', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        ChatEngineSwitch(settingsBox: settingsBox(), chatType: ChatType.Twitch),
+      ),
+    );
 
     expect(find.byIcon(JamIcons.padlock), findsNothing);
   });
 
-  testWidgets('not-Pro shows a lock badge on the Native segment',
-      (tester) async {
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
+  testWidgets('not-Pro shows a lock badge on the Native segment', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        ChatEngineSwitch(settingsBox: settingsBox(), chatType: ChatType.Twitch),
+      ),
+    );
     await revokePro(tester);
 
     expect(find.byIcon(JamIcons.padlock), findsOneWidget);
   });
 
   testWidgets(
-      'not-Pro tap on Native still switches the engine (the pane renders '
-      'the locked upsell instead)', (tester) async {
-    await tester.pumpWidget(wrap(ChatEngineSwitch(
-        settingsBox: settingsBox(), chatType: ChatType.Twitch)));
-    await revokePro(tester);
+    'not-Pro tap on Native still switches the engine (the pane renders '
+    'the locked upsell instead)',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          ChatEngineSwitch(
+            settingsBox: settingsBox(),
+            chatType: ChatType.Twitch,
+          ),
+        ),
+      );
+      await revokePro(tester);
 
-    await tester.tap(find.text('Native'));
-    await tester.pump();
-
-    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
-        ChatEngine.native);
-
-    /// The tap ran its Hive write in the test's FakeAsync zone - close
-    /// Hive from inside the zone (same dance as the 'tapping a segment
-    /// persists the engine' test above)
-    var closed = false;
-    unawaited(harness.close().then((_) => closed = true));
-    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.tap(find.text('Native'));
       await tester.pump();
-      await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    }
-    await tester.pump();
-    expect(closed, isTrue);
-  });
+
+      expect(
+        settingsBox().get(SettingsKeys.SelectedChatEngine.name),
+        ChatEngine.native,
+      );
+
+      /// The tap ran its Hive write in the test's FakeAsync zone - close
+      /// Hive from inside the zone (same dance as the 'tapping a segment
+      /// persists the engine' test above)
+      var closed = false;
+      unawaited(harness.close().then((_) => closed = true));
+      for (var i = 0; i < 10 && !closed; i++) {
+        await tester.pump();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+      }
+      await tester.pump();
+      expect(closed, isTrue);
+    },
+  );
 }

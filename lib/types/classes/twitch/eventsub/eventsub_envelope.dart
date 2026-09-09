@@ -26,6 +26,7 @@ abstract class EventSubMetadata with _$EventSubMetadata {
   const factory EventSubMetadata({
     required String messageId,
     required String messageType,
+
     /// Wire clock for this envelope — used as the chat message's
     /// [ChatMessageEvent.receivedAt] (the event payload itself has no time).
     @JsonKey(fromJson: _messageTimestampFromJson) DateTime? messageTimestamp,

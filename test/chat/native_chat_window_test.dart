@@ -15,23 +15,23 @@ NativeChatWindow buildWindow({
   VoidCallback? onLogout,
   VoidCallback? onConnect,
   String? selfUserId,
-}) =>
-    NativeChatWindow(
-      chatType: ChatType.Twitch,
-      status: status,
-      statusDetail: statusDetail,
-      accountLabel: accountLabel,
-      connectedAt: connectedAt,
-      onRetry: onRetry,
-      onLogout: onLogout,
-      onConnect: onConnect,
-      selfUserId: selfUserId,
-      child: const Center(child: Text('chat content')),
-    );
+}) => NativeChatWindow(
+  chatType: ChatType.Twitch,
+  status: status,
+  statusDetail: statusDetail,
+  accountLabel: accountLabel,
+  connectedAt: connectedAt,
+  onRetry: onRetry,
+  onLogout: onLogout,
+  onConnect: onConnect,
+  selfUserId: selfUserId,
+  child: const Center(child: Text('chat content')),
+);
 
 void main() {
-  testWidgets('renders window label, child and per-status labels',
-      (tester) async {
+  testWidgets('renders window label, child and per-status labels', (
+    tester,
+  ) async {
     for (final (status, label) in [
       (NativeChatConnectionStatus.offline, 'offline'),
       (NativeChatConnectionStatus.connecting, 'connecting…'),
@@ -46,8 +46,9 @@ void main() {
     }
   });
 
-  testWidgets('LIVE/Mod chips sit after the title, before connection status',
-      (tester) async {
+  testWidgets('LIVE/Mod chips sit after the title, before connection status', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(
         NativeChatWindow(
@@ -62,7 +63,9 @@ void main() {
     );
 
     final titleX = tester.getTopLeft(find.text('Stream Chat')).dx;
-    final liveX = tester.getTopLeft(find.byKey(const Key('chat-header-live'))).dx;
+    final liveX = tester
+        .getTopLeft(find.byKey(const Key('chat-header-live')))
+        .dx;
     final modX = tester.getTopLeft(find.byKey(const Key('chat-header-mod'))).dx;
     final statusX = tester.getTopLeft(find.text('connected')).dx;
 
@@ -85,8 +88,9 @@ void main() {
     });
   });
 
-  testWidgets('offline without selfUserId keeps the connect-only sheet',
-      (tester) async {
+  testWidgets('offline without selfUserId keeps the connect-only sheet', (
+    tester,
+  ) async {
     var connected = false;
     await tester.pumpWidget(
       wrap(
@@ -107,8 +111,9 @@ void main() {
     expect(connected, isTrue);
   });
 
-  testWidgets('failed without selfUserId keeps the connection sheet',
-      (tester) async {
+  testWidgets('failed without selfUserId keeps the connection sheet', (
+    tester,
+  ) async {
     var retried = false;
     await tester.pumpWidget(
       wrap(
@@ -130,8 +135,9 @@ void main() {
     expect(retried, isTrue);
   });
 
-  testWidgets('live with selfUserId routes through the merged card entry',
-      (tester) async {
+  testWidgets('live with selfUserId routes through the merged card entry', (
+    tester,
+  ) async {
     var mergedCard = false;
     await tester.pumpWidget(
       wrap(
@@ -154,10 +160,7 @@ void main() {
     test('m:ss under an hour', () {
       expect(formatChatUptime(Duration.zero), '0:00');
       expect(formatChatUptime(const Duration(seconds: 5)), '0:05');
-      expect(
-        formatChatUptime(const Duration(minutes: 1, seconds: 5)),
-        '1:05',
-      );
+      expect(formatChatUptime(const Duration(minutes: 1, seconds: 5)), '1:05');
       expect(
         formatChatUptime(const Duration(minutes: 59, seconds: 59)),
         '59:59',
@@ -167,16 +170,15 @@ void main() {
     test('h:mm:ss beyond an hour', () {
       expect(formatChatUptime(const Duration(hours: 1)), '1:00:00');
       expect(
-        formatChatUptime(
-          const Duration(hours: 1, minutes: 2, seconds: 5),
-        ),
+        formatChatUptime(const Duration(hours: 1, minutes: 2, seconds: 5)),
         '1:02:05',
       );
     });
   });
 
-  testWidgets('renders the input slot below the content when provided',
-      (tester) async {
+  testWidgets('renders the input slot below the content when provided', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(
         NativeChatWindow(

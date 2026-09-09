@@ -58,21 +58,21 @@ void showChatUserCardSheet(
   required String userId,
   ChatUserCardConnection? connection,
   TwitchUserService? userService,
-}) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.85,
-      builder: (_) => ChatUserCardSheet(
-        userId: userId,
-        connection: connection,
-        userService: userService ??
-            (GetIt.instance.isRegistered<TwitchUserService>()
-                ? GetIt.instance<TwitchUserService>()
-                : TwitchUserService()),
-      ),
-    );
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.85,
+  builder: (_) => ChatUserCardSheet(
+    userId: userId,
+    connection: connection,
+    userService:
+        userService ??
+        (GetIt.instance.isRegistered<TwitchUserService>()
+            ? GetIt.instance<TwitchUserService>()
+            : TwitchUserService()),
+  ),
+);
 
 /// Twitch-style viewer card: avatar, identity, Helix facts, recent chat.
 class ChatUserCardSheet extends StatefulWidget {
@@ -120,8 +120,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
 
   Future<void> _loadFacts() async {
     try {
-      final auth =
-          Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).get(TwitchAuth.kBoxKey);
+      final auth = Hive.box<TwitchAuth>(
+        HiveKeys.TwitchAuth.name,
+      ).get(TwitchAuth.kBoxKey);
       if (auth == null) return;
 
       final service = this.widget.userService;
@@ -170,8 +171,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
       Future<List<TwitchWarning>?> warningsFuture =
           Future<List<TwitchWarning>?>.value(null);
       if (!this._isSelf && broadcasterId != null) {
-        warningsFuture =
-            this._store.fetchUserWarnings(this.widget.userId);
+        warningsFuture = this._store.fetchUserWarnings(this.widget.userId);
       }
 
       final results = await Future.wait<Object?>([
@@ -196,7 +196,8 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   }
 
   Color _displayNameColor(BuildContext context) {
-    final hex = this._store.newestChatterColor(this.widget.userId) ??
+    final hex =
+        this._store.newestChatterColor(this.widget.userId) ??
         this._newestBuffered?.color;
     if (hex != null && hex.length == 7) {
       final value = int.tryParse(hex.substring(1), radix: 16);
@@ -229,8 +230,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     return 'Tier ${value ~/ 1000}';
   }
 
-  String _monthsLabel(int months) =>
-      months == 1 ? '1 month' : '$months months';
+  String _monthsLabel(int months) => months == 1 ? '1 month' : '$months months';
 
   @override
   Widget build(BuildContext context) {
@@ -293,10 +293,10 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
       children: [
         CircleAvatar(
           radius: 28.0,
-          backgroundColor:
-              Theme.of(context).colorScheme.surfaceContainerHighest,
-          backgroundImage:
-              avatarUrl == null ? null : NetworkImage(avatarUrl),
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest,
+          backgroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl),
           child: avatarUrl == null
               ? Icon(
                   CupertinoIcons.person_fill,
@@ -312,9 +312,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
               Text(
                 this._displayName(),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: this._displayNameColor(context),
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: this._displayNameColor(context),
+                ),
               ),
               if (this._loginLabel() case final login?)
                 Padding(
@@ -387,37 +387,46 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
 
     final rows = <Widget>[];
     if (this._helixUser?.createdAt case final created?) {
-      rows.add(this._factRow(
-        context,
-        icon: CupertinoIcons.calendar,
-        label: 'Account created on ${this._formatFactDate(created)}',
-      ));
+      rows.add(
+        this._factRow(
+          context,
+          icon: CupertinoIcons.calendar,
+          label: 'Account created on ${this._formatFactDate(created)}',
+        ),
+      );
     }
     if (this._followedAt case final followed?) {
-      rows.add(this._factRow(
-        context,
-        icon: CupertinoIcons.heart,
-        label: 'Following since ${this._formatFactDate(followed)}',
-      ));
+      rows.add(
+        this._factRow(
+          context,
+          icon: CupertinoIcons.heart,
+          label: 'Following since ${this._formatFactDate(followed)}',
+        ),
+      );
     }
     if (this._selfSub case final sub?) {
-      rows.add(this._factRow(
-        context,
-        icon: CupertinoIcons.star_fill,
-        label:
-            '${this._tierLabel(sub.tier)} — Subscribed for ${this._monthsLabel(sub.months)}',
-      ));
+      rows.add(
+        this._factRow(
+          context,
+          icon: CupertinoIcons.star_fill,
+          label:
+              '${this._tierLabel(sub.tier)} — Subscribed for ${this._monthsLabel(sub.months)}',
+        ),
+      );
     }
     if (this._warnings case final warnings?) {
       for (final warning in warnings.take(3)) {
         final when = warning.warnedAt;
-        rows.add(this._factRow(
-          context,
-          icon: CupertinoIcons.exclamationmark_triangle,
-          label: 'Warned'
-              '${when != null ? ' ${this._formatFactDate(when)}' : ''}'
-              '${warning.reason.isNotEmpty ? ' — ${warning.reason}' : ''}',
-        ));
+        rows.add(
+          this._factRow(
+            context,
+            icon: CupertinoIcons.exclamationmark_triangle,
+            label:
+                'Warned'
+                '${when != null ? ' ${this._formatFactDate(when)}' : ''}'
+                '${warning.reason.isNotEmpty ? ' — ${warning.reason}' : ''}',
+          ),
+        );
       }
     }
 
@@ -438,34 +447,33 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     BuildContext context, {
     required IconData icon,
     required String label,
-  }) =>
-      Row(
-        children: [
-          Icon(icon, size: 16.0, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
-          ),
-        ],
-      );
+  }) => Row(
+    children: [
+      Icon(icon, size: 16.0, color: Theme.of(context).colorScheme.primary),
+      const SizedBox(width: AppSpacing.sm),
+      Expanded(
+        child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ),
+    ],
+  );
 
   Widget _liveDivider(BuildContext context) => Row(
-        children: [
-          Expanded(child: nativeChatHairline(context)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            child: Text(
-              'LIVE',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: kChatViewerCountColor,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                  ),
-            ),
+    children: [
+      Expanded(child: nativeChatHairline(context)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        child: Text(
+          'LIVE',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: kChatViewerCountColor,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.6,
           ),
-          Expanded(child: nativeChatHairline(context)),
-        ],
-      );
+        ),
+      ),
+      Expanded(child: nativeChatHairline(context)),
+    ],
+  );
 
   Widget _connectionFooter(
     BuildContext context,
@@ -473,8 +481,8 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   ) {
     final degraded =
         connection.status == NativeChatConnectionStatus.connecting ||
-            connection.status == NativeChatConnectionStatus.reconnecting ||
-            connection.status == NativeChatConnectionStatus.failed;
+        connection.status == NativeChatConnectionStatus.reconnecting ||
+        connection.status == NativeChatConnectionStatus.failed;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,10 +500,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             const SizedBox(width: AppSpacing.xs),
             Text(
               connection.statusLabel,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: connection.statusColor),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: connection.statusColor),
             ),
           ],
         ),
@@ -561,10 +568,10 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   }) {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
-                AppStatusColors.standard)
-            .unreachable
+                  AppStatusColors.standard)
+              .unreachable
         : Theme.of(context).textTheme.bodyMedium?.color ??
-            CupertinoColors.label;
+              CupertinoColors.label;
     return Pressable(
       haptic: true,
       onTap: onTap == null
@@ -579,8 +586,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: BoxDecoration(
-          color:
-              StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+          color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -593,10 +599,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             const SizedBox(width: AppSpacing.sm),
             Text(
               label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: color),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: color),
             ),
           ],
         ),
@@ -617,8 +622,7 @@ class _ChatUserCardUptimeLine extends StatefulWidget {
 
 class _ChatUserCardUptimeLineState extends State<_ChatUserCardUptimeLine> {
   late final Timer _ticker;
-  late Duration _uptime =
-      DateTime.now().difference(this.widget.connectedAt);
+  late Duration _uptime = DateTime.now().difference(this.widget.connectedAt);
 
   @override
   void initState() {
@@ -638,7 +642,7 @@ class _ChatUserCardUptimeLineState extends State<_ChatUserCardUptimeLine> {
 
   @override
   Widget build(BuildContext context) => Text(
-        'Connected for ${formatChatUptime(this._uptime)}',
-        style: Theme.of(context).textTheme.bodySmall,
-      );
+    'Connected for ${formatChatUptime(this._uptime)}',
+    style: Theme.of(context).textTheme.bodySmall,
+  );
 }

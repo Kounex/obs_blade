@@ -12,24 +12,18 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 class TwitchBadgeService {
   final http.Client _client;
 
-  TwitchBadgeService({http.Client? client})
-      : _client = client ?? http.Client();
+  TwitchBadgeService({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<List<TwitchBadgeSet>> fetchGlobalBadges(String accessToken) =>
-      this._fetch(
-        Uri.parse('$kTwitchHelixBase/chat/badges/global'),
-        accessToken,
-      );
+  Future<List<TwitchBadgeSet>> fetchGlobalBadges(String accessToken) => this
+      ._fetch(Uri.parse('$kTwitchHelixBase/chat/badges/global'), accessToken);
 
   Future<List<TwitchBadgeSet>> fetchChannelBadges(
     String accessToken,
     String broadcasterId,
-  ) =>
-      this._fetch(
-        Uri.parse(
-            '$kTwitchHelixBase/chat/badges?broadcaster_id=$broadcasterId'),
-        accessToken,
-      );
+  ) => this._fetch(
+    Uri.parse('$kTwitchHelixBase/chat/badges?broadcaster_id=$broadcasterId'),
+    accessToken,
+  );
 
   Future<List<TwitchBadgeSet>> _fetch(Uri uri, String accessToken) async {
     final response = await this._client.get(
@@ -46,7 +40,8 @@ class TwitchBadgeService {
     final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
     if (data is! List) {
       throw const TwitchAuthException(
-          'Fetching Twitch chat badges returned no data');
+        'Fetching Twitch chat badges returned no data',
+      );
     }
     return [
       for (final set in data)

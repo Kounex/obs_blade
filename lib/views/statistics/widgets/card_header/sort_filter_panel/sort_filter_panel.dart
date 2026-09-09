@@ -18,9 +18,7 @@ import 'order_row.dart';
 import 'statistics_date_range.dart';
 
 class SortFilterPanel extends StatelessWidget {
-  const SortFilterPanel({
-    super.key,
-  });
+  const SortFilterPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,17 +52,17 @@ class SortFilterPanel extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: StylingHelper.lightenDarkenColor(
-                          Theme.of(context).cardColor, 8),
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(AppRadius.md)),
+                        Theme.of(context).cardColor,
+                        8,
+                      ),
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(AppRadius.md),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _PanelSection(
-                          label: 'Sort',
-                          child: OrderRow(),
-                        ),
+                        const _PanelSection(label: 'Sort', child: OrderRow()),
                         const _PanelSection(
                           label: 'Filter',
                           child: Column(
@@ -93,14 +91,11 @@ class SortFilterPanel extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Expanded(
-                              child: ExcludeUnnamedCheckbox(),
-                            ),
+                            const Expanded(child: ExcludeUnnamedCheckbox()),
                             BaseButton(
                               text: 'Default',
-                              onPressed: () =>
-                                  GetIt.instance<StatisticsStore>()
-                                      .setDefaults(),
+                              onPressed: () => GetIt.instance<StatisticsStore>()
+                                  .setDefaults(),
                             ),
                           ],
                         ),
@@ -123,10 +118,7 @@ class _PanelSection extends StatelessWidget {
   final String label;
   final Widget child;
 
-  const _PanelSection({
-    required this.label,
-    required this.child,
-  });
+  const _PanelSection({required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -140,10 +132,10 @@ class _PanelSection extends StatelessWidget {
             child: Text(
               this.label.toUpperCase(),
               style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                    color: Theme.of(context)
-                        .extension<AppTextColors>()!
-                        .textTertiary,
-                  ),
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.textTertiary,
+              ),
             ),
           ),
           this.child,

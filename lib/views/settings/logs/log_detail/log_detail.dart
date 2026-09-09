@@ -26,14 +26,15 @@ import '../../../../utils/modal_handler.dart';
 import 'widgets/log_entry.dart';
 
 class LogDetailView extends StatelessWidget {
-  const LogDetailView({
-    super.key,
-  });
+  const LogDetailView({super.key});
 
   Future<File?> _createLogFile(
-      List<Map<String, String>> jsonLogs, int timestampMS) async {
+    List<Map<String, String>> jsonLogs,
+    int timestampMS,
+  ) async {
     File logFile = File(
-        '${(await Directory.systemTemp.createTemp()).path}/${timestampMS.millisecondsToFileNameDate()}_obs_logs.json');
+      '${(await Directory.systemTemp.createTemp()).path}/${timestampMS.millisecondsToFileNameDate()}_obs_logs.json',
+    );
 
     try {
       logFile = await logFile.writeAsString(jsonEncode(jsonLogs));
@@ -59,12 +60,15 @@ class LogDetailView extends StatelessWidget {
   }
 
   Future<void> _createLogFileAndExport(
-      Map<String, List<AppLog>> mergedLogs) async {
+    Map<String, List<AppLog>> mergedLogs,
+  ) async {
     List<Map<String, String>> jsonLogs = [];
 
     for (var dateLog in mergedLogs.entries) {
-      Map<String, String> logEntry =
-          _addLogMetaData(dateLog.key, dateLog.value.first);
+      Map<String, String> logEntry = _addLogMetaData(
+        dateLog.key,
+        dateLog.value.first,
+      );
 
       for (var log in dateLog.value) {
         if (log.level.name != logEntry['level']) {
@@ -74,20 +78,23 @@ class LogDetailView extends StatelessWidget {
 
         logEntry['entry'] =
             (logEntry['entry'] != null ? '${logEntry['entry']!}\n' : '') +
-                log.entry +
-                (log.stackTrace != null ? '\n${log.stackTrace}' : '');
+            log.entry +
+            (log.stackTrace != null ? '\n${log.stackTrace}' : '');
       }
 
       jsonLogs.add(logEntry);
     }
 
     File? logFile = await _createLogFile(
-        jsonLogs, mergedLogs.values.first.first.timestampMS);
+      jsonLogs,
+      mergedLogs.values.first.first.timestampMS,
+    );
 
     if (logFile != null) {
       try {
-        await Share.shareXFiles([XFile(logFile.path)],
-            subject: 'OBS Blade Log');
+        await Share.shareXFiles([
+          XFile(logFile.path),
+        ], subject: 'OBS Blade Log');
       } catch (e) {
         GeneralHelper.advLog(
           'Unable to share log file!\n$e',
@@ -110,19 +117,20 @@ class LogDetailView extends StatelessWidget {
           builder: (context) {
             Map<String, List<AppLog>> mergedLogs = {};
 
-            List<AppLog>.from(appLogBox.values)
-                .reversed
-                .where((log) =>
-                    (logsStore.logLevel != null
-                        ? log.level == logsStore.logLevel
-                        : true) &&
-                    log.timestampMS.millisecondsSameDay(dateMS))
+            List<AppLog>.from(appLogBox.values).reversed
+                .where(
+                  (log) =>
+                      (logsStore.logLevel != null
+                          ? log.level == logsStore.logLevel
+                          : true) &&
+                      log.timestampMS.millisecondsSameDay(dateMS),
+                )
                 .forEach(
                   (log) => mergedLogs
                       .putIfAbsent(
-                          log.timestampMS
-                              .millisecondsToFormattedTimeString(true),
-                          () => [])
+                        log.timestampMS.millisecondsToFormattedTimeString(true),
+                        () => [],
+                      )
                       .add(log),
                 );
 
@@ -145,21 +153,22 @@ class LogDetailView extends StatelessWidget {
                       ModalHandler.showBaseDialog(
                         context: context,
                         dialogWidget: ConfirmationDialog(
-                            title: 'Delete Logs',
-                            body:
-                                'Are you sure you want to delete all logs listed here? This action can\'t be undone!',
-                            isYesDestructive: true,
-                            onOk: (_) {
-                              for (var logList in mergedLogs.values) {
-                                for (var log in logList) {
-                                  log.isInBox ? log.delete() : null;
-                                }
+                          title: 'Delete Logs',
+                          body:
+                              'Are you sure you want to delete all logs listed here? This action can\'t be undone!',
+                          isYesDestructive: true,
+                          onOk: (_) {
+                            for (var logList in mergedLogs.values) {
+                              for (var log in logList) {
+                                log.isInBox ? log.delete() : null;
                               }
-                              Navigator.of(context).pop();
-                            }),
+                            }
+                            Navigator.of(context).pop();
+                          },
+                        ),
                       );
                     },
-                  )
+                  ),
                 ],
               ),
               listViewChildren: [
@@ -169,8 +178,9 @@ class LogDetailView extends StatelessWidget {
                   index: 0,
                   child: Center(
                     child: ConstrainedBox(
-                      constraints:
-                          const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+                      constraints: const BoxConstraints(
+                        maxWidth: kBaseCardMaxWidth,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16.0),
                         child: Align(

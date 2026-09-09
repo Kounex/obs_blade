@@ -14,23 +14,23 @@ NativeChatInput buildInput({
   Widget? contextStrip,
   Future<bool> Function(String)? onSend,
   VoidCallback? onRelogin,
-}) =>
-    NativeChatInput(
-      controller: controller,
-      focusNode: focusNode,
-      leading: leading,
-      contextStrip: contextStrip,
-      canSend: canSend,
-      inFlight: inFlight,
-      errorText: errorText,
-      accentColor: Colors.purple,
-      onSend: onSend ?? (_) async => true,
-      onRelogin: onRelogin ?? () {},
-    );
+}) => NativeChatInput(
+  controller: controller,
+  focusNode: focusNode,
+  leading: leading,
+  contextStrip: contextStrip,
+  canSend: canSend,
+  inFlight: inFlight,
+  errorText: errorText,
+  accentColor: Colors.purple,
+  onSend: onSend ?? (_) async => true,
+  onRelogin: onRelogin ?? () {},
+);
 
 void main() {
-  testWidgets('ready state renders the field; read-only the lock strip',
-      (tester) async {
+  testWidgets('ready state renders the field; read-only the lock strip', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap(buildInput()));
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Logged in read-only'), findsNothing);
@@ -40,15 +40,17 @@ void main() {
     expect(find.text('Logged in read-only'), findsOneWidget);
   });
 
-  testWidgets('contextStrip shows in the ready state, not on the lock strip',
-      (tester) async {
+  testWidgets('contextStrip shows in the ready state, not on the lock strip', (
+    tester,
+  ) async {
     const strip = Text('strip-marker');
 
     await tester.pumpWidget(wrap(buildInput(contextStrip: strip)));
     expect(find.text('strip-marker'), findsOneWidget);
 
-    await tester
-        .pumpWidget(wrap(buildInput(canSend: false, contextStrip: strip)));
+    await tester.pumpWidget(
+      wrap(buildInput(canSend: false, contextStrip: strip)),
+    );
     expect(find.text('strip-marker'), findsNothing);
     expect(find.text('Logged in read-only'), findsOneWidget);
   });
@@ -63,8 +65,9 @@ void main() {
     expect(relogin, isTrue);
   });
 
-  testWidgets('send submits trimmed text and clears on success',
-      (tester) async {
+  testWidgets('send submits trimmed text and clears on success', (
+    tester,
+  ) async {
     String? sent;
     await tester.pumpWidget(
       wrap(
@@ -89,9 +92,7 @@ void main() {
   });
 
   testWidgets('failed send keeps the text', (tester) async {
-    await tester.pumpWidget(
-      wrap(buildInput(onSend: (_) async => false)),
-    );
+    await tester.pumpWidget(wrap(buildInput(onSend: (_) async => false)));
 
     await tester.enterText(find.byType(TextField), 'keep me');
     await tester.testTextInput.receiveAction(TextInputAction.send);
@@ -106,10 +107,14 @@ void main() {
   testWidgets('empty submit never calls onSend', (tester) async {
     var calls = 0;
     await tester.pumpWidget(
-      wrap(buildInput(onSend: (_) async {
-        calls++;
-        return true;
-      })),
+      wrap(
+        buildInput(
+          onSend: (_) async {
+            calls++;
+            return true;
+          },
+        ),
+      ),
     );
 
     await tester.enterText(find.byType(TextField), '   ');
@@ -119,8 +124,9 @@ void main() {
     expect(calls, 0);
   });
 
-  testWidgets('inFlight disables the field and the send button',
-      (tester) async {
+  testWidgets('inFlight disables the field and the send button', (
+    tester,
+  ) async {
     var calls = 0;
     await tester.pumpWidget(
       wrap(
@@ -134,10 +140,7 @@ void main() {
       ),
     );
 
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).enabled,
-      isFalse,
-    );
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
 
     await tester.tap(find.byType(NativeChatInput));
     await tester.pump();
@@ -161,8 +164,9 @@ void main() {
     expect(field.maxLines, 5);
   });
 
-  testWidgets('uses an external controller and never disposes it',
-      (tester) async {
+  testWidgets('uses an external controller and never disposes it', (
+    tester,
+  ) async {
     final controller = TextEditingController(text: 'hello');
     await tester.pumpWidget(wrap(buildInput(controller: controller)));
 
@@ -173,13 +177,15 @@ void main() {
 
     /// Unmount the dock — an external controller must survive (an
     /// internal one is disposed with the state).
-    await tester
-        .pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: SizedBox())),
+    );
     expect(() => controller.text = 'still alive', returnsNormally);
   });
 
-  testWidgets('clear-on-success works with an external controller',
-      (tester) async {
+  testWidgets('clear-on-success works with an external controller', (
+    tester,
+  ) async {
     final controller = TextEditingController();
     await tester.pumpWidget(wrap(buildInput(controller: controller)));
 

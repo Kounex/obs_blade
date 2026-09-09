@@ -35,20 +35,18 @@ class StatTile extends StatelessWidget {
             Text(
               this.value,
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    color: this.valueColor,
-                    fontFeatures: const [
-                      FontFeature.tabularFigures(),
-                    ],
-                  ),
+                color: this.valueColor,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
             if (this.unit != null)
               Padding(
                 padding: const EdgeInsets.only(left: AppSpacing.xs),
                 child: Text(
                   this.unit!.trim(),
-                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall!.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
           ],
@@ -57,10 +55,9 @@ class StatTile extends StatelessWidget {
         Text(
           this.label.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                /// Stat keys sit at the dim text level (token-delta §2.1)
-                color:
-                    Theme.of(context).extension<AppTextColors>()!.textSecondary,
-              ),
+            /// Stat keys sit at the dim text level (token-delta §2.1)
+            color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
+          ),
         ),
       ],
     );

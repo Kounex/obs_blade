@@ -13,10 +13,7 @@ class CustomValidationTextEditingController extends TextEditingController {
   /// the error text which should be displayed
   final String? Function(String?)? check;
 
-  CustomValidationTextEditingController({
-    this.check,
-    super.text,
-  });
+  CustomValidationTextEditingController({this.check, super.text});
 
   bool get isValid {
     this.submit();
@@ -98,8 +95,9 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
   void initState() {
     _textEditingListener = () {
       if (this.widget.controller.submitted && _validationText == null) {
-        String? tempVal =
-            this.widget.controller.check?.call(this.widget.controller.text);
+        String? tempVal = this.widget.controller.check?.call(
+          this.widget.controller.text,
+        );
         if (tempVal != _validationText) {
           setState(() => _validationText = tempVal);
         }
@@ -142,9 +140,7 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
     }
 
     if (this.widget.keyboardType == TextInputType.number) {
-      return [
-        FilteringTextInputFormatter.digitsOnly,
-      ];
+      return [FilteringTextInputFormatter.digitsOnly];
     }
 
     if (this.widget.keyboardType ==
@@ -164,11 +160,58 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
       children: [
         switch (this.widget.platform ?? Theme.of(context).platform) {
           TargetPlatform.iOS || TargetPlatform.macOS => CupertinoTextField(
+            focusNode: this.widget.focusNode,
+            controller: this.widget.controller,
+            style: this.widget.style,
+            cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
+            placeholder: this.widget.placeholder,
+            keyboardType: this.widget.keyboardType,
+            inputFormatters: _textInputFormatter(),
+            minLines: this.widget.minLines,
+            maxLines: this.widget.maxLines ?? this.widget.minLines,
+            autocorrect: this.widget.autocorrect,
+            obscureText: this.widget.obscureText,
+            enabled: this.widget.enabled,
+            readOnly: this.widget.readOnly,
+            prefix: this.widget.prefix,
+            suffix: this.widget.suffix ?? this.widget.suffixIcon,
+            onChanged: this.widget.onChanged,
+          ),
+          _ => Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: TextFormField(
               focusNode: this.widget.focusNode,
               controller: this.widget.controller,
               style: this.widget.style,
               cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
-              placeholder: this.widget.placeholder,
+              decoration: InputDecoration(
+                hintText: this.widget.placeholder,
+                labelText: this.widget.labelText,
+                prefix: this.widget.prefix,
+                suffix: this.widget.suffix,
+                suffixIcon: this.widget.suffixIcon,
+                enabledBorder: _validationText != null
+                    ? UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    : null,
+                focusedBorder: _validationText != null
+                    ? UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    : null,
+                border: _validationText != null
+                    ? UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    : null,
+              ),
               keyboardType: this.widget.keyboardType,
               inputFormatters: _textInputFormatter(),
               minLines: this.widget.minLines,
@@ -177,53 +220,9 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
               obscureText: this.widget.obscureText,
               enabled: this.widget.enabled,
               readOnly: this.widget.readOnly,
-              prefix: this.widget.prefix,
-              suffix: this.widget.suffix ?? this.widget.suffixIcon,
               onChanged: this.widget.onChanged,
             ),
-          _ => Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: TextFormField(
-                focusNode: this.widget.focusNode,
-                controller: this.widget.controller,
-                style: this.widget.style,
-                cursorColor: Theme.of(context).textSelectionTheme.cursorColor,
-                decoration: InputDecoration(
-                  hintText: this.widget.placeholder,
-                  labelText: this.widget.labelText,
-                  prefix: this.widget.prefix,
-                  suffix: this.widget.suffix,
-                  suffixIcon: this.widget.suffixIcon,
-                  enabledBorder: _validationText != null
-                      ? UnderlineInputBorder(
-                          borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.error),
-                        )
-                      : null,
-                  focusedBorder: _validationText != null
-                      ? UnderlineInputBorder(
-                          borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.error),
-                        )
-                      : null,
-                  border: _validationText != null
-                      ? UnderlineInputBorder(
-                          borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.error),
-                        )
-                      : null,
-                ),
-                keyboardType: this.widget.keyboardType,
-                inputFormatters: _textInputFormatter(),
-                minLines: this.widget.minLines,
-                maxLines: this.widget.maxLines ?? this.widget.minLines,
-                autocorrect: this.widget.autocorrect,
-                obscureText: this.widget.obscureText,
-                enabled: this.widget.enabled,
-                readOnly: this.widget.readOnly,
-                onChanged: this.widget.onChanged,
-              ),
-            ),
+          ),
         },
         this.widget.bottom ?? const SizedBox(),
         ...[
@@ -240,8 +239,8 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
                   child: Text(
                     _validationText ?? '',
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: CupertinoColors.destructiveRed,
-                        ),
+                      color: CupertinoColors.destructiveRed,
+                    ),
                     // style: const TextStyle(
                     //   color: CupertinoColors.destructiveRed,
                     // ),

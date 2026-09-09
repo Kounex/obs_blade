@@ -17,8 +17,8 @@ class ScrollRefreshIcon extends StatefulWidget {
     super.key,
     required expandedBarHeight,
     required this.currentBarHeight,
-  })  : expandedBarHeight = expandedBarHeight + kRefresherAppBarHeight,
-        super();
+  }) : expandedBarHeight = expandedBarHeight + kRefresherAppBarHeight,
+       super();
 
   @override
   _ScrollRefreshIconState createState() => _ScrollRefreshIconState();
@@ -47,16 +47,18 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
   }
 
   double _getRefreshOpacity(double barStretchOffset, double currentBarHeight) {
-    double opacity = pow(
-            1.4,
-            0.2 * (currentBarHeight - this.widget.expandedBarHeight) -
-                (barStretchOffset / 6)) -
+    double opacity =
+        pow(
+          1.4,
+          0.2 * (currentBarHeight - this.widget.expandedBarHeight) -
+              (barStretchOffset / 6),
+        ) -
         0.1;
     return opacity > 1.0
         ? 1.0
         : opacity < 0.0
-            ? 0.0
-            : opacity;
+        ? 0.0
+        : opacity;
   }
 
   @override
@@ -85,13 +87,12 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     return Transform.translate(
       /// [FlexibleSpaceBar] parks the title at the bottom — lift the
       /// indicator to the vertical midpoint of the expanded bar.
-      offset: Offset(
-        0.0,
-        -((this.widget.expandedBarHeight / 2.0) - 16.0),
-      ),
+      offset: Offset(0.0, -((this.widget.expandedBarHeight / 2.0) - 16.0)),
       child: Opacity(
         opacity: _getRefreshOpacity(
-            barStretchOffset, this.widget.currentBarHeight),
+          barStretchOffset,
+          this.widget.currentBarHeight,
+        ),
         child: Container(
           width: 32.0,
           height: 32.0,
@@ -101,10 +102,8 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
           ),
           child: AnimatedBuilder(
             animation: _animController,
-            builder: (context, child) => ScaleTransition(
-              scale: _scaleAnimation,
-              child: child,
-            ),
+            builder: (context, child) =>
+                ScaleTransition(scale: _scaleAnimation, child: child),
             child: Icon(
               Icons.arrow_downward,
               color: StylingHelper.surroundingAwareAccent(

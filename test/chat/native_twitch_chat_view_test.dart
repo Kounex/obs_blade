@@ -69,59 +69,57 @@ ChatMessageEvent mentionEvent({
   required String author,
   required String mentionedUserId,
   required String mentionText,
-}) =>
-    ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: id,
-      chatterUserLogin: author.toLowerCase(),
-      chatterUserName: author,
-      messageId: id,
-      message: ChatMessageText(
-        text: '$mentionText hi',
-        fragments: [
-          ChatMessageFragment(
-            type: 'mention',
-            text: mentionText,
-            mention: ChatFragmentMention(
-              userId: mentionedUserId,
-              userLogin: mentionText.substring(1).toLowerCase(),
-              userName: mentionText.substring(1),
-            ),
-          ),
-          const ChatMessageFragment(type: 'text', text: ' hi'),
-        ],
+}) => ChatMessageEvent(
+  broadcasterUserId: 'b1',
+  chatterUserId: id,
+  chatterUserLogin: author.toLowerCase(),
+  chatterUserName: author,
+  messageId: id,
+  message: ChatMessageText(
+    text: '$mentionText hi',
+    fragments: [
+      ChatMessageFragment(
+        type: 'mention',
+        text: mentionText,
+        mention: ChatFragmentMention(
+          userId: mentionedUserId,
+          userLogin: mentionText.substring(1).toLowerCase(),
+          userName: mentionText.substring(1),
+        ),
       ),
-    );
+      const ChatMessageFragment(type: 'text', text: ' hi'),
+    ],
+  ),
+);
 
 ChatNotificationEvent noticeEvent({
   required String id,
   required String author,
   String systemMessage = '',
-}) =>
-    ChatNotificationEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: id,
-      chatterUserLogin: author.toLowerCase(),
-      chatterUserName: author,
-      messageId: id,
-      systemMessage: systemMessage.isEmpty
-          ? '$author subscribed at Tier 1.'
-          : systemMessage,
-      noticeType: 'sub',
-    );
+}) => ChatNotificationEvent(
+  broadcasterUserId: 'b1',
+  chatterUserId: id,
+  chatterUserLogin: author.toLowerCase(),
+  chatterUserName: author,
+  messageId: id,
+  systemMessage: systemMessage.isEmpty
+      ? '$author subscribed at Tier 1.'
+      : systemMessage,
+  noticeType: 'sub',
+);
 
 ChatMessageEvent badgeEvent() => ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: '1',
-      chatterUserLogin: 'modder',
-      chatterUserName: 'Modder',
-      messageId: '1',
-      message: ChatMessageText(
-        text: 'secured',
-        fragments: [ChatMessageFragment(type: 'text', text: 'secured')],
-      ),
-      badges: const [ChatMessageBadge(setId: 'moderator', id: '1')],
-    );
+  broadcasterUserId: 'b1',
+  chatterUserId: '1',
+  chatterUserLogin: 'modder',
+  chatterUserName: 'Modder',
+  messageId: '1',
+  message: ChatMessageText(
+    text: 'secured',
+    fragments: [ChatMessageFragment(type: 'text', text: 'secured')],
+  ),
+  badges: const [ChatMessageBadge(setId: 'moderator', id: '1')],
+);
 
 void main() {
   late TwitchChatStore store;
@@ -140,8 +138,19 @@ void main() {
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
       isProResolver: () => true,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          FakeTwitchEventSubService(),
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => FakeTwitchEventSubService(),
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
@@ -163,17 +172,21 @@ void main() {
   group('TwitchChatMessageRow', () {
     testWidgets('renders author and text', (tester) async {
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
       expect(richText.text.toPlainText(), 'Viewer32: Hi chat');
     });
 
-    testWidgets('emote fragment becomes an inline network image', (tester) async {
+    testWidgets('emote fragment becomes an inline network image', (
+      tester,
+    ) async {
       final event = ChatMessageEvent(
         broadcasterUserId: 'b1',
         chatterUserId: '1',
@@ -194,10 +207,12 @@ void main() {
       );
 
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: event,
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: event,
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
@@ -215,10 +230,12 @@ void main() {
       };
 
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: badgeEvent(),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: badgeEvent(),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
@@ -242,15 +259,18 @@ void main() {
       /// Real file I/O never completes inside the test body's FakeAsync
       /// zone — runAsync escapes it (same pattern as the retry test below)
       await tester.runAsync(() async {
-        await Hive.box(HiveKeys.Settings.name)
-            .put(SettingsKeys.TwitchChatBadgeModerator.name, false);
+        await Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.TwitchChatBadgeModerator.name, false);
       });
 
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: badgeEvent(),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: badgeEvent(),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
@@ -261,10 +281,12 @@ void main() {
     testWidgets('unknown badges are skipped', (tester) async {
       /// Catalog deliberately left empty
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: badgeEvent(),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: badgeEvent(),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
@@ -272,8 +294,9 @@ void main() {
       expect(collectWidgetSpans(richText.text), isEmpty);
     });
 
-    testWidgets('a deleted message shows dimmed content plus the marker',
-        (tester) async {
+    testWidgets('a deleted message shows dimmed content plus the marker', (
+      tester,
+    ) async {
       final event = ChatMessageEvent(
         broadcasterUserId: 'b1',
         chatterUserId: '1',
@@ -294,17 +317,20 @@ void main() {
       );
 
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: event,
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          isDeleted: true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: event,
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            isDeleted: true,
+          ),
+        ),
       );
 
       final richText = tester.widget<RichText>(find.byType(RichText));
 
       /// Content stays (emote included) — only the marker is appended.
       expect(richText.text.toPlainText(), 'Emoter: Hello \u{FFFC} —Deleted');
+
       /// Twitch mod view: content non-italic and dimmed harder than the
       /// (italic) marker; the emote dims via a matching Opacity. The text
       /// fragment is split for third-party emote tokenization, so the
@@ -319,52 +345,58 @@ void main() {
       expect((emote.child as Opacity).opacity, 0.5);
     });
 
-    testWidgets('tapping a deleted row with an actor fires the callback',
-        (tester) async {
+    testWidgets('tapping a deleted row with an actor fires the callback', (
+      tester,
+    ) async {
       var tapped = false;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          isDeleted: true,
-          deletedActor: 'Cool_Mod',
-          onDeletedTap: () => tapped = true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            isDeleted: true,
+            deletedActor: 'Cool_Mod',
+            onDeletedTap: () => tapped = true,
+          ),
+        ),
       );
 
       await tester.tap(find.byType(TwitchChatMessageRow));
       expect(tapped, isTrue);
     });
 
-    testWidgets('an expanded deleted row reveals who deleted it',
-        (tester) async {
+    testWidgets('an expanded deleted row reveals who deleted it', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          isDeleted: true,
-          deletedActor: 'Cool_Mod',
-          isDeletedExpanded: true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            isDeleted: true,
+            deletedActor: 'Cool_Mod',
+            isDeletedExpanded: true,
+          ),
+        ),
       );
 
-      expect(
-        find.text("Cool_Mod deleted Viewer32's message"),
-        findsOneWidget,
-      );
+      expect(find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
     });
 
-    testWidgets('a purged message (no actor) is not tappable, no reveal',
-        (tester) async {
+    testWidgets('a purged message (no actor) is not tappable, no reveal', (
+      tester,
+    ) async {
       var tapped = false;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          isDeleted: true,
-          isDeletedExpanded: true,
-          onDeletedTap: () => tapped = true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            isDeleted: true,
+            isDeletedExpanded: true,
+            onDeletedTap: () => tapped = true,
+          ),
+        ),
       );
 
       expect(find.byType(GestureDetector), findsNothing);
@@ -377,84 +409,93 @@ void main() {
     testWidgets('author tap fires the card callback', (tester) async {
       var tapped = false;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onAuthorTap: () => tapped = true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onAuthorTap: () => tapped = true,
+          ),
+        ),
       );
 
       await tester.tap(find.text('Viewer32'));
       expect(tapped, isTrue);
     });
 
-    testWidgets('mention tap fires the card callback with that user id',
-        (tester) async {
+    testWidgets('mention tap fires the card callback with that user id', (
+      tester,
+    ) async {
       String? tappedId;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: mentionEvent(
-            id: '1',
-            author: 'Viewer32',
-            mentionedUserId: 'u2',
-            mentionText: '@Bob',
+        wrap(
+          TwitchChatMessageRow(
+            event: mentionEvent(
+              id: '1',
+              author: 'Viewer32',
+              mentionedUserId: 'u2',
+              mentionText: '@Bob',
+            ),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onMentionTap: (id) => tappedId = id,
           ),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onMentionTap: (id) => tappedId = id,
-        )),
+        ),
       );
 
       await tester.tap(find.text('@Bob'));
       expect(tappedId, 'u2');
     });
 
-    testWidgets('reply parent @name tap fires mention callback',
-        (tester) async {
+    testWidgets('reply parent @name tap fires mention callback', (
+      tester,
+    ) async {
       String? tappedId;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: ChatMessageEvent(
-            broadcasterUserId: 'b1',
-            chatterUserId: '1',
-            chatterUserLogin: 'viewer32',
-            chatterUserName: 'Viewer32',
-            messageId: '1',
-            message: const ChatMessageText(
-              text: 'thanks',
-              fragments: [
-                ChatMessageFragment(type: 'text', text: 'thanks'),
-              ],
+        wrap(
+          TwitchChatMessageRow(
+            event: ChatMessageEvent(
+              broadcasterUserId: 'b1',
+              chatterUserId: '1',
+              chatterUserLogin: 'viewer32',
+              chatterUserName: 'Viewer32',
+              messageId: '1',
+              message: const ChatMessageText(
+                text: 'thanks',
+                fragments: [ChatMessageFragment(type: 'text', text: 'thanks')],
+              ),
+              reply: const ChatMessageReply(
+                parentMessageId: 'p1',
+                parentMessageBody: 'hello there',
+                parentUserId: 'u2',
+                parentUserName: 'Bob',
+                parentUserLogin: 'bob',
+                threadMessageId: 'p1',
+                threadUserId: 'u2',
+                threadUserName: 'Bob',
+                threadUserLogin: 'bob',
+              ),
             ),
-            reply: const ChatMessageReply(
-              parentMessageId: 'p1',
-              parentMessageBody: 'hello there',
-              parentUserId: 'u2',
-              parentUserName: 'Bob',
-              parentUserLogin: 'bob',
-              threadMessageId: 'p1',
-              threadUserId: 'u2',
-              threadUserName: 'Bob',
-              threadUserLogin: 'bob',
-            ),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onMentionTap: (id) => tappedId = id,
           ),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onMentionTap: (id) => tappedId = id,
-        )),
+        ),
       );
 
       await tester.tap(find.text('@Bob'));
       expect(tappedId, 'u2');
     });
 
-    testWidgets('long-press fires mod callback; short body tap does not',
-        (tester) async {
+    testWidgets('long-press fires mod callback; short body tap does not', (
+      tester,
+    ) async {
       var longPressed = false;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onMessageLongPress: () => longPressed = true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onMessageLongPress: () => longPressed = true,
+          ),
+        ),
       );
 
       await tester.longPress(find.textContaining('Hi chat'));
@@ -465,14 +506,17 @@ void main() {
       expect(longPressed, isFalse);
     });
 
-    testWidgets('highlighted row paints the hold wash without extra padding',
-        (tester) async {
+    testWidgets('highlighted row paints the hold wash without extra padding', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          highlighted: true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            highlighted: true,
+          ),
+        ),
       );
 
       final box = tester.widget<ColoredBox>(
@@ -489,19 +533,23 @@ void main() {
           tester.element(find.byType(TwitchChatMessageRow)),
         ),
       );
+
       /// Wash wraps existing padding only — no nested highlight inset.
       expect(box.child, isA<Padding>());
     });
 
-    testWidgets('hold wash starts after a short delay, cancels on lift',
-        (tester) async {
+    testWidgets('hold wash starts after a short delay, cancels on lift', (
+      tester,
+    ) async {
       var pressed = false;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onMessageLongPress: () => pressed = true,
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onMessageLongPress: () => pressed = true,
+          ),
+        ),
       );
 
       Color? washColor() {
@@ -539,16 +587,19 @@ void main() {
       expect(pressed, isFalse);
     });
 
-    testWidgets('author tap still works when mod long-press is wired',
-        (tester) async {
+    testWidgets('author tap still works when mod long-press is wired', (
+      tester,
+    ) async {
       var tapped = false;
       await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onAuthorTap: () => tapped = true,
-          onMessageLongPress: () {},
-        )),
+        wrap(
+          TwitchChatMessageRow(
+            event: textEvent('1', 'Viewer32', 'Hi chat'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onAuthorTap: () => tapped = true,
+            onMessageLongPress: () {},
+          ),
+        ),
       );
 
       await tester.tap(find.text('Viewer32'));
@@ -557,59 +608,67 @@ void main() {
     });
 
     testWidgets(
-        'slow author press still opens the card when mod long-press is wired',
-        (tester) async {
-      var tapped = false;
-      var longPressed = false;
-      await tester.pumpWidget(
-        wrap(TwitchChatMessageRow(
-          event: textEvent('1', 'Viewer32', 'Hi chat'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onAuthorTap: () => tapped = true,
-          onMessageLongPress: () => longPressed = true,
-        )),
-      );
+      'slow author press still opens the card when mod long-press is wired',
+      (tester) async {
+        var tapped = false;
+        var longPressed = false;
+        await tester.pumpWidget(
+          wrap(
+            TwitchChatMessageRow(
+              event: textEvent('1', 'Viewer32', 'Hi chat'),
+              settingsBox: Hive.box(HiveKeys.Settings.name),
+              onAuthorTap: () => tapped = true,
+              onMessageLongPress: () => longPressed = true,
+            ),
+          ),
+        );
 
-      /// Real taps often outlast the hold-wash delay (~140ms). Parent
-      /// setState used to dispose [Pressable] here; local wash must not.
-      final gesture = await tester.startGesture(
-        tester.getCenter(find.text('Viewer32')),
-      );
-      await tester.pump(const Duration(milliseconds: 220));
-      await gesture.up();
-      await tester.pump();
-      expect(tapped, isTrue);
-      expect(longPressed, isFalse);
-    });
+        /// Real taps often outlast the hold-wash delay (~140ms). Parent
+        /// setState used to dispose [Pressable] here; local wash must not.
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.text('Viewer32')),
+        );
+        await tester.pump(const Duration(milliseconds: 220));
+        await gesture.up();
+        await tester.pump();
+        expect(tapped, isTrue);
+        expect(longPressed, isFalse);
+      },
+    );
   });
 
   group('TwitchChatNotificationRow', () {
     testWidgets('notice author tap fires the card callback', (tester) async {
       var tapped = false;
       await tester.pumpWidget(
-        wrap(TwitchChatNotificationRow(
-          event: noticeEvent(id: 'n1', author: 'Alice'),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-          onAuthorTap: () => tapped = true,
-        )),
+        wrap(
+          TwitchChatNotificationRow(
+            event: noticeEvent(id: 'n1', author: 'Alice'),
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+            onAuthorTap: () => tapped = true,
+          ),
+        ),
       );
 
       await tester.tap(find.text('Alice'));
       expect(tapped, isTrue);
     });
 
-    testWidgets('applies the same vertical message spacing as chat rows',
-        (tester) async {
+    testWidgets('applies the same vertical message spacing as chat rows', (
+      tester,
+    ) async {
       final settings = Hive.box(HiveKeys.Settings.name);
       await tester.runAsync(() async {
         await settings.put(SettingsKeys.TwitchChatMessageSpacing.name, 10.0);
       });
 
       await tester.pumpWidget(
-        wrap(TwitchChatNotificationRow(
-          event: noticeEvent(id: 'n1', author: 'Alice'),
-          settingsBox: settings,
-        )),
+        wrap(
+          TwitchChatNotificationRow(
+            event: noticeEvent(id: 'n1', author: 'Alice'),
+            settingsBox: settings,
+          ),
+        ),
       );
 
       final padding = tester.widget<Padding>(
@@ -623,34 +682,38 @@ void main() {
       expect(padding.padding, const EdgeInsets.symmetric(vertical: 10.0));
     });
 
-    testWidgets('announcement banner shows Announcement, not the author twice',
-        (tester) async {
-      await tester.pumpWidget(
-        wrap(TwitchChatNotificationRow(
-          event: ChatNotificationEvent(
-            broadcasterUserId: 'b1',
-            chatterUserId: 'c1',
-            chatterUserLogin: 'alice',
-            chatterUserName: 'Alice',
-            messageId: 'a1',
-            systemMessage: 'Alice: hello stream',
-            noticeType: 'announcement',
-            message: const ChatMessageText(
-              text: 'hello stream',
-              fragments: [
-                ChatMessageFragment(type: 'text', text: 'hello stream'),
-              ],
+    testWidgets(
+      'announcement banner shows Announcement, not the author twice',
+      (tester) async {
+        await tester.pumpWidget(
+          wrap(
+            TwitchChatNotificationRow(
+              event: ChatNotificationEvent(
+                broadcasterUserId: 'b1',
+                chatterUserId: 'c1',
+                chatterUserLogin: 'alice',
+                chatterUserName: 'Alice',
+                messageId: 'a1',
+                systemMessage: 'Alice: hello stream',
+                noticeType: 'announcement',
+                message: const ChatMessageText(
+                  text: 'hello stream',
+                  fragments: [
+                    ChatMessageFragment(type: 'text', text: 'hello stream'),
+                  ],
+                ),
+              ),
+              settingsBox: Hive.box(HiveKeys.Settings.name),
             ),
           ),
-          settingsBox: Hive.box(HiveKeys.Settings.name),
-        )),
-      );
+        );
 
-      expect(find.text('Announcement'), findsOneWidget);
-      expect(find.textContaining('Alice'), findsOneWidget);
-      expect(find.textContaining('hello stream'), findsOneWidget);
-      expect(find.text('Alice'), findsNothing);
-    });
+        expect(find.text('Announcement'), findsOneWidget);
+        expect(find.textContaining('Alice'), findsOneWidget);
+        expect(find.textContaining('hello stream'), findsOneWidget);
+        expect(find.text('Alice'), findsNothing);
+      },
+    );
   });
 
   group('NativeTwitchChatView', () {
@@ -676,8 +739,9 @@ void main() {
       expect(find.textContaining('Hello Kappa'), findsOneWidget);
     });
 
-    testWidgets('announce-only buffer leaves the waiting empty state',
-        (tester) async {
+    testWidgets('announce-only buffer leaves the waiting empty state', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       store.appendChatNotificationForTest(
         ChatNotificationEvent(
@@ -706,8 +770,9 @@ void main() {
       expect(find.textContaining('orange hello'), findsOneWidget);
     });
 
-    testWidgets('announce does not paint accent on the next PRIVMSG',
-        (tester) async {
+    testWidgets('announce does not paint accent on the next PRIVMSG', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       store.appendChatNotificationForTest(
         ChatNotificationEvent(
@@ -727,6 +792,7 @@ void main() {
           ),
         ),
       );
+
       /// Same chatter as the announce, different message id (next PRIVMSG).
       store.messages.add(
         textEvent('1', 'Viewer32', 'plain follow-up').copyWith(
@@ -743,12 +809,13 @@ void main() {
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
       await tester.pump();
 
-      final followUp = tester.widgetList<TwitchChatMessageRow>(
-        find.byType(TwitchChatMessageRow),
-      ).firstWhere((row) => !row.compact);
+      final followUp = tester
+          .widgetList<TwitchChatMessageRow>(find.byType(TwitchChatMessageRow))
+          .firstWhere((row) => !row.compact);
       expect(followUp.accentBarColor, isNull);
       expect(followUp.event.messageId, 'm2');
       expect(find.textContaining('plain follow-up'), findsOneWidget);
+
       /// Twin chat.message for the announce id is suppressed.
       expect(find.textContaining('announce body'), findsOneWidget);
     });
@@ -785,18 +852,21 @@ void main() {
       expect(store.chatConnection, TwitchChatConnectionState.connecting);
     });
 
-    testWidgets('rows pick up third-party emotes when the catalog lands',
-        (tester) async {
+    testWidgets('rows pick up third-party emotes when the catalog lands', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
 
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
 
       RichText richText = tester
-          .widgetList<RichText>(find.descendant(
-            of: find.byType(TwitchChatMessageRow),
-            matching: find.byType(RichText),
-          ))
+          .widgetList<RichText>(
+            find.descendant(
+              of: find.byType(TwitchChatMessageRow),
+              matching: find.byType(RichText),
+            ),
+          )
           .first;
       expect(richText.text.toPlainText(), '\u{FFFC}: hi peepoHappy');
 
@@ -807,16 +877,19 @@ void main() {
       await tester.pump();
 
       richText = tester
-          .widgetList<RichText>(find.descendant(
-            of: find.byType(TwitchChatMessageRow),
-            matching: find.byType(RichText),
-          ))
+          .widgetList<RichText>(
+            find.descendant(
+              of: find.byType(TwitchChatMessageRow),
+              matching: find.byType(RichText),
+            ),
+          )
           .first;
       expect(richText.text.toPlainText(), '\u{FFFC}: hi \u{FFFC}');
     });
 
-    testWidgets('turning the toggle off re-renders rows as text',
-        (tester) async {
+    testWidgets('turning the toggle off re-renders rows as text', (
+      tester,
+    ) async {
       emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
       store.chatConnection = TwitchChatConnectionState.live;
       store.messages.add(textEvent('1', 'Viewer', 'hi peepoHappy'));
@@ -824,32 +897,38 @@ void main() {
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
 
       RichText richText = tester
-          .widgetList<RichText>(find.descendant(
-            of: find.byType(TwitchChatMessageRow),
-            matching: find.byType(RichText),
-          ))
+          .widgetList<RichText>(
+            find.descendant(
+              of: find.byType(TwitchChatMessageRow),
+              matching: find.byType(RichText),
+            ),
+          )
           .first;
       expect(richText.text.toPlainText(), '\u{FFFC}: hi \u{FFFC}');
 
       /// Real file I/O never completes inside the test body's FakeAsync
       /// zone — runAsync escapes it (same pattern as the badge tests).
       await tester.runAsync(() async {
-        await Hive.box(HiveKeys.Settings.name)
-            .put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
+        await Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
       });
       await tester.pump();
 
       richText = tester
-          .widgetList<RichText>(find.descendant(
-            of: find.byType(TwitchChatMessageRow),
-            matching: find.byType(RichText),
-          ))
+          .widgetList<RichText>(
+            find.descendant(
+              of: find.byType(TwitchChatMessageRow),
+              matching: find.byType(RichText),
+            ),
+          )
           .first;
       expect(richText.text.toPlainText(), '\u{FFFC}: hi peepoHappy');
     });
 
-    testWidgets('/clear tombstones the rows and banners between old and new',
-        (tester) async {
+    testWidgets('/clear tombstones the rows and banners between old and new', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       store.appendChatMessageForTest(textEvent('1', 'Viewer32', 'Hi chat'));
       store.appendChatMessageForTest(textEvent('2', 'Emoter', 'Hello Kappa'));
@@ -861,10 +940,14 @@ void main() {
       await tester.pump();
 
       expect(find.text('Chat was cleared by a moderator'), findsOneWidget);
-      expect(find.textContaining('Hi chat —Deleted', findRichText: true),
-          findsOneWidget);
-      expect(find.textContaining('Hello Kappa —Deleted', findRichText: true),
-          findsOneWidget);
+      expect(
+        find.textContaining('Hi chat —Deleted', findRichText: true),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Hello Kappa —Deleted', findRichText: true),
+        findsOneWidget,
+      );
 
       /// The banner sorts after the cleared rows, before newer ones.
       store.appendChatMessageForTest(textEvent('3', 'Viewer32', 'fresh'));
@@ -878,8 +961,9 @@ void main() {
       expect(bannerY, lessThan(freshY));
     });
 
-    testWidgets('scrolling up shows the paused chip; tapping it resumes',
-        (tester) async {
+    testWidgets('scrolling up shows the paused chip; tapping it resumes', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       for (var i = 0; i < 50; i++) {
         store.appendChatMessageForTest(textEvent('$i', 'V$i', 'message $i'));
@@ -899,58 +983,65 @@ void main() {
       expect(find.text('Paused ↓'), findsNothing);
     });
 
-    testWidgets('a new message while paused flips the chip to the unread pill',
-        (tester) async {
-      store.chatConnection = TwitchChatConnectionState.live;
-      for (var i = 0; i < 50; i++) {
-        store.appendChatMessageForTest(textEvent('$i', 'V$i', 'message $i'));
-      }
+    testWidgets(
+      'a new message while paused flips the chip to the unread pill',
+      (tester) async {
+        store.chatConnection = TwitchChatConnectionState.live;
+        for (var i = 0; i < 50; i++) {
+          store.appendChatMessageForTest(textEvent('$i', 'V$i', 'message $i'));
+        }
 
-      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
-      await tester.pump();
-      await tester.drag(find.byType(ListView), const Offset(0, 200));
-      await tester.pump();
-      expect(find.text('Paused ↓'), findsOneWidget);
+        await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+        await tester.pump();
+        await tester.drag(find.byType(ListView), const Offset(0, 200));
+        await tester.pump();
+        expect(find.text('Paused ↓'), findsOneWidget);
 
-      store.appendChatMessageForTest(textEvent('50', 'Late', 'new one'));
-      await tester.pump();
-      await tester.pump();
-      expect(find.text('New messages ↓'), findsOneWidget);
-      expect(find.text('Paused ↓'), findsNothing);
-    });
+        store.appendChatMessageForTest(textEvent('50', 'Late', 'new one'));
+        await tester.pump();
+        await tester.pump();
+        expect(find.text('New messages ↓'), findsOneWidget);
+        expect(find.text('Paused ↓'), findsNothing);
+      },
+    );
 
-    testWidgets('tapping a deleted message reveals and collapses the actor',
-        (tester) async {
+    testWidgets('tapping a deleted message reveals and collapses the actor', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       store.appendChatMessageForTest(textEvent('1', 'Viewer32', 'Hi chat'));
 
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
       await tester.pump();
 
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: '1', targetUserId: '1', userName: 'Cool_Mod'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: '1',
+          targetUserId: '1',
+          userName: 'Cool_Mod',
+        ),
+      );
       await tester.pump();
 
       expect(find.text("Cool_Mod deleted Viewer32's message"), findsNothing);
 
       await tester.tap(find.byType(TwitchChatMessageRow));
       await tester.pump();
-      expect(
-          find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
+      expect(find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
 
       /// The expansion survives a lifecycle rebuild (new message arrives).
       store.appendChatMessageForTest(textEvent('2', 'Late', 'fresh'));
       await tester.pump();
-      expect(
-          find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
+      expect(find.text("Cool_Mod deleted Viewer32's message"), findsOneWidget);
 
       await tester.tap(find.byType(TwitchChatMessageRow).first);
       await tester.pump();
       expect(find.text("Cool_Mod deleted Viewer32's message"), findsNothing);
     });
 
-    testWidgets('a purged message shows content but no tap reveal',
-        (tester) async {
+    testWidgets('a purged message shows content but no tap reveal', (
+      tester,
+    ) async {
       store.chatConnection = TwitchChatConnectionState.live;
       store.appendChatMessageForTest(textEvent('1', 'Viewer32', 'Hi chat'));
 
@@ -961,8 +1052,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('Viewer32'), findsOneWidget);
-      expect(find.textContaining('Hi chat —Deleted', findRichText: true),
-          findsOneWidget);
+      expect(
+        find.textContaining('Hi chat —Deleted', findRichText: true),
+        findsOneWidget,
+      );
 
       await tester.tap(find.byType(TwitchChatMessageRow));
       await tester.pump();

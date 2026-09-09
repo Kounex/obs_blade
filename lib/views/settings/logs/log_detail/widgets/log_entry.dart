@@ -73,15 +73,13 @@ class LogEntry extends StatelessWidget {
                 child: Row(
                   children: [
                     for (LogLevel level in LogLevel.values) ...[
-                      if (groupedLogs.any((logs) =>
-                          logs.any((log) => log.level == level))) ...[
+                      if (groupedLogs.any(
+                        (logs) => logs.any((log) => log.level == level),
+                      )) ...[
                         const SizedBox(width: AppSpacing.md),
                         LevelDot(level: level, size: 8.0),
                         const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          level.name,
-                          style: textTheme.bodySmall,
-                        ),
+                        Text(level.name, style: textTheme.bodySmall),
                       ],
                     ],
                   ],
@@ -93,64 +91,66 @@ class LogEntry extends StatelessWidget {
         expandedBody: ColumnSeparated(
           children: [
             Container(),
-            ...groupedLogs.map((levelLogs) => Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 84.0,
-                      child: Text(
-                        levelLogs.first.level.prefix,
-                        style: textTheme.labelSmall?.copyWith(
-                          color:
-                              logLevelColor(context, levelLogs.first.level),
-                        ),
+            ...groupedLogs.map(
+              (levelLogs) => Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 84.0,
+                    child: Text(
+                      levelLogs.first.level.prefix,
+                      style: textTheme.labelSmall?.copyWith(
+                        color: logLevelColor(context, levelLogs.first.level),
                       ),
                     ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.only(left: 12.0),
-                        margin: const EdgeInsets.only(left: 12.0),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            left: BorderSide(
-                              color: logLevelColor(
-                                context,
-                                levelLogs.first.level,
-                              ).withOpacity(0.9),
-                              width: 2.5,
-                            ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      margin: const EdgeInsets.only(left: 12.0),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          left: BorderSide(
+                            color: logLevelColor(
+                              context,
+                              levelLogs.first.level,
+                            ).withOpacity(0.9),
+                            width: 2.5,
                           ),
                         ),
-                        child: ColumnSeparated(
-                          paddingSeparator:
-                              const EdgeInsets.symmetric(vertical: 4.0),
-                          children: [
-                            ...levelLogs.mapIndexed(
-                              (log, index) => Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(log.entry),
-                                        if (log.stackTrace != null)
-                                          _StackTrace(
-                                            stackTrace: log.stackTrace!,
-                                          ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            )
-                          ],
+                      ),
+                      child: ColumnSeparated(
+                        paddingSeparator: const EdgeInsets.symmetric(
+                          vertical: 4.0,
                         ),
+                        children: [
+                          ...levelLogs.mapIndexed(
+                            (log, index) => Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(log.entry),
+                                      if (log.stackTrace != null)
+                                        _StackTrace(
+                                          stackTrace: log.stackTrace!,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ))
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -173,12 +173,11 @@ class _StackTraceState extends State<_StackTrace> {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle? monoStyle =
-        Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontSize: 11.0,
-              fontFamily:
-                  StylingHelper.isApple(context) ? 'Menlo' : 'monospace',
-            );
+    final TextStyle? monoStyle = Theme.of(context).textTheme.bodySmall
+        ?.copyWith(
+          fontSize: 11.0,
+          fontFamily: StylingHelper.isApple(context) ? 'Menlo' : 'monospace',
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,10 +224,7 @@ class _StackTraceState extends State<_StackTrace> {
               color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: Text(
-              this.widget.stackTrace,
-              style: monoStyle,
-            ),
+            child: Text(this.widget.stackTrace, style: monoStyle),
           ),
         ),
       ],

@@ -6,9 +6,7 @@ import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_button
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 
 class DashboardContentStreaming extends StatelessWidget {
-  const DashboardContentStreaming({
-    super.key,
-  });
+  const DashboardContentStreaming({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,13 +14,8 @@ class DashboardContentStreaming extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ResizeableScenePreview(
-            resizeable: false,
-          ),
-          const SceneButtons(
-            size: 64,
-            mode: SceneButtonsMode.horizontalScroll,
-          ),
+          const ResizeableScenePreview(resizeable: false),
+          const SceneButtons(size: 64, mode: SceneButtonsMode.horizontalScroll),
           const Flexible(
             child: StreamChat(
               usernameRowExpandable: true,
@@ -30,9 +23,7 @@ class DashboardContentStreaming extends StatelessWidget {
               usernameRowPadding: true,
             ),
           ),
-          SizedBox(
-            height: MediaQuery.of(context).padding.bottom,
-          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
       ),
     );

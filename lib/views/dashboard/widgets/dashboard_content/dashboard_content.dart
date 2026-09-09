@@ -8,9 +8,7 @@ import '../../../../types/enums/settings_keys.dart';
 import 'dashboard_element_layout.dart';
 
 class DashboardContent extends StatelessWidget {
-  const DashboardContent({
-    super.key,
-  });
+  const DashboardContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +23,7 @@ class DashboardContent extends StatelessWidget {
           ),
         ];
 
-        return CustomSliverList(
-          children: buildOrderedDashboardSlivers(order),
-        );
+        return CustomSliverList(children: buildOrderedDashboardSlivers(order));
       },
     );
   }

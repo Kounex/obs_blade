@@ -54,9 +54,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
             CupertinoButton(
               child: const Text(
                 'Clear',
-                style: TextStyle(
-                  color: CupertinoColors.destructiveRed,
-                ),
+                style: TextStyle(color: CupertinoColors.destructiveRed),
               ),
               onPressed: () {
                 this.widget.updateDateTime?.call(null);
@@ -78,7 +76,7 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
                     this.widget.updateDateTime?.call(_date);
                     Navigator.of(context, rootNavigator: true).pop();
                   },
-                )
+                ),
               ],
             ),
           ],

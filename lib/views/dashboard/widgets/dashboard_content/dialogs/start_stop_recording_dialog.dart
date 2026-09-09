@@ -18,19 +18,21 @@ class StartStopRecordingDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConfirmationDialog(
-        title: '${this.isRecording ? 'Stop' : 'Start'} Recording',
-        body: this.isRecording
-            ? 'Do you want to stop recording? Got everything on tape as intended?\n\nIf yes: nice work!'
-            : 'Do you want to start recording? Recording unintentionally is not as bad as suddenly starting to stream!\n\nStill asking just to be sure!',
-        isYesDestructive: true,
-        enableDontShowAgainOption: true,
-        onOk: (checked) {
-          Hive.box(HiveKeys.Settings.name).put(
-              this.isRecording
-                  ? SettingsKeys.DontShowRecordStopMessage.name
-                  : SettingsKeys.DontShowRecordStartMessage.name,
-              checked);
-          this.onRecordStartStop();
-        });
+      title: '${this.isRecording ? 'Stop' : 'Start'} Recording',
+      body: this.isRecording
+          ? 'Do you want to stop recording? Got everything on tape as intended?\n\nIf yes: nice work!'
+          : 'Do you want to start recording? Recording unintentionally is not as bad as suddenly starting to stream!\n\nStill asking just to be sure!',
+      isYesDestructive: true,
+      enableDontShowAgainOption: true,
+      onOk: (checked) {
+        Hive.box(HiveKeys.Settings.name).put(
+          this.isRecording
+              ? SettingsKeys.DontShowRecordStopMessage.name
+              : SettingsKeys.DontShowRecordStartMessage.name,
+          checked,
+        );
+        this.onRecordStartStop();
+      },
+    );
   }
 }

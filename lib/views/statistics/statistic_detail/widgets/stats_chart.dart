@@ -85,8 +85,8 @@ class _StatsChartState extends State<StatsChart>
   Widget build(BuildContext context) {
     int streamStart = this.widget.streamEndedMS - this.widget.totalTime * 1000;
     double maxData = this.widget.data.reduce(
-          (value, element) => max(value, element),
-        );
+      (value, element) => max(value, element),
+    );
 
     double? yInterval = this.widget.yMax != null
         ? (this.widget.yMax! / this.widget.minYInterval)
@@ -94,15 +94,17 @@ class _StatsChartState extends State<StatsChart>
     if (yInterval == null) {
       if (maxData > 0) {
         if (this.widget.minYInterval < 1) {
-          yInterval = (((maxData / this.widget.minYInterval) /
-                      kChartsNormalizedFactor) *
-                  this.widget.minYInterval)
-              .toDouble();
+          yInterval =
+              (((maxData / this.widget.minYInterval) /
+                          kChartsNormalizedFactor) *
+                      this.widget.minYInterval)
+                  .toDouble();
         } else {
-          yInterval = (((maxData / this.widget.minYInterval) ~/
-                      kChartsNormalizedFactor) *
-                  this.widget.minYInterval)
-              .toDouble();
+          yInterval =
+              (((maxData / this.widget.minYInterval) ~/
+                          kChartsNormalizedFactor) *
+                      this.widget.minYInterval)
+                  .toDouble();
         }
       }
     }
@@ -113,61 +115,50 @@ class _StatsChartState extends State<StatsChart>
 
     /// All spots computed over the full data set - the draw-in animation
     /// only changes how many of them are shown, never their positions
-    final List<FlSpot> allSpots = this
-        .widget
-        .data
+    final List<FlSpot> allSpots = this.widget.data
         .mapIndexed(
           (data, index) => FlSpot(
-              streamStart +
-                  ((this.widget.totalTime * 1000) / this.widget.data.length) *
-                      index,
-              data.toDouble()),
+            streamStart +
+                ((this.widget.totalTime * 1000) / this.widget.data.length) *
+                    index,
+            data.toDouble(),
+          ),
         )
         .toList();
 
     final Color dividerColor =
-        Theme.of(context).dividerTheme.color ?? StylingHelper.light_divider_color;
+        Theme.of(context).dividerTheme.color ??
+        StylingHelper.light_divider_color;
 
-    TextStyle tooltipTextStyle =
-        Theme.of(context).textTheme.titleMedium!.copyWith(
-              fontWeight: FontWeight.w600,
-              fontFeatures: const [
-                FontFeature.tabularFigures(),
-              ],
-            );
-    TextStyle tooltipTimeTextStyle =
-        Theme.of(context).textTheme.bodySmall!.copyWith(
-              fontSize: 11.0,
-              fontFeatures: const [
-                FontFeature.tabularFigures(),
-              ],
-            );
-    TextStyle axisStepsTextStyle =
-        Theme.of(context).textTheme.bodySmall!.copyWith(
-              fontSize: 11.0,
-              fontWeight: FontWeight.w500,
+    TextStyle tooltipTextStyle = Theme.of(context).textTheme.titleMedium!
+        .copyWith(
+          fontWeight: FontWeight.w600,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
+    TextStyle tooltipTimeTextStyle = Theme.of(context).textTheme.bodySmall!
+        .copyWith(
+          fontSize: 11.0,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
+    TextStyle axisStepsTextStyle = Theme.of(context).textTheme.bodySmall!
+        .copyWith(
+          fontSize: 11.0,
+          fontWeight: FontWeight.w500,
 
-              /// Axis labels sit at the faint text level (token-delta §2.1)
-              color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
-              fontFeatures: const [
-                FontFeature.tabularFigures(),
-              ],
-            );
+          /// Axis labels sit at the faint text level (token-delta §2.1)
+          color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
     TextStyle axisTitleTextStyle = Theme.of(context).textTheme.titleMedium!;
 
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-          child: Text(
-            this.widget.dataName,
-            style: axisTitleTextStyle,
-          ),
+          child: Text(this.widget.dataName, style: axisTitleTextStyle),
         ),
         ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxHeight: 250.0,
-          ),
+          constraints: const BoxConstraints(maxHeight: 250.0),
           child: AnimatedBuilder(
             animation: _draw,
             builder: (context, child) {
@@ -179,7 +170,8 @@ class _StatsChartState extends State<StatsChart>
               return LineChart(
                 LineChartData(
                   minY: 0.0,
-                  maxY: this.widget.yMax ??
+                  maxY:
+                      this.widget.yMax ??
                       ((maxData ~/ yInterval!) + kChartsNormalizedFactor) *
                           yInterval,
                   minX: streamStart.toDouble(),
@@ -196,12 +188,8 @@ class _StatsChartState extends State<StatsChart>
                         color: dividerColor.withValues(alpha: 0.2),
                         width: 1,
                       ),
-                      right: const BorderSide(
-                        color: Colors.transparent,
-                      ),
-                      top: const BorderSide(
-                        color: Colors.transparent,
-                      ),
+                      right: const BorderSide(color: Colors.transparent),
+                      top: const BorderSide(color: Colors.transparent),
                     ),
                   ),
                   lineTouchData: LineTouchData(
@@ -241,7 +229,8 @@ class _StatsChartState extends State<StatsChart>
                         reservedSize: 48.0,
                         getTitlesWidget: (interval, titleMeta) => Text(
                           interval.toStringAsFixed(
-                                  this.widget.amountFixedYAxis) +
+                                this.widget.amountFixedYAxis,
+                              ) +
                               this.widget.dataUnit,
                           style: axisStepsTextStyle,
                         ),
@@ -272,14 +261,10 @@ class _StatsChartState extends State<StatsChart>
                       ),
                     ),
                     topTitles: const AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: false,
-                      ),
+                      sideTitles: SideTitles(showTitles: false),
                     ),
                     rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: false,
-                      ),
+                      sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
                   lineBarsData: [
@@ -290,24 +275,21 @@ class _StatsChartState extends State<StatsChart>
                       isStrokeCapRound: true,
                       isCurved: true,
                       curveSmoothness: 0.2,
-                      dotData: const FlDotData(
-                        show: false,
-                      ),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            this
-                                .widget
-                                .chartColor
-                                .withValues(alpha: 0.28 * _draw.value),
+                            this.widget.chartColor.withValues(
+                              alpha: 0.28 * _draw.value,
+                            ),
                             this.widget.chartColor.withValues(alpha: 0.0),
                           ],
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
                 duration: Duration.zero,

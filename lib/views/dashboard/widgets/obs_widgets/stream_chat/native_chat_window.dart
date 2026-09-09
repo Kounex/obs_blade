@@ -27,10 +27,14 @@ enum NativeChatConnectionStatus {
 /// Compact uptime for the connection sheet: `m:ss` under an hour,
 /// `h:mm:ss` beyond.
 String formatChatUptime(Duration uptime) {
-  final String minutes =
-      uptime.inMinutes.remainder(60).toString().padLeft(2, '0');
-  final String seconds =
-      uptime.inSeconds.remainder(60).toString().padLeft(2, '0');
+  final String minutes = uptime.inMinutes
+      .remainder(60)
+      .toString()
+      .padLeft(2, '0');
+  final String seconds = uptime.inSeconds
+      .remainder(60)
+      .toString()
+      .padLeft(2, '0');
   return uptime.inHours > 0
       ? '${uptime.inHours}:$minutes:$seconds'
       : '${uptime.inMinutes}:$seconds';
@@ -114,17 +118,20 @@ class NativeChatWindow extends StatelessWidget {
   (String, Color) _statusMeta(BuildContext context) {
     final AppStatusColors statusColors =
         Theme.of(context).extension<AppStatusColors>() ??
-            AppStatusColors.standard;
+        AppStatusColors.standard;
     final Color muted =
         Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     return switch (this.status) {
       NativeChatConnectionStatus.live => ('connected', statusColors.live),
-      NativeChatConnectionStatus.connecting =>
-        ('connecting…', statusColors.warning),
-      NativeChatConnectionStatus.reconnecting =>
-        ('reconnecting…', statusColors.warning),
-      NativeChatConnectionStatus.failed =>
-        ('failed', statusColors.unreachable),
+      NativeChatConnectionStatus.connecting => (
+        'connecting…',
+        statusColors.warning,
+      ),
+      NativeChatConnectionStatus.reconnecting => (
+        'reconnecting…',
+        statusColors.warning,
+      ),
+      NativeChatConnectionStatus.failed => ('failed', statusColors.unreachable),
       NativeChatConnectionStatus.offline => ('offline', muted),
     };
   }
@@ -147,68 +154,69 @@ class NativeChatWindow extends StatelessWidget {
         children: [
           Pressable(
             haptic: true,
-            onTap: this.onStatusTapOverride ?? () {
-              if (this.selfUserId != null) {
-                showChatUserCardSheet(
-                  context,
-                  userId: this.selfUserId!,
-                  userService: this.userService,
-                  connection: ChatUserCardConnection(
-                    chatType: this.chatType,
-                    status: this.status,
-                    statusLabel: statusLabel,
-                    statusColor: statusColor,
-                    statusDetail: this.statusDetail,
-                    accountLabel: this.accountLabel,
-                    connectedAt: this.connectedAt,
-                    onRetry: this.onRetry,
-                    onLogout: this.onLogout,
-                    onConnect: this.onConnect,
-                  ),
-                );
-                return;
-              }
-              ModalHandler.showBaseBottomSheet(
-                context: context,
-                barrierDismissible: true,
-                enableDrag: true,
-                maxHeightFraction: 0.72,
-                builder: (context) => _NativeChatConnectionSheet(
-                  chatType: this.chatType,
-                  status: this.status,
-                  statusLabel: statusLabel,
-                  statusColor: statusColor,
-                  statusDetail: this.statusDetail,
-                  accountLabel: this.accountLabel,
-                  connectedAt: this.connectedAt,
-                  onRetry: this.onRetry,
-                  onLogout: this.onLogout,
-                  onConnect: this.onConnect,
-                ),
-              );
-            },
+            onTap:
+                this.onStatusTapOverride ??
+                () {
+                  if (this.selfUserId != null) {
+                    showChatUserCardSheet(
+                      context,
+                      userId: this.selfUserId!,
+                      userService: this.userService,
+                      connection: ChatUserCardConnection(
+                        chatType: this.chatType,
+                        status: this.status,
+                        statusLabel: statusLabel,
+                        statusColor: statusColor,
+                        statusDetail: this.statusDetail,
+                        accountLabel: this.accountLabel,
+                        connectedAt: this.connectedAt,
+                        onRetry: this.onRetry,
+                        onLogout: this.onLogout,
+                        onConnect: this.onConnect,
+                      ),
+                    );
+                    return;
+                  }
+                  ModalHandler.showBaseBottomSheet(
+                    context: context,
+                    barrierDismissible: true,
+                    enableDrag: true,
+                    maxHeightFraction: 0.72,
+                    builder: (context) => _NativeChatConnectionSheet(
+                      chatType: this.chatType,
+                      status: this.status,
+                      statusLabel: statusLabel,
+                      statusColor: statusColor,
+                      statusDetail: this.statusDetail,
+                      accountLabel: this.accountLabel,
+                      connectedAt: this.connectedAt,
+                      onRetry: this.onRetry,
+                      onLogout: this.onLogout,
+                      onConnect: this.onConnect,
+                    ),
+                  );
+                },
             child: Container(
               constraints: const BoxConstraints(
                 minHeight: kMinInteractiveDimensionCupertino,
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
                 children: [
                   Text(
                     'Stream Chat',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   if (this.channelIsLive) ...[
                     const SizedBox(width: AppSpacing.sm),
                     NativeChatStatusChip.live(
                       key: const Key('chat-header-live'),
-                      color: (Theme.of(context).extension<AppStatusColors>() ??
-                              AppStatusColors.standard)
-                          .live,
+                      color:
+                          (Theme.of(context).extension<AppStatusColors>() ??
+                                  AppStatusColors.standard)
+                              .live,
                       viewerCount: this.channelViewerCount,
                     ),
                   ],
@@ -231,10 +239,9 @@ class NativeChatWindow extends StatelessWidget {
                   const SizedBox(width: AppSpacing.xs),
                   Text(
                     statusLabel,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: statusColor),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: statusColor),
                   ),
                 ],
               ),
@@ -242,10 +249,7 @@ class NativeChatWindow extends StatelessWidget {
           ),
           const BaseDivider(),
           Expanded(child: this.child),
-          if (this.input != null) ...[
-            const BaseDivider(),
-            this.input!,
-          ],
+          if (this.input != null) ...[const BaseDivider(), this.input!],
         ],
       ),
     );
@@ -295,10 +299,10 @@ class _NativeChatConnectionSheet extends StatelessWidget {
   }) {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
-                AppStatusColors.standard)
-            .unreachable
+                  AppStatusColors.standard)
+              .unreachable
         : Theme.of(context).textTheme.bodyMedium?.color ??
-            CupertinoColors.label;
+              CupertinoColors.label;
     return Pressable(
       haptic: true,
       onTap: onTap == null ? null : () => this._popThen(context, onTap),
@@ -308,8 +312,7 @@ class _NativeChatConnectionSheet extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         decoration: BoxDecoration(
-          color:
-              StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+          color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -322,10 +325,9 @@ class _NativeChatConnectionSheet extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: color),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: color),
             ),
           ],
         ),
@@ -337,8 +339,8 @@ class _NativeChatConnectionSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool degraded =
         this.status == NativeChatConnectionStatus.connecting ||
-            this.status == NativeChatConnectionStatus.reconnecting ||
-            this.status == NativeChatConnectionStatus.failed;
+        this.status == NativeChatConnectionStatus.reconnecting ||
+        this.status == NativeChatConnectionStatus.failed;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -371,10 +373,9 @@ class _NativeChatConnectionSheet extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Text(
                 this.statusLabel,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: this.statusColor),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: this.statusColor),
               ),
             ],
           ),
@@ -448,22 +449,18 @@ class _UptimeLineState extends State<_UptimeLine> {
   /// Uptime captured when the sheet opens — each tick advances it by a
   /// second, so the line also moves under fake test clocks
   /// (`DateTime.now()` is not zone-aware) and is immune to wall-clock jumps.
-  late Duration _uptime =
-      DateTime.now().difference(this.widget.connectedAt);
+  late Duration _uptime = DateTime.now().difference(this.widget.connectedAt);
 
   @override
   void initState() {
     super.initState();
-    this._ticker = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) {
-        if (this.mounted) {
-          this.setState(() {
-            this._uptime += const Duration(seconds: 1);
-          });
-        }
-      },
-    );
+    this._ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (this.mounted) {
+        this.setState(() {
+          this._uptime += const Duration(seconds: 1);
+        });
+      }
+    });
   }
 
   @override
@@ -474,7 +471,7 @@ class _UptimeLineState extends State<_UptimeLine> {
 
   @override
   Widget build(BuildContext context) => Text(
-        'Connected for ${formatChatUptime(this._uptime)}',
-        style: Theme.of(context).textTheme.bodySmall,
-      );
+    'Connected for ${formatChatUptime(this._uptime)}',
+    style: Theme.of(context).textTheme.bodySmall,
+  );
 }

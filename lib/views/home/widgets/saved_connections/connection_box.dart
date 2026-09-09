@@ -62,18 +62,18 @@ class ConnectionBox extends StatelessWidget {
   void _edit(BuildContext context) {
     ModalHandler.showBaseDialog(
       context: context,
-      dialogWidget: EditConnectionDialog(
-        connection: this.connection,
-      ),
+      dialogWidget: EditConnectionDialog(connection: this.connection),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final AppStatusColors statusColors =
-        Theme.of(context).extension<AppStatusColors>()!;
-    final AppTextColors textColors =
-        Theme.of(context).extension<AppTextColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
 
     /// Reachability badge (grammar rule 7 + mock token notes): "Online" is
     /// NEUTRAL (white-50% dot, dim label, 8% white pill) - green is
@@ -86,8 +86,7 @@ class ConnectionBox extends StatelessWidget {
     if (this.connection.reachable == null) {
       reachabilityDotColor = textColors.textOrnament;
       reachabilityLabelColor = textColors.textTertiary;
-      reachabilityFillColor =
-          Colors.white.withValues(alpha: 0.08);
+      reachabilityFillColor = Colors.white.withValues(alpha: 0.08);
     } else if (this.connection.reachable!) {
       reachabilityDotColor = Colors.white.withValues(alpha: 0.5);
       reachabilityLabelColor = textColors.textSecondary;
@@ -95,15 +94,14 @@ class ConnectionBox extends StatelessWidget {
     } else {
       reachabilityDotColor = statusColors.unreachable;
       reachabilityLabelColor = statusColors.recordingText;
-      reachabilityFillColor =
-          statusColors.unreachable.withValues(alpha: 0.13);
+      reachabilityFillColor = statusColors.unreachable.withValues(alpha: 0.13);
     }
 
     final String reachabilityLabel = this.connection.reachable == null
         ? 'Checking'
         : this.connection.reachable!
-            ? 'Online'
-            : 'Offline';
+        ? 'Online'
+        : 'Offline';
 
     return SizedBox(
       width: this.width,
@@ -162,10 +160,9 @@ class ConnectionBox extends StatelessWidget {
                             child: Icon(
                               CupertinoIcons.pencil,
                               size: 18.0,
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.color,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
                             ),
                           ),
                         ),
@@ -187,22 +184,19 @@ class ConnectionBox extends StatelessWidget {
                                 ? CupertinoIcons.lock_fill
                                 : CupertinoIcons.lock_slash,
                             size: 14.0,
-                            color:
-                                Theme.of(context).textTheme.bodySmall?.color,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             this._endpoint,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
+                            style: Theme.of(context).textTheme.bodySmall!
                                 .copyWith(
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
                           ),
                         ),
                       ],
@@ -223,8 +217,9 @@ class ConnectionBox extends StatelessWidget {
                         horizontal: AppSpacing.md,
                         vertical: AppSpacing.sm,
                       ),
-                      onPressed:
-                          connecting ? null : () => this._connect(context),
+                      onPressed: connecting
+                          ? null
+                          : () => this._connect(context),
                       child: AnimatedSwitcher(
                         duration: AppMotion.fast,
                         child: connecting
@@ -233,15 +228,12 @@ class ConnectionBox extends StatelessWidget {
                                 width: 20.0,
                                 height: 20.0,
                                 child: CupertinoActivityIndicator(
-                                  color: Theme.of(context)
-                                      .extension<AppTextColors>()!
-                                      .accentText,
+                                  color: Theme.of(
+                                    context,
+                                  ).extension<AppTextColors>()!.accentText,
                                 ),
                               )
-                            : const Text(
-                                key: ValueKey('idle'),
-                                'Connect',
-                              ),
+                            : const Text(key: ValueKey('idle'), 'Connect'),
                       ),
                     );
                   },
@@ -282,24 +274,18 @@ class _ReachabilityPill extends StatelessWidget {
             horizontal: AppSpacing.sm,
             vertical: AppSpacing.xs,
           ),
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: AppRadius.pill,
-          ),
+          decoration: BoxDecoration(color: fill, borderRadius: AppRadius.pill),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              StatusDot(
-                size: 6.0,
-                color: this.dotColor,
-              ),
+              StatusDot(size: 6.0, color: this.dotColor),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 this.label,
                 style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                      color: this.labelColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: this.labelColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

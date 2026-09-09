@@ -9,14 +9,14 @@ part 'twitch_chat_badges.g.dart';
 /// cover the common roles; everything else (sub-gifter, staff, partner,
 /// premium, event badges, ...) falls under [SettingsKeys.TwitchChatBadgeOther].
 SettingsKeys settingsKeyForBadgeSetId(String setId) => switch (setId) {
-      'broadcaster' => SettingsKeys.TwitchChatBadgeBroadcaster,
-      'moderator' => SettingsKeys.TwitchChatBadgeModerator,
-      'vip' => SettingsKeys.TwitchChatBadgeVip,
-      'subscriber' => SettingsKeys.TwitchChatBadgeSubscriber,
-      'founder' => SettingsKeys.TwitchChatBadgeFounder,
-      'bits' => SettingsKeys.TwitchChatBadgeBits,
-      _ => SettingsKeys.TwitchChatBadgeOther,
-    };
+  'broadcaster' => SettingsKeys.TwitchChatBadgeBroadcaster,
+  'moderator' => SettingsKeys.TwitchChatBadgeModerator,
+  'vip' => SettingsKeys.TwitchChatBadgeVip,
+  'subscriber' => SettingsKeys.TwitchChatBadgeSubscriber,
+  'founder' => SettingsKeys.TwitchChatBadgeFounder,
+  'bits' => SettingsKeys.TwitchChatBadgeBits,
+  _ => SettingsKeys.TwitchChatBadgeOther,
+};
 
 /// One badge set of the helix `chat/badges` responses (`data[]`)
 @Freezed(fromJson: true, toJson: false)

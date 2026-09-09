@@ -5,8 +5,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 
 void main() {
-  test('twitchChatWindowStatus maps every connection state when logged in',
-      () {
+  test('twitchChatWindowStatus maps every connection state when logged in', () {
     expect(
       twitchChatWindowStatus(TwitchChatConnectionState.live, true),
       NativeChatConnectionStatus.live,
@@ -38,29 +37,31 @@ void main() {
     }
   });
 
-  test('youTubeChatWindowStatus maps every connection state when configured',
-      () {
-    expect(
-      youTubeChatWindowStatus(YouTubeChatConnectionState.connected, true),
-      NativeChatConnectionStatus.live,
-    );
-    expect(
-      youTubeChatWindowStatus(YouTubeChatConnectionState.connecting, true),
-      NativeChatConnectionStatus.connecting,
-    );
-    expect(
-      youTubeChatWindowStatus(YouTubeChatConnectionState.error, true),
-      NativeChatConnectionStatus.failed,
-    );
-    expect(
-      youTubeChatWindowStatus(YouTubeChatConnectionState.offline, true),
-      NativeChatConnectionStatus.offline,
-    );
-    expect(
-      youTubeChatWindowStatus(YouTubeChatConnectionState.idle, true),
-      NativeChatConnectionStatus.offline,
-    );
-  });
+  test(
+    'youTubeChatWindowStatus maps every connection state when configured',
+    () {
+      expect(
+        youTubeChatWindowStatus(YouTubeChatConnectionState.connected, true),
+        NativeChatConnectionStatus.live,
+      );
+      expect(
+        youTubeChatWindowStatus(YouTubeChatConnectionState.connecting, true),
+        NativeChatConnectionStatus.connecting,
+      );
+      expect(
+        youTubeChatWindowStatus(YouTubeChatConnectionState.error, true),
+        NativeChatConnectionStatus.failed,
+      );
+      expect(
+        youTubeChatWindowStatus(YouTubeChatConnectionState.offline, true),
+        NativeChatConnectionStatus.offline,
+      );
+      expect(
+        youTubeChatWindowStatus(YouTubeChatConnectionState.idle, true),
+        NativeChatConnectionStatus.offline,
+      );
+    },
+  );
 
   test('youTubeChatWindowStatus maps to offline when no API key is set', () {
     for (final state in YouTubeChatConnectionState.values) {

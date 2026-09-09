@@ -2,10 +2,7 @@ import 'package:mobx/mobx.dart';
 
 part 'intro.g.dart';
 
-enum IntroStage {
-  GettingStarted,
-  AppSlides,
-}
+enum IntroStage { GettingStarted, AppSlides }
 
 class IntroStore = _IntroStore with _$IntroStore;
 

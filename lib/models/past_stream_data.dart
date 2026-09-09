@@ -157,12 +157,13 @@ class PastStreamData extends HiveObject implements PastStatsData {
   /// Update our lists (to see the changes of those values over time)
   /// according to our interval set by [kAmountStreamStatsForAverage]
   void _setListsFromStreamStats() {
-    StreamStats relevantStreamStats =
-        _cacheStreamStats.reduce((master, current) => master
-          ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
-          ..fps = min(master.fps, current.fps)
-          ..cpuUsage = max(master.cpuUsage, current.cpuUsage)
-          ..memoryUsage = max(master.memoryUsage, current.memoryUsage));
+    StreamStats relevantStreamStats = _cacheStreamStats.reduce(
+      (master, current) => master
+        ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
+        ..fps = min(master.fps, current.fps)
+        ..cpuUsage = max(master.cpuUsage, current.cpuUsage)
+        ..memoryUsage = max(master.memoryUsage, current.memoryUsage),
+    );
     this.kbitsPerSecList.add(relevantStreamStats.kbitsPerSec);
     this.fpsList.add(relevantStreamStats.fps);
     this.cpuUsageList.add(relevantStreamStats.cpuUsage);

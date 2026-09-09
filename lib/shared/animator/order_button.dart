@@ -29,20 +29,28 @@ class _OrderButtonState extends State<OrderButton>
     super.initState();
 
     _controllerUp = AnimationController(
-        vsync: this, duration: AppMotion.medium);
+      vsync: this,
+      duration: AppMotion.medium,
+    );
 
     _controllerDown = AnimationController(
-        vsync: this, duration: AppMotion.medium);
+      vsync: this,
+      duration: AppMotion.medium,
+    );
 
     _halfTurnUp = Tween<double>(begin: 0.0, end: 0.5).animate(
-        CurvedAnimation(parent: _controllerUp, curve: AppMotion.standard));
+      CurvedAnimation(parent: _controllerUp, curve: AppMotion.standard),
+    );
 
     _halfTurnDown = Tween<double>(begin: 0.0, end: 0.5).animate(
-        CurvedAnimation(parent: _controllerDown, curve: AppMotion.standard));
+      CurvedAnimation(parent: _controllerDown, curve: AppMotion.standard),
+    );
 
     if (this.widget.order == Order.Ascending) {
-      _controllerUp.animateTo(_controllerUp.upperBound,
-          duration: Duration.zero);
+      _controllerUp.animateTo(
+        _controllerUp.upperBound,
+        duration: Duration.zero,
+      );
     }
   }
 
@@ -97,19 +105,12 @@ class _OrderButtonState extends State<OrderButton>
         animation: _controllerUp,
         child: AnimatedBuilder(
           animation: _controllerDown,
-          child: const Icon(
-            CupertinoIcons.arrow_up_arrow_down,
-            size: 22.0,
-          ),
-          builder: (context, child) => RotationTransition(
-            turns: _halfTurnDown,
-            child: child,
-          ),
+          child: const Icon(CupertinoIcons.arrow_up_arrow_down, size: 22.0),
+          builder: (context, child) =>
+              RotationTransition(turns: _halfTurnDown, child: child),
         ),
-        builder: (context, child) => RotationTransition(
-          turns: _halfTurnUp,
-          child: child,
-        ),
+        builder: (context, child) =>
+            RotationTransition(turns: _halfTurnUp, child: child),
       ),
     );
   }

@@ -9,28 +9,28 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 /// the `broadcasterUserId` here is just a placeholder; `messageId` must
 /// still be unique per injection to keep tombstone/dedup maps sane.
 List<({String label, String description, ChatMessageEvent event})>
-    debugChatSamples() {
+debugChatSamples() {
   final stamp = DateTime.now().microsecondsSinceEpoch;
   ChatMessageEvent base({
     required String id,
     required ChatMessageText message,
     String messageType = 'text',
     String? sourceName,
-  }) =>
-      ChatMessageEvent(
-        broadcasterUserId: 'debug',
-        chatterUserId: 'debug-chatter',
-        chatterUserLogin: 'sampleviewer',
-        chatterUserName: 'SampleViewer',
-        messageId: 'debug-$id-$stamp',
-        color: '#00FF7F',
-        messageType: messageType,
-        sourceBroadcasterUserId: sourceName == null ? null : 'debug-partner',
-        sourceBroadcasterUserLogin:
-            sourceName == null ? null : sourceName.toLowerCase(),
-        sourceBroadcasterUserName: sourceName,
-        message: message,
-      );
+  }) => ChatMessageEvent(
+    broadcasterUserId: 'debug',
+    chatterUserId: 'debug-chatter',
+    chatterUserLogin: 'sampleviewer',
+    chatterUserName: 'SampleViewer',
+    messageId: 'debug-$id-$stamp',
+    color: '#00FF7F',
+    messageType: messageType,
+    sourceBroadcasterUserId: sourceName == null ? null : 'debug-partner',
+    sourceBroadcasterUserLogin: sourceName == null
+        ? null
+        : sourceName.toLowerCase(),
+    sourceBroadcasterUserName: sourceName,
+    message: message,
+  );
 
   return [
     (
@@ -51,8 +51,7 @@ List<({String label, String description, ChatMessageEvent event})>
                 /// Also pick one that visibly animates: a spinner-on-white
                 /// GIF looks exactly like a stuck loading state.
                 gifId: '111ebonMs90YLu',
-                url:
-                    'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif',
+                url: 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif',
               ),
             ),
           ],

@@ -5,10 +5,10 @@ import '../views/settings/custom_theme/widgets/color_picker/color_slider.dart';
 class ValidationHelper {
   static String? minLengthValidator(String? text, [int minLength = 1]) =>
       text == null || text.length < minLength
-          ? (minLength == 1
-              ? 'Input may not be empty!'
-              : 'Input needs at least $minLength characters!')
-          : null;
+      ? (minLength == 1
+            ? 'Input may not be empty!'
+            : 'Input needs at least $minLength characters!')
+      : null;
 
   static String? portValidator(String? text) {
     int? port = int.tryParse(text ?? '');
@@ -22,11 +22,13 @@ class ValidationHelper {
     List<String>? ip = text?.split('.');
     if (ip != null &&
         ip.length == 4 &&
-        ip.every((part) =>
-            part.isNotEmpty &&
-            part.length < 4 &&
-            int.tryParse(part) != null &&
-            int.parse(part) <= 255)) {
+        ip.every(
+          (part) =>
+              part.isNotEmpty &&
+              part.length < 4 &&
+              int.tryParse(part) != null &&
+              int.parse(part) <= 255,
+        )) {
       return null;
     }
     return 'Not an IP address!';

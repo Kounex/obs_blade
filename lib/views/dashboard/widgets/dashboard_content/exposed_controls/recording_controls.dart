@@ -14,9 +14,7 @@ import '../../../services/record_stream.dart';
 import 'exposed_controls.dart';
 
 class RecordingControls extends StatelessWidget {
-  const RecordingControls({
-    super.key,
-  });
+  const RecordingControls({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +35,14 @@ class RecordingControls extends StatelessWidget {
                 onPressed: () => RecordStreamService.triggerRecordStartStop(
                   context,
                   dashboardStore.isRecording,
-                  settingsBox.get(SettingsKeys.DontShowRecordStartMessage.name,
-                      defaultValue: false),
-                  settingsBox.get(SettingsKeys.DontShowRecordStopMessage.name,
-                      defaultValue: false),
+                  settingsBox.get(
+                    SettingsKeys.DontShowRecordStartMessage.name,
+                    defaultValue: false,
+                  ),
+                  settingsBox.get(
+                    SettingsKeys.DontShowRecordStopMessage.name,
+                    defaultValue: false,
+                  ),
                 ),
                 icon: Icon(
                   dashboardStore.isRecording
@@ -60,9 +62,9 @@ class RecordingControls extends StatelessWidget {
               child: BaseButton(
                 onPressed: dashboardStore.isRecording
                     ? () => NetworkHelper.makeRequest(
-                          GetIt.instance<NetworkStore>().activeSession!.socket,
-                          RequestType.ToggleRecordPause,
-                        )
+                        GetIt.instance<NetworkStore>().activeSession!.socket,
+                        RequestType.ToggleRecordPause,
+                      )
                     : null,
                 icon: Icon(
                   dashboardStore.isRecordingPaused

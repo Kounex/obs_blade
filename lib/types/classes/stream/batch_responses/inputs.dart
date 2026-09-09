@@ -7,19 +7,19 @@ import 'package:obs_blade/types/enums/request_type.dart';
 class InputsBatchResponse extends BaseBatchResponse {
   InputsBatchResponse(super.json);
 
-  Iterable<GetInputVolumeResponse> get inputsVolume => this
-      .responses
+  Iterable<GetInputVolumeResponse> get inputsVolume => this.responses
       .where((response) => response.requestType == RequestType.GetInputVolume)
       .map((response) => GetInputVolumeResponse(response.jsonRAW));
 
-  Iterable<GetInputMuteResponse> get inputsMute => this
-      .responses
+  Iterable<GetInputMuteResponse> get inputsMute => this.responses
       .where((response) => response.requestType == RequestType.GetInputMute)
       .map((response) => GetInputMuteResponse(response.jsonRAW));
 
   Iterable<GetInputAudioSyncOffsetResponse> get inputsAudioSyncOffset => this
       .responses
-      .where((response) =>
-          response.requestType == RequestType.GetInputAudioSyncOffset)
+      .where(
+        (response) =>
+            response.requestType == RequestType.GetInputAudioSyncOffset,
+      )
       .map((response) => GetInputAudioSyncOffsetResponse(response.jsonRAW));
 }

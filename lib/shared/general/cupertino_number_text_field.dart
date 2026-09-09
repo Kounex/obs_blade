@@ -76,17 +76,15 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
           enabled: this.widget.enabled,
           controller: this.widget.controller,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFeatures: [
-              FontFeature.tabularFigures(),
-            ],
-          ),
+          style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
 
           /// Raised card surface + hairline, same family as the other
           /// text fields (stock decoration renders pure black in dark)
           decoration: BoxDecoration(
             color: StylingHelper.lightenDarkenColor(
-                Theme.of(context).cardColor, 8),
+              Theme.of(context).cardColor,
+              8,
+            ),
             border: Border.all(
               color: Theme.of(context).dividerColor,
               width: 0.5,
@@ -95,11 +93,10 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
           ),
           maxLength: this.widget.maxLength,
           inputFormatters: [
-            NegativeIntFormatter(
-              negativeAllowed: this.widget.negativeAllowed,
-            ),
+            NegativeIntFormatter(negativeAllowed: this.widget.negativeAllowed),
           ],
-          keyboardType: this.widget.keyboardType ??
+          keyboardType:
+              this.widget.keyboardType ??
               TextInputType.numberWithOptions(
                 signed: this.widget.negativeAllowed,
               ),
@@ -125,13 +122,13 @@ class _CupertinoNumberTextFieldState extends State<CupertinoNumberTextField> {
 class NegativeIntFormatter extends TextInputFormatter {
   final bool negativeAllowed;
 
-  NegativeIntFormatter({
-    this.negativeAllowed = true,
-  });
+  NegativeIntFormatter({this.negativeAllowed = true});
 
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     if (!this.negativeAllowed && newValue.text.startsWith('-')) {
       return oldValue;
     }

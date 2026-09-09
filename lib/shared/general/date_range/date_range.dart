@@ -32,9 +32,9 @@ class DateRange extends StatelessWidget {
     this.updateToDate,
     this.placeholderFrom = 'From...',
     this.placeholderTo = 'To...',
-  })  : this.maximumFromDate = selectedToDate ?? DateTime.now(),
-        this.minimumToDate = selectedFromDate,
-        super();
+  }) : this.maximumFromDate = selectedToDate ?? DateTime.now(),
+       this.minimumToDate = selectedFromDate,
+       super();
 
   @override
   Widget build(BuildContext context) {

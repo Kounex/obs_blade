@@ -14,9 +14,7 @@ import 'general_actions.dart';
 import 'on_air_status_cluster.dart';
 
 class StatusAppBar extends StatelessWidget {
-  const StatusAppBar({
-    super.key,
-  });
+  const StatusAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +23,9 @@ class StatusAppBar extends StatelessWidget {
     /// The Close pill spends the brightened highlightText derivative on
     /// both label and tint (token-delta §2.3, mock close-pill: 15%
     /// highlightText tint + highlightText label)
-    final Color pillText =
-        Theme.of(context).extension<AppTextColors>()!.highlightText;
+    final Color pillText = Theme.of(
+      context,
+    ).extension<AppTextColors>()!.highlightText;
 
     return TransculentSliverAppBar(
       pinned: true,
@@ -82,9 +81,9 @@ class StatusAppBar extends StatelessWidget {
                   ),
                   child: Text(
                     'Close',
-                    style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                          color: pillText,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelMedium!.copyWith(color: pillText),
                   ),
                 ),
               ),

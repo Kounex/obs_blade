@@ -53,8 +53,9 @@ class LogTile extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  for (LogLevel level in LogLevel.values.where((level) =>
-                      this.logs.any((log) => log.level == level))) ...[
+                  for (LogLevel level in LogLevel.values.where(
+                    (level) => this.logs.any((log) => log.level == level),
+                  )) ...[
                     LevelDot(level: level, size: 8.0),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
@@ -68,10 +69,7 @@ class LogTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: textTheme.bodySmall?.color,
-            ),
+            Icon(Icons.chevron_right, color: textTheme.bodySmall?.color),
           ],
         ),
       ),

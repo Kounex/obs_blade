@@ -17,23 +17,23 @@ import 'third_party_emote_row_test.dart' show collectWidgetSpans;
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 ChatMessageEvent _emoteEvent(String messageType) => ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: '1',
-      chatterUserLogin: 'viewer',
-      chatterUserName: 'Viewer',
-      messageId: '1',
-      messageType: messageType,
-      message: const ChatMessageText(
+  broadcasterUserId: 'b1',
+  chatterUserId: '1',
+  chatterUserLogin: 'viewer',
+  chatterUserName: 'Viewer',
+  messageId: '1',
+  messageType: messageType,
+  message: const ChatMessageText(
+    text: 'Kappa',
+    fragments: [
+      ChatMessageFragment(
+        type: 'emote',
         text: 'Kappa',
-        fragments: [
-          ChatMessageFragment(
-            type: 'emote',
-            text: 'Kappa',
-            emote: ChatFragmentEmote(id: '25'),
-          ),
-        ],
+        emote: ChatFragmentEmote(id: '25'),
       ),
-    );
+    ],
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -59,18 +59,21 @@ void main() {
 
   Future<Image> pumpEmoteImage(WidgetTester tester, String messageType) async {
     await tester.pumpWidget(
-      _wrap(TwitchChatMessageRow(
-        event: _emoteEvent(messageType),
-        settingsBox: Hive.box(HiveKeys.Settings.name),
-      )),
+      _wrap(
+        TwitchChatMessageRow(
+          event: _emoteEvent(messageType),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        ),
+      ),
     );
     final richText = tester.widget<RichText>(find.byType(RichText));
     final span = collectWidgetSpans(richText.text).single;
     return span.child as Image;
   }
 
-  testWidgets('a plain emote renders at the configured emote size',
-      (tester) async {
+  testWidgets('a plain emote renders at the configured emote size', (
+    tester,
+  ) async {
     final image = await pumpEmoteImage(tester, 'text');
 
     expect(image.height, NativeChatAppearance.emoteSizeDefault);
@@ -80,12 +83,15 @@ void main() {
     final image = await pumpEmoteImage(tester, 'power_ups_gigantified_emote');
 
     expect(image.height, NativeChatAppearance.emoteSizeDefault * 3.0);
-    expect((image.image as NetworkImage).url,
-        'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark/2.0');
+    expect(
+      (image.image as NetworkImage).url,
+      'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark/2.0',
+    );
   });
 
-  testWidgets('a message-effect power-up renders as a normal message',
-      (tester) async {
+  testWidgets('a message-effect power-up renders as a normal message', (
+    tester,
+  ) async {
     final image = await pumpEmoteImage(tester, 'power_ups_message_effect');
 
     expect(image.height, NativeChatAppearance.emoteSizeDefault);

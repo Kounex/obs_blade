@@ -78,6 +78,7 @@ class TwitchChatNotificationRow extends StatelessWidget {
         ? chatAnnouncementHighlight(this.event.announcement?.color)
         : null;
     final accent = announce?.solid ?? chatNoticeAccentColor(chrome.color);
+
     /// Twitch paints announce header chrome white; rails carry the color.
     final headerColor = announce != null ? Colors.white : accent;
     final icon = chatNoticeIconData(chrome.icon);
@@ -93,7 +94,8 @@ class TwitchChatNotificationRow extends StatelessWidget {
           );
 
     final attached = this.event.message;
-    final showAttached = this.showAttachedMessage &&
+    final showAttached =
+        this.showAttachedMessage &&
         attached != null &&
         attached.text.trim().isNotEmpty;
 
@@ -118,10 +120,7 @@ class TwitchChatNotificationRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(
-                top: 2.0,
-                right: AppSpacing.xs,
-              ),
+              padding: const EdgeInsets.only(top: 2.0, right: AppSpacing.xs),
               child: Icon(icon, size: 14.0, color: headerColor),
             ),
             Expanded(
@@ -132,10 +131,7 @@ class TwitchChatNotificationRow extends StatelessWidget {
                   if (body.isNotEmpty)
                     Text(
                       body,
-                      style: TextStyle(
-                        fontSize: textSize,
-                        height: 1.25,
-                      ),
+                      style: TextStyle(fontSize: textSize, height: 1.25),
                     ),
                 ],
               ),
@@ -260,11 +256,7 @@ class TwitchChatNotificationRow extends StatelessWidget {
             ),
           );
     if (this.onAuthorTap == null) return line;
-    return Pressable(
-      haptic: true,
-      onTap: this.onAuthorTap,
-      child: line,
-    );
+    return Pressable(haptic: true, onTap: this.onAuthorTap, child: line);
   }
 
   Color? _parseColor(String? hex) {

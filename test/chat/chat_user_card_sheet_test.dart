@@ -26,20 +26,19 @@ ChatMessageEvent cardMessage(
   String userId,
   String text, {
   DateTime? receivedAt,
-}) =>
-    ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: userId,
-      chatterUserLogin: 'login-$userId',
-      chatterUserName: 'Name$userId',
-      messageId: id,
-      color: '#9146FF',
-      receivedAt: receivedAt,
-      message: ChatMessageText(
-        text: text,
-        fragments: [ChatMessageFragment(type: 'text', text: text)],
-      ),
-    );
+}) => ChatMessageEvent(
+  broadcasterUserId: 'b1',
+  chatterUserId: userId,
+  chatterUserLogin: 'login-$userId',
+  chatterUserName: 'Name$userId',
+  messageId: id,
+  color: '#9146FF',
+  receivedAt: receivedAt,
+  message: ChatMessageText(
+    text: text,
+    fragments: [ChatMessageFragment(type: 'text', text: text)],
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -66,8 +65,19 @@ void main() {
 
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () => TwitchBadgeStore(service: badgeService),
       moderationService: moderationService,
     );
@@ -188,8 +198,9 @@ void main() {
     );
   });
 
-  testWidgets('LIVE rows are not compact so chat spacing applies',
-      (tester) async {
+  testWidgets('LIVE rows are not compact so chat spacing applies', (
+    tester,
+  ) async {
     store.appendChatMessageForTest(cardMessage('m1', 'viewer-1', 'hello'));
 
     userService.userResult = const TwitchUser(
@@ -207,8 +218,9 @@ void main() {
     expect(row.compact, isFalse);
   });
 
-  testWidgets('omits Helix fact rows when the service returns null',
-      (tester) async {
+  testWidgets('omits Helix fact rows when the service returns null', (
+    tester,
+  ) async {
     userService.userResult = null;
     userService.followResult = null;
 
@@ -259,12 +271,10 @@ void main() {
     expect(moderationService.getWarningsCalls, 1);
     expect(moderationService.lastWarningsUserId, 'viewer-1');
 
-    final expectedDate = DateFormat.yMMMMd()
-        .format(FakeTwitchModerationService.warningSample.warnedAt!.toLocal());
-    expect(
-      find.text('Warned $expectedDate — spoiling movies'),
-      findsOneWidget,
+    final expectedDate = DateFormat.yMMMMd().format(
+      FakeTwitchModerationService.warningSample.warnedAt!.toLocal(),
     );
+    expect(find.text('Warned $expectedDate — spoiling movies'), findsOneWidget);
   });
 
   testWidgets('the self card hides the warnings section', (tester) async {
@@ -277,8 +287,9 @@ void main() {
     expect(find.textContaining('Warned'), findsNothing);
   });
 
-  testWidgets('without the moderation read bundle the section stays hidden',
-      (tester) async {
+  testWidgets('without the moderation read bundle the section stays hidden', (
+    tester,
+  ) async {
     await openCard(tester, userId: 'viewer-1');
     await tester.pumpAndSettle();
 

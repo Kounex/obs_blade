@@ -14,24 +14,22 @@ class InputLevel {
   String? inputName;
   List<InputChannel>? inputLevelsMul;
 
-  InputLevel({
-    required this.inputName,
-    required this.inputLevelsMul,
-  });
+  InputLevel({required this.inputName, required this.inputLevelsMul});
 
-  static List<InputChannel> _mapToChannel(List<dynamic> channels) =>
-      List.from(channels.map(
-        (channel) => InputChannel(
-          current: channel[1],
-          average: channel[0],
-          potential: channel[2],
-        ),
-      ));
+  static List<InputChannel> _mapToChannel(List<dynamic> channels) => List.from(
+    channels.map(
+      (channel) => InputChannel(
+        current: channel[1],
+        average: channel[0],
+        potential: channel[2],
+      ),
+    ),
+  );
 
   static InputLevel fromJSON(Map<String, dynamic> json) => InputLevel(
-        inputName: json['inputName'],
-        inputLevelsMul: json['inputLevelsMul'].isNotEmpty
-            ? _mapToChannel(json['inputLevelsMul'])
-            : [],
-      );
+    inputName: json['inputName'],
+    inputLevelsMul: json['inputLevelsMul'].isNotEmpty
+        ? _mapToChannel(json['inputLevelsMul'])
+        : [],
+  );
 }

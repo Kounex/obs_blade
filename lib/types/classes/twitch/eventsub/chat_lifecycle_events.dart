@@ -29,9 +29,8 @@ abstract class ChatMessageDeleteEvent with _$ChatMessageDeleteEvent {
 abstract class ChatClearUserMessagesEvent with _$ChatClearUserMessagesEvent {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory ChatClearUserMessagesEvent({
-    required String targetUserId,
-  }) = _ChatClearUserMessagesEvent;
+  const factory ChatClearUserMessagesEvent({required String targetUserId}) =
+      _ChatClearUserMessagesEvent;
 
   factory ChatClearUserMessagesEvent.fromJson(Map<String, Object?> json) =>
       _$ChatClearUserMessagesEventFromJson(json);
@@ -43,9 +42,8 @@ abstract class ChatClearUserMessagesEvent with _$ChatClearUserMessagesEvent {
 abstract class ChatClearEvent with _$ChatClearEvent {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory ChatClearEvent({
-    required String broadcasterUserId,
-  }) = _ChatClearEvent;
+  const factory ChatClearEvent({required String broadcasterUserId}) =
+      _ChatClearEvent;
 
   factory ChatClearEvent.fromJson(Map<String, Object?> json) =>
       _$ChatClearEventFromJson(json);

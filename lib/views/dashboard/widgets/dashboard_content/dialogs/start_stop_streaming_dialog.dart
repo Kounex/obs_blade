@@ -26,10 +26,11 @@ class StartStopStreamingDialog extends StatelessWidget {
       enableDontShowAgainOption: true,
       onOk: (checked) {
         Hive.box(HiveKeys.Settings.name).put(
-            this.isLive
-                ? SettingsKeys.DontShowStreamStopMessage.name
-                : SettingsKeys.DontShowStreamStartMessage.name,
-            checked);
+          this.isLive
+              ? SettingsKeys.DontShowStreamStopMessage.name
+              : SettingsKeys.DontShowStreamStartMessage.name,
+          checked,
+        );
         this.onStreamStartStop();
       },
     );

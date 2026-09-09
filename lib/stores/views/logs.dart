@@ -5,18 +5,14 @@ import '../../models/enums/log_level.dart';
 
 part 'logs.g.dart';
 
-enum AmountLogEntries {
-  Ten,
-  TwentyFive,
-  Fifty,
-}
+enum AmountLogEntries { Ten, TwentyFive, Fifty }
 
 extension AmountLogEntriesFunctions on AmountLogEntries {
   int get number => {
-        AmountLogEntries.Ten: 10,
-        AmountLogEntries.TwentyFive: 25,
-        AmountLogEntries.Fifty: 50,
-      }[this]!;
+    AmountLogEntries.Ten: 10,
+    AmountLogEntries.TwentyFive: 25,
+    AmountLogEntries.Fifty: 50,
+  }[this]!;
 }
 
 class LogsStore = _LogsStore with _$LogsStore;

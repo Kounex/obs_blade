@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/shared/dialogs/input.dart';
 
 void main() {
-  testWidgets('InputDialog opens without inputCheck (rename path)',
-      (tester) async {
+  testWidgets('InputDialog opens without inputCheck (rename path)', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Builder(

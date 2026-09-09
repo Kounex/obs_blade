@@ -24,10 +24,14 @@ void main() {
 
     expect(service.lastAccessToken, 'token-1');
     expect(service.lastBroadcasterId, 'user-1');
-    expect(store.badgeVersion('user-1', 'moderator', '1')?.imageUrl2x,
-        'https://badges.example/mod/2x.png');
-    expect(store.badgeVersion('user-1', 'subscriber', '12')?.imageUrl2x,
-        'https://badges.example/sub/2x.png');
+    expect(
+      store.badgeVersion('user-1', 'moderator', '1')?.imageUrl2x,
+      'https://badges.example/mod/2x.png',
+    );
+    expect(
+      store.badgeVersion('user-1', 'subscriber', '12')?.imageUrl2x,
+      'https://badges.example/sub/2x.png',
+    );
     expect(store.isLoading, isFalse);
   });
 
@@ -37,8 +41,10 @@ void main() {
 
     await store.fetch(accessToken: 'token-1', broadcasterId: 'user-1');
 
-    expect(store.badgeVersion('user-1', 'moderator', '1')?.imageUrl2x,
-        'https://badges.example/mod-override/2x.png');
+    expect(
+      store.badgeVersion('user-1', 'moderator', '1')?.imageUrl2x,
+      'https://badges.example/mod-override/2x.png',
+    );
   });
 
   test('unknown badges resolve to null', () async {
@@ -73,8 +79,10 @@ void main() {
 
   test('a failing channel fetch keeps the global catalog', () async {
     service.globalSets = [FakeTwitchBadgeService.moderatorSet];
-    service.channelThrows =
-        const TwitchAuthException('denied', statusCode: 401);
+    service.channelThrows = const TwitchAuthException(
+      'denied',
+      statusCode: 401,
+    );
 
     await store.fetch(accessToken: 'token-1', broadcasterId: 'user-1');
 

@@ -25,29 +25,23 @@ import 'support/fake_pro_purchase_gateway.dart';
 /// `buttonTheme.colorScheme.secondary` (accent), a non-null app bar
 /// background (transculent nav bar) and a divider color (skeleton/dots)
 ThemeData _testTheme() => ThemeData(
-      brightness: Brightness.dark,
-      cupertinoOverrideTheme: const CupertinoThemeData(),
-      appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-      buttonTheme: ButtonThemeData(
-        colorScheme: ColorScheme.fromSwatch(accentColor: Colors.redAccent),
-      ),
-      dividerTheme: const DividerThemeData(color: Colors.grey),
+  brightness: Brightness.dark,
+  cupertinoOverrideTheme: const CupertinoThemeData(),
+  appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+  buttonTheme: ButtonThemeData(
+    colorScheme: ColorScheme.fromSwatch(accentColor: Colors.redAccent),
+  ),
+  dividerTheme: const DividerThemeData(color: Colors.grey),
 
-      /// Design-system extensions the migrated widgets force-unwrap
-      /// (registered by `App._getCurrentTheme` in real runs)
-      extensions: const [
-        AppStatusColors.standard,
-        AppTextColors.standard,
-      ],
-    );
+  /// Design-system extensions the migrated widgets force-unwrap
+  /// (registered by `App._getCurrentTheme` in real runs)
+  extensions: const [AppStatusColors.standard, AppTextColors.standard],
+);
 
 Widget wrap(Widget child, {double width = 400.0}) => MediaQuery(
-      data: MediaQueryData(size: Size(width, 900.0)),
-      child: MaterialApp(
-        theme: _testTheme(),
-        home: child,
-      ),
-    );
+  data: MediaQueryData(size: Size(width, 900.0)),
+  child: MaterialApp(theme: _testTheme(), home: child),
+);
 
 void main() {
   late Directory tempDir;
@@ -105,8 +99,7 @@ void main() {
 
     /// Skip the cold-start restore - gateway counters should only see
     /// what each test triggers
-    await settingsBox()
-        .put(SettingsKeys.ProColdStartRestoreDone.name, true);
+    await settingsBox().put(SettingsKeys.ProColdStartRestoreDone.name, true);
 
     gateway = FakeProPurchaseGateway();
     stores = [];
@@ -125,8 +118,7 @@ void main() {
     }
   });
 
-  testWidgets(
-      'placeholder state (no store products) renders benefits, the '
+  testWidgets('placeholder state (no store products) renders benefits, the '
       'free-forever line and disabled placeholder pricing', (tester) async {
     await pumpPaywall(tester, newStore()..init());
 
@@ -165,8 +157,9 @@ void main() {
     await flushSnackBar(tester);
   });
 
-  testWidgets('loaded pricing renders live prices and yearly as the hero',
-      (tester) async {
+  testWidgets('loaded pricing renders live prices and yearly as the hero', (
+    tester,
+  ) async {
     gateway.storeProducts = [
       fakeProduct(kProYearlyId, price: '€19.99', rawPrice: 19.99),
       fakeProduct(kProMonthlyId, price: '€2.99', rawPrice: 2.99),
@@ -185,8 +178,9 @@ void main() {
     expect(find.text('Choose Lifetime'), findsOneWidget);
   });
 
-  testWidgets('buy tap calls ProStore.buy with the tapped product',
-      (tester) async {
+  testWidgets('buy tap calls ProStore.buy with the tapped product', (
+    tester,
+  ) async {
     gateway.storeProducts = [
       fakeProduct(kProYearlyId, price: '€19.99', rawPrice: 19.99),
       fakeProduct(kProMonthlyId, price: '€2.99', rawPrice: 2.99),
@@ -253,8 +247,9 @@ void main() {
     expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
   });
 
-  testWidgets('purchase event flips the paywall to the unlocked state',
-      (tester) async {
+  testWidgets('purchase event flips the paywall to the unlocked state', (
+    tester,
+  ) async {
     final ProStore store = newStore()..init();
     await pumpPaywall(tester, store);
 
@@ -275,8 +270,9 @@ void main() {
     expect(find.text('Manage subscription'), findsOneWidget);
   });
 
-  testWidgets('already-Pro renders the thank-you / manage state',
-      (tester) async {
+  testWidgets('already-Pro renders the thank-you / manage state', (
+    tester,
+  ) async {
     await tester.runAsync(
       () => settingsBox().put(SettingsKeys.BoughtPro.name, true),
     );
@@ -291,8 +287,9 @@ void main() {
   });
 
   testWidgets('long-press on the hero logo toggles the debug override '
-      '(kDebugMode only - the gesture is not attached in release builds)',
-      (tester) async {
+      '(kDebugMode only - the gesture is not attached in release builds)', (
+    tester,
+  ) async {
     final ProStore store = newNoIoDebugStore()..init();
     await pumpPaywall(tester, store);
 

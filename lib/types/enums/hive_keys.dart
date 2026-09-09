@@ -39,17 +39,17 @@ enum HiveKeys {
 
 extension HiveKeysFunctions on HiveKeys {
   String get name => const {
-        HiveKeys.SavedConnections: 'saved-connections',
-        HiveKeys.PastStreamData: 'past-stream-data',
-        HiveKeys.PastRecordData: 'past-record-data',
-        HiveKeys.CustomTheme: 'custom-theme',
-        HiveKeys.HiddenSceneItem: 'hidden-scene-item',
-        HiveKeys.HiddenScene: 'hidden-scene',
-        HiveKeys.AppLog: 'app-log',
-        HiveKeys.PurchasedTip: 'purchased-tip',
-        HiveKeys.Hotkey: 'hotkey',
-        HiveKeys.Settings: 'settings',
-        HiveKeys.TwitchAuth: 'twitch-auth',
-        HiveKeys.YouTubeAuth: 'youtube-auth',
-      }[this]!;
+    HiveKeys.SavedConnections: 'saved-connections',
+    HiveKeys.PastStreamData: 'past-stream-data',
+    HiveKeys.PastRecordData: 'past-record-data',
+    HiveKeys.CustomTheme: 'custom-theme',
+    HiveKeys.HiddenSceneItem: 'hidden-scene-item',
+    HiveKeys.HiddenScene: 'hidden-scene',
+    HiveKeys.AppLog: 'app-log',
+    HiveKeys.PurchasedTip: 'purchased-tip',
+    HiveKeys.Hotkey: 'hotkey',
+    HiveKeys.Settings: 'settings',
+    HiveKeys.TwitchAuth: 'twitch-auth',
+    HiveKeys.YouTubeAuth: 'youtube-auth',
+  }[this]!;
 }

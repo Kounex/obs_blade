@@ -23,7 +23,10 @@ void main() {
     ];
 
     await store.fetch(
-        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
+      accessToken: 'token-1',
+      userId: 'user-1',
+      broadcasterId: 'user-1',
+    );
 
     expect(service.lastAccessToken, 'token-1');
     expect(service.lastUserId, 'user-1');
@@ -34,29 +37,37 @@ void main() {
     expect(store.isLoading, isFalse);
   });
 
-  test('a distinct broadcaster is passed through and owns the channel section',
-      () async {
-    service.emotes = const [
-      TwitchUserEmote(id: '25', name: 'Kappa', ownerId: 'chan-9'),
-      TwitchUserEmote(id: '77', name: 'OwnSub', ownerId: 'user-1'),
-    ];
+  test(
+    'a distinct broadcaster is passed through and owns the channel section',
+    () async {
+      service.emotes = const [
+        TwitchUserEmote(id: '25', name: 'Kappa', ownerId: 'chan-9'),
+        TwitchUserEmote(id: '77', name: 'OwnSub', ownerId: 'user-1'),
+      ];
 
-    await store.fetch(
-        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'chan-9');
+      await store.fetch(
+        accessToken: 'token-1',
+        userId: 'user-1',
+        broadcasterId: 'chan-9',
+      );
 
-    expect(service.lastUserId, 'user-1');
-    expect(service.lastBroadcasterId, 'chan-9');
+      expect(service.lastUserId, 'user-1');
+      expect(service.lastBroadcasterId, 'chan-9');
 
-    /// Multi-chat grouping rule: the channel section holds the viewed
-    /// channel's emotes (ownerId == broadcasterId), not the user's own.
-    expect(store.channelEmotes.map((e) => e.name), ['Kappa']);
-    expect(store.globalEmotes.map((e) => e.name), ['OwnSub']);
-  });
+      /// Multi-chat grouping rule: the channel section holds the viewed
+      /// channel's emotes (ownerId == broadcasterId), not the user's own.
+      expect(store.channelEmotes.map((e) => e.name), ['Kappa']);
+      expect(store.globalEmotes.map((e) => e.name), ['OwnSub']);
+    },
+  );
 
   test('isLoading is true while the fetch is parked', () async {
     service.fetchGate = Completer<List<TwitchUserEmote>>();
     final pending = store.fetch(
-        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
+      accessToken: 'token-1',
+      userId: 'user-1',
+      broadcasterId: 'user-1',
+    );
 
     expect(store.isLoading, isTrue);
 
@@ -65,24 +76,32 @@ void main() {
     expect(store.isLoading, isFalse);
   });
 
-  test('a failing fetch degrades to empty and still bumps the version',
-      () async {
-    service.fetchThrows = Exception('boom');
+  test(
+    'a failing fetch degrades to empty and still bumps the version',
+    () async {
+      service.fetchThrows = Exception('boom');
 
-    await store.fetch(
-        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
+      await store.fetch(
+        accessToken: 'token-1',
+        userId: 'user-1',
+        broadcasterId: 'user-1',
+      );
 
-    expect(store.channelEmotes, isEmpty);
-    expect(store.globalEmotes, isEmpty);
-    expect(store.catalogVersion, 1);
-    expect(store.isLoading, isFalse);
-  });
+      expect(store.channelEmotes, isEmpty);
+      expect(store.globalEmotes, isEmpty);
+      expect(store.catalogVersion, 1);
+      expect(store.isLoading, isFalse);
+    },
+  );
 
   test('a superseded fetch cannot overwrite the newer catalog', () async {
     final gate = Completer<List<TwitchUserEmote>>();
     service.fetchGate = gate;
     final first = store.fetch(
-        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
+      accessToken: 'token-1',
+      userId: 'user-1',
+      broadcasterId: 'user-1',
+    );
 
     service.fetchGate = null;
 
@@ -93,7 +112,10 @@ void main() {
       TwitchUserEmote(id: '25', name: 'Kappa', ownerId: 'chan-2'),
     ];
     await store.fetch(
-        accessToken: 'token-2', userId: 'user-1', broadcasterId: 'chan-2');
+      accessToken: 'token-2',
+      userId: 'user-1',
+      broadcasterId: 'chan-2',
+    );
 
     gate.complete([FakeTwitchEmoteService.globalEmote]);
     await first;
@@ -109,7 +131,10 @@ void main() {
   test('clear drops the catalog and bumps the version', () async {
     service.emotes = [FakeTwitchEmoteService.channelEmote];
     await store.fetch(
-        accessToken: 'token-1', userId: 'user-1', broadcasterId: 'user-1');
+      accessToken: 'token-1',
+      userId: 'user-1',
+      broadcasterId: 'user-1',
+    );
     expect(store.channelEmotes, isNotEmpty);
 
     store.clear();

@@ -16,8 +16,7 @@ class TwitchEmoteService {
 
   final http.Client _client;
 
-  TwitchEmoteService({http.Client? client})
-      : _client = client ?? http.Client();
+  TwitchEmoteService({http.Client? client}) : _client = client ?? http.Client();
 
   /// All emotes usable by [userId] in [broadcasterId]'s chat, accumulated
   /// across pages.
@@ -68,7 +67,8 @@ class TwitchEmoteService {
     final data = body['data'];
     if (data is! List) {
       throw const TwitchAuthException(
-          'Fetching Twitch user emotes returned no data');
+        'Fetching Twitch user emotes returned no data',
+      );
     }
     final pagination = body['pagination'];
     final cursor = pagination is Map<String, dynamic>

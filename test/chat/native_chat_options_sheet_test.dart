@@ -27,15 +27,15 @@ void main() {
     for (var i = 0; i < 30 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
     }
     await tester.pump();
     expect(closed, isTrue);
   }
 
   setUp(() async {
-    tempDir =
-        await Directory.systemTemp.createTemp('chat_options_sheet_test');
+    tempDir = await Directory.systemTemp.createTemp('chat_options_sheet_test');
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
@@ -48,28 +48,34 @@ void main() {
     }
   });
 
-  testWidgets('root lists Appearance / Emotes / Badges / Event messages',
-      (tester) async {
+  testWidgets('root lists Appearance / Emotes / Badges / Event messages', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
     expect(find.text('Native chat options'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
-    expect(find.text('Text size, emote size, spacing, and separators'),
-        findsOneWidget);
+    expect(
+      find.text('Text size, emote size, spacing, and separators'),
+      findsOneWidget,
+    );
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Badges'), findsOneWidget);
     expect(find.text('Event messages'), findsOneWidget);
-    expect(find.text('Subs, raids, streaks, and similar system lines'),
-        findsOneWidget);
+    expect(
+      find.text('Subs, raids, streaks, and similar system lines'),
+      findsOneWidget,
+    );
     expect(find.text('Third-party emotes (7TV/BTTV)'), findsNothing);
     expect(find.text('Broadcaster'), findsNothing);
     expect(find.text('Subs & gifts'), findsNothing);
   });
 
-  testWidgets('Appearance page shows preview, sliders, separators',
-      (tester) async {
+  testWidgets('Appearance page shows preview, sliders, separators', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
@@ -78,8 +84,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text(
-          'Adjust how chat lines look — size, spacing, and dividers.'),
+      find.text('Adjust how chat lines look — size, spacing, and dividers.'),
       findsOneWidget,
     );
     expect(find.byKey(const Key('appearance-preview')), findsOneWidget);
@@ -131,8 +136,9 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Emotes and Badges pages keep the existing toggles',
-      (tester) async {
+  testWidgets('Emotes and Badges pages keep the existing toggles', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
@@ -174,8 +180,9 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Event messages page toggles write the settings box',
-      (tester) async {
+  testWidgets('Event messages page toggles write the settings box', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
@@ -199,17 +206,11 @@ void main() {
 
     await tester.tap(subsSwitch);
     await tester.pump();
-    expect(
-      settingsBox().get(SettingsKeys.TwitchChatNoticeSubs.name),
-      isFalse,
-    );
+    expect(settingsBox().get(SettingsKeys.TwitchChatNoticeSubs.name), isFalse);
 
     await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
-    expect(
-      settingsBox().get(SettingsKeys.TwitchChatNoticeSubs.name),
-      isTrue,
-    );
+    expect(settingsBox().get(SettingsKeys.TwitchChatNoticeSubs.name), isTrue);
 
     await closeHiveInZone(tester);
   });

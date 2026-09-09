@@ -9,9 +9,8 @@ class AboutHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextStyle descriptionStyle = Theme.of(
-      context,
-    ).textTheme.bodySmall!.copyWith(
+    TextStyle descriptionStyle = Theme.of(context).textTheme.bodySmall!
+        .copyWith(
           fontWeight: FontWeight.w300,
 
           /// Bylines / version read at the footnote level (token-delta §2.1)

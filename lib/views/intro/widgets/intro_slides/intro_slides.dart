@@ -44,12 +44,11 @@ class _IntroSlidesState extends State<IntroSlides> {
 
     _checkAndSetSlideLock(introStore, 0);
 
-    _disposers.add(reaction<int>(
-      (_) => introStore.currentPage,
-      (currentPage) {
+    _disposers.add(
+      reaction<int>((_) => introStore.currentPage, (currentPage) {
         _checkAndSetSlideLock(introStore, currentPage);
-      },
-    ));
+      }),
+    );
   }
 
   void _checkAndSetSlideLock(IntroStore introStore, int currentPage) {
@@ -115,7 +114,8 @@ class _IntroSlidesState extends State<IntroSlides> {
                   'Use the recommended defaults, set a password, and note the port (usually 4455).\n\n',
             ),
             TextSpan(
-              text: 'You\'ll enter those same details when connecting from this app.',
+              text:
+                  'You\'ll enter those same details when connecting from this app.',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).extension<AppStatusColors>()!.warning,
@@ -157,9 +157,7 @@ class _IntroSlidesState extends State<IntroSlides> {
           children: [
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 160),
-              child: Image.asset(
-                StylingHelper.brightnessAwareOBSLogo(context),
-              ),
+              child: Image.asset(StylingHelper.brightnessAwareOBSLogo(context)),
             ),
             const SizedBox(height: AppSpacing.lg),
             _tourIcon(context, CupertinoIcons.chart_bar_alt_fill),
@@ -193,9 +191,7 @@ class _IntroSlidesState extends State<IntroSlides> {
                 itemCount: _pageChildren.length,
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) => Center(
-                  child: BaseConstrainedBox(
-                    child: _pageChildren[index],
-                  ),
+                  child: BaseConstrainedBox(child: _pageChildren[index]),
                 ),
                 onPageChanged: (page) =>
                     GetIt.instance<IntroStore>().setCurrentPage(page),
@@ -205,25 +201,25 @@ class _IntroSlidesState extends State<IntroSlides> {
             const SizedBox(height: AppSpacing.md),
             Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.paddingOf(context).bottom +
+                bottom:
+                    MediaQuery.paddingOf(context).bottom +
                     kIntroControlsBottomPadding,
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxWidth: min(
-                    MediaQuery.sizeOf(context).width * 0.75,
-                    500.0,
-                  ),
+                  maxWidth: min(MediaQuery.sizeOf(context).width * 0.75, 500.0),
                 ),
                 child: SlideControls(
                   pageController: _pageController,
                   amountChildren: _pageChildren.length,
                   manually: this.widget.manually,
-                  onSlideLockWaited: () => _pagesLockedPreviously[
-                      GetIt.instance<IntroStore>().currentPage] = true,
+                  onSlideLockWaited: () =>
+                      _pagesLockedPreviously[GetIt.instance<IntroStore>()
+                              .currentPage] =
+                          true,
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),

@@ -21,5 +21,10 @@ class PurchasedTip extends HiveObject {
   String currencySymbol;
 
   PurchasedTip(
-      this.timestampMS, this.id, this.name, this.price, this.currencySymbol);
+    this.timestampMS,
+    this.id,
+    this.name,
+    this.price,
+    this.currencySymbol,
+  );
 }

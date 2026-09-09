@@ -10,50 +10,51 @@ class ChatPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color chip =
-        StylingHelper.lightenDarkenColor(Theme.of(context).cardColor, 12);
+    final Color chip = StylingHelper.lightenDarkenColor(
+      Theme.of(context).cardColor,
+      12,
+    );
 
     Widget line({
       required String user,
       required String message,
       required Color accent,
-    }) =>
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 18.0,
-                height: 18.0,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.85),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: RichText(
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.bodySmall,
-                    children: [
-                      TextSpan(
-                        text: '$user ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: accent,
-                        ),
-                      ),
-                      TextSpan(text: message),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+    }) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 18.0,
+            height: 18.0,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.85),
+              shape: BoxShape.circle,
+            ),
           ),
-        );
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: RichText(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodySmall,
+                children: [
+                  TextSpan(
+                    text: '$user ',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: accent,
+                    ),
+                  ),
+                  TextSpan(text: message),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 
     final Color secondary = Theme.of(context).colorScheme.secondary;
 

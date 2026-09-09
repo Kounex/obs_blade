@@ -18,16 +18,16 @@ import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
 
 ChatMessageEvent chatMessage(String id, String chatterId) => ChatMessageEvent(
-      broadcasterUserId: 'user-1',
-      chatterUserId: chatterId,
-      chatterUserLogin: 'user$chatterId',
-      chatterUserName: 'User$chatterId',
-      messageId: id,
-      message: ChatMessageText(
-        text: 'text $id',
-        fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
-      ),
-    );
+  broadcasterUserId: 'user-1',
+  chatterUserId: chatterId,
+  chatterUserLogin: 'user$chatterId',
+  chatterUserName: 'User$chatterId',
+  messageId: id,
+  message: ChatMessageText(
+    text: 'text $id',
+    fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -68,8 +68,19 @@ void main() {
     store = TwitchChatStore(
       authService: authService,
       isProResolver: () => true,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       moderationService: moderationService,
@@ -78,9 +89,11 @@ void main() {
     store.chatConnection = TwitchChatConnectionState.live;
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<TwitchBadgeStore>(
-        TwitchBadgeStore(service: FakeTwitchBadgeService()));
+      TwitchBadgeStore(service: FakeTwitchBadgeService()),
+    );
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
+      ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+    );
   });
 
   tearDown(() async {
@@ -92,8 +105,9 @@ void main() {
     }
   });
 
-  testWidgets('renders sender and pinned text; mods get the unpin button',
-      (tester) async {
+  testWidgets('renders sender and pinned text; mods get the unpin button', (
+    tester,
+  ) async {
     await pumpBanner(tester);
 
     expect(find.textContaining('Chatter:'), findsOneWidget);
@@ -102,8 +116,9 @@ void main() {
     expect(find.byIcon(CupertinoIcons.xmark), findsOneWidget);
   });
 
-  testWidgets('the unpin button confirms, then unpins via the store',
-      (tester) async {
+  testWidgets('the unpin button confirms, then unpins via the store', (
+    tester,
+  ) async {
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     expect(store.pinnedMessage?.messageId, 'msg-pinned');
@@ -123,8 +138,9 @@ void main() {
     expect(store.pinnedMessage, isNull);
   });
 
-  testWidgets('cancelling the unpin confirmation keeps the pin',
-      (tester) async {
+  testWidgets('cancelling the unpin confirmation keeps the pin', (
+    tester,
+  ) async {
     await pumpBanner(tester);
     await tester.tap(find.byIcon(CupertinoIcons.xmark));
     await tester.pumpAndSettle();
@@ -137,8 +153,9 @@ void main() {
     expect(find.text('Unpin this message?'), findsNothing);
   });
 
-  testWidgets('collapsed shows one muted line; tapping expands to active',
-      (tester) async {
+  testWidgets('collapsed shows one muted line; tapping expands to active', (
+    tester,
+  ) async {
     await pumpBanner(tester);
 
     final context = tester.element(find.byType(PinnedChatBanner));
@@ -183,8 +200,9 @@ void main() {
     expect(find.byIcon(CupertinoIcons.xmark), findsNothing);
   });
 
-  testWidgets('the chat view shows the banner above the timeline',
-      (tester) async {
+  testWidgets('the chat view shows the banner above the timeline', (
+    tester,
+  ) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
     await tester.pumpWidget(
@@ -197,8 +215,9 @@ void main() {
     expect(find.textContaining('text m1'), findsOneWidget);
   });
 
-  testWidgets('the chat view hides the banner when nothing is pinned',
-      (tester) async {
+  testWidgets('the chat view hides the banner when nothing is pinned', (
+    tester,
+  ) async {
     moderationService.pinnedMessageResult = null;
     store.pinnedMessage = null;
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
@@ -212,8 +231,9 @@ void main() {
     expect(find.textContaining('text m1'), findsOneWidget);
   });
 
-  testWidgets('unpin clears the banner in place (no other store event)',
-      (tester) async {
+  testWidgets('unpin clears the banner in place (no other store event)', (
+    tester,
+  ) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
     await tester.pumpWidget(

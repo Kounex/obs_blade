@@ -58,8 +58,19 @@ void main() {
 
       store = TwitchChatStore(
         authService: FakeTwitchAuthService(),
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            FakeTwitchEventSubService(),
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => FakeTwitchEventSubService(),
         ircSidecarFactory: (_) => TwitchIrcSidecar(
           onFirstMessage: (_) {},
           channelFactory: (_) => throw StateError('no real IRC in unit test'),
@@ -87,19 +98,18 @@ void main() {
       if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
     });
 
-    ChatMessageEvent msg(String id, {String type = 'text'}) =>
-        ChatMessageEvent(
-          broadcasterUserId: 'b1',
-          chatterUserId: 'c1',
-          chatterUserLogin: 'newbie',
-          chatterUserName: 'Newbie',
-          messageId: id,
-          messageType: type,
-          message: const ChatMessageText(
-            text: 'hello',
-            fragments: [ChatMessageFragment(type: 'text', text: 'hello')],
-          ),
-        );
+    ChatMessageEvent msg(String id, {String type = 'text'}) => ChatMessageEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: 'c1',
+      chatterUserLogin: 'newbie',
+      chatterUserName: 'Newbie',
+      messageId: id,
+      messageType: type,
+      message: const ChatMessageText(
+        text: 'hello',
+        fragments: [ChatMessageFragment(type: 'text', text: 'hello')],
+      ),
+    );
 
     test('pending IRC first-msg stamps the EventSub row on append', () {
       store.applyIrcFirstMessage('m1');

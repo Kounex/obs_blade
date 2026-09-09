@@ -30,8 +30,12 @@ class StylingHelper {
   /// keep their appBar/tabBar slots
   static const Color liquid_bar_color = Color(0xff1b1b1f);
 
-  static const Color background_reduced_smearing_color =
-      Color.fromRGBO(5, 5, 5, 1.0);
+  static const Color background_reduced_smearing_color = Color.fromRGBO(
+    5,
+    5,
+    5,
+    1.0,
+  );
 
   static const Color light_divider_color = Color.fromRGBO(111, 111, 111, 1.0);
 
@@ -58,11 +62,13 @@ class StylingHelper {
 
   static Color lightenDarkenColor(Color color, [int percent = 5]) =>
       StylingHelper.colorIsDark(color: color)
-          ? color.lighten(percent)
-          : color.darken(percent);
+      ? color.lighten(percent)
+      : color.darken(percent);
 
-  static Color surroundingAwareAccent(
-      {BuildContext? context, Color? surroundingColor}) {
+  static Color surroundingAwareAccent({
+    BuildContext? context,
+    Color? surroundingColor,
+  }) {
     assert(context != null || surroundingColor != null);
     return StylingHelper.colorIsDark(context: context, color: surroundingColor)
         ? Colors.white
@@ -83,12 +89,12 @@ class StylingHelper {
 
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
       try {
-        customTheme =
-            Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values.firstWhere(
-                  (customTheme) =>
-                      customTheme.uuid ==
-                      settingsBox!.get(SettingsKeys.ActiveCustomThemeUUID.name),
-                );
+        customTheme = Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values
+            .firstWhere(
+              (customTheme) =>
+                  customTheme.uuid ==
+                  settingsBox!.get(SettingsKeys.ActiveCustomThemeUUID.name),
+            );
       } catch (_) {}
     }
 

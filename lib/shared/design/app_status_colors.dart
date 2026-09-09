@@ -80,17 +80,16 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
     Color? program,
     Color? recordingText,
     Color? favorite,
-  }) =>
-      AppStatusColors(
-        live: live ?? this.live,
-        recording: recording ?? this.recording,
-        warning: warning ?? this.warning,
-        reachable: reachable ?? this.reachable,
-        unreachable: unreachable ?? this.unreachable,
-        program: program ?? this.program,
-        recordingText: recordingText ?? this.recordingText,
-        favorite: favorite ?? this.favorite,
-      );
+  }) => AppStatusColors(
+    live: live ?? this.live,
+    recording: recording ?? this.recording,
+    warning: warning ?? this.warning,
+    reachable: reachable ?? this.reachable,
+    unreachable: unreachable ?? this.unreachable,
+    program: program ?? this.program,
+    recordingText: recordingText ?? this.recordingText,
+    favorite: favorite ?? this.favorite,
+  );
 
   @override
   AppStatusColors lerp(ThemeExtension<AppStatusColors>? other, double t) {

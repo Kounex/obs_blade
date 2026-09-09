@@ -37,16 +37,15 @@ class TwitchChatSettings {
     bool? slowMode,
     int? slowModeWaitTimeSeconds,
     bool? uniqueChatMode,
-  }) =>
-      TwitchChatSettings(
-        emoteMode: emoteMode ?? this.emoteMode,
-        followerMode: followerMode ?? this.followerMode,
-        followerModeDurationMinutes:
-            followerModeDurationMinutes ?? this.followerModeDurationMinutes,
-        subscriberMode: subscriberMode ?? this.subscriberMode,
-        slowMode: slowMode ?? this.slowMode,
-        slowModeWaitTimeSeconds:
-            slowModeWaitTimeSeconds ?? this.slowModeWaitTimeSeconds,
-        uniqueChatMode: uniqueChatMode ?? this.uniqueChatMode,
-      );
+  }) => TwitchChatSettings(
+    emoteMode: emoteMode ?? this.emoteMode,
+    followerMode: followerMode ?? this.followerMode,
+    followerModeDurationMinutes:
+        followerModeDurationMinutes ?? this.followerModeDurationMinutes,
+    subscriberMode: subscriberMode ?? this.subscriberMode,
+    slowMode: slowMode ?? this.slowMode,
+    slowModeWaitTimeSeconds:
+        slowModeWaitTimeSeconds ?? this.slowModeWaitTimeSeconds,
+    uniqueChatMode: uniqueChatMode ?? this.uniqueChatMode,
+  );
 }

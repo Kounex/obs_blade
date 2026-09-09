@@ -1,12 +1,7 @@
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 
 /// Where the client was in the OBS WebSocket handshake when the attempt ended.
-enum ConnectionStage {
-  connecting,
-  waitingHello,
-  waitingIdentified,
-  identified,
-}
+enum ConnectionStage { connecting, waitingHello, waitingIdentified, identified }
 
 /// Outcome of [NetworkStore.setOBSWebSocket] — success or a specific failure.
 class ConnectionAttemptResult {

@@ -10,11 +10,7 @@ class ElementBody extends StatelessWidget {
   final int index;
   final PreviewConfig config;
 
-  const ElementBody({
-    super.key,
-    required this.index,
-    required this.config,
-  });
+  const ElementBody({super.key, required this.index, required this.config});
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +42,12 @@ class ElementBody extends StatelessWidget {
                 onPressed: () => ModalHandler.showBaseDialog(
                   context: context,
                   dialogWidget: InfoDialog(
-                      body:
-                          'Some of the elements on the dashboard are only visible if you activated them in the previous screen.\n\nCurrently this element is ${!this.config.visible ? "not " : ""}visible in the dashboard.'),
+                    body:
+                        'Some of the elements on the dashboard are only visible if you activated them in the previous screen.\n\nCurrently this element is ${!this.config.visible ? "not " : ""}visible in the dashboard.',
+                  ),
                 ),
                 icon: Icon(
-                  this.config.visible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
+                  this.config.visible ? Icons.visibility : Icons.visibility_off,
                   color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               )
@@ -62,9 +57,7 @@ class ElementBody extends StatelessWidget {
         bottomPadding: 18.0,
         child: BaseCard(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          child: Align(
-            child: this.config.widget,
-          ),
+          child: Align(child: this.config.widget),
         ),
       ),
     );

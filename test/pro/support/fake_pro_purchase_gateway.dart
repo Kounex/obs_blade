@@ -44,11 +44,11 @@ class FakeProPurchaseGateway implements ProPurchaseGateway {
 
   @override
   Future<ProductDetailsResponse> queryProductDetails(
-      Set<String> identifiers) async {
+    Set<String> identifiers,
+  ) async {
     this.queryCalls++;
     if (this.queryError != null) throw this.queryError!;
-    final found = this
-        .storeProducts
+    final found = this.storeProducts
         .where((product) => identifiers.contains(product.id))
         .toList();
     return ProductDetailsResponse(
@@ -60,8 +60,7 @@ class FakeProPurchaseGateway implements ProPurchaseGateway {
   }
 
   @override
-  Future<bool> buyNonConsumable(
-      {required PurchaseParam purchaseParam}) async {
+  Future<bool> buyNonConsumable({required PurchaseParam purchaseParam}) async {
     this.buyCalls++;
     if (this.buyError != null) throw this.buyError!;
     this.lastBoughtProduct = purchaseParam.productDetails;
@@ -82,16 +81,15 @@ ProductDetails fakeProduct(
   String id, {
   String price = '€9.99',
   double rawPrice = 9.99,
-}) =>
-    ProductDetails(
-      id: id,
-      title: 'Pro ($id)',
-      description: 'description $id',
-      price: price,
-      rawPrice: rawPrice,
-      currencyCode: 'EUR',
-      currencySymbol: '€',
-    );
+}) => ProductDetails(
+  id: id,
+  title: 'Pro ($id)',
+  description: 'description $id',
+  price: price,
+  rawPrice: rawPrice,
+  currencyCode: 'EUR',
+  currencySymbol: '€',
+);
 
 /// Paywall/store-facing wrapper around [fakeProduct] — mirrors what the
 /// IAP backend produces from live store details.
@@ -99,13 +97,12 @@ ProProduct fakeProProduct(
   String id, {
   String price = '€9.99',
   double rawPrice = 9.99,
-}) =>
-    ProProduct(
-      id: id,
-      title: 'Pro ($id)',
-      priceString: price,
-      storeObject: fakeProduct(id, price: price, rawPrice: rawPrice),
-    );
+}) => ProProduct(
+  id: id,
+  title: 'Pro ($id)',
+  priceString: price,
+  storeObject: fakeProduct(id, price: price, rawPrice: rawPrice),
+);
 
 PurchaseDetails fakePurchase(String productId, PurchaseStatus status) =>
     PurchaseDetails(

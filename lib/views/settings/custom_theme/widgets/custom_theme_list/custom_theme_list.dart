@@ -31,8 +31,9 @@ class CustomThemeList extends StatelessWidget {
                 /// card title), so every divider in the card spans the same
                 /// width instead of mixing full-width and deeply indented
                 /// separators.
-                additionalPaddingSeparator:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                additionalPaddingSeparator: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xl,
+                ),
                 children: [
                   for (final (index, theme) in themes.indexed)
                     StaggeredEntrance(

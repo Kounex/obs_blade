@@ -24,9 +24,7 @@ void main() {
   Box<dynamic> settingsBox() => Hive.box(HiveKeys.Settings.name);
 
   ProStore newStore() {
-    final store = ProStore(
-      service: ProPurchaseService(gateway: gateway),
-    );
+    final store = ProStore(service: ProPurchaseService(gateway: gateway));
     stores.add(store);
     return store;
   }

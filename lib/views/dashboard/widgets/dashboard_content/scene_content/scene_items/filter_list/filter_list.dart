@@ -19,10 +19,7 @@ import '../../animated_toggle_icon.dart';
 class FilterList extends StatefulWidget {
   final SceneItem sceneItem;
 
-  const FilterList({
-    super.key,
-    required this.sceneItem,
-  });
+  const FilterList({super.key, required this.sceneItem});
 
   @override
   State<FilterList> createState() => _FilterListState();
@@ -94,7 +91,8 @@ class _FilterListState extends State<FilterList> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   const Text(
-                      'List of filters which are attached to the selected scene item.'),
+                    'List of filters which are attached to the selected scene item.',
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   const BaseDivider(),
                 ],
@@ -138,13 +136,12 @@ class _FilterListState extends State<FilterList> {
                                     ? Icons.visibility
                                     : Icons.visibility_off,
                                 color: filter.filterEnabled
-                                    ? Theme.of(context)
-                                        .buttonTheme
-                                        .colorScheme!
-                                        .primary
-                                    : Theme.of(context)
-                                        .extension<AppStatusColors>()!
-                                        .recording,
+                                    ? Theme.of(
+                                        context,
+                                      ).buttonTheme.colorScheme!.primary
+                                    : Theme.of(
+                                        context,
+                                      ).extension<AppStatusColors>()!.recording,
                               ),
                             ),
                           ),
@@ -153,7 +150,8 @@ class _FilterListState extends State<FilterList> {
                                 .map(
                                   (filterSetting) => Padding(
                                     padding: const EdgeInsets.only(
-                                        bottom: AppSpacing.sm),
+                                      bottom: AppSpacing.sm,
+                                    ),
                                     child: DynamicInput(
                                       label: filterSetting.key,
                                       value: filterSetting.value,
@@ -168,8 +166,10 @@ class _FilterListState extends State<FilterList> {
                                             'filterName': filter.filterName,
                                             'filterSettings': {}
                                               ..addAll(filter.filterSettings)
-                                              ..update(filterSetting.key,
-                                                  (value) => updatedValue),
+                                              ..update(
+                                                filterSetting.key,
+                                                (value) => updatedValue,
+                                              ),
                                           },
                                         );
                                       },

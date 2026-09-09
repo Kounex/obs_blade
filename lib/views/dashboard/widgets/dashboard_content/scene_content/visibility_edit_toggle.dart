@@ -22,8 +22,8 @@ class VisibilityEditToggle extends StatelessWidget {
     this.child,
     required this.sceneItemType,
     this.tabletMode = false,
-  })  : assert(!tabletMode && child != null || tabletMode),
-        super();
+  }) : assert(!tabletMode && child != null || tabletMode),
+       super();
 
   @override
   Widget build(BuildContext context) {
@@ -33,26 +33,31 @@ class VisibilityEditToggle extends StatelessWidget {
     VoidCallback onEdit = () {
       if (this.sceneItemType == SceneItemType.Source) {
         dashboardStore.setEditSceneItemVisibility(
-            !dashboardStore.editSceneItemVisibility);
+          !dashboardStore.editSceneItemVisibility,
+        );
       } else if (this.sceneItemType == SceneItemType.Audio) {
-        dashboardStore
-            .setEditAudioVisibility(!dashboardStore.editAudioVisibility);
+        dashboardStore.setEditAudioVisibility(
+          !dashboardStore.editAudioVisibility,
+        );
       }
     };
 
     Widget editButton = Observer(
       builder: (context) => ThemedCupertinoButton(
-        text: (this.sceneItemType == SceneItemType.Source
+        text:
+            (this.sceneItemType == SceneItemType.Source
                 ? dashboardStore.editSceneItemVisibility
                 : dashboardStore.editAudioVisibility)
             ? 'Done'
             : 'Edit',
-        onPressed: () => !(this.sceneItemType == SceneItemType.Source
+        onPressed: () =>
+            !(this.sceneItemType == SceneItemType.Source
                     ? dashboardStore.editSceneItemVisibility
                     : dashboardStore.editAudioVisibility) &&
                 !Hive.box(HiveKeys.Settings.name).get(
-                    SettingsKeys.DontShowHidingSceneItemsWarning.name,
-                    defaultValue: false)
+                  SettingsKeys.DontShowHidingSceneItemsWarning.name,
+                  defaultValue: false,
+                )
             ? ModalHandler.showBaseDialog(
                 context: context,
                 dialogWidget: ConfirmationDialog(
@@ -65,8 +70,9 @@ class VisibilityEditToggle extends StatelessWidget {
                   onOk: (checked) {
                     if (checked) {
                       Hive.box(HiveKeys.Settings.name).put(
-                          SettingsKeys.DontShowHidingSceneItemsWarning.name,
-                          checked);
+                        SettingsKeys.DontShowHidingSceneItemsWarning.name,
+                        checked,
+                      );
                     }
                     onEdit();
                   },
@@ -80,14 +86,9 @@ class VisibilityEditToggle extends StatelessWidget {
         ? editButton
         : Column(
             children: [
-              Align(
-                alignment: Alignment.center,
-                child: editButton,
-              ),
+              Align(alignment: Alignment.center, child: editButton),
               const BaseDivider(),
-              Expanded(
-                child: this.child!,
-              ),
+              Expanded(child: this.child!),
             ],
           );
   }

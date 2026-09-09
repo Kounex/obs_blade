@@ -6,9 +6,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../../stores/views/statistics.dart';
 
 class FavoriteControl extends StatelessWidget {
-  const FavoriteControl({
-    super.key,
-  });
+  const FavoriteControl({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,24 +21,14 @@ class FavoriteControl extends StatelessWidget {
           children: const {
             false: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.star,
-                ),
-                Icon(
-                  Icons.star_border,
-                ),
-              ],
+              children: [Icon(Icons.star), Icon(Icons.star_border)],
             ),
-            true: Icon(
-              Icons.star,
-            ),
-            'null': Icon(
-              Icons.star_border,
-            ),
+            true: Icon(Icons.star),
+            'null': Icon(Icons.star_border),
           },
-          onValueChanged: (value) => statisticsStore
-              .setShowOnlyFavorites(value == 'null' ? null : value as bool),
+          onValueChanged: (value) => statisticsStore.setShowOnlyFavorites(
+            value == 'null' ? null : value as bool,
+          ),
         ),
       ),
     );

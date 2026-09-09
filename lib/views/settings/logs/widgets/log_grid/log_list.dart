@@ -14,9 +14,7 @@ import '../../../../../types/extensions/int.dart';
 import 'log_tile.dart';
 
 class LogList extends StatelessWidget {
-  const LogList({
-    super.key,
-  });
+  const LogList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,40 +23,43 @@ class LogList extends StatelessWidget {
     return BaseCard(
       paddingChild: const EdgeInsets.all(0),
       child: HiveBuilder<AppLog>(
-          hiveKey: HiveKeys.AppLog,
-          builder: (context, appLogBox, child) {
-            return Observer(builder: (context) {
+        hiveKey: HiveKeys.AppLog,
+        builder: (context, appLogBox, child) {
+          return Observer(
+            builder: (context) {
               List<int> datesMSWithLogs = [];
 
               Iterable<AppLog> filteredOrderedLogs =
                   appLogBox.values.where((log) {
-                bool reqMet = true;
+                    bool reqMet = true;
 
-                if (logsStore.fromDate != null) {
-                  reqMet = log.timestampMS >=
-                      logsStore.fromDate!.millisecondsSinceEpoch;
-                }
+                    if (logsStore.fromDate != null) {
+                      reqMet =
+                          log.timestampMS >=
+                          logsStore.fromDate!.millisecondsSinceEpoch;
+                    }
 
-                if (logsStore.toDate != null) {
-                  reqMet = log.timestampMS <=
-                      logsStore.toDate!.millisecondsSinceEpoch;
-                }
+                    if (logsStore.toDate != null) {
+                      reqMet =
+                          log.timestampMS <=
+                          logsStore.toDate!.millisecondsSinceEpoch;
+                    }
 
-                if (logsStore.logLevel != null) {
-                  reqMet = log.level == logsStore.logLevel;
-                }
+                    if (logsStore.logLevel != null) {
+                      reqMet = log.level == logsStore.logLevel;
+                    }
 
-                return reqMet;
-              }).toList()
-                    ..sort(
-                      (log1, log2) => logsStore.filterOrder == Order.Descending
-                          ? log2.timestampMS.compareTo(log1.timestampMS)
-                          : log1.timestampMS.compareTo(log2.timestampMS),
-                    );
+                    return reqMet;
+                  }).toList()..sort(
+                    (log1, log2) => logsStore.filterOrder == Order.Descending
+                        ? log2.timestampMS.compareTo(log1.timestampMS)
+                        : log1.timestampMS.compareTo(log2.timestampMS),
+                  );
 
               for (var log in filteredOrderedLogs) {
                 if (!datesMSWithLogs.any(
-                    (dateMS) => dateMS.millisecondsSameDay(log.timestampMS))) {
+                  (dateMS) => dateMS.millisecondsSameDay(log.timestampMS),
+                )) {
                   datesMSWithLogs.add(log.timestampMS);
                 }
               }
@@ -80,8 +81,7 @@ class LogList extends StatelessWidget {
                           Icon(
                             CupertinoIcons.tray,
                             size: 32.0,
-                            color:
-                                Theme.of(context).textTheme.bodySmall?.color,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                           Padding(
                             padding: const EdgeInsets.only(top: 14.0),
@@ -98,15 +98,19 @@ class LogList extends StatelessWidget {
                     (dateMS) => LogTile(
                       dateMS: dateMS,
                       logs: filteredOrderedLogs
-                          .where((log) =>
-                              log.timestampMS.millisecondsSameDay(dateMS))
+                          .where(
+                            (log) =>
+                                log.timestampMS.millisecondsSameDay(dateMS),
+                          )
                           .toList(),
                     ),
                   ),
                 ],
               );
-            });
-          }),
+            },
+          );
+        },
+      ),
     );
   }
 }

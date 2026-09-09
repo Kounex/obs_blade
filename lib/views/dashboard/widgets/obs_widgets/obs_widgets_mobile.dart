@@ -8,24 +8,15 @@ class OBSWidgetsMobile extends StatelessWidget {
   /// When true, the Stats tab is listed (and shown) before Chat.
   final bool statsFirst;
 
-  const OBSWidgetsMobile({
-    super.key,
-    this.statsFirst = false,
-  });
+  const OBSWidgetsMobile({super.key, this.statsFirst = false});
 
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
     final List<Widget> tabs = this.statsFirst
-        ? const [
-            Tab(child: Text('Stats')),
-            Tab(child: Text('Chat')),
-          ]
-        : const [
-            Tab(child: Text('Chat')),
-            Tab(child: Text('Stats')),
-          ];
+        ? const [Tab(child: Text('Stats')), Tab(child: Text('Chat'))]
+        : const [Tab(child: Text('Chat')), Tab(child: Text('Stats'))];
 
     final List<Widget> views = this.statsFirst
         ? const [
@@ -80,19 +71,20 @@ class OBSWidgetsMobile extends StatelessWidget {
                 child: TabBar(
                   /// Active tab ink = accent, spent as text ([AppTextColors
                   /// .accentText]) - token-delta rule 2 + §2.3
-                  labelColor:
-                      theme.extension<AppTextColors>()!.accentText,
+                  labelColor: theme.extension<AppTextColors>()!.accentText,
                   unselectedLabelColor: theme.textTheme.bodySmall!.color,
-                  labelStyle: theme.textTheme.titleSmall!
-                      .copyWith(fontWeight: FontWeight.w600),
+                  labelStyle: theme.textTheme.titleSmall!.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   unselectedLabelStyle: theme.textTheme.titleSmall,
                   indicator: UnderlineTabIndicator(
                     borderSide: BorderSide(
                       width: 3.0,
                       color: theme.extension<AppTextColors>()!.accentText,
                     ),
-                    insets:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                    insets: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                    ),
                   ),
                   indicatorSize: TabBarIndicatorSize.label,
                   dividerColor: Colors.transparent,
@@ -105,7 +97,7 @@ class OBSWidgetsMobile extends StatelessWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   children: views,
                 ),
-              )
+              ),
             ],
           ),
         ),

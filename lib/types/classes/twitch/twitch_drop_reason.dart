@@ -10,10 +10,8 @@ part 'twitch_drop_reason.g.dart';
 abstract class TwitchDropReason with _$TwitchDropReason {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory TwitchDropReason({
-    required String code,
-    String? message,
-  }) = _TwitchDropReason;
+  const factory TwitchDropReason({required String code, String? message}) =
+      _TwitchDropReason;
 
   factory TwitchDropReason.fromJson(Map<String, Object?> json) =>
       _$TwitchDropReasonFromJson(json);

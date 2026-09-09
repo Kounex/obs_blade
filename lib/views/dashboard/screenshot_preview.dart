@@ -58,37 +58,26 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
               const BaseDivider(),
               const SizedBox(height: 12.0),
               const Text(
-                  'Screenshot has been saved on your device running OBS.'),
+                'Screenshot has been saved on your device running OBS.',
+              ),
               const SizedBox(height: 12.0),
               Row(
                 children: [
-                  const SizedBox(
-                    width: 52.0,
-                    child: Text(
-                      'Path:',
-                    ),
-                  ),
+                  const SizedBox(width: 52.0, child: Text('Path:')),
                   Text(
                     GetIt.instance<DashboardStore>().recordDirectory!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               Row(
                 children: [
-                  const SizedBox(
-                    width: 52.0,
-                    child: Text('Name:'),
-                  ),
+                  const SizedBox(width: 52.0, child: Text('Name:')),
                   Text(
                     this.widget.screenshotPath.split('/').removeLast(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

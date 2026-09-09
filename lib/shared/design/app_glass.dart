@@ -45,9 +45,8 @@ class AppGlass extends ThemeExtension<AppGlass> {
   static const double barAlpha = 0.75;
 
   /// Derives the extension from the theme's bar slot (appBar/tabBar color)
-  factory AppGlass.forBar(Color barSlot) => AppGlass(
-        barColor: barSlot.withValues(alpha: barAlpha),
-      );
+  factory AppGlass.forBar(Color barSlot) =>
+      AppGlass(barColor: barSlot.withValues(alpha: barAlpha));
 
   @override
   AppGlass copyWith({
@@ -55,13 +54,12 @@ class AppGlass extends ThemeExtension<AppGlass> {
     double? sigma,
     double? saturate,
     double? specularOpacity,
-  }) =>
-      AppGlass(
-        barColor: barColor ?? this.barColor,
-        sigma: sigma ?? this.sigma,
-        saturate: saturate ?? this.saturate,
-        specularOpacity: specularOpacity ?? this.specularOpacity,
-      );
+  }) => AppGlass(
+    barColor: barColor ?? this.barColor,
+    sigma: sigma ?? this.sigma,
+    saturate: saturate ?? this.saturate,
+    specularOpacity: specularOpacity ?? this.specularOpacity,
+  );
 
   @override
   AppGlass lerp(ThemeExtension<AppGlass>? other, double t) {
@@ -72,8 +70,7 @@ class AppGlass extends ThemeExtension<AppGlass> {
       barColor: Color.lerp(barColor, other.barColor, t)!,
       sigma: lerpDouble(sigma, other.sigma, t)!,
       saturate: lerpDouble(saturate, other.saturate, t)!,
-      specularOpacity:
-          lerpDouble(specularOpacity, other.specularOpacity, t)!,
+      specularOpacity: lerpDouble(specularOpacity, other.specularOpacity, t)!,
     );
   }
 }

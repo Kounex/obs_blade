@@ -12,10 +12,10 @@ enum ConnectMode {
   Manual;
 
   String get text => {
-        ConnectMode.Autodiscover: 'Autodiscover',
-        ConnectMode.QR: 'Quick Connect',
-        ConnectMode.Manual: 'Manual',
-      }[this]!;
+    ConnectMode.Autodiscover: 'Autodiscover',
+    ConnectMode.QR: 'Quick Connect',
+    ConnectMode.Manual: 'Manual',
+  }[this]!;
 }
 
 class HomeStore = _HomeStore with _$HomeStore;
@@ -47,7 +47,8 @@ abstract class _HomeStore with Store {
   void updateAutodiscoverConnections() {
     if (ValidationHelper.portValidator(this.autodiscoverPort) == null) {
       this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
-          int.tryParse(this.autodiscoverPort) ?? 4455);
+        int.tryParse(this.autodiscoverPort) ?? 4455,
+      );
     }
   }
 

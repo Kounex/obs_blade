@@ -9,9 +9,7 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
 class ProfileControl extends StatelessWidget {
-  const ProfileControl({
-    super.key,
-  });
+  const ProfileControl({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,17 +18,18 @@ class ProfileControl extends StatelessWidget {
     return Observer(
       builder: (context) {
         return BaseDropdown<String>(
-          value: dashboardStore.profiles != null &&
-                  dashboardStore.profiles!
-                      .contains(dashboardStore.currentProfileName)
+          value:
+              dashboardStore.profiles != null &&
+                  dashboardStore.profiles!.contains(
+                    dashboardStore.currentProfileName,
+                  )
               ? dashboardStore.currentProfileName
               : null,
-          items: dashboardStore.profiles
+          items:
+              dashboardStore.profiles
                   ?.map(
-                    (profileName) => BaseDropdownItem(
-                      value: profileName,
-                      text: profileName,
-                    ),
+                    (profileName) =>
+                        BaseDropdownItem(value: profileName, text: profileName),
                   )
                   .toList() ??
               [],

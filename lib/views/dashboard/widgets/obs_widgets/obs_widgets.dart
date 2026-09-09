@@ -9,10 +9,7 @@ class OBSWidgets extends StatelessWidget {
   /// When true, the Stats card is on the left.
   final bool statsFirst;
 
-  const OBSWidgets({
-    super.key,
-    this.statsFirst = false,
-  });
+  const OBSWidgets({super.key, this.statsFirst = false});
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +20,7 @@ class OBSWidgets extends StatelessWidget {
       paddingChild: const EdgeInsets.all(0),
       child: const SizedBox(
         height: 750.0,
-        child: StreamChat(
-          usernameRowPadding: true,
-        ),
+        child: StreamChat(usernameRowPadding: true),
       ),
     );
 
@@ -34,10 +29,7 @@ class OBSWidgets extends StatelessWidget {
       leftPadding: this.statsFirst ? AppSpacing.lg : AppSpacing.md,
       rightPadding: this.statsFirst ? AppSpacing.md : AppSpacing.lg,
       paddingChild: const EdgeInsets.all(0),
-      child: const SizedBox(
-        height: 650.0,
-        child: Stats(),
-      ),
+      child: const SizedBox(height: 650.0, child: Stats()),
     );
 
     return Row(

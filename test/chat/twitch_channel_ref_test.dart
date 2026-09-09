@@ -6,25 +6,30 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 void main() {
   group('kTwitchChatScopes', () {
     test('contains the multi-chat discovery + mod action scopes', () {
-      expect(kTwitchChatScopes, containsAll(<String>[
-        'user:read:follows',
-        'user:read:subscriptions',
-        'user:read:moderated_channels',
-        'moderator:read:followers',
-        'moderator:manage:chat_messages',
-        'moderator:manage:banned_users',
-        'moderator:manage:chat_settings',
-        'moderator:manage:shield_mode',
-        'moderator:manage:announcements',
-      ]));
+      expect(
+        kTwitchChatScopes,
+        containsAll(<String>[
+          'user:read:follows',
+          'user:read:subscriptions',
+          'user:read:moderated_channels',
+          'moderator:read:followers',
+          'moderator:manage:chat_messages',
+          'moderator:manage:banned_users',
+          'moderator:manage:chat_settings',
+          'moderator:manage:shield_mode',
+          'moderator:manage:announcements',
+        ]),
+      );
     });
   });
 
   group('SettingsKeys multi-chat', () {
     test('name map entries are kebab-case', () {
       expect(SettingsKeys.NativeChatChannels.name, 'native-chat-channels');
-      expect(SettingsKeys.SelectedNativeChatChannelId.name,
-          'selected-native-chat-channel-id');
+      expect(
+        SettingsKeys.SelectedNativeChatChannelId.name,
+        'selected-native-chat-channel-id',
+      );
     });
   });
 

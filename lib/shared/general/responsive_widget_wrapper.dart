@@ -22,10 +22,12 @@ class ResponsiveWidgetWrapper extends StatelessWidget {
       rebuildKeys: const [SettingsKeys.EnforceTabletMode],
       builder: (context, settingsBox, child) =>
           MediaQuery.sizeOf(context).width > StylingHelper.max_width_mobile ||
-                  settingsBox.get(SettingsKeys.EnforceTabletMode.name,
-                      defaultValue: false)
-              ? this.tabletWidget
-              : this.mobileWidget,
+              settingsBox.get(
+                SettingsKeys.EnforceTabletMode.name,
+                defaultValue: false,
+              )
+          ? this.tabletWidget
+          : this.mobileWidget,
     );
   }
 }

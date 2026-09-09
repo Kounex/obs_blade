@@ -1,5 +1,4 @@
-import 'package:flutter/cupertino.dart'
-    show kMinInteractiveDimensionCupertino;
+import 'package:flutter/cupertino.dart' show kMinInteractiveDimensionCupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -54,9 +53,11 @@ class ProSalesView extends StatelessWidget {
       /// clearance CustomSliverList gives the sliver-based tab views, so
       /// the legal row scrolls fully above the bar
       padding: EdgeInsets.only(
-        top: MediaQuery.paddingOf(context).top +
+        top:
+            MediaQuery.paddingOf(context).top +
             kMinInteractiveDimensionCupertino,
-        bottom: 2 * kBottomNavigationBarHeight +
+        bottom:
+            2 * kBottomNavigationBarHeight +
             MediaQuery.paddingOf(context).bottom / 2,
       ),
       child: Center(
@@ -83,10 +84,10 @@ class ProSalesView extends StatelessWidget {
                   /// Conversion-critical copy earns the AA level
                   /// (token-delta §2.1 body copy)
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        color: Theme.of(context)
-                            .extension<AppTextColors>()!
-                            .textSecondary,
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).extension<AppTextColors>()!.textSecondary,
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -103,15 +104,14 @@ class ProSalesView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding:
-                          const EdgeInsets.only(bottom: AppSpacing.md),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: Text(
                         'CHOOSE YOUR PRO',
                         style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                              color: Theme.of(context)
-                                  .extension<AppTextColors>()!
-                                  .textTertiary,
-                            ),
+                          color: Theme.of(
+                            context,
+                          ).extension<AppTextColors>()!.textTertiary,
+                        ),
                       ),
                     ),
                     ProPricing(store: this.store),
@@ -147,13 +147,11 @@ class ProSalesView extends StatelessWidget {
                           ),
                           child: Text(
                             '·',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
+                            style: Theme.of(context).textTheme.bodySmall!
                                 .copyWith(
-                                  color: Theme.of(context)
-                                      .extension<AppTextColors>()!
-                                      .textTertiary,
+                                  color: Theme.of(
+                                    context,
+                                  ).extension<AppTextColors>()!.textTertiary,
                                 ),
                           ),
                         ),
@@ -194,12 +192,9 @@ class _LegalLink extends StatelessWidget {
         child: Text(
           this.text,
           style: Theme.of(context).textTheme.bodySmall!.copyWith(
-
-                /// Links are highlight-as-text (token-delta §2.3), not accent
-                color: Theme.of(context)
-                    .extension<AppTextColors>()!
-                    .highlightText,
-              ),
+            /// Links are highlight-as-text (token-delta §2.3), not accent
+            color: Theme.of(context).extension<AppTextColors>()!.highlightText,
+          ),
         ),
       ),
     );

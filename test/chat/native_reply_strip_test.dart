@@ -16,16 +16,16 @@ import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
 
 ChatMessageEvent chatMessage(String id, String chatterId) => ChatMessageEvent(
-      broadcasterUserId: 'user-1',
-      chatterUserId: chatterId,
-      chatterUserLogin: 'user$chatterId',
-      chatterUserName: 'User$chatterId',
-      messageId: id,
-      message: ChatMessageText(
-        text: 'text $id',
-        fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
-      ),
-    );
+  broadcasterUserId: 'user-1',
+  chatterUserId: chatterId,
+  chatterUserLogin: 'user$chatterId',
+  chatterUserName: 'User$chatterId',
+  messageId: id,
+  message: ChatMessageText(
+    text: 'text $id',
+    fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -33,8 +33,8 @@ void main() {
   late TwitchChatStore store;
 
   Widget wrap() => const MaterialApp(
-        home: Scaffold(body: NativeReplyStrip(accentColor: Colors.purple)),
-      );
+    home: Scaffold(body: NativeReplyStrip(accentColor: Colors.purple)),
+  );
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('reply_strip_test');
@@ -46,8 +46,19 @@ void main() {
     authService.tokenScopes = const ['user:read:chat', 'user:write:chat'];
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          FakeTwitchEventSubService(),
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => FakeTwitchEventSubService(),
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       messageService: FakeTwitchMessageService(),
@@ -72,8 +83,9 @@ void main() {
     expect(find.textContaining('Replying to'), findsNothing);
   });
 
-  testWidgets('shows author and excerpt while a target is set; x cancels',
-      (tester) async {
+  testWidgets('shows author and excerpt while a target is set; x cancels', (
+    tester,
+  ) async {
     store.setReplyTarget(chatMessage('parent-1', 'u7'));
     await tester.pumpWidget(wrap());
 

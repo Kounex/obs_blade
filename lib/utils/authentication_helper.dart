@@ -48,10 +48,7 @@ class AuthenticationHelper {
     }
 
     activeSession.socket.sink.add(
-      jsonEncode({
-        'op': WebSocketOpCode.Identify.identifier,
-        'd': data,
-      }),
+      jsonEncode({'op': WebSocketOpCode.Identify.identifier, 'd': data}),
     );
   }
 }

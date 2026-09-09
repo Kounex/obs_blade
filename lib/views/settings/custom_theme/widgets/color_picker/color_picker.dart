@@ -14,16 +14,10 @@ import '../../../../../utils/validation_helper.dart';
 import 'color_bubble.dart';
 import 'color_slider.dart';
 
-enum PickerType {
-  RGB,
-  HSL,
-}
+enum PickerType { RGB, HSL }
 
 extension PickerTypeFunctions on PickerType {
-  String get name => {
-        PickerType.RGB: 'RGB',
-        PickerType.HSL: 'HSL',
-      }[this]!;
+  String get name => {PickerType.RGB: 'RGB', PickerType.HSL: 'HSL'}[this]!;
 }
 
 class ColorPicker extends StatefulWidget {
@@ -57,38 +51,45 @@ class _ColorPickerState extends State<ColorPicker> {
 
   final CustomValidationTextEditingController _rController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.R));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.R),
+      );
 
   final CustomValidationTextEditingController _gController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.G));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.G),
+      );
 
   final CustomValidationTextEditingController _bController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.B));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.B),
+      );
 
   final CustomValidationTextEditingController _hController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.H));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.H),
+      );
 
   final CustomValidationTextEditingController _sController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.S));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.S),
+      );
 
   final CustomValidationTextEditingController _lController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.L));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.L),
+      );
 
   final CustomValidationTextEditingController _aController =
       CustomValidationTextEditingController(
-          check: (value) =>
-              ValidationHelper.colorTypeValidator(value, ColorType.A));
+        check: (value) =>
+            ValidationHelper.colorTypeValidator(value, ColorType.A),
+      );
 
   late double _hue;
   late double _saturation;
@@ -98,8 +99,10 @@ class _ColorPickerState extends State<ColorPicker> {
   void initState() {
     _hexController = CustomValidationTextEditingController(
       text: this.widget.color ?? '000000',
-      check: (value) => ValidationHelper.colorHexValidator(value,
-          useAlpha: this.widget.useAlpha),
+      check: (value) => ValidationHelper.colorHexValidator(
+        value,
+        useAlpha: this.widget.useAlpha,
+      ),
     );
     _latestValidHexValue = _hexController.text;
 
@@ -108,15 +111,18 @@ class _ColorPickerState extends State<ColorPicker> {
     _hexFocusNode.addListener(() {
       if (_hexFocusNode.hasFocus) {
         _hexController.selection = TextSelection(
-            baseOffset: 0, extentOffset: _hexController.text.length);
+          baseOffset: 0,
+          extentOffset: _hexController.text.length,
+        );
       }
     });
     super.initState();
   }
 
   void _setHSLColor() {
-    HSLColor hslColor =
-        HSLColor.fromColor(Color(int.parse(_latestValidHexValue, radix: 16)));
+    HSLColor hslColor = HSLColor.fromColor(
+      Color(int.parse(_latestValidHexValue, radix: 16)),
+    );
 
     _hue = hslColor.hue;
     _saturation = (hslColor.saturation * 100).roundToDouble();
@@ -128,12 +134,14 @@ class _ColorPickerState extends State<ColorPicker> {
       int offset = type == ColorType.A
           ? 0
           : (this.widget.useAlpha ? 0 : -2) + type.hexOffset;
-      return int.parse(_latestValidHexValue.substring(offset, offset + 2),
-              radix: 16)
-          .toDouble();
+      return int.parse(
+        _latestValidHexValue.substring(offset, offset + 2),
+        radix: 16,
+      ).toDouble();
     }
-    HSLColor color =
-        HSLColor.fromColor(Color(int.parse(_latestValidHexValue, radix: 16)));
+    HSLColor color = HSLColor.fromColor(
+      Color(int.parse(_latestValidHexValue, radix: 16)),
+    );
     switch (type) {
       case ColorType.H:
         return _hue;
@@ -155,11 +163,18 @@ class _ColorPickerState extends State<ColorPicker> {
           ? 0
           : (this.widget.useAlpha ? 0 : -2) + type.hexOffset;
       String hex = int.parse(value).toRadixString(16);
-      _hexController.text = _hexController.text
-          .replaceRange(offset, offset + 2, hex.padLeft(2, '0'));
+      _hexController.text = _hexController.text.replaceRange(
+        offset,
+        offset + 2,
+        hex.padLeft(2, '0'),
+      );
     } else {
-      HSLColor color =
-          HSLColor.fromAHSL(1.0, _hue, _saturation / 100, _lightness / 100);
+      HSLColor color = HSLColor.fromAHSL(
+        1.0,
+        _hue,
+        _saturation / 100,
+        _lightness / 100,
+      );
       switch (type) {
         case ColorType.H:
           _hue = double.parse(value);
@@ -234,7 +249,8 @@ class _ColorPickerState extends State<ColorPicker> {
                 alignment: Alignment.centerLeft,
                 child: ThemedCupertinoButton(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.lg),
+                    horizontal: AppSpacing.lg,
+                  ),
                   text: 'Reset',
                   isDestructive: true,
                   onPressed: () => ModalHandler.showBaseDialog(
@@ -251,26 +267,26 @@ class _ColorPickerState extends State<ColorPicker> {
               ),
             ),
             ThemedCupertinoButton(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               text: 'Cancel',
               onPressed: () => Navigator.of(context).pop(false),
             ),
             ThemedCupertinoButton(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               text: 'Save',
               onPressed: () {
                 if (_hexController.isValid &&
                     (this.widget.editableColorValues
                         ? (_pickerType == PickerType.RGB
-                                ? (_rController.isValid &&
-                                    _gController.isValid &&
-                                    _bController.isValid)
-                                : (_hController.isValid &&
-                                    _sController.isValid &&
-                                    _lController.isValid)) &&
-                            (this.widget.useAlpha ? _aController.isValid : true)
+                                  ? (_rController.isValid &&
+                                        _gController.isValid &&
+                                        _bController.isValid)
+                                  : (_hController.isValid &&
+                                        _sController.isValid &&
+                                        _lController.isValid)) &&
+                              (this.widget.useAlpha
+                                  ? _aController.isValid
+                                  : true)
                         : true)) {
                   this.widget.onSave?.call(_hexController.text);
                   Navigator.of(context).pop();
@@ -282,7 +298,10 @@ class _ColorPickerState extends State<ColorPicker> {
         const BaseDivider(),
         Padding(
           padding: const EdgeInsets.only(
-              top: AppSpacing.md, left: AppSpacing.md, bottom: AppSpacing.xs),
+            top: AppSpacing.md,
+            left: AppSpacing.md,
+            bottom: AppSpacing.xs,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -297,9 +316,10 @@ class _ColorPickerState extends State<ColorPicker> {
         ),
         Padding(
           padding: const EdgeInsets.only(
-              left: AppSpacing.md,
-              right: AppSpacing.md,
-              bottom: AppSpacing.md),
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            bottom: AppSpacing.md,
+          ),
           child: Text(
             this.widget.description,
             style: Theme.of(context).textTheme.bodySmall,
@@ -312,13 +332,14 @@ class _ColorPickerState extends State<ColorPicker> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   child: Center(
                     child: CupertinoSlidingSegmentedControl<PickerType>(
                       groupValue: _pickerType,
                       padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.xs, horizontal: 2.0),
+                        vertical: AppSpacing.xs,
+                        horizontal: 2.0,
+                      ),
                       children: {
                         PickerType.RGB: SizedBox(
                           width: 96.0,
@@ -345,14 +366,15 @@ class _ColorPickerState extends State<ColorPicker> {
                 const BaseDivider(),
                 Padding(
                   padding: const EdgeInsets.only(
-                      top: AppSpacing.md,
-                      left: AppSpacing.md,
-                      right: AppSpacing.md),
+                    top: AppSpacing.md,
+                    left: AppSpacing.md,
+                    right: AppSpacing.md,
+                  ),
                   child: Text(
                     'FROM CURRENT THEME',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color:
-                            Theme.of(context).textTheme.bodySmall?.color),
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                   ),
                 ),
                 Padding(
@@ -364,10 +386,7 @@ class _ColorPickerState extends State<ColorPicker> {
                       for (final Color swatch in _themeSwatches(context))
                         Pressable(
                           onTap: () => _applySwatch(swatch),
-                          child: ColorBubble(
-                            color: swatch,
-                            size: 32.0,
-                          ),
+                          child: ColorBubble(color: swatch, size: 32.0),
                         ),
                     ],
                   ),
@@ -375,7 +394,8 @@ class _ColorPickerState extends State<ColorPicker> {
                 const BaseDivider(),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md),
+                    horizontal: AppSpacing.md,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -383,11 +403,11 @@ class _ColorPickerState extends State<ColorPicker> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(
-                                right: AppSpacing.xl),
+                              right: AppSpacing.xl,
+                            ),
                             child: Text(
                               'Hex:',
-                              style:
-                                  Theme.of(context).textTheme.titleMedium,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
                           SizedBox(
@@ -397,7 +417,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               builder: (context, setInnerState) {
                                 return Padding(
                                   padding: const EdgeInsets.only(
-                                      top: AppSpacing.xl),
+                                    top: AppSpacing.xl,
+                                  ),
                                   child: TextFormField(
                                     controller: _hexController,
                                     focusNode: _hexFocusNode,
@@ -409,24 +430,26 @@ class _ColorPickerState extends State<ColorPicker> {
                                           .withValues(alpha: 0.5),
                                       contentPadding:
                                           const EdgeInsets.symmetric(
-                                        horizontal: AppSpacing.md,
-                                        vertical: AppSpacing.md,
-                                      ),
+                                            horizontal: AppSpacing.md,
+                                            vertical: AppSpacing.md,
+                                          ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(
-                                            AppRadius.sm),
+                                          AppRadius.sm,
+                                        ),
                                         borderSide: BorderSide.none,
                                       ),
                                       counterText: '',
                                       suffixText:
                                           '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
-                                      suffixStyle: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall,
+                                      suffixStyle: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                     validator: (color) =>
                                         ValidationHelper.colorHexValidator(
-                                            color),
+                                          color,
+                                        ),
                                     autovalidateMode: AutovalidateMode.always,
                                     autocorrect: false,
                                     maxLength: this.widget.useAlpha ? 8 : 6,
@@ -440,7 +463,8 @@ class _ColorPickerState extends State<ColorPicker> {
                                     // ],
                                     onChanged: (value) {
                                       if (ValidationHelper.colorHexValidator(
-                                              _hexController.text) ==
+                                            _hexController.text,
+                                          ) ==
                                           null) {
                                         _latestValidHexValue = value;
                                         _setHSLColor();
@@ -456,8 +480,7 @@ class _ColorPickerState extends State<ColorPicker> {
                         ],
                       ),
                       Padding(
-                        padding:
-                            const EdgeInsets.only(right: AppSpacing.md),
+                        padding: const EdgeInsets.only(right: AppSpacing.md),
                         child: ColorBubble(
                           color: _latestValidHexValue.hexToColor(),
                           size: 48.0,
@@ -469,9 +492,10 @@ class _ColorPickerState extends State<ColorPicker> {
                 const BaseDivider(),
                 Padding(
                   padding: const EdgeInsets.only(
-                      top: AppSpacing.md,
-                      left: AppSpacing.xl,
-                      right: AppSpacing.lg),
+                    top: AppSpacing.md,
+                    left: AppSpacing.xl,
+                    right: AppSpacing.lg,
+                  ),
                   child: AnimatedSwitcher(
                     duration: AppMotion.fast,
                     switchInCurve: AppMotion.standard,
@@ -489,10 +513,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               colorType: ColorType.R,
                               value: _getColorSliderValue(ColorType.R),
                               activeColor: CupertinoColors.destructiveRed,
-                              onChanged: (colorVal) => _onColorSlideChange(
-                                colorVal,
-                                ColorType.R,
-                              ),
+                              onChanged: (colorVal) =>
+                                  _onColorSlideChange(colorVal, ColorType.R),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             ColorSlider(
@@ -503,10 +525,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               colorType: ColorType.G,
                               value: _getColorSliderValue(ColorType.G),
                               activeColor: Colors.green,
-                              onChanged: (colorVal) => _onColorSlideChange(
-                                colorVal,
-                                ColorType.G,
-                              ),
+                              onChanged: (colorVal) =>
+                                  _onColorSlideChange(colorVal, ColorType.G),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             ColorSlider(
@@ -517,10 +537,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               colorType: ColorType.B,
                               value: _getColorSliderValue(ColorType.B),
                               activeColor: Colors.blue,
-                              onChanged: (colorVal) => _onColorSlideChange(
-                                colorVal,
-                                ColorType.B,
-                              ),
+                              onChanged: (colorVal) =>
+                                  _onColorSlideChange(colorVal, ColorType.B),
                             ),
                           ],
                           if (_pickerType == PickerType.HSL) ...[
@@ -533,10 +551,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               value: _getColorSliderValue(ColorType.H),
                               saturation: _saturation,
                               lightness: _lightness,
-                              onChanged: (colorVal) => _onColorSlideChange(
-                                colorVal,
-                                ColorType.H,
-                              ),
+                              onChanged: (colorVal) =>
+                                  _onColorSlideChange(colorVal, ColorType.H),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             ColorSlider(
@@ -548,10 +564,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               value: _getColorSliderValue(ColorType.S),
                               hue: _hue,
                               lightness: _lightness,
-                              onChanged: (colorVal) => _onColorSlideChange(
-                                colorVal,
-                                ColorType.S,
-                              ),
+                              onChanged: (colorVal) =>
+                                  _onColorSlideChange(colorVal, ColorType.S),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             ColorSlider(
@@ -563,10 +577,8 @@ class _ColorPickerState extends State<ColorPicker> {
                               value: _getColorSliderValue(ColorType.L),
                               hue: _hue,
                               saturation: _saturation,
-                              onChanged: (colorVal) => _onColorSlideChange(
-                                colorVal,
-                                ColorType.L,
-                              ),
+                              onChanged: (colorVal) =>
+                                  _onColorSlideChange(colorVal, ColorType.L),
                             ),
                           ],
                         ],
@@ -577,7 +589,9 @@ class _ColorPickerState extends State<ColorPicker> {
                 if (this.widget.useAlpha)
                   Padding(
                     padding: const EdgeInsets.only(
-                        left: AppSpacing.xl, right: AppSpacing.lg),
+                      left: AppSpacing.xl,
+                      right: AppSpacing.lg,
+                    ),
                     child: ColorSlider(
                       controller: this.widget.editableColorValues
                           ? _aController

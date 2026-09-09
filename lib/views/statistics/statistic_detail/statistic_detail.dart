@@ -19,9 +19,7 @@ import 'widgets/stat_tile.dart';
 import 'widgets/stats_chart.dart';
 
 class StatisticDetailView extends StatefulWidget {
-  const StatisticDetailView({
-    super.key,
-  });
+  const StatisticDetailView({super.key});
 
   @override
   _StatisticDetailViewState createState() => _StatisticDetailViewState();
@@ -87,45 +85,47 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         actions: AppBarActions(
           actions: [
             AppBarActionEntry(
-                title: pastStatsData.starred != null && pastStatsData.starred!
-                    ? 'Delete from Favorites'
-                    : 'Mark as Favorite',
-                onAction: () {
-                  if (pastStatsData.starred != null) {
-                    pastStatsData.starred = !pastStatsData.starred!;
-                  } else {
-                    pastStatsData.starred = true;
-                  }
-                  if (pastStatsData is PastStreamData) {
-                    pastStatsData.box!.put(pastStatsData.key, pastStatsData);
-                  } else if (pastStatsData is PastRecordData) {
-                    pastStatsData.box!.put(pastStatsData.key, pastStatsData);
-                  }
-                  setState(() {});
-                }),
+              title: pastStatsData.starred != null && pastStatsData.starred!
+                  ? 'Delete from Favorites'
+                  : 'Mark as Favorite',
+              onAction: () {
+                if (pastStatsData.starred != null) {
+                  pastStatsData.starred = !pastStatsData.starred!;
+                } else {
+                  pastStatsData.starred = true;
+                }
+                if (pastStatsData is PastStreamData) {
+                  pastStatsData.box!.put(pastStatsData.key, pastStatsData);
+                } else if (pastStatsData is PastRecordData) {
+                  pastStatsData.box!.put(pastStatsData.key, pastStatsData);
+                }
+                setState(() {});
+              },
+            ),
             AppBarActionEntry(
-                title: 'Rename',
-                onAction: () {
-                  ModalHandler.showBaseDialog(
-                    context: context,
-                    dialogWidget: InputDialog(
-                      title: 'Rename entry',
-                      body: 'Please enter a new name for this entry',
-                      inputPlaceholder: 'Entry name',
-                      inputText: pastStatsData.name,
-                      onSave: (name) {
-                        pastStatsData.name = name;
-                        if (pastStatsData is PastStreamData) {
-                          pastStatsData.save();
-                        } else if (pastStatsData is PastRecordData) {
-                          pastStatsData.save();
-                        }
+              title: 'Rename',
+              onAction: () {
+                ModalHandler.showBaseDialog(
+                  context: context,
+                  dialogWidget: InputDialog(
+                    title: 'Rename entry',
+                    body: 'Please enter a new name for this entry',
+                    inputPlaceholder: 'Entry name',
+                    inputText: pastStatsData.name,
+                    onSave: (name) {
+                      pastStatsData.name = name;
+                      if (pastStatsData is PastStreamData) {
+                        pastStatsData.save();
+                      } else if (pastStatsData is PastRecordData) {
+                        pastStatsData.save();
+                      }
 
-                        setState(() {});
-                      },
-                    ),
-                  );
-                }),
+                      setState(() {});
+                    },
+                  ),
+                );
+              },
+            ),
             AppBarActionEntry(
               title: 'Delete',
               isDestructive: true,
@@ -184,7 +184,8 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                               index: index + 1,
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
-                                  maxWidth: StylingHelper.max_width_mobile /
+                                  maxWidth:
+                                      StylingHelper.max_width_mobile /
                                       (MediaQuery.sizeOf(context).width <
                                               StylingHelper.max_width_mobile
                                           ? 1
@@ -199,11 +200,11 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                                   child: Padding(
                                     padding:
                                         const EdgeInsets.all(AppSpacing.md) +
-                                            const EdgeInsets.only(
-                                              top: AppSpacing.xs,
-                                              left: 20.0,
-                                              right: AppSpacing.xl,
-                                            ),
+                                        const EdgeInsets.only(
+                                          top: AppSpacing.xs,
+                                          left: 20.0,
+                                          right: AppSpacing.xl,
+                                        ),
                                     child: streamChart,
                                   ),
                                 ),
@@ -229,36 +230,44 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                           ),
                           StatTile(
                             label: 'Average FPS',
-                            value: (pastStatsData.fpsList
-                                        .reduce((a, b) => a + b) /
-                                    pastStatsData.fpsList.length)
-                                .toStringAsFixed(2),
+                            value:
+                                (pastStatsData.fpsList.reduce((a, b) => a + b) /
+                                        pastStatsData.fpsList.length)
+                                    .toStringAsFixed(2),
                             valueColor: Colors.greenAccent,
                           ),
                           StatTile(
                             label: 'Average CPU Usage',
-                            value: (pastStatsData.cpuUsageList
-                                        .reduce((a, b) => a + b) /
-                                    pastStatsData.cpuUsageList.length)
-                                .toStringAsFixed(2),
+                            value:
+                                (pastStatsData.cpuUsageList.reduce(
+                                          (a, b) => a + b,
+                                        ) /
+                                        pastStatsData.cpuUsageList.length)
+                                    .toStringAsFixed(2),
                             unit: '%',
                             valueColor: Colors.blueAccent,
                           ),
                           StatTile(
                             label: 'Average kbit/s',
-                            value: (pastStatsData.kbitsPerSecList
-                                        .reduce((a, b) => a + b) /
-                                    pastStatsData.kbitsPerSecList.length)
-                                .toStringAsFixed(2),
+                            value:
+                                (pastStatsData.kbitsPerSecList.reduce(
+                                          (a, b) => a + b,
+                                        ) /
+                                        pastStatsData.kbitsPerSecList.length)
+                                    .toStringAsFixed(2),
                             valueColor: Colors.orangeAccent,
                           ),
                           StatTile(
                             label: 'Average Memory Usage',
-                            value: ((pastStatsData.memoryUsageList
-                                            .reduce((a, b) => a + b) /
-                                        pastStatsData.memoryUsageList.length) /
-                                    1000)
-                                .toStringAsFixed(2),
+                            value:
+                                ((pastStatsData.memoryUsageList.reduce(
+                                              (a, b) => a + b,
+                                            ) /
+                                            pastStatsData
+                                                .memoryUsageList
+                                                .length) /
+                                        1000)
+                                    .toStringAsFixed(2),
                             unit: ' GB',
                             valueColor: Colors.redAccent,
                           ),
@@ -268,8 +277,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                           ),
                           StatTile(
                             label: 'Skipped Output Frames',
-                            value:
-                                pastStatsData.outputSkippedFrames.toString(),
+                            value: pastStatsData.outputSkippedFrames.toString(),
                           ),
                           StatTile(
                             label: 'Total Render Frames',
@@ -277,8 +285,7 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                           ),
                           StatTile(
                             label: 'Skipped Render Frames',
-                            value:
-                                pastStatsData.renderSkippedFrames.toString(),
+                            value: pastStatsData.renderSkippedFrames.toString(),
                           ),
                         ],
                       ),

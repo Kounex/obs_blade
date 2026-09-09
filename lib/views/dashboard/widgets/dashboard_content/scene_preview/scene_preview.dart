@@ -24,10 +24,7 @@ const String kScenePreviewHeroTag = 'scene-preview-hero';
 class ScenePreview extends StatefulWidget {
   final bool expandable;
 
-  const ScenePreview({
-    super.key,
-    this.expandable = true,
-  });
+  const ScenePreview({super.key, this.expandable = true});
 
   @override
   State<ScenePreview> createState() => _ScenePreviewState();
@@ -96,36 +93,33 @@ class _ScenePreviewState extends State<ScenePreview> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Container(
-              width: double.infinity,
-              color: Colors.black,
-            ),
+            Container(width: double.infinity, color: Colors.black),
             AnimatedSwitcher(
               duration: AppMotion.slow,
               child: _imageAvailable
                   ? Hero(
                       tag: kScenePreviewHeroTag,
-                      child: Observer(builder: (context) {
-                        return Image.memory(
-                          dashboardStore.scenePreviewImageBytes!,
+                      child: Observer(
+                        builder: (context) {
+                          return Image.memory(
+                            dashboardStore.scenePreviewImageBytes!,
 
-                          /// Might reduce the memory used and therefore
-                          /// the performance of the frequently changing
-                          /// image - a multiplicator is used since
-                          /// using the original size would decrease the
-                          /// quality significantly
-                          // cacheHeight: (maxImageHeight * 1.5).toInt(),
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
-                        );
-                      }),
+                            /// Might reduce the memory used and therefore
+                            /// the performance of the frequently changing
+                            /// image - a multiplicator is used since
+                            /// using the original size would decrease the
+                            /// quality significantly
+                            // cacheHeight: (maxImageHeight * 1.5).toInt(),
+                            fit: BoxFit.contain,
+                            gaplessPlayback: true,
+                          );
+                        },
+                      ),
                     )
                   : SizedBox(
                       key: const ValueKey('fetching-preview'),
                       height: 150.0,
-                      child: BaseProgressIndicator(
-                        text: 'Fetching preview...',
-                      ),
+                      child: BaseProgressIndicator(text: 'Fetching preview...'),
                     ),
             ),
             if (_imageAvailable)
@@ -158,22 +152,27 @@ class _ScenePreviewState extends State<ScenePreview> {
                                 /// tab shell (app / tab bar) as well - costs
                                 /// the [Hero] flight (different
                                 /// [HeroController] scope), accepted tradeoff
-                                Navigator.of(context, rootNavigator: true)
-                                    .push(
+                                Navigator.of(context, rootNavigator: true).push(
                                   PageRouteBuilder<void>(
                                     opaque: true,
                                     transitionDuration: AppMotion.medium,
-                                    reverseTransitionDuration:
-                                        AppMotion.medium,
-                                    pageBuilder: (context, animation,
-                                            secondaryAnimation) =>
-                                        const _ScenePreviewFullscreen(),
-                                    transitionsBuilder: (context, animation,
-                                            secondaryAnimation, child) =>
-                                        FadeTransition(
-                                      opacity: animation,
-                                      child: child,
-                                    ),
+                                    reverseTransitionDuration: AppMotion.medium,
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => const _ScenePreviewFullscreen(),
+                                    transitionsBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                          child,
+                                        ) => FadeTransition(
+                                          opacity: animation,
+                                          child: child,
+                                        ),
                                   ),
                                 );
                               }
@@ -205,8 +204,11 @@ class _ScenePreviewState extends State<ScenePreview> {
         SettingsKeys.DontShowPreviewWarning,
         SettingsKeys.ExposeScenePreview,
       ],
-      builder: (context, settingsBox, child) => settingsBox
-              .get(SettingsKeys.ExposeScenePreview.name, defaultValue: true)
+      builder: (context, settingsBox, child) =>
+          settingsBox.get(
+            SettingsKeys.ExposeScenePreview.name,
+            defaultValue: true,
+          )
           ? CustomExpansionTile(
               headerText: 'Current OBS scene preview',
               manualExpand: (expandFunction, expanded) {
@@ -214,18 +216,22 @@ class _ScenePreviewState extends State<ScenePreview> {
                 VoidCallback onExpand = () {
                   expandFunction();
                   dashboardStore.setShouldRequestPreviewImage(
-                      !dashboardStore.shouldRequestPreviewImage);
+                    !dashboardStore.shouldRequestPreviewImage,
+                  );
                 };
-                !settingsBox.get(SettingsKeys.DontShowPreviewWarning.name,
-                            defaultValue: false) &&
+                !settingsBox.get(
+                          SettingsKeys.DontShowPreviewWarning.name,
+                          defaultValue: false,
+                        ) &&
                         !expanded
                     ? ModalHandler.showBaseDialog(
                         context: context,
                         dialogWidget: PreviewWarningDialog(
                           onOk: (checked) {
                             settingsBox.put(
-                                SettingsKeys.DontShowPreviewWarning.name,
-                                checked);
+                              SettingsKeys.DontShowPreviewWarning.name,
+                              checked,
+                            );
                             onExpand();
                           },
                         ),

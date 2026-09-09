@@ -8,15 +8,15 @@ class ChatTombstoneInfo {
   final Duration? timeoutDuration;
 
   const ChatTombstoneInfo.deleted()
-      : kind = ChatTombstoneKind.deleted,
-        timeoutDuration = null;
+    : kind = ChatTombstoneKind.deleted,
+      timeoutDuration = null;
 
   const ChatTombstoneInfo.banned()
-      : kind = ChatTombstoneKind.banned,
-        timeoutDuration = null;
+    : kind = ChatTombstoneKind.banned,
+      timeoutDuration = null;
 
   const ChatTombstoneInfo.timedOut(Duration this.timeoutDuration)
-      : kind = ChatTombstoneKind.timedOut;
+    : kind = ChatTombstoneKind.timedOut;
 
   const ChatTombstoneInfo._(this.kind, this.timeoutDuration);
 }
@@ -34,17 +34,14 @@ String formatChatTimeoutDuration(Duration duration) {
 
 /// Italic marker appended to a dimmed tombstone body.
 String chatTombstoneMarker(ChatTombstoneInfo info) => switch (info.kind) {
-      ChatTombstoneKind.deleted => ' —Deleted',
-      ChatTombstoneKind.banned => ' —Banned',
-      ChatTombstoneKind.timedOut =>
-        ' —Timed out (${formatChatTimeoutDuration(info.timeoutDuration ?? Duration.zero)})',
-    };
+  ChatTombstoneKind.deleted => ' —Deleted',
+  ChatTombstoneKind.banned => ' —Banned',
+  ChatTombstoneKind.timedOut =>
+    ' —Timed out (${formatChatTimeoutDuration(info.timeoutDuration ?? Duration.zero)})',
+};
 
 /// Duration implied by a `channel.moderate` timeout `expires_at`.
-Duration timeoutDurationFromExpiresAt(
-  DateTime expiresAt, {
-  DateTime? now,
-}) {
+Duration timeoutDurationFromExpiresAt(DateTime expiresAt, {DateTime? now}) {
   final remaining = expiresAt.difference(now ?? DateTime.now());
   if (remaining.isNegative) return Duration.zero;
   return Duration(seconds: remaining.inSeconds);

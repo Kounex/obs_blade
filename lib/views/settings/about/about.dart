@@ -28,7 +28,10 @@ class AboutView extends StatelessWidget {
             child: Column(
               children: [
                 const StaggeredEntrance(
-                    scaleFrom: 0.985, index: 0, child: AboutHeader()),
+                  scaleFrom: 0.985,
+                  index: 0,
+                  child: AboutHeader(),
+                ),
                 // LightDivider(
                 //   height: 32.0,
                 // ),

@@ -46,8 +46,7 @@ class _SupportDialogState extends State<SupportDialog> {
       GeneralHelper.advLog(_error, includeInLogs: true, level: LogLevel.Error);
     }
 
-    ProductDetailsResponse productDetailsResponse = await InAppPurchase
-        .instance
+    ProductDetailsResponse productDetailsResponse = await InAppPurchase.instance
         .queryProductDetails({'tip_1', 'tip_2', 'tip_3'});
 
     return productDetailsResponse.productDetails;

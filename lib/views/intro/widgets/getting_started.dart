@@ -12,9 +12,7 @@ import '../intro.dart';
 import 'intro_primary_button.dart';
 
 class GettingStarted extends StatelessWidget {
-  const GettingStarted({
-    super.key,
-  });
+  const GettingStarted({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +40,7 @@ class GettingStarted extends StatelessWidget {
                     textAlign: TextAlign.center,
                     textStyle: Theme.of(context).textTheme.bodyLarge,
                     textSpans: [
-                      const TextSpan(
-                        text: 'An unofficial, ',
-                      ),
+                      const TextSpan(text: 'An unofficial, '),
                       WidgetSpan(
                         child: SocialBlock(
                           topPadding: 0,
@@ -53,8 +49,7 @@ class GettingStarted extends StatelessWidget {
                             SocialEntry(
                               linkText: 'open source',
                               link: 'https://github.com/Kounex/obs_blade',
-                              textStyle:
-                                  Theme.of(context).textTheme.bodyLarge,
+                              textStyle: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
                         ),
@@ -72,15 +67,12 @@ class GettingStarted extends StatelessWidget {
                               linkText: 'WebSocket',
                               link:
                                   'https://github.com/obsproject/obs-websocket',
-                              textStyle:
-                                  Theme.of(context).textTheme.bodyLarge,
+                              textStyle: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ],
                         ),
                       ),
-                      const TextSpan(
-                        text: ' plugin!',
-                      ),
+                      const TextSpan(text: ' plugin!'),
                     ],
                   ),
                 ),
@@ -94,7 +86,8 @@ class GettingStarted extends StatelessWidget {
             index: 2,
             child: Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.paddingOf(context).bottom +
+                bottom:
+                    MediaQuery.paddingOf(context).bottom +
                     kIntroControlsBottomPadding,
               ),
               child: Column(
@@ -103,8 +96,9 @@ class GettingStarted extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   IntroPrimaryButton(
                     text: 'Start',
-                    onPressed: () => GetIt.instance<IntroStore>()
-                        .setStage(IntroStage.AppSlides),
+                    onPressed: () => GetIt.instance<IntroStore>().setStage(
+                      IntroStage.AppSlides,
+                    ),
                   ),
                 ],
               ),

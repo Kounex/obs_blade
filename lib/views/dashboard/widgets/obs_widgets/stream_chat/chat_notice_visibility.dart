@@ -48,6 +48,7 @@ bool isChatNoticeTypeVisible(Box settingsBox, String noticeType) {
 
 bool isChatFirstMessageVisible(Box settingsBox) =>
     settingsBox.get(
-      SettingsKeys.TwitchChatNoticeFirstMessage.name,
-      defaultValue: true,
-    ) as bool;
+          SettingsKeys.TwitchChatNoticeFirstMessage.name,
+          defaultValue: true,
+        )
+        as bool;

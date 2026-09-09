@@ -12,24 +12,14 @@ class ProfilesPreview extends StatelessWidget {
         Expanded(
           child: BaseDropdown<String>(
             value: '<name>',
-            items: [
-              BaseDropdownItem(
-                value: '<name>',
-                text: '<name>',
-              ),
-            ],
+            items: [BaseDropdownItem(value: '<name>', text: '<name>')],
             label: 'Profile',
           ),
         ),
         Expanded(
           child: BaseDropdown<String>(
             value: '<name>',
-            items: [
-              BaseDropdownItem(
-                value: '<name>',
-                text: '<name>',
-              ),
-            ],
+            items: [BaseDropdownItem(value: '<name>', text: '<name>')],
             label: 'Scene Collection',
           ),
         ),

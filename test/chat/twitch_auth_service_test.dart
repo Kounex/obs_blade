@@ -23,18 +23,20 @@ void main() {
       final client = MockClient((request) async {
         expect(request.url.toString(), 'https://id.twitch.tv/oauth2/device');
         expect(request.bodyFields['client_id'], kTwitchClientId);
-        expect(request.bodyFields['scopes'],
-            'user:read:chat user:write:chat user:read:emotes '
-            'user:read:follows user:read:subscriptions '
-            'user:read:moderated_channels moderator:read:followers '
-            'moderator:manage:chat_messages moderator:manage:banned_users '
-            'moderator:manage:chat_settings moderator:manage:shield_mode '
-            'moderator:manage:announcements moderator:manage:warnings '
-            'moderator:manage:unban_requests moderator:manage:automod '
-            'moderator:read:blocked_terms moderator:read:chat_settings '
-            'moderator:read:unban_requests moderator:read:banned_users '
-            'moderator:read:chat_messages moderator:read:warnings '
-            'moderator:read:moderators moderator:read:vips');
+        expect(
+          request.bodyFields['scopes'],
+          'user:read:chat user:write:chat user:read:emotes '
+          'user:read:follows user:read:subscriptions '
+          'user:read:moderated_channels moderator:read:followers '
+          'moderator:manage:chat_messages moderator:manage:banned_users '
+          'moderator:manage:chat_settings moderator:manage:shield_mode '
+          'moderator:manage:announcements moderator:manage:warnings '
+          'moderator:manage:unban_requests moderator:manage:automod '
+          'moderator:read:blocked_terms moderator:read:chat_settings '
+          'moderator:read:unban_requests moderator:read:banned_users '
+          'moderator:read:chat_messages moderator:read:warnings '
+          'moderator:read:moderators moderator:read:vips',
+        );
         return http.Response(
           json.encode({
             'device_code': 'dev-code-123',
@@ -56,8 +58,7 @@ void main() {
     });
 
     test('throws on non-200', () {
-      final client =
-          MockClient((request) async => http.Response('nope', 400));
+      final client = MockClient((request) async => http.Response('nope', 400));
 
       expect(
         serviceWith(client).requestDeviceCode(),
@@ -74,8 +75,10 @@ void main() {
         expect(request.url.toString(), 'https://id.twitch.tv/oauth2/token');
         expect(request.bodyFields['client_id'], kTwitchClientId);
         expect(request.bodyFields['device_code'], 'dev-code-123');
-        expect(request.bodyFields['grant_type'],
-            'urn:ietf:params:oauth:grant-type:device_code');
+        expect(
+          request.bodyFields['grant_type'],
+          'urn:ietf:params:oauth:grant-type:device_code',
+        );
         if (tokenCalls < 3) {
           return http.Response(
             json.encode({'message': 'authorization_pending'}),
@@ -134,8 +137,10 @@ void main() {
     });
 
     test('access_denied throws', () {
-      final client = MockClient((request) async =>
-          http.Response(json.encode({'message': 'access_denied'}), 400));
+      final client = MockClient(
+        (request) async =>
+            http.Response(json.encode({'message': 'access_denied'}), 400),
+      );
 
       expect(
         serviceWith(client).pollForToken(
@@ -148,8 +153,10 @@ void main() {
     });
 
     test('expired_token throws', () {
-      final client = MockClient((request) async =>
-          http.Response(json.encode({'message': 'expired_token'}), 400));
+      final client = MockClient(
+        (request) async =>
+            http.Response(json.encode({'message': 'expired_token'}), 400),
+      );
 
       expect(
         serviceWith(client).pollForToken(
@@ -162,8 +169,12 @@ void main() {
     });
 
     test('cancellation aborts polling', () {
-      final client = MockClient((request) async => http.Response(
-          json.encode({'message': 'authorization_pending'}), 400));
+      final client = MockClient(
+        (request) async => http.Response(
+          json.encode({'message': 'authorization_pending'}),
+          400,
+        ),
+      );
 
       expect(
         serviceWith(client).pollForToken(
@@ -201,8 +212,12 @@ void main() {
     });
 
     test('throws on 400 (revoked/expired refresh token)', () {
-      final client = MockClient((request) async => http.Response(
-          json.encode({'message': 'Invalid refresh token'}), 400));
+      final client = MockClient(
+        (request) async => http.Response(
+          json.encode({'message': 'Invalid refresh token'}),
+          400,
+        ),
+      );
 
       expect(
         serviceWith(client).refreshToken('old-refresh'),
@@ -226,23 +241,23 @@ void main() {
     });
 
     test('false on 401', () async {
-      final client =
-          MockClient((request) async => http.Response('{}', 401));
+      final client = MockClient((request) async => http.Response('{}', 401));
 
       expect(await serviceWith(client).validate('access-1'), isFalse);
     });
 
     test('throws on other statuses (e.g. 500 during a Twitch incident)', () {
-      final client =
-          MockClient((request) async => http.Response('oops', 500));
+      final client = MockClient((request) async => http.Response('oops', 500));
 
       expect(
         serviceWith(client).validate('access-1'),
-        throwsA(isA<TwitchAuthException>().having(
-          (e) => e.message,
-          'message',
-          'Token validation failed (status 500)',
-        )),
+        throwsA(
+          isA<TwitchAuthException>().having(
+            (e) => e.message,
+            'message',
+            'Token validation failed (status 500)',
+          ),
+        ),
       );
     });
   });
@@ -261,7 +276,7 @@ void main() {
                 'login': 'kounex',
                 'display_name': 'Kounex',
                 'profile_image_url': 'https://example.com/p.png',
-              }
+              },
             ],
           }),
           200,
@@ -277,7 +292,8 @@ void main() {
 
     test('throws when data is empty', () {
       final client = MockClient(
-          (request) async => http.Response(json.encode({'data': []}), 200));
+        (request) async => http.Response(json.encode({'data': []}), 200),
+      );
 
       expect(
         serviceWith(client).fetchOwnUser('access-1'),

@@ -27,7 +27,8 @@ import 'widgets/status_app_bar/status_app_bar.dart';
 /// Widgets - could be put inside the DashboardStore but I want to avoid
 /// putting Flutter specific classes inside my stores
 @Deprecated(
-    'Don\'t necessary anymore since we expose a [ScrollController] from the Navigators used for the tabs since we want to scroll or route back if a user taps on the tab - therefore we can access the [ScrollController] from the [ModalRoute] settings argument')
+  'Don\'t necessary anymore since we expose a [ScrollController] from the Navigators used for the tabs since we want to scroll or route back if a user taps on the tab - therefore we can access the [ScrollController] from the [ModalRoute] settings argument',
+)
 class DashboardScroll extends InheritedWidget {
   final ScrollController scrollController = ScrollController();
 
@@ -42,9 +43,7 @@ class DashboardScroll extends InheritedWidget {
 }
 
 class DashboardView extends StatefulWidget {
-  const DashboardView({
-    super.key,
-  });
+  const DashboardView({super.key});
 
   @override
   _DashboardViewState createState() => _DashboardViewState();
@@ -64,8 +63,9 @@ class _DashboardViewState extends State<DashboardView> {
     /// and first calls etc.
     GetIt.instance<DashboardStore>().init();
 
-    if (Hive.box(HiveKeys.Settings.name)
-        .get(SettingsKeys.WakeLock.name, defaultValue: true)) {
+    if (Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.WakeLock.name, defaultValue: true)) {
       WakelockPlus.enable();
     }
 
@@ -76,10 +76,9 @@ class _DashboardViewState extends State<DashboardView> {
         /// Don't fire the dialog mid route transition - wait until the
         /// push animation has completed (fall back to the next frame if
         /// there is no route animation at all)
-        void showSaveDialog() =>
-            SchedulerBinding.instance.addPostFrameCallback(
-              (_) => _saveConnectionDialog(context),
-            );
+        void showSaveDialog() => SchedulerBinding.instance.addPostFrameCallback(
+          (_) => _saveConnectionDialog(context),
+        );
 
         Animation<double>? routeAnimation = ModalRoute.of(context)?.animation;
         if (routeAnimation == null ||
@@ -161,26 +160,26 @@ class _DashboardViewState extends State<DashboardView> {
         children: [
           HiveBuilder<dynamic>(
             hiveKey: HiveKeys.Settings,
-            rebuildKeys: const [
-              SettingsKeys.StreamingMode,
-            ],
+            rebuildKeys: const [SettingsKeys.StreamingMode],
             builder: (context, settingsBox, child) => Observer(
               builder: (context) => CustomScrollView(
-                physics: settingsBox.get(
+                physics:
+                    settingsBox.get(
                           SettingsKeys.StreamingMode.name,
                           defaultValue: false,
                         ) ||
                         dashboardStore.isPointerOnChat
                     ? const NeverScrollableScrollPhysics()
                     : const ClampingScrollPhysics(),
-                controller: ModalRoute.of(context)!.settings.arguments
-                    as ScrollController,
+                controller:
+                    ModalRoute.of(context)!.settings.arguments
+                        as ScrollController,
                 slivers: [
                   const StatusAppBar(),
                   settingsBox.get(
-                    SettingsKeys.StreamingMode.name,
-                    defaultValue: false,
-                  )
+                        SettingsKeys.StreamingMode.name,
+                        defaultValue: false,
+                      )
                       ? const DashboardContentStreaming()
                       : const DashboardContent(),
                 ],
@@ -191,10 +190,7 @@ class _DashboardViewState extends State<DashboardView> {
             top: kToolbarHeight + MediaQuery.paddingOf(context).top,
             child: const Align(
               alignment: Alignment.center,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: ReconnectToast(),
-              ),
+              child: FittedBox(fit: BoxFit.scaleDown, child: ReconnectToast()),
             ),
           ),
         ],

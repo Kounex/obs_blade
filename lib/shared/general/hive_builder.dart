@@ -9,7 +9,7 @@ class HiveBuilder<T> extends StatelessWidget {
   final List<SettingsKeys>? rebuildKeys;
   final Widget? child;
   final Widget Function(BuildContext context, Box<T> box, Widget? child)
-      builder;
+  builder;
 
   const HiveBuilder({
     super.key,
@@ -22,9 +22,9 @@ class HiveBuilder<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: Hive.box<T>(this.hiveKey.name).listenable(
-        keys: this.rebuildKeys?.map((key) => key.name).toList(),
-      ),
+      valueListenable: Hive.box<T>(
+        this.hiveKey.name,
+      ).listenable(keys: this.rebuildKeys?.map((key) => key.name).toList()),
       builder: this.builder,
       child: this.child,
     );

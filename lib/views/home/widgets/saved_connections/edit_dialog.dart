@@ -49,14 +49,16 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
     );
 
     _hostDomain = CustomValidationTextEditingController(
-      text: this.widget.connection.isDomain != null &&
+      text:
+          this.widget.connection.isDomain != null &&
               this.widget.connection.isDomain!
           ? this.widget.connection.host.split('://').last
           : null,
       check: ValidationHelper.minLengthValidator,
     );
     _hostIP = CustomValidationTextEditingController(
-      text: this.widget.connection.isDomain == null ||
+      text:
+          this.widget.connection.isDomain == null ||
               !this.widget.connection.isDomain!
           ? this.widget.connection.host
           : null,
@@ -70,26 +72,27 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
           : null,
     );
 
-    _pw =
-        CustomValidationTextEditingController(text: this.widget.connection.pw);
+    _pw = CustomValidationTextEditingController(
+      text: this.widget.connection.pw,
+    );
 
     _isDomain = this.widget.connection.isDomain ?? false;
 
     _protocolScheme = _isDomain
         ? this.widget.connection.host.contains('://')
-            ? '${this.widget.connection.host.split('://')[0]}://'
-            : ''
+              ? '${this.widget.connection.host.split('://')[0]}://'
+              : ''
         : 'ws://';
   }
 
   String? _nameValidator(String? name) => (name?.trim().isEmpty ?? true)
       ? 'Please provide a name!'
       : name?.trim() != this.widget.connection.name &&
-              Hive.box<Connection>(HiveKeys.SavedConnections.name)
-                  .values
-                  .any((connection) => connection.name == name)
-          ? 'Name already in use!'
-          : null;
+            Hive.box<Connection>(
+              HiveKeys.SavedConnections.name,
+            ).values.any((connection) => connection.name == name)
+      ? 'Name already in use!'
+      : null;
 
   @override
   Widget build(BuildContext context) {
@@ -150,9 +153,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     focusNode: _portFocusNode,
                     errorPaddingAlways: true,
                     style: const TextStyle(
-                      fontFeatures: [
-                        FontFeature.tabularFigures(),
-                      ],
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                     placeholder: 'Port',
                     keyboardType: TextInputType.number,
@@ -182,8 +183,9 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             suffixIcon: StylingHelper.isApple(context)
                 ? Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[
-                          Theme.of(context).brightness == Brightness.light
+                      color:
+                          Colors.grey[Theme.of(context).brightness ==
+                                  Brightness.light
                               ? 300
                               : 900],
                       borderRadius: const BorderRadius.horizontal(
@@ -215,16 +217,14 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         ],
       ),
       actions: [
-        DialogActionConfig(
-          isDefaultAction: true,
-          child: const Text('Cancel'),
-        ),
+        DialogActionConfig(isDefaultAction: true, child: const Text('Cancel')),
         DialogActionConfig(
           child: const Text('Save'),
           popOnAction: false,
           onPressed: (_) {
-            CustomValidationTextEditingController host =
-                _isDomain ? _hostDomain : _hostIP;
+            CustomValidationTextEditingController host = _isDomain
+                ? _hostDomain
+                : _hostIP;
             if (_name.isValid && host.isValid && _port.isValid) {
               String newName = _name.text.trim();
               String newHost = host.text.trim();
@@ -234,22 +234,22 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               /// to update these elements as well to preserve the status
               if (newName != this.widget.connection.name ||
                   newHost != this.widget.connection.host) {
-                Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
-                    .values
-                    .forEach((hiddenScene) {
-                  if (hiddenScene.connectionName ==
-                          this.widget.connection.name ||
-                      (hiddenScene.connectionName == null &&
-                          hiddenScene.host == this.widget.connection.host)) {
-                    hiddenScene.connectionName = newName;
-                    hiddenScene.host = newHost;
-                    hiddenScene.save();
-                  }
-                });
+                Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).values.forEach(
+                  (hiddenScene) {
+                    if (hiddenScene.connectionName ==
+                            this.widget.connection.name ||
+                        (hiddenScene.connectionName == null &&
+                            hiddenScene.host == this.widget.connection.host)) {
+                      hiddenScene.connectionName = newName;
+                      hiddenScene.host = newHost;
+                      hiddenScene.save();
+                    }
+                  },
+                );
 
-                Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
-                    .values
-                    .forEach((hiddenSceneItem) {
+                Hive.box<HiddenSceneItem>(
+                  HiveKeys.HiddenSceneItem.name,
+                ).values.forEach((hiddenSceneItem) {
                   if (hiddenSceneItem.connectionName ==
                           this.widget.connection.name ||
                       (hiddenSceneItem.connectionName == null &&

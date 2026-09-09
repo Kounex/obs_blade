@@ -37,9 +37,9 @@ class NativeReplyStrip extends StatelessWidget {
                     TextSpan(
                       text: '@${target.chatterUserName}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: this.accentColor,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: this.accentColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     TextSpan(text: ': ${target.message.text}'),
                   ],

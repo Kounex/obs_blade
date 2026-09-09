@@ -10,9 +10,7 @@ import '../visibility_slide_wrapper.dart';
 import 'scene_item_tile.dart';
 
 class SceneItems extends StatefulWidget {
-  const SceneItems({
-    super.key,
-  });
+  const SceneItems({super.key});
 
   @override
   _SceneItemsState createState() => _SceneItemsState();
@@ -30,27 +28,25 @@ class _SceneItemsState extends State<SceneItems>
     super.build(context);
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Observer(builder: (context) {
-      return NestedScrollManager(
-        parentScrollController:
-            ModalRoute.of(context)!.settings.arguments as ScrollController,
-        child: Scrollbar(
-          controller: _controller,
-          thumbVisibility: true,
-          child: ListView(
+    return Observer(
+      builder: (context) {
+        return NestedScrollManager(
+          parentScrollController:
+              ModalRoute.of(context)!.settings.arguments as ScrollController,
+          child: Scrollbar(
             controller: _controller,
-            physics: const ClampingScrollPhysics(),
-            padding: const EdgeInsets.only(top: AppSpacing.md),
-            children: [
-              ...dashboardStore.currentSceneItems.isNotEmpty
-                  ? dashboardStore.currentSceneItems.map(
-                      (sceneItem) {
+            thumbVisibility: true,
+            child: ListView(
+              controller: _controller,
+              physics: const ClampingScrollPhysics(),
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              children: [
+                ...dashboardStore.currentSceneItems.isNotEmpty
+                    ? dashboardStore.currentSceneItems.map((sceneItem) {
                         if (sceneItem.parentGroupName == null) {
                           return VisibilitySlideWrapper(
                             sceneItem: sceneItem,
-                            child: SceneItemTile(
-                              sceneItem: sceneItem,
-                            ),
+                            child: SceneItemTile(sceneItem: sceneItem),
                           );
                         }
 
@@ -59,29 +55,30 @@ class _SceneItemsState extends State<SceneItems>
                         /// still driven by the parents [SceneItem.displayGroup]
                         return _AnimatedGroupChild(
                           visible: dashboardStore.currentSceneItems
-                              .firstWhere((parentSceneItem) =>
-                                  parentSceneItem.sourceName ==
-                                  sceneItem.parentGroupName)
+                              .firstWhere(
+                                (parentSceneItem) =>
+                                    parentSceneItem.sourceName ==
+                                    sceneItem.parentGroupName,
+                              )
                               .displayGroup,
                           child: VisibilitySlideWrapper(
                             sceneItem: sceneItem,
-                            child: SceneItemTile(
-                              sceneItem: sceneItem,
-                            ),
+                            child: SceneItemTile(sceneItem: sceneItem),
                           ),
                         );
-                      },
-                    )
-                  : [
-                      const SizedBox(height: AppSpacing.md),
-                      const PlaceholderSceneItem(
-                          text: 'No Scene Items available...')
-                    ]
-            ],
+                      })
+                    : [
+                        const SizedBox(height: AppSpacing.md),
+                        const PlaceholderSceneItem(
+                          text: 'No Scene Items available...',
+                        ),
+                      ],
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -91,10 +88,7 @@ class _AnimatedGroupChild extends StatelessWidget {
   final bool visible;
   final Widget child;
 
-  const _AnimatedGroupChild({
-    required this.visible,
-    required this.child,
-  });
+  const _AnimatedGroupChild({required this.visible, required this.child});
 
   @override
   Widget build(BuildContext context) {

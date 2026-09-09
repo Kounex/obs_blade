@@ -26,11 +26,11 @@ void main() {
   late TwitchChatStore store;
 
   TwitchChannelRef ref(String id) => TwitchChannelRef(
-        id: id,
-        login: 'login-$id',
-        displayName: 'Channel $id',
-        addedAt: DateTime.utc(2026, 8, 9),
-      );
+    id: id,
+    login: 'login-$id',
+    displayName: 'Channel $id',
+    addedAt: DateTime.utc(2026, 8, 9),
+  );
 
   /// FakeAsync-zone Hive close dance (see native_chat_options_sheet_test).
   Future<void> closeHiveInZone(WidgetTester tester) async {
@@ -39,7 +39,8 @@ void main() {
     for (var i = 0; i < 10 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
     }
     await tester.pump();
     expect(closed, isTrue);
@@ -57,8 +58,19 @@ void main() {
     store = TwitchChatStore(
       authService: authService,
       isProResolver: () => true,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       channelService: channelService,
@@ -80,33 +92,46 @@ void main() {
     }
   });
 
-  testWidgets('own channel first with You; LIVE/Mod chips only in the open menu',
-      (tester) async {
-    store.channels.addAll([ref('chan-1'), ref('chan-2')]);
-    store.moderatedChannelIds.add('chan-2');
-    store.channelLiveViewers.addAll({'chan-1': 1200, 'user-1': 42});
+  testWidgets(
+    'own channel first with You; LIVE/Mod chips only in the open menu',
+    (tester) async {
+      store.channels.addAll([ref('chan-1'), ref('chan-2')]);
+      store.moderatedChannelIds.add('chan-2');
+      store.channelLiveViewers.addAll({'chan-1': 1200, 'user-1': 42});
 
-    await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
-    await tester.pump();
+      await tester.pumpWidget(
+        wrap(const Column(children: [NativeChannelDropdown()])),
+      );
+      await tester.pump();
 
-    /// Closed control: name (+ You) only — no status chips.
-    expect(find.text('LIVE'), findsNothing);
-    expect(find.text('Mod'), findsNothing);
-    expect(find.text('Kounex'), findsOneWidget);
-    expect(find.text('You'), findsOneWidget);
+      /// Closed control: name (+ You) only — no status chips.
+      expect(find.text('LIVE'), findsNothing);
+      expect(find.text('Mod'), findsNothing);
+      expect(find.text('Kounex'), findsOneWidget);
+      expect(find.text('You'), findsOneWidget);
 
-    await tester.tap(find.byType(DropdownButton<String>));
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byType(DropdownButton<String>));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Channel chan-1'), findsOneWidget);
-    expect(find.text('Channel chan-2'), findsOneWidget);
-    expect(find.text('Add chat…'), findsOneWidget);
-    expect(find.byKey(const Key('channel-dropdown-live-own')), findsOneWidget);
-    expect(find.byKey(const Key('channel-dropdown-live-chan-1')), findsOneWidget);
-    expect(find.byKey(const Key('channel-dropdown-mod-chan-2')), findsOneWidget);
-    expect(find.byIcon(Icons.shield), findsNothing);
-  });
+      expect(find.text('Channel chan-1'), findsOneWidget);
+      expect(find.text('Channel chan-2'), findsOneWidget);
+      expect(find.text('Add chat…'), findsOneWidget);
+      expect(
+        find.byKey(const Key('channel-dropdown-live-own')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('channel-dropdown-live-chan-1')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('channel-dropdown-mod-chan-2')),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.shield), findsNothing);
+    },
+  );
 
   testWidgets('selecting a channel calls selectChannel', (tester) async {
     /// try/finally: a failed expectation must still run the FakeAsync-zone
@@ -115,7 +140,9 @@ void main() {
     try {
       store.channels.add(ref('chan-1'));
 
-      await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
+      await tester.pumpWidget(
+        wrap(const Column(children: [NativeChannelDropdown()])),
+      );
       await tester.tap(find.byType(DropdownButton<String>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Channel chan-1').last);
@@ -143,12 +170,15 @@ void main() {
     }
   });
 
-  testWidgets('long-press asks for confirmation and removes the channel',
-      (tester) async {
+  testWidgets('long-press asks for confirmation and removes the channel', (
+    tester,
+  ) async {
     try {
       store.channels.add(ref('chan-1'));
 
-      await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
+      await tester.pumpWidget(
+        wrap(const Column(children: [NativeChannelDropdown()])),
+      );
       await tester.tap(find.byType(DropdownButton<String>));
       await tester.pumpAndSettle();
       await tester.longPress(find.text('Channel chan-1').last);
@@ -164,8 +194,9 @@ void main() {
     }
   });
 
-  testWidgets('removing the selected channel falls back to own',
-      (tester) async {
+  testWidgets('removing the selected channel falls back to own', (
+    tester,
+  ) async {
     try {
       await store.addChannel(ref('chan-1'));
       expect(store.selectedChannelId, 'chan-1');
@@ -174,7 +205,9 @@ void main() {
       /// dropdown is enabled.
       store.chatConnection = TwitchChatConnectionState.live;
 
-      await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
+      await tester.pumpWidget(
+        wrap(const Column(children: [NativeChannelDropdown()])),
+      );
       await tester.tap(find.byType(DropdownButton<String>));
       await tester.pumpAndSettle();
       await tester.longPress(find.text('Channel chan-1').last);
@@ -190,7 +223,9 @@ void main() {
   });
 
   testWidgets('the Add chat entry opens the add-chat sheet', (tester) async {
-    await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
+    await tester.pumpWidget(
+      wrap(const Column(children: [NativeChannelDropdown()])),
+    );
     await tester.tap(find.byType(DropdownButton<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add chat…').last);
@@ -203,7 +238,9 @@ void main() {
   });
 
   testWidgets('disabled while a channel switch is in flight', (tester) async {
-    await tester.pumpWidget(wrap(const Column(children: [NativeChannelDropdown()])));
+    await tester.pumpWidget(
+      wrap(const Column(children: [NativeChannelDropdown()])),
+    );
     expect(
       tester
           .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))

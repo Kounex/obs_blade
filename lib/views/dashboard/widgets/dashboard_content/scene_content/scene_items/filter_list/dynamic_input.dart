@@ -3,12 +3,7 @@ import 'package:obs_blade/shared/general/base/adaptive_switch.dart';
 import 'package:obs_blade/shared/general/base/adaptive_text_field.dart';
 import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 
-enum InputType {
-  Int,
-  Double,
-  String,
-  Bool,
-}
+enum InputType { Int, Double, String, Bool }
 
 class DynamicInput extends StatefulWidget {
   final String label;
@@ -76,37 +71,38 @@ class _DynamicInputState extends State<DynamicInput> {
           alignment: Alignment.centerRight,
           child: switch (_type) {
             InputType.Int => KeyboardNumberHeader(
-                focusNode: _focusNode,
-                child: BaseAdaptiveTextField(
-                  focusNode: _focusNode,
-                  controller: _controller,
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) => int.tryParse(value) != null
-                      ? this.widget.onUpdate?.call(int.parse(value))
-                      : null,
-                ),
-              ),
-            InputType.Double => KeyboardNumberHeader(
-                focusNode: _focusNode,
-                child: BaseAdaptiveTextField(
-                  focusNode: _focusNode,
-                  controller: _controller,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (value) => double.tryParse(value) != null
-                      ? this.widget.onUpdate?.call(double.parse(value))
-                      : null,
-                ),
-              ),
-            InputType.Bool => BaseAdaptiveSwitch(
-                value: this.widget.value,
-                onChanged: (value) => this.widget.onUpdate?.call(value),
-              ),
-            InputType.String => BaseAdaptiveTextField(
+              focusNode: _focusNode,
+              child: BaseAdaptiveTextField(
                 focusNode: _focusNode,
                 controller: _controller,
-                onChanged: this.widget.onUpdate,
+                keyboardType: TextInputType.number,
+                onChanged: (value) => int.tryParse(value) != null
+                    ? this.widget.onUpdate?.call(int.parse(value))
+                    : null,
               ),
+            ),
+            InputType.Double => KeyboardNumberHeader(
+              focusNode: _focusNode,
+              child: BaseAdaptiveTextField(
+                focusNode: _focusNode,
+                controller: _controller,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                onChanged: (value) => double.tryParse(value) != null
+                    ? this.widget.onUpdate?.call(double.parse(value))
+                    : null,
+              ),
+            ),
+            InputType.Bool => BaseAdaptiveSwitch(
+              value: this.widget.value,
+              onChanged: (value) => this.widget.onUpdate?.call(value),
+            ),
+            InputType.String => BaseAdaptiveTextField(
+              focusNode: _focusNode,
+              controller: _controller,
+              onChanged: this.widget.onUpdate,
+            ),
           },
         ),
       ],

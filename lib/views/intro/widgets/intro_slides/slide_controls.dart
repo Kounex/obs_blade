@@ -45,8 +45,9 @@ class _SlideControlsState extends State<SlideControls> {
     super.initState();
 
     _disposers.add(
-      reaction<bool>((_) => GetIt.instance<IntroStore>().lockedOnSlide,
-          (lockedOnSlide) {
+      reaction<bool>((_) => GetIt.instance<IntroStore>().lockedOnSlide, (
+        lockedOnSlide,
+      ) {
         if (lockedOnSlide && _lockTimer == null) {
           // _lockTimer = Timer.periodic(duration, (timer) { })
         }
@@ -77,21 +78,23 @@ class _SlideControlsState extends State<SlideControls> {
         Expanded(
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Observer(builder: (context) {
-              return ThemedCupertinoButton(
-                padding: const EdgeInsets.all(0),
-                onPressed: introStore.currentPage > 0
-                    ? () {
-                        introStore.setLockedOnSlide(false);
-                        this.widget.pageController.previousPage(
-                              duration: AppMotion.medium,
-                              curve: AppMotion.standard,
-                            );
-                      }
-                    : null,
-                text: 'Back',
-              );
-            }),
+            child: Observer(
+              builder: (context) {
+                return ThemedCupertinoButton(
+                  padding: const EdgeInsets.all(0),
+                  onPressed: introStore.currentPage > 0
+                      ? () {
+                          introStore.setLockedOnSlide(false);
+                          this.widget.pageController.previousPage(
+                            duration: AppMotion.medium,
+                            curve: AppMotion.standard,
+                          );
+                        }
+                      : null,
+                  text: 'Back',
+                );
+              },
+            ),
           ),
         ),
         SmoothPageIndicator(
@@ -108,51 +111,54 @@ class _SlideControlsState extends State<SlideControls> {
         Expanded(
           child: Align(
             alignment: Alignment.centerRight,
-            child: Observer(builder: (context) {
-              return SizedBox(
-                height: 52.0,
-                child: AnimatedSwitcher(
-                  duration: AppMotion.medium,
+            child: Observer(
+              builder: (context) {
+                return SizedBox(
+                  height: 52.0,
+                  child: AnimatedSwitcher(
+                    duration: AppMotion.medium,
 
-                  /// While the per-slide lock is running the countdown ring
-                  /// takes the place of the (locked) primary CTA
-                  child: introStore.lockedOnSlide
-                      ? BaseProgressIndicator(
-                          size: 52.0,
-                          countdownInSeconds: introStore.slideLockSeconds,
-                          onCountdownDone: () {
-                            introStore.setLockedOnSlide(false);
-                            this.widget.onSlideLockWaited();
-                          },
-                        )
-                      : BaseButton(
-                          onPressed: () {
-                            if (introStore.currentPage <
-                                this.widget.amountChildren - 1) {
-                              this.widget.pageController.nextPage(
-                                    duration: AppMotion.medium,
-                                    curve: AppMotion.standard,
-                                  );
-                            } else {
-                              Hive.box(HiveKeys.Settings.name).put(
-                                SettingsKeys.HasUserSeenIntro202208.name,
-                                true,
-                              );
-                              Navigator.of(context).pushReplacementNamed(
-                                this.widget.manually
-                                    ? SettingsTabRoutingKeys.Landing.route
-                                    : AppRoutingKeys.Tabs.route,
-                              );
-                            }
-                          },
-                          text: introStore.currentPage <
-                                  this.widget.amountChildren - 1
-                              ? 'Next'
-                              : 'Start',
-                        ),
-                ),
-              );
-            }),
+                    /// While the per-slide lock is running the countdown ring
+                    /// takes the place of the (locked) primary CTA
+                    child: introStore.lockedOnSlide
+                        ? BaseProgressIndicator(
+                            size: 52.0,
+                            countdownInSeconds: introStore.slideLockSeconds,
+                            onCountdownDone: () {
+                              introStore.setLockedOnSlide(false);
+                              this.widget.onSlideLockWaited();
+                            },
+                          )
+                        : BaseButton(
+                            onPressed: () {
+                              if (introStore.currentPage <
+                                  this.widget.amountChildren - 1) {
+                                this.widget.pageController.nextPage(
+                                  duration: AppMotion.medium,
+                                  curve: AppMotion.standard,
+                                );
+                              } else {
+                                Hive.box(HiveKeys.Settings.name).put(
+                                  SettingsKeys.HasUserSeenIntro202208.name,
+                                  true,
+                                );
+                                Navigator.of(context).pushReplacementNamed(
+                                  this.widget.manually
+                                      ? SettingsTabRoutingKeys.Landing.route
+                                      : AppRoutingKeys.Tabs.route,
+                                );
+                              }
+                            },
+                            text:
+                                introStore.currentPage <
+                                    this.widget.amountChildren - 1
+                                ? 'Next'
+                                : 'Start',
+                          ),
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],

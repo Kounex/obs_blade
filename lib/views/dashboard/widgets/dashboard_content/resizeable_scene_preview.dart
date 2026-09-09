@@ -44,9 +44,7 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
       children: [
         SizedBox(
           height: _currentHeight,
-          child: const ScenePreview(
-            expandable: false,
-          ),
+          child: const ScenePreview(expandable: false),
         ),
         if (this.widget.resizeable)
           Container(
@@ -55,7 +53,9 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
               color: Theme.of(context).cardColor,
               border: Border.symmetric(
                 horizontal: BorderSide(
-                  color: StylingHelper.light_divider_color.withValues(alpha: 0.4),
+                  color: StylingHelper.light_divider_color.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
               ),
             ),
@@ -74,9 +74,7 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
                 /// is not correctly ioncreasing the tap size for the
                 /// [GestureDetector]
                 color: Colors.transparent,
-                child: const Icon(
-                  Icons.drag_indicator,
-                ),
+                child: const Icon(Icons.drag_indicator),
               ),
             ),
           ),

@@ -27,24 +27,23 @@ void main() {
   late TwitchChatStore store;
 
   TwitchChannelRef ref(String id) => TwitchChannelRef(
-        id: id,
-        login: 'login-$id',
-        displayName: 'Channel $id',
-        addedAt: DateTime.utc(2026, 8, 9),
-      );
+    id: id,
+    login: 'login-$id',
+    displayName: 'Channel $id',
+    addedAt: DateTime.utc(2026, 8, 9),
+  );
 
   TwitchChannelSearchResult result(
     String id, {
     String gameName = '',
     bool live = false,
-  }) =>
-      TwitchChannelSearchResult(
-        id: id,
-        login: 'login-$id',
-        displayName: 'Channel $id',
-        gameName: gameName,
-        isLive: live,
-      );
+  }) => TwitchChannelSearchResult(
+    id: id,
+    login: 'login-$id',
+    displayName: 'Channel $id',
+    gameName: gameName,
+    isLive: live,
+  );
 
   /// FakeAsync-zone Hive close dance (see native_chat_options_sheet_test).
   Future<void> closeHiveInZone(WidgetTester tester) async {
@@ -53,7 +52,8 @@ void main() {
     for (var i = 0; i < 10 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
     }
     await tester.pump();
     expect(closed, isTrue);
@@ -88,8 +88,19 @@ void main() {
     store = TwitchChatStore(
       authService: authService,
       isProResolver: () => true,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       channelService: channelService,
@@ -114,8 +125,9 @@ void main() {
     }
   });
 
-  testWidgets('empty query loads the moderated and followed sections',
-      (tester) async {
+  testWidgets('empty query loads the moderated and followed sections', (
+    tester,
+  ) async {
     channelService.moderatedChannels = [ref('mod-1')];
     channelService.followedChannels = [ref('fol-1'), ref('fol-2')];
 
@@ -137,9 +149,9 @@ void main() {
     expect(find.text('Re-login'), findsNothing);
   });
 
-  testWidgets(
-      'quick-pick sections sort live→mod and show LIVE/Mod chips',
-      (tester) async {
+  testWidgets('quick-pick sections sort live→mod and show LIVE/Mod chips', (
+    tester,
+  ) async {
     /// fol-mod / fol-live count as moderated for Mod chips, but only the
     /// mod-* pair is listed in the moderated section (keeps order
     /// assertions section-local). Seed the store set directly — a second
@@ -151,10 +163,7 @@ void main() {
       ref('fol-mod'),
       ref('fol-live'),
     ];
-    channelService.liveStreams = {
-      'mod-live': 1200,
-      'fol-live': 42,
-    };
+    channelService.liveStreams = {'mod-live': 1200, 'fol-live': 42};
     store.moderatedChannelIds
       ..clear()
       ..addAll(['mod-offline', 'mod-live', 'fol-mod', 'fol-live']);
@@ -169,10 +178,8 @@ void main() {
           .toList(),
       ['Channel mod-live', 'Channel mod-offline'],
     );
-    expect(
-        find.byKey(const Key('add-chat-live-mod-mod-live')), findsOneWidget);
-    expect(
-        find.text('LIVE · 1.2k', findRichText: true), findsWidgets);
+    expect(find.byKey(const Key('add-chat-live-mod-mod-live')), findsOneWidget);
+    expect(find.text('LIVE · 1.2k', findRichText: true), findsWidgets);
     expect(find.byKey(const Key('add-chat-mod-mod-mod-live')), findsNothing);
 
     /// Followed: live → mod → rest; LIVE + Mod chips as applicable.
@@ -183,17 +190,16 @@ void main() {
           .toList(),
       ['Channel fol-live', 'Channel fol-mod', 'Channel fol-offline'],
     );
-    expect(
-        find.byKey(const Key('add-chat-live-fol-fol-live')), findsOneWidget);
+    expect(find.byKey(const Key('add-chat-live-fol-fol-live')), findsOneWidget);
     expect(find.text('LIVE · 42', findRichText: true), findsOneWidget);
     expect(find.byKey(const Key('add-chat-mod-fol-fol-live')), findsOneWidget);
     expect(find.byKey(const Key('add-chat-mod-fol-fol-mod')), findsOneWidget);
-    expect(
-        find.byKey(const Key('add-chat-mod-fol-fol-offline')), findsNothing);
+    expect(find.byKey(const Key('add-chat-mod-fol-fol-offline')), findsNothing);
   });
 
-  testWidgets('search is debounced (~300 ms) and renders results',
-      (tester) async {
+  testWidgets('search is debounced (~300 ms) and renders results', (
+    tester,
+  ) async {
     channelService.searchResults = [
       result('s-1', gameName: 'Just Chatting', live: true),
       result('s-2'),
@@ -226,8 +232,9 @@ void main() {
     expect(find.text('Channels you follow'), findsNothing);
   });
 
-  testWidgets('tapping a result adds the channel and closes the sheet',
-      (tester) async {
+  testWidgets('tapping a result adds the channel and closes the sheet', (
+    tester,
+  ) async {
     /// try/finally: a failed expectation must still run the FakeAsync-zone
     /// Hive close dance — adding persists to the settings box, and skipping
     /// the dance deadlocks tearDown's harness.close().
@@ -241,10 +248,8 @@ void main() {
             builder: (context) => Scaffold(
               body: Center(
                 child: TextButton(
-                  onPressed: () => showAddChatSheet(
-                    context,
-                    channelService: channelService,
-                  ),
+                  onPressed: () =>
+                      showAddChatSheet(context, channelService: channelService),
                   child: const Text('open'),
                 ),
               ),
@@ -268,8 +273,9 @@ void main() {
     }
   });
 
-  testWidgets('already-added and own channels render checked and disabled',
-      (tester) async {
+  testWidgets('already-added and own channels render checked and disabled', (
+    tester,
+  ) async {
     store.channels.add(ref('s-1'));
     channelService.searchResults = [
       result('s-1'),
@@ -302,64 +308,63 @@ void main() {
   });
 
   testWidgets(
-      'the moderated section fails independently — inline error and retry',
-      (tester) async {
-    channelService.moderatedThrows = Exception('boom');
-    channelService.followedChannels = [ref('fol-1')];
-
-    await pumpSheet(tester);
-
-    expect(find.text('Channels you moderate'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('Channel mod-1'), findsNothing);
-
-    /// The followed section is unaffected.
-    expect(find.text('Channel fol-1'), findsOneWidget);
-
-    channelService.moderatedThrows = null;
-    channelService.moderatedChannels = [ref('mod-1')];
-    await tester.tap(find.text('Retry'));
-    await tester.pumpAndSettle();
-
-    expect(channelService.moderatedCalls, 2);
-    expect(find.text('Channel mod-1'), findsOneWidget);
-    expect(find.text('Retry'), findsNothing);
-  });
-
-  testWidgets(
-      'sections hidden when the token lacks the scope — re-login CTA shown',
-      (tester) async {
-    try {
-      /// Downgrade the persisted token: no user:read:follows scope.
-      final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
-      final current = authBox.get(TwitchAuth.kBoxKey)!;
-      await tester.runAsync(
-        () => authBox.put(
-          TwitchAuth.kBoxKey,
-          TwitchAuth(
-            accessToken: current.accessToken,
-            refreshToken: current.refreshToken,
-            expiresAtMs: current.expiresAtMs,
-            scopes: const [
-              'user:read:chat',
-              'user:read:moderated_channels',
-            ],
-            userId: current.userId,
-            userLogin: current.userLogin,
-            userDisplayName: current.userDisplayName,
-          ),
-        ),
-      );
+    'the moderated section fails independently — inline error and retry',
+    (tester) async {
+      channelService.moderatedThrows = Exception('boom');
+      channelService.followedChannels = [ref('fol-1')];
 
       await pumpSheet(tester);
 
       expect(find.text('Channels you moderate'), findsOneWidget);
-      expect(channelService.moderatedCalls, 1);
-      expect(find.text('Channels you follow'), findsNothing);
-      expect(channelService.followedCalls, 0);
-      expect(find.text('Re-login'), findsOneWidget);
-    } finally {
-      await closeHiveInZone(tester);
-    }
-  });
+      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Channel mod-1'), findsNothing);
+
+      /// The followed section is unaffected.
+      expect(find.text('Channel fol-1'), findsOneWidget);
+
+      channelService.moderatedThrows = null;
+      channelService.moderatedChannels = [ref('mod-1')];
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+
+      expect(channelService.moderatedCalls, 2);
+      expect(find.text('Channel mod-1'), findsOneWidget);
+      expect(find.text('Retry'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'sections hidden when the token lacks the scope — re-login CTA shown',
+    (tester) async {
+      try {
+        /// Downgrade the persisted token: no user:read:follows scope.
+        final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
+        final current = authBox.get(TwitchAuth.kBoxKey)!;
+        await tester.runAsync(
+          () => authBox.put(
+            TwitchAuth.kBoxKey,
+            TwitchAuth(
+              accessToken: current.accessToken,
+              refreshToken: current.refreshToken,
+              expiresAtMs: current.expiresAtMs,
+              scopes: const ['user:read:chat', 'user:read:moderated_channels'],
+              userId: current.userId,
+              userLogin: current.userLogin,
+              userDisplayName: current.userDisplayName,
+            ),
+          ),
+        );
+
+        await pumpSheet(tester);
+
+        expect(find.text('Channels you moderate'), findsOneWidget);
+        expect(channelService.moderatedCalls, 1);
+        expect(find.text('Channels you follow'), findsNothing);
+        expect(channelService.followedCalls, 0);
+        expect(find.text('Re-login'), findsOneWidget);
+      } finally {
+        await closeHiveInZone(tester);
+      }
+    },
+  );
 }

@@ -9,12 +9,9 @@ import 'package:obs_blade/utils/network_helper.dart';
 
 class ReachableBuilder extends StatefulWidget {
   final Widget Function(List<Connection> savedConnections)
-      savedConnectionsBuilder;
+  savedConnectionsBuilder;
 
-  const ReachableBuilder({
-    super.key,
-    required this.savedConnectionsBuilder,
-  });
+  const ReachableBuilder({super.key, required this.savedConnectionsBuilder});
 
   @override
   State<ReachableBuilder> createState() => _ReachableBuilderState();
@@ -28,15 +25,17 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
   void initState() {
     super.initState();
 
-    _savedConnections =
-        Hive.box<Connection>(HiveKeys.SavedConnections.name).values.toList();
+    _savedConnections = Hive.box<Connection>(
+      HiveKeys.SavedConnections.name,
+    ).values.toList();
 
     _checkReachableStatus();
 
-    _disposers
-        .add(reaction<bool>((_) => GetIt.instance<HomeStore>().doRefresh, (_) {
-      _checkReachableStatus();
-    }));
+    _disposers.add(
+      reaction<bool>((_) => GetIt.instance<HomeStore>().doRefresh, (_) {
+        _checkReachableStatus();
+      }),
+    );
   }
 
   void _checkReachableStatus() async {
@@ -50,16 +49,20 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
         await NetworkHelper.checkConnectionAvailabilities(_savedConnections);
 
     for (var connection in _savedConnections) {
-      connection.reachable = availableConnections.any((availableConnection) =>
-          availableConnection.host == connection.host &&
-          availableConnection.port == connection.port &&
-          availableConnection.isDomain == connection.isDomain);
+      connection.reachable = availableConnections.any(
+        (availableConnection) =>
+            availableConnection.host == connection.host &&
+            availableConnection.port == connection.port &&
+            availableConnection.isDomain == connection.isDomain,
+      );
     }
-    _savedConnections.sort((c1, c2) => c1.reachable != c2.reachable
-        ? c1.reachable!
-            ? 0
-            : 1
-        : c1.name!.compareTo(c2.name!));
+    _savedConnections.sort(
+      (c1, c2) => c1.reachable != c2.reachable
+          ? c1.reachable!
+                ? 0
+                : 1
+          : c1.name!.compareTo(c2.name!),
+    );
 
     if (this.mounted) {
       setState(() {});

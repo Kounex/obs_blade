@@ -23,7 +23,8 @@ class ChatTypeDropdown extends StatelessWidget {
       /// 44pt touch target ([kMinInteractiveDimensionCupertino]) - finger
       /// friendly next to the other bar controls; the button centers inside
       constraints: const BoxConstraints(
-          minHeight: kMinInteractiveDimensionCupertino),
+        minHeight: kMinInteractiveDimensionCupertino,
+      ),
       alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
         color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
@@ -38,8 +39,10 @@ class ChatTypeDropdown extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: DropdownButton<ChatType>(
             // isExpanded: true,
-            value: this.settingsBox.get(SettingsKeys.SelectedChatType.name,
-                defaultValue: ChatType.Twitch),
+            value: this.settingsBox.get(
+              SettingsKeys.SelectedChatType.name,
+              defaultValue: ChatType.Twitch,
+            ),
             isExpanded: true,
             isDense: true,
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -49,10 +52,7 @@ class ChatTypeDropdown extends StatelessWidget {
                     value: chatType,
                     child: Row(
                       children: [
-                        Icon(
-                          chatType.icon,
-                          color: chatType.brandColor,
-                        ),
+                        Icon(chatType.icon, color: chatType.brandColor),
                         const SizedBox(width: AppSpacing.md),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,8 +71,8 @@ class ChatTypeDropdown extends StatelessWidget {
                   ),
                 )
                 .toList(),
-            onChanged: (chatType) => chatType == ChatType.YouTube &&
-
+            onChanged: (chatType) =>
+                chatType == ChatType.YouTube &&
                     /// The beta warning covers the WebView embed — the
                     /// native engine doesn't use it, so no warning there.
                     this.settingsBox.get(
@@ -81,8 +81,9 @@ class ChatTypeDropdown extends StatelessWidget {
                         ) !=
                         ChatEngine.native &&
                     !Hive.box(HiveKeys.Settings.name).get(
-                        SettingsKeys.DontShowYouTubeChatBetaWarning.name,
-                        defaultValue: false)
+                      SettingsKeys.DontShowYouTubeChatBetaWarning.name,
+                      defaultValue: false,
+                    )
                 ? ModalHandler.showBaseDialog(
                     context: context,
                     dialogWidget: ConfirmationDialog(
@@ -95,18 +96,21 @@ class ChatTypeDropdown extends StatelessWidget {
                       onOk: (checked) {
                         if (checked) {
                           this.settingsBox.put(
-                              SettingsKeys.DontShowYouTubeChatBetaWarning.name,
-                              checked);
+                            SettingsKeys.DontShowYouTubeChatBetaWarning.name,
+                            checked,
+                          );
                         }
-                        this
-                            .settingsBox
-                            .put(SettingsKeys.SelectedChatType.name, chatType);
+                        this.settingsBox.put(
+                          SettingsKeys.SelectedChatType.name,
+                          chatType,
+                        );
                       },
                     ),
                   )
-                : this
-                    .settingsBox
-                    .put(SettingsKeys.SelectedChatType.name, chatType),
+                : this.settingsBox.put(
+                    SettingsKeys.SelectedChatType.name,
+                    chatType,
+                  ),
           ),
         ),
       ),

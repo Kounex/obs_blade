@@ -21,6 +21,7 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     required ChatMessageText message,
     String? color,
     @Default(<ChatMessageBadge>[]) List<ChatMessageBadge> badges,
+
     /// Twitch message kind — `text`, `user_intro` (intro), etc.
     @Default('text') String messageType,
     ChatMessageReply? reply,
@@ -79,10 +80,8 @@ abstract class ChatMessageFragment with _$ChatMessageFragment {
 abstract class ChatFragmentGif with _$ChatFragmentGif {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory ChatFragmentGif({
-    required String gifId,
-    required String url,
-  }) = _ChatFragmentGif;
+  const factory ChatFragmentGif({required String gifId, required String url}) =
+      _ChatFragmentGif;
 
   factory ChatFragmentGif.fromJson(Map<String, Object?> json) =>
       _$ChatFragmentGifFromJson(json);
@@ -90,9 +89,7 @@ abstract class ChatFragmentGif with _$ChatFragmentGif {
 
 @Freezed(fromJson: true, toJson: false)
 abstract class ChatFragmentEmote with _$ChatFragmentEmote {
-  const factory ChatFragmentEmote({
-    required String id,
-  }) = _ChatFragmentEmote;
+  const factory ChatFragmentEmote({required String id}) = _ChatFragmentEmote;
 
   factory ChatFragmentEmote.fromJson(Map<String, Object?> json) =>
       _$ChatFragmentEmoteFromJson(json);

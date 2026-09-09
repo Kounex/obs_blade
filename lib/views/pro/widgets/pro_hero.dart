@@ -39,14 +39,14 @@ class ProHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     /// The accent group accessor (see app.dart): brand/selection color
-    final Color accent =
-        Theme.of(context).buttonTheme.colorScheme!.secondary;
+    final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
 
     return Column(
       children: [
         GestureDetector(
-          onLongPress:
-              kDebugMode ? () => this._toggleDebugOverride(context) : null,
+          onLongPress: kDebugMode
+              ? () => this._toggleDebugOverride(context)
+              : null,
           child: Container(
             width: 96.0,
             height: 96.0,
@@ -56,22 +56,17 @@ class ProHero extends StatelessWidget {
               border: Border.all(color: accent, width: 1.5),
               borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
-            child: Icon(
-              CupertinoIcons.bolt_fill,
-              color: accent,
-              size: 48.0,
-            ),
+            child: Icon(CupertinoIcons.bolt_fill, color: accent, size: 48.0),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
           'OBS Blade Pro',
           style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.2,
-                color:
-                    Theme.of(context).extension<AppTextColors>()!.textPrimary,
-              ),
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
+            color: Theme.of(context).extension<AppTextColors>()!.textPrimary,
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
@@ -81,13 +76,12 @@ class ProHero extends StatelessWidget {
           /// The value line is the pitch headline (token-delta §5):
           /// 19/600, near-white, tight tracking
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontSize: 19.0,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.19,
-                height: 1.4,
-                color:
-                    Theme.of(context).extension<AppTextColors>()!.textPrimary,
-              ),
+            fontSize: 19.0,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.19,
+            height: 1.4,
+            color: Theme.of(context).extension<AppTextColors>()!.textPrimary,
+          ),
         ),
       ],
     );

@@ -22,7 +22,8 @@ class BaseConstrainedBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: this.padding ??
+      padding:
+          this.padding ??
           EdgeInsets.symmetric(horizontal: this.hasBasePadding ? 24.0 : 0),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: this.maxWidth),

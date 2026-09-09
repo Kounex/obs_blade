@@ -51,14 +51,14 @@ class ThemeRow extends StatelessWidget {
     return Pressable(
       onTap: this.onSave != null
           ? () => ModalHandler.showBaseBottomSheet(
-                context: context,
-                builder: (context) => ColorPicker(
-                  title: this.title ?? 'Title',
-                  description: this.description ?? 'Description',
-                  color: this.colorHex,
-                  onSave: (colorHex) => this.onSave?.call(colorHex),
-                ),
-              ).then((reset) => reset ? this.onReset?.call() : null)
+              context: context,
+              builder: (context) => ColorPicker(
+                title: this.title ?? 'Title',
+                description: this.description ?? 'Description',
+                color: this.colorHex,
+                onSave: (colorHex) => this.onSave?.call(colorHex),
+              ),
+            ).then((reset) => reset ? this.onReset?.call() : null)
           : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -73,8 +73,7 @@ class ThemeRow extends StatelessWidget {
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: this.useDivider ? const BaseDivider() : Container(),
                 ),
                 Text(
@@ -125,9 +124,7 @@ class ThemeRow extends StatelessWidget {
                               this.colorHex != null
                                   ? '#${this.colorHex}'
                                   : 'Transparent',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
+                              style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(letterSpacing: 0.5),
                             ),
                           ),
@@ -135,7 +132,7 @@ class ThemeRow extends StatelessWidget {
                       ],
                     ],
                   ),
-          )
+          ),
         ],
       ),
     );

@@ -29,11 +29,11 @@ class TwitchChannelRef {
       );
 
   Map<String, Object?> toJson() => {
-        'id': this.id,
-        'login': this.login,
-        'displayName': this.displayName,
-        'addedAt': this.addedAt.toIso8601String(),
-      };
+    'id': this.id,
+    'login': this.login,
+    'displayName': this.displayName,
+    'addedAt': this.addedAt.toIso8601String(),
+  };
 
   @override
   bool operator ==(Object other) =>

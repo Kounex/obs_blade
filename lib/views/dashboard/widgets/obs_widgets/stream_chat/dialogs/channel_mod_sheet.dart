@@ -75,10 +75,7 @@ class ChannelModSheet extends StatefulWidget {
   /// Failure snackbar hook — hosted by the caller's context.
   final void Function(String message) onFailure;
 
-  const ChannelModSheet({
-    super.key,
-    required this.onFailure,
-  });
+  const ChannelModSheet({super.key, required this.onFailure});
 
   @override
   State<ChannelModSheet> createState() => _ChannelModSheetState();
@@ -210,11 +207,13 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
             child: SingleChildScrollView(
               child: switch (this._step) {
                 _ChannelModStep.root => this._buildRoot(context),
-                _ChannelModStep.followerPresets =>
-                  this._buildFollowerPresets(context),
+                _ChannelModStep.followerPresets => this._buildFollowerPresets(
+                  context,
+                ),
                 _ChannelModStep.slowPresets => this._buildSlowPresets(context),
-                _ChannelModStep.announceCompose =>
-                  this._buildAnnounceCompose(context),
+                _ChannelModStep.announceCompose => this._buildAnnounceCompose(
+                  context,
+                ),
               },
             ),
           ),
@@ -246,20 +245,15 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
             child: Icon(CupertinoIcons.chevron_back, size: 20.0),
           ),
         ),
-        Expanded(
-          child: Text(title, style: nativeChatSheetTitleStyle(context)),
-        ),
+        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
       ],
     );
   }
 
   Widget _sectionHeader(BuildContext context, String title) => Padding(
-        padding: const EdgeInsets.only(
-          top: AppSpacing.sm,
-          bottom: AppSpacing.xs,
-        ),
-        child: Text(title, style: nativeChatSheetSectionStyle(context)),
-      );
+    padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+    child: Text(title, style: nativeChatSheetSectionStyle(context)),
+  );
 
   Widget _buildRoot(BuildContext context) {
     final settings = this._settings;
@@ -447,8 +441,9 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           label: 'Announce…',
           onTap: () => this._requireScopeOr(
             this._store.canSendAnnouncements,
-            () => this
-                .setState(() => this._step = _ChannelModStep.announceCompose),
+            () => this.setState(
+              () => this._step = _ChannelModStep.announceCompose,
+            ),
           ),
         ),
       ],
@@ -471,13 +466,13 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
                 body: preset.$2 == 0
                     ? 'Only followers can chat.'
                     : 'Only followers who have followed for at least '
-                        '${preset.$1.toLowerCase()} can chat.',
+                          '${preset.$1.toLowerCase()} can chat.',
                 okText: 'Enable',
                 returnToRoot: true,
                 action: () => this._store.updateSelectedChatSettings(
-                      followerMode: true,
-                      followerModeDurationMinutes: preset.$2,
-                    ),
+                  followerMode: true,
+                  followerModeDurationMinutes: preset.$2,
+                ),
                 failureText: 'Could not update chat settings',
               ),
             ),
@@ -499,14 +494,13 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
               label: preset.$1,
               onTap: () => this._confirmThenRun(
                 title: 'Enable slow mode?',
-                body:
-                    'Viewers must wait ${preset.$1} between messages.',
+                body: 'Viewers must wait ${preset.$1} between messages.',
                 okText: 'Enable',
                 returnToRoot: true,
                 action: () => this._store.updateSelectedChatSettings(
-                      slowMode: true,
-                      slowModeWaitTimeSeconds: preset.$2,
-                    ),
+                  slowMode: true,
+                  slowModeWaitTimeSeconds: preset.$2,
+                ),
                 failureText: 'Could not update chat settings',
               ),
             ),
@@ -521,10 +515,12 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
 
   Widget _buildAnnounceCompose(BuildContext context) {
     final text = this._announceController.text;
-    final canSend = !this._running &&
+    final canSend =
+        !this._running &&
         text.trim().isNotEmpty &&
         text.length <= kAnnounceMaxLength;
-    final accent = ChatType.Twitch.brandColor ??
+    final accent =
+        ChatType.Twitch.brandColor ??
         Theme.of(context).cupertinoOverrideTheme?.primaryColor ??
         Theme.of(context).colorScheme.primary;
 
@@ -554,9 +550,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
                 textInputAction: TextInputAction.send,
                 focusBorderColor: accent,
                 onChanged: (_) => this.setState(() {}),
-                onSubmitted: canSend
-                    ? (_) => this._sendAnnouncement()
-                    : null,
+                onSubmitted: canSend ? (_) => this._sendAnnouncement() : null,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -573,23 +567,21 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
                   width: kNativeChatDockControlSize,
                   height: kNativeChatDockControlSize,
                   decoration: BoxDecoration(
-                    color: canSend
-                        ? accent
-                        : accent.withValues(alpha: 0.35),
+                    color: canSend ? accent : accent.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: this._running
                       ? (StylingHelper.isApple(context)
-                          ? const CupertinoActivityIndicator(radius: 8.0)
-                          : const SizedBox(
-                              width: 16.0,
-                              height: 16.0,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.0,
-                                color: Colors.white,
-                              ),
-                            ))
+                            ? const CupertinoActivityIndicator(radius: 8.0)
+                            : const SizedBox(
+                                width: 16.0,
+                                height: 16.0,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.0,
+                                  color: Colors.white,
+                                ),
+                              ))
                       : const Icon(
                           CupertinoIcons.paperplane_fill,
                           size: 17.0,
@@ -624,9 +616,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: selected
-              ? chipColor
-              : chipColor.withValues(alpha: 0.18),
+          color: selected ? chipColor : chipColor.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: chipColor.withValues(alpha: selected ? 1.0 : 0.55),
@@ -635,9 +625,9 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: selected ? Colors.white : chipColor,
-                fontWeight: selected ? FontWeight.w600 : null,
-              ),
+            color: selected ? Colors.white : chipColor,
+            fontWeight: selected ? FontWeight.w600 : null,
+          ),
         ),
       ),
     );
@@ -646,9 +636,9 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
   void _sendAnnouncement() {
     this._run(
       () => this._store.sendAnnouncement(
-            this._announceController.text.trim(),
-            this._announceColor,
-          ),
+        this._announceController.text.trim(),
+        this._announceColor,
+      ),
       'Could not send announcement',
       closeSheet: true,
     );
@@ -671,10 +661,8 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
         context,
         icon: icon,
         label: '$label · $status',
-        onTap: () => this._requireScopeOr(
-          can,
-          () => active ? onDisable() : onEnable(),
-        ),
+        onTap: () =>
+            this._requireScopeOr(can, () => active ? onDisable() : onEnable()),
       ),
     );
   }
@@ -689,10 +677,10 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
   }) {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
-                AppStatusColors.standard)
-            .unreachable
+                  AppStatusColors.standard)
+              .unreachable
         : Theme.of(context).textTheme.bodyMedium?.color ??
-            CupertinoColors.label;
+              CupertinoColors.label;
     return Pressable(
       haptic: true,
       onTap: this._running || !enabled ? null : onTap,
@@ -716,10 +704,9 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: color),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: color),
               ),
             ),
           ],

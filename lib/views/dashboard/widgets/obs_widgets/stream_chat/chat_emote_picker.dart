@@ -73,6 +73,7 @@ class ChatEmotePickerButton extends StatelessWidget {
             minWidth: kMinInteractiveDimensionCupertino,
             minHeight: kMinInteractiveDimensionCupertino,
           ),
+
           /// Bottom-align with the growing text field / send control — the
           /// 44pt box is the hit target; chrome matches
           /// [kNativeChatDockControlSize].
@@ -82,7 +83,8 @@ class ChatEmotePickerButton extends StatelessWidget {
             height: kNativeChatDockControlSize,
             decoration: BoxDecoration(
               color: StylingHelper.lightenDarkenColor(
-                  Theme.of(context).cardColor),
+                Theme.of(context).cardColor,
+              ),
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
                 color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -90,10 +92,7 @@ class ChatEmotePickerButton extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: const Icon(
-              CupertinoIcons.smiley,
-              size: 20.0,
-            ),
+            child: const Icon(CupertinoIcons.smiley, size: 20.0),
           ),
         ),
       ),
@@ -151,11 +150,10 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
   List<(String, String)> _filtered(
     Iterable<(String, String)> entries,
     String query,
-  ) =>
-      [
-        for (final entry in entries)
-          if (query.isEmpty || entry.$1.toLowerCase().contains(query)) entry,
-      ];
+  ) => [
+    for (final entry in entries)
+      if (query.isEmpty || entry.$1.toLowerCase().contains(query)) entry,
+  ];
 
   void _insert(String code) {
     final insert = '$code ';
@@ -163,18 +161,17 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
     if (selection.isValid) {
       this._draft
         ..text = this._draft.text.replaceRange(
-              selection.start,
-              selection.end,
-              insert,
-            )
+          selection.start,
+          selection.end,
+          insert,
+        )
         ..selection = TextSelection.collapsed(
           offset: selection.start + insert.length,
         );
     } else {
       this._draft
         ..text = this._draft.text + insert
-        ..selection =
-            TextSelection.collapsed(offset: this._draft.text.length);
+        ..selection = TextSelection.collapsed(offset: this._draft.text.length);
     }
   }
 
@@ -194,10 +191,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Emotes',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Emotes', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: AppSpacing.sm),
           NativeChatTextField(
             onChanged: (value) => this.setState(() => this._query = value),
@@ -214,8 +208,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
             child: Observer(
               builder: (context) {
                 final emoteStore = GetIt.instance<TwitchEmoteStore>();
-                final thirdPartyStore =
-                    GetIt.instance<ThirdPartyEmoteStore>();
+                final thirdPartyStore = GetIt.instance<ThirdPartyEmoteStore>();
                 final chatStore = GetIt.instance<TwitchChatStore>();
                 final broadcasterId = chatStore.user == null
                     ? ''
@@ -224,25 +217,26 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                 /// Tracked so catalogs landing while the sheet is open
                 /// pop in once.
                 // ignore: unused_local_variable
-                final catalogVersions = emoteStore.catalogVersion +
-                    thirdPartyStore.catalogVersion;
+                final catalogVersions =
+                    emoteStore.catalogVersion + thirdPartyStore.catalogVersion;
 
                 return HiveBuilder<dynamic>(
                   hiveKey: HiveKeys.Settings,
-                  rebuildKeys: const [
-                    SettingsKeys.TwitchChatThirdPartyEmotes,
-                  ],
+                  rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
                   builder: (context, settingsBox, child) {
                     final query = this._query.trim().toLowerCase();
 
-                    final thirdPartyEntries = (settingsBox.get(
-                      SettingsKeys.TwitchChatThirdPartyEmotes.name,
-                      defaultValue: true,
-                    ) as bool)
+                    final thirdPartyEntries =
+                        (settingsBox.get(
+                              SettingsKeys.TwitchChatThirdPartyEmotes.name,
+                              defaultValue: true,
+                            )
+                            as bool)
                         ? this._filtered(
                             [
-                              for (final emote in thirdPartyStore
-                                  .emotesFor(broadcasterId))
+                              for (final emote in thirdPartyStore.emotesFor(
+                                broadcasterId,
+                              ))
                                 (emote.name, emote.imageUrl),
                             ]..sort((a, b) => a.$1.compareTo(b.$1)),
                             query,
@@ -253,25 +247,17 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                       if (this.widget.canReadEmotes) ...[
                         (
                           'Channel',
-                          this._filtered(
-                            [
-                              for (final emote
-                                  in emoteStore.channelEmotes)
-                                (emote.name, twitchEmoteUrl(emote.id)),
-                            ],
-                            query,
-                          ),
+                          this._filtered([
+                            for (final emote in emoteStore.channelEmotes)
+                              (emote.name, twitchEmoteUrl(emote.id)),
+                          ], query),
                         ),
                         (
                           'Global',
-                          this._filtered(
-                            [
-                              for (final emote
-                                  in emoteStore.globalEmotes)
-                                (emote.name, twitchEmoteUrl(emote.id)),
-                            ],
-                            query,
-                          ),
+                          this._filtered([
+                            for (final emote in emoteStore.globalEmotes)
+                              (emote.name, twitchEmoteUrl(emote.id)),
+                          ], query),
                         ),
                       ],
                       ('Third-party (7TV/BTTV)', thirdPartyEntries),
@@ -291,9 +277,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                               Expanded(
                                 child: Text(
                                   'Log in again to load your Twitch emotes',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                               Pressable(
@@ -310,9 +294,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                                   alignment: Alignment.center,
                                   child: Text(
                                     'Re-login',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
+                                    style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: this.widget.accentColor,
                                           fontWeight: FontWeight.w600,
@@ -348,8 +330,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                             child: Center(
                               child: Text(
                                 'No emotes available',
-                                style:
-                                    Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ),
                           )
@@ -357,22 +338,19 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                           for (final section in sections) ...[
                             Text(
                               section.$1,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             GridView(
                               shrinkWrap: true,
-                              physics:
-                                  const NeverScrollableScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               gridDelegate:
                                   const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 56.0,
-                                mainAxisSpacing: AppSpacing.xs,
-                                crossAxisSpacing: AppSpacing.xs,
-                              ),
+                                    maxCrossAxisExtent: 56.0,
+                                    mainAxisSpacing: AppSpacing.xs,
+                                    crossAxisSpacing: AppSpacing.xs,
+                                  ),
                               children: [
                                 for (final emote in section.$2)
                                   _EmoteCell(
@@ -430,9 +408,9 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                     child: Text(
                       'Done',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),

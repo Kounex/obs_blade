@@ -7,9 +7,7 @@ import 'package:obs_blade/stores/views/statistics.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 class FilterStatus extends StatelessWidget {
-  const FilterStatus({
-    super.key,
-  });
+  const FilterStatus({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,14 +29,10 @@ class FilterStatus extends StatelessWidget {
           color: pillColor,
           label: active ? 'ON' : 'OFF',
           labelStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
-                color: active
-                    ? Theme.of(context)
-                        .extension<AppTextColors>()!
-                        .highlightText
-                    : Theme.of(context)
-                        .extension<AppTextColors>()!
-                        .textSecondary,
-              ),
+            color: active
+                ? Theme.of(context).extension<AppTextColors>()!.highlightText
+                : Theme.of(context).extension<AppTextColors>()!.textSecondary,
+          ),
           width: 32.0,
         );
       },

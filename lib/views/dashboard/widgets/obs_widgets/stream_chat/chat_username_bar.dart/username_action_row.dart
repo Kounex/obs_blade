@@ -23,16 +23,19 @@ class UsernameActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ChatType chatType = this.settingsBox.get(
-          SettingsKeys.SelectedChatType.name,
-          defaultValue: ChatType.Twitch,
-        );
+      SettingsKeys.SelectedChatType.name,
+      defaultValue: ChatType.Twitch,
+    );
     String? selectedChatUsername = switch (chatType) {
-      ChatType.Twitch =>
-        this.settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
-      ChatType.YouTube =>
-        this.settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name),
-      ChatType.Owncast =>
-        this.settingsBox.get(SettingsKeys.SelectedOwncastUsername.name),
+      ChatType.Twitch => this.settingsBox.get(
+        SettingsKeys.SelectedTwitchUsername.name,
+      ),
+      ChatType.YouTube => this.settingsBox.get(
+        SettingsKeys.SelectedYouTubeUsername.name,
+      ),
+      ChatType.Owncast => this.settingsBox.get(
+        SettingsKeys.SelectedOwncastUsername.name,
+      ),
     };
 
     return Container(
@@ -54,12 +57,15 @@ class UsernameActionRow extends StatelessWidget {
             onPressed: () => ModalHandler.showBaseDialog(
               context: context,
               dialogWidget: switch (chatType) {
-                ChatType.Twitch =>
-                  AddEditTwitchUsernameDialog(settingsBox: this.settingsBox),
-                ChatType.YouTube =>
-                  AddEditYouTubeUsernameDialog(settingsBox: this.settingsBox),
-                ChatType.Owncast =>
-                  AddEditOwncastUsernameDialog(settingsBox: this.settingsBox),
+                ChatType.Twitch => AddEditTwitchUsernameDialog(
+                  settingsBox: this.settingsBox,
+                ),
+                ChatType.YouTube => AddEditYouTubeUsernameDialog(
+                  settingsBox: this.settingsBox,
+                ),
+                ChatType.Owncast => AddEditOwncastUsernameDialog(
+                  settingsBox: this.settingsBox,
+                ),
               },
             ),
           ),
@@ -72,22 +78,22 @@ class UsernameActionRow extends StatelessWidget {
             tooltip: 'Edit',
             onPressed: selectedChatUsername != null
                 ? () => ModalHandler.showBaseDialog(
-                      context: context,
-                      dialogWidget: switch (chatType) {
-                        ChatType.Twitch => AddEditTwitchUsernameDialog(
-                            settingsBox: this.settingsBox,
-                            username: selectedChatUsername,
-                          ),
-                        ChatType.YouTube => AddEditYouTubeUsernameDialog(
-                            settingsBox: this.settingsBox,
-                            username: selectedChatUsername,
-                          ),
-                        ChatType.Owncast => AddEditOwncastUsernameDialog(
-                            settingsBox: this.settingsBox,
-                            username: selectedChatUsername,
-                          ),
-                      },
-                    )
+                    context: context,
+                    dialogWidget: switch (chatType) {
+                      ChatType.Twitch => AddEditTwitchUsernameDialog(
+                        settingsBox: this.settingsBox,
+                        username: selectedChatUsername,
+                      ),
+                      ChatType.YouTube => AddEditYouTubeUsernameDialog(
+                        settingsBox: this.settingsBox,
+                        username: selectedChatUsername,
+                      ),
+                      ChatType.Owncast => AddEditOwncastUsernameDialog(
+                        settingsBox: this.settingsBox,
+                        username: selectedChatUsername,
+                      ),
+                    },
+                  )
                 : null,
           ),
           const SizedBox(
@@ -100,12 +106,12 @@ class UsernameActionRow extends StatelessWidget {
             isDestructive: selectedChatUsername != null,
             onPressed: selectedChatUsername != null
                 ? () => ModalHandler.showBaseDialog(
-                      context: context,
-                      dialogWidget: DeleteUsernameDialog(
-                        settingsBox: settingsBox,
-                        username: selectedChatUsername,
-                      ),
-                    )
+                    context: context,
+                    dialogWidget: DeleteUsernameDialog(
+                      settingsBox: settingsBox,
+                      username: selectedChatUsername,
+                    ),
+                  )
                 : null,
           ),
         ],

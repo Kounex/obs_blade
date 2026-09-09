@@ -4,36 +4,26 @@ import '../../types/enums/order.dart';
 
 part 'statistics.g.dart';
 
-enum FilterType {
-  StatisticTime,
-  Name,
-  TotalTime,
-  Kbits,
-}
+enum FilterType { StatisticTime, Name, TotalTime, Kbits }
 
 extension FilterTypeFunctions on FilterType {
   String get text => const {
-        FilterType.StatisticTime: 'Date',
-        FilterType.Name: 'Name',
-        FilterType.TotalTime: 'Session Time',
-        FilterType.Kbits: 'kbit/s',
-      }[this]!;
+    FilterType.StatisticTime: 'Date',
+    FilterType.Name: 'Name',
+    FilterType.TotalTime: 'Session Time',
+    FilterType.Kbits: 'kbit/s',
+  }[this]!;
 }
 
-enum AmountStatisticEntries {
-  Five,
-  Ten,
-  TwentyFive,
-  Fifty,
-}
+enum AmountStatisticEntries { Five, Ten, TwentyFive, Fifty }
 
 extension AmountStatisticEntriesFunctions on AmountStatisticEntries {
   int get number => const {
-        AmountStatisticEntries.Five: 5,
-        AmountStatisticEntries.Ten: 10,
-        AmountStatisticEntries.TwentyFive: 25,
-        AmountStatisticEntries.Fifty: 50,
-      }[this]!;
+    AmountStatisticEntries.Five: 5,
+    AmountStatisticEntries.Ten: 10,
+    AmountStatisticEntries.TwentyFive: 25,
+    AmountStatisticEntries.Fifty: 50,
+  }[this]!;
 }
 
 enum StatType {
@@ -42,10 +32,10 @@ enum StatType {
   Recording;
 
   String get name => {
-        StatType.All: 'All Stats',
-        StatType.Stream: 'Stream',
-        StatType.Recording: 'Recording',
-      }[this]!;
+    StatType.All: 'All Stats',
+    StatType.Stream: 'Stream',
+    StatType.Recording: 'Recording',
+  }[this]!;
 }
 
 enum TimeUnit {
@@ -53,11 +43,8 @@ enum TimeUnit {
   Minutes,
   Hours;
 
-  int get factorToS => {
-        TimeUnit.Seconds: 1,
-        TimeUnit.Minutes: 60,
-        TimeUnit.Hours: 3600,
-      }[this]!;
+  int get factorToS =>
+      {TimeUnit.Seconds: 1, TimeUnit.Minutes: 60, TimeUnit.Hours: 3600}[this]!;
 }
 
 enum DurationFilter {
@@ -66,10 +53,10 @@ enum DurationFilter {
   Between;
 
   String get text => {
-        DurationFilter.Shorter: 'Shorter than...',
-        DurationFilter.Longer: 'Longer than...',
-        DurationFilter.Between: 'Between...',
-      }[this]!;
+    DurationFilter.Shorter: 'Shorter than...',
+    DurationFilter.Longer: 'Longer than...',
+    DurationFilter.Between: 'Between...',
+  }[this]!;
 }
 
 class StatisticsStore = _StatisticsStore with _$StatisticsStore;
@@ -157,8 +144,8 @@ abstract class _StatisticsStore with Store {
 
   @action
   void setAmountStatisticEntries(
-          AmountStatisticEntries amountStatisticEntries) =>
-      this.amountStatisticEntries = amountStatisticEntries;
+    AmountStatisticEntries amountStatisticEntries,
+  ) => this.amountStatisticEntries = amountStatisticEntries;
 
   @action
   void setFilterName(String filterName) => this.filterName = filterName;

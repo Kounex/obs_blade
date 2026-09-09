@@ -38,20 +38,19 @@ class BaseProgressIndicator extends StatefulWidget {
     this.valueUpdateDuration = const Duration(milliseconds: 1000),
     this.size = 32.0,
     this.strokeWidth = 2.0,
-  })  : assert(text != null && text.isNotEmpty || text == null),
-        assert(
-          countdownInSeconds != null
-              ? value == null
-              : value != null
-                  ? countdownInSeconds == null &&
-                      valueUpdateSteps < valueUpdateDuration.inMilliseconds &&
-                      valueUpdateDuration.inMilliseconds / valueUpdateSteps ==
-                          (valueUpdateDuration.inMilliseconds ~/
-                                  valueUpdateSteps)
-                              .toDouble()
-                  : true,
-        ),
-        super();
+  }) : assert(text != null && text.isNotEmpty || text == null),
+       assert(
+         countdownInSeconds != null
+             ? value == null
+             : value != null
+             ? countdownInSeconds == null &&
+                   valueUpdateSteps < valueUpdateDuration.inMilliseconds &&
+                   valueUpdateDuration.inMilliseconds / valueUpdateSteps ==
+                       (valueUpdateDuration.inMilliseconds ~/ valueUpdateSteps)
+                           .toDouble()
+             : true,
+       ),
+       super();
 
   @override
   State<BaseProgressIndicator> createState() => _BaseProgressIndicatorState();
@@ -73,7 +72,8 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
             this.widget.onCountdownDone?.call();
           }
           setState(() {
-            _tempValue = _tempValue! -
+            _tempValue =
+                _tempValue! -
                 (1.0 / ((this.widget.countdownInSeconds! * 1000) / 10));
           });
         } else {
@@ -92,20 +92,24 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
         oldWidget.value != this.widget.value) {
       _tempValue ??= oldWidget.value;
       Timer.periodic(
-          Duration(
-            milliseconds: this.widget.valueUpdateDuration.inMilliseconds ~/
-                this.widget.valueUpdateSteps,
-          ), (timer) {
-        if (this.mounted) {
-          setState(() {
-            _tempValue = _tempValue! +
-                (this.widget.value! - oldWidget.value!) /
-                    this.widget.valueUpdateSteps;
-          });
-        } else {
-          timer.cancel();
-        }
-      });
+        Duration(
+          milliseconds:
+              this.widget.valueUpdateDuration.inMilliseconds ~/
+              this.widget.valueUpdateSteps,
+        ),
+        (timer) {
+          if (this.mounted) {
+            setState(() {
+              _tempValue =
+                  _tempValue! +
+                  (this.widget.value! - oldWidget.value!) /
+                      this.widget.valueUpdateSteps;
+            });
+          } else {
+            timer.cancel();
+          }
+        },
+      );
     }
   }
 
@@ -137,7 +141,7 @@ class _BaseProgressIndicatorState extends State<BaseProgressIndicator> {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-          )
+          ),
       ],
     );
   }

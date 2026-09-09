@@ -5,19 +5,13 @@ void main() {
   group('chatUrlMatches', () {
     test('finds http(s) URLs in a message', () {
       const text = 'see https://example.com/path and http://foo.bar/x.';
-      final matches =
-          chatUrlMatches(text).map((m) => m.group(0)).toList();
-      expect(matches, [
-        'https://example.com/path',
-        'http://foo.bar/x.',
-      ]);
+      final matches = chatUrlMatches(text).map((m) => m.group(0)).toList();
+      expect(matches, ['https://example.com/path', 'http://foo.bar/x.']);
     });
 
     test('finds bare domains and www hosts', () {
-      const text =
-          'try shorturl.at/xyz or www.example.com/a and twitch.tv/foo';
-      final matches =
-          chatUrlMatches(text).map((m) => m.group(0)).toList();
+      const text = 'try shorturl.at/xyz or www.example.com/a and twitch.tv/foo';
+      final matches = chatUrlMatches(text).map((m) => m.group(0)).toList();
       expect(matches, [
         'shorturl.at/xyz',
         'www.example.com/a',
@@ -41,10 +35,7 @@ void main() {
         normalizeChatLinkUrl('https://example.com/path.'),
         'https://example.com/path',
       );
-      expect(
-        normalizeChatLinkUrl('http://foo.bar/x!'),
-        'http://foo.bar/x',
-      );
+      expect(normalizeChatLinkUrl('http://foo.bar/x!'), 'http://foo.bar/x');
     });
 
     test('prepends https for bare domains and www', () {

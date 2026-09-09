@@ -19,8 +19,14 @@ void main() {
         chatNoticeCategory('announcement'),
         ChatNoticeCategory.announcements,
       );
-      expect(chatNoticeCategory('bits_badge_tier'), ChatNoticeCategory.bitsBadge);
-      expect(chatNoticeCategory('charity_donation'), ChatNoticeCategory.charity);
+      expect(
+        chatNoticeCategory('bits_badge_tier'),
+        ChatNoticeCategory.bitsBadge,
+      );
+      expect(
+        chatNoticeCategory('charity_donation'),
+        ChatNoticeCategory.charity,
+      );
       expect(chatNoticeCategory('modiversary'), ChatNoticeCategory.modiversary);
       expect(chatNoticeCategory('something_new'), ChatNoticeCategory.other);
     });
@@ -32,8 +38,9 @@ void main() {
     Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
     setUp(() async {
-      tempDir =
-          await Directory.systemTemp.createTemp('chat_notice_visibility_test');
+      tempDir = await Directory.systemTemp.createTemp(
+        'chat_notice_visibility_test',
+      );
       harness = HiveTestHarness(tempDir);
       await harness.init();
       await Hive.openBox(HiveKeys.Settings.name);

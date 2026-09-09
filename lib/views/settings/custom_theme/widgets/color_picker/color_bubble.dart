@@ -49,10 +49,7 @@ class _CheckerboardPainter extends CustomPainter {
     for (double y = 0; y < size.height; y += _squareSize) {
       for (double x = 0; x < size.width; x += _squareSize) {
         if (((x / _squareSize).floor() + (y / _squareSize).floor()).isEven) {
-          canvas.drawRect(
-            Rect.fromLTWH(x, y, _squareSize, _squareSize),
-            dark,
-          );
+          canvas.drawRect(Rect.fromLTWH(x, y, _squareSize, _squareSize), dark);
         }
       }
     }

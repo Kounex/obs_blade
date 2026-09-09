@@ -61,17 +61,17 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
 
   @override
   Widget build(BuildContext context) {
-    final AppTextColors textColors =
-        Theme.of(context).extension<AppTextColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
     final bool darkSurface =
         Theme.of(context).cardColor.computeLuminance() <= 0.2;
 
     /// Mini-seg (IP / Domain): same neutral grammar as the connect-method
     /// segment - neutral thumb + white selected label, no accent
-    Color miniSegColor(bool domainMode) =>
-        this.widget.domainMode == domainMode
-            ? textColors.textPrimary
-            : textColors.textSecondary;
+    Color miniSegColor(bool domainMode) => this.widget.domainMode == domainMode
+        ? textColors.textPrimary
+        : textColors.textSecondary;
 
     return Column(
       children: [
@@ -86,24 +86,28 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
           enabled: this.widget.manual,
           platform: this.widget.platform,
           errorPaddingAlways: true,
-          style: const TextStyle(
-            fontFeatures: [
-              FontFeature.tabularFigures(),
-            ],
-          ),
-          prefix: this.widget.manual &&
+          style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
+          prefix:
+              this.widget.manual &&
                   this.widget.domainMode &&
                   (_inputFocusNode.hasFocus ||
                       this.widget.hostDomain.text.isNotEmpty)
               ? Padding(
                   padding: EdgeInsets.only(
-                      left: StylingHelper.isApple(context,
-                              platform: this.widget.platform)
-                          ? 8.0
-                          : 0),
+                    left:
+                        StylingHelper.isApple(
+                          context,
+                          platform: this.widget.platform,
+                        )
+                        ? 8.0
+                        : 0,
+                  ),
                   child: SizedBox(
-                    height: StylingHelper.isApple(context,
-                            platform: this.widget.platform)
+                    height:
+                        StylingHelper.isApple(
+                          context,
+                          platform: this.widget.platform,
+                        )
                         ? null
                         : 20.0,
                     child: Material(
@@ -122,17 +126,13 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                             value: 'wss://',
                             child: Text('wss://'),
                           ),
-                          DropdownMenuItem(
-                            value: '',
-                            child: Text('-'),
-                          ),
+                          DropdownMenuItem(value: '', child: Text('-')),
                         ],
                         onTap: () => _dropdownTapped = true,
                         onChanged: (scheme) {
-                          this
-                              .widget
-                              .onChangeProtocolScheme
-                              ?.call(scheme ?? 'ws://');
+                          this.widget.onChangeProtocolScheme?.call(
+                            scheme ?? 'ws://',
+                          );
                           _inputFocusNode.requestFocus();
                         },
                       ),
@@ -140,18 +140,21 @@ class _ConnectHostInputState extends State<ConnectHostInput> {
                   ),
                 )
               : null,
-          labelText:
-              !this.widget.domainMode ? 'IP Address (internal)' : 'Hostname',
-          placeholder:
-              !this.widget.domainMode ? '192.168.178.10' : 'obs-stream.com',
+          labelText: !this.widget.domainMode
+              ? 'IP Address (internal)'
+              : 'Hostname',
+          placeholder: !this.widget.domainMode
+              ? '192.168.178.10'
+              : 'obs-stream.com',
           bottom: this.widget.manual
               ? Row(
                   children: [
                     Expanded(
                       child: CupertinoSlidingSegmentedControl<bool>(
                         groupValue: this.widget.domainMode,
-                        backgroundColor: (darkSurface ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.06),
+                        backgroundColor:
+                            (darkSurface ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.06),
                         thumbColor: darkSurface
                             ? Colors.white.withValues(alpha: 0.13)
                             : Colors.white,

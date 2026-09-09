@@ -31,20 +31,16 @@ enum AppRoutingKeys implements RoutingKeys {
 
   @override
   String get route => const {
-        AppRoutingKeys.Intro: '/intro',
-        AppRoutingKeys.Tabs: '/tabs',
-      }[this]!;
+    AppRoutingKeys.Intro: '/intro',
+    AppRoutingKeys.Tabs: '/tabs',
+  }[this]!;
 }
 
 /// All available and used tabs in our TabView which is basically the root
 /// of our application (view wise) since the main navigation is realised
 /// with a tab bar - this enum is used to iterate over available tabs and
 /// automate adding tabs (see extension functions for this enum)
-enum Tabs {
-  Home,
-  Statistics,
-  Settings,
-}
+enum Tabs { Home, Statistics, Settings }
 
 /// Extension functions for the [Tabs] enum which has some convinient functions
 /// which automates the generation of the [Navigator] instances with the
@@ -52,22 +48,22 @@ enum Tabs {
 /// current and new tabs will automatically generated / changed
 extension TabsFunctions on Tabs {
   String get name => const {
-        Tabs.Home: 'Home',
-        Tabs.Statistics: 'Statistics',
-        Tabs.Settings: 'Settings',
-      }[this]!;
+    Tabs.Home: 'Home',
+    Tabs.Statistics: 'Statistics',
+    Tabs.Settings: 'Settings',
+  }[this]!;
 
   IconData get icon => const {
-        Tabs.Home: CupertinoIcons.house_alt,
-        Tabs.Statistics: CupertinoIcons.chart_bar_alt_fill,
-        Tabs.Settings: CupertinoIcons.settings,
-      }[this]!;
+    Tabs.Home: CupertinoIcons.house_alt,
+    Tabs.Statistics: CupertinoIcons.chart_bar_alt_fill,
+    Tabs.Settings: CupertinoIcons.settings,
+  }[this]!;
 
   Map<String, Widget Function(BuildContext)> get routes => {
-        Tabs.Home: RoutingHelper.homeTabRoutes,
-        Tabs.Statistics: RoutingHelper.statisticsTabRoutes,
-        Tabs.Settings: RoutingHelper.settingsTabRoutes,
-      }[this]!;
+    Tabs.Home: RoutingHelper.homeTabRoutes,
+    Tabs.Statistics: RoutingHelper.statisticsTabRoutes,
+    Tabs.Settings: RoutingHelper.settingsTabRoutes,
+  }[this]!;
 }
 
 /// Routing keys for the home tab
@@ -77,11 +73,8 @@ enum HomeTabRoutingKeys implements RoutingKeys {
   Pro;
 
   @override
-  String get route => '${AppRoutingKeys.Tabs.route}/home${{
-        HomeTabRoutingKeys.Landing: '',
-        HomeTabRoutingKeys.Dashboard: '/dashboard',
-        HomeTabRoutingKeys.Pro: '/pro',
-      }[this]!}';
+  String get route =>
+      '${AppRoutingKeys.Tabs.route}/home${{HomeTabRoutingKeys.Landing: '', HomeTabRoutingKeys.Dashboard: '/dashboard', HomeTabRoutingKeys.Pro: '/pro'}[this]!}';
 }
 
 /// Routing keys for the statistics tab
@@ -90,10 +83,8 @@ enum StaticticsTabRoutingKeys implements RoutingKeys {
   Detail;
 
   @override
-  String get route => '${AppRoutingKeys.Tabs.route}/statistic${{
-        StaticticsTabRoutingKeys.Landing: '',
-        StaticticsTabRoutingKeys.Detail: '/detail',
-      }[this]!}';
+  String get route =>
+      '${AppRoutingKeys.Tabs.route}/statistic${{StaticticsTabRoutingKeys.Landing: '', StaticticsTabRoutingKeys.Detail: '/detail'}[this]!}';
 }
 
 /// Routing keys for the settings tab
@@ -111,21 +102,8 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
   Pro;
 
   @override
-  String get route => '$AppRoutingKeys.Tabs.route/settings${{
-        SettingsTabRoutingKeys.Landing: '',
-        SettingsTabRoutingKeys.PrivacyPolicy: '/privacy-policy',
-        SettingsTabRoutingKeys.About: '/about',
-        SettingsTabRoutingKeys.CustomTheme: '/custom-theme',
-        SettingsTabRoutingKeys.FAQ: '/faq',
-        SettingsTabRoutingKeys.DataManagement: '/data-management',
-        SettingsTabRoutingKeys.Logs: '/logs',
-        SettingsTabRoutingKeys.LogDetail: '/logs/detail',
-        SettingsTabRoutingKeys.DashboardCustomisation:
-            '/dashboard-customisation',
-        SettingsTabRoutingKeys.DashboardCustomisationOrder:
-            '/dashboard-customisation/order',
-        SettingsTabRoutingKeys.Pro: '/pro',
-      }[this]!}';
+  String get route =>
+      '$AppRoutingKeys.Tabs.route/settings${{SettingsTabRoutingKeys.Landing: '', SettingsTabRoutingKeys.PrivacyPolicy: '/privacy-policy', SettingsTabRoutingKeys.About: '/about', SettingsTabRoutingKeys.CustomTheme: '/custom-theme', SettingsTabRoutingKeys.FAQ: '/faq', SettingsTabRoutingKeys.DataManagement: '/data-management', SettingsTabRoutingKeys.Logs: '/logs', SettingsTabRoutingKeys.LogDetail: '/logs/detail', SettingsTabRoutingKeys.DashboardCustomisation: '/dashboard-customisation', SettingsTabRoutingKeys.DashboardCustomisationOrder: '/dashboard-customisation/order', SettingsTabRoutingKeys.Pro: '/pro'}[this]!}';
 }
 
 /// Used to summarize routing tasks and information at one point

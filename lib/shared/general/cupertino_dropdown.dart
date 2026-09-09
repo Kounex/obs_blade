@@ -34,7 +34,9 @@ class CupertinoDropdown<T> extends StatelessWidget {
           readOnly: true,
           decoration: BoxDecoration(
             color: StylingHelper.lightenDarkenColor(
-                Theme.of(context).cardColor, 8),
+              Theme.of(context).cardColor,
+              8,
+            ),
             border: Border.all(
               color: Theme.of(context).dividerColor,
               width: 0.5,

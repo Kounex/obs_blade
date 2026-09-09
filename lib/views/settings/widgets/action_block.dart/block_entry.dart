@@ -119,16 +119,15 @@ class BlockEntry extends StatelessWidget {
                               right: AppSpacing.xs,
                             ),
                             child: DefaultTextStyle(
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodySmall!.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall!
+                                  .copyWith(
                                     fontSize: 14.0,
 
                                     /// Settings row values sit one emphasis
                                     /// level down (token-delta §2.1)
-                                    color: Theme.of(context)
-                                        .extension<AppTextColors>()!
-                                        .textSecondary,
+                                    color: Theme.of(
+                                      context,
+                                    ).extension<AppTextColors>()!.textSecondary,
                                   ),
                               child: this.navigateToResult!,
                             ),
@@ -136,9 +135,9 @@ class BlockEntry extends StatelessWidget {
                         Icon(
                           Icons.chevron_right,
                           size: 20.0,
-                          color: Theme.of(context)
-                              .extension<AppTextColors>()!
-                              .textTertiary,
+                          color: Theme.of(
+                            context,
+                          ).extension<AppTextColors>()!.textTertiary,
                         ),
                       ],
                     )

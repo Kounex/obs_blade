@@ -12,10 +12,7 @@ import '../../../../types/enums/hive_keys.dart';
 class SaveEditConnectionDialog extends StatelessWidget {
   final bool newConnection;
 
-  const SaveEditConnectionDialog({
-    super.key,
-    this.newConnection = true,
-  });
+  const SaveEditConnectionDialog({super.key, this.newConnection = true});
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +30,11 @@ class SaveEditConnectionDialog extends StatelessWidget {
         if (name?.isEmpty ?? false) {
           return 'Please provide a name!';
         }
-        if (box.values.any((connection) =>
-            name != networkStore.activeSession!.connection.name &&
-            connection.name == name)) {
+        if (box.values.any(
+          (connection) =>
+              name != networkStore.activeSession!.connection.name &&
+              connection.name == name,
+        )) {
           return 'Name already used!';
         }
         return null;
@@ -47,9 +46,9 @@ class SaveEditConnectionDialog extends StatelessWidget {
         /// connection name and host, once the user updates the connection, we need
         /// to update these elements as well to preserve the status
         if (name != networkStore.activeSession!.connection.name) {
-          Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
-              .values
-              .forEach((hiddenScene) {
+          Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).values.forEach((
+            hiddenScene,
+          ) {
             if (hiddenScene.connectionName ==
                     networkStore.activeSession!.connection.name ||
                 (hiddenScene.connectionName == null &&
@@ -60,9 +59,9 @@ class SaveEditConnectionDialog extends StatelessWidget {
             }
           });
 
-          Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
-              .values
-              .forEach((hiddenSceneItem) {
+          Hive.box<HiddenSceneItem>(
+            HiveKeys.HiddenSceneItem.name,
+          ).values.forEach((hiddenSceneItem) {
             if (hiddenSceneItem.connectionName ==
                     networkStore.activeSession!.connection.name ||
                 (hiddenSceneItem.connectionName == null &&

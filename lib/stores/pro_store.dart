@@ -44,7 +44,7 @@ abstract class _ProStore with Store {
   StreamSubscription<bool>? _entitlementSubscription;
 
   _ProStore({ProPurchaseService? service})
-      : this._service = service ?? ProPurchaseService();
+    : this._service = service ?? ProPurchaseService();
 
   @observable
   bool boughtPro = false;
@@ -55,8 +55,7 @@ abstract class _ProStore with Store {
   bool debugOverride = false;
 
   @computed
-  bool get isPro =>
-      this.boughtPro || (kDebugMode && this.debugOverride);
+  bool get isPro => this.boughtPro || (kDebugMode && this.debugOverride);
 
   /// Live store products for the paywall — empty while the products don't
   /// exist store-side (graceful placeholder state), loaded lazily via
@@ -93,11 +92,9 @@ abstract class _ProStore with Store {
     /// RevenueCat path mirrors its entitlement into the same key).
     this._settingsSubscription = settingsBox.watch().listen((event) {
       if (event.key == SettingsKeys.BoughtPro.name) {
-        runInAction(
-            () => this.boughtPro = event.value as bool? ?? false);
+        runInAction(() => this.boughtPro = event.value as bool? ?? false);
       } else if (event.key == SettingsKeys.ProDebugOverride.name) {
-        runInAction(
-            () => this.debugOverride = event.value as bool? ?? false);
+        runInAction(() => this.debugOverride = event.value as bool? ?? false);
       }
     });
 
@@ -122,11 +119,13 @@ abstract class _ProStore with Store {
     try {
       await this._service.init();
       await this._mirrorEntitlement();
-      this._entitlementSubscription =
-          this._service.proEntitlementStream.listen((bool active) {
-        Hive.box<dynamic>(HiveKeys.Settings.name)
-            .put(SettingsKeys.BoughtPro.name, active);
-      });
+      this._entitlementSubscription = this._service.proEntitlementStream.listen(
+        (bool active) {
+          Hive.box<dynamic>(
+            HiveKeys.Settings.name,
+          ).put(SettingsKeys.BoughtPro.name, active);
+        },
+      );
     } catch (e) {
       GeneralHelper.advLog(
         'RevenueCat pro init failed — $e',
@@ -140,8 +139,9 @@ abstract class _ProStore with Store {
     try {
       final bool? active = await this._service.fetchProEntitlement();
       if (active == null) return;
-      await Hive.box<dynamic>(HiveKeys.Settings.name)
-          .put(SettingsKeys.BoughtPro.name, active);
+      await Hive.box<dynamic>(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.BoughtPro.name, active);
     } catch (e) {
       /// Offline before RC's cache warmed, SDK error mid-session — keep
       /// the last mirrored state, the next update retries.
@@ -225,8 +225,9 @@ abstract class _ProStore with Store {
       /// mirror it now instead of waiting for the CustomerInfo listener.
       /// (Legacy path: the purchase stream event sets the flag.)
       if (bought && this._service.handlesEntitlement) {
-        await Hive.box<dynamic>(HiveKeys.Settings.name)
-            .put(SettingsKeys.BoughtPro.name, true);
+        await Hive.box<dynamic>(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.BoughtPro.name, true);
       }
       return bought;
     } catch (e) {
@@ -281,8 +282,9 @@ abstract class _ProStore with Store {
           );
         }
         if (restoredActive) {
-          await Hive.box<dynamic>(HiveKeys.Settings.name)
-              .put(SettingsKeys.BoughtPro.name, true);
+          await Hive.box<dynamic>(
+            HiveKeys.Settings.name,
+          ).put(SettingsKeys.BoughtPro.name, true);
           showProRestoredDialog();
         }
       }
@@ -306,9 +308,8 @@ abstract class _ProStore with Store {
   @action
   void setDebugOverride(bool value) {
     if (!kDebugMode) return;
-    Hive.box<dynamic>(HiveKeys.Settings.name).put(
-      SettingsKeys.ProDebugOverride.name,
-      value,
-    );
+    Hive.box<dynamic>(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.ProDebugOverride.name, value);
   }
 }

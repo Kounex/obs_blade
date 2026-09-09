@@ -11,9 +11,7 @@ import '../visibility_slide_wrapper.dart';
 import 'audio_slider.dart';
 
 class AudioInputs extends StatefulWidget {
-  const AudioInputs({
-    super.key,
-  });
+  const AudioInputs({super.key});
 
   @override
   _AudioInputsState createState() => _AudioInputsState();
@@ -47,16 +45,17 @@ class _AudioInputsState extends State<AudioInputs>
               Column(
                 children: dashboardStore.globalInputs.isNotEmpty
                     ? dashboardStore.globalInputs
-                        .map(
-                          (globalInput) => VisibilitySlideWrapper(
-                            input: globalInput,
-                            child: AudioSlider(input: globalInput),
-                          ),
-                        )
-                        .toList()
+                          .map(
+                            (globalInput) => VisibilitySlideWrapper(
+                              input: globalInput,
+                              child: AudioSlider(input: globalInput),
+                            ),
+                          )
+                          .toList()
                     : [
                         const PlaceholderSceneItem(
-                            text: 'No Global Audio source available...'),
+                          text: 'No Global Audio source available...',
+                        ),
                         const SizedBox(height: AppSpacing.md),
                       ],
               ),
@@ -68,16 +67,17 @@ class _AudioInputsState extends State<AudioInputs>
               Column(
                 children: dashboardStore.currentInputs.isNotEmpty
                     ? dashboardStore.currentInputs
-                        .map(
-                          (input) => VisibilitySlideWrapper(
-                            input: input,
-                            child: AudioSlider(input: input),
-                          ),
-                        )
-                        .toList()
+                          .map(
+                            (input) => VisibilitySlideWrapper(
+                              input: input,
+                              child: AudioSlider(input: input),
+                            ),
+                          )
+                          .toList()
                     : [
                         const PlaceholderSceneItem(
-                            text: 'No Audio source in this scene...')
+                          text: 'No Audio source in this scene...',
+                        ),
                       ],
               ),
             ],
@@ -108,8 +108,8 @@ class _AudioSectionHeader extends StatelessWidget {
         child: Text(
           this.label.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                color: Theme.of(context).textTheme.bodySmall!.color,
-              ),
+            color: Theme.of(context).textTheme.bodySmall!.color,
+          ),
         ),
       ),
     );

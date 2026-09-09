@@ -30,8 +30,10 @@ void main() {
     expect(b.program, a.program);
 
     final AppStatusColors mid = a.lerp(b, 0.5);
-    expect(mid.favorite.r * 255,
-        closeTo((a.favorite.r + b.favorite.r) * 255 / 2, 1.0));
+    expect(
+      mid.favorite.r * 255,
+      closeTo((a.favorite.r + b.favorite.r) * 255 / 2, 1.0),
+    );
     expect(mid.recordingText, a.recordingText);
   });
 }

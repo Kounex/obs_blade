@@ -6,5 +6,6 @@ class TransitionListChangedEvent extends BaseEvent {
 
   /// Transitions list
   List<String> get transitions => List.from(
-      this.json['transitions'].map((transition) => transition['name']));
+    this.json['transitions'].map((transition) => transition['name']),
+  );
 }

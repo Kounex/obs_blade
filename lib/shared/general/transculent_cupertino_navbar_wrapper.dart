@@ -42,8 +42,8 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     this.extendBodyBehindBar = false,
     this.leading,
     this.actions,
-  })  : assert(customBody == null || listViewChildren.isEmpty),
-        super();
+  }) : assert(customBody == null || listViewChildren.isEmpty),
+       super();
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +72,8 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
             padding: this.extendBodyBehindBar
                 ? EdgeInsets.zero
                 : EdgeInsets.only(
-                    top: MediaQuery.paddingOf(context).top +
+                    top:
+                        MediaQuery.paddingOf(context).top +
                         kMinInteractiveDimensionCupertino,
                   ),
             child: this.customBody,
@@ -84,7 +85,8 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
               : Theme.of(context).appBarTheme.backgroundColor!.withOpacity(1.0),
           leading: this.leading,
           previousPageTitle: this.previousTitle,
-          middle: this.titleWidget ??
+          middle:
+              this.titleWidget ??
               (this.title != null
                   ? Text(
                       this.title!,

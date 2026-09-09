@@ -200,8 +200,7 @@ class YouTubeAuthService {
         statusCode: response.statusCode,
       );
     }
-    final items =
-        (json.decode(response.body) as Map<String, dynamic>)['items'];
+    final items = (json.decode(response.body) as Map<String, dynamic>)['items'];
     if (items is! List || items.isEmpty) return null;
     final snippet = (items.first as Map<String, dynamic>)['snippet'];
     if (snippet is! Map<String, dynamic>) return null;

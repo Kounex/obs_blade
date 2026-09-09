@@ -38,18 +38,15 @@ class StatsEntry extends StatelessWidget {
               switchOutCurve: AppMotion.exit,
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
-                child: ScaleTransition(
-                  scale: animation,
-                  child: child,
-                ),
+                child: ScaleTransition(scale: animation, child: child),
               ),
               child: isStarred
                   ? Icon(
                       Icons.star,
                       key: const ValueKey('starred'),
-                      color: Theme.of(context)
-                          .extension<AppStatusColors>()!
-                          .favorite,
+                      color: Theme.of(
+                        context,
+                      ).extension<AppStatusColors>()!.favorite,
                       size: 28.0,
                     )
                   : const SizedBox(key: ValueKey('unstarred')),
@@ -66,15 +63,15 @@ class StatsEntry extends StatelessWidget {
                       children: [
                         Text(
                           this.pastStatsData.name ?? 'Unnamed entry',
-                          style:
-                              Theme.of(context).textTheme.labelLarge!.copyWith(
-                                    fontSize: 18.0,
-                                    color: this.pastStatsData.name == null
-                                        ? Theme.of(context)
-                                            .extension<AppTextColors>()!
-                                            .textSecondary
-                                        : null,
-                                  ),
+                          style: Theme.of(context).textTheme.labelLarge!
+                              .copyWith(
+                                fontSize: 18.0,
+                                color: this.pastStatsData.name == null
+                                    ? Theme.of(context)
+                                          .extension<AppTextColors>()!
+                                          .textSecondary
+                                    : null,
+                              ),
                           maxLines: 2,
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
@@ -87,8 +84,8 @@ class StatsEntry extends StatelessWidget {
                               final ThemeData theme = Theme.of(context);
                               final AppStatusColors statusColors = theme
                                   .extension<AppStatusColors>()!;
-                              final AppTextColors textColors =
-                                  theme.extension<AppTextColors>()!;
+                              final AppTextColors textColors = theme
+                                  .extension<AppTextColors>()!;
                               final bool isStream =
                                   this.pastStatsData is PastStreamData;
                               final bool isRecord =
@@ -102,33 +99,33 @@ class StatsEntry extends StatelessWidget {
                               final Color chipText = isStream
                                   ? textColors.highlightText
                                   : isRecord
-                                      ? statusColors.recordingText
-                                      : textColors.textSecondary;
+                                  ? statusColors.recordingText
+                                  : textColors.textSecondary;
                               return TagBox(
                                 expand: false,
                                 color: isStream
-                                    ? theme.colorScheme.secondary
-                                        .withValues(alpha: 0.16)
+                                    ? theme.colorScheme.secondary.withValues(
+                                        alpha: 0.16,
+                                      )
                                     : isRecord
-                                        ? statusColors.recording
-                                            .withValues(alpha: 0.16)
-                                        : Colors.white
-                                            .withValues(alpha: 0.12),
+                                    ? statusColors.recording.withValues(
+                                        alpha: 0.16,
+                                      )
+                                    : Colors.white.withValues(alpha: 0.12),
                                 icon: Icon(
                                   isStream
-                                      ? CupertinoIcons
-                                          .dot_radiowaves_left_right
+                                      ? CupertinoIcons.dot_radiowaves_left_right
                                       : isRecord
-                                          ? CupertinoIcons.recordingtape
-                                          : Icons.question_mark,
+                                      ? CupertinoIcons.recordingtape
+                                      : Icons.question_mark,
                                   size: 18.0,
                                   color: chipText,
                                 ),
                                 label: isStream
                                     ? 'Stream'
                                     : isRecord
-                                        ? 'Recording'
-                                        : 'Unknown',
+                                    ? 'Recording'
+                                    : 'Unknown',
                                 labelStyle: Theme.of(context)
                                     .textTheme
                                     .bodySmall!
@@ -172,9 +169,9 @@ class StatsEntry extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Icon(
                         Icons.chevron_right,
-                        color: Theme.of(context)
-                            .extension<AppTextColors>()!
-                            .textTertiary,
+                        color: Theme.of(
+                          context,
+                        ).extension<AppTextColors>()!.textTertiary,
                       ),
                     )
                   : const SizedBox(),

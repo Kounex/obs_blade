@@ -42,8 +42,9 @@ class _AddEditTwitchUsernameDialogState
     if (this.widget.username != null && username == this.widget.username) {
       return null;
     }
-    return this.widget.settingsBox.get(SettingsKeys.TwitchUsernames.name,
-            defaultValue: <String>[]).contains(username)
+    return this.widget.settingsBox
+            .get(SettingsKeys.TwitchUsernames.name, defaultValue: <String>[])
+            .contains(username)
         ? 'Username already exists'
         : null;
   }
@@ -62,13 +63,13 @@ class _AddEditTwitchUsernameDialogState
           username;
     }
     this.widget.settingsBox.put(
-          SettingsKeys.TwitchUsernames.name,
-          twitchUsernames,
-        );
+      SettingsKeys.TwitchUsernames.name,
+      twitchUsernames,
+    );
     this.widget.settingsBox.put(
-          SettingsKeys.SelectedTwitchUsername.name,
-          username,
-        );
+      SettingsKeys.SelectedTwitchUsername.name,
+      username,
+    );
   }
 
   @override

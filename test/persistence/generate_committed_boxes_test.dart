@@ -16,7 +16,9 @@ void main() {
   test('write foundation data into test/persistence/fixtures/boxes', () async {
     if (!shouldGenerate) {
       // ignore: avoid_print
-      print('Skipping fixture generation (set GENERATE_HIVE_FIXTURES=1 to run).');
+      print(
+        'Skipping fixture generation (set GENERATE_HIVE_FIXTURES=1 to run).',
+      );
       return;
     }
 
@@ -31,13 +33,14 @@ void main() {
     await harness.seed(HiveFoundationData());
     await harness.close();
 
-    final files = outDir
-        .listSync()
-        .whereType<File>()
-        .map((f) => f.uri.pathSegments.last)
-        .where((n) => n.endsWith('.hive'))
-        .toList()
-      ..sort();
+    final files =
+        outDir
+            .listSync()
+            .whereType<File>()
+            .map((f) => f.uri.pathSegments.last)
+            .where((n) => n.endsWith('.hive'))
+            .toList()
+          ..sort();
 
     expect(files, isNotEmpty);
     expect(files, contains('saved-connections.hive'));

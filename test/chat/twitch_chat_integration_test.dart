@@ -35,25 +35,25 @@ import 'support/fake_twitch_services.dart';
 import 'support/fake_youtube_services.dart';
 
 Widget wrap(Widget child, {bool withProRoute = false}) => MaterialApp(
-      theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
+  theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
 
-      /// The Pro gate entry points push the paywall route - register it so
-      /// the not-Pro tests can assert the push
-      routes: withProRoute
-          ? {
-              HomeTabRoutingKeys.Pro.route: (_) =>
-                  const Scaffold(body: Text('PAYWALL')),
-            }
-          : const {},
+  /// The Pro gate entry points push the paywall route - register it so
+  /// the not-Pro tests can assert the push
+  routes: withProRoute
+      ? {
+          HomeTabRoutingKeys.Pro.route: (_) =>
+              const Scaffold(body: Text('PAYWALL')),
+        }
+      : const {},
 
-      /// The test font's full-em glyphs are much wider than production
-      /// fonts — at 1.0 the selected 'YouTube ᵇᵉᵗᵃ' dropdown item
-      /// overflows its fixed-width row by a few pixels
-      home: MediaQuery(
-        data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
-        child: Scaffold(body: child),
-      ),
-    );
+  /// The test font's full-em glyphs are much wider than production
+  /// fonts — at 1.0 the selected 'YouTube ᵇᵉᵗᵃ' dropdown item
+  /// overflows its fixed-width row by a few pixels
+  home: MediaQuery(
+    data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
+    child: Scaffold(body: child),
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -77,8 +77,7 @@ void main() {
     /// register the real store reading it - native-mode tests run as Pro.
     /// The cold-start restore is skipped so no store call fires.
     await settingsBox().put(SettingsKeys.BoughtPro.name, true);
-    await settingsBox()
-        .put(SettingsKeys.ProColdStartRestoreDone.name, true);
+    await settingsBox().put(SettingsKeys.ProColdStartRestoreDone.name, true);
     proStore = ProStore(
       service: ProPurchaseService(gateway: FakeProPurchaseGateway()),
     )..init();
@@ -86,8 +85,19 @@ void main() {
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          FakeTwitchEventSubService(),
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => FakeTwitchEventSubService(),
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
@@ -99,7 +109,8 @@ void main() {
     GetIt.instance.registerSingleton<YouTubeChatStore>(youTubeStore);
     GetIt.instance.registerSingleton<DashboardStore>(DashboardStore());
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
+      ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+    );
   });
 
   tearDown(() async {
@@ -120,20 +131,26 @@ void main() {
   /// Flip the entitlement off through the real box write - the ProStore
   /// watcher picks it up, the next pump rebuilds the gate Observers
   Future<void> revokePro(WidgetTester tester) async {
-    await tester
-        .runAsync(() => settingsBox().put(SettingsKeys.BoughtPro.name, false));
+    await tester.runAsync(
+      () => settingsBox().put(SettingsKeys.BoughtPro.name, false),
+    );
     await tester.pump();
   }
 
-  testWidgets('slot shows the native view for Twitch when logged in',
-      (tester) async {
+  testWidgets('slot shows the native view for Twitch when logged in', (
+    tester,
+  ) async {
     /// Hive writes need real I/O — the test body's FakeAsync zone never
     /// completes them (and a pending write hangs Hive.close() in tearDown)
     await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
     });
     store.authState = TwitchAuthState.loggedIn;
     store.chatConnection = TwitchChatConnectionState.live;
@@ -145,37 +162,47 @@ void main() {
   });
 
   testWidgets(
-      'slot shows the native connect prompt when logged out in native mode',
-      (tester) async {
+    'slot shows the native connect prompt when logged out in native mode',
+    (tester) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+        await settingsBox().put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+      });
+
+      await tester.pumpWidget(wrap(const StreamChat()));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NativeTwitchChatView), findsNothing);
+      expect(
+        find.text('Connect your Twitch account to see your chat natively.'),
+        findsOneWidget,
+      );
+
+      /// Two "Connect Twitch" affordances by design in this tree: the
+      /// username bar's account-control pill (Task 4) and the slot prompt's
+      /// pill - both call startTwitchLogin
+      expect(find.text('Connect Twitch'), findsNWidgets(2));
+    },
+  );
+
+  testWidgets('connect button starts the login and the dialog auto-closes', (
+    tester,
+  ) async {
     await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-    });
-
-    await tester.pumpWidget(wrap(const StreamChat()));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(NativeTwitchChatView), findsNothing);
-    expect(
-      find.text('Connect your Twitch account to see your chat natively.'),
-      findsOneWidget,
-    );
-
-    /// Two "Connect Twitch" affordances by design in this tree: the
-    /// username bar's account-control pill (Task 4) and the slot prompt's
-    /// pill - both call startTwitchLogin
-    expect(find.text('Connect Twitch'), findsNWidgets(2));
-  });
-
-  testWidgets('connect button starts the login and the dialog auto-closes',
-      (tester) async {
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
     });
 
     await tester.pumpWidget(wrap(const StreamChat()));
@@ -195,7 +222,8 @@ void main() {
     /// used while the dialog's progress spinner is animating — it never
     /// settles.)
     await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 500)));
+      () => Future<void>.delayed(const Duration(milliseconds: 500)),
+    );
     await tester.pump();
     expect(store.authState, TwitchAuthState.loggedIn);
 
@@ -229,134 +257,174 @@ void main() {
     for (var i = 0; i < 10 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
     }
     await tester.pump();
     expect(closed, isTrue);
   });
 
   testWidgets(
-      'slot keeps the legacy WebView path when logged in but the engine is WebView',
-      (tester) async {
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-    });
-    store.authState = TwitchAuthState.loggedIn;
-    store.chatConnection = TwitchChatConnectionState.live;
+    'slot keeps the legacy WebView path when logged in but the engine is WebView',
+    (tester) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+      });
+      store.authState = TwitchAuthState.loggedIn;
+      store.chatConnection = TwitchChatConnectionState.live;
 
-    await tester.pumpWidget(wrap(const StreamChat()));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(wrap(const StreamChat()));
+      await tester.pumpAndSettle();
 
-    /// Being logged in no longer takes over the slot by itself — the
-    /// WebView engine keeps the legacy path (here: its empty state, since
-    /// no username is selected and a real WebView can't mount in tests)
-    expect(find.byType(NativeTwitchChatView), findsNothing);
-    expect(
-      find.text('No Twitch username selected, so no one\'s chat can be displayed.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets(
-      'native engine with a selected username still shows the connect prompt when logged out',
-      (tester) async {
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-      await settingsBox()
-          .put(SettingsKeys.TwitchUsernames.name, <String>['someuser']);
-      await settingsBox()
-          .put(SettingsKeys.SelectedTwitchUsername.name, 'someuser');
-    });
-
-    await tester.pumpWidget(wrap(const StreamChat()));
-    await tester.pumpAndSettle();
-
-    /// The native branch wins before the legacy stack - no WebView gets
-    /// built for the selected username while logged out
-    expect(find.byType(NativeTwitchChatView), findsNothing);
-    expect(
-      find.text('Connect your Twitch account to see your chat natively.'),
-      findsOneWidget,
-    );
-    expect(
-      find.text('No Twitch username selected, so no one\'s chat can be displayed.'),
-      findsNothing,
-    );
-  });
+      /// Being logged in no longer takes over the slot by itself — the
+      /// WebView engine keeps the legacy path (here: its empty state, since
+      /// no username is selected and a real WebView can't mount in tests)
+      expect(find.byType(NativeTwitchChatView), findsNothing);
+      expect(
+        find.text(
+          'No Twitch username selected, so no one\'s chat can be displayed.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
-      'username bar shows the engine switch and per-platform account pill for Twitch and YouTube in native mode',
-      (tester) async {
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-    });
+    'native engine with a selected username still shows the connect prompt when logged out',
+    (tester) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+        await settingsBox().put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+        await settingsBox().put(SettingsKeys.TwitchUsernames.name, <String>[
+          'someuser',
+        ]);
+        await settingsBox().put(
+          SettingsKeys.SelectedTwitchUsername.name,
+          'someuser',
+        );
+      });
 
-    await tester.pumpWidget(wrap(const ChatUsernameBar()));
-    await tester.pumpAndSettle();
-    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsOneWidget);
-    expect(find.text('Connect Twitch'), findsOneWidget);
+      await tester.pumpWidget(wrap(const StreamChat()));
+      await tester.pumpAndSettle();
 
-    /// YouTube passed the native gate in Task 4 — the switch stays, the
-    /// account control swaps to the YouTube one (unconfigured, since no
-    /// API key is set: the "Set up YouTube" pill)
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.YouTube);
-    });
-    await tester.pumpAndSettle();
-    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsOneWidget);
-    expect(find.text('Connect Twitch'), findsNothing);
-    expect(find.text('Set up YouTube'), findsOneWidget);
-  });
+      /// The native branch wins before the legacy stack - no WebView gets
+      /// built for the selected username while logged out
+      expect(find.byType(NativeTwitchChatView), findsNothing);
+      expect(
+        find.text('Connect your Twitch account to see your chat natively.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'No Twitch username selected, so no one\'s chat can be displayed.',
+        ),
+        findsNothing,
+      );
+    },
+  );
 
   testWidgets(
-      'username bar shows the connected account in native mode and offers disconnect',
-      (tester) async {
+    'username bar shows the engine switch and per-platform account pill for Twitch and YouTube in native mode',
+    (tester) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+        await settingsBox().put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+      });
+
+      await tester.pumpWidget(wrap(const ChatUsernameBar()));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsOneWidget,
+      );
+      expect(find.text('Connect Twitch'), findsOneWidget);
+
+      /// YouTube passed the native gate in Task 4 — the switch stays, the
+      /// account control swaps to the YouTube one (unconfigured, since no
+      /// API key is set: the "Set up YouTube" pill)
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.YouTube,
+        );
+      });
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsOneWidget,
+      );
+      expect(find.text('Connect Twitch'), findsNothing);
+      expect(find.text('Set up YouTube'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'username bar shows the connected account in native mode and offers disconnect',
+    (tester) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+        await settingsBox().put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+      });
+      store.authState = TwitchAuthState.loggedIn;
+      store.user = FakeTwitchAuthService.user;
+
+      await tester.pumpWidget(wrap(const ChatUsernameBar()));
+      await tester.pumpAndSettle();
+
+      /// Account chip instead of a bare status icon — reads as tappable
+      expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
+
+      /// The display name shows twice: the channel dropdown's own-channel row
+      /// and the account chip
+      expect(find.text('Kounex'), findsNWidgets(2));
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(TwitchAccountControl),
+          matching: find.text('Kounex'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Disconnect Twitch?'), findsOneWidget);
+    },
+  );
+
+  testWidgets('switching engines swaps the bar controls and persists the key', (
+    tester,
+  ) async {
     await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-    });
-    store.authState = TwitchAuthState.loggedIn;
-    store.user = FakeTwitchAuthService.user;
-
-    await tester.pumpWidget(wrap(const ChatUsernameBar()));
-    await tester.pumpAndSettle();
-
-    /// Account chip instead of a bare status icon — reads as tappable
-    expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
-
-    /// The display name shows twice: the channel dropdown's own-channel row
-    /// and the account chip
-    expect(find.text('Kounex'), findsNWidgets(2));
-
-    await tester.tap(find.descendant(
-      of: find.byType(TwitchAccountControl),
-      matching: find.text('Kounex'),
-    ));
-    await tester.pumpAndSettle();
-    expect(find.text('Disconnect Twitch?'), findsOneWidget);
-  });
-
-  testWidgets('switching engines swaps the bar controls and persists the key',
-      (tester) async {
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.TwitchUsernames.name, <String>['someuser']);
-      await settingsBox()
-          .put(SettingsKeys.SelectedTwitchUsername.name, 'someuser');
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(SettingsKeys.TwitchUsernames.name, <String>[
+        'someuser',
+      ]);
+      await settingsBox().put(
+        SettingsKeys.SelectedTwitchUsername.name,
+        'someuser',
+      );
     });
 
     await tester.pumpWidget(wrap(const ChatUsernameBar()));
@@ -375,8 +443,10 @@ void main() {
     /// Hive applies puts to its in-memory keystore synchronously; the box
     /// watch event reaches the HiveBuilder through the zone's microtasks,
     /// so pumps alone drive the rebuild (no real I/O window needed)
-    expect(settingsBox().get(SettingsKeys.SelectedChatEngine.name),
-        ChatEngine.native);
+    expect(
+      settingsBox().get(SettingsKeys.SelectedChatEngine.name),
+      ChatEngine.native,
+    );
 
     await tester.pumpAndSettle();
 
@@ -395,126 +465,144 @@ void main() {
     for (var i = 0; i < 10 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
     }
     await tester.pump();
     expect(closed, isTrue);
   });
 
   testWidgets(
-      'native account control offers connect while logged out and starts login on tap',
-      (tester) async {
-    await tester.pumpWidget(wrap(const TwitchAccountControl()));
-    await tester.pumpAndSettle();
+    'native account control offers connect while logged out and starts login on tap',
+    (tester) async {
+      await tester.pumpWidget(wrap(const TwitchAccountControl()));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Connect Twitch'), findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsNothing);
+      expect(find.text('Connect Twitch'), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsNothing);
 
-    await tester.tap(find.text('Connect Twitch'));
-    await tester.pump();
-    expect(find.byType(TwitchDeviceCodeDialog), findsOneWidget);
-
-    /// Same teardown dance as the slot login test above: the tap-driven
-    /// login chain persists the token (Hive write in this FakeAsync zone)
-    /// and starts the store's auth-box watcher — unmount, dispose and
-    /// close Hive from inside the zone or harness.close() hangs.
-    await tester.pumpWidget(const SizedBox());
-    await tester.runAsync(() => store.dispose());
-    await tester.pump();
-
-    var closed = false;
-    unawaited(harness.close().then((_) => closed = true));
-    for (var i = 0; i < 10 && !closed; i++) {
+      await tester.tap(find.text('Connect Twitch'));
       await tester.pump();
-      await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    }
-    await tester.pump();
-    expect(closed, isTrue);
-  });
+      expect(find.byType(TwitchDeviceCodeDialog), findsOneWidget);
 
-  testWidgets(
-      'native account control shows the connected account and disconnects on confirm',
-      (tester) async {
-    store.authState = TwitchAuthState.loggedIn;
-    store.user = FakeTwitchAuthService.user;
-
-    await tester.pumpWidget(wrap(const TwitchAccountControl()));
-    await tester.pumpAndSettle();
-
-    expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
-    expect(find.text('Kounex'), findsOneWidget);
-
-    await tester.tap(find.text('Kounex'));
-    await tester.pumpAndSettle();
-    expect(find.text('Disconnect Twitch?'), findsOneWidget);
-
-    await tester.tap(find.text('Disconnect'));
-    await tester.pumpAndSettle();
-    expect(find.text('Disconnect Twitch?'), findsNothing);
-
-    /// logout() awaits the chat disconnect, the TwitchAuth box delete and
-    /// the (faked) revoke — real I/O window, then the zone resumes the
-    /// continuations
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    await tester.pump();
-    expect(store.authState, TwitchAuthState.loggedOut);
-
-    /// The tap-driven box delete ran in the test's FakeAsync zone and
-    /// Hive's write-queue Completers only dispatch through the zone they
-    /// were created in - a real-zone harness.close() in tearDown would
-    /// hang. Same close-inside-the-zone dance as the login test above.
-    await tester.pumpWidget(const SizedBox());
-    await tester.runAsync(() => store.dispose());
-    await tester.pump();
-
-    var closed = false;
-    unawaited(harness.close().then((_) => closed = true));
-    for (var i = 0; i < 10 && !closed; i++) {
+      /// Same teardown dance as the slot login test above: the tap-driven
+      /// login chain persists the token (Hive write in this FakeAsync zone)
+      /// and starts the store's auth-box watcher — unmount, dispose and
+      /// close Hive from inside the zone or harness.close() hangs.
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(() => store.dispose());
       await tester.pump();
-      await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)));
-    }
-    await tester.pump();
-    expect(closed, isTrue);
-  });
+
+      var closed = false;
+      unawaited(harness.close().then((_) => closed = true));
+      for (var i = 0; i < 10 && !closed; i++) {
+        await tester.pump();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+      }
+      await tester.pump();
+      expect(closed, isTrue);
+    },
+  );
 
   testWidgets(
-      'not-Pro native mode shows the Pro upsell pane instead of the login CTAs',
-      (tester) async {
+    'native account control shows the connected account and disconnects on confirm',
+    (tester) async {
+      store.authState = TwitchAuthState.loggedIn;
+      store.user = FakeTwitchAuthService.user;
+
+      await tester.pumpWidget(wrap(const TwitchAccountControl()));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
+      expect(find.text('Kounex'), findsOneWidget);
+
+      await tester.tap(find.text('Kounex'));
+      await tester.pumpAndSettle();
+      expect(find.text('Disconnect Twitch?'), findsOneWidget);
+
+      await tester.tap(find.text('Disconnect'));
+      await tester.pumpAndSettle();
+      expect(find.text('Disconnect Twitch?'), findsNothing);
+
+      /// logout() awaits the chat disconnect, the TwitchAuth box delete and
+      /// the (faked) revoke — real I/O window, then the zone resumes the
+      /// continuations
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump();
+      expect(store.authState, TwitchAuthState.loggedOut);
+
+      /// The tap-driven box delete ran in the test's FakeAsync zone and
+      /// Hive's write-queue Completers only dispatch through the zone they
+      /// were created in - a real-zone harness.close() in tearDown would
+      /// hang. Same close-inside-the-zone dance as the login test above.
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(() => store.dispose());
+      await tester.pump();
+
+      var closed = false;
+      unawaited(harness.close().then((_) => closed = true));
+      for (var i = 0; i < 10 && !closed; i++) {
+        await tester.pump();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+      }
+      await tester.pump();
+      expect(closed, isTrue);
+    },
+  );
+
+  testWidgets(
+    'not-Pro native mode shows the Pro upsell pane instead of the login CTAs',
+    (tester) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+        await settingsBox().put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+      });
+
+      await tester.pumpWidget(wrap(const StreamChat()));
+      await revokePro(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NativeTwitchChatView), findsNothing);
+      expect(
+        find.text('Native chat is locked — unlock it with OBS Blade Pro.'),
+        findsOneWidget,
+      );
+      expect(find.text('Explore Pro'), findsOneWidget);
+
+      /// Neither the pane's connect prompt nor the bar's account pill - a
+      /// legacy persisted native engine must not surface dead-end login CTAs
+      expect(
+        find.text('Connect your Twitch account to see your chat natively.'),
+        findsNothing,
+      );
+      expect(find.text('Connect Twitch'), findsNothing);
+    },
+  );
+
+  testWidgets('Explore Pro in the upsell pane pushes the paywall route', (
+    tester,
+  ) async {
     await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-    });
-
-    await tester.pumpWidget(wrap(const StreamChat()));
-    await revokePro(tester);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(NativeTwitchChatView), findsNothing);
-    expect(find.text('Native chat is locked — unlock it with OBS Blade Pro.'),
-        findsOneWidget);
-    expect(find.text('Explore Pro'), findsOneWidget);
-
-    /// Neither the pane's connect prompt nor the bar's account pill - a
-    /// legacy persisted native engine must not surface dead-end login CTAs
-    expect(
-      find.text('Connect your Twitch account to see your chat natively.'),
-      findsNothing,
-    );
-    expect(find.text('Connect Twitch'), findsNothing);
-  });
-
-  testWidgets('Explore Pro in the upsell pane pushes the paywall route',
-      (tester) async {
-    await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
     });
 
     await tester.pumpWidget(wrap(const StreamChat(), withProRoute: true));
@@ -528,13 +616,18 @@ void main() {
     expect(find.text('PAYWALL'), findsOneWidget);
   });
 
-  testWidgets('username bar hides the native cluster when not Pro',
-      (tester) async {
+  testWidgets('username bar hides the native cluster when not Pro', (
+    tester,
+  ) async {
     await tester.runAsync(() async {
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
     });
 
     await tester.pumpWidget(wrap(const ChatUsernameBar()));
@@ -543,8 +636,10 @@ void main() {
 
     /// The engine switch stays (the lock badge is the affordance) but the
     /// native cluster is gone - no dead-end login pill, no options gear
-    expect(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-        findsOneWidget);
+    expect(
+      find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+      findsOneWidget,
+    );
     expect(find.byIcon(JamIcons.padlock), findsOneWidget);
     expect(find.byType(TwitchAccountControl), findsNothing);
     expect(find.byType(NativeChatOptionsButton), findsNothing);
@@ -555,8 +650,7 @@ void main() {
     expect(find.byType(UsernameDropdown), findsNothing);
   });
 
-  testWidgets('tapping the code copies it and confirms inline',
-      (tester) async {
+  testWidgets('tapping the code copies it and confirms inline', (tester) async {
     store.authState = TwitchAuthState.awaitingAuthorization;
     store.pendingUserCode = 'ABCD-EFGH';
     store.pendingVerificationUri = 'https://www.twitch.tv/activate';

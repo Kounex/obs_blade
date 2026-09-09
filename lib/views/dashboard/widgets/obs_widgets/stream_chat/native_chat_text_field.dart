@@ -68,7 +68,8 @@ class NativeChatTextField extends StatelessWidget {
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(
-        color: this.focusBorderColor ??
+        color:
+            this.focusBorderColor ??
             Theme.of(context).dividerColor.withValues(alpha: 0.4),
         width: this.focusBorderColor == null ? 0.0 : 1.0,
       ),
@@ -95,8 +96,8 @@ class NativeChatTextField extends StatelessWidget {
         ),
         hintText: this.hintText,
         hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
+          color: Theme.of(context).textTheme.bodySmall?.color,
+        ),
         prefixIcon: this.prefixIcon,
         prefixIconConstraints: this.prefixIconConstraints,
         counterText: this.maxLength == null ? null : '',

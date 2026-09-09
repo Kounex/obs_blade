@@ -16,9 +16,7 @@ const List<DurationFilter?> kActiveDurationFilters = [
 ];
 
 class FilterDuration extends StatefulWidget {
-  const FilterDuration({
-    super.key,
-  });
+  const FilterDuration({super.key});
 
   @override
   State<FilterDuration> createState() => _FilterDurationState();
@@ -36,21 +34,24 @@ class _FilterDurationState extends State<FilterDuration> {
 
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
-    _disposers.add(reaction((_) => statisticsStore.triggeredDefault, (_) {
-      _controller.text = '';
-    }));
+    _disposers.add(
+      reaction((_) => statisticsStore.triggeredDefault, (_) {
+        _controller.text = '';
+      }),
+    );
 
-    _disposers
-        .add(reaction((_) => statisticsStore.durationFilter, (durationFilter) {
-      if (durationFilter != null && _controller.text.trim().isEmpty) {
-        if (statisticsStore.durationFilterAmount == null) {
-          _controller.text = '1';
-          statisticsStore.setDurationFilterAmount(_controller.text);
-        } else {
-          _controller.text = statisticsStore.durationFilterAmount.toString();
+    _disposers.add(
+      reaction((_) => statisticsStore.durationFilter, (durationFilter) {
+        if (durationFilter != null && _controller.text.trim().isEmpty) {
+          if (statisticsStore.durationFilterAmount == null) {
+            _controller.text = '1';
+            statisticsStore.setDurationFilterAmount(_controller.text);
+          } else {
+            _controller.text = statisticsStore.durationFilterAmount.toString();
+          }
         }
-      }
-    }));
+      }),
+    );
   }
 
   @override
@@ -74,10 +75,12 @@ class _FilterDurationState extends State<FilterDuration> {
             child: CupertinoDropdown<DurationFilter?>(
               value: statisticsStore.durationFilter,
               items: kActiveDurationFilters
-                  .map((durationFilter) => DropdownMenuItem<DurationFilter?>(
-                        value: durationFilter,
-                        child: Text(durationFilter?.text ?? '-'),
-                      ))
+                  .map(
+                    (durationFilter) => DropdownMenuItem<DurationFilter?>(
+                      value: durationFilter,
+                      child: Text(durationFilter?.text ?? '-'),
+                    ),
+                  )
                   .toList(),
               selectedItemBuilder: (context) => kActiveDurationFilters
                   .map((durationFilter) => Text(durationFilter?.text ?? '-'))
@@ -98,9 +101,7 @@ class _FilterDurationState extends State<FilterDuration> {
                   color: statisticsStore.durationFilter == null
                       ? Colors.white38
                       : null,
-                  fontFeatures: const [
-                    FontFeature.tabularFigures(),
-                  ],
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 maxLength: 4,
                 maxLengthEnforcement: MaxLengthEnforcement.enforced,
@@ -117,17 +118,19 @@ class _FilterDurationState extends State<FilterDuration> {
             child: CupertinoDropdown<TimeUnit>(
               value: statisticsStore.durationFilterTimeUnit,
               items: TimeUnit.values
-                  .map((timeUnit) => DropdownMenuItem<TimeUnit>(
-                        value: timeUnit,
-                        child: Text(timeUnit.name),
-                      ))
+                  .map(
+                    (timeUnit) => DropdownMenuItem<TimeUnit>(
+                      value: timeUnit,
+                      child: Text(timeUnit.name),
+                    ),
+                  )
                   .toList(),
               selectedItemBuilder: (context) => TimeUnit.values
                   .map((timeUnit) => Text(timeUnit.name))
                   .toList(),
               onChanged: statisticsStore.durationFilter != null
                   ? (timeUnit) =>
-                      statisticsStore.setDurationFilterTimeUnit(timeUnit!)
+                        statisticsStore.setDurationFilterTimeUnit(timeUnit!)
                   : null,
             ),
           ),

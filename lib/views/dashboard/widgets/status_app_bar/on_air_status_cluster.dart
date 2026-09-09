@@ -15,59 +15,63 @@ import '../../../../types/extensions/int.dart';
 /// Timers keep tabular figures and the store-driven 1s poll cadence - the
 /// digit change just crossfades softly instead of hard swapping.
 class OnAirStatusCluster extends StatelessWidget {
-  const OnAirStatusCluster({
-    super.key,
-  });
+  const OnAirStatusCluster({super.key});
 
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
-    final AppStatusColors statusColors =
-        Theme.of(context).extension<AppStatusColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
 
-    return Observer(builder: (context) {
-      final bool recordingActive =
-          dashboardStore.isRecording && !dashboardStore.isRecordingPaused;
+    return Observer(
+      builder: (context) {
+        final bool recordingActive =
+            dashboardStore.isRecording && !dashboardStore.isRecordingPaused;
 
-      /// While the socket is reconnecting the broadcast state is unknown -
-      /// the pills must not assert "you're live/recording" over a dead
-      /// connection, so they drop to the neutral unknown state (gray dot +
-      /// label, no breathe, timer hidden - token-delta §5)
-      final bool reconnecting = dashboardStore.reconnecting;
+        /// While the socket is reconnecting the broadcast state is unknown -
+        /// the pills must not assert "you're live/recording" over a dead
+        /// connection, so they drop to the neutral unknown state (gray dot +
+        /// label, no breathe, timer hidden - token-delta §5)
+        final bool reconnecting = dashboardStore.reconnecting;
 
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _OnAirPill(
-            label: 'LIVE',
-            active: dashboardStore.isLive,
-            unknown: reconnecting,
-            activeColor: statusColors.live,
-            timerText:
-                ((dashboardStore.latestStreamTimeDurationMS ?? 0) ~/ 1000)
-                    .secondsToFormattedDurationString(),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          _OnAirPill(
-            label: 'REC',
-            active: dashboardStore.isRecording,
-            unknown: reconnecting,
-            paused: dashboardStore.isRecording &&
-                dashboardStore.isRecordingPaused,
-            activeColor:
-                recordingActive ? statusColors.recording : statusColors.warning,
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _OnAirPill(
+              label: 'LIVE',
+              active: dashboardStore.isLive,
+              unknown: reconnecting,
+              activeColor: statusColors.live,
+              timerText:
+                  ((dashboardStore.latestStreamTimeDurationMS ?? 0) ~/ 1000)
+                      .secondsToFormattedDurationString(),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            _OnAirPill(
+              label: 'REC',
+              active: dashboardStore.isRecording,
+              unknown: reconnecting,
+              paused:
+                  dashboardStore.isRecording &&
+                  dashboardStore.isRecordingPaused,
+              activeColor: recordingActive
+                  ? statusColors.recording
+                  : statusColors.warning,
 
-            /// Red status text on a same-hue tint resolves the brightened
-            /// [AppStatusColors.recordingText] derivative (§2.3)
-            activeTextColor:
-                recordingActive ? statusColors.recordingText : null,
-            timerText:
-                ((dashboardStore.latestRecordTimeDurationMS ?? 0) ~/ 1000)
-                    .secondsToFormattedDurationString(),
-          ),
-        ],
-      );
-    });
+              /// Red status text on a same-hue tint resolves the brightened
+              /// [AppStatusColors.recordingText] derivative (§2.3)
+              activeTextColor: recordingActive
+                  ? statusColors.recordingText
+                  : null,
+              timerText:
+                  ((dashboardStore.latestRecordTimeDurationMS ?? 0) ~/ 1000)
+                      .secondsToFormattedDurationString(),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -109,8 +113,7 @@ class _OnAirPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
-    final Color mutedColor =
-        textTheme.bodySmall?.color ?? Colors.grey[500]!;
+    final Color mutedColor = textTheme.bodySmall?.color ?? Colors.grey[500]!;
 
     /// Unknown (reconnecting) forces the neutral treatment - an armed pill
     /// must not assert broadcast state over a dead connection
@@ -145,20 +148,20 @@ class _OnAirPill extends StatelessWidget {
                     color: this.activeColor,
                   )
                 : active
-                    ? StatusDot(
-                        key: const ValueKey('active'),
-                        size: 8.0,
-                        color: this.activeColor,
-                      )
-                    : Container(
-                        key: const ValueKey('inactive'),
-                        height: 8.0,
-                        width: 8.0,
-                        decoration: BoxDecoration(
-                          color: mutedColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+                ? StatusDot(
+                    key: const ValueKey('active'),
+                    size: 8.0,
+                    color: this.activeColor,
+                  )
+                : Container(
+                    key: const ValueKey('inactive'),
+                    height: 8.0,
+                    width: 8.0,
+                    decoration: BoxDecoration(
+                      color: mutedColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
           ),
           const SizedBox(width: AppSpacing.sm),
           AnimatedDefaultTextStyle(
@@ -177,17 +180,12 @@ class _OnAirPill extends StatelessWidget {
               duration: AppMotion.medium,
               curve: AppMotion.standard,
               style: textTheme.labelMedium!.copyWith(
-                color: active
-                    ? textTheme.bodyMedium?.color
-                    : mutedColor,
+                color: active ? textTheme.bodyMedium?.color : mutedColor,
                 fontFeatures: kTabularFigures,
               ),
               child: AnimatedSwitcher(
                 duration: AppMotion.fast,
-                child: Text(
-                  this.timerText,
-                  key: ValueKey(this.timerText),
-                ),
+                child: Text(this.timerText, key: ValueKey(this.timerText)),
               ),
             ),
           ],

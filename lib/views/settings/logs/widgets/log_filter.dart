@@ -11,9 +11,7 @@ import '../../../../shared/general/date_range/date_range.dart';
 import '../../../../stores/views/logs.dart';
 
 class LogFilter extends StatelessWidget {
-  const LogFilter({
-    super.key,
-  });
+  const LogFilter({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +23,8 @@ class LogFilter extends StatelessWidget {
         child: Text(
           'FILTER',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color:
-                    Theme.of(context).extension<AppTextColors>()!.textTertiary,
-              ),
+            color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+          ),
         ),
       ),
       topPadding: 8.0,
@@ -40,9 +37,11 @@ class LogFilter extends StatelessWidget {
                 selectedFromDate: logsStore.fromDate,
                 updateFromDate: (date) => logsStore.setFromDate(date),
                 selectedToDate: logsStore.toDate,
-                updateToDate: (date) => logsStore.setToDate(date
-                    ?.add(const Duration(days: 1))
-                    .subtract(const Duration(milliseconds: 1))),
+                updateToDate: (date) => logsStore.setToDate(
+                  date
+                      ?.add(const Duration(days: 1))
+                      .subtract(const Duration(milliseconds: 1)),
+                ),
               ),
               const SizedBox(height: 12.0),
               Row(
@@ -51,10 +50,7 @@ class LogFilter extends StatelessWidget {
                     child: CupertinoDropdown<LogLevel>(
                       value: logsStore.logLevel,
                       items: [
-                        const DropdownMenuItem(
-                          value: null,
-                          child: Text('All'),
-                        ),
+                        const DropdownMenuItem(value: null, child: Text('All')),
                         ...LogLevel.values.map(
                           (logLevel) => DropdownMenuItem(
                             value: logLevel,
@@ -77,10 +73,7 @@ class LogFilter extends StatelessWidget {
                             child: Text(amount.number.toString()),
                           ),
                         ),
-                        const DropdownMenuItem(
-                          value: null,
-                          child: Text('All'),
-                        ),
+                        const DropdownMenuItem(value: null, child: Text('All')),
                       ],
                       onChanged: (amount) =>
                           logsStore.setAmountLogEntries(amount),
@@ -92,7 +85,7 @@ class LogFilter extends StatelessWidget {
                     toggle: logsStore.toggleFilterOrder,
                   ),
                 ],
-              )
+              ),
             ],
           );
         },

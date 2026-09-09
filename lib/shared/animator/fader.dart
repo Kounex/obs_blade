@@ -32,8 +32,10 @@ class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: this.widget.duration);
+    _controller = AnimationController(
+      vsync: this,
+      duration: this.widget.duration,
+    );
     _animation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -66,9 +68,6 @@ class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _animation,
-      child: this.widget.child,
-    );
+    return FadeTransition(opacity: _animation, child: this.widget.child);
   }
 }

@@ -13,7 +13,8 @@ void main() {
   group('lifecycle event DTOs', () {
     test('message_delete parses the documented example payload', () {
       final event = ChatMessageDeleteEvent.fromJson(
-          fixture('channel_chat_message_delete'));
+        fixture('channel_chat_message_delete'),
+      );
       expect(event.messageId, 'ab24e0b0-2260-4bac-94e4-05eedd4ecd0e');
       expect(event.targetUserId, '7734');
 
@@ -24,7 +25,8 @@ void main() {
 
     test('clear_user_messages parses the documented example payload', () {
       final event = ChatClearUserMessagesEvent.fromJson(
-          fixture('channel_chat_clear_user_messages'));
+        fixture('channel_chat_clear_user_messages'),
+      );
       expect(event.targetUserId, '7734');
     });
 
@@ -57,8 +59,9 @@ void main() {
 
   group('channel.moderate v2 DTO', () {
     test('delete action parses the real payload shape', () {
-      final event =
-          ChannelModerateEvent.fromJson(fixture('channel_moderate_delete'));
+      final event = ChannelModerateEvent.fromJson(
+        fixture('channel_moderate_delete'),
+      );
       expect(event.action, 'delete');
       expect(event.moderatorUserName, 'quotrok');
       expect(event.delete?.messageId, 'ab24e0b0-2260-4bac-94e4-05eedd4ecd0e');
@@ -66,8 +69,9 @@ void main() {
     });
 
     test('a non-delete action yields no delete payload', () {
-      final event =
-          ChannelModerateEvent.fromJson(fixture('channel_moderate_timeout'));
+      final event = ChannelModerateEvent.fromJson(
+        fixture('channel_moderate_timeout'),
+      );
       expect(event.action, 'timeout');
       expect(event.moderatorUserName, 'quotrok');
       expect(event.delete, isNull);

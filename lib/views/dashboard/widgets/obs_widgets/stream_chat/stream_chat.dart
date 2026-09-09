@@ -109,8 +109,7 @@ class _StreamChatState extends State<StreamChat>
   /// Dock controller/focus for the native input — owned here so the emote
   /// picker (the dock's leading slot) can insert codes at the cursor and
   /// refocus after its sheet closes.
-  final TextEditingController _chatInputController =
-      TextEditingController();
+  final TextEditingController _chatInputController = TextEditingController();
   final FocusNode _chatInputFocusNode = FocusNode();
 
   static const _mobileSafariUserAgent =
@@ -201,27 +200,34 @@ class _StreamChatState extends State<StreamChat>
     }
     if (chatType == ChatType.YouTube &&
         (settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)) != null) {
-      final stored = settingsBox.get(SettingsKeys.YouTubeUsernames.name)
-          [settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)];
+      final stored = settingsBox.get(
+        SettingsKeys.YouTubeUsernames.name,
+      )[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)];
       final videoId = extractYouTubeVideoId(stored is String ? stored : null);
       if (videoId == null) return 'about:blank';
       return 'https://www.youtube.com/live_chat?v=$videoId';
     }
     if (chatType == ChatType.Owncast &&
         (settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)) != null) {
-      final base = settingsBox.get(SettingsKeys.OwncastUsernames.name)
-          [settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)] as String;
+      final base =
+          settingsBox.get(SettingsKeys.OwncastUsernames.name)[settingsBox.get(
+                SettingsKeys.SelectedOwncastUsername.name,
+              )]
+              as String;
       return '${base.replaceAll(RegExp(r'/+$'), '')}/embed/chat/readwrite';
     }
     return 'about:blank';
   }
 
   bool anyChatActive(ChatType chatType, Box<dynamic> settingsBox) {
-    bool twitchActive = chatType == ChatType.Twitch &&
+    bool twitchActive =
+        chatType == ChatType.Twitch &&
         settingsBox.get(SettingsKeys.SelectedTwitchUsername.name) != null;
-    bool youtubeActive = chatType == ChatType.YouTube &&
+    bool youtubeActive =
+        chatType == ChatType.YouTube &&
         settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name) != null;
-    bool owncastActive = chatType == ChatType.Owncast &&
+    bool owncastActive =
+        chatType == ChatType.Owncast &&
         settingsBox.get(SettingsKeys.SelectedOwncastUsername.name) != null;
 
     return twitchActive || youtubeActive || owncastActive;
@@ -276,7 +282,8 @@ class _StreamChatState extends State<StreamChat>
 
               /// A native engine exists only where
               /// [nativeChatAvailableFor] says so (Twitch today)
-              final nativeEngine = nativeChatAvailableFor(chatType) &&
+              final nativeEngine =
+                  nativeChatAvailableFor(chatType) &&
                   settingsBox.get(
                         SettingsKeys.SelectedChatEngine.name,
                         defaultValue: ChatEngine.webView,
@@ -306,7 +313,12 @@ class _StreamChatState extends State<StreamChat>
               }
 
               return this._buildLegacyChatStack(
-                  context, settingsBox, chatType, chatActive, dashboardStore);
+                context,
+                settingsBox,
+                chatType,
+                chatActive,
+                dashboardStore,
+              );
             },
           ),
         ),
@@ -340,7 +352,8 @@ class _StreamChatState extends State<StreamChat>
             ),
             statusDetail: youTubeStore.chatError,
             accountLabel: channelTitle,
-            channelIsLive: youTubeStore.chatConnection ==
+            channelIsLive:
+                youTubeStore.chatConnection ==
                 YouTubeChatConnectionState.connected,
             onRetry: youTubeStore.connectChat,
             onConnect: () => configured
@@ -348,25 +361,23 @@ class _StreamChatState extends State<StreamChat>
                 : showYouTubeSetupSheet(context),
             onLogout: signedIn
                 ? () => ModalHandler.showBaseDialog(
-                      context: context,
-                      dialogWidget: ConfirmationDialog(
-                        title: 'Disconnect YouTube?',
-                        body:
-                            'Connected as ${channelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
-                        okText: 'Disconnect',
-                        isYesDestructive: true,
-                        onOk: (_) => youTubeStore.logout(),
-                      ),
-                    )
+                    context: context,
+                    dialogWidget: ConfirmationDialog(
+                      title: 'Disconnect YouTube?',
+                      body:
+                          'Connected as ${channelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
+                      okText: 'Disconnect',
+                      isYesDestructive: true,
+                      onOk: (_) => youTubeStore.logout(),
+                    ),
+                  )
                 : null,
             child: configured
                 ? NativeYouTubeChatView(
                     /// Fresh scroll state per channel — avoids
                     /// carrying a stuck/overscrolled controller
                     /// across multi-chat switches.
-                    key: ValueKey(
-                      youTubeStore.selectedChannelLabel,
-                    ),
+                    key: ValueKey(youTubeStore.selectedChannelLabel),
                   )
                 : StaggeredEntrance(
                     scaleFrom: 0.985,
@@ -386,7 +397,8 @@ class _StreamChatState extends State<StreamChat>
                     canSend: signedIn && youTubeStore.canWrite,
                     inFlight: youTubeStore.sendingChat,
                     errorText: youTubeStore.sendChatError,
-                    accentColor: chatType.brandColor ??
+                    accentColor:
+                        chatType.brandColor ??
                         Theme.of(context).colorScheme.secondary,
                     onSend: youTubeStore.sendChatMessage,
                     onRelogin: () => startYouTubeLogin(context),
@@ -413,10 +425,7 @@ class _StreamChatState extends State<StreamChat>
 
         return NativeChatWindow(
           chatType: chatType,
-          status: twitchChatWindowStatus(
-            twitchStore.chatConnection,
-            loggedIn,
-          ),
+          status: twitchChatWindowStatus(twitchStore.chatConnection, loggedIn),
           statusDetail: twitchStore.chatError,
           accountLabel: displayName,
           connectedAt: twitchStore.chatConnectedAt,
@@ -424,8 +433,7 @@ class _StreamChatState extends State<StreamChat>
           channelViewerCount: loggedIn && twitchStore.selectedChannelIsLive
               ? twitchStore.selectedChannelViewerCount
               : null,
-          channelIsMod:
-              loggedIn && twitchStore.canModerateSelectedChannel,
+          channelIsMod: loggedIn && twitchStore.canModerateSelectedChannel,
           onRetry: twitchStore.connectChat,
           onConnect: () => startTwitchLogin(context),
           onLogout: () => ModalHandler.showBaseDialog(
@@ -446,9 +454,7 @@ class _StreamChatState extends State<StreamChat>
                   /// carrying a stuck/overscrolled controller
                   /// across multi-chat switches. Null-safe:
                   /// logged-in shells may not have [user] yet.
-                  key: ValueKey(
-                    twitchStore.effectiveBroadcasterIdSafe,
-                  ),
+                  key: ValueKey(twitchStore.effectiveBroadcasterIdSafe),
                   onReplyTargetSet: () =>
                       this._chatInputFocusNode.requestFocus(),
                 )
@@ -467,18 +473,21 @@ class _StreamChatState extends State<StreamChat>
                     controller: this._chatInputController,
                     focusNode: this._chatInputFocusNode,
                     canReadEmotes: twitchStore.canReadEmotes,
-                    accentColor: chatType.brandColor ??
+                    accentColor:
+                        chatType.brandColor ??
                         Theme.of(context).colorScheme.secondary,
                     onRelogin: () => startTwitchLogin(context),
                   ),
                   contextStrip: NativeReplyStrip(
-                    accentColor: chatType.brandColor ??
+                    accentColor:
+                        chatType.brandColor ??
                         Theme.of(context).colorScheme.secondary,
                   ),
                   canSend: twitchStore.canWriteChat,
                   inFlight: twitchStore.sendingChat,
                   errorText: twitchStore.sendChatError,
-                  accentColor: chatType.brandColor ??
+                  accentColor:
+                      chatType.brandColor ??
                       Theme.of(context).colorScheme.secondary,
                   onSend: twitchStore.sendChatMessage,
                   onRelogin: () => startTwitchLogin(context),
@@ -512,14 +521,12 @@ class _StreamChatState extends State<StreamChat>
           /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
           /// the scroll
           Listener(
-            onPointerDown: (onPointerDown) =>
-                dashboardStore.setPointerOnChat(
-                    onPointerDown.localPosition.dy > 150.0 &&
-                        onPointerDown.localPosition.dy < 450.0),
-            onPointerUp: (_) =>
-                dashboardStore.setPointerOnChat(false),
-            onPointerCancel: (_) =>
-                dashboardStore.setPointerOnChat(false),
+            onPointerDown: (onPointerDown) => dashboardStore.setPointerOnChat(
+              onPointerDown.localPosition.dy > 150.0 &&
+                  onPointerDown.localPosition.dy < 450.0,
+            ),
+            onPointerUp: (_) => dashboardStore.setPointerOnChat(false),
+            onPointerCancel: (_) => dashboardStore.setPointerOnChat(false),
             child: WebViewWidget(
               key: Key(
                 chatType.toString() +
@@ -527,12 +534,10 @@ class _StreamChatState extends State<StreamChat>
                         .get(SettingsKeys.SelectedTwitchUsername.name)
                         .toString() +
                     settingsBox
-                        .get(
-                            SettingsKeys.SelectedYouTubeUsername.name)
+                        .get(SettingsKeys.SelectedYouTubeUsername.name)
                         .toString() +
                     settingsBox
-                        .get(
-                            SettingsKeys.SelectedOwncastUsername.name)
+                        .get(SettingsKeys.SelectedOwncastUsername.name)
                         .toString(),
               ),
               controller: _webController!,
@@ -577,11 +582,7 @@ class _ChatBrandIcon extends StatelessWidget {
         color: this.color.withValues(alpha: 0.15),
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        this.chatType.icon,
-        color: this.color,
-        size: 28.0,
-      ),
+      child: Icon(this.chatType.icon, color: this.color, size: 28.0),
     );
   }
 }
@@ -608,8 +609,8 @@ class _ChatEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color brandColor = this.chatType.brandColor ??
-        Theme.of(context).colorScheme.secondary;
+    final Color brandColor =
+        this.chatType.brandColor ?? Theme.of(context).colorScheme.secondary;
 
     /// Top-aligned (instead of centered in the fixed-height chat viewport)
     /// so the state sits inside the actually visible area of the dashboard
@@ -656,10 +657,9 @@ class _ChatEmptyState extends StatelessWidget {
                   ),
                   child: Text(
                     this.connectLabel ?? 'Connect Twitch',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.white),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.white),
                   ),
                 ),
               ),
@@ -739,8 +739,8 @@ class _ChatProUpsell extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Pressable(
               haptic: true,
-              onTap: () => Navigator.of(context)
-                  .pushNamed(HomeTabRoutingKeys.Pro.route),
+              onTap: () =>
+                  Navigator.of(context).pushNamed(HomeTabRoutingKeys.Pro.route),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg,
@@ -752,10 +752,9 @@ class _ChatProUpsell extends StatelessWidget {
                 ),
                 child: Text(
                   'Explore Pro',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Colors.white),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -775,8 +774,8 @@ class _ChatLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color brandColor = this.chatType.brandColor ??
-        Theme.of(context).colorScheme.secondary;
+    final Color brandColor =
+        this.chatType.brandColor ?? Theme.of(context).colorScheme.secondary;
 
     return Container(
       color: Theme.of(context).cardColor,

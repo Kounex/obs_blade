@@ -32,7 +32,7 @@ class TwitchModerationService {
   final http.Client _client;
 
   TwitchModerationService({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   /// Delete one chat message (Helix answers 204 No Content).
   Future<void> deleteChatMessage({
@@ -42,11 +42,13 @@ class TwitchModerationService {
     required String messageId,
   }) async {
     final response = await this._client.delete(
-      Uri.parse('$kTwitchHelixBase/moderation/chat').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-        'message_id': messageId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/chat').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+          'message_id': messageId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 204) {
@@ -66,10 +68,12 @@ class TwitchModerationService {
     required String moderatorId,
   }) async {
     final response = await this._client.delete(
-      Uri.parse('$kTwitchHelixBase/moderation/chat').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/chat').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 204) {
@@ -88,10 +92,12 @@ class TwitchModerationService {
     required String moderatorId,
   }) async {
     final response = await this._client.get(
-      Uri.parse('$kTwitchHelixBase/chat/settings').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/chat/settings').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) {
@@ -110,9 +116,7 @@ class TwitchModerationService {
         statusCode: response.statusCode,
       );
     }
-    return TwitchChatSettings.fromHelixJson(
-      rows.first as Map<String, Object?>,
-    );
+    return TwitchChatSettings.fromHelixJson(rows.first as Map<String, Object?>);
   }
 
   /// Patch chat mode settings — only non-null parameters are sent.
@@ -140,10 +144,12 @@ class TwitchModerationService {
       if (uniqueChatMode != null) 'unique_chat_mode': uniqueChatMode,
     };
     final response = await this._client.patch(
-      Uri.parse('$kTwitchHelixBase/chat/settings').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/chat/settings').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: {
         ...TwitchAuthService.helixHeaders(accessToken),
         'Content-Type': 'application/json',
@@ -166,11 +172,12 @@ class TwitchModerationService {
     required String moderatorId,
   }) async {
     final response = await this._client.get(
-      Uri.parse('$kTwitchHelixBase/moderation/shield_mode')
-          .replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/shield_mode').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) {
@@ -200,11 +207,12 @@ class TwitchModerationService {
     required bool isActive,
   }) async {
     final response = await this._client.put(
-      Uri.parse('$kTwitchHelixBase/moderation/shield_mode')
-          .replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/shield_mode').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: {
         ...TwitchAuthService.helixHeaders(accessToken),
         'Content-Type': 'application/json',
@@ -229,11 +237,12 @@ class TwitchModerationService {
     required String color,
   }) async {
     final response = await this._client.post(
-      Uri.parse('$kTwitchHelixBase/chat/announcements')
-          .replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/chat/announcements').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: {
         ...TwitchAuthService.helixHeaders(accessToken),
         'Content-Type': 'application/json',
@@ -260,10 +269,12 @@ class TwitchModerationService {
     int? durationSeconds,
   }) async {
     final response = await this._client.post(
-      Uri.parse('$kTwitchHelixBase/moderation/bans').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/bans').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: {
         ...TwitchAuthService.helixHeaders(accessToken),
         'Content-Type': 'application/json',
@@ -294,10 +305,12 @@ class TwitchModerationService {
     required String moderatorId,
   }) async {
     final response = await this._client.get(
-      Uri.parse('$kTwitchHelixBase/chat/pins').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/chat/pins').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) {
@@ -328,11 +341,13 @@ class TwitchModerationService {
     required String messageId,
   }) async {
     final response = await this._client.put(
-      Uri.parse('$kTwitchHelixBase/chat/pins').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-        'message_id': messageId,
-      }),
+      Uri.parse('$kTwitchHelixBase/chat/pins').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+          'message_id': messageId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 204) {
@@ -353,11 +368,13 @@ class TwitchModerationService {
     required String messageId,
   }) async {
     final response = await this._client.delete(
-      Uri.parse('$kTwitchHelixBase/chat/pins').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-        'message_id': messageId,
-      }),
+      Uri.parse('$kTwitchHelixBase/chat/pins').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+          'message_id': messageId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 204) {
@@ -382,12 +399,13 @@ class TwitchModerationService {
     String? cursor;
     for (var page = 0; page < 3; page++) {
       final response = await this._client.get(
-        Uri.parse('$kTwitchHelixBase/moderation/banned')
-            .replace(queryParameters: {
-          'broadcaster_id': broadcasterId,
-          'first': '100',
-          if (cursor != null) 'after': cursor,
-        }),
+        Uri.parse('$kTwitchHelixBase/moderation/banned').replace(
+          queryParameters: {
+            'broadcaster_id': broadcasterId,
+            'first': '100',
+            if (cursor != null) 'after': cursor,
+          },
+        ),
         headers: TwitchAuthService.helixHeaders(accessToken),
       );
       if (response.statusCode != 200) {
@@ -399,11 +417,13 @@ class TwitchModerationService {
       }
       final data = json.decode(response.body) as Map<String, Object?>;
       final rows = data['data'] as List<Object?>? ?? const [];
-      users.addAll(rows.map(
-        (row) => TwitchBannedUser.fromHelixJson(row as Map<String, Object?>),
-      ));
-      cursor = (data['pagination'] as Map<String, Object?>?)?['cursor']
-          as String?;
+      users.addAll(
+        rows.map(
+          (row) => TwitchBannedUser.fromHelixJson(row as Map<String, Object?>),
+        ),
+      );
+      cursor =
+          (data['pagination'] as Map<String, Object?>?)?['cursor'] as String?;
       if (cursor == null || rows.isEmpty) break;
     }
     return users;
@@ -418,11 +438,13 @@ class TwitchModerationService {
     required String userId,
   }) async {
     final response = await this._client.delete(
-      Uri.parse('$kTwitchHelixBase/moderation/bans').replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-        'user_id': userId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/bans').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+          'user_id': userId,
+        },
+      ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 204) {
@@ -445,14 +467,15 @@ class TwitchModerationService {
     String? cursor;
     for (var page = 0; page < 3; page++) {
       final response = await this._client.get(
-        Uri.parse('$kTwitchHelixBase/moderation/unban_requests')
-            .replace(queryParameters: {
-          'broadcaster_id': broadcasterId,
-          'moderator_id': moderatorId,
-          'status': 'pending',
-          'first': '100',
-          if (cursor != null) 'after': cursor,
-        }),
+        Uri.parse('$kTwitchHelixBase/moderation/unban_requests').replace(
+          queryParameters: {
+            'broadcaster_id': broadcasterId,
+            'moderator_id': moderatorId,
+            'status': 'pending',
+            'first': '100',
+            if (cursor != null) 'after': cursor,
+          },
+        ),
         headers: TwitchAuthService.helixHeaders(accessToken),
       );
       if (response.statusCode != 200) {
@@ -464,11 +487,14 @@ class TwitchModerationService {
       }
       final data = json.decode(response.body) as Map<String, Object?>;
       final rows = data['data'] as List<Object?>? ?? const [];
-      requests.addAll(rows.map(
-        (row) => TwitchUnbanRequest.fromHelixJson(row as Map<String, Object?>),
-      ));
-      cursor = (data['pagination'] as Map<String, Object?>?)?['cursor']
-          as String?;
+      requests.addAll(
+        rows.map(
+          (row) =>
+              TwitchUnbanRequest.fromHelixJson(row as Map<String, Object?>),
+        ),
+      );
+      cursor =
+          (data['pagination'] as Map<String, Object?>?)?['cursor'] as String?;
       if (cursor == null || rows.isEmpty) break;
     }
     return requests;
@@ -486,12 +512,13 @@ class TwitchModerationService {
     String? resolutionText,
   }) async {
     final response = await this._client.put(
-      Uri.parse('$kTwitchHelixBase/moderation/unban_requests')
-          .replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-        'unban_request_id': requestId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/unban_requests').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+          'unban_request_id': requestId,
+        },
+      ),
       headers: {
         ...TwitchAuthService.helixHeaders(accessToken),
         'Content-Type': 'application/json',
@@ -522,11 +549,12 @@ class TwitchModerationService {
     required String reason,
   }) async {
     final response = await this._client.post(
-      Uri.parse('$kTwitchHelixBase/moderation/warnings')
-          .replace(queryParameters: {
-        'broadcaster_id': broadcasterId,
-        'moderator_id': moderatorId,
-      }),
+      Uri.parse('$kTwitchHelixBase/moderation/warnings').replace(
+        queryParameters: {
+          'broadcaster_id': broadcasterId,
+          'moderator_id': moderatorId,
+        },
+      ),
       headers: {
         ...TwitchAuthService.helixHeaders(accessToken),
         'Content-Type': 'application/json',
@@ -557,14 +585,15 @@ class TwitchModerationService {
     String? cursor;
     for (var page = 0; page < 3; page++) {
       final response = await this._client.get(
-        Uri.parse('$kTwitchHelixBase/moderation/warnings')
-            .replace(queryParameters: {
-          'broadcaster_id': broadcasterId,
-          'moderator_id': moderatorId,
-          'user_id': userId,
-          'first': '100',
-          if (cursor != null) 'after': cursor,
-        }),
+        Uri.parse('$kTwitchHelixBase/moderation/warnings').replace(
+          queryParameters: {
+            'broadcaster_id': broadcasterId,
+            'moderator_id': moderatorId,
+            'user_id': userId,
+            'first': '100',
+            if (cursor != null) 'after': cursor,
+          },
+        ),
         headers: TwitchAuthService.helixHeaders(accessToken),
       );
       if (response.statusCode != 200) {
@@ -576,11 +605,13 @@ class TwitchModerationService {
       }
       final data = json.decode(response.body) as Map<String, Object?>;
       final rows = data['data'] as List<Object?>? ?? const [];
-      warnings.addAll(rows.map(
-        (row) => TwitchWarning.fromHelixJson(row as Map<String, Object?>),
-      ));
-      cursor = (data['pagination'] as Map<String, Object?>?)?['cursor']
-          as String?;
+      warnings.addAll(
+        rows.map(
+          (row) => TwitchWarning.fromHelixJson(row as Map<String, Object?>),
+        ),
+      );
+      cursor =
+          (data['pagination'] as Map<String, Object?>?)?['cursor'] as String?;
       if (cursor == null || rows.isEmpty) break;
     }
     return warnings;

@@ -13,8 +13,10 @@ void main() {
     test('GETs /users?id= and parses the first entry', () async {
       final client = MockClient((request) async {
         expect(request.method, 'GET');
-        expect(request.url.toString(),
-            'https://api.twitch.tv/helix/users?id=user-42');
+        expect(
+          request.url.toString(),
+          'https://api.twitch.tv/helix/users?id=user-42',
+        );
         expect(request.headers['Authorization'], 'Bearer $token');
         expect(request.headers['Client-Id'], kTwitchClientId);
         return http.Response(
@@ -33,10 +35,9 @@ void main() {
         );
       });
 
-      final user = await TwitchUserService(client: client).fetchUser(
-        accessToken: token,
-        userId: 'user-42',
-      );
+      final user = await TwitchUserService(
+        client: client,
+      ).fetchUser(accessToken: token, userId: 'user-42');
 
       expect(user?.id, 'user-42');
       expect(user?.login, 'viewer');
@@ -47,10 +48,9 @@ void main() {
     test('403 returns null', () async {
       final client = MockClient((_) async => http.Response('nope', 403));
 
-      final user = await TwitchUserService(client: client).fetchUser(
-        accessToken: token,
-        userId: 'user-42',
-      );
+      final user = await TwitchUserService(
+        client: client,
+      ).fetchUser(accessToken: token, userId: 'user-42');
 
       expect(user, isNull);
     });
@@ -139,10 +139,9 @@ void main() {
         );
       });
 
-      final sub = await TwitchUserService(client: client).selfSubscription(
-        accessToken: token,
-        broadcasterId: 'broad-1',
-      );
+      final sub = await TwitchUserService(
+        client: client,
+      ).selfSubscription(accessToken: token, broadcasterId: 'broad-1');
 
       expect(sub?.tier, '2000');
       expect(sub?.months, 14);
@@ -151,10 +150,9 @@ void main() {
     test('404 returns null', () async {
       final client = MockClient((_) async => http.Response('', 404));
 
-      final sub = await TwitchUserService(client: client).selfSubscription(
-        accessToken: token,
-        broadcasterId: 'broad-1',
-      );
+      final sub = await TwitchUserService(
+        client: client,
+      ).selfSubscription(accessToken: token, broadcasterId: 'broad-1');
 
       expect(sub, isNull);
     });

@@ -132,9 +132,9 @@ class _NativeChatInputState extends State<NativeChatInput> {
                 child: Text(
                   this.widget.lockedActionText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: this.widget.accentColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: this.widget.accentColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -176,10 +176,9 @@ class _NativeChatInputState extends State<NativeChatInput> {
                 Expanded(
                   child: Text(
                     this.widget.errorText!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: errorColor),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: errorColor),
                   ),
                 ),
               ],
@@ -227,15 +226,15 @@ class _NativeChatInputState extends State<NativeChatInput> {
                     alignment: Alignment.center,
                     child: this.widget.inFlight
                         ? (StylingHelper.isApple(context)
-                            ? const CupertinoActivityIndicator(radius: 8.0)
-                            : const SizedBox(
-                                width: 16.0,
-                                height: 16.0,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.0,
-                                  color: Colors.white,
-                                ),
-                              ))
+                              ? const CupertinoActivityIndicator(radius: 8.0)
+                              : const SizedBox(
+                                  width: 16.0,
+                                  height: 16.0,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.0,
+                                    color: Colors.white,
+                                  ),
+                                ))
                         : const Icon(
                             CupertinoIcons.paperplane_fill,
                             size: 17.0,

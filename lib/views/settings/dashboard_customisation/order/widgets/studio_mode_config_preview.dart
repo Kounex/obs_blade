@@ -31,17 +31,12 @@ class StudioModeConfigPreview extends StatelessWidget {
               Expanded(
                 child: BaseDropdown<String>(
                   value: 'Fade',
-                  items: [
-                    BaseDropdownItem(value: 'Fade', text: 'Fade'),
-                  ],
+                  items: [BaseDropdownItem(value: 'Fade', text: 'Fade')],
                   label: 'Transition',
                 ),
               ),
               const SizedBox(width: AppSpacing.md),
-              Text(
-                '300 ms',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text('300 ms', style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ],

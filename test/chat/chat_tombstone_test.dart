@@ -19,10 +19,7 @@ void main() {
         chatTombstoneMarker(const ChatTombstoneInfo.deleted()),
         ' —Deleted',
       );
-      expect(
-        chatTombstoneMarker(const ChatTombstoneInfo.banned()),
-        ' —Banned',
-      );
+      expect(chatTombstoneMarker(const ChatTombstoneInfo.banned()), ' —Banned');
       expect(
         chatTombstoneMarker(
           const ChatTombstoneInfo.timedOut(Duration(seconds: 600)),

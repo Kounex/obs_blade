@@ -20,10 +20,7 @@ void main() {
     });
 
     test('created_at is null when absent or invalid', () {
-      final without = TwitchUser.fromJson({
-        'id': '1',
-        'login': 'someone',
-      });
+      final without = TwitchUser.fromJson({'id': '1', 'login': 'someone'});
       final invalid = TwitchUser.fromJson({
         'id': '1',
         'login': 'someone',

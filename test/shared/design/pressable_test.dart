@@ -5,38 +5,43 @@ import 'package:obs_blade/shared/design/pressable.dart';
 
 void main() {
   Widget wrap(Widget child, {bool reduceMotion = false}) => MaterialApp(
-        home: MediaQuery(
-          data: MediaQueryData(disableAnimations: reduceMotion),
-          child: Scaffold(body: Center(child: child)),
-        ),
-      );
+    home: MediaQuery(
+      data: MediaQueryData(disableAnimations: reduceMotion),
+      child: Scaffold(body: Center(child: child)),
+    ),
+  );
 
   double pressedScale(WidgetTester tester) {
-    final Transform transform = tester.widget<Transform>(find.descendant(
-      of: find.byType(Pressable),
-      matching: find.byType(Transform),
-    ));
+    final Transform transform = tester.widget<Transform>(
+      find.descendant(
+        of: find.byType(Pressable),
+        matching: find.byType(Transform),
+      ),
+    );
     return transform.transform.storage[0];
   }
 
   double pressedOpacity(WidgetTester tester) => tester
-      .widget<Opacity>(find.descendant(
-        of: find.byType(Pressable),
-        matching: find.byType(Opacity),
-      ))
+      .widget<Opacity>(
+        find.descendant(
+          of: find.byType(Pressable),
+          matching: find.byType(Opacity),
+        ),
+      )
       .opacity;
 
-  testWidgets('default press scales to 0.97 and flashes opacity',
-      (tester) async {
-    await tester.pumpWidget(wrap(Pressable(
-      onTap: () {},
-      child: const Text('tap'),
-    )));
+  testWidgets('default press scales to 0.97 and flashes opacity', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(Pressable(onTap: () {}, child: const Text('tap'))),
+    );
 
     expect(pressedScale(tester), 1.0);
 
-    final TestGesture gesture =
-        await tester.startGesture(tester.getCenter(find.text('tap')));
+    final TestGesture gesture = await tester.startGesture(
+      tester.getCenter(find.text('tap')),
+    );
     await tester.pump();
     await tester.pump(AppMotion.instant);
     expect(pressedScale(tester), closeTo(0.97, 0.001));
@@ -50,14 +55,13 @@ void main() {
   });
 
   testWidgets('custom scale parameter is honored', (tester) async {
-    await tester.pumpWidget(wrap(Pressable(
-      onTap: () {},
-      scale: 0.9,
-      child: const Text('tap'),
-    )));
+    await tester.pumpWidget(
+      wrap(Pressable(onTap: () {}, scale: 0.9, child: const Text('tap'))),
+    );
 
-    final TestGesture gesture =
-        await tester.startGesture(tester.getCenter(find.text('tap')));
+    final TestGesture gesture = await tester.startGesture(
+      tester.getCenter(find.text('tap')),
+    );
     await tester.pump();
     await tester.pump(AppMotion.instant);
     expect(pressedScale(tester), closeTo(0.9, 0.001));
@@ -76,15 +80,19 @@ void main() {
     );
   });
 
-  testWidgets('reduced motion drops the scale, keeps the opacity flash',
-      (tester) async {
-    await tester.pumpWidget(wrap(
-      Pressable(onTap: () {}, child: const Text('tap')),
-      reduceMotion: true,
-    ));
+  testWidgets('reduced motion drops the scale, keeps the opacity flash', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        Pressable(onTap: () {}, child: const Text('tap')),
+        reduceMotion: true,
+      ),
+    );
 
-    final TestGesture gesture =
-        await tester.startGesture(tester.getCenter(find.text('tap')));
+    final TestGesture gesture = await tester.startGesture(
+      tester.getCenter(find.text('tap')),
+    );
     await tester.pump();
 
     expect(

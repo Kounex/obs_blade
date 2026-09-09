@@ -24,8 +24,8 @@ class StatsContainer extends StatelessWidget {
     this.trailing,
     this.titleLeading,
     this.wrapWithDescribedBox = false,
-  })  : assert(child != null || children != null),
-        super();
+  }) : assert(child != null || children != null),
+       super();
 
   @override
   Widget build(BuildContext context) {
@@ -47,29 +47,32 @@ class StatsContainer extends StatelessWidget {
       ),
       trailingTitleWidget: this.trailing,
       paddingChild: const EdgeInsets.only(
-          top: AppSpacing.lg,
-          right: AppSpacing.lg,
-          left: AppSpacing.lg,
-          bottom: AppSpacing.xl),
+        top: AppSpacing.lg,
+        right: AppSpacing.lg,
+        left: AppSpacing.lg,
+        bottom: AppSpacing.xl,
+      ),
       centerChild: false,
-      child: this.child ??
+      child:
+          this.child ??
           LayoutBuilder(
             builder: (context, constraints) {
-              int amountInRow = constraints.maxWidth ~/
-                  (this
-                          .children!
-                          .reduce((value, current) =>
-                              value.width >= current.width ? value : current)
+              int amountInRow =
+                  constraints.maxWidth ~/
+                  (this.children!
+                          .reduce(
+                            (value, current) =>
+                                value.width >= current.width ? value : current,
+                          )
                           .width +
                       AppSpacing.xl);
               double generalWidth =
                   (constraints.maxWidth - (amountInRow - 1) * AppSpacing.xl) /
-                      amountInRow;
+                  amountInRow;
               return Wrap(
                 spacing: AppSpacing.xl,
                 runSpacing: AppSpacing.xl,
-                children: this
-                    .children!
+                children: this.children!
                     .map(
                       (formattedText) => FormattedText(
                         label: formattedText.label,

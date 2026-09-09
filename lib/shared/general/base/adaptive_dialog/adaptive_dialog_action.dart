@@ -21,24 +21,25 @@ class AdaptiveDialogAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (Theme.of(context).platform) {
       TargetPlatform.iOS || TargetPlatform.macOS => CupertinoDialogAction(
-          onPressed: this.onPressed,
-          isDefaultAction: this.isDefaultAction,
-          isDestructiveAction: this.isDestructiveAction,
-          child: this.child,
-        ),
+        onPressed: this.onPressed,
+        isDefaultAction: this.isDefaultAction,
+        isDestructiveAction: this.isDestructiveAction,
+        child: this.child,
+      ),
       _ => TextButton(
-          onPressed: this.onPressed,
-          style: this.isDestructiveAction
-              ? ButtonStyle(
-                  foregroundColor: const MaterialStatePropertyAll(
-                      CupertinoColors.destructiveRed),
-                  overlayColor: MaterialStatePropertyAll(
-                    CupertinoColors.destructiveRed.withOpacity(0.1),
-                  ),
-                )
-              : null,
-          child: this.child,
-        ),
+        onPressed: this.onPressed,
+        style: this.isDestructiveAction
+            ? ButtonStyle(
+                foregroundColor: const MaterialStatePropertyAll(
+                  CupertinoColors.destructiveRed,
+                ),
+                overlayColor: MaterialStatePropertyAll(
+                  CupertinoColors.destructiveRed.withOpacity(0.1),
+                ),
+              )
+            : null,
+        child: this.child,
+      ),
     };
   }
 }

@@ -36,10 +36,9 @@ class _AddEditYouTubeUsernameDialogState
       check: _usernameValidation,
     );
     _youtubeLinkController = CustomValidationTextEditingController(
-      text: this
-          .widget
-          .settingsBox
-          .get(SettingsKeys.YouTubeUsernames.name)?[this.widget.username],
+      text: this.widget.settingsBox.get(
+        SettingsKeys.YouTubeUsernames.name,
+      )?[this.widget.username],
       check: _youtubeLinkValidation,
     );
   }
@@ -51,11 +50,11 @@ class _AddEditYouTubeUsernameDialogState
     if (this.widget.username != null && username == this.widget.username) {
       return null;
     }
-    return this
-            .widget
-            .settingsBox
-            .get(SettingsKeys.YouTubeUsernames.name,
-                defaultValue: <String, String>{})
+    return this.widget.settingsBox
+            .get(
+              SettingsKeys.YouTubeUsernames.name,
+              defaultValue: <String, String>{},
+            )
             .keys
             .contains(username)
         ? 'Username already exists'
@@ -89,13 +88,13 @@ class _AddEditYouTubeUsernameDialogState
     youtubeUsernames.putIfAbsent(username, () => videoId);
 
     this.widget.settingsBox.put(
-          SettingsKeys.YouTubeUsernames.name,
-          youtubeUsernames,
-        );
+      SettingsKeys.YouTubeUsernames.name,
+      youtubeUsernames,
+    );
     this.widget.settingsBox.put(
-          SettingsKeys.SelectedYouTubeUsername.name,
-          username,
-        );
+      SettingsKeys.SelectedYouTubeUsername.name,
+      username,
+    );
   }
 
   @override

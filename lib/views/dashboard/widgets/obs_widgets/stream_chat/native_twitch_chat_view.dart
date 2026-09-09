@@ -134,6 +134,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
       this._unreadWhileScrolledUp = false;
     });
     this._jumpToBottomIfPossible();
+
     /// Layout may still be settling after the chip disappears — one
     /// follow-up jump is enough (not a per-rebuild schedule).
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -191,8 +192,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           );
         }
 
-        if (connection == TwitchChatConnectionState.failed &&
-            timelineEmpty) {
+        if (connection == TwitchChatConnectionState.failed && timelineEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -222,10 +222,9 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     ),
                     child: Text(
                       'Retry',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Colors.white),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.white),
                     ),
                   ),
                 ),
@@ -246,7 +245,6 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             ),
           );
         }
-
 
         /// Stick to bottom only when the timeline length changes while
         /// pinned — not on every Observer rebuild (lifecycle/emote/etc.),
@@ -306,6 +304,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
+
             /// Announce bodies render on the banner — drop the twin
             /// `channel.chat.message` with the same id so it doesn't show
             /// as a plain line under the notice.
@@ -350,170 +349,176 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       ? Divider(
                           height: 1.0,
                           thickness: 0.5,
-                          color: Theme.of(context)
-                              .dividerColor
-                              .withValues(alpha: 0.35),
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withValues(alpha: 0.35),
                         )
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
-                  final item = visibleItems[index];
-                  if (item is ChatSystemNotice) {
-                    return Padding(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                      child: Row(
-                        children: [
-                          const Expanded(child: Divider()),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
+                    final item = visibleItems[index];
+                    if (item is ChatSystemNotice) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                              ),
+                              child: Text(
+                                'Chat was cleared by a moderator',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
                             ),
-                            child: Text(
-                              'Chat was cleared by a moderator',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                          const Expanded(child: Divider()),
-                        ],
-                      ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                      );
+                    }
+                    if (item is ChatNotificationNotice) {
+                      final next = index + 1 < visibleItems.length
+                          ? visibleItems[index + 1]
+                          : null;
+                      final announce =
+                          chatNoticeChrome(item.event.noticeType).color ==
+                          ChatNoticeColorSeed.announce;
+
+                      /// Announce chrome is self-contained (Twitch doesn't
+                      /// paint the next PRIVMSG with announce rails). Other
+                      /// notices may continue the accent onto the chatter's
+                      /// following line.
+                      final continues =
+                          !announce &&
+                          next is ChatMessageEvent &&
+                          next.chatterUserId == item.event.chatterUserId;
+                      final attachedOnNotice =
+                          item.event.message != null &&
+                          item.event.message!.text.trim().isNotEmpty;
+                      return TwitchChatNotificationRow(
+                        event: item.event,
+                        settingsBox: settingsBox,
+                        accentContinues: continues,
+
+                        /// Prefer the body on the announce banner; hide the
+                        /// duplicate `channel.chat.message` with the same id
+                        /// below. Other notices keep the prior split layout.
+                        showAttachedMessage: announce
+                            ? attachedOnNotice
+                            : !chatMessageIds.contains(item.event.messageId),
+                        mentionHexFor: mentionHexFor,
+                        onAuthorTap: () => showChatUserCardSheet(
+                          context,
+                          userId: item.event.chatterUserId,
+                        ),
+                        onMentionTap: (userId) =>
+                            showChatUserCardSheet(context, userId: userId),
+                      );
+                    }
+                    final event = item as ChatMessageEvent;
+                    final actor = this._store.deletedMessageActor(
+                      event.messageId,
                     );
-                  }
-                  if (item is ChatNotificationNotice) {
-                    final next = index + 1 < visibleItems.length
-                        ? visibleItems[index + 1]
-                        : null;
-                    final announce = chatNoticeChrome(item.event.noticeType)
-                            .color ==
-                        ChatNoticeColorSeed.announce;
-                    /// Announce chrome is self-contained (Twitch doesn't
-                    /// paint the next PRIVMSG with announce rails). Other
-                    /// notices may continue the accent onto the chatter's
-                    /// following line.
-                    final continues = !announce &&
-                        next is ChatMessageEvent &&
-                        next.chatterUserId == item.event.chatterUserId;
-                    final attachedOnNotice = item.event.message != null &&
-                        item.event.message!.text.trim().isNotEmpty;
-                    return TwitchChatNotificationRow(
-                      event: item.event,
-                      settingsBox: settingsBox,
-                      accentContinues: continues,
-                      /// Prefer the body on the announce banner; hide the
-                      /// duplicate `channel.chat.message` with the same id
-                      /// below. Other notices keep the prior split layout.
-                      showAttachedMessage: announce
-                          ? attachedOnNotice
-                          : !chatMessageIds.contains(item.event.messageId),
-                      mentionHexFor: mentionHexFor,
-                      onAuthorTap: () => showChatUserCardSheet(
-                        context,
-                        userId: item.event.chatterUserId,
-                      ),
-                      onMentionTap: (userId) => showChatUserCardSheet(
-                        context,
-                        userId: userId,
-                      ),
+                    final deleted = this._store.isMessageDeleted(
+                      event.messageId,
                     );
-                  }
-                  final event = item as ChatMessageEvent;
-                  final actor =
-                      this._store.deletedMessageActor(event.messageId);
-                  final deleted =
-                      this._store.isMessageDeleted(event.messageId);
-                  final tombstone = this._store.tombstoneInfo(event.messageId);
-                  Color? accent;
-                  if (index > 0) {
-                    final prev = visibleItems[index - 1];
-                    if (prev is ChatNotificationNotice &&
-                        prev.event.chatterUserId == event.chatterUserId) {
-                      final seed =
-                          chatNoticeChrome(prev.event.noticeType).color;
-                      /// Announce → next chat must not keep an orange strip.
-                      if (seed != ChatNoticeColorSeed.announce) {
-                        accent = chatNoticeAccentColor(seed);
+                    final tombstone = this._store.tombstoneInfo(
+                      event.messageId,
+                    );
+                    Color? accent;
+                    if (index > 0) {
+                      final prev = visibleItems[index - 1];
+                      if (prev is ChatNotificationNotice &&
+                          prev.event.chatterUserId == event.chatterUserId) {
+                        final seed = chatNoticeChrome(
+                          prev.event.noticeType,
+                        ).color;
+
+                        /// Announce → next chat must not keep an orange strip.
+                        if (seed != ChatNoticeColorSeed.announce) {
+                          accent = chatNoticeAccentColor(seed);
+                        }
                       }
                     }
-                  }
 
-                  return TwitchChatMessageRow(
-                    event: event,
-                    settingsBox: settingsBox,
-                    isDeleted: deleted,
-                    deletedMarker: tombstone == null
-                        ? ' —Deleted'
-                        : chatTombstoneMarker(tombstone),
-                    deletedActor: actor,
-                    isDeletedExpanded:
-                        this._expandedDeletedIds.contains(event.messageId),
-                    accentBarColor: accent,
-                    mentionHexFor: mentionHexFor,
-                    onDeletedTap: actor == null
-                        ? null
-                        : () => setState(() {
+                    return TwitchChatMessageRow(
+                      event: event,
+                      settingsBox: settingsBox,
+                      isDeleted: deleted,
+                      deletedMarker: tombstone == null
+                          ? ' —Deleted'
+                          : chatTombstoneMarker(tombstone),
+                      deletedActor: actor,
+                      isDeletedExpanded: this._expandedDeletedIds.contains(
+                        event.messageId,
+                      ),
+                      accentBarColor: accent,
+                      mentionHexFor: mentionHexFor,
+                      onDeletedTap: actor == null
+                          ? null
+                          : () => setState(() {
                               final id = event.messageId;
                               if (!this._expandedDeletedIds.remove(id)) {
                                 this._expandedDeletedIds.add(id);
                               }
                             }),
 
-                    onAuthorTap: () => showChatUserCardSheet(
-                      context,
-                      userId: event.chatterUserId,
-                    ),
-                    onMentionTap: (userId) => showChatUserCardSheet(
-                      context,
-                      userId: userId,
-                    ),
-                    highlighted: this._modTargetMessageId == event.messageId,
-                    onMessageLongPress: deleted
-                        ? null
-                        : (this._store.canModerateSelectedChannel
-                            ? () => this._openModActions(event)
-                            : (this._store.canWriteChat
-                                ? () => this._openReplyActions(event)
-                                : null)),
-                  );
-                },
-              ),
-              if (!this._pinnedToBottom)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: AppSpacing.sm,
-                  child: Center(
-                    child: Pressable(
-                      haptic: true,
-                      onTap: this._resumePinnedToBottom,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: this._unreadWhileScrolledUp
-                              ? Theme.of(context).colorScheme.secondary
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest,
-                          borderRadius: AppRadius.pill,
-                        ),
-                        child: Text(
-                          this._unreadWhileScrolledUp
-                              ? 'New messages ↓'
-                              : 'Paused ↓',
-                          style: this._unreadWhileScrolledUp
-                              ? Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: Colors.white)
-                              : Theme.of(context).textTheme.bodySmall,
+                      onAuthorTap: () => showChatUserCardSheet(
+                        context,
+                        userId: event.chatterUserId,
+                      ),
+                      onMentionTap: (userId) =>
+                          showChatUserCardSheet(context, userId: userId),
+                      highlighted: this._modTargetMessageId == event.messageId,
+                      onMessageLongPress: deleted
+                          ? null
+                          : (this._store.canModerateSelectedChannel
+                                ? () => this._openModActions(event)
+                                : (this._store.canWriteChat
+                                      ? () => this._openReplyActions(event)
+                                      : null)),
+                    );
+                  },
+                ),
+                if (!this._pinnedToBottom)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: AppSpacing.sm,
+                    child: Center(
+                      child: Pressable(
+                        haptic: true,
+                        onTap: this._resumePinnedToBottom,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: this._unreadWhileScrolledUp
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
+                            borderRadius: AppRadius.pill,
+                          ),
+                          child: Text(
+                            this._unreadWhileScrolledUp
+                                ? 'New messages ↓'
+                                : 'Paused ↓',
+                            style: this._unreadWhileScrolledUp
+                                ? Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.white)
+                                : Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          );
+              ],
+            );
           },
         );
         return Column(

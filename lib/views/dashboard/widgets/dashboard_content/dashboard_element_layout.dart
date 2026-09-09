@@ -44,8 +44,7 @@ List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
       continue;
     }
 
-    final DashboardElement? next =
-        i + 1 < order.length ? order[i + 1] : null;
+    final DashboardElement? next = i + 1 < order.length ? order[i + 1] : null;
 
     if (next != null &&
         _kScenePair.contains(current) &&
@@ -110,14 +109,9 @@ List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
 List<Widget> _buildStandalone(DashboardElement element) {
   switch (element) {
     case DashboardElement.ExposedProfile:
-      return const [
-        ProfileSceneCollection(),
-      ];
+      return const [ProfileSceneCollection()];
     case DashboardElement.ExposedControls:
-      return const [
-        ExposedControls(),
-        SizedBox(height: AppSpacing.xl),
-      ];
+      return const [ExposedControls(), SizedBox(height: AppSpacing.xl)];
     case DashboardElement.SceneButtons:
       return const [
         Center(
@@ -157,19 +151,13 @@ List<Widget> _buildStandalone(DashboardElement element) {
         SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.ScenePreview:
-      return const [
-        ScenePreview(),
-        SizedBox(height: AppSpacing.xl),
-      ];
+      return const [ScenePreview(), SizedBox(height: AppSpacing.xl)];
     case DashboardElement.SceneItems:
       return const [
         BaseCard(
           title: 'Scene Items',
           paddingChild: EdgeInsets.all(0),
-          child: SizedBox(
-            height: 400.0,
-            child: SceneItems(),
-          ),
+          child: SizedBox(height: 400.0, child: SceneItems()),
         ),
         SizedBox(height: AppSpacing.xl),
       ];
@@ -178,10 +166,7 @@ List<Widget> _buildStandalone(DashboardElement element) {
         BaseCard(
           title: 'Audio',
           paddingChild: EdgeInsets.all(0),
-          child: SizedBox(
-            height: 400.0,
-            child: AudioInputs(),
-          ),
+          child: SizedBox(height: 400.0, child: AudioInputs()),
         ),
         SizedBox(height: AppSpacing.xl),
       ];
@@ -202,10 +187,7 @@ List<Widget> _buildStandalone(DashboardElement element) {
         BaseCard(
           title: 'Stats',
           paddingChild: EdgeInsets.all(0),
-          child: SizedBox(
-            height: 650.0,
-            child: Stats(),
-          ),
+          child: SizedBox(height: 650.0, child: Stats()),
         ),
         SizedBox(height: AppSpacing.xl),
       ];

@@ -15,10 +15,7 @@ import '../../../../../../models/hotkey.dart';
 class HotkeyList extends StatefulWidget {
   final ScrollController? controller;
 
-  const HotkeyList({
-    super.key,
-    this.controller,
-  });
+  const HotkeyList({super.key, this.controller});
 
   @override
   State<HotkeyList> createState() => _HotkeyListState();
@@ -47,12 +44,17 @@ class _HotkeyListState extends State<HotkeyList> {
   }
 
   List<Hotkey> _filterAllHotkeys(
-      ObservableSet<Hotkey> allHotkeys, Iterable<Hotkey> savedHotkeys) {
+    ObservableSet<Hotkey> allHotkeys,
+    Iterable<Hotkey> savedHotkeys,
+  ) {
     return allHotkeys
-        .where((hotkey) =>
-            !savedHotkeys
-                .any((savedHotkey) => savedHotkey.name == hotkey.name) &&
-            _lowerCaseContains(hotkey.name, _controller.text))
+        .where(
+          (hotkey) =>
+              !savedHotkeys.any(
+                (savedHotkey) => savedHotkey.name == hotkey.name,
+              ) &&
+              _lowerCaseContains(hotkey.name, _controller.text),
+        )
         .toList();
   }
 
@@ -67,13 +69,11 @@ class _HotkeyListState extends State<HotkeyList> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Hotkeys',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
+              Text('Hotkeys', style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 8.0),
               const Text(
-                  'Only these internal names are exposed by the WebSocket API, so a bit of guessing and try and error is necessary to find the correct ones. Users have also reported that some hotkeys do not work at all via the WebSocket API, so expect problems when using this feature.'),
+                'Only these internal names are exposed by the WebSocket API, so a bit of guessing and try and error is necessary to find the correct ones. Users have also reported that some hotkeys do not work at all via the WebSocket API, so expect problems when using this feature.',
+              ),
               const SizedBox(height: 12.0),
               CupertinoTextField(
                 controller: _controller,
@@ -86,69 +86,65 @@ class _HotkeyListState extends State<HotkeyList> {
         ),
         Expanded(
           child: HiveBuilder<Hotkey>(
-              hiveKey: HiveKeys.Hotkey,
-              builder: (context, hotkeyBox, child) {
-                return Observer(
-                  builder: (context) {
-                    if (dashboardStore.hotkeys == null) {
-                      return BaseProgressIndicator(
-                        text: 'Fetching...',
-                      );
-                    }
+            hiveKey: HiveKeys.Hotkey,
+            builder: (context, hotkeyBox, child) {
+              return Observer(
+                builder: (context) {
+                  if (dashboardStore.hotkeys == null) {
+                    return BaseProgressIndicator(text: 'Fetching...');
+                  }
 
-                    _filteredSavedHotkeys =
-                        _filterSavedHotkeys(hotkeyBox.values);
+                  _filteredSavedHotkeys = _filterSavedHotkeys(hotkeyBox.values);
 
-                    _filteredAllHotkeys = _filterAllHotkeys(
-                        dashboardStore.hotkeys!, hotkeyBox.values);
+                  _filteredAllHotkeys = _filterAllHotkeys(
+                    dashboardStore.hotkeys!,
+                    hotkeyBox.values,
+                  );
 
-                    return Scrollbar(
+                  return Scrollbar(
+                    controller: this.widget.controller,
+                    child: ListView(
                       controller: this.widget.controller,
-                      child: ListView(
-                        controller: this.widget.controller,
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0) +
-                            EdgeInsets.only(
-                              bottom:
-                                  MediaQuery.paddingOf(context).bottom + 12.0,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 24.0) +
+                          EdgeInsets.only(
+                            bottom: MediaQuery.paddingOf(context).bottom + 12.0,
+                          ),
+                      children: [
+                        if (hotkeyBox.values.isNotEmpty) ...[
+                          const SectionHeader(title: 'Favourites'),
+                          ..._filteredSavedHotkeys.map(
+                            (hotkey) => HotkeyEntry(
+                              hotkeyBox: hotkeyBox,
+                              hotkey: hotkey,
                             ),
-                        children: [
-                          if (hotkeyBox.values.isNotEmpty) ...[
-                            const SectionHeader(
-                              title: 'Favourites',
-                            ),
-                            ..._filteredSavedHotkeys.map(
-                              (hotkey) => HotkeyEntry(
-                                hotkeyBox: hotkeyBox,
-                                hotkey: hotkey,
-                              ),
-                            ),
-                            const SizedBox(height: 24.0),
-                          ],
-                          ...[
-                            if (hotkeyBox.values.isNotEmpty)
-                              const SectionHeader(
-                                title: 'All',
-                              ),
-                            ..._filteredAllHotkeys.map(
-                              (hotkey) => HotkeyEntry(
-                                hotkeyBox: hotkeyBox,
-                                hotkey: hotkey,
-                              ),
-                            ),
-                          ],
+                          ),
+                          const SizedBox(height: 24.0),
                         ],
-                        // itemCount: _filteredHotkeys.length,
-                        // separatorBuilder: (context, index) =>
-                        //     const BaseDivider(),
-                        // itemBuilder: (context, index) => HotkeyEntry(
-                        //   hotkey: _filteredHotkeys[index],
-                        //   onStar: () {},
-                        // ),
-                      ),
-                    );
-                  },
-                );
-              }),
+                        ...[
+                          if (hotkeyBox.values.isNotEmpty)
+                            const SectionHeader(title: 'All'),
+                          ..._filteredAllHotkeys.map(
+                            (hotkey) => HotkeyEntry(
+                              hotkeyBox: hotkeyBox,
+                              hotkey: hotkey,
+                            ),
+                          ),
+                        ],
+                      ],
+                      // itemCount: _filteredHotkeys.length,
+                      // separatorBuilder: (context, index) =>
+                      //     const BaseDivider(),
+                      // itemBuilder: (context, index) => HotkeyEntry(
+                      //   hotkey: _filteredHotkeys[index],
+                      //   onStar: () {},
+                      // ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );

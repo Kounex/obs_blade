@@ -18,9 +18,7 @@ import 'utils/styling_helper.dart';
 // GlobalKey<NavigatorState> rootNavKey = GlobalKey();
 
 class App extends StatelessWidget {
-  const App({
-    super.key,
-  });
+  const App({super.key});
 
   ThemeData _getCurrentTheme(Box settingsBox) {
     Brightness? brightness;
@@ -38,13 +36,18 @@ class App extends StatelessWidget {
     if (settingsBox.get(SettingsKeys.CustomTheme.name, defaultValue: false)) {
       CustomTheme? activeCustomTheme;
       try {
-        activeCustomTheme = [
-          ...BuiltInThemes.themes,
-          ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values
-        ].firstWhere((customTheme) =>
-            customTheme.uuid ==
-            settingsBox.get(SettingsKeys.ActiveCustomThemeUUID.name,
-                defaultValue: ''));
+        activeCustomTheme =
+            [
+              ...BuiltInThemes.themes,
+              ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values,
+            ].firstWhere(
+              (customTheme) =>
+                  customTheme.uuid ==
+                  settingsBox.get(
+                    SettingsKeys.ActiveCustomThemeUUID.name,
+                    defaultValue: '',
+                  ),
+            );
       } catch (e) {
         // No cusotm theme
       }
@@ -52,8 +55,8 @@ class App extends StatelessWidget {
         brightness = activeCustomTheme.useLightBrightness
             ? Brightness.light
             : Brightness.dark;
-        scaffoldBackgroundColor =
-            activeCustomTheme.backgroundColorHex.hexToColor();
+        scaffoldBackgroundColor = activeCustomTheme.backgroundColorHex
+            .hexToColor();
         accentColor = activeCustomTheme.accentColorHex.hexToColor();
         hightlightColor = activeCustomTheme.highlightColorHex.hexToColor();
         backgroundColor = activeCustomTheme.cardColorHex.hexToColor();
@@ -68,8 +71,8 @@ class App extends StatelessWidget {
 
     ThemeData baseThemeData =
         (brightness != null && brightness == Brightness.light
-            ? ThemeData.light()
-            : ThemeData.dark());
+        ? ThemeData.light()
+        : ThemeData.dark());
 
     final TextTheme appTextTheme = buildAppTextTheme(baseThemeData.textTheme);
 
@@ -83,12 +86,15 @@ class App extends StatelessWidget {
     final bool dark = brightness != Brightness.light;
 
     /// Resolved scaffold (True Dark variants collapse to their black base)
-    final Color scaffold = scaffoldBackgroundColor ??
+    final Color scaffold =
+        scaffoldBackgroundColor ??
         (settingsBox.get(SettingsKeys.TrueDark.name, defaultValue: false)
-            ? settingsBox.get(SettingsKeys.ReduceSmearing.name,
-                    defaultValue: false)
-                ? StylingHelper.background_reduced_smearing_color
-                : StylingHelper.background_color
+            ? settingsBox.get(
+                    SettingsKeys.ReduceSmearing.name,
+                    defaultValue: false,
+                  )
+                  ? StylingHelper.background_reduced_smearing_color
+                  : StylingHelper.background_color
             : StylingHelper.scaffold_color);
 
     /// Liquid surface ladder (token-delta §2.5): the card fill is a 5%
@@ -106,8 +112,8 @@ class App extends StatelessWidget {
 
     Color onGroup(Color group) =>
         ThemeData.estimateBrightnessForColor(group) == Brightness.dark
-            ? Colors.white
-            : Colors.black;
+        ? Colors.white
+        : Colors.black;
 
     /// Explicit slots - no `ColorScheme.fromSwatch` (its default blue
     /// primarySwatch leaked Material #2196F3 into `primary`). Both
@@ -134,21 +140,20 @@ class App extends StatelessWidget {
     /// field state shifts the color (focus = highlight, error and
     /// disabled stay distinguishable)
     TextStyle statefulLabelStyle(TextStyle base) =>
-        WidgetStateTextStyle.resolveWith(
-          (Set<WidgetState> states) {
-            if (states.contains(WidgetState.disabled)) {
-              return base.copyWith(color: baseThemeData.disabledColor);
-            }
-            if (states.contains(WidgetState.error)) {
-              return base.copyWith(color: baseThemeData.colorScheme.error);
-            }
-            if (states.contains(WidgetState.focused)) {
-              return base.copyWith(
-                  color: hightlightColor ?? StylingHelper.highlight_color);
-            }
-            return base;
-          },
-        );
+        WidgetStateTextStyle.resolveWith((Set<WidgetState> states) {
+          if (states.contains(WidgetState.disabled)) {
+            return base.copyWith(color: baseThemeData.disabledColor);
+          }
+          if (states.contains(WidgetState.error)) {
+            return base.copyWith(color: baseThemeData.colorScheme.error);
+          }
+          if (states.contains(WidgetState.focused)) {
+            return base.copyWith(
+              color: hightlightColor ?? StylingHelper.highlight_color,
+            );
+          }
+          return base;
+        });
 
     return baseThemeData.copyWith(
       scaffoldBackgroundColor: scaffold,
@@ -168,11 +173,14 @@ class App extends StatelessWidget {
 
       /// Setting a platform specifically to manipulate the platform
       /// agnostic elements (if the user opted in for that)
-      platform: settingsBox.get(SettingsKeys.ForceNonNativeElements.name,
-              defaultValue: false)
+      platform:
+          settingsBox.get(
+            SettingsKeys.ForceNonNativeElements.name,
+            defaultValue: false,
+          )
           ? (Platform.isIOS || Platform.isMacOS
-              ? TargetPlatform.android
-              : TargetPlatform.iOS)
+                ? TargetPlatform.android
+                : TargetPlatform.iOS)
           : defaultTargetPlatform,
 
       /// Inner Widget themes
@@ -189,9 +197,11 @@ class App extends StatelessWidget {
       inputDecorationTheme: InputDecorationThemeData(
         hintStyle: appTextTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
         labelStyle: statefulLabelStyle(
-            appTextTheme.bodyMedium!.copyWith(color: Colors.grey[500])),
+          appTextTheme.bodyMedium!.copyWith(color: Colors.grey[500]),
+        ),
         floatingLabelStyle: statefulLabelStyle(
-            appTextTheme.labelMedium!.copyWith(color: Colors.grey[500])),
+          appTextTheme.labelMedium!.copyWith(color: Colors.grey[500]),
+        ),
       ),
 
       /// Cupertino slide transitions on all platforms - that IS the
@@ -272,8 +282,9 @@ class App extends StatelessWidget {
           borderColor: Colors.transparent,
         ),
         overlayColor: highlight.withValues(alpha: 0.3),
-        inactiveTrackColor:
-            (dark ? Colors.white : Colors.black).withValues(alpha: 0.10),
+        inactiveTrackColor: (dark ? Colors.white : Colors.black).withValues(
+          alpha: 0.10,
+        ),
         inactiveTickMarkColor: Colors.transparent,
       ),
 
@@ -309,20 +320,23 @@ class App extends StatelessWidget {
         barBackgroundColor: (tabBarColor ?? StylingHelper.liquid_bar_color)
             .withOpacity(StylingHelper.opacity_blurry),
       ),
+
       /// Toggleables unified on the highlight group on both platforms
       /// (Gate 2b): iOS reads this via [BaseAdaptiveSwitch], the Android
       /// M3 widgets read the same theme slots - control on-states are
       /// highlight, never the brand accent
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith<Color?>(
-            (Set<MaterialState> states) {
+        thumbColor: MaterialStateProperty.resolveWith<Color?>((
+          Set<MaterialState> states,
+        ) {
           if (states.contains(MaterialState.selected)) {
             return Colors.white;
           }
           return null;
         }),
-        trackColor: MaterialStateProperty.resolveWith<Color?>(
-            (Set<MaterialState> states) {
+        trackColor: MaterialStateProperty.resolveWith<Color?>((
+          Set<MaterialState> states,
+        ) {
           if (states.contains(MaterialState.disabled)) {
             return null;
           }
@@ -333,8 +347,9 @@ class App extends StatelessWidget {
         }),
       ),
       radioTheme: RadioThemeData(
-        fillColor: MaterialStateProperty.resolveWith<Color?>(
-            (Set<MaterialState> states) {
+        fillColor: MaterialStateProperty.resolveWith<Color?>((
+          Set<MaterialState> states,
+        ) {
           if (states.contains(MaterialState.disabled)) {
             return null;
           }
@@ -345,8 +360,9 @@ class App extends StatelessWidget {
         }),
       ),
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith<Color?>(
-            (Set<MaterialState> states) {
+        fillColor: MaterialStateProperty.resolveWith<Color?>((
+          Set<MaterialState> states,
+        ) {
           if (states.contains(MaterialState.disabled)) {
             return null;
           }
@@ -378,10 +394,11 @@ class App extends StatelessWidget {
             // navigatorKey: rootNavKey,
             debugShowCheckedModeBanner: false,
             theme: _getCurrentTheme(settingsBox),
-            initialRoute: settingsBox.get(
-              SettingsKeys.HasUserSeenIntro202208.name,
-              defaultValue: false,
-            )
+            initialRoute:
+                settingsBox.get(
+                  SettingsKeys.HasUserSeenIntro202208.name,
+                  defaultValue: false,
+                )
                 ? AppRoutingKeys.Tabs.route
                 // ? AppRoutingKeys.Intro.route
                 : AppRoutingKeys.Intro.route,
@@ -423,7 +440,8 @@ class BorderRoundSliderThumbShape extends SliderComponentShape {
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) {
     return Size.fromRadius(
-        isEnabled == true ? enabledThumbRadius : _disabledThumbRadius);
+      isEnabled == true ? enabledThumbRadius : _disabledThumbRadius,
+    );
   }
 
   @override
@@ -472,10 +490,6 @@ class BorderRoundSliderThumbShape extends SliderComponentShape {
         ..style = PaintingStyle.stroke,
     );
 
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()..color = color,
-    );
+    canvas.drawCircle(center, radius, Paint()..color = color);
   }
 }

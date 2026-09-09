@@ -12,6 +12,7 @@ class GetSceneListResponse extends BaseResponse {
   String? get currentPreviewSceneName => this.json['currentPreviewSceneName'];
 
   /// Ordered list of the current profile's scenes (See GetCurrentScene for more information)
-  Iterable<Scene> get scenes => (this.json['scenes'] as List<dynamic>)
-      .map((scene) => Scene.fromJson(scene));
+  Iterable<Scene> get scenes => (this.json['scenes'] as List<dynamic>).map(
+    (scene) => Scene.fromJson(scene),
+  );
 }

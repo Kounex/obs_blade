@@ -119,8 +119,7 @@ class TwitchChatMessageRow extends StatelessWidget {
       Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
 
   bool get _isFirstMessage =>
-      this.event.isFirstMessage &&
-      isChatFirstMessageVisible(this.settingsBox);
+      this.event.isFirstMessage && isChatFirstMessageVisible(this.settingsBox);
 
   /// Shared-chat origin channel name when this message was broadcast from
   /// a partner channel — never for same-channel messages (Twitch leaves
@@ -138,8 +137,7 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
-  double get _spacing =>
-      NativeChatAppearance.messageSpacing(this.settingsBox);
+  double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
 
   Color _authorColor(BuildContext context) {
     final hex = this.event.color;
@@ -165,7 +163,10 @@ class TwitchChatMessageRow extends StatelessWidget {
           defaultValue: true,
         ))
           if (badgeStore.badgeVersion(
-                  this.event.broadcasterUserId, badge.setId, badge.id)
+                this.event.broadcasterUserId,
+                badge.setId,
+                badge.id,
+              )
               case final version?)
             Padding(
               padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
@@ -181,12 +182,9 @@ class TwitchChatMessageRow extends StatelessWidget {
   }
 
   List<InlineSpan> _badgeSpans() => [
-        for (final widget in this._badgeWidgets())
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: widget,
-          ),
-      ];
+    for (final widget in this._badgeWidgets())
+      WidgetSpan(alignment: PlaceholderAlignment.middle, child: widget),
+  ];
 
   InlineSpan _authorSpan(BuildContext context) {
     final authorStyle = TextStyle(
@@ -194,10 +192,7 @@ class TwitchChatMessageRow extends StatelessWidget {
       color: this._authorColor(context),
     );
     if (this.onAuthorTap == null) {
-      return TextSpan(
-        text: this.event.chatterUserName,
-        style: authorStyle,
-      );
+      return TextSpan(text: this.event.chatterUserName, style: authorStyle);
     }
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
@@ -230,10 +225,8 @@ class TwitchChatMessageRow extends StatelessWidget {
     /// (same scale as GIF attachments); `power_ups_message_effect` is a
     /// cosmetic animation we can't reproduce — the content renders as a
     /// normal message, which matches the wire payload.
-    final gigantified =
-        this.event.messageType == 'power_ups_gigantified_emote';
-    final emoteHeight =
-        gigantified ? _emoteSize * _gifSizeFactor : _emoteSize;
+    final gigantified = this.event.messageType == 'power_ups_gigantified_emote';
+    final emoteHeight = gigantified ? _emoteSize * _gifSizeFactor : _emoteSize;
     return [
       for (final fragment in fragments)
         if (fragment.type == 'emote' && fragment.emote != null)
@@ -268,7 +261,8 @@ class TwitchChatMessageRow extends StatelessWidget {
     final mention = fragment.mention!;
     final style = TextStyle(
       fontWeight: FontWeight.w700,
-      color: mentionColorForFragment(
+      color:
+          mentionColorForFragment(
             mentionUserId: mention.userId,
             broadcasterUserId: this.event.broadcasterUserId,
             chatterHex: this.mentionHexFor?.call(mention.userId),
@@ -294,15 +288,16 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// builders are preserved. Assumes [_messageSpans] results are flat
   /// (plain TextSpans + emote/mention WidgetSpans).
   List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
-    final color = Theme.of(context)
-        .textTheme
-        .bodySmall
-        ?.color
-        ?.withValues(alpha: 0.5);
+    final color = Theme.of(
+      context,
+    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5);
     return [
       for (final span in this._messageSpans(context))
         if (span is TextSpan)
-          TextSpan(text: span.text, style: TextStyle(color: color))
+          TextSpan(
+            text: span.text,
+            style: TextStyle(color: color),
+          )
         else if (span is WidgetSpan)
           WidgetSpan(
             alignment: span.alignment,
@@ -328,8 +323,10 @@ class TwitchChatMessageRow extends StatelessWidget {
     return [
       for (var i = 0; i < tokens.length; i++) ...[
         if (i > 0) const TextSpan(text: ' '),
-        if (emoteStore.emoteImageUrl(tokens[i],
-                broadcasterId: this.event.broadcasterUserId)
+        if (emoteStore.emoteImageUrl(
+              tokens[i],
+              broadcasterId: this.event.broadcasterUserId,
+            )
             case final imageUrl?)
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
@@ -405,10 +402,10 @@ class TwitchChatMessageRow extends StatelessWidget {
             child: Text(
               'FIRST MESSAGE',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: kChatFirstMessageAccent,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                  ),
+                color: kChatFirstMessageAccent,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+              ),
             ),
           ),
         if (reply != null)
@@ -426,8 +423,8 @@ class TwitchChatMessageRow extends StatelessWidget {
                   child: Text.rich(
                     TextSpan(
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: this._textSize * 0.85,
-                          ),
+                        fontSize: this._textSize * 0.85,
+                      ),
                       children: [
                         const TextSpan(text: 'Replying to '),
                         if (this.onMentionTap == null)
@@ -441,9 +438,7 @@ class TwitchChatMessageRow extends StatelessWidget {
                                   this.onMentionTap!(reply.parentUserId),
                               child: Text(
                                 '@${reply.parentUserName}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       fontSize: this._textSize * 0.85,
                                       fontWeight: FontWeight.w700,
@@ -536,10 +531,7 @@ class TwitchChatMessageRow extends StatelessWidget {
         child: padded,
       );
     } else if (this.highlighted) {
-      child = ColoredBox(
-        color: holdHighlightColor(context),
-        child: padded,
-      );
+      child = ColoredBox(color: holdHighlightColor(context), child: padded);
     } else {
       child = padded;
     }
@@ -559,52 +551,52 @@ class TwitchChatMessageRow extends StatelessWidget {
   }
 
   Text _richText(BuildContext context) => Text.rich(
-        TextSpan(
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: this._textSize,
-              ),
-          children: [
-            if (this.showTimestamp && this.event.receivedAt != null)
-              TextSpan(
-                text: '${formatChatMessageTime(this.event.receivedAt!)} ',
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                  fontSize: this._textSize * 0.9,
-                  fontWeight: FontWeight.w400,
+    TextSpan(
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
+      children: [
+        if (this.showTimestamp && this.event.receivedAt != null)
+          TextSpan(
+            text: '${formatChatMessageTime(this.event.receivedAt!)} ',
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodySmall?.color,
+              fontSize: this._textSize * 0.9,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        if (this._sourceChannelName case final sourceName?)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
+              child: _SourceChannelChip(
+                label: '#$sourceName',
+                color: sourceChannelColor(
+                  this.event.sourceBroadcasterUserId ??
+                      this.event.sourceBroadcasterUserLogin ??
+                      sourceName,
                 ),
               ),
-            if (this._sourceChannelName case final sourceName?)
-              WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
-                  child: _SourceChannelChip(
-                    label: '#$sourceName',
-                    color: sourceChannelColor(
-                      this.event.sourceBroadcasterUserId ??
-                          this.event.sourceBroadcasterUserLogin ??
-                          sourceName,
-                    ),
-                  ),
-                ),
-              ),
-            if (this.onAuthorTap == null) ...this._badgeSpans(),
-            this._authorSpan(context),
-            const TextSpan(text: ': '),
-            if (this.isDeleted) ...[
-              ...this._dimmedMessageSpans(context),
-              TextSpan(
-                text: this.deletedMarker,
-                style: TextStyle(
-                  fontStyle: FontStyle.italic,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-              ),
-            ] else
-              ...this._messageSpans(context),
-          ],
-        ),
-      );
+            ),
+          ),
+        if (this.onAuthorTap == null) ...this._badgeSpans(),
+        this._authorSpan(context),
+        const TextSpan(text: ': '),
+        if (this.isDeleted) ...[
+          ...this._dimmedMessageSpans(context),
+          TextSpan(
+            text: this.deletedMarker,
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
+          ),
+        ] else
+          ...this._messageSpans(context),
+      ],
+    ),
+  );
 }
 
 /// Source-channel chip for shared-chat partner messages — same visual
@@ -631,10 +623,10 @@ class _SourceChannelChip extends StatelessWidget {
       child: Text(
         this.label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: this.color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-            ),
+          color: this.color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }
@@ -694,6 +686,7 @@ class ChatRowLongPressListenerState extends State<ChatRowLongPressListener> {
     this._longPressTimer = null;
     this._activePointer = null;
     this._downPosition = null;
+
     /// Sheet wash continues via [highlighted] after parent setState in
     /// [onLongPress] (runs before this pointer-up in the event queue).
     this._setHolding(false);
@@ -723,8 +716,7 @@ class ChatRowLongPressListenerState extends State<ChatRowLongPressListener> {
             this._downPosition == null) {
           return;
         }
-        if ((event.localPosition - this._downPosition!).distance >
-            _moveSlop) {
+        if ((event.localPosition - this._downPosition!).distance > _moveSlop) {
           this._cancelPending();
         }
       },

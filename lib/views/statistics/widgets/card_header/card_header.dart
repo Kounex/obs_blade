@@ -47,10 +47,10 @@ class CardHeader extends StatelessWidget {
                 child: Text(
                   this.description,
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                        color: Theme.of(context)
-                            .extension<AppTextColors>()!
-                            .textSecondary,
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).extension<AppTextColors>()!.textSecondary,
+                  ),
                 ),
               ),
             ],

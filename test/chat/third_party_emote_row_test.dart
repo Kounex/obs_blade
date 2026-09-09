@@ -29,16 +29,16 @@ List<WidgetSpan> collectWidgetSpans(InlineSpan span) {
 }
 
 ChatMessageEvent textEvent(String text) => ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: '1',
-      chatterUserLogin: 'viewer',
-      chatterUserName: 'Viewer',
-      messageId: '1',
-      message: ChatMessageText(
-        text: text,
-        fragments: [ChatMessageFragment(type: 'text', text: text)],
-      ),
-    );
+  broadcasterUserId: 'b1',
+  chatterUserId: '1',
+  chatterUserLogin: 'viewer',
+  chatterUserName: 'Viewer',
+  messageId: '1',
+  message: ChatMessageText(
+    text: text,
+    fragments: [ChatMessageFragment(type: 'text', text: text)],
+  ),
+);
 
 void main() {
   late ThirdPartyEmoteStore emoteStore;
@@ -46,8 +46,9 @@ void main() {
   late HiveTestHarness harness;
 
   setUp(() async {
-    tempDir = await Directory.systemTemp
-        .createTemp('third_party_emote_row_test');
+    tempDir = await Directory.systemTemp.createTemp(
+      'third_party_emote_row_test',
+    );
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
@@ -65,10 +66,12 @@ void main() {
 
   Future<RichText> pumpRow(WidgetTester tester, String text) async {
     await tester.pumpWidget(
-      wrap(TwitchChatMessageRow(
-        event: textEvent(text),
-        settingsBox: Hive.box(HiveKeys.Settings.name),
-      )),
+      wrap(
+        TwitchChatMessageRow(
+          event: textEvent(text),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        ),
+      ),
     );
     return tester.widget<RichText>(find.byType(RichText));
   }
@@ -81,8 +84,10 @@ void main() {
     expect(richText.text.toPlainText(), 'Viewer: hi \u{FFFC}');
     final span = collectWidgetSpans(richText.text).single;
     final image = span.child as Image;
-    expect((image.image as NetworkImage).url,
-        FakeThirdPartyEmoteService.peepo.imageUrl);
+    expect(
+      (image.image as NetworkImage).url,
+      FakeThirdPartyEmoteService.peepo.imageUrl,
+    );
   });
 
   testWidgets('multiple emote tokens in one message', (tester) async {
@@ -127,8 +132,9 @@ void main() {
     /// Real file I/O never completes inside the test body's FakeAsync
     /// zone — runAsync escapes it (same pattern as the badge tests).
     await tester.runAsync(() async {
-      await Hive.box(HiveKeys.Settings.name)
-          .put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
+      await Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
     });
 
     final richText = await pumpRow(tester, 'hi peepoHappy');
@@ -159,10 +165,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      wrap(TwitchChatMessageRow(
-        event: event,
-        settingsBox: Hive.box(HiveKeys.Settings.name),
-      )),
+      wrap(
+        TwitchChatMessageRow(
+          event: event,
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        ),
+      ),
     );
 
     final richText = tester.widget<RichText>(find.byType(RichText));

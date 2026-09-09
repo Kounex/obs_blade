@@ -42,8 +42,9 @@ void main() {
     await Hive.openBox(HiveKeys.Settings.name);
     userEmoteService = FakeTwitchEmoteService();
     emoteStore = TwitchEmoteStore(service: userEmoteService);
-    thirdPartyStore =
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService());
+    thirdPartyStore = ThirdPartyEmoteStore(
+      service: FakeThirdPartyEmoteService(),
+    );
     GetIt.instance.registerSingleton<TwitchEmoteStore>(emoteStore);
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(thirdPartyStore);
 
@@ -66,13 +67,12 @@ void main() {
   ChatEmotePickerSheet buildSheet({
     bool canReadEmotes = true,
     VoidCallback? onRelogin,
-  }) =>
-      ChatEmotePickerSheet(
-        controller: controller,
-        canReadEmotes: canReadEmotes,
-        accentColor: Colors.purple,
-        onRelogin: onRelogin ?? () {},
-      );
+  }) => ChatEmotePickerSheet(
+    controller: controller,
+    canReadEmotes: canReadEmotes,
+    accentColor: Colors.purple,
+    onRelogin: onRelogin ?? () {},
+  );
 
   void seedCatalogs() {
     emoteStore.channelEmotes.add(FakeTwitchEmoteService.channelEmote);
@@ -81,8 +81,9 @@ void main() {
         FakeThirdPartyEmoteService.peepo;
   }
 
-  testWidgets('sections render in order with headers and cells',
-      (tester) async {
+  testWidgets('sections render in order with headers and cells', (
+    tester,
+  ) async {
     seedCatalogs();
     await tester.pumpWidget(wrap(buildSheet()));
 
@@ -99,13 +100,13 @@ void main() {
     );
   });
 
-  testWidgets('search filters across sections, case-insensitive',
-      (tester) async {
+  testWidgets('search filters across sections, case-insensitive', (
+    tester,
+  ) async {
     seedCatalogs();
     await tester.pumpWidget(wrap(buildSheet()));
 
-    await tester.enterText(
-        find.byType(TextField).first, 'kappa');
+    await tester.enterText(find.byType(TextField).first, 'kappa');
     await tester.pump();
 
     expect(cellUrls(tester), [kappaUrl]);
@@ -115,44 +116,46 @@ void main() {
   });
 
   testWidgets(
-      'tapping cells appends into the draft; Done writes back to the dock',
-      (tester) async {
-    seedCatalogs();
-    controller.text = 'hi ';
-    await tester.pumpWidget(wrap(buildSheet()));
+    'tapping cells appends into the draft; Done writes back to the dock',
+    (tester) async {
+      seedCatalogs();
+      controller.text = 'hi ';
+      await tester.pumpWidget(wrap(buildSheet()));
 
-    final draft = find.byKey(const Key('emote-draft-field'));
-    expect(tester.widget<TextField>(draft).controller!.text, 'hi ');
+      final draft = find.byKey(const Key('emote-draft-field'));
+      expect(tester.widget<TextField>(draft).controller!.text, 'hi ');
 
-    await tester.tap(find.byType(Image).first);
-    await tester.pump();
-    await tester.tap(find.byType(Image).at(1));
-    await tester.pump();
+      await tester.tap(find.byType(Image).first);
+      await tester.pump();
+      await tester.tap(find.byType(Image).at(1));
+      await tester.pump();
 
-    /// Dock stays unchanged until Done.
-    expect(controller.text, 'hi ');
-    expect(
-      tester.widget<TextField>(draft).controller!.text,
-      'hi Kappa PogChamp ',
-    );
-    expect(find.text('Emotes'), findsOneWidget);
+      /// Dock stays unchanged until Done.
+      expect(controller.text, 'hi ');
+      expect(
+        tester.widget<TextField>(draft).controller!.text,
+        'hi Kappa PogChamp ',
+      );
+      expect(find.text('Emotes'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('emote-done-button')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('emote-done-button')));
+      await tester.pumpAndSettle();
 
-    expect(controller.text, 'hi Kappa PogChamp ');
-    expect(find.text('Emotes'), findsNothing);
-  });
+      expect(controller.text, 'hi Kappa PogChamp ');
+      expect(find.text('Emotes'), findsNothing);
+    },
+  );
 
-  testWidgets('draft insert respects cursor; dock unchanged until Done',
-      (tester) async {
+  testWidgets('draft insert respects cursor; dock unchanged until Done', (
+    tester,
+  ) async {
     seedCatalogs();
     controller.text = 'hi there';
     await tester.pumpWidget(wrap(buildSheet()));
 
-    final draftController =
-        tester.widget<TextField>(find.byKey(const Key('emote-draft-field')))
-            .controller!;
+    final draftController = tester
+        .widget<TextField>(find.byKey(const Key('emote-draft-field')))
+        .controller!;
     draftController.selection = const TextSelection.collapsed(offset: 2);
 
     await tester.tap(find.byType(Image).first);
@@ -163,36 +166,39 @@ void main() {
   });
 
   testWidgets(
-      'pre-upgrade token shows the re-login CTA; third-party stays visible',
-      (tester) async {
-    var relogin = false;
-    seedCatalogs();
-    await tester.pumpWidget(
-      wrap(buildSheet(canReadEmotes: false, onRelogin: () => relogin = true)),
-    );
+    'pre-upgrade token shows the re-login CTA; third-party stays visible',
+    (tester) async {
+      var relogin = false;
+      seedCatalogs();
+      await tester.pumpWidget(
+        wrap(buildSheet(canReadEmotes: false, onRelogin: () => relogin = true)),
+      );
 
-    expect(
-      find.text('Log in again to load your Twitch emotes'),
-      findsOneWidget,
-    );
-    expect(find.text('Channel'), findsNothing);
-    expect(find.text('Global'), findsNothing);
-    expect(find.text('Third-party (7TV/BTTV)'), findsOneWidget);
+      expect(
+        find.text('Log in again to load your Twitch emotes'),
+        findsOneWidget,
+      );
+      expect(find.text('Channel'), findsNothing);
+      expect(find.text('Global'), findsNothing);
+      expect(find.text('Third-party (7TV/BTTV)'), findsOneWidget);
 
-    await tester.tap(find.text('Re-login'));
-    await tester.pump();
-    expect(relogin, isTrue);
-  });
+      await tester.tap(find.text('Re-login'));
+      await tester.pump();
+      expect(relogin, isTrue);
+    },
+  );
 
-  testWidgets('third-party section hides when the toggle is off',
-      (tester) async {
+  testWidgets('third-party section hides when the toggle is off', (
+    tester,
+  ) async {
     seedCatalogs();
 
     /// Real file I/O never completes inside the test body's FakeAsync
     /// zone — runAsync escapes it (same pattern as the badge tests).
     await tester.runAsync(() async {
-      await Hive.box(HiveKeys.Settings.name)
-          .put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
+      await Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
     });
 
     await tester.pumpWidget(wrap(buildSheet()));
@@ -201,8 +207,9 @@ void main() {
     expect(find.text('Channel'), findsOneWidget);
   });
 
-  testWidgets('catalog landing pops the grid in (catalogVersion)',
-      (tester) async {
+  testWidgets('catalog landing pops the grid in (catalogVersion)', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap(buildSheet()));
     expect(find.text('No emotes available'), findsOneWidget);
 
@@ -214,8 +221,9 @@ void main() {
     expect(cellUrls(tester), [kappaUrl]);
   });
 
-  testWidgets('empty catalog with a fetch in flight shows a spinner',
-      (tester) async {
+  testWidgets('empty catalog with a fetch in flight shows a spinner', (
+    tester,
+  ) async {
     emoteStore.isLoading = true;
     await tester.pumpWidget(wrap(buildSheet()));
 
@@ -225,8 +233,9 @@ void main() {
     expect(find.byType(Image), findsNothing);
   });
 
-  testWidgets('button opens the sheet and refocuses after Done',
-      (tester) async {
+  testWidgets('button opens the sheet and refocuses after Done', (
+    tester,
+  ) async {
     seedCatalogs();
 
     /// The focus node must be attached to the tree — requestFocus on a
@@ -234,16 +243,18 @@ void main() {
     /// the dock's attached node; here a Focus wrapper attaches it.
     final focusNode = FocusNode();
     await tester.pumpWidget(
-      wrap(Focus(
-        focusNode: focusNode,
-        child: ChatEmotePickerButton(
-          controller: controller,
+      wrap(
+        Focus(
           focusNode: focusNode,
-          canReadEmotes: true,
-          accentColor: Colors.purple,
-          onRelogin: () {},
+          child: ChatEmotePickerButton(
+            controller: controller,
+            focusNode: focusNode,
+            canReadEmotes: true,
+            accentColor: Colors.purple,
+            onRelogin: () {},
+          ),
         ),
-      )),
+      ),
     );
 
     await tester.tap(find.byType(ChatEmotePickerButton));

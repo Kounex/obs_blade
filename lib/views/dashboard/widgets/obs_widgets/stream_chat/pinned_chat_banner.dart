@@ -57,9 +57,7 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
-                const SnackBar(
-                  content: Text('Could not unpin the message'),
-                ),
+                const SnackBar(content: Text('Could not unpin the message')),
               );
           }
         },
@@ -75,8 +73,9 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
     final activeColor = this._expanded
         ? theme.textTheme.bodyMedium?.color
         : mutedColor;
-    final accentColor =
-        this._expanded ? theme.colorScheme.secondary : mutedColor;
+    final accentColor = this._expanded
+        ? theme.colorScheme.secondary
+        : mutedColor;
 
     return Pressable(
       haptic: true,

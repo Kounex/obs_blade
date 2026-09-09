@@ -33,8 +33,9 @@ class LicenseModal extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               child: SizedBox(
                 width: 256.0,
-                child:
-                    Image.asset(StylingHelper.brightnessAwareOBSLogo(context)),
+                child: Image.asset(
+                  StylingHelper.brightnessAwareOBSLogo(context),
+                ),
               ),
             ),
           ),
@@ -55,9 +56,7 @@ class LicenseModal extends StatelessWidget {
           ),
           const BaseDivider(),
           Expanded(
-            child: LicenseEntries(
-              scrollController: this.scrollController,
-            ),
+            child: LicenseEntries(scrollController: this.scrollController),
           ),
         ],
       ),

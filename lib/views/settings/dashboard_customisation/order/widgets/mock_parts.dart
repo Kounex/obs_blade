@@ -20,7 +20,9 @@ class MockBar extends StatelessWidget {
       width: this.width,
       height: this.height,
       decoration: BoxDecoration(
-        color: this.color ?? Theme.of(context).disabledColor.withValues(alpha: 0.5),
+        color:
+            this.color ??
+            Theme.of(context).disabledColor.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
     );
@@ -40,7 +42,9 @@ class MockCircle extends StatelessWidget {
       width: this.size,
       height: this.size,
       decoration: BoxDecoration(
-        color: this.color ?? Theme.of(context).disabledColor.withValues(alpha: 0.5),
+        color:
+            this.color ??
+            Theme.of(context).disabledColor.withValues(alpha: 0.5),
         shape: BoxShape.circle,
       ),
     );

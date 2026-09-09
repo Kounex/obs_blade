@@ -9,21 +9,14 @@ class IntroPrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
 
-  const IntroPrimaryButton({
-    super.key,
-    required this.text,
-    this.onPressed,
-  });
+  const IntroPrimaryButton({super.key, required this.text, this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       height: 52.0,
-      child: BaseButton(
-        text: this.text,
-        onPressed: this.onPressed,
-      ),
+      child: BaseButton(text: this.text, onPressed: this.onPressed),
     );
   }
 }

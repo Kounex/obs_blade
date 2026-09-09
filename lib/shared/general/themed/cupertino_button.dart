@@ -30,14 +30,11 @@ class ThemedCupertinoButton extends StatelessWidget {
         style: TextStyle(
           color: this.onPressed != null
               ? this.isDestructive
-                  ? CupertinoColors.destructiveRed
-                  : Theme.of(context).cupertinoOverrideTheme!.primaryColor
+                    ? CupertinoColors.destructiveRed
+                    : Theme.of(context).cupertinoOverrideTheme!.primaryColor
               : null,
         ),
-        child: this.child ??
-            Text(
-              this.text ?? '',
-            ),
+        child: this.child ?? Text(this.text ?? ''),
       ),
     );
   }

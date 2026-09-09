@@ -46,7 +46,9 @@ class _SupportSkeletonState extends State<SupportSkeleton>
               child: Container(
                 height: 40.0,
                 decoration: BoxDecoration(
-                  color: baseColor.withValues(alpha: 0.10 + 0.10 * _controller.value),
+                  color: baseColor.withValues(
+                    alpha: 0.10 + 0.10 * _controller.value,
+                  ),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),

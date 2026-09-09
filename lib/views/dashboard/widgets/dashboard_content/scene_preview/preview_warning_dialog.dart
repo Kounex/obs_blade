@@ -7,10 +7,7 @@ import '../../../../../shared/dialogs/confirmation.dart';
 class PreviewWarningDialog extends StatelessWidget {
   final void Function(bool) onOk;
 
-  const PreviewWarningDialog({
-    super.key,
-    required this.onOk,
-  });
+  const PreviewWarningDialog({super.key, required this.onOk});
 
   @override
   Widget build(BuildContext context) {

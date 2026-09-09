@@ -33,11 +33,11 @@ class ProPaywallView extends StatefulWidget {
 }
 
 class _ProPaywallViewState extends State<ProPaywallView> {
-  late final ProStore _store =
-      this.widget.store ?? GetIt.instance<ProStore>();
+  late final ProStore _store = this.widget.store ?? GetIt.instance<ProStore>();
 
-  late final ConfettiController _confettiController =
-      ConfettiController(duration: AppMotion.dramatic);
+  late final ConfettiController _confettiController = ConfettiController(
+    duration: AppMotion.dramatic,
+  );
 
   late final ReactionDisposer _proReaction;
 
@@ -54,14 +54,11 @@ class _ProPaywallViewState extends State<ProPaywallView> {
 
     /// Celebrate only on the unlock edge (a long-time Pro opening this
     /// page gets the calm thank-you state, not confetti)
-    this._proReaction = reaction(
-      (_) => this._store.isPro,
-      (bool isPro) {
-        if (isPro) {
-          this._confettiController.play();
-        }
-      },
-    );
+    this._proReaction = reaction((_) => this._store.isPro, (bool isPro) {
+      if (isPro) {
+        this._confettiController.play();
+      }
+    });
   }
 
   @override

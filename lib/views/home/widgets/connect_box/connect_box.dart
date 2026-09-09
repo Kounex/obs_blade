@@ -10,9 +10,7 @@ import 'connect_form/connect_form.dart';
 import 'switcher_card.dart';
 
 class ConnectBox extends StatelessWidget {
-  const ConnectBox({
-    super.key,
-  });
+  const ConnectBox({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +28,7 @@ class ConnectBox extends StatelessWidget {
               /// Horizontal inset lives inside [QuickConnect] so its
               /// divider runs full-bleed like the other connect cards
               return const Padding(
-                padding: EdgeInsets.only(
-                  top: 20.0,
-                  bottom: 18.0,
-                ),
+                padding: EdgeInsets.only(top: 20.0, bottom: 18.0),
                 child: QuickConnect(),
               );
             case ConnectMode.Manual:

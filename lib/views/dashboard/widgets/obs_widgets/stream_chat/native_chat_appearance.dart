@@ -18,29 +18,24 @@ abstract final class NativeChatAppearance {
 
   static const bool separatorsDefault = false;
 
-  static double textSize(Box settings) => _double(
-        settings,
-        SettingsKeys.TwitchChatTextSize,
-        textSizeDefault,
-      );
+  static double textSize(Box settings) =>
+      _double(settings, SettingsKeys.TwitchChatTextSize, textSizeDefault);
 
-  static double emoteSize(Box settings) => _double(
-        settings,
-        SettingsKeys.TwitchChatEmoteSize,
-        emoteSizeDefault,
-      );
+  static double emoteSize(Box settings) =>
+      _double(settings, SettingsKeys.TwitchChatEmoteSize, emoteSizeDefault);
 
   static double messageSpacing(Box settings) => _double(
-        settings,
-        SettingsKeys.TwitchChatMessageSpacing,
-        messageSpacingDefault,
-      );
+    settings,
+    SettingsKeys.TwitchChatMessageSpacing,
+    messageSpacingDefault,
+  );
 
   static bool separators(Box settings) =>
       settings.get(
-        SettingsKeys.TwitchChatMessageSeparators.name,
-        defaultValue: separatorsDefault,
-      ) as bool;
+            SettingsKeys.TwitchChatMessageSeparators.name,
+            defaultValue: separatorsDefault,
+          )
+          as bool;
 
   static double _double(Box settings, SettingsKeys key, double fallback) {
     final value = settings.get(key.name, defaultValue: fallback);

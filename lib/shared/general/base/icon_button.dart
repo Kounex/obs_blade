@@ -36,15 +36,13 @@ class BaseIconButton extends StatelessWidget {
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: this.backgroundColor ??
+        color:
+            this.backgroundColor ??
             Theme.of(context).buttonTheme.colorScheme!.secondary,
       ),
-      child: this.child ??
-          Icon(
-            this.icon,
-            color: this.foregroundColor,
-            size: this.iconSize,
-          ),
+      child:
+          this.child ??
+          Icon(this.icon, color: this.foregroundColor, size: this.iconSize),
     );
 
     /// 44x44 hit-area floor for interactive use; decorative use (no
@@ -58,9 +56,6 @@ class BaseIconButton extends StatelessWidget {
       );
     }
 
-    return Pressable(
-      onTap: this.onTap,
-      child: button,
-    );
+    return Pressable(onTap: this.onTap, child: button);
   }
 }

@@ -43,7 +43,8 @@ class DataEntry extends StatelessWidget {
           dialogWidget: ConfirmationDialog(
             title: 'Delete ${this.title}',
             isYesDestructive: true,
-            body: this.customConfirmationText ??
+            body:
+                this.customConfirmationText ??
                 'Are you sure you want to delete all ${this.title}? This action can\'t be undone!',
             onOk: (_) => this.additionalConfirmationText != null
                 ? Future.delayed(

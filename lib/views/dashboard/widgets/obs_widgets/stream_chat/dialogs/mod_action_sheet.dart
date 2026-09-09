@@ -30,20 +30,19 @@ Future<void> showModActionSheet(
   BuildContext context,
   ChatMessageEvent event, {
   VoidCallback? onReply,
-}) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
-      builder: (_) => ModActionSheet(
-        event: event,
-        onReply: onReply,
-        onFailure: (message) => ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message))),
-      ),
-    );
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (_) => ModActionSheet(
+    event: event,
+    onReply: onReply,
+    onFailure: (message) => ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message))),
+  ),
+);
 
 /// Opens the lightweight message sheet for non-moderators: just the Reply
 /// action (mod users get [showModActionSheet] instead). [onReply] runs
@@ -52,15 +51,13 @@ Future<void> showMessageActionSheet(
   BuildContext context, {
   required String authorName,
   required VoidCallback onReply,
-}) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
-      builder: (_) =>
-          MessageActionSheet(authorName: authorName, onReply: onReply),
-    );
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (_) => MessageActionSheet(authorName: authorName, onReply: onReply),
+);
 
 /// Timeout presets (label → seconds). Twitch caps at 2 weeks; these cover
 /// the common moderator ladder including a 1-minute quick hit.
@@ -124,10 +121,7 @@ class _ModActionSheetState extends State<ModActionSheet> {
     super.dispose();
   }
 
-  Future<void> _run(
-    Future<bool> Function() action,
-    String failureText,
-  ) async {
+  Future<void> _run(Future<bool> Function() action, String failureText) async {
     if (this._running) return;
     this.setState(() => this._running = true);
     final ok = await action();
@@ -204,9 +198,10 @@ class _ModActionSheetState extends State<ModActionSheet> {
                                 'Timeout $name for ${preset.$1}? They can\'t '
                                 'chat until it expires.',
                             okText: 'Timeout',
-                            action: () => this
-                                ._store
-                                .timeoutUser(event.chatterUserId, preset.$2),
+                            action: () => this._store.timeoutUser(
+                              event.chatterUserId,
+                              preset.$2,
+                            ),
                             failureText: 'Could not time out the user',
                           ),
                         ),
@@ -345,8 +340,8 @@ class _ModActionSheetState extends State<ModActionSheet> {
     final title = this._timeoutStep
         ? 'Timeout $chatterName'
         : this._warnStep
-            ? 'Warn $chatterName'
-            : 'Moderate $chatterName';
+        ? 'Warn $chatterName'
+        : 'Moderate $chatterName';
     if (!this._timeoutStep && !this._warnStep) {
       return Text(title, style: nativeChatSheetTitleStyle(context));
     }
@@ -357,17 +352,15 @@ class _ModActionSheetState extends State<ModActionSheet> {
           onTap: this._running
               ? null
               : () => this.setState(() {
-                    this._timeoutStep = false;
-                    this._warnStep = false;
-                  }),
+                  this._timeoutStep = false;
+                  this._warnStep = false;
+                }),
           child: const Padding(
             padding: EdgeInsets.only(right: AppSpacing.sm),
             child: Icon(CupertinoIcons.chevron_back, size: 20.0),
           ),
         ),
-        Expanded(
-          child: Text(title, style: nativeChatSheetTitleStyle(context)),
-        ),
+        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
       ],
     );
   }
@@ -377,10 +370,12 @@ class _ModActionSheetState extends State<ModActionSheet> {
   /// user must acknowledge the warning in chat before chatting again.
   Widget _buildWarnCompose(BuildContext context) {
     final text = this._warnController.text;
-    final canSend = !this._running &&
+    final canSend =
+        !this._running &&
         text.trim().isNotEmpty &&
         text.length <= kWarnReasonMaxLength;
-    final accent = ChatType.Twitch.brandColor ??
+    final accent =
+        ChatType.Twitch.brandColor ??
         Theme.of(context).cupertinoOverrideTheme?.primaryColor ??
         Theme.of(context).colorScheme.primary;
 
@@ -414,22 +409,21 @@ class _ModActionSheetState extends State<ModActionSheet> {
               width: kNativeChatDockControlSize,
               height: kNativeChatDockControlSize,
               decoration: BoxDecoration(
-                color:
-                    canSend ? accent : accent.withValues(alpha: 0.35),
+                color: canSend ? accent : accent.withValues(alpha: 0.35),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
               child: this._running
                   ? (StylingHelper.isApple(context)
-                      ? const CupertinoActivityIndicator(radius: 8.0)
-                      : const SizedBox(
-                          width: 16.0,
-                          height: 16.0,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                            color: Colors.white,
-                          ),
-                        ))
+                        ? const CupertinoActivityIndicator(radius: 8.0)
+                        : const SizedBox(
+                            width: 16.0,
+                            height: 16.0,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              color: Colors.white,
+                            ),
+                          ))
                   : const Icon(
                       CupertinoIcons.paperplane_fill,
                       size: 17.0,
@@ -445,10 +439,8 @@ class _ModActionSheetState extends State<ModActionSheet> {
   void _sendWarn() {
     final event = this.widget.event;
     this._run(
-      () => this._store.warnUser(
-            event.chatterUserId,
-            this._warnController.text,
-          ),
+      () =>
+          this._store.warnUser(event.chatterUserId, this._warnController.text),
       'Could not warn the user',
     );
   }
@@ -461,14 +453,13 @@ class _ModActionSheetState extends State<ModActionSheet> {
     required String label,
     required VoidCallback onTap,
     bool destructive = false,
-  }) =>
-      chatActionRowCard(
-        context,
-        icon: icon,
-        label: label,
-        destructive: destructive,
-        onTap: this._running ? null : onTap,
-      );
+  }) => chatActionRowCard(
+    context,
+    icon: icon,
+    label: label,
+    destructive: destructive,
+    onTap: this._running ? null : onTap,
+  );
 }
 
 /// Shared action-row card idiom (connection sheet / mod sheet): container
@@ -483,10 +474,9 @@ Widget chatActionRowCard(
 }) {
   final Color color = destructive
       ? (Theme.of(context).extension<AppStatusColors>() ??
-              AppStatusColors.standard)
-          .unreachable
-      : Theme.of(context).textTheme.bodyMedium?.color ??
-          CupertinoColors.label;
+                AppStatusColors.standard)
+            .unreachable
+      : Theme.of(context).textTheme.bodyMedium?.color ?? CupertinoColors.label;
   return Pressable(
     haptic: true,
     onTap: onTap,
@@ -509,10 +499,9 @@ Widget chatActionRowCard(
           const SizedBox(width: AppSpacing.sm),
           Text(
             label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: color),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: color),
           ),
         ],
       ),

@@ -67,8 +67,8 @@ class TwitchIrcSidecar {
     required this.onFirstMessage,
     WebSocketChannel Function(Uri)? channelFactory,
     Future<void> Function(Duration)? sleep,
-  })  : _channelFactory = channelFactory ?? WebSocketChannel.connect,
-        _sleep = sleep ?? Future.delayed;
+  }) : _channelFactory = channelFactory ?? WebSocketChannel.connect,
+       _sleep = sleep ?? Future.delayed;
 
   Future<void> connect({
     required String accessToken,

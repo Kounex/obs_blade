@@ -56,11 +56,14 @@ class OverlayHandler {
       /// manually from anywhere with the [closeAnyOverlay] function where all timers
       /// are canceled as well)
       _currentOverlayTimer = Timer(
-          Duration(
-              milliseconds: delayDuration.inMilliseconds +
-                  showDuration.inMilliseconds +
-                  2 * kAnimationDuration.inMilliseconds),
-          () => OverlayHandler.closeAnyOverlay());
+        Duration(
+          milliseconds:
+              delayDuration.inMilliseconds +
+              showDuration.inMilliseconds +
+              2 * kAnimationDuration.inMilliseconds,
+        ),
+        () => OverlayHandler.closeAnyOverlay(),
+      );
     }
   }
 
@@ -78,7 +81,8 @@ class OverlayHandler {
       _currentOverlayEntry = null;
     } catch (e) {
       throw Exception(
-          'Could not handle "closeAnyOverlay" (utils/overlay_handler.dart) | $e');
+        'Could not handle "closeAnyOverlay" (utils/overlay_handler.dart) | $e',
+      );
     }
   }
 
@@ -88,16 +92,15 @@ class OverlayHandler {
   static OverlayEntry _getStatusOverlay({
     required Widget content,
     required Duration showDuration,
-  }) =>
-      OverlayEntry(
-        builder: (context) => Material(
-          type: MaterialType.transparency,
-          child: FullOverlay(
-            key: _fullOverlayKey,
-            content: content,
-            showDuration: showDuration,
-            animationDuration: kAnimationDuration,
-          ),
-        ),
-      );
+  }) => OverlayEntry(
+    builder: (context) => Material(
+      type: MaterialType.transparency,
+      child: FullOverlay(
+        key: _fullOverlayKey,
+        content: content,
+        showDuration: showDuration,
+        animationDuration: kAnimationDuration,
+      ),
+    ),
+  );
 }

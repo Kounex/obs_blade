@@ -67,8 +67,9 @@ class NativeChatOptionsButton extends StatelessWidget {
               ? const EdgeInsets.symmetric(horizontal: AppSpacing.sm)
               : EdgeInsets.zero,
           decoration: BoxDecoration(
-            color:
-                StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+            color: StylingHelper.lightenDarkenColor(
+              Theme.of(context).cardColor,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -80,10 +81,7 @@ class NativeChatOptionsButton extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      CupertinoIcons.slider_horizontal_3,
-                      size: 18.0,
-                    ),
+                    const Icon(CupertinoIcons.slider_horizontal_3, size: 18.0),
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.xs,
@@ -91,28 +89,29 @@ class NativeChatOptionsButton extends StatelessWidget {
                       child: Container(
                         width: 1.0,
                         height: 16.0,
-                        color: Theme.of(context)
-                            .dividerColor
-                            .withValues(alpha: 0.55),
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.55),
                       ),
                     ),
-                    const Icon(
-                      CupertinoIcons.shield,
-                      size: 18.0,
-                    ),
+                    const Icon(CupertinoIcons.shield, size: 18.0),
                   ],
                 )
-              : const Icon(
-                  CupertinoIcons.slider_horizontal_3,
-                  size: 18.0,
-                ),
+              : const Icon(CupertinoIcons.slider_horizontal_3, size: 18.0),
         ),
       ),
     );
   }
 }
 
-enum _OptionsPage { root, appearance, emotes, badges, eventMessages, debugSamples }
+enum _OptionsPage {
+  root,
+  appearance,
+  emotes,
+  badges,
+  eventMessages,
+  debugSamples,
+}
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
@@ -188,10 +187,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
               _OptionsPage.appearance => _AppearancePage(onBack: this._back),
               _OptionsPage.emotes => _EmotesPage(onBack: this._back),
               _OptionsPage.badges => _BadgesPage(onBack: this._back),
-              _OptionsPage.eventMessages =>
-                _EventMessagesPage(onBack: this._back),
-              _OptionsPage.debugSamples =>
-                _DebugSamplesPage(onBack: this._back),
+              _OptionsPage.eventMessages => _EventMessagesPage(
+                onBack: this._back,
+              ),
+              _OptionsPage.debugSamples => _DebugSamplesPage(
+                onBack: this._back,
+              ),
             },
           ],
         ),
@@ -204,10 +205,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Native chat options',
-          style: nativeChatSheetTitleStyle(context),
-        ),
+        Text('Native chat options', style: nativeChatSheetTitleStyle(context)),
         const SizedBox(height: AppSpacing.sm),
         if (this._isTwitch && this.widget.modFoldedIntoOptions)
           this._foldedModCard(context),
@@ -236,13 +234,11 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             subtitle: 'Subs, raids, streaks, and similar system lines',
             onTap: () => this._open(_OptionsPage.eventMessages),
           ),
-          if (kDebugMode &&
-              GetIt.instance.isRegistered<TwitchChatStore>())
+          if (kDebugMode && GetIt.instance.isRegistered<TwitchChatStore>())
             this._navRow(
               context,
               label: 'Debug samples',
-              subtitle:
-                  'Inject crafted messages (GIF, power-up, shared chat)',
+              subtitle: 'Inject crafted messages (GIF, power-up, shared chat)',
               onTap: () => this._open(_OptionsPage.debugSamples),
             ),
         ],
@@ -303,9 +299,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                       children: [
                         Text(
                           'Channel moderation',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
+                          style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 2.0),
@@ -343,14 +337,11 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
         contentPadding: EdgeInsets.zero,
         title: Text(
           label,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
         ),
-        subtitle: Text(
-          subtitle,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16.0),
       ),
     );
@@ -408,9 +399,9 @@ class _PageScaffold extends StatelessWidget {
                     child: Text(
                       'Reset',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -418,10 +409,7 @@ class _PageScaffold extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(
-          this.description,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(this.description, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: AppSpacing.sm),
         ...this.children,
       ],
@@ -486,20 +474,16 @@ class _AppearancePage extends StatelessWidget {
               value: textSize,
               min: NativeChatAppearance.textSizeMin,
               max: NativeChatAppearance.textSizeMax,
-              onChanged: (v) => settingsBox.put(
-                SettingsKeys.TwitchChatTextSize.name,
-                v,
-              ),
+              onChanged: (v) =>
+                  settingsBox.put(SettingsKeys.TwitchChatTextSize.name, v),
             ),
             _AppearanceSlider(
               label: 'Emote size',
               value: emoteSize,
               min: NativeChatAppearance.emoteSizeMin,
               max: NativeChatAppearance.emoteSizeMax,
-              onChanged: (v) => settingsBox.put(
-                SettingsKeys.TwitchChatEmoteSize.name,
-                v,
-              ),
+              onChanged: (v) =>
+                  settingsBox.put(SettingsKeys.TwitchChatEmoteSize.name, v),
             ),
             _AppearanceSlider(
               label: 'Message spacing',
@@ -543,7 +527,8 @@ class _AppearancePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColors = Theme.of(context).extension<AppStatusColors>() ??
+    final statusColors =
+        Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     return Container(
       key: const Key('appearance-preview'),
@@ -561,9 +546,9 @@ class _AppearancePreview extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
         child: Text.rich(
           TextSpan(
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontSize: this.textSize,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontSize: this.textSize),
             children: [
               TextSpan(
                 text: 'Streamer',
@@ -626,9 +611,9 @@ class _AppearanceSlider extends StatelessWidget {
             Text(
               this.value.round().toString(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: scheme.primary,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: scheme.primary,
+              ),
             ),
           ],
         ),
@@ -676,10 +661,8 @@ class _EmotesPage extends StatelessWidget {
         description:
             'Choose whether 7TV and BTTV emotes render inline in chat.',
         onBack: this.onBack,
-        onReset: () => settingsBox.put(
-          SettingsKeys.TwitchChatThirdPartyEmotes.name,
-          true,
-        ),
+        onReset: () =>
+            settingsBox.put(SettingsKeys.TwitchChatThirdPartyEmotes.name, true),
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
@@ -723,8 +706,7 @@ class _BadgesPage extends StatelessWidget {
         final rows = NativeChatOptionsSheet.twitchBadgeRows;
         return _PageScaffold(
           title: 'Badges',
-          description:
-              'Show or hide badge categories next to chatter names.',
+          description: 'Show or hide badge categories next to chatter names.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
@@ -734,12 +716,8 @@ class _BadgesPage extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(rows[i].$1),
                 trailing: BaseAdaptiveSwitch(
-                  value: settingsBox.get(
-                    rows[i].$2.name,
-                    defaultValue: true,
-                  ),
-                  onChanged: (value) =>
-                      settingsBox.put(rows[i].$2.name, value),
+                  value: settingsBox.get(rows[i].$2.name, defaultValue: true),
+                  onChanged: (value) => settingsBox.put(rows[i].$2.name, value),
                 ),
               ),
             ],
@@ -784,12 +762,8 @@ class _EventMessagesPage extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: Text(rows[i].$1),
                 trailing: BaseAdaptiveSwitch(
-                  value: settingsBox.get(
-                    rows[i].$2.name,
-                    defaultValue: true,
-                  ),
-                  onChanged: (value) =>
-                      settingsBox.put(rows[i].$2.name, value),
+                  value: settingsBox.get(rows[i].$2.name, defaultValue: true),
+                  onChanged: (value) => settingsBox.put(rows[i].$2.name, value),
                 ),
               ),
             ],
@@ -828,8 +802,9 @@ class _DebugSamplesPage extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             onTap: () {
-              GetIt.instance<TwitchChatStore>()
-                  .debugInjectMessage(samples[i].event);
+              GetIt.instance<TwitchChatStore>().debugInjectMessage(
+                samples[i].event,
+              );
               Navigator.of(context).pop();
             },
           ),

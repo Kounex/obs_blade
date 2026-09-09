@@ -45,10 +45,10 @@ class TwitchDeviceCodeDialog extends StatelessWidget {
         return BaseAdaptiveDialog(
           title: 'Connect Twitch',
           bodyWidget: switch (store.authState) {
-            TwitchAuthState.awaitingAuthorization =>
-              _CodeEntryState(store: store),
-            TwitchAuthState.loggingIn =>
-              const _ProgressState('Finishing up…'),
+            TwitchAuthState.awaitingAuthorization => _CodeEntryState(
+              store: store,
+            ),
+            TwitchAuthState.loggingIn => const _ProgressState('Finishing up…'),
             TwitchAuthState.error => _ErrorState(store: store),
             _ => const _ProgressState('Contacting Twitch…'),
           },
@@ -112,8 +112,10 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
   @override
   Widget build(BuildContext context) {
     final code = this.widget.store.pendingUserCode ?? '…';
-    final uri = Uri.parse(this.widget.store.pendingVerificationUri ??
-        'https://www.twitch.tv/activate');
+    final uri = Uri.parse(
+      this.widget.store.pendingVerificationUri ??
+          'https://www.twitch.tv/activate',
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -138,10 +140,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
             ),
             child: Text(
               code,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(letterSpacing: 2.0),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(letterSpacing: 2.0),
             ),
           ),
         ),
@@ -158,10 +159,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
               const SizedBox(width: AppSpacing.xs / 2),
               Text(
                 'Copied to clipboard',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: CupertinoColors.activeGreen),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: CupertinoColors.activeGreen,
+                ),
               ),
             ],
           )
@@ -189,10 +189,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
             ),
             child: Text(
               'Open Twitch',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.white),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
           ),
         ),

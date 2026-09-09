@@ -94,10 +94,7 @@ class _CountUpTextState extends State<CountUpText>
     TextStyle style = const TextStyle(fontFeatures: kTabularFigures);
     if (this.widget.style != null) {
       style = this.widget.style!.copyWith(
-        fontFeatures: [
-          ...?this.widget.style!.fontFeatures,
-          ...kTabularFigures,
-        ],
+        fontFeatures: [...?this.widget.style!.fontFeatures, ...kTabularFigures],
       );
     }
 
@@ -108,8 +105,9 @@ class _CountUpTextState extends State<CountUpText>
         final double? from = _from;
         final double? to = _to;
         if (from != null && to != null && _controller.value < 1.0) {
-          text = (from + (to - from) * _curved.value)
-              .toStringAsFixed(_fractionDigits);
+          text = (from + (to - from) * _curved.value).toStringAsFixed(
+            _fractionDigits,
+          );
         }
         return Text(
           text,

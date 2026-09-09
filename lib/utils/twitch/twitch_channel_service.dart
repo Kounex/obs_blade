@@ -25,15 +25,14 @@ List<TwitchChannelRef> sortChannelPickerRefs(
 }) {
   final indexed = refs.asMap().entries.toList();
   indexed.sort((a, b) {
-    final cmp = channelPickerSortRank(
-      a.value.id,
-      liveIds: liveIds,
-      modIds: modIds,
-    ).compareTo(channelPickerSortRank(
-      b.value.id,
-      liveIds: liveIds,
-      modIds: modIds,
-    ));
+    final cmp =
+        channelPickerSortRank(
+          a.value.id,
+          liveIds: liveIds,
+          modIds: modIds,
+        ).compareTo(
+          channelPickerSortRank(b.value.id, liveIds: liveIds, modIds: modIds),
+        );
     if (cmp != 0) return cmp;
     return a.key.compareTo(b.key);
   });
@@ -46,10 +45,10 @@ List<TwitchChannelSearchResult> sortChannelSearchResults(
   required Set<String> modIds,
 }) {
   int rank(TwitchChannelSearchResult result) => channelPickerSortRank(
-        result.id,
-        liveIds: result.isLive ? {result.id} : const {},
-        modIds: modIds,
-      );
+    result.id,
+    liveIds: result.isLive ? {result.id} : const {},
+    modIds: modIds,
+  );
   final indexed = results.asMap().entries.toList();
   indexed.sort((a, b) {
     final cmp = rank(a.value).compareTo(rank(b.value));
@@ -70,15 +69,16 @@ class TwitchChannelService {
   final http.Client _client;
 
   TwitchChannelService({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   Future<List<TwitchChannelSearchResult>> searchChannels({
     required String accessToken,
     required String query,
   }) async {
     final response = await this._client.get(
-      Uri.parse('$kTwitchHelixBase/search/channels')
-          .replace(queryParameters: {'query': query, 'first': '20'}),
+      Uri.parse(
+        '$kTwitchHelixBase/search/channels',
+      ).replace(queryParameters: {'query': query, 'first': '20'}),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) {
@@ -124,8 +124,7 @@ class TwitchChannelService {
           statusCode: response.statusCode,
         );
       }
-      final data =
-          (json.decode(response.body) as Map<String, dynamic>)['data'];
+      final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
       if (data is! List) continue;
       for (final entry in data) {
         final map = entry as Map<String, dynamic>;
@@ -147,8 +146,9 @@ class TwitchChannelService {
   }) async {
     return this._pagedRefs(
       accessToken,
-      Uri.parse('$kTwitchHelixBase/moderation/channels')
-          .replace(queryParameters: {'user_id': userId, 'first': '100'}),
+      Uri.parse(
+        '$kTwitchHelixBase/moderation/channels',
+      ).replace(queryParameters: {'user_id': userId, 'first': '100'}),
       'Fetching moderated channels failed',
     );
   }
@@ -161,8 +161,9 @@ class TwitchChannelService {
   }) async {
     return this._pagedRefs(
       accessToken,
-      Uri.parse('$kTwitchHelixBase/channels/followed')
-          .replace(queryParameters: {'user_id': userId, 'first': '100'}),
+      Uri.parse(
+        '$kTwitchHelixBase/channels/followed',
+      ).replace(queryParameters: {'user_id': userId, 'first': '100'}),
       'Fetching followed channels failed',
     );
   }
@@ -180,10 +181,9 @@ class TwitchChannelService {
     for (var page = 0; page < 2; page++) {
       final uri = cursor == null
           ? firstPage
-          : firstPage.replace(queryParameters: {
-              ...firstPage.queryParameters,
-              'after': cursor,
-            });
+          : firstPage.replace(
+              queryParameters: {...firstPage.queryParameters, 'after': cursor},
+            );
       final response = await this._client.get(
         uri,
         headers: TwitchAuthService.helixHeaders(accessToken),
@@ -198,12 +198,13 @@ class TwitchChannelService {
       final decoded = json.decode(response.body) as Map<String, dynamic>;
       final data = decoded['data'];
       if (data is List) {
-        refs.addAll(data.map(
-          (entry) => _refFromJson(entry as Map<String, Object?>),
-        ));
+        refs.addAll(
+          data.map((entry) => _refFromJson(entry as Map<String, Object?>)),
+        );
       }
-      cursor = (decoded['pagination'] as Map<String, dynamic>?)?['cursor']
-          as String?;
+      cursor =
+          (decoded['pagination'] as Map<String, dynamic>?)?['cursor']
+              as String?;
       if (cursor == null || data is! List || data.isEmpty) break;
     }
     return refs;

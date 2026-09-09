@@ -23,14 +23,13 @@ import '../twitch_device_code_dialog.dart';
 void showAddChatSheet(
   BuildContext context, {
   TwitchChannelService? channelService,
-}) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
-      builder: (context) => AddChatSheet(channelService: channelService),
-    );
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (context) => AddChatSheet(channelService: channelService),
+);
 
 /// "Add chat" picker (multi-chat): find another streamer's channel and add
 /// it to the native chat. A debounced search field queries Helix Search
@@ -79,9 +78,9 @@ class _AddChatSheetState extends State<AddChatSheet> {
 
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
 
-  String? get _accessToken => Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name)
-      .get(TwitchAuth.kBoxKey)
-      ?.accessToken;
+  String? get _accessToken => Hive.box<TwitchAuth>(
+    HiveKeys.TwitchAuth.name,
+  ).get(TwitchAuth.kBoxKey)?.accessToken;
 
   @override
   void initState() {
@@ -124,9 +123,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
       if (token == null || userId == null) {
         throw StateError('Not logged in');
       }
-      final refs = await this
-          ._channelService
-          .getModeratedChannels(accessToken: token, userId: userId);
+      final refs = await this._channelService.getModeratedChannels(
+        accessToken: token,
+        userId: userId,
+      );
       final liveCounts = await this._liveViewerCountsFor(
         token,
         refs.map((ref) => ref.id),
@@ -164,9 +164,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
       if (token == null || userId == null) {
         throw StateError('Not logged in');
       }
-      final refs = await this
-          ._channelService
-          .getFollowedChannels(accessToken: token, userId: userId);
+      final refs = await this._channelService.getFollowedChannels(
+        accessToken: token,
+        userId: userId,
+      );
       final liveCounts = await this._liveViewerCountsFor(
         token,
         refs.map((ref) => ref.id),
@@ -220,9 +221,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
     });
     try {
       if (token == null) throw StateError('Not logged in');
-      final results = await this
-          ._channelService
-          .searchChannels(accessToken: token, query: query);
+      final results = await this._channelService.searchChannels(
+        accessToken: token,
+        query: query,
+      );
       final sorted = sortChannelSearchResults(
         results,
         modIds: this._store.moderatedChannelIds.toSet(),
@@ -265,8 +267,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
   @override
   Widget build(BuildContext context) {
     final store = this._store;
-    final locked =
-        !store.canReadModeratedChannels || !store.canReadFollows;
+    final locked = !store.canReadModeratedChannels || !store.canReadFollows;
     final listMaxHeight = MediaQuery.sizeOf(context).height * 0.45;
 
     return Padding(
@@ -281,10 +282,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           nativeChatSheetDragHandle(context),
-          Text(
-            'Add chat',
-            style: nativeChatSheetTitleStyle(context),
-          ),
+          Text('Add chat', style: nativeChatSheetTitleStyle(context)),
           Padding(
             padding: const EdgeInsets.only(
               top: AppSpacing.sm,
@@ -344,9 +342,9 @@ class _AddChatSheetState extends State<AddChatSheet> {
                     child: Text(
                       'Re-login',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -377,6 +375,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
             onRetry: this._loadModerated,
             refs: this._moderated,
             liveViewers: this._moderatedLiveViewers,
+
             /// Section header already means mod — no Mod chip here.
             showModChip: false,
             store: store,
@@ -442,7 +441,8 @@ class _AddChatSheetState extends State<AddChatSheet> {
             id: result.id,
             displayName: result.displayName,
             subtitle: _searchSubtitle(result),
-            live: result.isLive || this._searchLiveViewers.containsKey(result.id),
+            live:
+                result.isLive || this._searchLiveViewers.containsKey(result.id),
             viewerCount: this._searchLiveViewers[result.id],
             mod: modIds.contains(result.id),
             added: this._isAdded(store, ownId, result.id),
@@ -460,12 +460,9 @@ class _AddChatSheetState extends State<AddChatSheet> {
   }
 
   Widget _sectionHeader(BuildContext context, String title) => Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-        child: Text(
-          title,
-          style: nativeChatSheetSectionStyle(context),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+    child: Text(title, style: nativeChatSheetSectionStyle(context)),
+  );
 
   Widget _sectionBody(
     BuildContext context, {
@@ -489,10 +486,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
     if (refs.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-        child: Text(
-          'None',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        child: Text('None', style: Theme.of(context).textTheme.bodySmall),
       );
     }
     final modIds = store.moderatedChannelIds;
@@ -542,9 +536,9 @@ class _AddChatSheetState extends State<AddChatSheet> {
               child: Text(
                 'Retry',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -555,8 +549,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
   /// store dedupes by id, but adding yourself would duplicate the own
   /// channel in the dropdown).
   bool _isAdded(TwitchChatStore store, String? ownId, String id) =>
-      id == ownId ||
-      store.channels.any((channel) => channel.id == id);
+      id == ownId || store.channels.any((channel) => channel.id == id);
 
   Widget _channelRow(
     BuildContext context, {
@@ -570,14 +563,16 @@ class _AddChatSheetState extends State<AddChatSheet> {
     bool mod = false,
     required VoidCallback onAdd,
   }) {
-    final statusColors = Theme.of(context).extension<AppStatusColors>() ??
+    final statusColors =
+        Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     return Pressable(
       haptic: true,
       onTap: added ? null : onAdd,
       child: Container(
-        constraints:
-            const BoxConstraints(minHeight: kMinInteractiveDimensionCupertino),
+        constraints: const BoxConstraints(
+          minHeight: kMinInteractiveDimensionCupertino,
+        ),
         alignment: Alignment.centerLeft,
         child: Opacity(
           opacity: added ? 0.5 : 1.0,
@@ -605,6 +600,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
                   ],
                 ),
               ),
+
               /// Reserved check slot left of LIVE so viewer chips share a
               /// column whether or not the channel is already added.
               SizedBox(

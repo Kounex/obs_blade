@@ -40,18 +40,16 @@ class YouTubeChatOptionsButton extends StatelessWidget {
             minHeight: kMinInteractiveDimensionCupertino,
           ),
           decoration: BoxDecoration(
-            color:
-                StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+            color: StylingHelper.lightenDarkenColor(
+              Theme.of(context).cardColor,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
               width: 0.0,
             ),
           ),
-          child: const Icon(
-            CupertinoIcons.slider_horizontal_3,
-            size: 18.0,
-          ),
+          child: const Icon(CupertinoIcons.slider_horizontal_3, size: 18.0),
         ),
       ),
     );
@@ -83,10 +81,10 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
   }) {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
-                AppStatusColors.standard)
-            .unreachable
+                  AppStatusColors.standard)
+              .unreachable
         : Theme.of(context).textTheme.bodyMedium?.color ??
-            CupertinoColors.label;
+              CupertinoColors.label;
     return Pressable(
       haptic: true,
       onTap: onTap,
@@ -96,16 +94,13 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
         title: Text(
           label,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
         ),
         subtitle: subtitle == null
             ? null
-            : Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+            : Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16.0),
       ),
     );
@@ -138,8 +133,7 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
                   return this._navRow(
                     context,
                     icon: CupertinoIcons.square_arrow_right,
-                    label:
-                        'Sign out ${store.selfChannelTitle ?? 'YouTube'}',
+                    label: 'Sign out ${store.selfChannelTitle ?? 'YouTube'}',
                     destructive: true,
                     onTap: () => this._popThen(
                       context,
@@ -194,9 +188,8 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
                 barrierDismissible: true,
                 enableDrag: true,
                 maxHeightFraction: 0.72,
-                builder: (_) => const NativeChatOptionsSheet(
-                  chatType: ChatType.YouTube,
-                ),
+                builder: (_) =>
+                    const NativeChatOptionsSheet(chatType: ChatType.YouTube),
               ),
             ),
           ),

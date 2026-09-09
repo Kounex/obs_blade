@@ -60,8 +60,14 @@ class HiddenSceneItem extends HiveObject {
     this.host,
   );
 
-  bool isSceneItem(String sceneName, SceneItemType type, int? id,
-          String sourceName, String? connectionName, String? host) =>
+  bool isSceneItem(
+    String sceneName,
+    SceneItemType type,
+    int? id,
+    String sourceName,
+    String? connectionName,
+    String? host,
+  ) =>
       this.sceneName == sceneName &&
       this.type == type &&
       this.id == id &&

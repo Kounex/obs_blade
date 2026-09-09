@@ -135,10 +135,13 @@ abstract class _DashboardStore with Store {
   ObservableList<SceneItem> currentSceneItems = ObservableList();
 
   @computed
-  ObservableList<SceneItem> get mediaSceneItems =>
-      ObservableList.of(this.currentSceneItems.where((sceneItem) =>
+  ObservableList<SceneItem> get mediaSceneItems => ObservableList.of(
+    this.currentSceneItems.where(
+      (sceneItem) =>
           (sceneItem.inputKind?.toLowerCase().contains('ffmpeg') ?? false) &&
-          (sceneItem.sceneItemEnabled ?? false)));
+          (sceneItem.sceneItemEnabled ?? false),
+    ),
+  );
 
   /// Will contain all inputs returned by [GetInputList] which will even contian
   /// special inputs etc.
@@ -153,18 +156,22 @@ abstract class _DashboardStore with Store {
   /// individual scenes
   @computed
   ObservableList<Input> get currentInputs => ObservableList.of(
-        this.allInputs.where((input) => this
-            .globalInputNames
-            .every((globalInputName) => globalInputName != input.inputName)),
-      );
+    this.allInputs.where(
+      (input) => this.globalInputNames.every(
+        (globalInputName) => globalInputName != input.inputName,
+      ),
+    ),
+  );
 
   /// "Special" audio inputs produced by global entities like Desktop or Mic
   @computed
   ObservableList<Input> get globalInputs => ObservableList.of(
-        this.allInputs.where((input) => this
-            .globalInputNames
-            .any((globalInputName) => globalInputName == input.inputName)),
-      );
+    this.allInputs.where(
+      (input) => this.globalInputNames.any(
+        (globalInputName) => globalInputName == input.inputName,
+      ),
+    ),
+  );
 
   @observable
   Transition? currentTransition;
@@ -340,10 +347,9 @@ abstract class _DashboardStore with Store {
   /// Scene name whose items the dashboard is currently showing (preview in
   /// studio mode when exposed, otherwise program).
   String? get _displayedSceneName {
-    final exposeStudio = Hive.box(HiveKeys.Settings.name).get(
-      SettingsKeys.ExposeStudioControls.name,
-      defaultValue: false,
-    );
+    final exposeStudio = Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.ExposeStudioControls.name, defaultValue: false);
     if (exposeStudio && this.studioMode) {
       return this.studioModePreviewSceneName ?? this.activeSceneName;
     }
@@ -369,24 +375,26 @@ abstract class _DashboardStore with Store {
 
   void handleStream() {
     _obsStreamSubscription?.cancel();
-    _obsStreamSubscription =
-        GetIt.instance<NetworkStore>().watchOBSStream().listen((message) {
-      try {
-        if (_handleRequestsEvents ||
-            (message is BaseEvent &&
-                message.eventType == EventType.CurrentSceneCollectionChanged)) {
-          if (message is BaseEvent) {
-            _handleEvent(message);
-          } else if (message is BaseResponse) {
-            _handleResponse(message);
-          } else if (message is BaseBatchResponse) {
-            _handleBatchResponse(message);
+    _obsStreamSubscription = GetIt.instance<NetworkStore>()
+        .watchOBSStream()
+        .listen((message) {
+          try {
+            if (_handleRequestsEvents ||
+                (message is BaseEvent &&
+                    message.eventType ==
+                        EventType.CurrentSceneCollectionChanged)) {
+              if (message is BaseEvent) {
+                _handleEvent(message);
+              } else if (message is BaseResponse) {
+                _handleResponse(message);
+              } else if (message is BaseBatchResponse) {
+                _handleBatchResponse(message);
+              }
+            }
+          } catch (e) {
+            GeneralHelper.advLog(e);
           }
-        }
-      } catch (e) {
-        GeneralHelper.advLog(e);
-      }
-    });
+        });
   }
 
   /// Cancel timers and the OBS message subscription (e.g. when leaving
@@ -398,19 +406,21 @@ abstract class _DashboardStore with Store {
   }
 
   void _requestPreviewImage() => NetworkHelper.makeRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestType.GetSourceScreenshot,
-        {
-          'sourceName': Hive.box(HiveKeys.Settings.name).get(
-                      SettingsKeys.ExposeStudioControls.name,
-                      defaultValue: false) &&
-                  this.studioMode
-              ? this.studioModePreviewSceneName
-              : this.activeSceneName,
-          'imageFormat': this.previewFileFormat,
-          'compressionQuality': -1,
-        },
-      );
+    GetIt.instance<NetworkStore>().activeSession!.socket,
+    RequestType.GetSourceScreenshot,
+    {
+      'sourceName':
+          Hive.box(HiveKeys.Settings.name).get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false,
+              ) &&
+              this.studioMode
+          ? this.studioModePreviewSceneName
+          : this.activeSceneName,
+      'imageFormat': this.previewFileFormat,
+      'compressionQuality': -1,
+    },
+  );
 
   /// Periodically polls the OBS, stream and record stats by making use
   /// of the batch request capabilities every second since we don't receive
@@ -437,8 +447,9 @@ abstract class _DashboardStore with Store {
   /// instance (indicating new stream) or we use the last one since it
   /// seems as this is the same stream we already were connected to
   Future<void> _manageStreamDataInit() async {
-    Box<PastStreamData> pastStreamDataBox =
-        Hive.box<PastStreamData>(HiveKeys.PastStreamData.name);
+    Box<PastStreamData> pastStreamDataBox = Hive.box<PastStreamData>(
+      HiveKeys.PastStreamData.name,
+    );
     List<PastStreamData> tmp = pastStreamDataBox.values.toList();
 
     /// Sort ascending so the last entry is the latest stream
@@ -463,8 +474,9 @@ abstract class _DashboardStore with Store {
   /// instance (indicating new recording) or we use the last one since it
   /// seems as this is the same recording we already were connected to
   Future<void> _manageRecordDataInit() async {
-    Box<PastRecordData> pastRecordDataBox =
-        Hive.box<PastRecordData>(HiveKeys.PastRecordData.name);
+    Box<PastRecordData> pastRecordDataBox = Hive.box<PastRecordData>(
+      HiveKeys.PastRecordData.name,
+    );
     List<PastRecordData> tmp = pastRecordDataBox.values.toList();
 
     /// Sort ascending so the last entry is the latest stream
@@ -541,8 +553,9 @@ abstract class _DashboardStore with Store {
   /// different value)
   bool _filterSettingsUnchanged(List<Map<String, dynamic>> filterObjects) =>
       this.currentSceneItems.every((sceneItem) {
-        final filterObject = filterObjects.firstWhere((filterObject) =>
-            filterObject['sourceName'] == sceneItem.sourceName);
+        final filterObject = filterObjects.firstWhere(
+          (filterObject) => filterObject['sourceName'] == sceneItem.sourceName,
+        );
 
         if (sceneItem.filters.length !=
             (filterObject['response'] as GetSourceFilterListResponse)
@@ -553,10 +566,11 @@ abstract class _DashboardStore with Store {
 
         return sceneItem.filters.every((filter) {
           final responseFilter =
-              (filterObject['response'] as GetSourceFilterListResponse)
-                  .filters
-                  .firstWhere((responseFilter) =>
-                      responseFilter.filterName == filter.filterName);
+              (filterObject['response'] as GetSourceFilterListResponse).filters
+                  .firstWhere(
+                    (responseFilter) =>
+                        responseFilter.filterName == filter.filterName,
+                  );
 
           if (filter.filterSettings.length !=
               responseFilter.filterSettings.length) {
@@ -566,8 +580,10 @@ abstract class _DashboardStore with Store {
           return filter.filterSettings.entries.every((filterSetting) {
             return filterSetting.value ==
                 responseFilter.filterSettings.entries
-                    .firstWhere((responseFilterSetting) =>
-                        responseFilterSetting.key == filterSetting.key)
+                    .firstWhere(
+                      (responseFilterSetting) =>
+                          responseFilterSetting.key == filterSetting.key,
+                    )
                     .value;
           });
         });
@@ -584,18 +600,22 @@ abstract class _DashboardStore with Store {
     Filter filter,
   ) {
     final defaultFilter = _defaultFilters.firstWhere(
-        (defaultFilter) => defaultFilter.filterKind == filter.filterKind);
+      (defaultFilter) => defaultFilter.filterKind == filter.filterKind,
+    );
 
-    filterSettings.removeWhere((key, value) =>
-        (!responseFilterSettings.containsKey(key) &&
-            !defaultFilter.filterSettings.containsKey(key)));
+    filterSettings.removeWhere(
+      (key, value) =>
+          (!responseFilterSettings.containsKey(key) &&
+          !defaultFilter.filterSettings.containsKey(key)),
+    );
   }
 
   Filter _populateFiltersWithDefaults(Filter filter) {
     try {
       final defaultFilterSettings = _defaultFilters
           .firstWhere(
-              (defaultFilter) => defaultFilter.filterKind == filter.filterKind)
+            (defaultFilter) => defaultFilter.filterKind == filter.filterKind,
+          )
           .filterSettings;
 
       final filterSettings = <String, dynamic>{}..addAll(filter.filterSettings);
@@ -607,7 +627,9 @@ abstract class _DashboardStore with Store {
       /// correct one.
       for (final defaultFilterSetting in defaultFilterSettings.entries) {
         filterSettings.putIfAbsent(
-            defaultFilterSetting.key, () => defaultFilterSetting.value);
+          defaultFilterSetting.key,
+          () => defaultFilterSetting.value,
+        );
       }
 
       return filter.copyWith(filterSettings: filterSettings);
@@ -622,18 +644,16 @@ abstract class _DashboardStore with Store {
   }
 
   void fetchSceneItemsFilters() => NetworkHelper.makeBatchRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestBatchType.FilterList,
-        this
-            .currentSceneItems
-            .map(
-              (sceneItem) => RequestBatchObject(
-                RequestType.GetSourceFilterList,
-                {'sourceName': sceneItem.sourceName},
-              ),
-            )
-            .toList(),
-      );
+    GetIt.instance<NetworkStore>().activeSession!.socket,
+    RequestBatchType.FilterList,
+    this.currentSceneItems
+        .map(
+          (sceneItem) => RequestBatchObject(RequestType.GetSourceFilterList, {
+            'sourceName': sceneItem.sourceName,
+          }),
+        )
+        .toList(),
+  );
 
   @action
   void init() {
@@ -677,13 +697,12 @@ abstract class _DashboardStore with Store {
       );
 
       while ((Hive.box(HiveKeys.Settings.name).get(
-                  SettingsKeys.UnlimitedReconnects.name,
-                  defaultValue: false) ||
+                SettingsKeys.UnlimitedReconnects.name,
+                defaultValue: false,
+              ) ||
               tries < 5) &&
           (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
-        await Future.delayed(
-          const Duration(seconds: 3),
-        );
+        await Future.delayed(const Duration(seconds: 3));
         closeCode = await GetIt.instance<NetworkStore>().setOBSWebSocket(
           GetIt.instance<NetworkStore>().activeSession!.connection,
           reconnect: true,
@@ -742,15 +761,16 @@ abstract class _DashboardStore with Store {
 
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
-    this.currentSceneItems =
-        ObservableList.of(this.currentSceneItems.map((currentSceneItem) {
-      if (currentSceneItem == sceneItem) {
-        return currentSceneItem.copyWith(
-          displayGroup: !sceneItem.displayGroup,
-        );
-      }
-      return currentSceneItem;
-    }));
+    this.currentSceneItems = ObservableList.of(
+      this.currentSceneItems.map((currentSceneItem) {
+        if (currentSceneItem == sceneItem) {
+          return currentSceneItem.copyWith(
+            displayGroup: !sceneItem.displayGroup,
+          );
+        }
+        return currentSceneItem;
+      }),
+    );
   }
 
   @action
@@ -781,9 +801,7 @@ abstract class _DashboardStore with Store {
       );
     } else {
       if (event.eventType != EventType.InputVolumeMeters) {
-        GeneralHelper.advLog(
-          'Event Incoming: ${event.eventType}',
-        );
+        GeneralHelper.advLog('Event Incoming: ${event.eventType}');
       }
     }
 
@@ -808,6 +826,7 @@ abstract class _DashboardStore with Store {
         this.isVirtualCamActive = virtualCamStateChangedEvent.outputActive;
         break;
       case EventType.CurrentSceneCollectionChanging:
+
         /// OBS: requests during a collection change are undefined / crash-risk.
         _handleRequestsEvents = false;
         _pauseStatsPolling();
@@ -834,8 +853,9 @@ abstract class _DashboardStore with Store {
         SceneCollectionListChangedEvent sceneCollectionListChangedEvent =
             SceneCollectionListChangedEvent(event.jsonRAW);
 
-        this.sceneCollections =
-            ObservableList.of(sceneCollectionListChangedEvent.sceneCollections);
+        this.sceneCollections = ObservableList.of(
+          sceneCollectionListChangedEvent.sceneCollections,
+        );
 
         break;
       case EventType.CurrentProfileChanged:
@@ -865,12 +885,13 @@ abstract class _DashboardStore with Store {
         break;
       case EventType.CurrentSceneTransitionDurationChanged:
         CurrentSceneTransitionDurationChangedEvent
-            currentSceneTransitionDurationChangedEvent =
+        currentSceneTransitionDurationChangedEvent =
             CurrentSceneTransitionDurationChangedEvent(event.jsonRAW);
 
         this.currentTransition = this.currentTransition?.copyWith(
-            transitionDuration:
-                currentSceneTransitionDurationChangedEvent.transitionDuration);
+          transitionDuration:
+              currentSceneTransitionDurationChangedEvent.transitionDuration,
+        );
         break;
       case EventType.StudioModeStateChanged:
         StudioModeStateChangedEvent studioModeStateChangedEvent =
@@ -879,8 +900,9 @@ abstract class _DashboardStore with Store {
         this.studioMode = studioModeStateChangedEvent.studioModeEnabled;
 
         if (Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeStudioControls.name,
-                defaultValue: false) &&
+              SettingsKeys.ExposeStudioControls.name,
+              defaultValue: false,
+            ) &&
             this.studioMode) {
           NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -903,8 +925,9 @@ abstract class _DashboardStore with Store {
             currentPreviewSceneChangedEvent.sceneName;
 
         if (Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeStudioControls.name,
-                defaultValue: false) &&
+              SettingsKeys.ExposeStudioControls.name,
+              defaultValue: false,
+            ) &&
             this.studioMode) {
           _requestDisplayedSceneItems();
         }
@@ -928,47 +951,57 @@ abstract class _DashboardStore with Store {
         InputVolumeChangedEvent inputVolumeChangedEvent =
             InputVolumeChangedEvent(event.jsonRAW);
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          if (input.inputName == inputVolumeChangedEvent.inputName) {
-            return input.copyWith(
-              inputVolumeMul: inputVolumeChangedEvent.inputVolumeMul,
-              inputVolumeDb: inputVolumeChangedEvent.inputVolumeDb,
-            );
-          }
-          return input;
-        }));
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            if (input.inputName == inputVolumeChangedEvent.inputName) {
+              return input.copyWith(
+                inputVolumeMul: inputVolumeChangedEvent.inputVolumeMul,
+                inputVolumeDb: inputVolumeChangedEvent.inputVolumeDb,
+              );
+            }
+            return input;
+          }),
+        );
 
         break;
       case EventType.InputVolumeMeters:
-        InputVolumeMetersEvent inputVolumeMetersEvent =
-            InputVolumeMetersEvent(event.jsonRAW);
+        InputVolumeMetersEvent inputVolumeMetersEvent = InputVolumeMetersEvent(
+          event.jsonRAW,
+        );
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          try {
-            InputLevel inputLevel = inputVolumeMetersEvent.inputs.firstWhere(
-                (inputLevel) => inputLevel.inputName == input.inputName);
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            try {
+              InputLevel inputLevel = inputVolumeMetersEvent.inputs.firstWhere(
+                (inputLevel) => inputLevel.inputName == input.inputName,
+              );
 
-            if (input.inputName == inputLevel.inputName) {
-              return input.copyWith(inputLevelsMul: inputLevel.inputLevelsMul);
-            }
-          } catch (e) {}
+              if (input.inputName == inputLevel.inputName) {
+                return input.copyWith(
+                  inputLevelsMul: inputLevel.inputLevelsMul,
+                );
+              }
+            } catch (e) {}
 
-          return input;
-        }));
+            return input;
+          }),
+        );
 
         break;
       case EventType.InputMuteStateChanged:
         InputMuteStateChangedEvent inputMuteStateChangedEvent =
             InputMuteStateChangedEvent(event.jsonRAW);
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          if (input.inputName == inputMuteStateChangedEvent.inputName) {
-            return input.copyWith(
-              inputMuted: inputMuteStateChangedEvent.inputMuted,
-            );
-          }
-          return input;
-        }));
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            if (input.inputName == inputMuteStateChangedEvent.inputName) {
+              return input.copyWith(
+                inputMuted: inputMuteStateChangedEvent.inputMuted,
+              );
+            }
+            return input;
+          }),
+        );
 
         break;
       case EventType.SceneItemEnableStateChanged:
@@ -976,41 +1009,44 @@ abstract class _DashboardStore with Store {
             SceneItemEnableStateChangedEvent(event.jsonRAW);
 
         /// sceneItemId is only unique within a scene — ignore other scenes.
-        if (sceneItemEnableStateChangedEvent.sceneName !=
-            _displayedSceneName) {
+        if (sceneItemEnableStateChangedEvent.sceneName != _displayedSceneName) {
           break;
         }
 
-        this.currentSceneItems =
-            ObservableList.of(this.currentSceneItems.map((sceneItem) {
-          if (sceneItem.sceneItemId ==
-              sceneItemEnableStateChangedEvent.sceneItemId) {
-            return sceneItem.copyWith(
-              sceneItemEnabled:
-                  sceneItemEnableStateChangedEvent.sceneItemEnabled,
-            );
-          }
-          return sceneItem;
-        }));
+        this.currentSceneItems = ObservableList.of(
+          this.currentSceneItems.map((sceneItem) {
+            if (sceneItem.sceneItemId ==
+                sceneItemEnableStateChangedEvent.sceneItemId) {
+              return sceneItem.copyWith(
+                sceneItemEnabled:
+                    sceneItemEnableStateChangedEvent.sceneItemEnabled,
+              );
+            }
+            return sceneItem;
+          }),
+        );
         break;
       case EventType.InputAudioSyncOffsetChanged:
         InputAudioSyncOffsetChangedEvent inputAudioSyncOffsetChangedEvent =
             InputAudioSyncOffsetChangedEvent(event.jsonRAW);
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          if (input.inputName == inputAudioSyncOffsetChangedEvent.inputName) {
-            return input.copyWith(
-              syncOffset: inputAudioSyncOffsetChangedEvent.inputAudioSyncOffset,
-            );
-          }
-          return input;
-        }));
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            if (input.inputName == inputAudioSyncOffsetChangedEvent.inputName) {
+              return input.copyWith(
+                syncOffset:
+                    inputAudioSyncOffsetChangedEvent.inputAudioSyncOffset,
+              );
+            }
+            return input;
+          }),
+        );
 
         break;
 
       case EventType.SourceFilterEnableStateChanged:
         SourceFilterEnableStateChangedEvent
-            sourceFilterEnableStateChangedEvent =
+        sourceFilterEnableStateChangedEvent =
             SourceFilterEnableStateChangedEvent(event.jsonRAW);
 
         this.currentSceneItems = ObservableList.of(
@@ -1019,16 +1055,17 @@ abstract class _DashboardStore with Store {
                 sceneItem.sourceName ==
                     sourceFilterEnableStateChangedEvent.sourceName) {
               return sceneItem.copyWith(
-                  filters: sceneItem.filters.map((filter) {
-                if (filter.filterName ==
-                    sourceFilterEnableStateChangedEvent.filterName) {
-                  return filter.copyWith(
-                    filterEnabled:
-                        sourceFilterEnableStateChangedEvent.filterEnabled,
-                  );
-                }
-                return filter;
-              }).toList());
+                filters: sceneItem.filters.map((filter) {
+                  if (filter.filterName ==
+                      sourceFilterEnableStateChangedEvent.filterName) {
+                    return filter.copyWith(
+                      filterEnabled:
+                          sourceFilterEnableStateChangedEvent.filterEnabled,
+                    );
+                  }
+                  return filter;
+                }).toList(),
+              );
             }
             return sceneItem;
           }),
@@ -1048,17 +1085,16 @@ abstract class _DashboardStore with Store {
   @action
   void _handleResponse(BaseResponse response) {
     if (response.requestType != RequestType.GetSourceScreenshot) {
-      GeneralHelper.advLog(
-        'Response Incoming: ${(response.requestType)}',
-      );
+      GeneralHelper.advLog('Response Incoming: ${(response.requestType)}');
     }
 
     if (!_obsRequestSucceeded(response)) return;
 
     switch (response.requestType) {
       case RequestType.GetVersion:
-        GetVersionResponse getVersionResponse =
-            GetVersionResponse(response.jsonRAW);
+        GetVersionResponse getVersionResponse = GetVersionResponse(
+          response.jsonRAW,
+        );
 
         if (!getVersionResponse.supportedImageFormats.contains('jpg') &&
             !getVersionResponse.supportedImageFormats.contains('jpeg')) {
@@ -1076,22 +1112,27 @@ abstract class _DashboardStore with Store {
         this.recordDirectory = getRecordDirectoryResponse.recordDirectory;
         break;
       case RequestType.GetSceneList:
-        GetSceneListResponse getSceneListResponse =
-            GetSceneListResponse(response.jsonRAW);
+        GetSceneListResponse getSceneListResponse = GetSceneListResponse(
+          response.jsonRAW,
+        );
 
         this.activeSceneName = getSceneListResponse.currentProgramSceneName;
         this.studioModePreviewSceneName =
             getSceneListResponse.currentPreviewSceneName;
-        this.scenes = ObservableList.of([...getSceneListResponse.scenes]
-          ..sort((a, b) => b.sceneIndex - a.sceneIndex));
+        this.scenes = ObservableList.of(
+          [...getSceneListResponse.scenes]
+            ..sort((a, b) => b.sceneIndex - a.sceneIndex),
+        );
 
         NetworkHelper.makeRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.GetSceneItemList,
           {
-            'sceneName': Hive.box(HiveKeys.Settings.name).get(
-                        SettingsKeys.ExposeStudioControls.name,
-                        defaultValue: false) &&
+            'sceneName':
+                Hive.box(HiveKeys.Settings.name).get(
+                      SettingsKeys.ExposeStudioControls.name,
+                      defaultValue: false,
+                    ) &&
                     this.studioMode
                 ? this.studioModePreviewSceneName
                 : this.activeSceneName,
@@ -1102,16 +1143,18 @@ abstract class _DashboardStore with Store {
         GetSceneCollectionListResponse getSceneCollectionListResponse =
             GetSceneCollectionListResponse(response.jsonRAW);
 
-        this.sceneCollections =
-            ObservableList.of(getSceneCollectionListResponse.sceneCollections);
+        this.sceneCollections = ObservableList.of(
+          getSceneCollectionListResponse.sceneCollections,
+        );
 
         this.currentSceneCollectionName =
             getSceneCollectionListResponse.currentSceneCollectionName;
         break;
 
       case RequestType.GetProfileList:
-        GetProfileListResponse getProfileListResponse =
-            GetProfileListResponse(response.jsonRAW);
+        GetProfileListResponse getProfileListResponse = GetProfileListResponse(
+          response.jsonRAW,
+        );
 
         this.profiles = ObservableList.of(getProfileListResponse.profiles);
 
@@ -1122,9 +1165,10 @@ abstract class _DashboardStore with Store {
             GetSceneItemListResponse(response.jsonRAW);
 
         this.currentSceneItems =
-            ObservableList.of(getSceneItemListResponse.sceneItems)
-              ..sort((sc1, sc2) =>
-                  (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0));
+            ObservableList.of(getSceneItemListResponse.sceneItems)..sort(
+              (sc1, sc2) =>
+                  (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0),
+            );
 
         this.fetchSceneItemsFilters();
 
@@ -1133,9 +1177,7 @@ abstract class _DashboardStore with Store {
             NetworkHelper.makeRequest(
               GetIt.instance<NetworkStore>().activeSession!.socket,
               RequestType.GetGroupSceneItemList,
-              {
-                'sceneName': sceneItem.sourceName,
-              },
+              {'sceneName': sceneItem.sourceName},
             );
           }
         }
@@ -1146,7 +1188,8 @@ abstract class _DashboardStore with Store {
             GetGroupSceneItemListResponse(response.jsonRAW);
 
         final requestBody = NetworkHelper.getRequestBodyForUUID(
-            getGroupSceneItemListResponse.uuid);
+          getGroupSceneItemListResponse.uuid,
+        );
         if (requestBody == null) {
           GeneralHelper.advLog(
             'GetGroupSceneItemList: missing request body for uuid',
@@ -1157,32 +1200,36 @@ abstract class _DashboardStore with Store {
         }
         final parentSceneItemName = requestBody['sceneName'];
 
-        List<SceneItem> childrenSceneItems =
-            getGroupSceneItemListResponse.sceneItems
-                .map(
-                  (sceneItem) =>
-                      sceneItem.copyWith(parentGroupName: parentSceneItemName),
-                )
-                .toList();
+        List<SceneItem> childrenSceneItems = getGroupSceneItemListResponse
+            .sceneItems
+            .map(
+              (sceneItem) =>
+                  sceneItem.copyWith(parentGroupName: parentSceneItemName),
+            )
+            .toList();
 
-        final parentIndex = this.currentSceneItems.indexWhere((sceneItem) =>
-            (sceneItem.isGroup ?? false) &&
-            sceneItem.sourceName == parentSceneItemName);
+        final parentIndex = this.currentSceneItems.indexWhere(
+          (sceneItem) =>
+              (sceneItem.isGroup ?? false) &&
+              sceneItem.sourceName == parentSceneItemName,
+        );
         if (parentIndex < 0) break;
 
         this.currentSceneItems = ObservableList.of([
-          ...this.currentSceneItems
-            ..insertAll(
-                parentIndex + 1,
-                childrenSceneItems
-                  ..sort((sc1, sc2) =>
-                      (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0))),
+          ...this.currentSceneItems..insertAll(
+            parentIndex + 1,
+            childrenSceneItems..sort(
+              (sc1, sc2) =>
+                  (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0),
+            ),
+          ),
         ]);
 
         break;
       case RequestType.GetInputList:
-        GetInputListResponse getInputListResponse =
-            GetInputListResponse(response.jsonRAW);
+        GetInputListResponse getInputListResponse = GetInputListResponse(
+          response.jsonRAW,
+        );
 
         this.allInputs = ObservableList.of(getInputListResponse.inputs);
 
@@ -1191,18 +1238,15 @@ abstract class _DashboardStore with Store {
           RequestBatchType.Input,
           [
             for (var input in this.allInputs) ...[
-              RequestBatchObject(
-                RequestType.GetInputVolume,
-                {'inputName': input.inputName},
-              ),
-              RequestBatchObject(
-                RequestType.GetInputMute,
-                {'inputName': input.inputName},
-              ),
-              RequestBatchObject(
-                RequestType.GetInputAudioSyncOffset,
-                {'inputName': input.inputName},
-              ),
+              RequestBatchObject(RequestType.GetInputVolume, {
+                'inputName': input.inputName,
+              }),
+              RequestBatchObject(RequestType.GetInputMute, {
+                'inputName': input.inputName,
+              }),
+              RequestBatchObject(RequestType.GetInputAudioSyncOffset, {
+                'inputName': input.inputName,
+              }),
             ],
           ],
         );
@@ -1240,8 +1284,9 @@ abstract class _DashboardStore with Store {
 
         this.studioMode = getStudioModeEnabledResponse.studioModeEnabled;
         if (Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeStudioControls.name,
-                defaultValue: false) &&
+              SettingsKeys.ExposeStudioControls.name,
+              defaultValue: false,
+            ) &&
             this.studioMode) {
           NetworkHelper.makeRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
@@ -1310,37 +1355,46 @@ abstract class _DashboardStore with Store {
 
         break;
       case RequestType.GetInputVolume:
-        GetInputVolumeResponse getInputVolumeResponse =
-            GetInputVolumeResponse(response.jsonRAW);
+        GetInputVolumeResponse getInputVolumeResponse = GetInputVolumeResponse(
+          response.jsonRAW,
+        );
 
-        final requestData =
-            NetworkHelper.getRequestBodyForUUID(getInputVolumeResponse.uuid);
+        final requestData = NetworkHelper.getRequestBodyForUUID(
+          getInputVolumeResponse.uuid,
+        );
         if (requestData == null) break;
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          if (input.inputName == requestData['inputName']) {
-            return input.copyWith(
-              inputVolumeDb: getInputVolumeResponse.inputVolumeDb,
-              inputVolumeMul: getInputVolumeResponse.inputVolumeMul,
-            );
-          }
-          return input;
-        }));
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            if (input.inputName == requestData['inputName']) {
+              return input.copyWith(
+                inputVolumeDb: getInputVolumeResponse.inputVolumeDb,
+                inputVolumeMul: getInputVolumeResponse.inputVolumeMul,
+              );
+            }
+            return input;
+          }),
+        );
 
         break;
       case RequestType.GetInputMute:
-        GetInputMuteResponse getInputMuteResponse =
-            GetInputMuteResponse(response.jsonRAW);
+        GetInputMuteResponse getInputMuteResponse = GetInputMuteResponse(
+          response.jsonRAW,
+        );
 
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
         if (requestData == null) break;
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          if (input.inputName == requestData['inputName']) {
-            return input.copyWith(inputMuted: getInputMuteResponse.inputMuted);
-          }
-          return input;
-        }));
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            if (input.inputName == requestData['inputName']) {
+              return input.copyWith(
+                inputMuted: getInputMuteResponse.inputMuted,
+              );
+            }
+            return input;
+          }),
+        );
         break;
       case RequestType.GetInputAudioSyncOffset:
         GetInputAudioSyncOffsetResponse getInputAudioSyncOffsetResponse =
@@ -1349,21 +1403,25 @@ abstract class _DashboardStore with Store {
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
         if (requestData == null) break;
 
-        this.allInputs = ObservableList.of(this.allInputs.map((input) {
-          if (input.inputName == requestData['inputName']) {
-            return input.copyWith(
-              syncOffset: getInputAudioSyncOffsetResponse.inputAudioSyncOffset,
-            );
-          }
-          return input;
-        }));
+        this.allInputs = ObservableList.of(
+          this.allInputs.map((input) {
+            if (input.inputName == requestData['inputName']) {
+              return input.copyWith(
+                syncOffset:
+                    getInputAudioSyncOffsetResponse.inputAudioSyncOffset,
+              );
+            }
+            return input;
+          }),
+        );
         break;
       case RequestType.GetSourceScreenshot:
         GetSourceScreenshotResponse getSourceScreenshotResponse =
             GetSourceScreenshotResponse(response.jsonRAW);
 
-        this.scenePreviewImageBytes =
-            base64Decode(getSourceScreenshotResponse.imageData.split(',')[1]);
+        this.scenePreviewImageBytes = base64Decode(
+          getSourceScreenshotResponse.imageData.split(',')[1],
+        );
 
         if (this.shouldRequestPreviewImage) _requestPreviewImage();
         break;
@@ -1375,13 +1433,12 @@ abstract class _DashboardStore with Store {
       //       base64Decode(saveSourceScreenshotResponse.imageData.split(',')[1]);
       //   break;
       case RequestType.GetHotkeyList:
-        GetHotkeyListResponse getHotkeyListResponse =
-            GetHotkeyListResponse(response.jsonRAW);
+        GetHotkeyListResponse getHotkeyListResponse = GetHotkeyListResponse(
+          response.jsonRAW,
+        );
 
         this.hotkeys = ObservableSet.of(
-          Set.of(getHotkeyListResponse.hotkeys).map(
-            (name) => Hotkey(name),
-          ),
+          Set.of(getHotkeyListResponse.hotkeys).map((name) => Hotkey(name)),
         );
         break;
       default:
@@ -1413,8 +1470,9 @@ abstract class _DashboardStore with Store {
 
     switch (batchResponse.batchRequestType) {
       case RequestBatchType.Stats:
-        StatsBatchResponse statsBatchResponse =
-            StatsBatchResponse(batchResponse.jsonRAW);
+        StatsBatchResponse statsBatchResponse = StatsBatchResponse(
+          batchResponse.jsonRAW,
+        );
 
         if (!_obsRequestSucceeded(statsBatchResponse.streamStatus) ||
             !_obsRequestSucceeded(statsBatchResponse.recordStatus) ||
@@ -1426,10 +1484,12 @@ abstract class _DashboardStore with Store {
 
         /// Set the timestamps or recording and streaming according
         /// to the current status received by the batch
-        this.latestRecordTimeDurationMS =
-            _timecodeToMS(statsBatchResponse.recordStatus.outputTimecode);
-        this.latestStreamTimeDurationMS =
-            _timecodeToMS(statsBatchResponse.streamStatus.outputTimecode);
+        this.latestRecordTimeDurationMS = _timecodeToMS(
+          statsBatchResponse.recordStatus.outputTimecode,
+        );
+        this.latestStreamTimeDurationMS = _timecodeToMS(
+          statsBatchResponse.streamStatus.outputTimecode,
+        );
 
         this.isRecordingPaused =
             statsBatchResponse.recordStatus.outputPaused ?? false;
@@ -1466,15 +1526,19 @@ abstract class _DashboardStore with Store {
           this.latestStreamStats = StreamStats(
             kbitsPerSec:
                 (statsBatchResponse.streamStatus.outputBytes - _streamBytes) ~/
-                    125,
-            totalTime: (_timecodeToMS(
-                        statsBatchResponse.streamStatus.outputTimecode) ??
+                125,
+            totalTime:
+                (_timecodeToMS(
+                      statsBatchResponse.streamStatus.outputTimecode,
+                    ) ??
                     0) ~/
                 1000,
             fps: statsBatchResponse.stats.activeFps,
-            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames -
+            renderTotalFrames:
+                statsBatchResponse.stats.renderTotalFrames -
                 _streamStartedRenderFramesTotal,
-            renderSkippedFrames: statsBatchResponse.stats.renderSkippedFrames -
+            renderSkippedFrames:
+                statsBatchResponse.stats.renderSkippedFrames -
                 _streamStartedRenderFramesSkipped,
             outputTotalFrames:
                 statsBatchResponse.streamStatus.outputTotalFrames,
@@ -1519,15 +1583,19 @@ abstract class _DashboardStore with Store {
           this.latestRecordStats = RecordStats(
             kbitsPerSec:
                 (statsBatchResponse.recordStatus.outputBytes - _recordBytes) ~/
-                    125,
-            totalTime: (_timecodeToMS(
-                        statsBatchResponse.recordStatus.outputTimecode) ??
+                125,
+            totalTime:
+                (_timecodeToMS(
+                      statsBatchResponse.recordStatus.outputTimecode,
+                    ) ??
                     0) ~/
                 1000,
             fps: statsBatchResponse.stats.activeFps,
-            renderTotalFrames: statsBatchResponse.stats.renderTotalFrames -
+            renderTotalFrames:
+                statsBatchResponse.stats.renderTotalFrames -
                 _recordingStartedRenderFramesTotal,
-            renderSkippedFrames: statsBatchResponse.stats.renderSkippedFrames -
+            renderSkippedFrames:
+                statsBatchResponse.stats.renderSkippedFrames -
                 _recordingStartedRenderFramesSkipped,
             outputTotalFrames: statsBatchResponse.stats.outputTotalFrames,
             outputSkippedFrames: statsBatchResponse.stats.outputSkippedFrames,
@@ -1559,11 +1627,13 @@ abstract class _DashboardStore with Store {
         }
         break;
       case RequestBatchType.Input:
-        InputsBatchResponse inputsBatchResponse =
-            InputsBatchResponse(batchResponse.jsonRAW);
+        InputsBatchResponse inputsBatchResponse = InputsBatchResponse(
+          batchResponse.jsonRAW,
+        );
 
-        final requestBatchObjects =
-            NetworkHelper.getRequestBatchBodyForUUID(inputsBatchResponse.uuid)!;
+        final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
+          inputsBatchResponse.uuid,
+        )!;
 
         final validGetInputMuteRespones = inputsBatchResponse.inputsMute.where(
           (getInputMuteRespone) =>
@@ -1595,8 +1665,9 @@ abstract class _DashboardStore with Store {
               volumeObjects.add({
                 'inputName': requestBatchObject.body!['inputName'],
                 'response': inputsBatchResponse.inputsVolume.firstWhere(
-                    (getInputVolumeResponse) =>
-                        getInputVolumeResponse.uuid == requestBatchObject.uuid),
+                  (getInputVolumeResponse) =>
+                      getInputVolumeResponse.uuid == requestBatchObject.uuid,
+                ),
               });
               break;
             }
@@ -1612,44 +1683,59 @@ abstract class _DashboardStore with Store {
               syncOffsetObjects.add({
                 'inputName': requestBatchObject.body!['inputName'],
                 'response': inputsBatchResponse.inputsAudioSyncOffset
-                    .firstWhere((getInputAudioSyncOffset) =>
-                        getInputAudioSyncOffset.uuid ==
-                        requestBatchObject.uuid),
+                    .firstWhere(
+                      (getInputAudioSyncOffset) =>
+                          getInputAudioSyncOffset.uuid ==
+                          requestBatchObject.uuid,
+                    ),
               });
               break;
             }
           }
         }
 
-        this.allInputs = ObservableList.of(this
-            .allInputs
-            .where((tempInput) => muteObjects.any(
-                (muteObject) => muteObject['inputName'] == tempInput.inputName))
-            .map((tempInput) {
-          final muteObject = muteObjects.firstWhere(
-              (muteObject) => muteObject['inputName'] == tempInput.inputName);
+        this.allInputs = ObservableList.of(
+          this.allInputs
+              .where(
+                (tempInput) => muteObjects.any(
+                  (muteObject) =>
+                      muteObject['inputName'] == tempInput.inputName,
+                ),
+              )
+              .map((tempInput) {
+                final muteObject = muteObjects.firstWhere(
+                  (muteObject) =>
+                      muteObject['inputName'] == tempInput.inputName,
+                );
 
-          final volumeObject = volumeObjects.firstWhere((volumeObject) =>
-              volumeObject['inputName'] == tempInput.inputName);
+                final volumeObject = volumeObjects.firstWhere(
+                  (volumeObject) =>
+                      volumeObject['inputName'] == tempInput.inputName,
+                );
 
-          final syncOffsetObject = syncOffsetObjects.firstWhere(
-              (syncOffsetObject) =>
-                  syncOffsetObject['inputName'] == tempInput.inputName);
+                final syncOffsetObject = syncOffsetObjects.firstWhere(
+                  (syncOffsetObject) =>
+                      syncOffsetObject['inputName'] == tempInput.inputName,
+                );
 
-          tempInput = tempInput.copyWith(
-            inputVolumeDb: (volumeObject['response'] as GetInputVolumeResponse)
-                .inputVolumeDb,
-            inputVolumeMul: (volumeObject['response'] as GetInputVolumeResponse)
-                .inputVolumeMul,
-            inputMuted:
-                (muteObject['response'] as GetInputMuteResponse).inputMuted,
-            syncOffset: (syncOffsetObject['response']
-                    as GetInputAudioSyncOffsetResponse)
-                .inputAudioSyncOffset,
-          );
+                tempInput = tempInput.copyWith(
+                  inputVolumeDb:
+                      (volumeObject['response'] as GetInputVolumeResponse)
+                          .inputVolumeDb,
+                  inputVolumeMul:
+                      (volumeObject['response'] as GetInputVolumeResponse)
+                          .inputVolumeMul,
+                  inputMuted: (muteObject['response'] as GetInputMuteResponse)
+                      .inputMuted,
+                  syncOffset:
+                      (syncOffsetObject['response']
+                              as GetInputAudioSyncOffsetResponse)
+                          .inputAudioSyncOffset,
+                );
 
-          return tempInput;
-        }));
+                return tempInput;
+              }),
+        );
 
         break;
       case RequestBatchType.Screenshot:
@@ -1657,20 +1743,24 @@ abstract class _DashboardStore with Store {
             ScreenshotBatchResponse(batchResponse.jsonRAW);
 
         if (!_obsRequestSucceeded(
-            screenshotBatchResponse.getSourceScreenshotResponse)) {
+          screenshotBatchResponse.getSourceScreenshotResponse,
+        )) {
           break;
         }
 
-        this.manualScreenshotImageBytes = base64Decode(screenshotBatchResponse
-            .getSourceScreenshotResponse.imageData
-            .split(',')[1]);
+        this.manualScreenshotImageBytes = base64Decode(
+          screenshotBatchResponse.getSourceScreenshotResponse.imageData.split(
+            ',',
+          )[1],
+        );
         break;
 
       case RequestBatchType.FilterList:
         FilterListBatchResponse filterListBatchResponse =
             FilterListBatchResponse(batchResponse.jsonRAW);
         final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
-            filterListBatchResponse.uuid);
+          filterListBatchResponse.uuid,
+        );
         if (requestBatchObjects == null) {
           GeneralHelper.advLog(
             'FilterList batch: missing request bodies for uuid',
@@ -1702,8 +1792,10 @@ abstract class _DashboardStore with Store {
         if (!_filterSettingsUnchanged(filterObjects)) {
           this.currentSceneItems = ObservableList.of(
             this.currentSceneItems.map((sceneItem) {
-              final filterObject = filterObjects.firstWhere((filterObject) =>
-                  filterObject['sourceName'] == sceneItem.sourceName);
+              final filterObject = filterObjects.firstWhere(
+                (filterObject) =>
+                    filterObject['sourceName'] == sceneItem.sourceName,
+              );
 
               final List<Filter> responseFilters =
                   (filterObject['response'] as GetSourceFilterListResponse)
@@ -1721,8 +1813,9 @@ abstract class _DashboardStore with Store {
               /// there are no default ones.
               if (filters.length != responseFilters.length) {
                 filters = [];
-                filters
-                    .addAll(responseFilters.map(_populateFiltersWithDefaults));
+                filters.addAll(
+                  responseFilters.map(_populateFiltersWithDefaults),
+                );
               } else {
                 /// We handle this case if this is a subsequent fetch and our
                 /// [Filter]s are already populated. Here we need to make sure
@@ -1730,8 +1823,10 @@ abstract class _DashboardStore with Store {
                 /// and update our existing ones.
                 filters = filters.map((filter) {
                   final responseFilterSettings = responseFilters
-                      .firstWhere((responseFilter) =>
-                          responseFilter.filterKind == filter.filterKind)
+                      .firstWhere(
+                        (responseFilter) =>
+                            responseFilter.filterKind == filter.filterKind,
+                      )
                       .filterSettings;
 
                   final filterSettings = <String, dynamic>{}
@@ -1773,8 +1868,9 @@ abstract class _DashboardStore with Store {
 
         for (final sceneItem in this.currentSceneItems) {
           for (final filter in sceneItem.filters) {
-            if (!_defaultFilters.any((defaultFilter) =>
-                defaultFilter.filterKind == filter.filterKind)) {
+            if (!_defaultFilters.any(
+              (defaultFilter) => defaultFilter.filterKind == filter.filterKind,
+            )) {
               filterKinds.add(filter.filterKind);
             }
           }
@@ -1787,9 +1883,9 @@ abstract class _DashboardStore with Store {
             filterKinds
                 .map(
                   (filterKind) => RequestBatchObject(
-                      RequestType.GetSourceFilterDefaultSettings, {
-                    'filterKind': filterKind,
-                  }),
+                    RequestType.GetSourceFilterDefaultSettings,
+                    {'filterKind': filterKind},
+                  ),
                 )
                 .toList(),
           );
@@ -1799,16 +1895,19 @@ abstract class _DashboardStore with Store {
         FilterDefaultSettingsResponse filterDefaultSettingsResponse =
             FilterDefaultSettingsResponse(batchResponse.jsonRAW);
         final requestBatchObjects = NetworkHelper.getRequestBatchBodyForUUID(
-            filterDefaultSettingsResponse.uuid)!;
+          filterDefaultSettingsResponse.uuid,
+        )!;
 
         for (final getSourceFilterDefaultSettingsResponse
             in filterDefaultSettingsResponse.defaultSettings) {
           for (final requestBatchObject in requestBatchObjects) {
             if (getSourceFilterDefaultSettingsResponse.uuid ==
                     requestBatchObject.uuid &&
-                !_defaultFilters.any((defaultFilter) =>
-                    defaultFilter.filterKind ==
-                    requestBatchObject.body!['filterKind'])) {
+                !_defaultFilters.any(
+                  (defaultFilter) =>
+                      defaultFilter.filterKind ==
+                      requestBatchObject.body!['filterKind'],
+                )) {
               _defaultFilters.add(
                 DefaultFilter(
                   requestBatchObject.body!['filterKind'],
@@ -1821,12 +1920,12 @@ abstract class _DashboardStore with Store {
 
         this.currentSceneItems = ObservableList.of(
           this.currentSceneItems.map(
-                (sceneItem) => sceneItem.copyWith(
-                  filters: sceneItem.filters
-                      .map(_populateFiltersWithDefaults)
-                      .toList(),
-                ),
-              ),
+            (sceneItem) => sceneItem.copyWith(
+              filters: sceneItem.filters
+                  .map(_populateFiltersWithDefaults)
+                  .toList(),
+            ),
+          ),
         );
 
         break;

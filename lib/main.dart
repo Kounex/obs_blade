@@ -93,15 +93,19 @@ void _initializeStores() {
     () => DashboardStore(),
     dispose: (store) => store.disposeListeners(),
   );
-  GetIt.instance
-      .registerLazySingleton<StatisticsStore>(() => StatisticsStore());
+  GetIt.instance.registerLazySingleton<StatisticsStore>(
+    () => StatisticsStore(),
+  );
   GetIt.instance.registerLazySingleton<LogsStore>(() => LogsStore());
-  GetIt.instance
-      .registerLazySingleton<TwitchBadgeStore>(() => TwitchBadgeStore());
+  GetIt.instance.registerLazySingleton<TwitchBadgeStore>(
+    () => TwitchBadgeStore(),
+  );
   GetIt.instance.registerLazySingleton<ThirdPartyEmoteStore>(
-      () => ThirdPartyEmoteStore());
-  GetIt.instance
-      .registerLazySingleton<TwitchEmoteStore>(() => TwitchEmoteStore());
+    () => ThirdPartyEmoteStore(),
+  );
+  GetIt.instance.registerLazySingleton<TwitchEmoteStore>(
+    () => TwitchEmoteStore(),
+  );
   GetIt.instance.registerLazySingleton<TwitchChatStore>(
     /// Fire-and-forget [init] — cold-start token validation must not
     /// block store creation.
@@ -192,15 +196,19 @@ Future<void> _initializeHive() async {
   );
 }
 
-bool _isLogNew(List<LogLevel> level, String entry) => !List<AppLog>.from(
-        Hive.box<AppLog>(HiveKeys.AppLog.name)
-            .values
-            .where((log) => level.contains(log.level)))
-    .reversed
-    .take(5 * level.length)
-    .any((prevLog) =>
-        DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS < 10000 &&
-        prevLog.entry == entry);
+bool _isLogNew(List<LogLevel> level, String entry) =>
+    !List<AppLog>.from(
+          Hive.box<AppLog>(
+            HiveKeys.AppLog.name,
+          ).values.where((log) => level.contains(log.level)),
+        ).reversed
+        .take(5 * level.length)
+        .any(
+          (prevLog) =>
+              DateTime.now().millisecondsSinceEpoch - prevLog.timestampMS <
+                  10000 &&
+              prevLog.entry == entry,
+        );
 
 void _logging(String line, [LogLevel? fixedLevel]) {
   String? stack;
@@ -209,8 +217,9 @@ void _logging(String line, [LogLevel? fixedLevel]) {
   bool shouldLog = true;
   bool manually = false;
 
-  Iterable<LogLevel> lineLevel =
-      LogLevel.values.where((level) => line.startsWith(level.prefix));
+  Iterable<LogLevel> lineLevel = LogLevel.values.where(
+    (level) => line.startsWith(level.prefix),
+  );
 
   if (fixedLevel != null || lineLevel.isNotEmpty) {
     manually = true;
@@ -265,13 +274,7 @@ void main() async {
       /// Create all hive objects with references to the persistant boxes
       await _initializeHive();
 
-      runApp(
-        const LifecycleWatcher(
-          app: PurchaseBase(
-            child: App(),
-          ),
-        ),
-      );
+      runApp(const LifecycleWatcher(app: PurchaseBase(child: App())));
     },
     (Object error, StackTrace stack) =>
         _logging('[ERROR][ON] $error\n[STACK]\n$stack'),

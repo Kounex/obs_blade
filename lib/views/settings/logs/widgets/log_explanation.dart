@@ -10,42 +10,37 @@ import '../../../../shared/general/themed/rich_text.dart';
 import 'level_dot.dart';
 
 class LogExplanation extends StatelessWidget {
-  const LogExplanation({
-    super.key,
-  });
+  const LogExplanation({super.key});
 
   EnumerationEntry _levelEntry(
     BuildContext context, {
     required LogLevel level,
     required String description,
-  }) =>
-      EnumerationEntry(
-        customEntry: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
-              child: LevelDot(level: level, size: 8.0),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Flexible(
-              child: ThemedRichText(
-                textSpans: [
-                  TextSpan(
-                    text: level.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: logLevelColor(context, level),
-                    ),
-                  ),
-                  TextSpan(
-                    text: description,
-                  ),
-                ],
-              ),
-            ),
-          ],
+  }) => EnumerationEntry(
+    customEntry: Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: LevelDot(level: level, size: 8.0),
         ),
-      );
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: ThemedRichText(
+            textSpans: [
+              TextSpan(
+                text: level.name,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: logLevelColor(context, level),
+                ),
+              ),
+              TextSpan(text: description),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +54,12 @@ class LogExplanation extends StatelessWidget {
           children: [
             const SizedBox(height: 12.0),
             const Text(
-                'Logs listed here have been created programmatically by me and are only available locally. I\'m not sending them to any servers or alike. You can view them here and decide to share them (for example with me) if you encounter any problems and would like to give me more information to work on or even want to try to figure out the problem on your own!'),
+              'Logs listed here have been created programmatically by me and are only available locally. I\'m not sending them to any servers or alike. You can view them here and decide to share them (for example with me) if you encounter any problems and would like to give me more information to work on or even want to try to figure out the problem on your own!',
+            ),
             const SizedBox(height: 12.0),
             const Text(
-                'You can delete log entries selectively here or all together in "Data Management" in the settings tab.'),
+              'You can delete log entries selectively here or all together in "Data Management" in the settings tab.',
+            ),
             const SizedBox(height: 12.0),
             const Text('Used log types:'),
             const SizedBox(height: 4.0),
@@ -90,7 +87,8 @@ class LogExplanation extends StatelessWidget {
             ),
             const SizedBox(height: 12.0),
             const Text(
-                'Logs are grouped by days and can be filtered to find the relevant ones easier. Feel free to suggest improvements!')
+              'Logs are grouped by days and can be filtered to find the relevant ones easier. Feel free to suggest improvements!',
+            ),
           ],
         ),
       ),

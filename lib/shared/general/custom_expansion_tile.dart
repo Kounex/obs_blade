@@ -24,8 +24,8 @@ class CustomExpansionTile extends StatefulWidget {
     required this.expandedBody,
     this.onExpand,
     this.manualExpand,
-  })  : assert(headerText != null || customHeader != null),
-        super();
+  }) : assert(headerText != null || customHeader != null),
+       super();
 
   @override
   _CustomExpansionTileState createState() => _CustomExpansionTileState();
@@ -44,8 +44,10 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
 
   @override
   void initState() {
-    _animController =
-        AnimationController(vsync: this, duration: AppMotion.medium);
+    _animController = AnimationController(
+      vsync: this,
+      duration: AppMotion.medium,
+    );
 
     _startExpandAnimation = () {
       _expandController.toggle();
@@ -61,12 +63,15 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
   @override
   void didChangeDependencies() {
     _rotation = Tween<double>(begin: 0.0, end: 0.5).animate(
-        CurvedAnimation(parent: _animController, curve: AppMotion.standard));
-    _color = ColorTween(
-      begin: Theme.of(context).iconTheme.color,
-      end: Theme.of(context).colorScheme.secondary,
-    ).animate(
-        CurvedAnimation(parent: _animController, curve: AppMotion.standard));
+      CurvedAnimation(parent: _animController, curve: AppMotion.standard),
+    );
+    _color =
+        ColorTween(
+          begin: Theme.of(context).iconTheme.color,
+          end: Theme.of(context).colorScheme.secondary,
+        ).animate(
+          CurvedAnimation(parent: _animController, curve: AppMotion.standard),
+        );
     super.didChangeDependencies();
   }
 
@@ -98,7 +103,9 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
             if (!_animController.isAnimating) {
               if (this.widget.manualExpand != null) {
                 this.widget.manualExpand!(
-                    _startExpandAnimation, _expandController.expanded);
+                  _startExpandAnimation,
+                  _expandController.expanded,
+                );
               } else {
                 if (!_expandController.expanded) this.widget.onExpand?.call();
                 _startExpandAnimation();
@@ -114,16 +121,18 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                   const SizedBox(width: 24.0),
                 ],
                 Expanded(
-                  child: this.widget.customHeader ??
+                  child:
+                      this.widget.customHeader ??
                       Text(
                         this.widget.headerText!,
-                        style: (this.widget.headerTextStyle ??
-                                Theme.of(context).textTheme.titleMedium)!
-                            .copyWith(
-                          fontFeatures: const [
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
+                        style:
+                            (this.widget.headerTextStyle ??
+                                    Theme.of(context).textTheme.titleMedium)!
+                                .copyWith(
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
                       ),
                 ),
                 this.widget.trailing ?? const SizedBox(),
@@ -134,10 +143,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
                   animation: _animController,
                   builder: (context, _) => RotationTransition(
                     turns: _rotation,
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: _color.value,
-                    ),
+                    child: Icon(Icons.keyboard_arrow_down, color: _color.value),
                   ),
                 ),
               ],

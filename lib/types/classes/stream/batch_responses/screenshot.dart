@@ -6,7 +6,7 @@ class ScreenshotBatchResponse extends BaseBatchResponse {
   ScreenshotBatchResponse(super.json);
 
   GetSourceScreenshotResponse get getSourceScreenshotResponse => this.response(
-        RequestType.GetSourceScreenshot,
-        (jsonRAW) => GetSourceScreenshotResponse(jsonRAW),
-      );
+    RequestType.GetSourceScreenshot,
+    (jsonRAW) => GetSourceScreenshotResponse(jsonRAW),
+  );
 }

@@ -45,7 +45,8 @@ class CustomCupertinoDialog extends StatelessWidget {
             borderRadius: dialogRadius,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Theme.of(context).dialogTheme.backgroundColor ??
+                color:
+                    Theme.of(context).dialogTheme.backgroundColor ??
                     Theme.of(context).cardColor,
                 borderRadius: dialogRadius,
               ),
@@ -59,14 +60,17 @@ class CustomCupertinoDialog extends StatelessWidget {
                             style: Theme.of(context).textTheme.bodyLarge!,
                             textAlign: TextAlign.center,
                             child: Padding(
-                              padding: this.contentPadding ??
+                              padding:
+                                  this.contentPadding ??
                                   EdgeInsets.only(
                                     top: this.paddingTop ?? _kDialogEdgePadding,
-                                    left: this.paddingRight ??
+                                    left:
+                                        this.paddingRight ??
                                         _kDialogEdgePadding,
                                     right:
                                         this.paddingLeft ?? _kDialogEdgePadding,
-                                    bottom: this.paddingBottom ??
+                                    bottom:
+                                        this.paddingBottom ??
                                         _kDialogEdgePadding,
                                   ),
                               child: this.content,

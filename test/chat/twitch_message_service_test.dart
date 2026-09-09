@@ -32,8 +32,7 @@ void main() {
       );
     });
 
-    final result = await TwitchMessageService(client: client)
-        .sendChatMessage(
+    final result = await TwitchMessageService(client: client).sendChatMessage(
       accessToken: 'token-1',
       senderId: 'user-1',
       broadcasterId: 'user-1',
@@ -62,8 +61,7 @@ void main() {
       );
     });
 
-    final result = await TwitchMessageService(client: client)
-        .sendChatMessage(
+    final result = await TwitchMessageService(client: client).sendChatMessage(
       accessToken: 'token-1',
       senderId: 'user-1',
       broadcasterId: 'chan-9',
@@ -73,37 +71,38 @@ void main() {
     expect(result.isSent, isTrue);
   });
 
-  test('includes reply_parent_message_id when a reply target is passed',
-      () async {
-    final client = MockClient((request) async {
-      expect(json.decode(request.body), {
-        'broadcaster_id': 'user-1',
-        'sender_id': 'user-1',
-        'message': 'totally agree',
-        'reply_parent_message_id': 'parent-1',
+  test(
+    'includes reply_parent_message_id when a reply target is passed',
+    () async {
+      final client = MockClient((request) async {
+        expect(json.decode(request.body), {
+          'broadcaster_id': 'user-1',
+          'sender_id': 'user-1',
+          'message': 'totally agree',
+          'reply_parent_message_id': 'parent-1',
+        });
+        return http.Response(
+          json.encode({
+            'data': [
+              {'message_id': 'msg-3', 'is_sent': true, 'drop_reason': null},
+            ],
+          }),
+          200,
+        );
       });
-      return http.Response(
-        json.encode({
-          'data': [
-            {'message_id': 'msg-3', 'is_sent': true, 'drop_reason': null},
-          ],
-        }),
-        200,
+
+      final result = await TwitchMessageService(client: client).sendChatMessage(
+        accessToken: 'token-1',
+        senderId: 'user-1',
+        broadcasterId: 'user-1',
+        message: 'totally agree',
+        replyParentMessageId: 'parent-1',
       );
-    });
 
-    final result = await TwitchMessageService(client: client)
-        .sendChatMessage(
-      accessToken: 'token-1',
-      senderId: 'user-1',
-      broadcasterId: 'user-1',
-      message: 'totally agree',
-      replyParentMessageId: 'parent-1',
-    );
-
-    expect(result.isSent, isTrue);
-    expect(result.messageId, 'msg-3');
-  });
+      expect(result.isSent, isTrue);
+      expect(result.messageId, 'msg-3');
+    },
+  );
 
   test('parses a dropped result with its reason object', () async {
     final client = MockClient(
@@ -124,8 +123,7 @@ void main() {
       ),
     );
 
-    final result = await TwitchMessageService(client: client)
-        .sendChatMessage(
+    final result = await TwitchMessageService(client: client).sendChatMessage(
       accessToken: 'token-1',
       senderId: 'user-1',
       broadcasterId: 'user-1',
@@ -148,8 +146,11 @@ void main() {
         message: 'hi',
       ),
       throwsA(
-        isA<TwitchAuthException>()
-            .having((e) => e.statusCode, 'statusCode', 401),
+        isA<TwitchAuthException>().having(
+          (e) => e.statusCode,
+          'statusCode',
+          401,
+        ),
       ),
     );
   });

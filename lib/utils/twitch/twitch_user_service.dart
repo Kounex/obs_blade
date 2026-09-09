@@ -9,10 +9,7 @@ class TwitchSelfSubscription {
   final String tier;
   final int months;
 
-  const TwitchSelfSubscription({
-    required this.tier,
-    required this.months,
-  });
+  const TwitchSelfSubscription({required this.tier, required this.months});
 }
 
 /// Helix user lookups for the native chat user card — identity, follow
@@ -23,8 +20,7 @@ class TwitchSelfSubscription {
 class TwitchUserService {
   final http.Client _client;
 
-  TwitchUserService({http.Client? client})
-      : _client = client ?? http.Client();
+  TwitchUserService({http.Client? client}) : _client = client ?? http.Client();
 
   /// `GET /helix/users?id=` — avatar, login, display name, created_at.
   Future<TwitchUser?> fetchUser({
@@ -32,9 +28,9 @@ class TwitchUserService {
     required String userId,
   }) async {
     final response = await this._client.get(
-      Uri.parse('$kTwitchHelixBase/users').replace(
-        queryParameters: {'id': userId},
-      ),
+      Uri.parse(
+        '$kTwitchHelixBase/users',
+      ).replace(queryParameters: {'id': userId}),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) return null;
@@ -51,10 +47,7 @@ class TwitchUserService {
   }) async {
     final response = await this._client.get(
       Uri.parse('$kTwitchHelixBase/channels/followers').replace(
-        queryParameters: {
-          'broadcaster_id': broadcasterId,
-          'user_id': userId,
-        },
+        queryParameters: {'broadcaster_id': broadcasterId, 'user_id': userId},
       ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
@@ -70,10 +63,7 @@ class TwitchUserService {
   }) async {
     final response = await this._client.get(
       Uri.parse('$kTwitchHelixBase/channels/followed').replace(
-        queryParameters: {
-          'user_id': userId,
-          'broadcaster_id': broadcasterId,
-        },
+        queryParameters: {'user_id': userId, 'broadcaster_id': broadcasterId},
       ),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
@@ -87,9 +77,9 @@ class TwitchUserService {
     required String broadcasterId,
   }) async {
     final response = await this._client.get(
-      Uri.parse('$kTwitchHelixBase/subscriptions/user').replace(
-        queryParameters: {'broadcaster_id': broadcasterId},
-      ),
+      Uri.parse(
+        '$kTwitchHelixBase/subscriptions/user',
+      ).replace(queryParameters: {'broadcaster_id': broadcasterId}),
       headers: TwitchAuthService.helixHeaders(accessToken),
     );
     if (response.statusCode != 200) return null;

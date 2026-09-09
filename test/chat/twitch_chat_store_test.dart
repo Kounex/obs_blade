@@ -28,16 +28,16 @@ import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
 
 ChatMessageEvent chatMessage(String id, String chatterId) => ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: chatterId,
-      chatterUserLogin: 'user$chatterId',
-      chatterUserName: 'User$chatterId',
-      messageId: id,
-      message: ChatMessageText(
-        text: 'text $id',
-        fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
-      ),
-    );
+  broadcasterUserId: 'b1',
+  chatterUserId: chatterId,
+  chatterUserLogin: 'user$chatterId',
+  chatterUserName: 'User$chatterId',
+  messageId: id,
+  message: ChatMessageText(
+    text: 'text $id',
+    fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -61,8 +61,19 @@ void main() {
     badgeStore = TwitchBadgeStore(service: badgeService);
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () => badgeStore,
       isProResolver: () => true,
     );
@@ -88,8 +99,7 @@ void main() {
         TwitchAuth(
           accessToken: 'access-1',
           refreshToken: 'refresh-1',
-          expiresAtMs:
-              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
           scopes: const ['user:read:chat'],
           userId: 'user-1',
           userLogin: 'kounex',
@@ -111,8 +121,7 @@ void main() {
         TwitchAuth(
           accessToken: 'stale',
           refreshToken: 'stale',
-          expiresAtMs:
-              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
           scopes: const ['user:read:chat'],
         ),
       );
@@ -123,70 +132,81 @@ void main() {
       expect(authBox().get(TwitchAuth.kBoxKey), isNull);
     });
 
-    test('validate throwing (offline) keeps the record, stays logged out', () async {
-      authService.validateThrows = const SocketException('Network unreachable');
-      await authBox().put(
-        TwitchAuth.kBoxKey,
-        TwitchAuth(
-          accessToken: 'access-1',
-          refreshToken: 'refresh-1',
-          expiresAtMs:
-              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
-          scopes: const ['user:read:chat'],
-          userId: 'user-1',
-          userLogin: 'kounex',
-        ),
-      );
+    test(
+      'validate throwing (offline) keeps the record, stays logged out',
+      () async {
+        authService.validateThrows = const SocketException(
+          'Network unreachable',
+        );
+        await authBox().put(
+          TwitchAuth.kBoxKey,
+          TwitchAuth(
+            accessToken: 'access-1',
+            refreshToken: 'refresh-1',
+            expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+            scopes: const ['user:read:chat'],
+            userId: 'user-1',
+            userLogin: 'kounex',
+          ),
+        );
 
-      await store.init();
+        await store.init();
 
-      expect(store.authState, TwitchAuthState.loggedOut);
-      expect(store.isLoggedIn, isFalse);
-      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
-      expect(eventSubService.connectCalled, isFalse);
-    });
+        expect(store.authState, TwitchAuthState.loggedOut);
+        expect(store.isLoggedIn, isFalse);
+        expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+        expect(eventSubService.connectCalled, isFalse);
+      },
+    );
 
-    test('validate throwing a Twitch 5xx keeps the record, stays logged out', () async {
-      authService.validateThrows =
-          const TwitchAuthException('Token validation failed (status 500)');
-      await authBox().put(
-        TwitchAuth.kBoxKey,
-        TwitchAuth(
-          accessToken: 'access-1',
-          refreshToken: 'refresh-1',
-          expiresAtMs:
-              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
-          scopes: const ['user:read:chat'],
-          userId: 'user-1',
-          userLogin: 'kounex',
-        ),
-      );
+    test(
+      'validate throwing a Twitch 5xx keeps the record, stays logged out',
+      () async {
+        authService.validateThrows = const TwitchAuthException(
+          'Token validation failed (status 500)',
+        );
+        await authBox().put(
+          TwitchAuth.kBoxKey,
+          TwitchAuth(
+            accessToken: 'access-1',
+            refreshToken: 'refresh-1',
+            expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+            scopes: const ['user:read:chat'],
+            userId: 'user-1',
+            userLogin: 'kounex',
+          ),
+        );
 
-      await store.init();
+        await store.init();
 
-      expect(store.authState, TwitchAuthState.loggedOut);
-      expect(store.isLoggedIn, isFalse);
-      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
-      expect(eventSubService.connectCalled, isFalse);
-    });
+        expect(store.authState, TwitchAuthState.loggedOut);
+        expect(store.isLoggedIn, isFalse);
+        expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+        expect(eventSubService.connectCalled, isFalse);
+      },
+    );
   });
 
   group('startLogin', () {
-    test('success persists the auth, sets the user and connects chat', () async {
-      await store.startLogin();
+    test(
+      'success persists the auth, sets the user and connects chat',
+      () async {
+        await store.startLogin();
 
-      expect(store.authState, TwitchAuthState.loggedIn);
-      expect(store.user?.login, 'kounex');
-      final stored = authBox().get(TwitchAuth.kBoxKey);
-      expect(stored?.accessToken, 'access-1');
-      expect(stored?.userId, 'user-1');
-      expect(eventSubService.connectCalled, isTrue);
-      expect(eventSubService.lastAccessToken, 'access-1');
-    });
+        expect(store.authState, TwitchAuthState.loggedIn);
+        expect(store.user?.login, 'kounex');
+        final stored = authBox().get(TwitchAuth.kBoxKey);
+        expect(stored?.accessToken, 'access-1');
+        expect(stored?.userId, 'user-1');
+        expect(eventSubService.connectCalled, isTrue);
+        expect(eventSubService.lastAccessToken, 'access-1');
+      },
+    );
 
     test('poll failure lands in error state without a stored record', () async {
-      authService.failPollWith =
-          const TwitchAuthException('Authorization denied on Twitch');
+      authService.failPollWith = const TwitchAuthException(
+        'Authorization denied on Twitch',
+      );
 
       await store.startLogin();
 
@@ -246,30 +266,32 @@ void main() {
       expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
     });
 
-    test('a superseded flow\'s stale poll success cannot clobber the new flow',
-        () async {
-      // Login A: the poll parks on a gate the test controls.
-      final gateA = Completer<TwitchToken>();
-      authService.pollGate = gateA;
-      final loginA = store.startLogin();
-      await pumpEventQueue();
+    test(
+      'a superseded flow\'s stale poll success cannot clobber the new flow',
+      () async {
+        // Login A: the poll parks on a gate the test controls.
+        final gateA = Completer<TwitchToken>();
+        authService.pollGate = gateA;
+        final loginA = store.startLogin();
+        await pumpEventQueue();
 
-      // The user restarts — login B supersedes A and succeeds.
-      authService.pollGate = null;
-      await store.startLogin();
-      expect(store.authState, TwitchAuthState.loggedIn);
+        // The user restarts — login B supersedes A and succeeds.
+        authService.pollGate = null;
+        await store.startLogin();
+        expect(store.authState, TwitchAuthState.loggedIn);
 
-      // A's stale poll now RESOLVES successfully — its continuation must
-      // bail instead of re-persisting and reconnecting (a reconnect would
-      // dispose B's live EventSub session first).
-      gateA.complete(FakeTwitchAuthService.token);
-      await loginA;
-      await pumpEventQueue();
+        // A's stale poll now RESOLVES successfully — its continuation must
+        // bail instead of re-persisting and reconnecting (a reconnect would
+        // dispose B's live EventSub session first).
+        gateA.complete(FakeTwitchAuthService.token);
+        await loginA;
+        await pumpEventQueue();
 
-      expect(store.authState, TwitchAuthState.loggedIn);
-      expect(store.user?.login, 'kounex');
-      expect(eventSubService.disposeCalled, isFalse);
-    });
+        expect(store.authState, TwitchAuthState.loggedIn);
+        expect(store.user?.login, 'kounex');
+        expect(eventSubService.disposeCalled, isFalse);
+      },
+    );
   });
 
   group('logout', () {
@@ -312,32 +334,34 @@ void main() {
 
   group('connectChat', () {
     TwitchAuth recordInsideRefreshWindow() => TwitchAuth(
-          accessToken: 'access-1',
-          refreshToken: 'refresh-1',
-          // Inside the 5-minute refresh window → connectChat refreshes
-          // the token before connecting.
-          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 60 * 1000,
-          scopes: const ['user:read:chat'],
-          userId: 'user-1',
-          userLogin: 'kounex',
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      // Inside the 5-minute refresh window → connectChat refreshes
+      // the token before connecting.
+      expiresAtMs: DateTime.now().millisecondsSinceEpoch + 60 * 1000,
+      scopes: const ['user:read:chat'],
+      userId: 'user-1',
+      userLogin: 'kounex',
+    );
+
+    test(
+      'a 5xx on token refresh keeps the session and fails the connection',
+      () async {
+        authService.failRefreshWith = const TwitchAuthException(
+          'Token refresh failed (500)',
+          statusCode: 500,
         );
+        await authBox().put(TwitchAuth.kBoxKey, recordInsideRefreshWindow());
 
-    test('a 5xx on token refresh keeps the session and fails the connection',
-        () async {
-      authService.failRefreshWith = const TwitchAuthException(
-        'Token refresh failed (500)',
-        statusCode: 500,
-      );
-      await authBox().put(TwitchAuth.kBoxKey, recordInsideRefreshWindow());
+        await store.init();
 
-      await store.init();
-
-      expect(store.chatConnection, TwitchChatConnectionState.failed);
-      expect(store.chatError, 'Could not connect to Twitch chat');
-      expect(store.authState, TwitchAuthState.loggedIn);
-      expect(authBox().get(TwitchAuth.kBoxKey)?.accessToken, 'access-1');
-      expect(eventSubService.connectCalled, isFalse);
-    });
+        expect(store.chatConnection, TwitchChatConnectionState.failed);
+        expect(store.chatError, 'Could not connect to Twitch chat');
+        expect(store.authState, TwitchAuthState.loggedIn);
+        expect(authBox().get(TwitchAuth.kBoxKey)?.accessToken, 'access-1');
+        expect(eventSubService.connectCalled, isFalse);
+      },
+    );
 
     test('a 401 on token refresh wipes the session', () async {
       authService.failRefreshWith = const TwitchAuthException(
@@ -371,18 +395,16 @@ void main() {
 
   group('message buffer', () {
     ChatMessageEvent event(String id) => ChatMessageEvent(
-          broadcasterUserId: 'user-1',
-          chatterUserId: id,
-          chatterUserLogin: 'u$id',
-          chatterUserName: 'User$id',
-          messageId: id,
-          message: ChatMessageText(
-            text: 'msg $id',
-            fragments: [
-              ChatMessageFragment(type: 'text', text: 'msg $id'),
-            ],
-          ),
-        );
+      broadcasterUserId: 'user-1',
+      chatterUserId: id,
+      chatterUserLogin: 'u$id',
+      chatterUserName: 'User$id',
+      messageId: id,
+      message: ChatMessageText(
+        text: 'msg $id',
+        fragments: [ChatMessageFragment(type: 'text', text: 'msg $id')],
+      ),
+    );
 
     test('appends via the exposed action and trims at 500', () {
       for (var i = 0; i < 505; i++) {
@@ -394,54 +416,53 @@ void main() {
       expect(store.messages.last.messageId, '504');
     });
 
-    test('messagesForChatter returns newest-first capped rows for one user',
-        () {
-      ChatMessageEvent tagged(String id, String chatterId, {String? color}) =>
-          ChatMessageEvent(
-            broadcasterUserId: 'b1',
-            chatterUserId: chatterId,
-            chatterUserLogin: 'u$chatterId',
-            chatterUserName: 'User$chatterId',
-            messageId: id,
-            color: color,
-            message: ChatMessageText(
-              text: 'msg $id',
-              fragments: [
-                ChatMessageFragment(type: 'text', text: 'msg $id'),
-              ],
-            ),
-          );
+    test(
+      'messagesForChatter returns newest-first capped rows for one user',
+      () {
+        ChatMessageEvent tagged(String id, String chatterId, {String? color}) =>
+            ChatMessageEvent(
+              broadcasterUserId: 'b1',
+              chatterUserId: chatterId,
+              chatterUserLogin: 'u$chatterId',
+              chatterUserName: 'User$chatterId',
+              messageId: id,
+              color: color,
+              message: ChatMessageText(
+                text: 'msg $id',
+                fragments: [ChatMessageFragment(type: 'text', text: 'msg $id')],
+              ),
+            );
 
-      for (var i = 0; i < 25; i++) {
-        store.appendChatMessageForTest(tagged('a$i', 'target'));
-        store.appendChatMessageForTest(tagged('b$i', 'other'));
-      }
-      store.appendChatMessageForTest(
-        tagged('latest', 'target', color: '#FF0000'),
-      );
+        for (var i = 0; i < 25; i++) {
+          store.appendChatMessageForTest(tagged('a$i', 'target'));
+          store.appendChatMessageForTest(tagged('b$i', 'other'));
+        }
+        store.appendChatMessageForTest(
+          tagged('latest', 'target', color: '#FF0000'),
+        );
 
-      final rows = store.messagesForChatter('target');
+        final rows = store.messagesForChatter('target');
 
-      expect(rows, hasLength(20));
-      expect(rows.first.messageId, 'latest');
-      expect(rows.last.messageId, 'a6');
-      expect(store.newestChatterColor('target'), '#FF0000');
-      expect(store.messagesForChatter('missing'), isEmpty);
-    });
+        expect(rows, hasLength(20));
+        expect(rows.first.messageId, 'latest');
+        expect(rows.last.messageId, 'a6');
+        expect(store.newestChatterColor('target'), '#FF0000');
+        expect(store.messagesForChatter('missing'), isEmpty);
+      },
+    );
   });
 
   group('badge catalog wiring', () {
     Future<void> seedValidAuth() => authBox().put(
-          TwitchAuth.kBoxKey,
-          TwitchAuth(
-            accessToken: 'access-1',
-            refreshToken: 'refresh-1',
-            expiresAtMs:
-                DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
-            scopes: const ['user:read:chat'],
-            userId: 'user-1',
-          ),
-        );
+      TwitchAuth.kBoxKey,
+      TwitchAuth(
+        accessToken: 'access-1',
+        refreshToken: 'refresh-1',
+        expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+        scopes: const ['user:read:chat'],
+        userId: 'user-1',
+      ),
+    );
 
     test('connectChat fetches badges for the logged-in user', () async {
       await seedValidAuth();
@@ -456,32 +477,14 @@ void main() {
       expect(badgeService.lastBroadcasterId, 'user-1');
     });
 
-    test('a failing badge fetch does not affect the chat connection',
-        () async {
-      badgeService.globalThrows =
-          const TwitchAuthException('down', statusCode: 500);
-      badgeService.channelThrows =
-          const TwitchAuthException('down', statusCode: 500);
-      await seedValidAuth();
-      store.authState = TwitchAuthState.loggedIn;
-      store.user = FakeTwitchAuthService.user;
-
-      await store.connectChat();
-
-      expect(store.chatConnection,
-          isNot(TwitchChatConnectionState.failed));
-      expect(store.chatError, isNull);
-    });
-
-    test('connectChat refuses to connect without the Pro entitlement',
-        () async {
-      store = TwitchChatStore(
-        authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______,
-                ________, _________, __________) =>
-            eventSubService,
-        badgeStoreResolver: () => badgeStore,
-        isProResolver: () => false,
+    test('a failing badge fetch does not affect the chat connection', () async {
+      badgeService.globalThrows = const TwitchAuthException(
+        'down',
+        statusCode: 500,
+      );
+      badgeService.channelThrows = const TwitchAuthException(
+        'down',
+        statusCode: 500,
       );
       await seedValidAuth();
       store.authState = TwitchAuthState.loggedIn;
@@ -489,9 +492,41 @@ void main() {
 
       await store.connectChat();
 
-      expect(eventSubService.connectCalled, isFalse);
-      expect(store.chatConnection, TwitchChatConnectionState.disconnected);
+      expect(store.chatConnection, isNot(TwitchChatConnectionState.failed));
+      expect(store.chatError, isNull);
     });
+
+    test(
+      'connectChat refuses to connect without the Pro entitlement',
+      () async {
+        store = TwitchChatStore(
+          authService: authService,
+          eventSubFactory:
+              (
+                _,
+                __,
+                ___,
+                ____,
+                _____,
+                ______,
+                _______,
+                ________,
+                _________,
+                __________,
+              ) => eventSubService,
+          badgeStoreResolver: () => badgeStore,
+          isProResolver: () => false,
+        );
+        await seedValidAuth();
+        store.authState = TwitchAuthState.loggedIn;
+        store.user = FakeTwitchAuthService.user;
+
+        await store.connectChat();
+
+        expect(eventSubService.connectCalled, isFalse);
+        expect(store.chatConnection, TwitchChatConnectionState.disconnected);
+      },
+    );
 
     test('logout clears the badge catalog', () async {
       badgeService.globalSets = [FakeTwitchBadgeService.moderatorSet];
@@ -515,33 +550,46 @@ void main() {
       store = TwitchChatStore(
         authService: authService,
         eventSubFactory:
-            (_, __, ___, ____, _____, ______, _______, ________, onStateChanged, onRevoked) {
-          emitState = onStateChanged;
-          emitRevoked = onRevoked;
-          return eventSubService;
-        },
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              onStateChanged,
+              onRevoked,
+            ) {
+              emitState = onStateChanged;
+              emitRevoked = onRevoked;
+              return eventSubService;
+            },
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
       );
       await store.startLogin();
     }
 
-    test('stamped on live, kept on repeated live, re-stamped after reconnect',
-        () async {
-      await loginWithCapturedCallbacks();
-      expect(store.chatConnectedAt, isNull);
+    test(
+      'stamped on live, kept on repeated live, re-stamped after reconnect',
+      () async {
+        await loginWithCapturedCallbacks();
+        expect(store.chatConnectedAt, isNull);
 
-      emitState(TwitchEventSubState.connected);
-      final first = store.chatConnectedAt;
-      expect(first, isNotNull);
+        emitState(TwitchEventSubState.connected);
+        final first = store.chatConnectedAt;
+        expect(first, isNotNull);
 
-      emitState(TwitchEventSubState.connected);
-      expect(store.chatConnectedAt, same(first));
+        emitState(TwitchEventSubState.connected);
+        expect(store.chatConnectedAt, same(first));
 
-      emitState(TwitchEventSubState.reconnecting);
-      emitState(TwitchEventSubState.connected);
-      expect(store.chatConnectedAt, isNot(same(first)));
-    });
+        emitState(TwitchEventSubState.reconnecting);
+        emitState(TwitchEventSubState.connected);
+        expect(store.chatConnectedAt, isNot(same(first)));
+      },
+    );
 
     test('cleared on disconnect', () async {
       await loginWithCapturedCallbacks();
@@ -572,8 +620,19 @@ void main() {
       messageService = FakeTwitchMessageService();
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         messageService: messageService,
@@ -598,16 +657,17 @@ void main() {
       expect(store.sendChatError, isNull);
     });
 
-    test('returns false without write scope and never calls the service',
-        () async {
-      await login(scopes: const ['user:read:chat']);
+    test(
+      'returns false without write scope and never calls the service',
+      () async {
+        await login(scopes: const ['user:read:chat']);
 
-      expect(await store.sendChatMessage('hi'), isFalse);
-      expect(messageService.calls, 0);
-    });
+        expect(await store.sendChatMessage('hi'), isFalse);
+        expect(messageService.calls, 0);
+      },
+    );
 
-    test('returns false for empty text and never calls the service',
-        () async {
+    test('returns false for empty text and never calls the service', () async {
       await login();
 
       expect(await store.sendChatMessage('   '), isFalse);
@@ -653,41 +713,51 @@ void main() {
       expect(store.sendChatError, 'Message not delivered');
     });
 
-    test('dropped with an unknown code surfaces Twitch\'s own message',
-        () async {
-      await login();
-      messageService.result = const TwitchSendResult(
-        messageId: '',
-        isSent: false,
-        dropReason: TwitchDropReason(
-          code: 'channel_settings_block',
-          message: 'Your message was blocked by the channel settings.',
-        ),
-      );
+    test(
+      'dropped with an unknown code surfaces Twitch\'s own message',
+      () async {
+        await login();
+        messageService.result = const TwitchSendResult(
+          messageId: '',
+          isSent: false,
+          dropReason: TwitchDropReason(
+            code: 'channel_settings_block',
+            message: 'Your message was blocked by the channel settings.',
+          ),
+        );
 
-      expect(await store.sendChatMessage('spam'), isFalse);
-      expect(store.sendChatError,
-          'Your message was blocked by the channel settings.');
-    });
+        expect(await store.sendChatMessage('spam'), isFalse);
+        expect(
+          store.sendChatError,
+          'Your message was blocked by the channel settings.',
+        );
+      },
+    );
 
-    test('dropped with an unknown code and no message shows the code',
-        () async {
-      await login();
-      messageService.result = const TwitchSendResult(
-        messageId: '',
-        isSent: false,
-        dropReason: TwitchDropReason(code: 'channel_settings_block'),
-      );
+    test(
+      'dropped with an unknown code and no message shows the code',
+      () async {
+        await login();
+        messageService.result = const TwitchSendResult(
+          messageId: '',
+          isSent: false,
+          dropReason: TwitchDropReason(code: 'channel_settings_block'),
+        );
 
-      expect(await store.sendChatMessage('spam'), isFalse);
-      expect(store.sendChatError,
-          'Message not delivered (channel_settings_block)');
-    });
+        expect(await store.sendChatMessage('spam'), isFalse);
+        expect(
+          store.sendChatError,
+          'Message not delivered (channel_settings_block)',
+        );
+      },
+    );
 
     test('exception maps to the generic error and returns false', () async {
       await login();
-      messageService.sendThrows =
-          const TwitchAuthException('nope', statusCode: 401);
+      messageService.sendThrows = const TwitchAuthException(
+        'nope',
+        statusCode: 401,
+      );
 
       expect(await store.sendChatMessage('hi'), isFalse);
       expect(store.sendChatError, 'Could not send — try again');
@@ -707,8 +777,10 @@ void main() {
       await login();
       final target = chatMessage('parent-1', 'u7');
       store.setReplyTarget(target);
-      messageService.sendThrows =
-          const TwitchAuthException('nope', statusCode: 401);
+      messageService.sendThrows = const TwitchAuthException(
+        'nope',
+        statusCode: 401,
+      );
 
       expect(await store.sendChatMessage('hi'), isFalse);
       expect(messageService.lastReplyParentMessageId, 'parent-1');
@@ -745,8 +817,19 @@ void main() {
       await Hive.openBox(HiveKeys.Settings.name);
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         emoteStoreResolver: () => emoteStore,
@@ -754,8 +837,7 @@ void main() {
       await store.startLogin();
     }
 
-    test('connect fetches the emote catalogs for the logged-in user',
-        () async {
+    test('connect fetches the emote catalogs for the logged-in user', () async {
       await logIn();
 
       expect(emoteService.sevenTvGlobalCalls, 1);
@@ -767,8 +849,9 @@ void main() {
 
     test('toggle off at connect skips the fetch', () async {
       await Hive.openBox(HiveKeys.Settings.name);
-      await Hive.box(HiveKeys.Settings.name)
-          .put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
+      await Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.TwitchChatThirdPartyEmotes.name, false);
 
       await logIn();
 
@@ -800,12 +883,24 @@ void main() {
     });
 
     Future<void> logIn({List<String>? scopes}) async {
-      authService.tokenScopes = scopes ??
+      authService.tokenScopes =
+          scopes ??
           const ['user:read:chat', 'user:write:chat', 'user:read:emotes'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         userEmoteStoreResolver: () => userEmoteStore,
@@ -819,10 +914,11 @@ void main() {
       expect(store.canReadEmotes, isTrue);
       expect(userEmoteService.calls, 1);
       expect(userEmoteService.lastUserId, FakeTwitchAuthService.user.id);
+      expect(userEmoteService.lastBroadcasterId, FakeTwitchAuthService.user.id);
       expect(
-          userEmoteService.lastBroadcasterId, FakeTwitchAuthService.user.id);
-      expect(userEmoteService.lastAccessToken,
-          FakeTwitchAuthService.token.accessToken);
+        userEmoteService.lastAccessToken,
+        FakeTwitchAuthService.token.accessToken,
+      );
     });
 
     test('a pre-upgrade token skips the fetch', () async {
@@ -848,8 +944,13 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       final version = store.lifecycleVersion;
 
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm1',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
 
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(store.lifecycleVersion, version + 1);
@@ -859,8 +960,13 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       final version = store.lifecycleVersion;
 
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'nope', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'nope',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
 
       expect(store.isMessageDeleted('nope'), isFalse);
       expect(store.lifecycleVersion, version);
@@ -882,24 +988,30 @@ void main() {
       expect(store.lifecycleVersion, version);
     });
 
-    test('chat clear tombstones everything and banners between old and new', () {
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+    test(
+      'chat clear tombstones everything and banners between old and new',
+      () {
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+        store.appendChatMessageForTest(chatMessage('m2', 'u2'));
 
-      store.applyChatClear();
+        store.applyChatClear();
 
-      expect(store.isMessageDeleted('m1'), isTrue);
-      expect(store.isMessageDeleted('m2'), isTrue);
-      expect(store.systemNotices.single.kind, ChatSystemNoticeKind.chatCleared);
+        expect(store.isMessageDeleted('m1'), isTrue);
+        expect(store.isMessageDeleted('m2'), isTrue);
+        expect(
+          store.systemNotices.single.kind,
+          ChatSystemNoticeKind.chatCleared,
+        );
 
-      store.appendChatMessageForTest(chatMessage('m3', 'u1'));
-      final items = store.messagesWithNotices();
-      expect(items, hasLength(4));
-      expect(items[0], isA<ChatMessageEvent>());
-      expect(items[1], isA<ChatMessageEvent>());
-      expect(items[2], isA<ChatSystemNotice>());
-      expect(items[3], isA<ChatMessageEvent>());
-    });
+        store.appendChatMessageForTest(chatMessage('m3', 'u1'));
+        final items = store.messagesWithNotices();
+        expect(items, hasLength(4));
+        expect(items[0], isA<ChatMessageEvent>());
+        expect(items[1], isA<ChatMessageEvent>());
+        expect(items[2], isA<ChatSystemNotice>());
+        expect(items[3], isA<ChatMessageEvent>());
+      },
+    );
 
     test('chat clear on an empty chat is a full no-op', () {
       final version = store.lifecycleVersion;
@@ -932,8 +1044,13 @@ void main() {
       for (var i = 0; i < 500; i++) {
         store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
       }
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm0', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm0',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
       expect(store.isMessageDeleted('m0'), isTrue);
       expect(store.deletedMessageActor('m0'), 'Cool_Mod');
 
@@ -946,8 +1063,13 @@ void main() {
 
     test('logout clears tombstones, notices and the arrival counter', () async {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm1',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
       store.applyChatClear();
       expect(store.systemNotices, isNotEmpty);
       expect(store.deletedMessageActor('m1'), 'Cool_Mod');
@@ -968,8 +1090,13 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m2', 'u2'));
       store.appendChatMessageForTest(chatMessage('m3', 'u3'));
 
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm1',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
       store.applyClearUserMessages('u2');
       store.applyChatClear();
 
@@ -979,23 +1106,25 @@ void main() {
       expect(store.deletedMessageActor('nope'), isNull);
     });
 
-    test('a moderate delete tombstones with the actor and bumps the version',
-        () {
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      final version = store.lifecycleVersion;
+    test(
+      'a moderate delete tombstones with the actor and bumps the version',
+      () {
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+        final version = store.lifecycleVersion;
 
-      store.applyModerationDelete('m1', 'Cool_Mod');
+        store.applyModerationDelete('m1', 'Cool_Mod');
 
-      expect(store.isMessageDeleted('m1'), isTrue);
-      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
-      expect(store.lifecycleVersion, version + 1);
-    });
+        expect(store.isMessageDeleted('m1'), isTrue);
+        expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+        expect(store.lifecycleVersion, version + 1);
+      },
+    );
 
-    test('message_delete first, moderate later — actor lands with a bump',
-        () {
+    test('message_delete first, moderate later — actor lands with a bump', () {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.applyMessageDelete(
-          const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'));
+        const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
+      );
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(store.deletedMessageActor('m1'), isNull);
       final version = store.lifecycleVersion;
@@ -1006,19 +1135,22 @@ void main() {
       expect(store.lifecycleVersion, version + 1);
     });
 
-    test('moderate first, message_delete later — idempotent single tombstone',
-        () {
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.applyModerationDelete('m1', 'Cool_Mod');
-      final version = store.lifecycleVersion;
+    test(
+      'moderate first, message_delete later — idempotent single tombstone',
+      () {
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+        store.applyModerationDelete('m1', 'Cool_Mod');
+        final version = store.lifecycleVersion;
 
-      store.applyMessageDelete(
-          const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'));
+        store.applyMessageDelete(
+          const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
+        );
 
-      expect(store.isMessageDeleted('m1'), isTrue);
-      expect(store.deletedMessageActor('m1'), 'Cool_Mod');
-      expect(store.lifecycleVersion, version);
-    });
+        expect(store.isMessageDeleted('m1'), isTrue);
+        expect(store.deletedMessageActor('m1'), 'Cool_Mod');
+        expect(store.lifecycleVersion, version);
+      },
+    );
 
     test('a moderate delete for an unknown id is a no-op', () {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
@@ -1038,8 +1170,10 @@ void main() {
       store.applyModerationTimeout('u1', const Duration(seconds: 600));
 
       expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
-      expect(store.tombstoneInfo('m1')?.timeoutDuration,
-          const Duration(seconds: 600));
+      expect(
+        store.tombstoneInfo('m1')?.timeoutDuration,
+        const Duration(seconds: 600),
+      );
       expect(store.tombstoneInfo('m2')?.kind, ChatTombstoneKind.timedOut);
       expect(store.isMessageDeleted('m3'), isFalse);
 
@@ -1055,15 +1189,17 @@ void main() {
       expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
     });
 
-    test('clear_user_messages before timeout upgrades Deleted to Timed out',
-        () {
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.applyClearUserMessages('u1');
-      expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.deleted);
+    test(
+      'clear_user_messages before timeout upgrades Deleted to Timed out',
+      () {
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+        store.applyClearUserMessages('u1');
+        expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.deleted);
 
-      store.applyModerationTimeout('u1', const Duration(minutes: 10));
-      expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
-    });
+        store.applyModerationTimeout('u1', const Duration(minutes: 10));
+        expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
+      },
+    );
   });
 
   group('lifecycle wiring', () {
@@ -1079,18 +1215,27 @@ void main() {
     Future<void> loginWithCapturedCallbacks() async {
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (onChatMessage, onChatNotification, onMessageDelete,
-            onClearUserMessages, onChatClear, onChannelModerate,
-            onAutoModMessageHold, onAutoModMessageUpdate,
-            onStateChanged, onRevoked) {
-          emitDelete = onMessageDelete;
-          emitPurge = onClearUserMessages;
-          emitClear = onChatClear;
-          emitModerate = onChannelModerate;
-          emitAutoModHold = onAutoModMessageHold;
-          emitAutoModUpdate = onAutoModMessageUpdate;
-          return eventSubService;
-        },
+        eventSubFactory:
+            (
+              onChatMessage,
+              onChatNotification,
+              onMessageDelete,
+              onClearUserMessages,
+              onChatClear,
+              onChannelModerate,
+              onAutoModMessageHold,
+              onAutoModMessageUpdate,
+              onStateChanged,
+              onRevoked,
+            ) {
+              emitDelete = onMessageDelete;
+              emitPurge = onClearUserMessages;
+              emitClear = onChatClear;
+              emitModerate = onChannelModerate;
+              emitAutoModHold = onAutoModMessageHold;
+              emitAutoModUpdate = onAutoModMessageUpdate;
+              return eventSubService;
+            },
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
       );
@@ -1102,8 +1247,13 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.appendChatMessageForTest(chatMessage('m2', 'u2'));
 
-      emitDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1', userName: 'Cool_Mod'));
+      emitDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm1',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(store.deletedMessageActor('m1'), 'Cool_Mod');
       expect(store.isMessageDeleted('m2'), isFalse);
@@ -1119,11 +1269,13 @@ void main() {
       await loginWithCapturedCallbacks();
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-      emitModerate(const ChannelModerateEvent(
-        action: 'delete',
-        moderatorUserName: 'Cool_Mod',
-        delete: ModerateDeleteAction(messageId: 'm1'),
-      ));
+      emitModerate(
+        const ChannelModerateEvent(
+          action: 'delete',
+          moderatorUserName: 'Cool_Mod',
+          delete: ModerateDeleteAction(messageId: 'm1'),
+        ),
+      );
 
       expect(store.isMessageDeleted('m1'), isTrue);
       expect(store.deletedMessageActor('m1'), 'Cool_Mod');
@@ -1131,25 +1283,29 @@ void main() {
   });
 
   group('moderation scope gate', () {
-    test('connectChat passes includeModeration: false without the bundle',
-        () async {
-      authService.tokenScopes = const [
-        'user:read:chat',
-        'user:write:chat',
-        'user:read:emotes',
-      ];
-      await store.startLogin();
+    test(
+      'connectChat passes includeModeration: false without the bundle',
+      () async {
+        authService.tokenScopes = const [
+          'user:read:chat',
+          'user:write:chat',
+          'user:read:emotes',
+        ];
+        await store.startLogin();
 
-      expect(eventSubService.lastIncludeModeration, isFalse);
-    });
+        expect(eventSubService.lastIncludeModeration, isFalse);
+      },
+    );
 
-    test('connectChat passes includeModeration: true with the full bundle',
-        () async {
-      authService.tokenScopes = kTwitchModerationScopes;
-      await store.startLogin();
+    test(
+      'connectChat passes includeModeration: true with the full bundle',
+      () async {
+        authService.tokenScopes = kTwitchModerationScopes;
+        await store.startLogin();
 
-      expect(eventSubService.lastIncludeModeration, isTrue);
-    });
+        expect(eventSubService.lastIncludeModeration, isTrue);
+      },
+    );
   });
 
   group('multi-channel', () {
@@ -1158,11 +1314,11 @@ void main() {
     late void Function(TwitchEventSubState) emitState;
 
     TwitchChannelRef ref(String id) => TwitchChannelRef(
-          id: id,
-          login: 'login-$id',
-          displayName: 'Channel $id',
-          addedAt: DateTime.utc(2026, 8, 9),
-        );
+      id: id,
+      login: 'login-$id',
+      displayName: 'Channel $id',
+      addedAt: DateTime.utc(2026, 8, 9),
+    );
 
     Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
@@ -1177,10 +1333,22 @@ void main() {
           scopes ?? const ['user:read:chat', 'user:write:chat'];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, onStateChanged, __________) {
-          emitState = onStateChanged;
-          return eventSubService;
-        },
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              onStateChanged,
+              __________,
+            ) {
+              emitState = onStateChanged;
+              return eventSubService;
+            },
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         messageService: messageService,
@@ -1190,55 +1358,76 @@ void main() {
       emitState(TwitchEventSubState.connected);
     }
 
-    test('addChannel dedupes by id, persists and selects the channel',
-        () async {
-      await login();
+    test(
+      'addChannel dedupes by id, persists and selects the channel',
+      () async {
+        await login();
 
-      await store.addChannel(ref('chan-1'));
-      await store.addChannel(ref('chan-1'));
+        await store.addChannel(ref('chan-1'));
+        await store.addChannel(ref('chan-1'));
 
-      expect(store.channels.map((entry) => entry.id), ['chan-1']);
-      final stored =
-          settingsBox().get(SettingsKeys.NativeChatChannels.name) as List;
-      expect(stored, hasLength(1));
-      expect((stored.single as Map)['id'], 'chan-1');
-      expect(
+        expect(store.channels.map((entry) => entry.id), ['chan-1']);
+        final stored =
+            settingsBox().get(SettingsKeys.NativeChatChannels.name) as List;
+        expect(stored, hasLength(1));
+        expect((stored.single as Map)['id'], 'chan-1');
+        expect(
           settingsBox().get(SettingsKeys.SelectedNativeChatChannelId.name),
-          'chan-1');
-      expect(store.selectedChannelId, 'chan-1');
-      expect(store.effectiveBroadcasterId, 'chan-1');
-      expect(eventSubService.lastSwitchBroadcasterId, 'chan-1');
-    });
+          'chan-1',
+        );
+        expect(store.selectedChannelId, 'chan-1');
+        expect(store.effectiveBroadcasterId, 'chan-1');
+        expect(eventSubService.lastSwitchBroadcasterId, 'chan-1');
+      },
+    );
 
-    test('channels and selection survive a store restart (settings round-trip)',
-        () async {
-      await login();
-      await store.addChannel(ref('chan-1'));
+    test(
+      'channels and selection survive a store restart (settings round-trip)',
+      () async {
+        await login();
+        await store.addChannel(ref('chan-1'));
 
-      final restarted = TwitchChatStore(
-        authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
-        badgeStoreResolver: () => badgeStore,
-        isProResolver: () => true,
-        channelService: channelService,
-      );
-      await restarted.init();
+        final restarted = TwitchChatStore(
+          authService: authService,
+          eventSubFactory:
+              (
+                _,
+                __,
+                ___,
+                ____,
+                _____,
+                ______,
+                _______,
+                ________,
+                _________,
+                __________,
+              ) => eventSubService,
+          badgeStoreResolver: () => badgeStore,
+          isProResolver: () => true,
+          channelService: channelService,
+        );
+        await restarted.init();
 
-      expect(restarted.channels.map((entry) => entry.id), ['chan-1']);
-      expect(restarted.selectedChannelId, 'chan-1');
-      expect(restarted.effectiveBroadcasterId, 'chan-1');
+        expect(restarted.channels.map((entry) => entry.id), ['chan-1']);
+        expect(restarted.selectedChannelId, 'chan-1');
+        expect(restarted.effectiveBroadcasterId, 'chan-1');
 
-      /// Cold start connects straight into the persisted channel.
-      expect(eventSubService.lastBroadcasterId, 'chan-1');
-    });
+        /// Cold start connects straight into the persisted channel.
+        expect(eventSubService.lastBroadcasterId, 'chan-1');
+      },
+    );
 
     test('garbage in the settings box degrades to empty/null', () async {
       await Hive.openBox(HiveKeys.Settings.name);
-      await settingsBox()
-          .put(SettingsKeys.NativeChatChannels.name, ['nope', 42, {'id': 1}]);
-      await settingsBox()
-          .put(SettingsKeys.SelectedNativeChatChannelId.name, 42);
+      await settingsBox().put(SettingsKeys.NativeChatChannels.name, [
+        'nope',
+        42,
+        {'id': 1},
+      ]);
+      await settingsBox().put(
+        SettingsKeys.SelectedNativeChatChannelId.name,
+        42,
+      );
 
       await login();
 
@@ -1251,8 +1440,9 @@ void main() {
       await login();
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.appendChatMessageForTest(chatMessage('m2', 'u2'));
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
+      );
 
       await store.selectChannel('chan-1');
       expect(store.selectedChannelId, 'chan-1');
@@ -1298,17 +1488,14 @@ void main() {
 
       await store.selectChannel('chan-1');
       eventSubService.onSwitchChannel = null;
-      expect(
-        store.messages.map((message) => message.messageId),
-        ['new-live'],
-      );
+      expect(store.messages.map((message) => message.messageId), ['new-live']);
       expect(store.chatConnection, isNot(TwitchChatConnectionState.failed));
 
       await store.selectChannel(null);
-      expect(
-        store.messages.map((message) => message.messageId),
-        ['own-1', 'old-late'],
-      );
+      expect(store.messages.map((message) => message.messageId), [
+        'own-1',
+        'old-late',
+      ]);
     });
 
     test('the chat bar shows connecting during a switch, live after', () async {
@@ -1331,26 +1518,33 @@ void main() {
       expect(eventSubService.switchChannelCalls, 0);
     });
 
-    test('removeChannel drops the channel, its buffer and falls back to own',
-        () async {
-      await login();
-      await store.addChannel(ref('chan-1'));
-      store.appendChatMessageForTest(chatMessage('m9', 'u9'));
-      expect(store.selectedChannelId, 'chan-1');
+    test(
+      'removeChannel drops the channel, its buffer and falls back to own',
+      () async {
+        await login();
+        await store.addChannel(ref('chan-1'));
+        store.appendChatMessageForTest(chatMessage('m9', 'u9'));
+        expect(store.selectedChannelId, 'chan-1');
 
-      await store.removeChannel('chan-1');
+        await store.removeChannel('chan-1');
 
-      expect(store.channels, isEmpty);
-      expect(settingsBox().get(SettingsKeys.NativeChatChannels.name), isEmpty);
-      expect(settingsBox().get(SettingsKeys.SelectedNativeChatChannelId.name),
-          isNull);
-      expect(store.selectedChannelId, isNull);
-      expect(eventSubService.lastSwitchBroadcasterId, 'user-1');
+        expect(store.channels, isEmpty);
+        expect(
+          settingsBox().get(SettingsKeys.NativeChatChannels.name),
+          isEmpty,
+        );
+        expect(
+          settingsBox().get(SettingsKeys.SelectedNativeChatChannelId.name),
+          isNull,
+        );
+        expect(store.selectedChannelId, isNull);
+        expect(eventSubService.lastSwitchBroadcasterId, 'user-1');
 
-      /// The buffer was dropped — re-adding starts with an empty chat.
-      await store.addChannel(ref('chan-1'));
-      expect(store.messages, isEmpty);
-    });
+        /// The buffer was dropped — re-adding starts with an empty chat.
+        await store.addChannel(ref('chan-1'));
+        expect(store.messages, isEmpty);
+      },
+    );
 
     test('connectChat subscribes to the selected channel', () async {
       await login();
@@ -1361,32 +1555,32 @@ void main() {
       expect(eventSubService.lastBroadcasterId, 'chan-1');
     });
 
-    test('live poll batches own + saved channels and syncs selection',
-        () async {
-      await login();
-      await store.addChannel(ref('chan-1'));
-      await store.addChannel(ref('chan-2'));
-      channelService.liveStreams = {
-        'user-1': 10,
-        'chan-2': 2500,
-      };
+    test(
+      'live poll batches own + saved channels and syncs selection',
+      () async {
+        await login();
+        await store.addChannel(ref('chan-1'));
+        await store.addChannel(ref('chan-2'));
+        channelService.liveStreams = {'user-1': 10, 'chan-2': 2500};
 
-      await store.refreshSelectedChannelLive();
+        await store.refreshSelectedChannelLive();
 
-      expect(
-        channelService.lastLiveBroadcasterIds,
-        containsAll(['user-1', 'chan-1', 'chan-2']),
-      );
-      expect(store.channelLiveViewers['user-1'], 10);
-      expect(store.channelLiveViewers['chan-2'], 2500);
-      expect(store.channelLiveViewers.containsKey('chan-1'), isFalse);
-      expect(store.isChannelLive(null), isTrue);
-      expect(store.isChannelLive('chan-2'), isTrue);
-      expect(store.isChannelLive('chan-1'), isFalse);
-      /// Selected is chan-2 (last add) — header fields mirror the map.
-      expect(store.selectedChannelIsLive, isTrue);
-      expect(store.selectedChannelViewerCount, 2500);
-    });
+        expect(
+          channelService.lastLiveBroadcasterIds,
+          containsAll(['user-1', 'chan-1', 'chan-2']),
+        );
+        expect(store.channelLiveViewers['user-1'], 10);
+        expect(store.channelLiveViewers['chan-2'], 2500);
+        expect(store.channelLiveViewers.containsKey('chan-1'), isFalse);
+        expect(store.isChannelLive(null), isTrue);
+        expect(store.isChannelLive('chan-2'), isTrue);
+        expect(store.isChannelLive('chan-1'), isFalse);
+
+        /// Selected is chan-2 (last add) — header fields mirror the map.
+        expect(store.selectedChannelIsLive, isTrue);
+        expect(store.selectedChannelViewerCount, 2500);
+      },
+    );
 
     test('sendChatMessage targets the effective broadcaster', () async {
       await login();
@@ -1399,10 +1593,9 @@ void main() {
 
     test('login populates the moderated set when scoped', () async {
       channelService.moderatedChannels = [ref('chan-mod')];
-      await login(scopes: const [
-        'user:read:chat',
-        'user:read:moderated_channels',
-      ]);
+      await login(
+        scopes: const ['user:read:chat', 'user:read:moderated_channels'],
+      );
       await pumpEventQueue();
 
       expect(channelService.moderatedCalls, 1);
@@ -1411,12 +1604,13 @@ void main() {
     });
 
     test('a failing moderated fetch degrades to an empty set', () async {
-      channelService.moderatedThrows =
-          const TwitchAuthException('down', statusCode: 500);
-      await login(scopes: const [
-        'user:read:chat',
-        'user:read:moderated_channels',
-      ]);
+      channelService.moderatedThrows = const TwitchAuthException(
+        'down',
+        statusCode: 500,
+      );
+      await login(
+        scopes: const ['user:read:chat', 'user:read:moderated_channels'],
+      );
       await pumpEventQueue();
 
       expect(store.moderatedChannelIds, isEmpty);
@@ -1430,31 +1624,34 @@ void main() {
       expect(channelService.moderatedCalls, 0);
     });
 
-    test('gating — own / moderated / other channel with manage scopes',
-        () async {
-      await login(scopes: const [
-        'user:read:chat',
-        'user:write:chat',
-        'moderator:manage:chat_messages',
-        'moderator:manage:banned_users',
-      ]);
-      store.moderatedChannelIds.add('chan-mod');
+    test(
+      'gating — own / moderated / other channel with manage scopes',
+      () async {
+        await login(
+          scopes: const [
+            'user:read:chat',
+            'user:write:chat',
+            'moderator:manage:chat_messages',
+            'moderator:manage:banned_users',
+          ],
+        );
+        store.moderatedChannelIds.add('chan-mod');
 
-      /// Own channel counts as full-mod implicitly.
-      expect(store.canModerateSelectedChannel, isTrue);
+        /// Own channel counts as full-mod implicitly.
+        expect(store.canModerateSelectedChannel, isTrue);
 
-      await store.selectChannel('chan-mod');
-      expect(store.canModerateSelectedChannel, isTrue);
+        await store.selectChannel('chan-mod');
+        expect(store.canModerateSelectedChannel, isTrue);
 
-      await store.selectChannel('chan-other');
-      expect(store.canModerateSelectedChannel, isFalse);
-    });
+        await store.selectChannel('chan-other');
+        expect(store.canModerateSelectedChannel, isFalse);
+      },
+    );
 
     test('gating — pre-upgrade token cannot moderate anywhere', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        'user:read:moderated_channels',
-      ]);
+      await login(
+        scopes: const ['user:read:chat', 'user:read:moderated_channels'],
+      );
       store.moderatedChannelIds.add('chan-mod');
 
       expect(store.canModerateSelectedChannel, isFalse);
@@ -1465,32 +1662,36 @@ void main() {
 
     test('repeat delete events for the same id apply once', () {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
+      );
       final version = store.lifecycleVersion;
 
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
+      );
 
       expect(store.lifecycleVersion, version);
       expect(store.isMessageDeleted('m1'), isTrue);
     });
 
-    test('a duplicate /clear does not double-banner; a real second one does',
-        () {
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.applyChatClear();
-      expect(store.systemNotices, hasLength(1));
+    test(
+      'a duplicate /clear does not double-banner; a real second one does',
+      () {
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+        store.applyChatClear();
+        expect(store.systemNotices, hasLength(1));
 
-      /// Same arrival seq = same /clear delivered twice — deduped.
-      store.applyChatClear();
-      expect(store.systemNotices, hasLength(1));
+        /// Same arrival seq = same /clear delivered twice — deduped.
+        store.applyChatClear();
+        expect(store.systemNotices, hasLength(1));
 
-      /// Messages after the clear move the seq — a genuine second /clear.
-      store.appendChatMessageForTest(chatMessage('m2', 'u1'));
-      store.applyChatClear();
-      expect(store.systemNotices, hasLength(2));
-    });
+        /// Messages after the clear move the seq — a genuine second /clear.
+        store.appendChatMessageForTest(chatMessage('m2', 'u1'));
+        store.applyChatClear();
+        expect(store.systemNotices, hasLength(2));
+      },
+    );
   });
 
   group('mod actions', () {
@@ -1504,7 +1705,8 @@ void main() {
     /// as a full mod there.
     Future<void> login({List<String>? scopes}) async {
       await Hive.openBox(HiveKeys.Settings.name);
-      authService.tokenScopes = scopes ??
+      authService.tokenScopes =
+          scopes ??
           const [
             'user:read:chat',
             'user:write:chat',
@@ -1513,8 +1715,19 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         moderationService: moderationService,
@@ -1539,8 +1752,7 @@ void main() {
       expect(store.deletedMessageActor('m1'), 'Kounex');
     });
 
-    test('the EventSub echoes of a local delete do not double-apply',
-        () async {
+    test('the EventSub echoes of a local delete do not double-apply', () async {
       await login();
       final event = chatMessage('m1', 'u1');
       store.appendChatMessageForTest(event);
@@ -1548,8 +1760,9 @@ void main() {
       final version = store.lifecycleVersion;
 
       /// channel.chat.message_delete echo — same dedup key, skipped.
-      store.applyMessageDelete(const ChatMessageDeleteEvent(
-          messageId: 'm1', targetUserId: 'u1'));
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
+      );
       expect(store.lifecycleVersion, version);
 
       /// channel.moderate delete echo — same actor, skipped too.
@@ -1611,19 +1824,21 @@ void main() {
       expect(store.lifecycleVersion, version);
     });
 
-    test('gated off without manage scopes and in non-moderated channels',
-        () async {
-      await login(scopes: const ['user:read:chat']);
-      expect(await store.deleteMessage(chatMessage('m1', 'u1')), isFalse);
+    test(
+      'gated off without manage scopes and in non-moderated channels',
+      () async {
+        await login(scopes: const ['user:read:chat']);
+        expect(await store.deleteMessage(chatMessage('m1', 'u1')), isFalse);
 
-      /// Manage scopes, but the selected channel is not moderated.
-      await login();
-      store.selectedChannelId = 'chan-other';
-      expect(store.canModerateSelectedChannel, isFalse);
-      expect(await store.banUser('u1'), isFalse);
-      expect(moderationService.banCalls, 0);
-      expect(moderationService.deleteCalls, 0);
-    });
+        /// Manage scopes, but the selected channel is not moderated.
+        await login();
+        store.selectedChannelId = 'chan-other';
+        expect(store.canModerateSelectedChannel, isFalse);
+        expect(await store.banUser('u1'), isFalse);
+        expect(moderationService.banCalls, 0);
+        expect(moderationService.deleteCalls, 0);
+      },
+    );
   });
 
   group('pinned messages', () {
@@ -1637,7 +1852,8 @@ void main() {
     /// initial pin refresh, so tests start from [pinnedSample] loaded.
     Future<void> login({List<String>? scopes}) async {
       await Hive.openBox(HiveKeys.Settings.name);
-      authService.tokenScopes = scopes ??
+      authService.tokenScopes =
+          scopes ??
           const [
             'user:read:chat',
             'user:write:chat',
@@ -1646,8 +1862,19 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         moderationService: moderationService,
@@ -1680,10 +1907,7 @@ void main() {
     });
 
     test('the moderation read bundle is enough to fetch pins', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        ...kTwitchModerationScopes,
-      ]);
+      await login(scopes: const ['user:read:chat', ...kTwitchModerationScopes]);
 
       expect(moderationService.getPinnedCalls, 1);
       expect(store.pinnedMessage?.messageId, 'msg-pinned');
@@ -1736,10 +1960,7 @@ void main() {
     });
 
     test('pinMessage is gated off without manage scopes', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        ...kTwitchModerationScopes,
-      ]);
+      await login(scopes: const ['user:read:chat', ...kTwitchModerationScopes]);
 
       expect(await store.pinMessage(chatMessage('m1', 'u1')), isFalse);
       expect(moderationService.pinCalls, 0);
@@ -1775,19 +1996,21 @@ void main() {
       expect(moderationService.unpinCalls, 0);
     });
 
-    test('a channel switch clears the pin and refetches for the new channel',
-        () async {
-      await login();
-      store.moderatedChannelIds.add('chan-mod');
-      moderationService.getPinnedCalls = 0;
+    test(
+      'a channel switch clears the pin and refetches for the new channel',
+      () async {
+        await login();
+        store.moderatedChannelIds.add('chan-mod');
+        moderationService.getPinnedCalls = 0;
 
-      await store.selectChannel('chan-mod');
-      await pumpEventQueue();
+        await store.selectChannel('chan-mod');
+        await pumpEventQueue();
 
-      expect(moderationService.getPinnedCalls, 1);
-      expect(moderationService.lastPinnedBroadcasterId, 'chan-mod');
-      expect(store.pinnedMessage?.messageId, 'msg-pinned');
-    });
+        expect(moderationService.getPinnedCalls, 1);
+        expect(moderationService.lastPinnedBroadcasterId, 'chan-mod');
+        expect(store.pinnedMessage?.messageId, 'msg-pinned');
+      },
+    );
 
     test('logout clears the pinned message', () async {
       await login();
@@ -1809,7 +2032,8 @@ void main() {
     /// Own channel with manage scopes by default.
     Future<void> login({List<String>? scopes}) async {
       await Hive.openBox(HiveKeys.Settings.name);
-      authService.tokenScopes = scopes ??
+      authService.tokenScopes =
+          scopes ??
           const [
             'user:read:chat',
             'user:write:chat',
@@ -1819,8 +2043,19 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         moderationService: moderationService,
@@ -1906,10 +2141,7 @@ void main() {
     });
 
     test('unbanUser is gated off without manage scopes', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        ...kTwitchModerationScopes,
-      ]);
+      await login(scopes: const ['user:read:chat', ...kTwitchModerationScopes]);
 
       expect(await store.unbanUser('bad-1'), isFalse);
       expect(moderationService.unbanCalls, 0);
@@ -1945,15 +2177,15 @@ void main() {
     ];
 
     AutoModMessageHoldEvent holdEvent(String id) => AutoModMessageHoldEvent(
-          messageId: id,
-          userId: 'u-bad',
-          userLogin: 'troll',
-          userName: 'Troll',
-          message: const AutoModMessageContent(text: 'bad message'),
-          reason: 'automod',
-          automod: const AutoModClassification(category: 'aggressive', level: 3),
-          heldAt: DateTime.utc(2026, 8, 13, 9, 59),
-        );
+      messageId: id,
+      userId: 'u-bad',
+      userLogin: 'troll',
+      userName: 'Troll',
+      message: const AutoModMessageContent(text: 'bad message'),
+      reason: 'automod',
+      automod: const AutoModClassification(category: 'aggressive', level: 3),
+      heldAt: DateTime.utc(2026, 8, 13, 9, 59),
+    );
 
     setUp(() {
       moderationService = FakeTwitchModerationService();
@@ -1965,12 +2197,23 @@ void main() {
       authService.tokenScopes = scopes ?? wave3Scopes;
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, onAutoModHold,
-            onAutoModUpdate, _________, __________) {
-          emitHold = onAutoModHold;
-          emitUpdate = onAutoModUpdate;
-          return eventSubService;
-        },
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              onAutoModHold,
+              onAutoModUpdate,
+              _________,
+              __________,
+            ) {
+              emitHold = onAutoModHold;
+              emitUpdate = onAutoModUpdate;
+              return eventSubService;
+            },
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         moderationService: moderationService,
@@ -1980,13 +2223,15 @@ void main() {
     }
 
     test('the manage getters follow the token scopes', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        'user:write:chat',
-        'moderator:manage:chat_messages',
-        'moderator:manage:banned_users',
-        ...kTwitchModerationScopes,
-      ]);
+      await login(
+        scopes: const [
+          'user:read:chat',
+          'user:write:chat',
+          'moderator:manage:chat_messages',
+          'moderator:manage:banned_users',
+          ...kTwitchModerationScopes,
+        ],
+      );
       expect(store.canWarnUsers, isFalse);
       expect(store.canManageUnbanRequests, isFalse);
       expect(store.canManageAutoMod, isFalse);
@@ -2002,20 +2247,22 @@ void main() {
       expect(eventSubService.lastIncludeAutoMod, isTrue);
     });
 
-    test('resolveUnbanRequest approval drops the request and the ban',
-        () async {
-      await login();
-      await store.refreshBanInbox();
+    test(
+      'resolveUnbanRequest approval drops the request and the ban',
+      () async {
+        await login();
+        await store.refreshBanInbox();
 
-      final ok = await store.resolveUnbanRequest('req-1', approved: true);
+        final ok = await store.resolveUnbanRequest('req-1', approved: true);
 
-      expect(ok, isTrue);
-      expect(moderationService.resolveUnbanRequestCalls, 1);
-      expect(moderationService.lastResolveUnbanRequestId, 'req-1');
-      expect(moderationService.lastResolveUnbanApproved, isTrue);
-      expect(store.unbanRequests, isEmpty);
-      expect(store.bannedUsers, isEmpty);
-    });
+        expect(ok, isTrue);
+        expect(moderationService.resolveUnbanRequestCalls, 1);
+        expect(moderationService.lastResolveUnbanRequestId, 'req-1');
+        expect(moderationService.lastResolveUnbanApproved, isTrue);
+        expect(store.unbanRequests, isEmpty);
+        expect(store.bannedUsers, isEmpty);
+      },
+    );
 
     test('resolveUnbanRequest denial keeps the ban list entry', () async {
       await login();
@@ -2031,8 +2278,9 @@ void main() {
     test('resolveUnbanRequest failure keeps the lists', () async {
       await login();
       await store.refreshBanInbox();
-      moderationService.resolveUnbanRequestThrows =
-          const TwitchAuthException('down');
+      moderationService.resolveUnbanRequestThrows = const TwitchAuthException(
+        'down',
+      );
 
       final ok = await store.resolveUnbanRequest('req-1', approved: true);
 
@@ -2042,12 +2290,14 @@ void main() {
     });
 
     test('resolveUnbanRequest is gated without the manage scope', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        'moderator:manage:chat_messages',
-        'moderator:manage:banned_users',
-        ...kTwitchModerationScopes,
-      ]);
+      await login(
+        scopes: const [
+          'user:read:chat',
+          'moderator:manage:chat_messages',
+          'moderator:manage:banned_users',
+          ...kTwitchModerationScopes,
+        ],
+      );
 
       expect(await store.resolveUnbanRequest('req-1', approved: true), isFalse);
       expect(moderationService.resolveUnbanRequestCalls, 0);
@@ -2071,34 +2321,40 @@ void main() {
       expect(await store.warnUser('bad-1', 'spam'), isFalse);
     });
 
-    test('warnUser is gated without the manage scope or an empty reason',
-        () async {
-      await login(scopes: const [
-        'user:read:chat',
-        'moderator:manage:chat_messages',
-        'moderator:manage:banned_users',
-        ...kTwitchModerationScopes,
-      ]);
+    test(
+      'warnUser is gated without the manage scope or an empty reason',
+      () async {
+        await login(
+          scopes: const [
+            'user:read:chat',
+            'moderator:manage:chat_messages',
+            'moderator:manage:banned_users',
+            ...kTwitchModerationScopes,
+          ],
+        );
 
-      expect(await store.warnUser('bad-1', 'spam'), isFalse);
+        expect(await store.warnUser('bad-1', 'spam'), isFalse);
 
-      await login();
-      expect(await store.warnUser('bad-1', '   '), isFalse);
-      expect(moderationService.warnCalls, 0);
-    });
+        await login();
+        expect(await store.warnUser('bad-1', '   '), isFalse);
+        expect(moderationService.warnCalls, 0);
+      },
+    );
 
-    test('fetchUserWarnings returns the list; gated reads return null',
-        () async {
-      await login();
+    test(
+      'fetchUserWarnings returns the list; gated reads return null',
+      () async {
+        await login();
 
-      final warnings = await store.fetchUserWarnings('bad-1');
-      expect(warnings, hasLength(1));
-      expect(warnings!.single.reason, 'spoiling movies');
-      expect(moderationService.lastWarningsUserId, 'bad-1');
+        final warnings = await store.fetchUserWarnings('bad-1');
+        expect(warnings, hasLength(1));
+        expect(warnings!.single.reason, 'spoiling movies');
+        expect(moderationService.lastWarningsUserId, 'bad-1');
 
-      await login(scopes: const ['user:read:chat']);
-      expect(await store.fetchUserWarnings('bad-1'), isNull);
-    });
+        await login(scopes: const ['user:read:chat']);
+        expect(await store.fetchUserWarnings('bad-1'), isNull);
+      },
+    );
 
     test('automod holds queue (deduped), updates remove', () async {
       await login();
@@ -2107,17 +2363,26 @@ void main() {
       emitHold(holdEvent('msg-held-1'));
       emitHold(holdEvent('msg-held-2'));
 
-      expect(store.autoModQueue.map((held) => held.messageId),
-          ['msg-held-1', 'msg-held-2']);
+      expect(store.autoModQueue.map((held) => held.messageId), [
+        'msg-held-1',
+        'msg-held-2',
+      ]);
 
-      emitUpdate(const AutoModMessageUpdateEvent(
-          messageId: 'msg-held-1', status: 'approved'));
-      expect(store.autoModQueue.map((held) => held.messageId),
-          ['msg-held-2']);
+      emitUpdate(
+        const AutoModMessageUpdateEvent(
+          messageId: 'msg-held-1',
+          status: 'approved',
+        ),
+      );
+      expect(store.autoModQueue.map((held) => held.messageId), ['msg-held-2']);
 
       /// An update for an unknown id is a no-op.
-      emitUpdate(const AutoModMessageUpdateEvent(
-          messageId: 'msg-held-9', status: 'expired'));
+      emitUpdate(
+        const AutoModMessageUpdateEvent(
+          messageId: 'msg-held-9',
+          status: 'expired',
+        ),
+      );
       expect(store.autoModQueue, hasLength(1));
     });
 
@@ -2126,13 +2391,17 @@ void main() {
       emitHold(holdEvent('msg-held-1'));
 
       moderationService.autoModThrows = const TwitchAuthException('down');
-      expect(await store.resolveAutoModMessage('msg-held-1', allow: true),
-          isFalse);
+      expect(
+        await store.resolveAutoModMessage('msg-held-1', allow: true),
+        isFalse,
+      );
       expect(store.autoModQueue, hasLength(1));
 
       moderationService.autoModThrows = null;
-      expect(await store.resolveAutoModMessage('msg-held-1', allow: true),
-          isTrue);
+      expect(
+        await store.resolveAutoModMessage('msg-held-1', allow: true),
+        isTrue,
+      );
 
       /// The failed attempt above counted too — the fake records before
       /// throwing, like every fake in the support file.
@@ -2164,7 +2433,8 @@ void main() {
 
     Future<void> login({List<String>? scopes}) async {
       await Hive.openBox(HiveKeys.Settings.name);
-      authService.tokenScopes = scopes ??
+      authService.tokenScopes =
+          scopes ??
           const [
             'user:read:chat',
             'user:write:chat',
@@ -2176,8 +2446,19 @@ void main() {
           ];
       store = TwitchChatStore(
         authService: authService,
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            eventSubService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
         isProResolver: () => true,
         moderationService: moderationService,
@@ -2190,47 +2471,49 @@ void main() {
     });
 
     test('capability getters reflect the persisted scopes', () async {
-      await login(scopes: const [
-        'user:read:chat',
-        'moderator:manage:chat_settings',
-      ]);
+      await login(
+        scopes: const ['user:read:chat', 'moderator:manage:chat_settings'],
+      );
       expect(store.canManageChatSettings, isTrue);
       expect(store.canManageShieldMode, isFalse);
       expect(store.canSendAnnouncements, isFalse);
 
-      await login(scopes: const [
-        'user:read:chat',
-        'moderator:manage:shield_mode',
-      ]);
+      await login(
+        scopes: const ['user:read:chat', 'moderator:manage:shield_mode'],
+      );
       expect(store.canManageChatSettings, isFalse);
       expect(store.canManageShieldMode, isTrue);
       expect(store.canSendAnnouncements, isFalse);
 
-      await login(scopes: const [
-        'user:read:chat',
-        'moderator:manage:announcements',
-      ]);
+      await login(
+        scopes: const ['user:read:chat', 'moderator:manage:announcements'],
+      );
       expect(store.canManageChatSettings, isFalse);
       expect(store.canManageShieldMode, isFalse);
       expect(store.canSendAnnouncements, isTrue);
     });
 
-    test('clearSelectedChannelChat clears via Helix and applies locally',
-        () async {
-      await login();
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-      store.appendChatMessageForTest(chatMessage('m2', 'u2'));
+    test(
+      'clearSelectedChannelChat clears via Helix and applies locally',
+      () async {
+        await login();
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+        store.appendChatMessageForTest(chatMessage('m2', 'u2'));
 
-      final ok = await store.clearSelectedChannelChat();
+        final ok = await store.clearSelectedChannelChat();
 
-      expect(ok, isTrue);
-      expect(moderationService.clearCalls, 1);
-      expect(moderationService.lastClearBroadcasterId, 'user-1');
-      expect(moderationService.lastClearModeratorId, 'user-1');
-      expect(store.isMessageDeleted('m1'), isTrue);
-      expect(store.isMessageDeleted('m2'), isTrue);
-      expect(store.systemNotices.single.kind, ChatSystemNoticeKind.chatCleared);
-    });
+        expect(ok, isTrue);
+        expect(moderationService.clearCalls, 1);
+        expect(moderationService.lastClearBroadcasterId, 'user-1');
+        expect(moderationService.lastClearModeratorId, 'user-1');
+        expect(store.isMessageDeleted('m1'), isTrue);
+        expect(store.isMessageDeleted('m2'), isTrue);
+        expect(
+          store.systemNotices.single.kind,
+          ChatSystemNoticeKind.chatCleared,
+        );
+      },
+    );
 
     test('clearSelectedChannelChat returns false on service failure', () async {
       await login();
@@ -2242,30 +2525,31 @@ void main() {
       expect(store.systemNotices, isEmpty);
     });
 
-    test('updateSelectedChatSettings updates the snapshot only on success',
-        () async {
-      await login();
-      moderationService.chatSettings = const TwitchChatSettings(
-        emoteMode: false,
-        followerMode: false,
-        followerModeDurationMinutes: null,
-        subscriberMode: false,
-        slowMode: false,
-        slowModeWaitTimeSeconds: null,
-        uniqueChatMode: false,
-      );
-      store.roomChatSettings = moderationService.chatSettings;
+    test(
+      'updateSelectedChatSettings updates the snapshot only on success',
+      () async {
+        await login();
+        moderationService.chatSettings = const TwitchChatSettings(
+          emoteMode: false,
+          followerMode: false,
+          followerModeDurationMinutes: null,
+          subscriberMode: false,
+          slowMode: false,
+          slowModeWaitTimeSeconds: null,
+          uniqueChatMode: false,
+        );
+        store.roomChatSettings = moderationService.chatSettings;
 
-      final ok = await store.updateSelectedChatSettings(emoteMode: true);
+        final ok = await store.updateSelectedChatSettings(emoteMode: true);
 
-      expect(ok, isTrue);
-      expect(moderationService.updateSettingsCalls, 1);
-      expect(moderationService.lastUpdateEmoteMode, isTrue);
-      expect(store.roomChatSettings?.emoteMode, isTrue);
-    });
+        expect(ok, isTrue);
+        expect(moderationService.updateSettingsCalls, 1);
+        expect(moderationService.lastUpdateEmoteMode, isTrue);
+        expect(store.roomChatSettings?.emoteMode, isTrue);
+      },
+    );
 
-    test('updateSelectedChatSettings leaves the snapshot on failure',
-        () async {
+    test('updateSelectedChatSettings leaves the snapshot on failure', () async {
       await login();
       const before = TwitchChatSettings(
         emoteMode: false,
@@ -2277,7 +2561,9 @@ void main() {
         uniqueChatMode: false,
       );
       store.roomChatSettings = before;
-      moderationService.updateSettingsThrows = const TwitchAuthException('down');
+      moderationService.updateSettingsThrows = const TwitchAuthException(
+        'down',
+      );
 
       expect(await store.updateSelectedChatSettings(emoteMode: true), isFalse);
       expect(store.roomChatSettings, before);
@@ -2350,12 +2636,14 @@ void main() {
 
     test('refreshRoomModState targets the selected channel', () async {
       await login();
-      await store.addChannel(TwitchChannelRef(
-        id: 'chan-9',
-        login: 'login-chan-9',
-        displayName: 'Channel 9',
-        addedAt: DateTime.utc(2026, 8, 9),
-      ));
+      await store.addChannel(
+        TwitchChannelRef(
+          id: 'chan-9',
+          login: 'login-chan-9',
+          displayName: 'Channel 9',
+          addedAt: DateTime.utc(2026, 8, 9),
+        ),
+      );
 
       await store.refreshRoomModState();
 
@@ -2363,23 +2651,28 @@ void main() {
       expect(moderationService.lastShieldBroadcasterId, 'chan-9');
     });
 
-    test('room actions are gated without manage scopes or in non-mod channels',
-        () async {
-      await login(scopes: const ['user:read:chat']);
-      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+    test(
+      'room actions are gated without manage scopes or in non-mod channels',
+      () async {
+        await login(scopes: const ['user:read:chat']);
+        store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-      expect(await store.clearSelectedChannelChat(), isFalse);
-      expect(await store.updateSelectedChatSettings(emoteMode: true), isFalse);
-      expect(await store.setShieldMode(true), isFalse);
-      expect(await store.sendAnnouncement('hi', 'primary'), isFalse);
-      expect(moderationService.clearCalls, 0);
-      expect(moderationService.updateSettingsCalls, 0);
-      expect(moderationService.updateShieldCalls, 0);
-      expect(moderationService.announceCalls, 0);
+        expect(await store.clearSelectedChannelChat(), isFalse);
+        expect(
+          await store.updateSelectedChatSettings(emoteMode: true),
+          isFalse,
+        );
+        expect(await store.setShieldMode(true), isFalse);
+        expect(await store.sendAnnouncement('hi', 'primary'), isFalse);
+        expect(moderationService.clearCalls, 0);
+        expect(moderationService.updateSettingsCalls, 0);
+        expect(moderationService.updateShieldCalls, 0);
+        expect(moderationService.announceCalls, 0);
 
-      await login();
-      store.selectedChannelId = 'chan-other';
-      expect(await store.clearSelectedChannelChat(), isFalse);
-    });
+        await login();
+        store.selectedChannelId = 'chan-other';
+        expect(await store.clearSelectedChannelChat(), isFalse);
+      },
+    );
   });
 }

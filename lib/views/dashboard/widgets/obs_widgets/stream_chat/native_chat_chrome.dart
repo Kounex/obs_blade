@@ -25,30 +25,25 @@ class NativeChatStatusChip extends StatelessWidget {
     Key? key,
     required Color color,
     int? viewerCount,
-  }) =>
-      NativeChatStatusChip(
-        key: key,
-        label: 'LIVE',
-        viewerCountLabel: viewerCount == null
-            ? null
-            : formatChatViewerCount(viewerCount),
-        color: color,
-      );
+  }) => NativeChatStatusChip(
+    key: key,
+    label: 'LIVE',
+    viewerCountLabel: viewerCount == null
+        ? null
+        : formatChatViewerCount(viewerCount),
+    color: color,
+  );
 
   factory NativeChatStatusChip.mod({Key? key, required Color color}) =>
-      NativeChatStatusChip(
-        key: key,
-        label: 'Mod',
-        color: color,
-      );
+      NativeChatStatusChip(key: key, label: 'Mod', color: color);
 
   @override
   Widget build(BuildContext context) {
     final baseStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: this.color,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
-        );
+      color: this.color,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.2,
+    );
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xs,
@@ -98,34 +93,32 @@ String formatChatViewerCount(int count) {
 
 /// Sheet / page titles — title2 scale so they read clearly above body
 /// (`titleMedium` is 15px in the On Air theme, same as body).
-TextStyle? nativeChatSheetTitleStyle(BuildContext context) =>
-    Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.3,
-        );
+TextStyle? nativeChatSheetTitleStyle(BuildContext context) => Theme.of(context)
+    .textTheme
+    .titleLarge
+    ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3);
 
 /// Section labels inside a sheet (Emotes, Badges groups, etc.).
-TextStyle? nativeChatSheetSectionStyle(BuildContext context) =>
-    Theme.of(context).textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        );
+TextStyle? nativeChatSheetSectionStyle(BuildContext context) => Theme.of(
+  context,
+).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700);
 
 /// Thin hairline matching native chat message separators.
 Widget nativeChatHairline(BuildContext context) => Divider(
-      height: 1.0,
-      thickness: 0.5,
-      color: Theme.of(context).dividerColor.withValues(alpha: 0.35),
-    );
+  height: 1.0,
+  thickness: 0.5,
+  color: Theme.of(context).dividerColor.withValues(alpha: 0.35),
+);
 
 /// Drag handle for dismissible chat sheets.
 Widget nativeChatSheetDragHandle(BuildContext context) => Center(
-      child: Container(
-        width: 36.0,
-        height: 4.0,
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.55),
-          borderRadius: AppRadius.pill,
-        ),
-      ),
-    );
+  child: Container(
+    width: 36.0,
+    height: 4.0,
+    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+    decoration: BoxDecoration(
+      color: Theme.of(context).dividerColor.withValues(alpha: 0.55),
+      borderRadius: AppRadius.pill,
+    ),
+  ),
+);

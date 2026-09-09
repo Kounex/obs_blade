@@ -14,7 +14,7 @@ class TwitchMessageService {
   final http.Client _client;
 
   TwitchMessageService({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   Future<TwitchSendResult> sendChatMessage({
     required String accessToken,
@@ -50,7 +50,8 @@ class TwitchMessageService {
     final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
     if (data is! List || data.isEmpty) {
       throw const TwitchAuthException(
-          'Sending Twitch chat message returned no data');
+        'Sending Twitch chat message returned no data',
+      );
     }
     return TwitchSendResult.fromJson(data.first as Map<String, Object?>);
   }

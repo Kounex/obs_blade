@@ -20,9 +20,12 @@ class VisibilitySlideWrapper extends StatefulWidget {
   final Input? input;
   final Widget child;
 
-  const VisibilitySlideWrapper(
-      {super.key, required this.child, this.sceneItem, this.input})
-      : assert(sceneItem != null || input != null);
+  const VisibilitySlideWrapper({
+    super.key,
+    required this.child,
+    this.sceneItem,
+    this.input,
+  }) : assert(sceneItem != null || input != null);
 
   @override
   _VisibilitySlideWrapperState createState() => _VisibilitySlideWrapperState();
@@ -42,7 +45,9 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
   }
 
   void _registerReaction(
-      DashboardStore dashboardStore, SlidableController slidableController) {
+    DashboardStore dashboardStore,
+    SlidableController slidableController,
+  ) {
     _disposers.add(
       reaction(
         this.widget.sceneItem != null
@@ -61,9 +66,10 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
   }
 
   bool _isItemHidden(
-      DashboardStore dashboardStore,
-      Box<HiddenSceneItem> hiddenSceneItemsBox,
-      HiddenSceneItem? hiddenSceneItem) {
+    DashboardStore dashboardStore,
+    Box<HiddenSceneItem> hiddenSceneItemsBox,
+    HiddenSceneItem? hiddenSceneItem,
+  ) {
     bool isEditing = this.widget.sceneItem != null
         ? dashboardStore.editSceneItemVisibility
         : dashboardStore.editAudioVisibility;
@@ -76,13 +82,13 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
       } else if (this.widget.sceneItem != null &&
           this.widget.sceneItem!.parentGroupName != null) {
         bool parentHidden = hiddenSceneItemsBox.values.toList().any(
-              (hiddenSceneItemInBox) =>
-                  hiddenSceneItemInBox.name ==
-                      this.widget.sceneItem!.parentGroupName &&
-                  (hiddenSceneItemInBox.sourceType != null
-                      ? hiddenSceneItemInBox.sourceType == 'group'
-                      : true),
-            );
+          (hiddenSceneItemInBox) =>
+              hiddenSceneItemInBox.name ==
+                  this.widget.sceneItem!.parentGroupName &&
+              (hiddenSceneItemInBox.sourceType != null
+                  ? hiddenSceneItemInBox.sourceType == 'group'
+                  : true),
+        );
 
         return parentHidden;
       }
@@ -102,18 +108,18 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
         HiddenSceneItem? hiddenSceneItem;
         try {
           hiddenSceneItem = hiddenSceneItemsBox.values.toList().firstWhere(
-                (hiddenSceneItem) => hiddenSceneItem.isSceneItem(
-                  dashboardStore.activeSceneName!,
-                  this.widget.sceneItem != null
-                      ? SceneItemType.Source
-                      : SceneItemType.Audio,
-                  this.widget.sceneItem?.sceneItemId,
-                  this.widget.sceneItem?.sourceName ??
-                      this.widget.input!.inputName!,
-                  networkStore.activeSession?.connection.name,
-                  networkStore.activeSession?.connection.host,
-                ),
-              );
+            (hiddenSceneItem) => hiddenSceneItem.isSceneItem(
+              dashboardStore.activeSceneName!,
+              this.widget.sceneItem != null
+                  ? SceneItemType.Source
+                  : SceneItemType.Audio,
+              this.widget.sceneItem?.sceneItemId,
+              this.widget.sceneItem?.sourceName ??
+                  this.widget.input!.inputName!,
+              networkStore.activeSession?.connection.name,
+              networkStore.activeSession?.connection.host,
+            ),
+          );
         } catch (e) {
           hiddenSceneItem = null;
         }
@@ -125,7 +131,10 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
         return Observer(
           builder: (context) => Offstage(
             offstage: _isItemHidden(
-                dashboardStore, hiddenSceneItemsBox, hiddenSceneItem),
+              dashboardStore,
+              hiddenSceneItemsBox,
+              hiddenSceneItem,
+            ),
             child: Slidable(
               closeOnScroll: false,
               enabled: false,
@@ -187,9 +196,7 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                             Flexible(
                               child: Text(
                                 hiddenSceneItem != null ? 'Hidden' : 'Visible',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium!
+                                style: Theme.of(context).textTheme.labelMedium!
                                     .copyWith(color: actionColor),
                               ),
                             ),

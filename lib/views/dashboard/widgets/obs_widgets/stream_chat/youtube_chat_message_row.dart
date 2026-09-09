@@ -14,14 +14,14 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch
 /// blue → red ascending). The API reports `tier` 1–11; tiers above 7 share
 /// the top red band.
 Color youTubeSuperChatTierColor(int tier) => switch (tier) {
-      1 => const Color(0xFF1565C0),
-      2 => const Color(0xFF00B8D4),
-      3 => const Color(0xFF00BFA5),
-      4 => const Color(0xFFFFB300),
-      5 => const Color(0xFFE65100),
-      6 => const Color(0xFFC2185B),
-      _ => const Color(0xFFD50000),
-    };
+  1 => const Color(0xFF1565C0),
+  2 => const Color(0xFF00B8D4),
+  3 => const Color(0xFF00BFA5),
+  4 => const Color(0xFFFFB300),
+  5 => const Color(0xFFE65100),
+  6 => const Color(0xFFC2185B),
+  _ => const Color(0xFFD50000),
+};
 
 /// YouTube sends no per-chatter chat color (unlike Twitch) — derive a
 /// stable pastel from the author channel id so names stay distinguishable
@@ -37,8 +37,7 @@ Color youTubeAuthorColor(BuildContext context, String? authorChannelId) {
   for (final unit in id.codeUnits) {
     hash = (hash * 31 + unit) & 0x7fffffff;
   }
-  return HSLColor.fromAHSL(1.0, (hash % 360).toDouble(), 0.55, 0.62)
-      .toColor();
+  return HSLColor.fromAHSL(1.0, (hash % 360).toDouble(), 0.55, 0.62).toColor();
 }
 
 /// Accent for member notices (new member / milestone / gifts) — YouTube's
@@ -73,8 +72,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
-  double get _spacing =>
-      NativeChatAppearance.messageSpacing(this.settingsBox);
+  double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
 
   /// Role badges as inline icons, in YouTube's own order (owner, mod,
   /// member, verified).
@@ -115,20 +113,17 @@ class YouTubeChatMessageRow extends StatelessWidget {
       );
 
   List<InlineSpan> _badgeSpans() => [
-        for (final widget in this._badgeWidgets())
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: widget,
-          ),
-      ];
+    for (final widget in this._badgeWidgets())
+      WidgetSpan(alignment: PlaceholderAlignment.middle, child: widget),
+  ];
 
   TextSpan _authorSpan(BuildContext context) => TextSpan(
-        text: this.message.authorName ?? 'Unknown',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: youTubeAuthorColor(context, this.message.authorChannelId),
-        ),
-      );
+    text: this.message.authorName ?? 'Unknown',
+    style: TextStyle(
+      fontWeight: FontWeight.w600,
+      color: youTubeAuthorColor(context, this.message.authorChannelId),
+    ),
+  );
 
   /// Body text with tappable links — same split idiom as the Twitch row.
   List<InlineSpan> _linkAwareTextSpans(BuildContext context, String text) {
@@ -178,15 +173,16 @@ class YouTubeChatMessageRow extends StatelessWidget {
   /// Tombstone treatment — the content stays visible but dims hard, with
   /// the italic marker appended (same UX as the Twitch row).
   List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
-    final color = Theme.of(context)
-        .textTheme
-        .bodySmall
-        ?.color
-        ?.withValues(alpha: 0.5);
+    final color = Theme.of(
+      context,
+    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5);
     return [
       for (final span in this._messageSpans(context))
         if (span is TextSpan)
-          TextSpan(text: span.text, style: TextStyle(color: color))
+          TextSpan(
+            text: span.text,
+            style: TextStyle(color: color),
+          )
         else if (span is WidgetSpan)
           WidgetSpan(
             alignment: span.alignment,
@@ -198,31 +194,31 @@ class YouTubeChatMessageRow extends StatelessWidget {
   }
 
   TextSpan _deletedMarkerSpan(BuildContext context) => TextSpan(
-        text: ' —Deleted',
-        style: TextStyle(
-          fontStyle: FontStyle.italic,
-          color: Theme.of(context).textTheme.bodySmall?.color,
-        ),
-      );
+    text: ' —Deleted',
+    style: TextStyle(
+      fontStyle: FontStyle.italic,
+      color: Theme.of(context).textTheme.bodySmall?.color,
+    ),
+  );
 
   /// The plain chat line: badges + colored author + body.
   Widget _textRow(BuildContext context) => Text.rich(
-        TextSpan(
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: this._textSize,
-              ),
-          children: [
-            ...this._badgeSpans(),
-            this._authorSpan(context),
-            const TextSpan(text: ': '),
-            if (this.message.isTombstoned) ...[
-              ...this._dimmedMessageSpans(context),
-              this._deletedMarkerSpan(context),
-            ] else
-              ...this._messageSpans(context),
-          ],
-        ),
-      );
+    TextSpan(
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
+      children: [
+        ...this._badgeSpans(),
+        this._authorSpan(context),
+        const TextSpan(text: ': '),
+        if (this.message.isTombstoned) ...[
+          ...this._dimmedMessageSpans(context),
+          this._deletedMarkerSpan(context),
+        ] else
+          ...this._messageSpans(context),
+      ],
+    ),
+  );
 
   /// Tier-colored money card (Super Chat with comment / Super Sticker).
   Widget _tierCard(
@@ -233,9 +229,9 @@ class YouTubeChatMessageRow extends StatelessWidget {
     required List<InlineSpan> bodySpans,
   }) {
     final tierColor = youTubeSuperChatTierColor(tier);
-    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: this._textSize,
-        );
+    final baseStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize);
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,10 +242,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
               child: Text.rich(
                 TextSpan(
                   style: baseStyle,
-                  children: [
-                    ...this._badgeSpans(),
-                    this._authorSpan(context),
-                  ],
+                  children: [...this._badgeSpans(), this._authorSpan(context)],
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -270,13 +263,16 @@ class YouTubeChatMessageRow extends StatelessWidget {
         if (bodySpans.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.xs / 2),
           Text.rich(
-            TextSpan(style: baseStyle, children: [
-              if (this.message.isTombstoned) ...[
-                ...this._dimmedSpans(context, bodySpans),
-                this._deletedMarkerSpan(context),
-              ] else
-                ...bodySpans,
-            ]),
+            TextSpan(
+              style: baseStyle,
+              children: [
+                if (this.message.isTombstoned) ...[
+                  ...this._dimmedSpans(context, bodySpans),
+                  this._deletedMarkerSpan(context),
+                ] else
+                  ...bodySpans,
+              ],
+            ),
           ),
         ],
       ],
@@ -308,15 +304,16 @@ class YouTubeChatMessageRow extends StatelessWidget {
   }
 
   List<InlineSpan> _dimmedSpans(BuildContext context, List<InlineSpan> spans) {
-    final color = Theme.of(context)
-        .textTheme
-        .bodySmall
-        ?.color
-        ?.withValues(alpha: 0.5);
+    final color = Theme.of(
+      context,
+    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5);
     return [
       for (final span in spans)
         if (span is TextSpan)
-          TextSpan(text: span.text, style: TextStyle(color: color))
+          TextSpan(
+            text: span.text,
+            style: TextStyle(color: color),
+          )
         else
           span,
     ];
@@ -335,9 +332,9 @@ class YouTubeChatMessageRow extends StatelessWidget {
     /// don't have a meaningful one.
     bool showAuthor = true,
   }) {
-    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: this._textSize,
-        );
+    final baseStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -380,9 +377,9 @@ class YouTubeChatMessageRow extends StatelessWidget {
   }
 
   Widget _pollCard(BuildContext context, YouTubePollMetadata metadata) {
-    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontSize: this._textSize,
-        );
+    final baseStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize);
     final mutedStyle = Theme.of(context).textTheme.bodySmall;
     return Container(
       key: const Key('yt-poll-card'),
@@ -427,10 +424,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      option.optionText ?? '',
-                      style: baseStyle,
-                    ),
+                    child: Text(option.optionText ?? '', style: baseStyle),
                   ),
 
                   /// Tallies are owner-only in the API — show when present.
@@ -486,7 +480,9 @@ class YouTubeChatMessageRow extends StatelessWidget {
           context,
           icon: JamIcons.star_f,
           accent: kYouTubeMemberAccent,
-          notice: level == null ? 'became a member' : 'became a member ($level)',
+          notice: level == null
+              ? 'became a member'
+              : 'became a member ($level)',
         );
       case YouTubeChatMessageType.memberMilestone:
         final details = snippet.memberMilestoneChatDetails;
@@ -509,7 +505,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
           accent: kYouTubeMemberAccent,
           notice: count > 0
               ? 'gifted $count ${details?.giftMembershipsLevelName ?? ''} memberships'
-                  .replaceAll('  ', ' ')
+                    .replaceAll('  ', ' ')
               : 'gifted memberships',
         );
       case YouTubeChatMessageType.giftMembershipReceived:

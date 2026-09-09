@@ -24,14 +24,15 @@ class EnumerationBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<Widget> usedEntries = List.from(
-      (this.entries?.mapIndexed((text, index) => EnumerationEntry(
-                  text: text, order: this.ordered ? index : null)) ??
+      (this.entries?.mapIndexed(
+                (text, index) => EnumerationEntry(
+                  text: text,
+                  order: this.ordered ? index : null,
+                ),
+              ) ??
               this.customEntries ??
               [])
-          .expand((entry) => [
-                entry,
-                SizedBox(height: this.entrySpacing),
-              ]),
+          .expand((entry) => [entry, SizedBox(height: this.entrySpacing)]),
     );
 
     if (usedEntries.isNotEmpty) usedEntries.removeLast();
@@ -40,10 +41,7 @@ class EnumerationBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (this.title != null) ...[
-          Text(
-            this.title!,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+          Text(this.title!, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 6.0),
         ],
         ...usedEntries,

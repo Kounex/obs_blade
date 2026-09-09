@@ -11,11 +11,7 @@ class RequestStatusObject {
   RequestStatusObject(this.result, this.code, this.comment);
 
   static RequestStatusObject fromJSON(Map<String, dynamic> json) =>
-      RequestStatusObject(
-        json['result'],
-        json['code'],
-        json['comment'],
-      );
+      RequestStatusObject(json['result'], json['code'], json['comment']);
 }
 
 /// Initial Wrapper object for responses to the requests made to the OBS
@@ -28,15 +24,12 @@ class BaseResponse implements Message {
   Map<String, dynamic> json;
 
   BaseResponse(Map<String, dynamic> json)
-      : jsonRAW = json,
-        json = json['d']?['responseData'] ?? {};
+    : jsonRAW = json,
+      json = json['d']?['responseData'] ?? {};
 
   BaseResponse.d(Map<String, dynamic> json)
-      : jsonRAW = {
-          'op': WebSocketOpCode.RequestResponse.identifier,
-          'd': json,
-        },
-        json = json['responseData'] ?? {};
+    : jsonRAW = {'op': WebSocketOpCode.RequestResponse.identifier, 'd': json},
+      json = json['responseData'] ?? {};
 
   String get uuid => this.jsonRAW['d']['requestId'];
 
@@ -55,7 +48,8 @@ class BaseResponse implements Message {
   }
 
   RequestType get requestType {
-    return RequestType.values
-        .firstWhere((type) => type.name == this.jsonRAW['d']['requestType']);
+    return RequestType.values.firstWhere(
+      (type) => type.name == this.jsonRAW['d']['requestType'],
+    );
   }
 }

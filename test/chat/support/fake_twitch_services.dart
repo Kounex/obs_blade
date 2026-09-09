@@ -60,14 +60,13 @@ class FakeTwitchAuthService extends TwitchAuthService {
   );
 
   @override
-  Future<TwitchDeviceCode> requestDeviceCode() async =>
-      const TwitchDeviceCode(
-        deviceCode: 'dev',
-        userCode: 'ABCD',
-        verificationUri: 'https://www.twitch.tv/activate',
-        expiresIn: 1800,
-        interval: 0,
-      );
+  Future<TwitchDeviceCode> requestDeviceCode() async => const TwitchDeviceCode(
+    deviceCode: 'dev',
+    userCode: 'ABCD',
+    verificationUri: 'https://www.twitch.tv/activate',
+    expiresIn: 1800,
+    interval: 0,
+  );
 
   @override
   Future<TwitchToken> pollForToken(
@@ -132,11 +131,7 @@ class FakeTwitchEventSubService extends TwitchEventSubService {
   bool disposeCalled = false;
 
   FakeTwitchEventSubService()
-      : super(
-          onChatMessage: (_) {},
-          onStateChanged: (_) {},
-          onRevoked: (_) {},
-        );
+    : super(onChatMessage: (_) {}, onStateChanged: (_) {}, onRevoked: (_) {});
 
   @override
   Future<void> connect({
@@ -338,7 +333,8 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
 
   @override
   Future<Map<String, ThirdPartyEmote>> fetchSevenTvChannel(
-      String broadcasterId) async {
+    String broadcasterId,
+  ) async {
     this.sevenTvChannelCalls++;
     this.lastBroadcasterId = broadcasterId;
     return this.sevenTvChannel;
@@ -352,7 +348,8 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
 
   @override
   Future<Map<String, ThirdPartyEmote>> fetchBttvChannel(
-      String broadcasterId) async {
+    String broadcasterId,
+  ) async {
     this.bttvChannelCalls++;
     this.lastBroadcasterId = broadcasterId;
     if (this.bttvChannelThrows != null) throw this.bttvChannelThrows!;
@@ -441,11 +438,11 @@ class FakeTwitchChannelService extends TwitchChannelService {
   List<String>? lastLiveBroadcasterIds;
 
   static TwitchChannelRef channel(String id) => TwitchChannelRef(
-        id: id,
-        login: 'login-$id',
-        displayName: 'Channel $id',
-        addedAt: DateTime.utc(2026, 8, 9),
-      );
+    id: id,
+    login: 'login-$id',
+    displayName: 'Channel $id',
+    addedAt: DateTime.utc(2026, 8, 9),
+  );
 
   @override
   Future<List<TwitchChannelRef>> getModeratedChannels({
@@ -731,14 +728,14 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.lastUpdateUniqueChatMode = uniqueChatMode;
     if (this.updateSettingsThrows != null) throw this.updateSettingsThrows!;
     this.chatSettings = this.chatSettings.copyWithWithUpdates(
-          emoteMode: emoteMode,
-          followerMode: followerMode,
-          followerModeDurationMinutes: followerModeDurationMinutes,
-          subscriberMode: subscriberMode,
-          slowMode: slowMode,
-          slowModeWaitTimeSeconds: slowModeWaitTimeSeconds,
-          uniqueChatMode: uniqueChatMode,
-        );
+      emoteMode: emoteMode,
+      followerMode: followerMode,
+      followerModeDurationMinutes: followerModeDurationMinutes,
+      subscriberMode: subscriberMode,
+      slowMode: slowMode,
+      slowModeWaitTimeSeconds: slowModeWaitTimeSeconds,
+      uniqueChatMode: uniqueChatMode,
+    );
   }
 
   @override
@@ -861,10 +858,10 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.unbanCalls++;
     this.lastUnbanUserId = userId;
     if (this.unbanThrows != null) throw this.unbanThrows!;
-    this.bannedUsersResult =
-        this.bannedUsersResult.where((user) => user.userId != userId).toList();
-    this.unbanRequestsResult = this
-        .unbanRequestsResult
+    this.bannedUsersResult = this.bannedUsersResult
+        .where((user) => user.userId != userId)
+        .toList();
+    this.unbanRequestsResult = this.unbanRequestsResult
         .where((request) => request.userId != userId)
         .toList();
   }
@@ -898,18 +895,15 @@ class FakeTwitchModerationService extends TwitchModerationService {
 
     /// Mirror Helix: the request leaves the pending list, and an approval
     /// also lifts the ban.
-    final matches = this
-        .unbanRequestsResult
+    final matches = this.unbanRequestsResult
         .where((request) => request.id == requestId)
         .toList();
     final resolvedUserId = matches.isEmpty ? null : matches.first.userId;
-    this.unbanRequestsResult = this
-        .unbanRequestsResult
+    this.unbanRequestsResult = this.unbanRequestsResult
         .where((request) => request.id != requestId)
         .toList();
     if (approved && resolvedUserId != null) {
-      this.bannedUsersResult = this
-          .bannedUsersResult
+      this.bannedUsersResult = this.bannedUsersResult
           .where((user) => user.userId != resolvedUserId)
           .toList();
     }
@@ -984,34 +978,31 @@ class FakeTwitchUserService extends TwitchUserService {
     required String accessToken,
     required String broadcasterId,
     required String userId,
-  }) async =>
-      this.followResult;
+  }) async => this.followResult;
 
   @override
   Future<DateTime?> selfFollowedAt({
     required String accessToken,
     required String userId,
     required String broadcasterId,
-  }) async =>
-      this.selfFollowResult;
+  }) async => this.selfFollowResult;
 
   @override
   Future<TwitchSelfSubscription?> selfSubscription({
     required String accessToken,
     required String broadcasterId,
-  }) async =>
-      this.selfSubResult;
+  }) async => this.selfSubResult;
 }
 
 /// No-op IRC sidecar so widget/store tests never open a real Twitch WS
 /// (and never leave pending connect timers after dispose).
 class FakeSilentIrcSidecar extends TwitchIrcSidecar {
   FakeSilentIrcSidecar()
-      : super(
-          onFirstMessage: (_) {},
-          channelFactory: (_) => throw StateError('IRC disabled in tests'),
-          sleep: (_) async {},
-        );
+    : super(
+        onFirstMessage: (_) {},
+        channelFactory: (_) => throw StateError('IRC disabled in tests'),
+        sleep: (_) async {},
+      );
 
   @override
   Future<void> connect({

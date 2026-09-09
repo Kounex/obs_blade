@@ -7,56 +7,48 @@ import '../../../../../utils/validation_helper.dart';
 import 'color_label.dart';
 import 'color_picker.dart';
 
-enum ColorType {
-  R,
-  G,
-  B,
-  H,
-  S,
-  L,
-  A,
-}
+enum ColorType { R, G, B, H, S, L, A }
 
 extension ColorTypeFunction on ColorType {
   String get label => {
-        ColorType.R: 'R',
-        ColorType.G: 'G',
-        ColorType.B: 'B',
-        ColorType.H: 'H',
-        ColorType.S: 'S',
-        ColorType.L: 'L',
-        ColorType.A: 'A',
-      }[this]!;
+    ColorType.R: 'R',
+    ColorType.G: 'G',
+    ColorType.B: 'B',
+    ColorType.H: 'H',
+    ColorType.S: 'S',
+    ColorType.L: 'L',
+    ColorType.A: 'A',
+  }[this]!;
 
   double get max => {
-        ColorType.R: 255.0,
-        ColorType.G: 255.0,
-        ColorType.B: 255.0,
-        ColorType.H: 360.0,
-        ColorType.S: 100.0,
-        ColorType.L: 100.0,
-        ColorType.A: 1.0,
-      }[this]!;
+    ColorType.R: 255.0,
+    ColorType.G: 255.0,
+    ColorType.B: 255.0,
+    ColorType.H: 360.0,
+    ColorType.S: 100.0,
+    ColorType.L: 100.0,
+    ColorType.A: 1.0,
+  }[this]!;
 
   int get divisions => {
-        ColorType.R: 255,
-        ColorType.G: 255,
-        ColorType.B: 255,
-        ColorType.H: 360,
-        ColorType.S: 100,
-        ColorType.L: 100,
-        ColorType.A: 100,
-      }[this]!;
+    ColorType.R: 255,
+    ColorType.G: 255,
+    ColorType.B: 255,
+    ColorType.H: 360,
+    ColorType.S: 100,
+    ColorType.L: 100,
+    ColorType.A: 100,
+  }[this]!;
 
   int get hexOffset => {
-        ColorType.R: 2,
-        ColorType.G: 4,
-        ColorType.B: 6,
-        ColorType.H: 0,
-        ColorType.S: 0,
-        ColorType.L: 0,
-        ColorType.A: 0,
-      }[this]!;
+    ColorType.R: 2,
+    ColorType.G: 4,
+    ColorType.B: 6,
+    ColorType.H: 0,
+    ColorType.S: 0,
+    ColorType.L: 0,
+    ColorType.A: 0,
+  }[this]!;
 }
 
 class ColorSlider extends StatefulWidget {
@@ -107,7 +99,9 @@ class _ColorSliderState extends State<ColorSlider> {
     _colorValueFocusNode.addListener(() {
       if (this.widget.controller != null && _colorValueFocusNode.hasFocus) {
         this.widget.controller!.selection = TextSelection(
-            baseOffset: 0, extentOffset: this.widget.controller!.text.length);
+          baseOffset: 0,
+          extentOffset: this.widget.controller!.text.length,
+        );
       }
     });
     super.initState();
@@ -134,9 +128,7 @@ class _ColorSliderState extends State<ColorSlider> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        ColorLabel(
-          label: this.widget.label ?? this.widget.colorType.label,
-        ),
+        ColorLabel(label: this.widget.label ?? this.widget.colorType.label),
         Expanded(
           child: Stack(
             alignment: Alignment.center,
@@ -160,12 +152,12 @@ class _ColorSliderState extends State<ColorSlider> {
                             (this.widget.colorType == ColorType.H
                                     ? 100
                                     : this.widget.saturation ??
-                                        index.toDouble()) /
+                                          index.toDouble()) /
                                 100,
                             (this.widget.colorType == ColorType.H
                                     ? 50
                                     : this.widget.lightness ??
-                                        index.toDouble()) /
+                                          index.toDouble()) /
                                 100,
                           ).toColor(),
                         ),
@@ -212,14 +204,18 @@ class _ColorSliderState extends State<ColorSlider> {
                     ),
                     keyboardType: TextInputType.number,
                     validator: (value) => ValidationHelper.colorTypeValidator(
-                        value, this.widget.colorType),
+                      value,
+                      this.widget.colorType,
+                    ),
                     autovalidateMode: AutovalidateMode.always,
                     autocorrect: false,
                     maxLength: 3,
                     maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     onChanged: (value) {
                       if (ValidationHelper.colorTypeValidator(
-                              value, this.widget.colorType) ==
+                            value,
+                            this.widget.colorType,
+                          ) ==
                           null) {
                         _latestValidSliderValue = double.parse(value);
                         this.widget.onChanged?.call(value);

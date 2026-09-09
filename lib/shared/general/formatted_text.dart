@@ -21,13 +21,11 @@ class FormattedText extends StatelessWidget {
     /// floating label above a disabled-grey value with tabular figures.
     /// The value tweens between numeric changes (1s stats cadence) via
     /// [CountUpText] and snaps for non-numeric values.
-    final TextStyle valueStyle =
-        Theme.of(context).textTheme.bodyMedium!.copyWith(
-              color: Theme.of(context).disabledColor,
-              fontFeatures: const [
-                FontFeature.tabularFigures(),
-              ],
-            );
+    final TextStyle valueStyle = Theme.of(context).textTheme.bodyMedium!
+        .copyWith(
+          color: Theme.of(context).disabledColor,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
 
     return SizedBox(
       width: this.width,
@@ -38,8 +36,9 @@ class FormattedText extends StatelessWidget {
           isDense: true,
           enabled: false,
           labelText: this.label,
-          labelStyle:
-              Theme.of(context).textTheme.bodyMedium!.copyWith(height: 0.75),
+          labelStyle: Theme.of(
+            context,
+          ).textTheme.bodyMedium!.copyWith(height: 0.75),
         ),
         child: ClipRect(
           child: Row(
@@ -53,11 +52,7 @@ class FormattedText extends StatelessWidget {
                 ),
               ),
               if (this.text != null && this.unit != null)
-                Text(
-                  this.unit!,
-                  style: valueStyle,
-                  maxLines: 1,
-                ),
+                Text(this.unit!, style: valueStyle, maxLines: 1),
             ],
           ),
         ),

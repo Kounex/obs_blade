@@ -22,16 +22,15 @@ void main() {
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
   ProStore newStore() {
-    final store = ProStore(
-      service: ProPurchaseService(gateway: gateway),
-    );
+    final store = ProStore(service: ProPurchaseService(gateway: gateway));
     stores.add(store);
     return store;
   }
 
   setUp(() async {
     tempDir = Directory(
-        '${Directory.systemTemp.path}/pro_store_test_${DateTime.now().microsecondsSinceEpoch}');
+      '${Directory.systemTemp.path}/pro_store_test_${DateTime.now().microsecondsSinceEpoch}',
+    );
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await harness.openAllBoxes();
@@ -114,21 +113,25 @@ void main() {
 
       await store.loadProducts();
 
-      expect(store.products.map((product) => product.id),
-          [kProYearlyId, kProMonthlyId]);
+      expect(store.products.map((product) => product.id), [
+        kProYearlyId,
+        kProMonthlyId,
+      ]);
       expect(store.lastError, isNull);
       expect(store.pending, isFalse);
     });
 
-    test('products missing store-side → empty graceful state, no error',
-        () async {
-      final store = newStore()..init();
+    test(
+      'products missing store-side → empty graceful state, no error',
+      () async {
+        final store = newStore()..init();
 
-      await store.loadProducts();
+        await store.loadProducts();
 
-      expect(store.products, isEmpty);
-      expect(store.lastError, isNull);
-    });
+        expect(store.products, isEmpty);
+        expect(store.lastError, isNull);
+      },
+    );
 
     test('store unavailable → lastError, empty products, no crash', () async {
       gateway.available = false;
@@ -180,8 +183,7 @@ void main() {
   });
 
   group('restore', () {
-    test(
-        'explicit restore arms the dialog flag in flight and disarms it when '
+    test('explicit restore arms the dialog flag in flight and disarms it when '
         'the restore completes without a pro event', () async {
       final store = newStore()..init();
 
@@ -211,17 +213,19 @@ void main() {
       expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
     });
 
-    test('restore error disarms the dialog flag and records lastError',
-        () async {
-      final store = newStore()..init();
-      await until(() => gateway.restoreCalls > 0);
+    test(
+      'restore error disarms the dialog flag and records lastError',
+      () async {
+        final store = newStore()..init();
+        await until(() => gateway.restoreCalls > 0);
 
-      gateway.restoreError = StateError('restore failed');
-      await store.restore(explicit: true);
+        gateway.restoreError = StateError('restore failed');
+        await store.restore(explicit: true);
 
-      expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
-      expect(store.lastError, contains('restore failed'));
-    });
+        expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
+        expect(store.lastError, contains('restore failed'));
+      },
+    );
   });
 
   group('cold-start restore', () {
@@ -231,8 +235,10 @@ void main() {
 
       expect(gateway.restoreCalls, 1);
       expect(
-        settingsBox()
-            .get(SettingsKeys.ProColdStartRestoreDone.name, defaultValue: false),
+        settingsBox().get(
+          SettingsKeys.ProColdStartRestoreDone.name,
+          defaultValue: false,
+        ),
         isTrue,
       );
 
@@ -243,50 +249,60 @@ void main() {
       expect(gateway.restoreCalls, 1);
     });
 
-    test('store unavailable → one shot not burned, retried next launch',
-        () async {
-      gateway.available = false;
-      newStore().init();
-      await until(() => gateway.isAvailableCalls > 0);
+    test(
+      'store unavailable → one shot not burned, retried next launch',
+      () async {
+        gateway.available = false;
+        newStore().init();
+        await until(() => gateway.isAvailableCalls > 0);
 
-      expect(gateway.restoreCalls, 0);
-      expect(
-        settingsBox()
-            .get(SettingsKeys.ProColdStartRestoreDone.name, defaultValue: false),
-        isFalse,
-      );
+        expect(gateway.restoreCalls, 0);
+        expect(
+          settingsBox().get(
+            SettingsKeys.ProColdStartRestoreDone.name,
+            defaultValue: false,
+          ),
+          isFalse,
+        );
 
-      gateway.available = true;
-      newStore().init();
-      await until(() => gateway.restoreCalls > 0);
+        gateway.available = true;
+        newStore().init();
+        await until(() => gateway.restoreCalls > 0);
 
-      expect(gateway.restoreCalls, 1);
-    });
+        expect(gateway.restoreCalls, 1);
+      },
+    );
 
-    test('restore error leaves the guard flag unset (retried next launch)',
-        () async {
-      gateway.restoreError = StateError('boom');
-      newStore().init();
-      await until(() => gateway.restoreCalls > 0);
+    test(
+      'restore error leaves the guard flag unset (retried next launch)',
+      () async {
+        gateway.restoreError = StateError('boom');
+        newStore().init();
+        await until(() => gateway.restoreCalls > 0);
 
-      expect(gateway.restoreCalls, 1);
-      expect(
-        settingsBox()
-            .get(SettingsKeys.ProColdStartRestoreDone.name, defaultValue: false),
-        isFalse,
-      );
+        expect(gateway.restoreCalls, 1);
+        expect(
+          settingsBox().get(
+            SettingsKeys.ProColdStartRestoreDone.name,
+            defaultValue: false,
+          ),
+          isFalse,
+        );
 
-      /// Next launch: the transient error is gone, the restore retried and
-      /// the guard flag set only now.
-      gateway.restoreError = null;
-      newStore().init();
-      await until(() => gateway.restoreCalls > 1);
+        /// Next launch: the transient error is gone, the restore retried and
+        /// the guard flag set only now.
+        gateway.restoreError = null;
+        newStore().init();
+        await until(() => gateway.restoreCalls > 1);
 
-      expect(
-        settingsBox()
-            .get(SettingsKeys.ProColdStartRestoreDone.name, defaultValue: false),
-        isTrue,
-      );
-    });
+        expect(
+          settingsBox().get(
+            SettingsKeys.ProColdStartRestoreDone.name,
+            defaultValue: false,
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 }

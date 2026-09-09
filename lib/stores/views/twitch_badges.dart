@@ -19,7 +19,7 @@ abstract class _TwitchBadgeStore with Store {
   int _fetchGeneration = 0;
 
   _TwitchBadgeStore({TwitchBadgeService? service})
-      : _service = service ?? TwitchBadgeService();
+    : _service = service ?? TwitchBadgeService();
 
   /// Global catalog: setId -> (versionId -> version)
   final ObservableMap<String, Map<String, TwitchBadgeVersion>> globalBadges =
@@ -27,7 +27,7 @@ abstract class _TwitchBadgeStore with Store {
 
   /// Per-channel catalogs: broadcasterId -> setId -> (versionId -> version)
   final ObservableMap<String, Map<String, Map<String, TwitchBadgeVersion>>>
-      channelBadges = ObservableMap();
+  channelBadges = ObservableMap();
 
   @observable
   bool isLoading = false;
@@ -36,7 +36,10 @@ abstract class _TwitchBadgeStore with Store {
   /// over the global one and an unfetched broadcaster falls back to global
   /// cleanly; null when unknown (the message row skips those silently).
   TwitchBadgeVersion? badgeVersion(
-          String broadcasterId, String setId, String id) =>
+    String broadcasterId,
+    String setId,
+    String id,
+  ) =>
       this.channelBadges[broadcasterId]?[setId]?[id] ??
       this.globalBadges[setId]?[id];
 
@@ -99,9 +102,8 @@ abstract class _TwitchBadgeStore with Store {
 
   static Map<String, Map<String, TwitchBadgeVersion>> _setsToMap(
     List<TwitchBadgeSet> sets,
-  ) =>
-      {
-        for (final set in sets)
-          set.setId: {for (final version in set.versions) version.id: version},
-      };
+  ) => {
+    for (final set in sets)
+      set.setId: {for (final version in set.versions) version.id: version},
+  };
 }

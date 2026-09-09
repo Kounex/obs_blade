@@ -11,9 +11,7 @@ import '../../../../../types/enums/settings_keys.dart';
 import '../../../services/record_stream.dart';
 
 class StreamingControls extends StatelessWidget {
-  const StreamingControls({
-    super.key,
-  });
+  const StreamingControls({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +30,14 @@ class StreamingControls extends StatelessWidget {
             onPressed: () => RecordStreamService.triggerStreamStartStop(
               context,
               dashboardStore.isLive,
-              settingsBox.get(SettingsKeys.DontShowStreamStartMessage.name,
-                  defaultValue: false),
-              settingsBox.get(SettingsKeys.DontShowStreamStopMessage.name,
-                  defaultValue: false),
+              settingsBox.get(
+                SettingsKeys.DontShowStreamStartMessage.name,
+                defaultValue: false,
+              ),
+              settingsBox.get(
+                SettingsKeys.DontShowStreamStopMessage.name,
+                defaultValue: false,
+              ),
             ),
             icon: Transform.translate(
               offset: Offset(0.0, dashboardStore.isLive ? 0.0 : -2.0),

@@ -36,12 +36,12 @@ class NativeChannelDropdown extends StatelessWidget {
       context: context,
       dialogWidget: ConfirmationDialog(
         title: 'Remove chat?',
-        body: 'The channel is removed from your list — its chat history '
+        body:
+            'The channel is removed from your list — its chat history '
             'in this session is dropped.',
         okText: 'Remove',
         isYesDestructive: true,
-        onOk: (_) =>
-            GetIt.instance<TwitchChatStore>().removeChannel(channelId),
+        onOk: (_) => GetIt.instance<TwitchChatStore>().removeChannel(channelId),
       ),
     );
   }
@@ -63,10 +63,7 @@ class NativeChannelDropdown extends StatelessWidget {
         ),
         if (trailingLabel != null) ...[
           const SizedBox(width: AppSpacing.xs),
-          Text(
-            trailingLabel,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(trailingLabel, style: Theme.of(context).textTheme.bodySmall),
         ],
       ],
     );
@@ -79,7 +76,8 @@ class NativeChannelDropdown extends StatelessWidget {
     required String name,
     String? trailingLabel,
   }) {
-    final statusColors = Theme.of(context).extension<AppStatusColors>() ??
+    final statusColors =
+        Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     final live = store.isChannelLive(channelId);
     final mod = store.canModerateChannel(channelId);
@@ -131,12 +129,11 @@ class NativeChannelDropdown extends StatelessWidget {
     return Observer(
       builder: (_) {
         final store = GetIt.instance<TwitchChatStore>();
-        final switching = store.chatConnection ==
-            TwitchChatConnectionState.connecting;
+        final switching =
+            store.chatConnection == TwitchChatConnectionState.connecting;
 
-        final ownName = store.user?.displayName ??
-            store.user?.login ??
-            'Own channel';
+        final ownName =
+            store.user?.displayName ?? store.user?.login ?? 'Own channel';
 
         final items = <DropdownMenuItem<String>>[
           DropdownMenuItem<String>(
@@ -178,11 +175,7 @@ class NativeChannelDropdown extends StatelessWidget {
         /// Closed value: name (+ You) only — LIVE/Mod live on the header
         /// for the effective channel, so they stay off the compact control.
         final selectedBuilders = <Widget>[
-          this._channelLabel(
-            context,
-            name: ownName,
-            trailingLabel: 'You',
-          ),
+          this._channelLabel(context, name: ownName, trailingLabel: 'You'),
           for (final ref in store.channels)
             this._channelLabel(context, name: ref.displayName),
           this._channelLabel(context, name: 'Add chat…'),
@@ -195,22 +188,24 @@ class NativeChannelDropdown extends StatelessWidget {
               /// 44pt touch target ([kMinInteractiveDimensionCupertino]) —
               /// same bar-control idiom as [UsernameDropdown].
               constraints: const BoxConstraints(
-                  minHeight: kMinInteractiveDimensionCupertino),
+                minHeight: kMinInteractiveDimensionCupertino,
+              ),
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
                 color: StylingHelper.lightenDarkenColor(
-                    Theme.of(context).cardColor),
+                  Theme.of(context).cardColor,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
-                  color:
-                      Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
                   width: 0.0,
                 ),
               ),
               child: DropdownButtonHideUnderline(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   child: DropdownButton<String>(
                     value: store.selectedChannelId ?? _kOwnValue,
                     isExpanded: true,
@@ -227,7 +222,8 @@ class NativeChannelDropdown extends StatelessWidget {
                               return;
                             }
                             store.selectChannel(
-                                value == _kOwnValue ? null : value);
+                              value == _kOwnValue ? null : value,
+                            );
                           },
                   ),
                 ),

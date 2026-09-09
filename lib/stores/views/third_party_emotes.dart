@@ -20,7 +20,7 @@ abstract class _ThirdPartyEmoteStore with Store {
   int _fetchGeneration = 0;
 
   _ThirdPartyEmoteStore({ThirdPartyEmoteService? service})
-      : _service = service ?? ThirdPartyEmoteService();
+    : _service = service ?? ThirdPartyEmoteService();
 
   /// Merged global catalogs (emote name -> emote): BTTV applied first,
   /// 7TV wins same-name ties.
@@ -48,9 +48,9 @@ abstract class _ThirdPartyEmoteStore with Store {
   /// Merged picker view for [broadcasterId] — its channel emotes win over
   /// the shared globals on name ties.
   List<ThirdPartyEmote> emotesFor(String broadcasterId) => {
-        ...this.globalEmotes,
-        ...?this.channelEmotes[broadcasterId],
-      }.values.toList();
+    ...this.globalEmotes,
+    ...?this.channelEmotes[broadcasterId],
+  }.values.toList();
 
   @action
   Future<void> fetch({required String broadcasterId}) async {
@@ -60,9 +60,13 @@ abstract class _ThirdPartyEmoteStore with Store {
       this._tryFetch(this._service.fetchBttvGlobal(), 'bttv-global'),
       this._tryFetch(this._service.fetchSevenTvGlobal(), '7tv-global'),
       this._tryFetch(
-          this._service.fetchBttvChannel(broadcasterId), 'bttv-channel'),
+        this._service.fetchBttvChannel(broadcasterId),
+        'bttv-channel',
+      ),
       this._tryFetch(
-          this._service.fetchSevenTvChannel(broadcasterId), '7tv-channel'),
+        this._service.fetchSevenTvChannel(broadcasterId),
+        '7tv-channel',
+      ),
     ]);
 
     /// A newer fetch superseded this one — it owns the catalog (and

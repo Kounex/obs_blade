@@ -40,89 +40,88 @@ class ElementList extends StatelessWidget {
   const ElementList({super.key});
 
   List<PreviewConfig> _previewConfigs() => [
-        PreviewConfig(
-          element: DashboardElement.ExposedProfile,
-          widget: const ProfilesPreview(),
-          canBeNotVisible: true,
-          visible: Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeProfile.name,
-                defaultValue: false,
-              ) ||
-              Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeSceneCollection.name,
-                defaultValue: false,
-              ),
-        ),
-        PreviewConfig(
-          element: DashboardElement.ExposedControls,
-          widget: const ControlsPreview(),
-          canBeNotVisible: true,
-          visible: Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeStreamingControls.name,
-                defaultValue: false,
-              ) ||
-              Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeRecordingControls.name,
-                defaultValue: false,
-              ) ||
-              Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeReplayBufferControls.name,
-                defaultValue: false,
-              ) ||
-              Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeHotkeys.name,
-                defaultValue: false,
-              ),
-        ),
-        PreviewConfig(
-          element: DashboardElement.SceneButtons,
-          widget: const SceneButtonsPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.StudioModeTransition,
-          widget: const StudioModeTransitionPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.StudioModeConfig,
-          widget: const StudioModeConfigPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.ScenePreview,
-          widget: const ScenePreviewMock(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.SceneItems,
-          widget: const SceneItemsPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.SceneItemsAudio,
-          widget: const SceneAudioPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.StreamChat,
-          widget: const ChatPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-        PreviewConfig(
-          element: DashboardElement.OBSStats,
-          widget: const StatsPreview(),
-          canBeNotVisible: false,
-          visible: true,
-        ),
-      ];
+    PreviewConfig(
+      element: DashboardElement.ExposedProfile,
+      widget: const ProfilesPreview(),
+      canBeNotVisible: true,
+      visible:
+          Hive.box(
+            HiveKeys.Settings.name,
+          ).get(SettingsKeys.ExposeProfile.name, defaultValue: false) ||
+          Hive.box(
+            HiveKeys.Settings.name,
+          ).get(SettingsKeys.ExposeSceneCollection.name, defaultValue: false),
+    ),
+    PreviewConfig(
+      element: DashboardElement.ExposedControls,
+      widget: const ControlsPreview(),
+      canBeNotVisible: true,
+      visible:
+          Hive.box(HiveKeys.Settings.name).get(
+            SettingsKeys.ExposeStreamingControls.name,
+            defaultValue: false,
+          ) ||
+          Hive.box(HiveKeys.Settings.name).get(
+            SettingsKeys.ExposeRecordingControls.name,
+            defaultValue: false,
+          ) ||
+          Hive.box(HiveKeys.Settings.name).get(
+            SettingsKeys.ExposeReplayBufferControls.name,
+            defaultValue: false,
+          ) ||
+          Hive.box(
+            HiveKeys.Settings.name,
+          ).get(SettingsKeys.ExposeHotkeys.name, defaultValue: false),
+    ),
+    PreviewConfig(
+      element: DashboardElement.SceneButtons,
+      widget: const SceneButtonsPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.StudioModeTransition,
+      widget: const StudioModeTransitionPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.StudioModeConfig,
+      widget: const StudioModeConfigPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.ScenePreview,
+      widget: const ScenePreviewMock(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.SceneItems,
+      widget: const SceneItemsPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.SceneItemsAudio,
+      widget: const SceneAudioPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.StreamChat,
+      widget: const ChatPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+    PreviewConfig(
+      element: DashboardElement.OBSStats,
+      widget: const StatsPreview(),
+      canBeNotVisible: false,
+      visible: true,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -132,8 +131,10 @@ class ElementList extends StatelessWidget {
       hiveKey: HiveKeys.Settings,
       builder: (context, settingsBox, child) {
         List<DashboardElement> elements = [
-          ...settingsBox.get(SettingsKeys.DashboardElementsOrder.name,
-              defaultValue: DashboardElement.values)
+          ...settingsBox.get(
+            SettingsKeys.DashboardElementsOrder.name,
+            defaultValue: DashboardElement.values,
+          ),
         ];
         return ReorderableListView.builder(
           shrinkWrap: true,
@@ -148,10 +149,14 @@ class ElementList extends StatelessWidget {
             builder: (BuildContext context, Widget? child) {
               /// Spring-ish lift: slight overshoot while picking up, settling
               /// into a scaled, elevated card while dragging
-              final double springValue =
-                  AppMotion.spring.transform(animation.value);
-              final double elevation =
-                  lerpDouble(0, 8, clampDouble(springValue, 0.0, 1.0))!;
+              final double springValue = AppMotion.spring.transform(
+                animation.value,
+              );
+              final double elevation = lerpDouble(
+                0,
+                8,
+                clampDouble(springValue, 0.0, 1.0),
+              )!;
               return Transform.scale(
                 scale: 1.0 + 0.02 * springValue,
                 child: Material(

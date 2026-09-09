@@ -17,10 +17,7 @@ import '../animated_toggle_icon.dart';
 class AudioSlider extends StatefulWidget {
   final Input input;
 
-  const AudioSlider({
-    super.key,
-    required this.input,
-  });
+  const AudioSlider({super.key, required this.input});
 
   @override
   State<AudioSlider> createState() => _AudioSliderState();
@@ -34,8 +31,9 @@ class _AudioSliderState extends State<AudioSlider> {
   void initState() {
     super.initState();
 
-    _controller =
-        TextEditingController(text: this.widget.input.syncOffset.toString());
+    _controller = TextEditingController(
+      text: this.widget.input.syncOffset.toString(),
+    );
   }
 
   @override
@@ -52,21 +50,21 @@ class _AudioSliderState extends State<AudioSlider> {
     return level < 0
         ? 0
         : level > 1
-            ? 1
-            : level;
+        ? 1
+        : level;
   }
 
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
     ThemeData theme = Theme.of(context);
-    final AppStatusColors statusColors =
-        theme.extension<AppStatusColors>()!;
+    final AppStatusColors statusColors = theme.extension<AppStatusColors>()!;
 
     /// Highlight (control slot) for the mute affordance
     Color highlight = theme.colorScheme.secondary;
 
-    final double currentLevel = (this.widget.input.inputLevelsMul != null &&
+    final double currentLevel =
+        (this.widget.input.inputLevelsMul != null &&
             this.widget.input.inputLevelsMul!.isNotEmpty &&
             this.widget.input.inputLevelsMul!.first.current! > 0)
         ? _transformMulToLevel(this.widget.input.inputLevelsMul!.first.current!)
@@ -78,8 +76,7 @@ class _AudioSliderState extends State<AudioSlider> {
     final bool meterHot = currentLevel >= 0.9;
 
     return Padding(
-      padding: const EdgeInsets.only(
-          left: AppSpacing.md, right: AppSpacing.md),
+      padding: const EdgeInsets.only(left: AppSpacing.md, right: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -98,15 +95,14 @@ class _AudioSliderState extends State<AudioSlider> {
               ),
               HiveBuilder<dynamic>(
                 hiveKey: HiveKeys.Settings,
-                rebuildKeys: const [
-                  SettingsKeys.ExposeInputAudioSyncOffset,
-                ],
+                rebuildKeys: const [SettingsKeys.ExposeInputAudioSyncOffset],
                 builder: (context, settingsBox, child) => AnimatedSwitcher(
                   duration: AppMotion.medium,
-                  child: settingsBox.get(
-                    SettingsKeys.ExposeInputAudioSyncOffset.name,
-                    defaultValue: false,
-                  )
+                  child:
+                      settingsBox.get(
+                        SettingsKeys.ExposeInputAudioSyncOffset.name,
+                        defaultValue: false,
+                      )
                       ? CupertinoNumberTextField(
                           width: 112.0,
                           controller: _controller,
@@ -124,7 +120,7 @@ class _AudioSliderState extends State<AudioSlider> {
                             {
                               'inputName': this.widget.input.inputName,
                               'inputAudioSyncOffset':
-                                  int.tryParse(_controller.text) ?? 0
+                                  int.tryParse(_controller.text) ?? 0,
                             },
                           ),
                         )
@@ -161,18 +157,15 @@ class _AudioSliderState extends State<AudioSlider> {
                           gradient: LinearGradient(
                             colors: meterHot
                                 ? [
-                                    statusColors.live
-                                        .withValues(alpha: 0.75),
-                                    statusColors.live
-                                        .withValues(alpha: 0.75),
-                                    statusColors.recording
-                                        .withValues(alpha: 0.85),
+                                    statusColors.live.withValues(alpha: 0.75),
+                                    statusColors.live.withValues(alpha: 0.75),
+                                    statusColors.recording.withValues(
+                                      alpha: 0.85,
+                                    ),
                                   ]
                                 : [
-                                    statusColors.live
-                                        .withValues(alpha: 0.55),
-                                    statusColors.live
-                                        .withValues(alpha: 0.90),
+                                    statusColors.live.withValues(alpha: 0.55),
+                                    statusColors.live.withValues(alpha: 0.90),
                                   ],
                             stops: meterHot ? const [0.0, 0.7, 1.0] : null,
                           ),
@@ -183,13 +176,11 @@ class _AudioSliderState extends State<AudioSlider> {
                         this.widget.input.inputLevelsMul!.first.average! > 0)
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 200),
-                        left: constraints.maxWidth *
-                            _transformMulToLevel(this
-                                .widget
-                                .input
-                                .inputLevelsMul!
-                                .first
-                                .average!),
+                        left:
+                            constraints.maxWidth *
+                            _transformMulToLevel(
+                              this.widget.input.inputLevelsMul!.first.average!,
+                            ),
                         child: Container(
                           height: 12.0,
                           width: 2.0,
@@ -213,7 +204,7 @@ class _AudioSliderState extends State<AudioSlider> {
                   RequestType.SetInputMute,
                   {
                     'inputName': this.widget.input.inputName,
-                    'inputMuted': !this.widget.input.inputMuted
+                    'inputMuted': !this.widget.input.inputMuted,
                   },
                 ),
                 child: Padding(
@@ -245,11 +236,13 @@ class _AudioSliderState extends State<AudioSlider> {
                     /// delta §2 variant A: hairline track, highlight 55%
                     /// fill, neutral knob) - no per-widget color override
                     onChanged: (volume) => NetworkHelper.makeRequest(
-                        networkStore.activeSession!.socket,
-                        RequestType.SetInputVolume, {
-                      'inputName': this.widget.input.inputName,
-                      'inputVolumeMul': volume,
-                    }),
+                      networkStore.activeSession!.socket,
+                      RequestType.SetInputVolume,
+                      {
+                        'inputName': this.widget.input.inputName,
+                        'inputVolumeMul': volume,
+                      },
+                    ),
                   ),
                 ),
               ),

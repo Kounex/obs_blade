@@ -18,10 +18,7 @@ import '../animated_toggle_icon.dart';
 class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
 
-  const SceneItemTile({
-    super.key,
-    required this.sceneItem,
-  });
+  const SceneItemTile({super.key, required this.sceneItem});
 
   @override
   Widget build(BuildContext context) {
@@ -32,15 +29,16 @@ class SceneItemTile extends StatelessWidget {
 
     IconData typeIcon = isGroup
         ? this.sceneItem.displayGroup
-            ? CupertinoIcons.folder
-            : CupertinoIcons.folder_solid
+              ? CupertinoIcons.folder
+              : CupertinoIcons.folder_solid
         : CupertinoIcons.photo_on_rectangle;
 
     /// Group rows forward the tap of the whole row to the same group
     /// visibility toggle the leading icon already exposes (still gated on
     /// the visibility edit mode)
     return Pressable(
-      onTap: isGroup &&
+      onTap:
+          isGroup &&
               !dashboardStore.editAudioVisibility &&
               !dashboardStore.editSceneItemVisibility
           ? () => dashboardStore.toggleSceneItemGroupVisibility(this.sceneItem)
@@ -60,19 +58,18 @@ class SceneItemTile extends StatelessWidget {
               const SizedBox(width: 16.0),
             ],
             GestureDetector(
-              onTap: () => (!dashboardStore.editAudioVisibility &&
+              onTap: () =>
+                  (!dashboardStore.editAudioVisibility &&
                       !dashboardStore.editSceneItemVisibility)
-                  ? dashboardStore
-                      .toggleSceneItemGroupVisibility(this.sceneItem)
+                  ? dashboardStore.toggleSceneItemGroupVisibility(
+                      this.sceneItem,
+                    )
                   : null,
               child: AnimatedSwitcher(
                 duration: AppMotion.fast,
                 switchInCurve: AppMotion.standard,
                 switchOutCurve: AppMotion.exit,
-                child: Icon(
-                  typeIcon,
-                  key: ValueKey(typeIcon),
-                ),
+                child: Icon(typeIcon, key: ValueKey(typeIcon)),
               ),
             ),
           ],
@@ -87,9 +84,7 @@ class SceneItemTile extends StatelessWidget {
           children: [
             HiveBuilder<dynamic>(
               hiveKey: HiveKeys.Settings,
-              rebuildKeys: const [
-                SettingsKeys.ExposeStudioControls,
-              ],
+              rebuildKeys: const [SettingsKeys.ExposeStudioControls],
               builder: (context, settingsBox, child) => Pressable(
                 haptic: true,
                 onTap: () => NetworkHelper.makeRequest(
@@ -100,10 +95,12 @@ class SceneItemTile extends StatelessWidget {
                     /// we need to use the parents scene item name as the
                     /// 'sceneName' property if we are toggling a child of a
                     /// group...
-                    'sceneName': this.sceneItem.parentGroupName ??
+                    'sceneName':
+                        this.sceneItem.parentGroupName ??
                         (settingsBox.get(
-                                    SettingsKeys.ExposeStudioControls.name,
-                                    defaultValue: false) &&
+                                  SettingsKeys.ExposeStudioControls.name,
+                                  defaultValue: false,
+                                ) &&
                                 dashboardStore.studioMode
                             ? dashboardStore.studioModePreviewSceneName
                             : dashboardStore.activeSceneName),
@@ -127,10 +124,10 @@ class SceneItemTile extends StatelessWidget {
             Pressable(
               onTap: this.sceneItem.filters.isNotEmpty
                   ? () => ModalHandler.showBaseCupertinoBottomSheet(
-                        context: context,
-                        modalWidgetBuilder: (context, controller) =>
-                            FilterList(sceneItem: this.sceneItem),
-                      )
+                      context: context,
+                      modalWidgetBuilder: (context, controller) =>
+                          FilterList(sceneItem: this.sceneItem),
+                    )
                   : null,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.sm),

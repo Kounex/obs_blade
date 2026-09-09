@@ -37,22 +37,19 @@ bool applyProPurchaseToSettings({
 /// armed; RevenueCat path: called directly by `ProStore.restore` (no
 /// purchase-stream events exist there).
 void showProRestoredDialog() {
-  Future.delayed(
-    const Duration(seconds: 1),
-    () {
-      /// Null in unit tests / headless states — skip the dialog rather
-      /// than crash.
-      if (RoutingHelper.tabBaseKey.currentContext == null) return;
-      OverlayHandler.closeAnyOverlay();
-      ModalHandler.showBaseDialog(
-        context: RoutingHelper.tabBaseKey.currentContext!,
-        barrierDismissible: true,
-        dialogWidget: const InfoDialog(
-          body: 'Your Pro purchase has been restored!\n\nEnjoy!',
-        ),
-      );
-    },
-  );
+  Future.delayed(const Duration(seconds: 1), () {
+    /// Null in unit tests / headless states — skip the dialog rather
+    /// than crash.
+    if (RoutingHelper.tabBaseKey.currentContext == null) return;
+    OverlayHandler.closeAnyOverlay();
+    ModalHandler.showBaseDialog(
+      context: RoutingHelper.tabBaseKey.currentContext!,
+      barrierDismissible: true,
+      dialogWidget: const InfoDialog(
+        body: 'Your Pro purchase has been restored!\n\nEnjoy!',
+      ),
+    );
+  });
 }
 
 class PurchaseBase extends StatefulWidget {
@@ -65,10 +62,7 @@ class PurchaseBase extends StatefulWidget {
   /// a restored pro event, disarmed by [ProStore.restore] otherwise.
   static bool restoreTriggeredExplicitly = false;
 
-  const PurchaseBase({
-    super.key,
-    required this.child,
-  });
+  const PurchaseBase({super.key, required this.child});
 
   @override
   _PurchaseBaseState createState() => _PurchaseBaseState();
@@ -81,13 +75,17 @@ class _PurchaseBaseState extends State<PurchaseBase> {
   void initState() {
     final Stream<List<PurchaseDetails>> purchaseUpdated =
         InAppPurchase.instance.purchaseStream;
-    _subscription = purchaseUpdated.listen((purchaseDetailsList) {
-      _listenToPurchaseUpdated(purchaseDetailsList);
-    }, onDone: () {
-      _subscription.cancel();
-    }, onError: (error) {
-      // handle error here.
-    });
+    _subscription = purchaseUpdated.listen(
+      (purchaseDetailsList) {
+        _listenToPurchaseUpdated(purchaseDetailsList);
+      },
+      onDone: () {
+        _subscription.cancel();
+      },
+      onError: (error) {
+        // handle error here.
+      },
+    );
     super.initState();
   }
 
@@ -98,7 +96,9 @@ class _PurchaseBaseState extends State<PurchaseBase> {
   }
 
   void _handlePurchase(
-      PurchaseDetails purchaseDetails, ProductDetails? inAppDetails) {
+    PurchaseDetails purchaseDetails,
+    ProductDetails? inAppDetails,
+  ) {
     /// If a purchase contains tip in its productID, it is a consumable
     /// and therefore not persistent. The App Stores will only persist
     /// non-consumables (one time "upgrades"). Thats why it will be persisted
@@ -125,8 +125,7 @@ class _PurchaseBaseState extends State<PurchaseBase> {
       /// single source of truth for the pro entitlement then, and pro
       /// purchases no longer ride this IAP stream. Tips and blacksmith
       /// below stay on direct IAP regardless.
-      if (isProProductId(purchaseDetails.productID) &&
-          !revenueCatConfigured) {
+      if (isProProductId(purchaseDetails.productID) && !revenueCatConfigured) {
         bool showRestoredDialog = applyProPurchaseToSettings(
           purchaseDetails: purchaseDetails,
           settingsBox: Hive.box<dynamic>(HiveKeys.Settings.name),
@@ -147,28 +146,23 @@ class _PurchaseBaseState extends State<PurchaseBase> {
           /// that the user clicked on restore and therefore called the restorePurchases
           /// function and it worked - therefore we show an info dialog to inform
           /// the user that it worked!
-          Future.delayed(
-            const Duration(seconds: 1),
-            () {
-              Hive.box<dynamic>(HiveKeys.Settings.name).put(
-                SettingsKeys.BoughtBlacksmith.name,
-                true,
-              );
-              OverlayHandler.closeAnyOverlay();
-              ModalHandler.showBaseDialog(
-                context: RoutingHelper.tabBaseKey.currentContext!,
-                barrierDismissible: true,
-                dialogWidget: const InfoDialog(
-                  body: 'Your theme purchase has been restored!\n\nEnjoy!',
-                ),
-              );
-            },
-          );
+          Future.delayed(const Duration(seconds: 1), () {
+            Hive.box<dynamic>(
+              HiveKeys.Settings.name,
+            ).put(SettingsKeys.BoughtBlacksmith.name, true);
+            OverlayHandler.closeAnyOverlay();
+            ModalHandler.showBaseDialog(
+              context: RoutingHelper.tabBaseKey.currentContext!,
+              barrierDismissible: true,
+              dialogWidget: const InfoDialog(
+                body: 'Your theme purchase has been restored!\n\nEnjoy!',
+              ),
+            );
+          });
         } else {
-          Hive.box<dynamic>(HiveKeys.Settings.name).put(
-            SettingsKeys.BoughtBlacksmith.name,
-            true,
-          );
+          Hive.box<dynamic>(
+            HiveKeys.Settings.name,
+          ).put(SettingsKeys.BoughtBlacksmith.name, true);
         }
       }
     }
@@ -178,24 +172,25 @@ class _PurchaseBaseState extends State<PurchaseBase> {
     OverlayHandler.showStatusOverlay(
       context: RoutingHelper.tabBaseKey.currentContext!,
       showDuration: const Duration(seconds: 10),
-      content: BaseProgressIndicator(
-        text: 'Pending...',
-      ),
+      content: BaseProgressIndicator(text: 'Pending...'),
     );
   }
 
   Future<void> _listenToPurchaseUpdated(
-      List<PurchaseDetails> purchaseDetailsList) async {
+    List<PurchaseDetails> purchaseDetailsList,
+  ) async {
     for (var purchaseDetails in purchaseDetailsList) {
       GeneralHelper.advLog(
-          '${purchaseDetails.productID} - ${purchaseDetails.status}');
+        '${purchaseDetails.productID} - ${purchaseDetails.status}',
+      );
       try {
         /// Product ids which don't exist store-side (pro ids right now)
         /// yield an empty productDetails list — `.first` would throw and the
         /// entitlement flag would silently never set, so guard for it.
-        List<ProductDetails> productDetails = (await InAppPurchase.instance
-                .queryProductDetails({purchaseDetails.productID}))
-            .productDetails;
+        List<ProductDetails> productDetails =
+            (await InAppPurchase.instance.queryProductDetails({
+              purchaseDetails.productID,
+            })).productDetails;
         if (purchaseDetails.status == PurchaseStatus.pending) {
           _showPendingUI();
         } else {
@@ -203,19 +198,26 @@ class _PurchaseBaseState extends State<PurchaseBase> {
           if (purchaseDetails.status == PurchaseStatus.error) {
             // _handleError(purchaseDetails.error!);
           } else if (purchaseDetails.status == PurchaseStatus.purchased) {
-            _handlePurchase(purchaseDetails,
-                productDetails.isEmpty ? null : productDetails.first);
+            _handlePurchase(
+              purchaseDetails,
+              productDetails.isEmpty ? null : productDetails.first,
+            );
           } else if (purchaseDetails.status == PurchaseStatus.restored) {
-            _handlePurchase(purchaseDetails,
-                productDetails.isEmpty ? null : productDetails.first);
+            _handlePurchase(
+              purchaseDetails,
+              productDetails.isEmpty ? null : productDetails.first,
+            );
           }
           if (purchaseDetails.pendingCompletePurchase) {
             await InAppPurchase.instance.completePurchase(purchaseDetails);
           }
         }
       } catch (e) {
-        GeneralHelper.advLog(e.toString(),
-            includeInLogs: true, level: LogLevel.Error);
+        GeneralHelper.advLog(
+          e.toString(),
+          includeInLogs: true,
+          level: LogLevel.Error,
+        );
       }
     }
   }
@@ -224,10 +226,7 @@ class _PurchaseBaseState extends State<PurchaseBase> {
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
-      children: [
-        this.widget.child,
-        const SizedBox(),
-      ],
+      children: [this.widget.child, const SizedBox()],
     );
   }
 }

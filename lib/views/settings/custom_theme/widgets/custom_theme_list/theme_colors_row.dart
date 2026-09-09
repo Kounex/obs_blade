@@ -14,9 +14,9 @@ class ThemeColorsRow extends StatelessWidget {
   const ThemeColorsRow({super.key, required this.customTheme});
 
   Widget _bubble(String slot, Color color) => Tooltip(
-        message: slot,
-        child: ColorBubble(color: color, size: 20.0),
-      );
+    message: slot,
+    child: ColorBubble(color: color, size: 20.0),
+  );
 
   @override
   Widget build(BuildContext context) {

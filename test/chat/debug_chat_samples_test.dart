@@ -16,10 +16,7 @@ void main() {
       expect(samples, hasLength(3));
       expect(samples[0].event.message.fragments[1].type, 'gif');
       expect(samples[0].event.message.fragments[1].gif, isNotNull);
-      expect(
-        samples[1].event.messageType,
-        'power_ups_gigantified_emote',
-      );
+      expect(samples[1].event.messageType, 'power_ups_gigantified_emote');
       expect(samples[2].event.sourceBroadcasterUserName, isNotNull);
       expect(samples[2].event.sourceBroadcasterUserId, isNotNull);
     });
@@ -28,10 +25,7 @@ void main() {
       final first = debugChatSamples();
       final second = debugChatSamples();
 
-      expect(
-        first[0].event.messageId,
-        isNot(second[0].event.messageId),
-      );
+      expect(first[0].event.messageId, isNot(second[0].event.messageId));
     });
   });
 
@@ -46,8 +40,19 @@ void main() {
       await harness.init();
       store = TwitchChatStore(
         authService: FakeTwitchAuthService(),
-        eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-            FakeTwitchEventSubService(),
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => FakeTwitchEventSubService(),
         badgeStoreResolver: () =>
             TwitchBadgeStore(service: FakeTwitchBadgeService()),
       );

@@ -24,9 +24,7 @@ import 'widgets/stats_entry/stats_entry.dart';
 import 'widgets/stats_entry_placeholder.dart';
 
 class StatisticsView extends StatefulWidget {
-  const StatisticsView({
-    super.key,
-  });
+  const StatisticsView({super.key});
 
   @override
   _StatisticsViewState createState() => _StatisticsViewState();
@@ -87,66 +85,75 @@ class _StatisticsViewState extends State<StatisticsView> {
 
   /// Uses both sort and filter functions
   List<PastStatsData> _sortAndFilterPastStatsData(
-          StatisticsStore statisticsStore,
-          Iterable<PastStatsData> pastStatsData) =>
-      _filterPastStatsData(
-          statisticsStore, _sortPastStatsData(statisticsStore, pastStatsData));
+    StatisticsStore statisticsStore,
+    Iterable<PastStatsData> pastStatsData,
+  ) => _filterPastStatsData(
+    statisticsStore,
+    _sortPastStatsData(statisticsStore, pastStatsData),
+  );
 
   /// Sorts [PastStatsData] accroding to the selected [FilterType] and
   /// [FilterOrder]
-  Iterable<PastStatsData> _sortPastStatsData(StatisticsStore statisticsStore,
-          Iterable<PastStatsData> pastStatsData) =>
-      pastStatsData.toList()
-        ..sort((data1, data2) {
-          PastStatsData dataOrder1;
-          PastStatsData dataOrder2;
-          int sortResult = 0;
-          if (statisticsStore.filterOrder == Order.Ascending) {
-            dataOrder1 = data1;
-            dataOrder2 = data2;
-          } else {
-            dataOrder1 = data2;
-            dataOrder2 = data1;
-          }
-          switch (statisticsStore.filterType) {
-            case FilterType.StatisticTime:
-              sortResult = dataOrder1.listEntryDateMS.last -
-                  dataOrder2.listEntryDateMS.last;
-              break;
-            case FilterType.TotalTime:
-              sortResult = dataOrder1.totalTime! - dataOrder2.totalTime!;
-              break;
-            case FilterType.Name:
-              sortResult = (dataOrder1.name ?? 'Unnamed stream')
-                  .compareTo((dataOrder2.name) ?? '');
-              break;
-            case FilterType.Kbits:
-              sortResult = (dataOrder1.kbitsPerSecList
-                          .reduce((value, element) => value += element) ~/
-                      dataOrder1.kbitsPerSecList.length) -
-                  (dataOrder2.kbitsPerSecList
-                          .reduce((value, element) => value += element) ~/
-                      dataOrder2.kbitsPerSecList.length);
-              break;
-            default:
-              sortResult = dataOrder1.listEntryDateMS.last -
-                  dataOrder2.listEntryDateMS.last;
-          }
+  Iterable<PastStatsData> _sortPastStatsData(
+    StatisticsStore statisticsStore,
+    Iterable<PastStatsData> pastStatsData,
+  ) => pastStatsData.toList()
+    ..sort((data1, data2) {
+      PastStatsData dataOrder1;
+      PastStatsData dataOrder2;
+      int sortResult = 0;
+      if (statisticsStore.filterOrder == Order.Ascending) {
+        dataOrder1 = data1;
+        dataOrder2 = data2;
+      } else {
+        dataOrder1 = data2;
+        dataOrder2 = data1;
+      }
+      switch (statisticsStore.filterType) {
+        case FilterType.StatisticTime:
+          sortResult =
+              dataOrder1.listEntryDateMS.last - dataOrder2.listEntryDateMS.last;
+          break;
+        case FilterType.TotalTime:
+          sortResult = dataOrder1.totalTime! - dataOrder2.totalTime!;
+          break;
+        case FilterType.Name:
+          sortResult = (dataOrder1.name ?? 'Unnamed stream').compareTo(
+            (dataOrder2.name) ?? '',
+          );
+          break;
+        case FilterType.Kbits:
+          sortResult =
+              (dataOrder1.kbitsPerSecList.reduce(
+                    (value, element) => value += element,
+                  ) ~/
+                  dataOrder1.kbitsPerSecList.length) -
+              (dataOrder2.kbitsPerSecList.reduce(
+                    (value, element) => value += element,
+                  ) ~/
+                  dataOrder2.kbitsPerSecList.length);
+          break;
+        default:
+          sortResult =
+              dataOrder1.listEntryDateMS.last - dataOrder2.listEntryDateMS.last;
+      }
 
-          return sortResult;
-        });
+      return sortResult;
+    });
 
   /// Filters [PastStatsData] according to various stuff the user has
   /// set (like amount entries, favorited or not, date range etc.)
   List<PastStatsData> _filterPastStatsData(
-      StatisticsStore statisticsStore, Iterable<PastStatsData> pastStatsData) {
+    StatisticsStore statisticsStore,
+    Iterable<PastStatsData> pastStatsData,
+  ) {
     pastStatsData = pastStatsData
-
         /// Filter statistics which name contain the String entered by the user
-        .where((data) => (data.name ?? 'Unnamed stream')
-            .toLowerCase()
-            .contains(statisticsStore.filterName))
-
+        .where(
+          (data) => (data.name ?? 'Unnamed stream').toLowerCase().contains(
+            statisticsStore.filterName,
+          ),
+        )
         /// Fitler statistics which are either starred, not starred or both
         .where((data) {
           if (statisticsStore.showOnlyFavorites != null) {
@@ -156,24 +163,24 @@ class _StatisticsViewState extends State<StatisticsView> {
           }
           return data.starred == null || !data.starred!;
         })
-
         /// Filter statistics which are either streams, recordings or both
         .where((data) {
           return statisticsStore.statType == StatType.Stream
               ? data is PastStreamData
               : statisticsStore.statType == StatType.Recording
-                  ? data is PastRecordData
-                  : true;
+              ? data is PastRecordData
+              : true;
         })
-
         /// Filter statistics which are inside the date range the user might
         /// have set
-        .where((data) =>
-            data.listEntryDateMS.first >=
-                (statisticsStore.fromDate?.millisecondsSinceEpoch ?? 0) &&
-            data.listEntryDateMS.last <=
-                (statisticsStore.toDate?.millisecondsSinceEpoch ??
-                    DateTime.now().millisecondsSinceEpoch))
+        .where(
+          (data) =>
+              data.listEntryDateMS.first >=
+                  (statisticsStore.fromDate?.millisecondsSinceEpoch ?? 0) &&
+              data.listEntryDateMS.last <=
+                  (statisticsStore.toDate?.millisecondsSinceEpoch ??
+                      DateTime.now().millisecondsSinceEpoch),
+        )
         .where((data) {
           if (statisticsStore.durationFilter != null) {
             switch (statisticsStore.durationFilter!) {
@@ -191,7 +198,6 @@ class _StatisticsViewState extends State<StatisticsView> {
           }
           return true;
         })
-
         /// Filter statistics which are not unnamed or specifically unnamed if
         /// user set this checkbox (or tristate)
         .where((data) {
@@ -221,131 +227,143 @@ class _StatisticsViewState extends State<StatisticsView> {
             hiveKey: HiveKeys.PastStreamData,
             builder: (context, pastStreamDataBox, child) {
               return HiveBuilder<PastRecordData>(
-                  hiveKey: HiveKeys.PastRecordData,
-                  builder: (context, pastRecordDataBox, child) {
-                    List<PastStatsData> pastStatsData = [
-                      ...pastStreamDataBox.values,
-                      // ..._pastStreamData,
-                      ...pastRecordDataBox.values,
-                    ]..sort((a, b) =>
-                        a.listEntryDateMS.last - b.listEntryDateMS.last);
+                hiveKey: HiveKeys.PastRecordData,
+                builder: (context, pastRecordDataBox, child) {
+                  List<PastStatsData> pastStatsData =
+                      [
+                        ...pastStreamDataBox.values,
+                        // ..._pastStreamData,
+                        ...pastRecordDataBox.values,
+                      ]..sort(
+                        (a, b) =>
+                            a.listEntryDateMS.last - b.listEntryDateMS.last,
+                      );
 
-                    PastStreamData? latestStreamData;
-                    PastRecordData? latestRecordData;
+                  PastStreamData? latestStreamData;
+                  PastRecordData? latestRecordData;
 
-                    try {
-                      latestStreamData =
-                          pastStatsData.whereType<PastStreamData>().last;
-                    } catch (_) {}
+                  try {
+                    latestStreamData = pastStatsData
+                        .whereType<PastStreamData>()
+                        .last;
+                  } catch (_) {}
 
-                    try {
-                      latestRecordData =
-                          pastStatsData.whereType<PastRecordData>().last;
-                    } catch (_) {}
+                  try {
+                    latestRecordData = pastStatsData
+                        .whereType<PastRecordData>()
+                        .last;
+                  } catch (_) {}
 
-                    List<PastStatsData?> latestRecordStreamStat = [
-                      latestRecordData,
-                      latestStreamData,
-                    ]..sort((a, b) =>
-                        (b?.listEntryDateMS.last ?? 0) -
-                        (a?.listEntryDateMS.last ?? 0));
+                  List<PastStatsData?> latestRecordStreamStat =
+                      [latestRecordData, latestStreamData]..sort(
+                        (a, b) =>
+                            (b?.listEntryDateMS.last ?? 0) -
+                            (a?.listEntryDateMS.last ?? 0),
+                      );
 
-                    return Column(
-                      children: [
-                        BaseCard(
-                          bottomPadding: AppSpacing.lg,
-                          titlePadding: const EdgeInsets.all(0),
-                          titleWidget: const CardHeader(
-                            title: 'Latest Stats',
-                            description:
-                                'The freshest statistics from your latest streaming and recording sessions',
-                          ),
-                          paddingChild: const EdgeInsets.all(0),
-                          child: latestRecordStreamStat.isNotEmpty &&
-                                  latestRecordStreamStat.any(
-                                      (pastStatsData) => pastStatsData != null)
-                              ? ColumnSeparated(
-                                  paddingSeparator:
-                                      const EdgeInsets.symmetric(vertical: 0),
-                                  children: latestRecordStreamStat
-                                      .where((pastStatsData) =>
-                                          pastStatsData != null)
-                                      .mapIndexed(
-                                        (pastStatsData, index) =>
-                                            StaggeredEntrance(
-                                          scaleFrom: 0.985,
-                                          index: index,
-                                          child: StatsEntry(
-                                            pastStatsData: pastStatsData!,
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
+                  return Column(
+                    children: [
+                      BaseCard(
+                        bottomPadding: AppSpacing.lg,
+                        titlePadding: const EdgeInsets.all(0),
+                        titleWidget: const CardHeader(
+                          title: 'Latest Stats',
+                          description:
+                              'The freshest statistics from your latest streaming and recording sessions',
+                        ),
+                        paddingChild: const EdgeInsets.all(0),
+                        child:
+                            latestRecordStreamStat.isNotEmpty &&
+                                latestRecordStreamStat.any(
+                                  (pastStatsData) => pastStatsData != null,
                                 )
-                              : const StatsEntryPlaceholder(
-                                  icon: CupertinoIcons.time_solid,
-                                  text:
-                                      'Nothing here yet - stream or record something great and your latest stats will land right here.',
+                            ? ColumnSeparated(
+                                paddingSeparator: const EdgeInsets.symmetric(
+                                  vertical: 0,
                                 ),
+                                children: latestRecordStreamStat
+                                    .where(
+                                      (pastStatsData) => pastStatsData != null,
+                                    )
+                                    .mapIndexed(
+                                      (pastStatsData, index) =>
+                                          StaggeredEntrance(
+                                            scaleFrom: 0.985,
+                                            index: index,
+                                            child: StatsEntry(
+                                              pastStatsData: pastStatsData!,
+                                            ),
+                                          ),
+                                    )
+                                    .toList(),
+                              )
+                            : const StatsEntryPlaceholder(
+                                icon: CupertinoIcons.time_solid,
+                                text:
+                                    'Nothing here yet - stream or record something great and your latest stats will land right here.',
+                              ),
+                      ),
+                      BaseCard(
+                        bottomPadding: AppSpacing.lg,
+                        titlePadding: const EdgeInsets.all(0),
+                        titleWidget: const CardHeader(
+                          title: 'Previous Stats',
+                          description:
+                              'All previous streaming / recording sessions',
+                          additionalCardWidgets: [SortFilterPanel()],
                         ),
-                        BaseCard(
-                          bottomPadding: AppSpacing.lg,
-                          titlePadding: const EdgeInsets.all(0),
-                          titleWidget: const CardHeader(
-                            title: 'Previous Stats',
-                            description:
-                                'All previous streaming / recording sessions',
-                            additionalCardWidgets: [
-                              SortFilterPanel(),
-                            ],
-                          ),
-                          paddingChild: const EdgeInsets.all(0),
-                          child: Observer(
-                            builder: (context) {
-                              /// Only purpose of this line is to omit the debug message of
-                              /// missing observable (which is not correct) since I pass the
-                              /// store to internal functions to handle sort and filter where
-                              /// those observables are used. It even gets rebuilt propely but
-                              /// the message keeps coming up
-                              statisticsStore.filterName;
+                        paddingChild: const EdgeInsets.all(0),
+                        child: Observer(
+                          builder: (context) {
+                            /// Only purpose of this line is to omit the debug message of
+                            /// missing observable (which is not correct) since I pass the
+                            /// store to internal functions to handle sort and filter where
+                            /// those observables are used. It even gets rebuilt propely but
+                            /// the message keeps coming up
+                            statisticsStore.filterName;
 
-                              List<PastStatsData> sortedFilteredPastStatsData =
-                                  _sortAndFilterPastStatsData(
-                                statisticsStore,
-                                pastStatsData
-                                  ..removeWhere(
-                                    (pastStatsData) => latestRecordStreamStat
-                                        .any((latestStat) =>
-                                            latestStat == pastStatsData),
+                            List<PastStatsData> sortedFilteredPastStatsData =
+                                _sortAndFilterPastStatsData(
+                                  statisticsStore,
+                                  pastStatsData..removeWhere(
+                                    (pastStatsData) =>
+                                        latestRecordStreamStat.any(
+                                          (latestStat) =>
+                                              latestStat == pastStatsData,
+                                        ),
                                   ),
-                              );
-                              return AnimatedSwitcher(
-                                duration: AppMotion.medium,
-                                switchInCurve: AppMotion.standard,
-                                switchOutCurve: AppMotion.exit,
-                                child: sortedFilteredPastStatsData.isNotEmpty
-                                    ? PaginatedStatistics(
-                                        key: const ValueKey('paginated-stats'),
-                                        sortedFilteredPastStatsData:
-                                            sortedFilteredPastStatsData,
-                                      )
-                                    : StatsEntryPlaceholder(
-                                        key: const ValueKey('stats-empty'),
-                                        icon: CupertinoIcons.tray,
-                                        text: latestRecordStreamStat
-                                                .where((latestStat) =>
-                                                    latestStat != null)
-                                                .isEmpty
-                                            ? 'No previous sessions yet - stream or record some good stuff and it will show up here.'
-                                            : 'Nothing matches your filters right now - adjust them or stream / record some more good stuff.',
-                                      ),
-                              );
-                            },
-                          ),
+                                );
+                            return AnimatedSwitcher(
+                              duration: AppMotion.medium,
+                              switchInCurve: AppMotion.standard,
+                              switchOutCurve: AppMotion.exit,
+                              child: sortedFilteredPastStatsData.isNotEmpty
+                                  ? PaginatedStatistics(
+                                      key: const ValueKey('paginated-stats'),
+                                      sortedFilteredPastStatsData:
+                                          sortedFilteredPastStatsData,
+                                    )
+                                  : StatsEntryPlaceholder(
+                                      key: const ValueKey('stats-empty'),
+                                      icon: CupertinoIcons.tray,
+                                      text:
+                                          latestRecordStreamStat
+                                              .where(
+                                                (latestStat) =>
+                                                    latestStat != null,
+                                              )
+                                              .isEmpty
+                                          ? 'No previous sessions yet - stream or record some good stuff and it will show up here.'
+                                          : 'Nothing matches your filters right now - adjust them or stream / record some more good stuff.',
+                                    ),
+                            );
+                          },
                         ),
-                      ],
-                    );
-                  });
+                      ),
+                    ],
+                  );
+                },
+              );
             },
           ),
         ],

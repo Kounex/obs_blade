@@ -24,9 +24,7 @@ String? get revenueCatApiKey {
     case TargetPlatform.macOS:
       return kRevenueCatAppleApiKey.isEmpty ? null : kRevenueCatAppleApiKey;
     case TargetPlatform.android:
-      return kRevenueCatGoogleApiKey.isEmpty
-          ? null
-          : kRevenueCatGoogleApiKey;
+      return kRevenueCatGoogleApiKey.isEmpty ? null : kRevenueCatGoogleApiKey;
     default:
       return null;
   }

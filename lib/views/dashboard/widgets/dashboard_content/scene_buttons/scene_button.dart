@@ -33,17 +33,20 @@ class SceneButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
-    final AppStatusColors statusColors =
-        Theme.of(context).extension<AppStatusColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
       rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) => Observer(
         builder: (context) {
-          final bool studioMode = settingsBox.get(
-                  SettingsKeys.ExposeStudioControls.name,
-                  defaultValue: false) &&
+          final bool studioMode =
+              settingsBox.get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false,
+              ) &&
               dashboardStore.studioMode;
 
           /// Broadcast tally language for studio mode: the scene currently
@@ -53,9 +56,9 @@ class SceneButton extends StatelessWidget {
           /// the themable accent/highlight (token-delta rule 1)
           final bool isProgram =
               dashboardStore.activeSceneName == this.scene.sceneName;
-          final bool isPreview = studioMode &&
-              dashboardStore.studioModePreviewSceneName ==
-                  this.scene.sceneName;
+          final bool isPreview =
+              studioMode &&
+              dashboardStore.studioModePreviewSceneName == this.scene.sceneName;
 
           String? tally;
           if (studioMode) {
@@ -73,8 +76,9 @@ class SceneButton extends StatelessWidget {
                 this.onVisibilityTap();
               } else {
                 if (studioMode) {
-                  dashboardStore
-                      .setStudioModePreviewSceneName(this.scene.sceneName);
+                  dashboardStore.setStudioModePreviewSceneName(
+                    this.scene.sceneName,
+                  );
                   NetworkHelper.makeRequest(
                     GetIt.instance<NetworkStore>().activeSession!.socket,
                     RequestType.SetCurrentPreviewScene,
@@ -101,18 +105,18 @@ class SceneButton extends StatelessWidget {
                   /// transition progress via [SelectableBox.boxAnimation].
                   /// A preview-only tile gets a neutral ring instead so red
                   /// stays exclusive to program (rule 7)
-                  colorSelected:
-                      statusColors.program.withValues(alpha: 0.10),
+                  colorSelected: statusColors.program.withValues(alpha: 0.10),
                   colorSelectedBorder: isProgram
                       ? statusColors.program
                       : Colors.white.withValues(alpha: 0.55),
                   colorUnselected: Theme.of(context).cardColor,
                   boxAnimation: Duration(
-                    milliseconds: dashboardStore
-                                    .currentTransition?.transitionDuration !=
+                    milliseconds:
+                        dashboardStore.currentTransition?.transitionDuration !=
                                 null &&
                             dashboardStore
-                                    .currentTransition!.transitionDuration! >=
+                                    .currentTransition!
+                                    .transitionDuration! >=
                                 0
                         ? dashboardStore.currentTransition!.transitionDuration!
                         : 0,
@@ -150,10 +154,7 @@ class SceneButton extends StatelessWidget {
                     duration: AppMotion.medium,
                     transitionBuilder: (child, animation) => FadeTransition(
                       opacity: animation,
-                      child: ScaleTransition(
-                        scale: animation,
-                        child: child,
-                      ),
+                      child: ScaleTransition(scale: animation, child: child),
                     ),
                     child: dashboardStore.editSceneVisibility
                         ? Container(
@@ -161,14 +162,14 @@ class SceneButton extends StatelessWidget {
                             height: 28.0,
                             width: 28.0,
                             decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .cardColor
-                                  .withValues(alpha: 0.92),
+                              color: Theme.of(
+                                context,
+                              ).cardColor.withValues(alpha: 0.92),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Theme.of(context)
-                                    .dividerColor
-                                    .withValues(alpha: 0.4),
+                                color: Theme.of(
+                                  context,
+                                ).dividerColor.withValues(alpha: 0.4),
                               ),
                             ),
                             child: AnimatedSwitcher(
@@ -179,14 +180,15 @@ class SceneButton extends StatelessWidget {
                                     : Icons.visibility_off,
                                 key: ValueKey(this.visible),
                                 size: 16.0,
+
                                 /// Hidden scene = dim glyph (neutral) - red
                                 /// stays exclusive to recording/program
                                 /// (rule 7)
                                 color: this.visible
                                     ? null
                                     : Theme.of(context)
-                                        .extension<AppTextColors>()!
-                                        .textTertiary,
+                                          .extension<AppTextColors>()!
+                                          .textTertiary,
                               ),
                             ),
                           )
@@ -210,16 +212,13 @@ class _TallyChip extends StatelessWidget {
   final String label;
   final bool isProgram;
 
-  const _TallyChip({
-    super.key,
-    required this.label,
-    required this.isProgram,
-  });
+  const _TallyChip({super.key, required this.label, required this.isProgram});
 
   @override
   Widget build(BuildContext context) {
-    final AppStatusColors statusColors =
-        Theme.of(context).extension<AppStatusColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
 
     return Container(
       height: 16.0,
@@ -234,12 +233,12 @@ class _TallyChip extends StatelessWidget {
       child: Text(
         this.label,
         style: Theme.of(context).textTheme.labelSmall!.copyWith(
-              fontSize: 10.0,
-              fontWeight: FontWeight.w700,
-              color: this.isProgram
-                  ? Colors.white
-                  : Colors.black.withValues(alpha: 0.78),
-            ),
+          fontSize: 10.0,
+          fontWeight: FontWeight.w700,
+          color: this.isProgram
+              ? Colors.white
+              : Colors.black.withValues(alpha: 0.78),
+        ),
       ),
     );
   }

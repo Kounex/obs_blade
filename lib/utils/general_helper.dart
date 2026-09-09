@@ -8,8 +8,10 @@ class GeneralHelper {
   }) {
     String inLog = includeInLogs ? '[ON]' : '[OFF]';
     // ignore: avoid_print
-    print(obj == null
-        ? '${LogLevel.Warning.prefix}$inLog ${obj.runtimeType} is null!'
-        : '${level.prefix}$inLog $obj');
+    print(
+      obj == null
+          ? '${LogLevel.Warning.prefix}$inLog ${obj.runtimeType} is null!'
+          : '${level.prefix}$inLog $obj',
+    );
   }
 }

@@ -62,7 +62,7 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
         title: allow ? 'Allow this message?' : 'Deny this message?',
         body: allow
             ? 'The message from ${held.userName} is posted to chat for '
-                'everyone.'
+                  'everyone.'
             : 'The message never appears in chat.',
         okText: allow ? 'Allow' : 'Deny',
         noText: 'Cancel',
@@ -101,9 +101,7 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: Observer(
-                builder: (context) => this._buildBody(context),
-              ),
+              child: Observer(builder: (context) => this._buildBody(context)),
             ),
           ),
         ],
@@ -125,9 +123,7 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (final held in queue) this._heldRow(context, held),
-      ],
+      children: [for (final held in queue) this._heldRow(context, held)],
     );
   }
 
@@ -158,10 +154,9 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
                 children: [
                   Text(
                     held.userName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
                     held.message.text,
@@ -262,10 +257,10 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: filled
-                    ? Colors.white
-                    : Theme.of(context).textTheme.bodySmall?.color,
-              ),
+            color: filled
+                ? Colors.white
+                : Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
       ),
     );

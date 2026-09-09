@@ -13,66 +13,66 @@ const List<FontFeature> kTabularFigures = [FontFeature.tabularFigures()];
 /// grey `bodySmall` color semantic), caption 11/w600, letterSpacing 0.8
 /// (section headers - apply `.toUpperCase()` at the use site).
 TextTheme buildAppTextTheme(TextTheme base) => base.copyWith(
-      displaySmall: base.displaySmall?.copyWith(
-        fontSize: 34.0,
-        fontWeight: FontWeight.w700,
-      ),
+  displaySmall: base.displaySmall?.copyWith(
+    fontSize: 34.0,
+    fontWeight: FontWeight.w700,
+  ),
 
-      /// title1
-      headlineMedium: base.headlineMedium?.copyWith(
-        fontSize: 28.0,
-        fontWeight: FontWeight.w700,
-      ),
+  /// title1
+  headlineMedium: base.headlineMedium?.copyWith(
+    fontSize: 28.0,
+    fontWeight: FontWeight.w700,
+  ),
 
-      /// title2
-      titleLarge: base.titleLarge?.copyWith(
-        fontSize: 22.0,
-        fontWeight: FontWeight.w600,
-      ),
+  /// title2
+  titleLarge: base.titleLarge?.copyWith(
+    fontSize: 22.0,
+    fontWeight: FontWeight.w600,
+  ),
 
-      /// title3 (card titles)
-      headlineSmall: base.headlineSmall?.copyWith(
-        fontSize: 17.0,
-        fontWeight: FontWeight.w600,
-      ),
-      titleMedium: base.titleMedium?.copyWith(
-        fontSize: 15.0,
-        fontWeight: FontWeight.w500,
-      ),
-      titleSmall: base.titleSmall?.copyWith(
-        fontSize: 13.0,
-        fontWeight: FontWeight.w500,
-      ),
+  /// title3 (card titles)
+  headlineSmall: base.headlineSmall?.copyWith(
+    fontSize: 17.0,
+    fontWeight: FontWeight.w600,
+  ),
+  titleMedium: base.titleMedium?.copyWith(
+    fontSize: 15.0,
+    fontWeight: FontWeight.w500,
+  ),
+  titleSmall: base.titleSmall?.copyWith(
+    fontSize: 13.0,
+    fontWeight: FontWeight.w500,
+  ),
 
-      /// body
-      bodyLarge: base.bodyLarge?.copyWith(
-        fontSize: 15.0,
-        fontWeight: FontWeight.w400,
-      ),
-      bodyMedium: base.bodyMedium?.copyWith(
-        fontSize: 15.0,
-        fontWeight: FontWeight.w400,
-      ),
+  /// body
+  bodyLarge: base.bodyLarge?.copyWith(
+    fontSize: 15.0,
+    fontWeight: FontWeight.w400,
+  ),
+  bodyMedium: base.bodyMedium?.copyWith(
+    fontSize: 15.0,
+    fontWeight: FontWeight.w400,
+  ),
 
-      /// callout (descriptions - keeps the grey semantic)
-      bodySmall: base.bodySmall?.copyWith(
-        fontSize: 13.0,
-        fontWeight: FontWeight.w400,
-        color: Colors.grey[500],
-      ),
-      labelLarge: base.labelLarge?.copyWith(
-        fontSize: 15.0,
-        fontWeight: FontWeight.w600,
-      ),
-      labelMedium: base.labelMedium?.copyWith(
-        fontSize: 12.0,
-        fontWeight: FontWeight.w500,
-      ),
+  /// callout (descriptions - keeps the grey semantic)
+  bodySmall: base.bodySmall?.copyWith(
+    fontSize: 13.0,
+    fontWeight: FontWeight.w400,
+    color: Colors.grey[500],
+  ),
+  labelLarge: base.labelLarge?.copyWith(
+    fontSize: 15.0,
+    fontWeight: FontWeight.w600,
+  ),
+  labelMedium: base.labelMedium?.copyWith(
+    fontSize: 12.0,
+    fontWeight: FontWeight.w500,
+  ),
 
-      /// caption (section headers - uppercase applied at the use site)
-      labelSmall: base.labelSmall?.copyWith(
-        fontSize: 11.0,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.8,
-      ),
-    );
+  /// caption (section headers - uppercase applied at the use site)
+  labelSmall: base.labelSmall?.copyWith(
+    fontSize: 11.0,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.8,
+  ),
+);

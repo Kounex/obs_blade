@@ -12,10 +12,7 @@ import '../../../../../types/classes/api/scene.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import 'scene_button.dart';
 
-enum SceneButtonsMode {
-  wrap,
-  horizontalScroll,
-}
+enum SceneButtonsMode { wrap, horizontalScroll }
 
 class SceneButtons extends StatelessWidget {
   final double size;
@@ -33,129 +30,135 @@ class SceneButtons extends StatelessWidget {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
-    return LayoutBuilder(builder: (context, constraints) {
-      double size = this.size;
-      double buttonSizeToFitThree = (constraints.maxWidth - 4 * 18.0) / 3;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double size = this.size;
+        double buttonSizeToFitThree = (constraints.maxWidth - 4 * 18.0) / 3;
 
-      size = buttonSizeToFitThree < size ? buttonSizeToFitThree : size;
+        size = buttonSizeToFitThree < size ? buttonSizeToFitThree : size;
 
-      return HiveBuilder<HiddenScene>(
-        hiveKey: HiveKeys.HiddenScene,
-        builder: (context, hiddenScenesBox, child) =>
-            Observer(builder: (context) {
-          Iterable<Scene>? visibleScenes = dashboardStore.scenes;
-          List<HiddenScene> hiddenScenes = [];
+        return HiveBuilder<HiddenScene>(
+          hiveKey: HiveKeys.HiddenScene,
+          builder: (context, hiddenScenesBox, child) => Observer(
+            builder: (context) {
+              Iterable<Scene>? visibleScenes = dashboardStore.scenes;
+              List<HiddenScene> hiddenScenes = [];
 
-          if (networkStore.activeSession != null) {
-            visibleScenes?.forEach(
-              (scene) => hiddenScenes.addAll(
-                hiddenScenesBox.values.where((hiddenSceneInBox) =>
-                        hiddenSceneInBox.isScene(
-                            scene.sceneName,
-                            networkStore.activeSession?.connection.name,
-                            networkStore.activeSession?.connection.host)
-                    // {
-                    //   bool isHiddenScene = hiddenSceneInBox.sceneName == scene.name;
+              if (networkStore.activeSession != null) {
+                visibleScenes?.forEach(
+                  (scene) => hiddenScenes.addAll(
+                    hiddenScenesBox.values.where(
+                      (hiddenSceneInBox) => hiddenSceneInBox.isScene(
+                        scene.sceneName,
+                        networkStore.activeSession?.connection.name,
+                        networkStore.activeSession?.connection.host,
+                      ),
+                      // {
+                      //   bool isHiddenScene = hiddenSceneInBox.sceneName == scene.name;
 
-                    //   if (isHiddenScene) {
-                    //     if (networkStore.activeSession!.connection.name != null &&
-                    //         hiddenSceneInBox.connectionName != null) {
-                    //       isHiddenScene =
-                    //           networkStore.activeSession!.connection.name ==
-                    //               hiddenSceneInBox.connectionName;
-                    //     } else {
-                    //       isHiddenScene =
-                    //           networkStore.activeSession!.connection.host ==
-                    //               hiddenSceneInBox.host;
-                    //     }
-                    //   }
+                      //   if (isHiddenScene) {
+                      //     if (networkStore.activeSession!.connection.name != null &&
+                      //         hiddenSceneInBox.connectionName != null) {
+                      //       isHiddenScene =
+                      //           networkStore.activeSession!.connection.name ==
+                      //               hiddenSceneInBox.connectionName;
+                      //     } else {
+                      //       isHiddenScene =
+                      //           networkStore.activeSession!.connection.host ==
+                      //               hiddenSceneInBox.host;
+                      //     }
+                      //   }
 
-                    //   return isHiddenScene;
-                    // }
+                      //   return isHiddenScene;
+                      // }
                     ),
-              ),
-            );
-          }
+                  ),
+                );
+              }
 
-          if (!dashboardStore.editSceneVisibility) {
-            visibleScenes = visibleScenes?.where((scene) => hiddenScenes.every(
-                (hiddenScene) => scene.sceneName != hiddenScene.sceneName));
-          }
+              if (!dashboardStore.editSceneVisibility) {
+                visibleScenes = visibleScenes?.where(
+                  (scene) => hiddenScenes.every(
+                    (hiddenScene) => scene.sceneName != hiddenScene.sceneName,
+                  ),
+                );
+              }
 
-          final List<Widget>? sceneButtons =
-              visibleScenes?.indexed.map((entry) {
-            final int index = entry.$1;
-            final Scene scene = entry.$2;
+              final List<Widget>? sceneButtons = visibleScenes?.indexed.map((
+                entry,
+              ) {
+                final int index = entry.$1;
+                final Scene scene = entry.$2;
 
-            HiddenScene? hiddenScene;
-            try {
-              hiddenScene = hiddenScenes.firstWhere(
-                  (element) => element.sceneName == scene.sceneName);
-            } catch (e) {}
+                HiddenScene? hiddenScene;
+                try {
+                  hiddenScene = hiddenScenes.firstWhere(
+                    (element) => element.sceneName == scene.sceneName,
+                  );
+                } catch (e) {}
 
-            return StaggeredEntrance(
-              index: index,
-              scaleFrom: 0.985,
-              child: SceneButton(
-                scene: scene,
-                height: size,
-                width: size,
-                visible: hiddenScene == null,
-                onVisibilityTap: () {
-                  if (hiddenScene != null) {
-                    hiddenScene!.delete();
-                  } else {
-                    hiddenScene = HiddenScene(
-                      scene.sceneName,
-                      networkStore.activeSession!.connection.name,
-                      networkStore.activeSession!.connection.host,
-                    );
+                return StaggeredEntrance(
+                  index: index,
+                  scaleFrom: 0.985,
+                  child: SceneButton(
+                    scene: scene,
+                    height: size,
+                    width: size,
+                    visible: hiddenScene == null,
+                    onVisibilityTap: () {
+                      if (hiddenScene != null) {
+                        hiddenScene!.delete();
+                      } else {
+                        hiddenScene = HiddenScene(
+                          scene.sceneName,
+                          networkStore.activeSession!.connection.name,
+                          networkStore.activeSession!.connection.host,
+                        );
 
-                    Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
-                        .add(hiddenScene!);
-                  }
-                },
-              ),
-            );
-          }).toList();
+                        Hive.box<HiddenScene>(
+                          HiveKeys.HiddenScene.name,
+                        ).add(hiddenScene!);
+                      }
+                    },
+                  ),
+                );
+              }).toList();
 
-          if (sceneButtons == null || sceneButtons.isEmpty) {
-            return const Center(
-              child: Text(
-                'No Scenes available',
-              ),
-            );
-          }
+              if (sceneButtons == null || sceneButtons.isEmpty) {
+                return const Center(child: Text('No Scenes available'));
+              }
 
-          return switch (this.mode) {
-            SceneButtonsMode.wrap => Wrap(
-                runSpacing: 18.0,
-                spacing: 18.0,
-                children: sceneButtons,
-              ),
-            SceneButtonsMode.horizontalScroll => SizedBox(
-                height: this.size + 24.0,
-                child: MediaQuery.removePadding(
-                  removeBottom: true,
-                  context: context,
-                  child: Scrollbar(
-                    scrollbarOrientation: ScrollbarOrientation.bottom,
-                    thumbVisibility: true,
-                    trackVisibility: true,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.all(12.0),
-                      itemCount: sceneButtons.length,
-                      itemBuilder: (context, index) => sceneButtons[index],
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 12.0),
+              return switch (this.mode) {
+                SceneButtonsMode.wrap => Wrap(
+                  runSpacing: 18.0,
+                  spacing: 18.0,
+                  children: sceneButtons,
+                ),
+                SceneButtonsMode.horizontalScroll => SizedBox(
+                  height: this.size + 24.0,
+                  child: MediaQuery.removePadding(
+                    removeBottom: true,
+                    context: context,
+                    child: Scrollbar(
+                      scrollbarOrientation: ScrollbarOrientation.bottom,
+                      thumbVisibility: true,
+                      trackVisibility: true,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.all(12.0),
+                        itemCount: sceneButtons.length,
+                        itemBuilder: (context, index) => sceneButtons[index],
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 12.0),
+                      ),
                     ),
                   ),
                 ),
-              ),
-          };
-        }),
-      );
-    });
+              };
+            },
+          ),
+        );
+      },
+    );
   }
 }

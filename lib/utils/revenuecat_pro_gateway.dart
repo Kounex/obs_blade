@@ -15,12 +15,12 @@ import 'revenuecat_config.dart';
 /// from a plain map); the package rides along in `storeObject` so
 /// [RevenueCatProGateway.buy] can purchase it.
 ProProduct proProductFromPackage(Package package) => ProProduct(
-      id: package.storeProduct.identifier,
-      title: package.storeProduct.title,
-      priceString: package.storeProduct.priceString,
-      subscriptionPeriod: package.storeProduct.subscriptionPeriod,
-      storeObject: package,
-    );
+  id: package.storeProduct.identifier,
+  title: package.storeProduct.title,
+  priceString: package.storeProduct.priceString,
+  subscriptionPeriod: package.storeProduct.subscriptionPeriod,
+  storeObject: package,
+);
 
 /// Entitlement truth: the `pro` entitlement being active in a
 /// [CustomerInfo] snapshot. RevenueCat tracks expiry/renewal server-side,

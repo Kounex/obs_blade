@@ -15,8 +15,10 @@ extension IntStuff on int {
       (withoutSeconds ? DateFormat.Hm('de_DE') : DateFormat.Hms('de_DE'))
           .format(DateTime.fromMillisecondsSinceEpoch(this));
 
-  String millisecondsToFileNameDate(
-      {String separator = '', bool withTime = false}) {
+  String millisecondsToFileNameDate({
+    String separator = '',
+    bool withTime = false,
+  }) {
     DateTime now = DateTime.fromMillisecondsSinceEpoch(this);
 
     String month = (now.month < 10 ? '0' : '') + now.month.toString();

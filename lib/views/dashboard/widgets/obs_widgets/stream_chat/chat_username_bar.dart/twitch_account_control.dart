@@ -49,17 +49,13 @@ class _AccountChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabledColor =
-        Theme.of(context).cupertinoOverrideTheme!.primaryColor;
+    final enabledColor = Theme.of(context).cupertinoOverrideTheme!.primaryColor;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final textMax = constraints.maxWidth.isFinite
-            ? (constraints.maxWidth -
-                    AppSpacing.md * 2 -
-                    18.0 -
-                    AppSpacing.xs)
-                .clamp(0.0, 96.0)
+            ? (constraints.maxWidth - AppSpacing.md * 2 - 18.0 - AppSpacing.xs)
+                  .clamp(0.0, 96.0)
             : 96.0;
 
         return Tooltip(
@@ -85,7 +81,8 @@ class _AccountChip extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: StylingHelper.lightenDarkenColor(
-                    Theme.of(context).cardColor),
+                  Theme.of(context).cardColor,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -108,9 +105,9 @@ class _AccountChip extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: enabledColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: enabledColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -139,16 +136,16 @@ class _ConnectPill extends StatelessWidget {
           vertical: AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: ChatType.Twitch.brandColor ??
+          color:
+              ChatType.Twitch.brandColor ??
               Theme.of(context).colorScheme.secondary,
           borderRadius: AppRadius.pill,
         ),
         child: Text(
           'Connect Twitch',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: Colors.white),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.white),
         ),
       ),
     );

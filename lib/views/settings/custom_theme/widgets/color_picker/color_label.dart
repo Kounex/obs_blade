@@ -4,11 +4,7 @@ class ColorLabel extends StatelessWidget {
   final String label;
   final double width;
 
-  const ColorLabel({
-    super.key,
-    required this.label,
-    this.width = 24.0,
-  });
+  const ColorLabel({super.key, required this.label, this.width = 24.0});
 
   @override
   Widget build(BuildContext context) {

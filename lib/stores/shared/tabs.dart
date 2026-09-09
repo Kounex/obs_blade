@@ -25,7 +25,7 @@ abstract class _TabsStore with Store {
 
   GlobalKey<NavigatorState> keyForCurrentTab() =>
       this.navigatorKeys[this.activeTab]!;
-      
+
   String activeRouteForCurrentTab() =>
       this.activeRoutePerNavigator[this.activeTab]!;
 

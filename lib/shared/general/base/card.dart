@@ -67,8 +67,12 @@ class BaseCard extends StatelessWidget {
     this.rightPadding = AppSpacing.lg,
     this.bottomPadding = AppSpacing.lg,
     this.leftPadding = AppSpacing.lg,
-    this.titlePadding =
-        const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 12.0),
+    this.titlePadding = const EdgeInsets.only(
+      left: 24.0,
+      right: 24.0,
+      top: 12.0,
+      bottom: 12.0,
+    ),
     this.titleCrossAlignment = CrossAxisAlignment.center,
     this.elevation = 0,
   });
@@ -84,8 +88,9 @@ class BaseCard extends StatelessWidget {
 
     /// The divider sits directly under the title - inset it to the
     /// title's own horizontal content inset instead of full-bleed
-    final EdgeInsets resolvedTitlePadding =
-        this.titlePadding.resolve(Directionality.of(context));
+    final EdgeInsets resolvedTitlePadding = this.titlePadding.resolve(
+      Directionality.of(context),
+    );
 
     Widget card = Padding(
       padding: EdgeInsets.only(
@@ -96,7 +101,8 @@ class BaseCard extends StatelessWidget {
       ),
       child: Card(
         clipBehavior: Clip.hardEdge,
-        shadowColor: this.backgroundColor != null &&
+        shadowColor:
+            this.backgroundColor != null &&
                 this.backgroundColor!.value == Colors.transparent.value
             ? Colors.transparent
             : null,
@@ -104,27 +110,28 @@ class BaseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(kBaseCardBorderRadius),
           side: this.paintBorder
               ? BorderSide(
-                  color: this.borderColor ??
+                  color:
+                      this.borderColor ??
                       (cardColor.computeLuminance() <= 0.2
                           ? Colors.white
                           : Colors.black),
                 )
               : customTheme?.cardBorderColorHex != null
-                  ? BorderSide(
-                      color: customTheme!.cardBorderColorHex!
-                          .hexToColor()
-                          .withOpacity(0.6),
-                    )
-
-                  /// Derived hairline (token-delta §2.5: 7% white over the
-                  /// composed card fill) so raised surfaces separate from
-                  /// the scaffold without a hardcoded color
-                  : BorderSide(
-                      color: (cardColor.computeLuminance() <= 0.2
+              ? BorderSide(
+                  color: customTheme!.cardBorderColorHex!
+                      .hexToColor()
+                      .withOpacity(0.6),
+                )
+              /// Derived hairline (token-delta §2.5: 7% white over the
+              /// composed card fill) so raised surfaces separate from
+              /// the scaffold without a hardcoded color
+              : BorderSide(
+                  color:
+                      (cardColor.computeLuminance() <= 0.2
                               ? Colors.white
                               : Colors.black)
                           .withValues(alpha: 0.07),
-                    ),
+                ),
         ),
         color: cardColor,
         elevation: this.elevation,
@@ -143,15 +150,17 @@ class BaseCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                        child: this.titleWidget == null
-                            ? Text(
-                                this.title!,
-                                style: this.titleStyle ??
-                                    Theme.of(context).textTheme.headlineSmall,
-                              )
-                            : this.titleWidget!),
+                      child: this.titleWidget == null
+                          ? Text(
+                              this.title!,
+                              style:
+                                  this.titleStyle ??
+                                  Theme.of(context).textTheme.headlineSmall,
+                            )
+                          : this.titleWidget!,
+                    ),
                     if (this.trailingTitleWidget != null)
-                      this.trailingTitleWidget!
+                      this.trailingTitleWidget!,
                   ],
                 ),
               ),
@@ -163,10 +172,7 @@ class BaseCard extends StatelessWidget {
                 ),
                 child: const BaseDivider(),
               ),
-            Padding(
-              padding: this.paddingChild,
-              child: this.child,
-            ),
+            Padding(padding: this.paddingChild, child: this.child),
           ],
         ),
       ),

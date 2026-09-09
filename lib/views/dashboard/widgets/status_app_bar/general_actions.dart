@@ -21,9 +21,7 @@ import '../../services/record_stream.dart';
 import '../dialogs/save_edit_connection.dart';
 
 class GeneralActions extends StatelessWidget {
-  const GeneralActions({
-    super.key,
-  });
+  const GeneralActions({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +47,10 @@ class GeneralActions extends StatelessWidget {
           builder: (context, settingsBox, child) => Observer(
             builder: (context) => AppBarActions(
               actions: [
-                if (!settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
-                    defaultValue: false))
+                if (!settingsBox.get(
+                  SettingsKeys.ExposeStreamingControls.name,
+                  defaultValue: false,
+                ))
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isLive ? 'Stop' : 'Start'} Streaming',
@@ -59,15 +59,19 @@ class GeneralActions extends StatelessWidget {
                       context,
                       dashboardStore.isLive,
                       settingsBox.get(
-                          SettingsKeys.DontShowStreamStartMessage.name,
-                          defaultValue: false),
+                        SettingsKeys.DontShowStreamStartMessage.name,
+                        defaultValue: false,
+                      ),
                       settingsBox.get(
-                          SettingsKeys.DontShowStreamStopMessage.name,
-                          defaultValue: false),
+                        SettingsKeys.DontShowStreamStopMessage.name,
+                        defaultValue: false,
+                      ),
                     ),
                   ),
-                if (!settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
-                    defaultValue: false)) ...[
+                if (!settingsBox.get(
+                  SettingsKeys.ExposeRecordingControls.name,
+                  defaultValue: false,
+                )) ...[
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isRecording ? 'Stop' : 'Start'} Recording',
@@ -76,11 +80,13 @@ class GeneralActions extends StatelessWidget {
                       context,
                       dashboardStore.isRecording,
                       settingsBox.get(
-                          SettingsKeys.DontShowRecordStartMessage.name,
-                          defaultValue: false),
+                        SettingsKeys.DontShowRecordStartMessage.name,
+                        defaultValue: false,
+                      ),
                       settingsBox.get(
-                          SettingsKeys.DontShowRecordStopMessage.name,
-                          defaultValue: false),
+                        SettingsKeys.DontShowRecordStopMessage.name,
+                        defaultValue: false,
+                      ),
                     ),
                   ),
                   AppBarActionEntry(
@@ -89,15 +95,16 @@ class GeneralActions extends StatelessWidget {
                     leadingIcon: CupertinoIcons.playpause_fill,
                     onAction: dashboardStore.isRecording
                         ? () => NetworkHelper.makeRequest(
-                              networkStore.activeSession!.socket,
-                              RequestType.ToggleRecordPause,
-                            )
+                            networkStore.activeSession!.socket,
+                            RequestType.ToggleRecordPause,
+                          )
                         : null,
                   ),
                 ],
                 if (!settingsBox.get(
-                    SettingsKeys.ExposeReplayBufferControls.name,
-                    defaultValue: false)) ...[
+                  SettingsKeys.ExposeReplayBufferControls.name,
+                  defaultValue: false,
+                )) ...[
                   AppBarActionEntry(
                     title:
                         '${dashboardStore.isReplayBufferActive ? 'Stop' : 'Start'} Replay Buffer',
@@ -123,9 +130,9 @@ class GeneralActions extends StatelessWidget {
                     leadingIcon: CupertinoIcons.arrow_down_doc_fill,
                     onAction: dashboardStore.isReplayBufferActive
                         ? () => NetworkHelper.makeRequest(
-                              networkStore.activeSession!.socket,
-                              RequestType.SaveReplayBuffer,
-                            )
+                            networkStore.activeSession!.socket,
+                            RequestType.SaveReplayBuffer,
+                          )
                         : null,
                   ),
                 ],
@@ -160,33 +167,31 @@ class GeneralActions extends StatelessWidget {
                       networkStore.activeSession!.socket,
                       RequestBatchType.Screenshot,
                       [
-                        RequestBatchObject(
-                          RequestType.SaveSourceScreenshot,
-                          {
-                            'sourceName': Hive.box(HiveKeys.Settings.name).get(
-                                        SettingsKeys.ExposeStudioControls.name,
-                                        defaultValue: false) &&
-                                    dashboardStore.studioMode
-                                ? dashboardStore.studioModePreviewSceneName
-                                : dashboardStore.activeSceneName,
-                            'imageFilePath': dashboardStore.screenshotPath,
-                            'imageFormat': dashboardStore.previewFileFormat,
-                            'compressionQuality': -1,
-                          },
-                        ),
-                        RequestBatchObject(
-                          RequestType.GetSourceScreenshot,
-                          {
-                            'sourceName': Hive.box(HiveKeys.Settings.name).get(
-                                        SettingsKeys.ExposeStudioControls.name,
-                                        defaultValue: false) &&
-                                    dashboardStore.studioMode
-                                ? dashboardStore.studioModePreviewSceneName
-                                : dashboardStore.activeSceneName,
-                            'imageFormat': dashboardStore.previewFileFormat,
-                            'compressionQuality': -1,
-                          },
-                        ),
+                        RequestBatchObject(RequestType.SaveSourceScreenshot, {
+                          'sourceName':
+                              Hive.box(HiveKeys.Settings.name).get(
+                                    SettingsKeys.ExposeStudioControls.name,
+                                    defaultValue: false,
+                                  ) &&
+                                  dashboardStore.studioMode
+                              ? dashboardStore.studioModePreviewSceneName
+                              : dashboardStore.activeSceneName,
+                          'imageFilePath': dashboardStore.screenshotPath,
+                          'imageFormat': dashboardStore.previewFileFormat,
+                          'compressionQuality': -1,
+                        }),
+                        RequestBatchObject(RequestType.GetSourceScreenshot, {
+                          'sourceName':
+                              Hive.box(HiveKeys.Settings.name).get(
+                                    SettingsKeys.ExposeStudioControls.name,
+                                    defaultValue: false,
+                                  ) &&
+                                  dashboardStore.studioMode
+                              ? dashboardStore.studioModePreviewSceneName
+                              : dashboardStore.activeSceneName,
+                          'imageFormat': dashboardStore.previewFileFormat,
+                          'compressionQuality': -1,
+                        }),
                       ],
                     );
                   },
@@ -202,39 +207,39 @@ class GeneralActions extends StatelessWidget {
                           dashboardStore.setEditAudioVisibility(false);
                         }
                       : settingsBox.get(
-                              SettingsKeys.DontShowHidingScenesWarning.name,
-                              defaultValue: false)
-                          ? () {
-                              dashboardStore.setEditSceneVisibility(true);
-                              dashboardStore.setEditSceneItemVisibility(true);
-                              dashboardStore.setEditAudioVisibility(true);
-                            }
-                          : () {
-                              ModalHandler.showBaseDialog(
-                                context: context,
-                                dialogWidget: ConfirmationDialog(
-                                  // title: 'Warning on hiding scenes',
-                                  // body:
-                                  //     'Unfortunately OBS WebSocket only transmits the scene name, nothing else. Therefore I can\'t distinguish between a scene from one specific OBS instance.\n\nUsing a saved connection is advised because then I can bound the scene name to the saved connection - otherwise trying with the ip address which might cause trouble but is still better than nothing!',
-                                  title: 'Warning on hiding scene elements',
-                                  body:
-                                      'Unfortunately OBS WebSocket only gives limit information about scenes and their elements for me to reliably match them with different connections etc.\n\nTo ensure maximum compatibility, please save your connections so I can bound hidden elements to a saved connection.',
-                                  enableDontShowAgainOption: true,
-                                  noText: 'Cancel',
-                                  okText: 'Ok',
-                                  onOk: (checked) {
-                                    settingsBox.put(
-                                        SettingsKeys
-                                            .DontShowHidingScenesWarning.name,
-                                        checked);
-                                    dashboardStore.setEditSceneVisibility(true);
-                                    dashboardStore
-                                        .setEditSceneItemVisibility(true);
-                                    dashboardStore.setEditAudioVisibility(true);
-                                  },
-                                ),
-                              );
-                            },
+                          SettingsKeys.DontShowHidingScenesWarning.name,
+                          defaultValue: false,
+                        )
+                      ? () {
+                          dashboardStore.setEditSceneVisibility(true);
+                          dashboardStore.setEditSceneItemVisibility(true);
+                          dashboardStore.setEditAudioVisibility(true);
+                        }
+                      : () {
+                          ModalHandler.showBaseDialog(
+                            context: context,
+                            dialogWidget: ConfirmationDialog(
+                              // title: 'Warning on hiding scenes',
+                              // body:
+                              //     'Unfortunately OBS WebSocket only transmits the scene name, nothing else. Therefore I can\'t distinguish between a scene from one specific OBS instance.\n\nUsing a saved connection is advised because then I can bound the scene name to the saved connection - otherwise trying with the ip address which might cause trouble but is still better than nothing!',
+                              title: 'Warning on hiding scene elements',
+                              body:
+                                  'Unfortunately OBS WebSocket only gives limit information about scenes and their elements for me to reliably match them with different connections etc.\n\nTo ensure maximum compatibility, please save your connections so I can bound hidden elements to a saved connection.',
+                              enableDontShowAgainOption: true,
+                              noText: 'Cancel',
+                              okText: 'Ok',
+                              onOk: (checked) {
+                                settingsBox.put(
+                                  SettingsKeys.DontShowHidingScenesWarning.name,
+                                  checked,
+                                );
+                                dashboardStore.setEditSceneVisibility(true);
+                                dashboardStore.setEditSceneItemVisibility(true);
+                                dashboardStore.setEditAudioVisibility(true);
+                              },
+                            ),
+                          );
+                        },
                 ),
                 AppBarActionEntry(
                   title: '${newConnection ? 'Save' : 'Edit'} Connection',

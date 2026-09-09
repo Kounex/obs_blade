@@ -55,4 +55,3 @@ void main() {
     expect(chatAnnouncementHighlight('ORANGE').solid, const Color(0xFFFF7A00));
   });
 }
-

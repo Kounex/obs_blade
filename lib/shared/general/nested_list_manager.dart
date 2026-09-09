@@ -45,17 +45,19 @@ class _NestedScrollManagerState extends State<NestedScrollManager> {
         if (_scrollThreshold.abs() >= SCROLL_THRESHOLD) {
           double scrollPosition =
               this.widget.parentScrollController.offset + value.overscroll;
-          this.widget.parentScrollController.jumpTo(scrollPosition <
-                  this.widget.parentScrollController.position.minScrollExtent
-              ? 0
-              : scrollPosition >
+          this.widget.parentScrollController.jumpTo(
+            scrollPosition <
+                    this.widget.parentScrollController.position.minScrollExtent
+                ? 0
+                : scrollPosition >
                       this
                           .widget
                           .parentScrollController
                           .position
                           .maxScrollExtent
-                  ? this.widget.parentScrollController.position.maxScrollExtent
-                  : scrollPosition);
+                ? this.widget.parentScrollController.position.maxScrollExtent
+                : scrollPosition,
+          );
         }
         return true;
       },

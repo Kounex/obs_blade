@@ -24,18 +24,16 @@ class ChannelModButton extends StatelessWidget {
             minHeight: kMinInteractiveDimensionCupertino,
           ),
           decoration: BoxDecoration(
-            color:
-                StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+            color: StylingHelper.lightenDarkenColor(
+              Theme.of(context).cardColor,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
               width: 0.0,
             ),
           ),
-          child: const Icon(
-            CupertinoIcons.shield,
-            size: 18.0,
-          ),
+          child: const Icon(CupertinoIcons.shield, size: 18.0),
         ),
       ),
     );
@@ -44,13 +42,10 @@ class ChannelModButton extends StatelessWidget {
 
 /// Preferred width of the connected-account chip for the right-cluster
 /// fit check (padding + icon + gap + ellipsized name ≤ 96).
-double accountChipPreferredWidth(
-  BuildContext context,
-  String? displayName,
-) {
-  final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-        fontWeight: FontWeight.w600,
-      );
+double accountChipPreferredWidth(BuildContext context, String? displayName) {
+  final style = Theme.of(
+    context,
+  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600);
   final painter = TextPainter(
     text: TextSpan(text: displayName ?? 'Twitch', style: style),
     textDirection: Directionality.of(context),

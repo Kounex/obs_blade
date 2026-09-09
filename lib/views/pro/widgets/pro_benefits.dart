@@ -58,9 +58,7 @@ class ProBenefitsBrowser extends StatefulWidget {
 }
 
 class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
-  final PageController _pageController = PageController(
-    viewportFraction: 0.88,
-  );
+  final PageController _pageController = PageController(viewportFraction: 0.88);
 
   @override
   void dispose() {
@@ -73,8 +71,9 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
     /// The carousel is fixed-height (PageView needs a bound), so grow it
     /// with the text scale - clamped, so accessibility sizes enlarge the
     /// cards without the carousel eating the whole paywall
-    final double textScale =
-        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.4);
+    final double textScale = MediaQuery.textScalerOf(
+      context,
+    ).scale(1.0).clamp(1.0, 1.4);
 
     return ResponsiveWidgetWrapper(
       mobileWidget: Column(
@@ -85,9 +84,7 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
               controller: this._pageController,
               itemCount: kProBenefits.length,
               itemBuilder: (context, index) => Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.xs,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 child: ProBenefitCard(benefit: kProBenefits[index]),
               ),
             ),
@@ -100,10 +97,10 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
               dotHeight: 8.0,
               dotWidth: 8.0,
               spacing: AppSpacing.sm,
-              dotColor:
-                  Theme.of(context).dividerColor.withValues(alpha: 0.35),
-              activeDotColor:
-                  Theme.of(context).buttonTheme.colorScheme!.secondary,
+              dotColor: Theme.of(context).dividerColor.withValues(alpha: 0.35),
+              activeDotColor: Theme.of(
+                context,
+              ).buttonTheme.colorScheme!.secondary,
             ),
           ),
         ],
@@ -168,10 +165,10 @@ class ProBenefitCard extends StatelessWidget {
             Text(
               this.benefit.body,
               style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    color: Theme.of(context)
-                        .extension<AppTextColors>()!
-                        .textSecondary,
-                  ),
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.textSecondary,
+              ),
             ),
           ],
         ),

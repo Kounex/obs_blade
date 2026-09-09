@@ -46,7 +46,9 @@ class PaginationControl extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: StylingHelper.lightenDarkenColor(
-                  Theme.of(context).cardColor, 10),
+                Theme.of(context).cardColor,
+                10,
+              ),
               borderRadius: AppRadius.pill,
             ),
             child: AnimatedSwitcher(
@@ -57,10 +59,8 @@ class PaginationControl extends StatelessWidget {
                 '${this.currentPage} / ${this.amountPages}',
                 key: ValueKey('${this.currentPage}/${this.amountPages}'),
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      fontFeatures: const [
-                        FontFeature.tabularFigures(),
-                      ],
-                    ),
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
           ),
@@ -83,10 +83,7 @@ class _PaginationButton extends StatelessWidget {
   final IconData icon;
   final void Function()? onTap;
 
-  const _PaginationButton({
-    required this.icon,
-    this.onTap,
-  });
+  const _PaginationButton({required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -100,16 +97,18 @@ class _PaginationButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: enabled
               ? StylingHelper.lightenDarkenColor(
-                  Theme.of(context).cardColor, 10)
+                  Theme.of(context).cardColor,
+                  10,
+                )
               : Colors.transparent,
           borderRadius: AppRadius.pill,
         ),
         child: Icon(
           this.icon,
           size: 20.0,
-          color: IconTheme.of(context).color?.withValues(
-                alpha: enabled ? 1.0 : 0.3,
-              ),
+          color: IconTheme.of(
+            context,
+          ).color?.withValues(alpha: enabled ? 1.0 : 0.3),
         ),
       ),
     );

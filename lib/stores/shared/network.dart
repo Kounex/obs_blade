@@ -72,15 +72,12 @@ abstract class _NetworkStore with Store {
       final startedAt = DateTime.now();
 
       this.activeSession = Session(
-        NetworkHelper.establishWebSocket(
-          connection,
-          connectTimeout: timeout,
-        ),
+        NetworkHelper.establishWebSocket(connection, connectTimeout: timeout),
         connection,
       );
 
-      this.activeSession!.socketStream =
-          this.activeSession!.socket.stream.asBroadcastStream();
+      this.activeSession!.socketStream = this.activeSession!.socket.stream
+          .asBroadcastStream();
 
       GeneralHelper.advLog(
         'Handshake: connecting to ${connection.host}'
@@ -113,8 +110,7 @@ abstract class _NetworkStore with Store {
       }
 
       _handshakeStage = ConnectionStage.waitingHello;
-      _authSubscription =
-          _handleInitialWebSocket(connection, authCompleter);
+      _authSubscription = _handleInitialWebSocket(connection, authCompleter);
 
       GeneralHelper.advLog(
         'Handshake: waiting Hello for ${connection.host}'
@@ -123,8 +119,7 @@ abstract class _NetworkStore with Store {
       );
 
       final remaining = timeout - DateTime.now().difference(startedAt);
-      final helloBudget =
-          remaining.isNegative ? Duration.zero : remaining;
+      final helloBudget = remaining.isNegative ? Duration.zero : remaining;
 
       this.lastConnectionResult = await Future.any([
         authCompleter.future,
@@ -228,63 +223,62 @@ abstract class _NetworkStore with Store {
   StreamSubscription _handleInitialWebSocket(
     Connection connection,
     Completer<ConnectionAttemptResult> authCompleter,
-  ) =>
-      this.activeSession!.socketStream!.listen(
-        (event) {
-          try {
-            final jsonObject = json.decode(event) as Map<String, dynamic>;
-            _handleNewProtocol(connection, authCompleter, jsonObject);
-          } catch (e) {
-            GeneralHelper.advLog(
-              'Handshake decode error: $e',
-              level: LogLevel.Error,
-              includeInLogs: true,
-            );
-            _completeAuth(
-              authCompleter,
-              ConnectionAttemptResult(
-                closeCode: WebSocketCloseCode.MessageDecodeError,
-                stage: _handshakeStage,
-                detail: e.toString(),
-              ),
-            );
-          }
-        },
-        onDone: () {
-          final closeCode = WebSocketCloseCode.fromIdentifier(
-            this.activeSession?.socket.closeCode,
-          );
-          GeneralHelper.advLog(
-            'Initial WebSocket done, close code: '
-            '${this.activeSession?.socket.closeCode} (${closeCode.message})',
-            includeInLogs: true,
-          );
-
-          _completeAuth(
-            authCompleter,
-            ConnectionAttemptResult(
-              closeCode: closeCode,
-              stage: _handshakeStage,
-              detail: this.activeSession?.socket.closeReason,
-            ),
-          );
-        },
-        onError: (error) {
-          GeneralHelper.advLog(
-            'Error initial WebSocket connection | $error',
-            level: LogLevel.Error,
-            includeInLogs: true,
-          );
-          _completeAuth(
-            authCompleter,
-            ConnectionAttemptResult(
-              closeCode: WebSocketCloseCode.UnknownReason,
-              stage: _handshakeStage,
-              detail: error.toString(),
-            ),
-          );
-        },
+  ) => this.activeSession!.socketStream!.listen(
+    (event) {
+      try {
+        final jsonObject = json.decode(event) as Map<String, dynamic>;
+        _handleNewProtocol(connection, authCompleter, jsonObject);
+      } catch (e) {
+        GeneralHelper.advLog(
+          'Handshake decode error: $e',
+          level: LogLevel.Error,
+          includeInLogs: true,
+        );
+        _completeAuth(
+          authCompleter,
+          ConnectionAttemptResult(
+            closeCode: WebSocketCloseCode.MessageDecodeError,
+            stage: _handshakeStage,
+            detail: e.toString(),
+          ),
+        );
+      }
+    },
+    onDone: () {
+      final closeCode = WebSocketCloseCode.fromIdentifier(
+        this.activeSession?.socket.closeCode,
       );
+      GeneralHelper.advLog(
+        'Initial WebSocket done, close code: '
+        '${this.activeSession?.socket.closeCode} (${closeCode.message})',
+        includeInLogs: true,
+      );
+
+      _completeAuth(
+        authCompleter,
+        ConnectionAttemptResult(
+          closeCode: closeCode,
+          stage: _handshakeStage,
+          detail: this.activeSession?.socket.closeReason,
+        ),
+      );
+    },
+    onError: (error) {
+      GeneralHelper.advLog(
+        'Error initial WebSocket connection | $error',
+        level: LogLevel.Error,
+        includeInLogs: true,
+      );
+      _completeAuth(
+        authCompleter,
+        ConnectionAttemptResult(
+          closeCode: WebSocketCloseCode.UnknownReason,
+          stage: _handshakeStage,
+          detail: error.toString(),
+        ),
+      );
+    },
+  );
 
   void _handleNewProtocol(
     Connection connection,
@@ -312,10 +306,7 @@ abstract class _NetworkStore with Store {
       );
 
       _handshakeStage = ConnectionStage.waitingIdentified;
-      AuthenticationHelper.identify(
-        activeSession!,
-        rpcVersion: rpcVersion,
-      );
+      AuthenticationHelper.identify(activeSession!, rpcVersion: rpcVersion);
     } else if (json['op'] == WebSocketOpCode.Identified.identifier) {
       _handshakeStage = ConnectionStage.identified;
       _completeAuth(authCompleter, ConnectionAttemptResult.success);

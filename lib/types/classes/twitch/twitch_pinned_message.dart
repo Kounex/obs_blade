@@ -50,8 +50,7 @@ class TwitchPinnedMessage {
         pinnedByUserLogin: json['pinned_by_user_login'] as String? ?? '',
         pinnedByUserName: json['pinned_by_user_name'] as String? ?? '',
         message: ChatMessageText.fromJson(
-          (json['message'] as Map? ?? const {})
-              .cast<String, Object?>(),
+          (json['message'] as Map? ?? const {}).cast<String, Object?>(),
         ),
         startsAt: DateTime.tryParse(json['starts_at'] as String? ?? ''),
         endsAt: DateTime.tryParse(json['ends_at'] as String? ?? ''),

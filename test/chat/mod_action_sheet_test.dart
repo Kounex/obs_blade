@@ -21,16 +21,16 @@ import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
 
 ChatMessageEvent chatMessage(String id, String chatterId) => ChatMessageEvent(
-      broadcasterUserId: 'user-1',
-      chatterUserId: chatterId,
-      chatterUserLogin: 'user$chatterId',
-      chatterUserName: 'User$chatterId',
-      messageId: id,
-      message: ChatMessageText(
-        text: 'text $id',
-        fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
-      ),
-    );
+  broadcasterUserId: 'user-1',
+  chatterUserId: chatterId,
+  chatterUserLogin: 'user$chatterId',
+  chatterUserName: 'User$chatterId',
+  messageId: id,
+  message: ChatMessageText(
+    text: 'text $id',
+    fragments: [ChatMessageFragment(type: 'text', text: 'text $id')],
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -79,8 +79,19 @@ void main() {
     store = TwitchChatStore(
       authService: authService,
       isProResolver: () => true,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       moderationService: moderationService,
@@ -89,9 +100,11 @@ void main() {
     store.chatConnection = TwitchChatConnectionState.live;
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<TwitchBadgeStore>(
-        TwitchBadgeStore(service: FakeTwitchBadgeService()));
+      TwitchBadgeStore(service: FakeTwitchBadgeService()),
+    );
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
+      ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+    );
   });
 
   tearDown(() async {
@@ -112,8 +125,9 @@ void main() {
     auth.scopes = [...auth.scopes, ...extra];
   }
 
-  testWidgets('delete hits the service, tombstones and closes the sheet',
-      (tester) async {
+  testWidgets('delete hits the service, tombstones and closes the sheet', (
+    tester,
+  ) async {
     final event = chatMessage('m1', 'u1');
     store.appendChatMessageForTest(event);
 
@@ -254,8 +268,9 @@ void main() {
     expect(find.text('Delete message'), findsOneWidget);
   });
 
-  testWidgets('mod sheet offers Reply; tapping it sets the reply target',
-      (tester) async {
+  testWidgets('mod sheet offers Reply; tapping it sets the reply target', (
+    tester,
+  ) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
     await tester.pumpWidget(
@@ -277,8 +292,9 @@ void main() {
     expect(find.byType(ModActionSheet), findsNothing);
   });
 
-  testWidgets('non-mod with write scope gets a reply-only sheet',
-      (tester) async {
+  testWidgets('non-mod with write scope gets a reply-only sheet', (
+    tester,
+  ) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
     /// Selected channel the user does not moderate.
@@ -303,8 +319,9 @@ void main() {
     expect(find.byType(MessageActionSheet), findsNothing);
   });
 
-  testWidgets('read-only non-mod gets no sheet; tombstones stay inert',
-      (tester) async {
+  testWidgets('read-only non-mod gets no sheet; tombstones stay inert', (
+    tester,
+  ) async {
     /// Drop the write scope from the persisted auth — `canWriteChat` reads
     /// the box live, nothing actionable for a non-mod then. No save():
     /// the box serves this same in-memory instance on get(), and a Hive
@@ -312,8 +329,9 @@ void main() {
     /// async zone.
     final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
     final auth = authBox.get(TwitchAuth.kBoxKey)!;
-    auth.scopes =
-        auth.scopes.where((scope) => scope != 'user:write:chat').toList();
+    auth.scopes = auth.scopes
+        .where((scope) => scope != 'user:write:chat')
+        .toList();
 
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
     store.selectedChannelId = 'chan-other';
@@ -337,14 +355,12 @@ void main() {
     await tester.tap(find.textContaining('text m1'));
     await tester.pumpAndSettle();
     expect(find.text('Delete message'), findsNothing);
-    expect(
-      find.text("Cool_Mod deleted Useru1's message"),
-      findsOneWidget,
-    );
+    expect(find.text("Cool_Mod deleted Useru1's message"), findsOneWidget);
   });
 
-  testWidgets('Pin message asks before pinning when nothing is pinned yet',
-      (tester) async {
+  testWidgets('Pin message asks before pinning when nothing is pinned yet', (
+    tester,
+  ) async {
     final event = chatMessage('m1', 'u1');
     store.appendChatMessageForTest(event);
     store.pinnedMessage = null;
@@ -370,8 +386,9 @@ void main() {
     expect(find.byType(ModActionSheet), findsNothing);
   });
 
-  testWidgets('Pin message asks before replacing the active pin',
-      (tester) async {
+  testWidgets('Pin message asks before replacing the active pin', (
+    tester,
+  ) async {
     final event = chatMessage('m1', 'u1');
     store.appendChatMessageForTest(event);
 
@@ -397,39 +414,41 @@ void main() {
   });
 
   testWidgets(
-      'the pinned message offers Unpin message and unpins after confirmation',
-      (tester) async {
-    final event = chatMessage('msg-pinned', 'u1');
-    store.appendChatMessageForTest(event);
+    'the pinned message offers Unpin message and unpins after confirmation',
+    (tester) async {
+      final event = chatMessage('msg-pinned', 'u1');
+      store.appendChatMessageForTest(event);
 
-    /// Flush the login connect's pin fetch — the sample pin is active.
-    await tester.pumpWidget(const SizedBox());
-    await tester.pumpAndSettle();
-    expect(store.pinnedMessage?.messageId, 'msg-pinned');
+      /// Flush the login connect's pin fetch — the sample pin is active.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      expect(store.pinnedMessage?.messageId, 'msg-pinned');
 
-    await openSheet(tester, event);
+      await openSheet(tester, event);
 
-    expect(find.text('Unpin message'), findsOneWidget);
-    expect(find.text('Pin message'), findsNothing);
+      expect(find.text('Unpin message'), findsOneWidget);
+      expect(find.text('Pin message'), findsNothing);
 
-    await tester.tap(find.text('Unpin message'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Unpin message'));
+      await tester.pumpAndSettle();
 
-    /// Unpin confirms too — it drops a room-visible pin.
-    expect(find.text('Unpin this message?'), findsOneWidget);
-    expect(moderationService.unpinCalls, 0);
+      /// Unpin confirms too — it drops a room-visible pin.
+      expect(find.text('Unpin this message?'), findsOneWidget);
+      expect(moderationService.unpinCalls, 0);
 
-    await tester.tap(find.text('Unpin').last);
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Unpin').last);
+      await tester.pumpAndSettle();
 
-    expect(moderationService.unpinCalls, 1);
-    expect(moderationService.lastUnpinMessageId, 'msg-pinned');
-    expect(store.pinnedMessage, isNull);
-    expect(find.byType(ModActionSheet), findsNothing);
-  });
+      expect(moderationService.unpinCalls, 1);
+      expect(moderationService.lastUnpinMessageId, 'msg-pinned');
+      expect(store.pinnedMessage, isNull);
+      expect(find.byType(ModActionSheet), findsNothing);
+    },
+  );
 
-  testWidgets('Warn… composes a reason; the send is the confirm',
-      (tester) async {
+  testWidgets('Warn… composes a reason; the send is the confirm', (
+    tester,
+  ) async {
     grantScopes(const ['moderator:manage:warnings']);
     final event = chatMessage('m1', 'u1');
     store.appendChatMessageForTest(event);
@@ -479,8 +498,9 @@ void main() {
     expect(find.byType(ModActionSheet), findsNothing);
   });
 
-  testWidgets('a failed warn closes the sheet and shows a snackbar',
-      (tester) async {
+  testWidgets('a failed warn closes the sheet and shows a snackbar', (
+    tester,
+  ) async {
     grantScopes(const ['moderator:manage:warnings']);
     moderationService.warnThrows = Exception('boom');
     final event = chatMessage('m1', 'u1');
@@ -509,8 +529,9 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('Warn… without the manage scope starts the re-login flow',
-      (tester) async {
+  testWidgets('Warn… without the manage scope starts the re-login flow', (
+    tester,
+  ) async {
     /// Next device-code poll fails so the re-login dialog stays open.
     authService.failPollWith = const TwitchAuthException('denied');
     final event = chatMessage('m1', 'u1');

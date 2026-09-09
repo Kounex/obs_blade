@@ -10,16 +10,16 @@ extension BaseResultIconFunctions on BaseResultIcon {
   /// Static fallback glyphs - kept in sync with the stroke-drawn
   /// [AnimatedResultIcon] painter (check / cross / question mark)
   IconData get data => const {
-        BaseResultIcon.Positive: CupertinoIcons.check_mark_circled,
-        BaseResultIcon.Negative: CupertinoIcons.clear_circled,
-        BaseResultIcon.Missing: CupertinoIcons.question_circle,
-      }[this]!;
+    BaseResultIcon.Positive: CupertinoIcons.check_mark_circled,
+    BaseResultIcon.Negative: CupertinoIcons.clear_circled,
+    BaseResultIcon.Missing: CupertinoIcons.question_circle,
+  }[this]!;
 
   AnimatedResultType get animatedType => const {
-        BaseResultIcon.Positive: AnimatedResultType.positive,
-        BaseResultIcon.Negative: AnimatedResultType.negative,
-        BaseResultIcon.Missing: AnimatedResultType.missing,
-      }[this]!;
+    BaseResultIcon.Positive: AnimatedResultType.positive,
+    BaseResultIcon.Negative: AnimatedResultType.negative,
+    BaseResultIcon.Missing: AnimatedResultType.missing,
+  }[this]!;
 }
 
 class BaseResult extends StatelessWidget {
@@ -62,7 +62,7 @@ class BaseResult extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
-          )
+          ),
       ],
     );
   }

@@ -43,9 +43,7 @@ import 'youtube_native_channel_dropdown.dart';
 /// experience (the engine switch always applies, the lock badge marks
 /// the gated segment).
 class ChatUsernameBar extends StatelessWidget {
-  const ChatUsernameBar({
-    super.key,
-  });
+  const ChatUsernameBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +72,10 @@ class ChatUsernameBar extends StatelessWidget {
             nativeChatAvailableFor(chatType) && engine == ChatEngine.native;
 
         return Padding(
-          padding:
-              const EdgeInsets.only(left: AppSpacing.sm, right: AppSpacing.sm),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.sm,
+            right: AppSpacing.sm,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
@@ -86,9 +86,7 @@ class ChatUsernameBar extends StatelessWidget {
             children: [
               Flexible(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 256.0,
-                  ),
+                  constraints: const BoxConstraints(maxWidth: 256.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -96,9 +94,7 @@ class ChatUsernameBar extends StatelessWidget {
                       ChatTypeDropdown(settingsBox: settingsBox),
                       if (!nativeMode) ...[
                         const SizedBox(height: AppSpacing.sm),
-                        UsernameDropdown(
-                          settingsBox: settingsBox,
-                        ),
+                        UsernameDropdown(settingsBox: settingsBox),
                       ] else
                         /// Native-mode channel dropdown slot — per
                         /// platform. Twitch gates on login; YouTube reads
@@ -112,13 +108,11 @@ class ChatUsernameBar extends StatelessWidget {
                             }
 
                             final showDropdown = switch (chatType) {
-                              ChatType.Twitch => GetIt
-                                  .instance<TwitchChatStore>()
-                                  .isLoggedIn,
-                              ChatType.YouTube => GetIt
-                                      .instance<YouTubeChatStore>()
-                                      .authState !=
-                                  YouTubeAuthState.unconfigured,
+                              ChatType.Twitch =>
+                                GetIt.instance<TwitchChatStore>().isLoggedIn,
+                              ChatType.YouTube =>
+                                GetIt.instance<YouTubeChatStore>().authState !=
+                                    YouTubeAuthState.unconfigured,
                               _ => false,
                             };
 
@@ -168,9 +162,7 @@ class ChatUsernameBar extends StatelessWidget {
                             : const SizedBox.shrink(),
                       )
                     else
-                      UsernameActionRow(
-                        settingsBox: settingsBox,
-                      ),
+                      UsernameActionRow(settingsBox: settingsBox),
                   ],
                 ),
               ),
@@ -218,9 +210,12 @@ class _NativeRightCluster extends StatelessWidget {
             store.moderatedChannelIds.length;
             final canMod = store.canModerateSelectedChannel;
             final displayName = store.user?.displayName ?? store.user?.login;
-            final accountWidth =
-                accountChipPreferredWidth(context, displayName);
-            final showShield = canMod &&
+            final accountWidth = accountChipPreferredWidth(
+              context,
+              displayName,
+            );
+            final showShield =
+                canMod &&
                 nativeModClusterFitsWithShield(
                   maxWidth: constraints.maxWidth,
                   accountWidth: accountWidth,

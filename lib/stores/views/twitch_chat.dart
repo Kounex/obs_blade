@@ -80,14 +80,14 @@ class _ChannelBuffer {
   });
 
   factory _ChannelBuffer.empty() => _ChannelBuffer(
-        messages: <ChatMessageEvent>[],
-        deletedMessageIds: <String>{},
-        deletedMessageActors: <String, String>{},
-        tombstoneInfos: <String, ChatTombstoneInfo>{},
-        systemNotices: <ChatSystemNotice>[],
-        chatNotifications: <ChatNotificationNotice>[],
-        arrivalSeq: 0,
-      );
+    messages: <ChatMessageEvent>[],
+    deletedMessageIds: <String>{},
+    deletedMessageActors: <String, String>{},
+    tombstoneInfos: <String, ChatTombstoneInfo>{},
+    systemNotices: <ChatSystemNotice>[],
+    chatNotifications: <ChatNotificationNotice>[],
+    arrivalSeq: 0,
+  );
 }
 
 /// Owns the native Twitch chat: device-flow login state, the persisted
@@ -108,9 +108,12 @@ abstract class _TwitchChatStore with Store {
     void Function(AutoModMessageUpdateEvent) onAutoModMessageUpdate,
     void Function(TwitchEventSubState) onStateChanged,
     void Function(String) onRevoked,
-  ) _eventSubFactory;
-  final TwitchIrcSidecar Function(void Function(String messageId) onFirstMessage)
-      _ircSidecarFactory;
+  )
+  _eventSubFactory;
+  final TwitchIrcSidecar Function(
+    void Function(String messageId) onFirstMessage,
+  )
+  _ircSidecarFactory;
   final TwitchBadgeStore Function() _badgeStoreResolver;
   final ThirdPartyEmoteStore Function() _emoteStoreResolver;
   final TwitchEmoteStore Function() _userEmoteStoreResolver;
@@ -156,9 +159,10 @@ abstract class _TwitchChatStore with Store {
       void Function(AutoModMessageUpdateEvent),
       void Function(TwitchEventSubState),
       void Function(String),
-    )? eventSubFactory,
+    )?
+    eventSubFactory,
     TwitchIrcSidecar Function(void Function(String messageId))?
-        ircSidecarFactory,
+    ircSidecarFactory,
     TwitchBadgeStore Function()? badgeStoreResolver,
     ThirdPartyEmoteStore Function()? emoteStoreResolver,
     TwitchEmoteStore Function()? userEmoteStoreResolver,
@@ -166,38 +170,47 @@ abstract class _TwitchChatStore with Store {
     TwitchChannelService? channelService,
     TwitchModerationService? moderationService,
     bool Function()? isProResolver,
-  })  : _authService = authService ?? TwitchAuthService(),
-        _eventSubFactory = eventSubFactory ??
-            ((onChatMessage, onChatNotification, onMessageDelete,
-                    onClearUserMessages, onChatClear, onChannelModerate,
-                    onAutoModMessageHold, onAutoModMessageUpdate,
-                    onStateChanged, onRevoked) =>
-                TwitchEventSubService(
-                  onChatMessage: onChatMessage,
-                  onChatNotification: onChatNotification,
-                  onMessageDelete: onMessageDelete,
-                  onClearUserMessages: onClearUserMessages,
-                  onChatClear: onChatClear,
-                  onChannelModerate: onChannelModerate,
-                  onAutoModMessageHold: onAutoModMessageHold,
-                  onAutoModMessageUpdate: onAutoModMessageUpdate,
-                  onStateChanged: onStateChanged,
-                  onRevoked: onRevoked,
-                )),
-        _ircSidecarFactory = ircSidecarFactory ??
-            ((onFirstMessage) =>
-                TwitchIrcSidecar(onFirstMessage: onFirstMessage)),
-        _badgeStoreResolver = badgeStoreResolver ??
-            (() => GetIt.instance<TwitchBadgeStore>()),
-        _emoteStoreResolver = emoteStoreResolver ??
-            (() => GetIt.instance<ThirdPartyEmoteStore>()),
-        _userEmoteStoreResolver = userEmoteStoreResolver ??
-            (() => GetIt.instance<TwitchEmoteStore>()),
-        _messageService = messageService ?? TwitchMessageService(),
-        _channelService = channelService ?? TwitchChannelService(),
-        _moderationService = moderationService ?? TwitchModerationService(),
-        _isProResolver = isProResolver ??
-            (() => GetIt.instance<ProStore>().isPro);
+  }) : _authService = authService ?? TwitchAuthService(),
+       _eventSubFactory =
+           eventSubFactory ??
+           ((
+             onChatMessage,
+             onChatNotification,
+             onMessageDelete,
+             onClearUserMessages,
+             onChatClear,
+             onChannelModerate,
+             onAutoModMessageHold,
+             onAutoModMessageUpdate,
+             onStateChanged,
+             onRevoked,
+           ) => TwitchEventSubService(
+             onChatMessage: onChatMessage,
+             onChatNotification: onChatNotification,
+             onMessageDelete: onMessageDelete,
+             onClearUserMessages: onClearUserMessages,
+             onChatClear: onChatClear,
+             onChannelModerate: onChannelModerate,
+             onAutoModMessageHold: onAutoModMessageHold,
+             onAutoModMessageUpdate: onAutoModMessageUpdate,
+             onStateChanged: onStateChanged,
+             onRevoked: onRevoked,
+           )),
+       _ircSidecarFactory =
+           ircSidecarFactory ??
+           ((onFirstMessage) =>
+               TwitchIrcSidecar(onFirstMessage: onFirstMessage)),
+       _badgeStoreResolver =
+           badgeStoreResolver ?? (() => GetIt.instance<TwitchBadgeStore>()),
+       _emoteStoreResolver =
+           emoteStoreResolver ?? (() => GetIt.instance<ThirdPartyEmoteStore>()),
+       _userEmoteStoreResolver =
+           userEmoteStoreResolver ?? (() => GetIt.instance<TwitchEmoteStore>()),
+       _messageService = messageService ?? TwitchMessageService(),
+       _channelService = channelService ?? TwitchChannelService(),
+       _moderationService = moderationService ?? TwitchModerationService(),
+       _isProResolver =
+           isProResolver ?? (() => GetIt.instance<ProStore>().isPro);
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -393,18 +406,20 @@ abstract class _TwitchChatStore with Store {
   /// plain getter (not reactive): scopes change only at login/logout, and
   /// those transitions flip [user]/[authState], which rebuild observers.
   bool get canWriteChat =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'user:write:chat',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('user:write:chat') ??
       false;
 
   /// Whether the persisted token carries the read-emotes scope (emote
   /// picker). Same deliberately plain (non-reactive) pattern as
   /// [canWriteChat].
   bool get canReadEmotes =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'user:read:emotes',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('user:read:emotes') ??
       false;
 
   /// Whether the persisted token carries the full moderation read bundle
@@ -419,17 +434,19 @@ abstract class _TwitchChatStore with Store {
   /// (multi-chat: moderated picker section + mod gating). Same
   /// deliberately plain (non-reactive) pattern as [canReadEmotes].
   bool get canReadModeratedChannels =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'user:read:moderated_channels',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('user:read:moderated_channels') ??
       false;
 
   /// Whether the persisted token can list followed channels (multi-chat:
   /// followed picker section). Same deliberately plain pattern.
   bool get canReadFollows =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'user:read:follows',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('user:read:follows') ??
       false;
 
   /// Whether the persisted token carries the mod-action manage scopes
@@ -445,57 +462,62 @@ abstract class _TwitchChatStore with Store {
   /// Whether the persisted token can get/update chat mode settings.
   /// Same deliberately plain (non-reactive) pattern as [canWriteChat].
   bool get canManageChatSettings =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:manage:chat_settings',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('moderator:manage:chat_settings') ??
       false;
 
   /// Whether the persisted token can get/update Shield Mode.
   /// Same deliberately plain (non-reactive) pattern as [canWriteChat].
   bool get canManageShieldMode =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:manage:shield_mode',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('moderator:manage:shield_mode') ??
       false;
 
   /// Whether the persisted token can send chat announcements.
   /// Same deliberately plain (non-reactive) pattern as [canWriteChat].
   bool get canSendAnnouncements =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:manage:announcements',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('moderator:manage:announcements') ??
       false;
 
   /// Whether the persisted token can warn users (Wave 3). Same
   /// deliberately plain (non-reactive) pattern as [canWriteChat] —
   /// pre-upgrade tokens get the re-login CTA on the gated row.
   bool get canWarnUsers =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:manage:warnings',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('moderator:manage:warnings') ??
       false;
 
   /// Whether the persisted token can approve/deny unban requests
   /// (Wave 3). Same deliberately plain pattern as [canWarnUsers].
   bool get canManageUnbanRequests =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:manage:unban_requests',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('moderator:manage:unban_requests') ??
       false;
 
   /// Whether the persisted token can work the AutoMod queue — both the
   /// allow/deny Helix call and the `automod.message.*` v2 subscriptions
   /// need `moderator:manage:automod`. Same deliberately plain pattern.
   bool get canManageAutoMod =>
-      this._authBox.get(TwitchAuth.kBoxKey)?.scopes.contains(
-            'moderator:manage:automod',
-          ) ??
+      this._authBox
+          .get(TwitchAuth.kBoxKey)
+          ?.scopes
+          .contains('moderator:manage:automod') ??
       false;
 
   /// The channel chat is read from / sent to — the selected multi-chat
   /// channel or the user's own. Only valid while logged in ([user] set).
-  String get effectiveBroadcasterId =>
-      this.selectedChannelId ?? this.user!.id;
+  String get effectiveBroadcasterId => this.selectedChannelId ?? this.user!.id;
 
   /// Login used for IRC `JOIN #…` — own login or the selected channel ref.
   String get effectiveBroadcasterLogin {
@@ -526,10 +548,9 @@ abstract class _TwitchChatStore with Store {
   /// data management clearing the Twitch box — reset the feature even
   /// when [init] never ran for this instance (fresh login path).
   void _ensureAuthBoxWatcher() {
-    this._authBoxSub ??= this
-        ._authBox
-        .watch(key: TwitchAuth.kBoxKey)
-        .listen((event) {
+    this._authBoxSub ??= this._authBox.watch(key: TwitchAuth.kBoxKey).listen((
+      event,
+    ) {
       if (event.deleted && this.authState != TwitchAuthState.loggedOut) {
         this._resetToLoggedOut();
       }
@@ -554,7 +575,9 @@ abstract class _TwitchChatStore with Store {
       return;
     }
     if (!valid) {
-      await this._handleInvalidAuth('Twitch session expired — please log in again');
+      await this._handleInvalidAuth(
+        'Twitch session expired — please log in again',
+      );
       return;
     }
     this.user = TwitchUser(
@@ -611,8 +634,8 @@ abstract class _TwitchChatStore with Store {
         // Cancelling an upgrade re-login while a session is live must not
         // misreport it: the persisted auth and the EventSub connection
         // were never torn down, so the store is still logged in.
-        this.authState = this.user != null &&
-                this._authBox.get(TwitchAuth.kBoxKey) != null
+        this.authState =
+            this.user != null && this._authBox.get(TwitchAuth.kBoxKey) != null
             ? TwitchAuthState.loggedIn
             : TwitchAuthState.loggedOut;
       } else {
@@ -708,6 +731,7 @@ abstract class _TwitchChatStore with Store {
 
       this._refetchCatalogs(token, this.effectiveBroadcasterId);
       unawaited(this.refreshPinnedMessage());
+
       /// Live poll starts when EventSub reports connected (see
       /// [_onEventSubState]) — not here, so a failed handshake never
       /// leaves a dangling Timer in tests.
@@ -735,8 +759,7 @@ abstract class _TwitchChatStore with Store {
 
   void _startLivePoll() {
     this._livePollTimer?.cancel();
-    this._livePollTimer =
-        Timer.periodic(const Duration(minutes: 1), (_) {
+    this._livePollTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       unawaited(this.refreshSelectedChannelLive());
     });
     unawaited(this.refreshSelectedChannelLive());
@@ -818,8 +841,8 @@ abstract class _TwitchChatStore with Store {
             ._badgeStoreResolver()
             .fetch(accessToken: token, broadcasterId: broadcasterId)
             .catchError((Object e) {
-          GeneralHelper.advLog('Twitch badge fetch failed — $e');
-        }),
+              GeneralHelper.advLog('Twitch badge fetch failed — $e');
+            }),
       );
     } catch (e) {
       GeneralHelper.advLog('Twitch badge fetch could not start — $e');
@@ -830,17 +853,16 @@ abstract class _TwitchChatStore with Store {
     /// is guarded: a missing Settings box or store lookup must never break
     /// the chat connect.
     try {
-      if (Hive.box(HiveKeys.Settings.name).get(
-        SettingsKeys.TwitchChatThirdPartyEmotes.name,
-        defaultValue: true,
-      )) {
+      if (Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.TwitchChatThirdPartyEmotes.name, defaultValue: true)) {
         unawaited(
           this
               ._emoteStoreResolver()
               .fetch(broadcasterId: broadcasterId)
               .catchError((Object e) {
-            GeneralHelper.advLog('Third-party emote fetch failed — $e');
-          }),
+                GeneralHelper.advLog('Third-party emote fetch failed — $e');
+              }),
         );
       }
     } catch (e) {
@@ -861,8 +883,8 @@ abstract class _TwitchChatStore with Store {
                 broadcasterId: broadcasterId,
               )
               .catchError((Object e) {
-            GeneralHelper.advLog('Twitch user emote fetch failed — $e');
-          }),
+                GeneralHelper.advLog('Twitch user emote fetch failed — $e');
+              }),
         );
       }
     } catch (e) {
@@ -912,10 +934,8 @@ abstract class _TwitchChatStore with Store {
           try {
             if (entry is Map) {
               this.channels.add(
-                    TwitchChannelRef.fromJson(
-                      Map<String, Object?>.from(entry),
-                    ),
-                  );
+                TwitchChannelRef.fromJson(Map<String, Object?>.from(entry)),
+              );
             }
           } catch (_) {
             // garbage entry — skipped, the rest still load
@@ -1012,12 +1032,10 @@ abstract class _TwitchChatStore with Store {
       chatNotifications: List.of(this.chatNotifications),
       arrivalSeq: this._arrivalSeq,
     );
+
     /// Ensure the destination has a buffer so mid-switch EventSub rows
     /// for the new channel aren't wiped by the post-switch clear.
-    this._channelBuffers.putIfAbsent(
-      newBroadcasterId,
-      _ChannelBuffer.empty,
-    );
+    this._channelBuffers.putIfAbsent(newBroadcasterId, _ChannelBuffer.empty);
 
     this.selectedChannelId = id;
     this._persistSelectedChannel();
@@ -1087,9 +1105,7 @@ abstract class _TwitchChatStore with Store {
     } on TwitchAuthException catch (e) {
       /// Same policy as [connectChat]: a definitively dead token wipes
       /// the session, a transient one is only logged.
-      if (e.statusCode == null ||
-          e.statusCode == 401 ||
-          e.statusCode == 403) {
+      if (e.statusCode == null || e.statusCode == 401 || e.statusCode == 403) {
         await this._handleInvalidAuth(e.message);
       } else {
         GeneralHelper.advLog('Twitch token refresh on switch failed — $e');
@@ -1108,8 +1124,8 @@ abstract class _TwitchChatStore with Store {
     this._appliedModerationOrder.addLast(key);
     while (this._appliedModerationOrder.length > _kMaxAppliedModerationKeys) {
       this._appliedModerationKeys.remove(
-            this._appliedModerationOrder.removeFirst(),
-          );
+        this._appliedModerationOrder.removeFirst(),
+      );
     }
     return true;
   }
@@ -1173,9 +1189,10 @@ abstract class _TwitchChatStore with Store {
       'automod_blocked' || 'automod_held' => 'Message held by AutoMod',
       'duplicate' => 'Duplicate message',
       'rate_limited' => 'Sending too fast — slow down',
-      _ => (dropReason.message?.isNotEmpty ?? false)
-          ? dropReason.message!
-          : 'Message not delivered (${dropReason.code})',
+      _ =>
+        (dropReason.message?.isNotEmpty ?? false)
+            ? dropReason.message!
+            : 'Message not delivered (${dropReason.code})',
     };
   }
 
@@ -1201,9 +1218,12 @@ abstract class _TwitchChatStore with Store {
       return false;
     }
     this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:delete:${event.messageId}');
+      '${this.effectiveBroadcasterIdSafe}:delete:${event.messageId}',
+    );
     this.applyModerationDelete(
-        event.messageId, this.user!.displayName ?? this.user!.login);
+      event.messageId,
+      this.user!.displayName ?? this.user!.login,
+    );
     return true;
   }
 
@@ -1216,14 +1236,15 @@ abstract class _TwitchChatStore with Store {
   /// Mod action sheet: ban [targetUserId] permanently in the effective
   /// channel. Same return/echo contract as [deleteMessage].
   @action
-  Future<bool> banUser(String targetUserId) =>
-      this._banOrTimeout(targetUserId);
+  Future<bool> banUser(String targetUserId) => this._banOrTimeout(targetUserId);
 
   /// Shared timeout/ban body — the local purge marks the
   /// `clear_user_messages` echo key first, so the EventSub echo of the
   /// timeout/ban lands as a no-op.
-  Future<bool> _banOrTimeout(String targetUserId,
-      {int? durationSeconds}) async {
+  Future<bool> _banOrTimeout(
+    String targetUserId, {
+    int? durationSeconds,
+  }) async {
     if (!this.canModerateSelectedChannel || this.user == null) return false;
     try {
       final token = await this._validAccessToken();
@@ -1239,7 +1260,8 @@ abstract class _TwitchChatStore with Store {
       return false;
     }
     this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId');
+      '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId',
+    );
     final info = durationSeconds != null
         ? ChatTombstoneInfo.timedOut(Duration(seconds: durationSeconds))
         : const ChatTombstoneInfo.banned();
@@ -1305,7 +1327,9 @@ abstract class _TwitchChatStore with Store {
       GeneralHelper.advLog('Twitch chat settings update failed — $e');
       return false;
     }
-    final base = this.roomChatSettings ?? const TwitchChatSettings(
+    final base =
+        this.roomChatSettings ??
+        const TwitchChatSettings(
           emoteMode: false,
           followerMode: false,
           followerModeDurationMinutes: null,
@@ -1396,12 +1420,12 @@ abstract class _TwitchChatStore with Store {
         );
       }
       if (this.canManageShieldMode) {
-        this.roomShieldModeActive =
-            await this._moderationService.getShieldModeStatus(
-          accessToken: token,
-          broadcasterId: broadcasterId,
-          moderatorId: moderatorId,
-        );
+        this.roomShieldModeActive = await this._moderationService
+            .getShieldModeStatus(
+              accessToken: token,
+              broadcasterId: broadcasterId,
+              moderatorId: moderatorId,
+            );
       }
     } catch (e) {
       GeneralHelper.advLog('Twitch room mod state refresh failed — $e');
@@ -1514,8 +1538,7 @@ abstract class _TwitchChatStore with Store {
         !this._canUseBanInbox) {
       return;
     }
-    final fetchBans =
-        this.selectedChannelId == null && this.canModerateChats;
+    final fetchBans = this.selectedChannelId == null && this.canModerateChats;
     this.banInboxLoading = true;
     this.banInboxError = null;
     try {
@@ -1577,8 +1600,10 @@ abstract class _TwitchChatStore with Store {
   /// applied — never throws; the request leaves the inbox optimistically
   /// on success, and an approval also drops the user from the ban list.
   @action
-  Future<bool> resolveUnbanRequest(String requestId,
-      {required bool approved}) async {
+  Future<bool> resolveUnbanRequest(
+    String requestId, {
+    required bool approved,
+  }) async {
     if (!this.canManageUnbanRequests ||
         !this.canModerateSelectedChannel ||
         this.user == null) {
@@ -1665,8 +1690,10 @@ abstract class _TwitchChatStore with Store {
   /// row leaves [autoModQueue] optimistically on success (the
   /// `automod.message.update` echo then lands as a no-op).
   @action
-  Future<bool> resolveAutoModMessage(String messageId,
-      {required bool allow}) async {
+  Future<bool> resolveAutoModMessage(
+    String messageId, {
+    required bool allow,
+  }) async {
     if (!this.canManageAutoMod ||
         !this.canModerateSelectedChannel ||
         this.user == null) {
@@ -1693,7 +1720,8 @@ abstract class _TwitchChatStore with Store {
   @action
   void applyAutoModMessageHold(AutoModMessageHoldEvent event) {
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:automod-hold:${event.messageId}')) {
+      '${this.effectiveBroadcasterIdSafe}:automod-hold:${event.messageId}',
+    )) {
       return;
     }
     this.autoModQueue.add(event);
@@ -1715,8 +1743,8 @@ abstract class _TwitchChatStore with Store {
       auth
         ..accessToken = token.accessToken
         ..refreshToken = token.refreshToken ?? auth.refreshToken
-        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch +
-            token.expiresIn * 1000;
+        ..expiresAtMs =
+            DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000;
       await auth.save();
     }
     return auth.accessToken;
@@ -1748,9 +1776,9 @@ abstract class _TwitchChatStore with Store {
     if (color != null && color.isNotEmpty) {
       this._chatterColors[event.chatterUserId] = color;
     }
-    final fromPending =
-        this._pendingFirstMessageIds.remove(event.messageId);
-    final isFirst = event.isFirstMessage ||
+    final fromPending = this._pendingFirstMessageIds.remove(event.messageId);
+    final isFirst =
+        event.isFirstMessage ||
         fromPending ||
         event.messageType == 'user_intro';
     this.messages.add(
@@ -1775,9 +1803,9 @@ abstract class _TwitchChatStore with Store {
       event.broadcasterUserId,
       _ChannelBuffer.empty,
     );
-    final fromPending =
-        this._pendingFirstMessageIds.remove(event.messageId);
-    final isFirst = event.isFirstMessage ||
+    final fromPending = this._pendingFirstMessageIds.remove(event.messageId);
+    final isFirst =
+        event.isFirstMessage ||
         fromPending ||
         event.messageType == 'user_intro';
     buffer.messages.add(
@@ -1798,8 +1826,9 @@ abstract class _TwitchChatStore with Store {
   /// IRC sidecar reported `first-msg=1` for [messageId].
   @action
   void applyIrcFirstMessage(String messageId) {
-    final index =
-        this.messages.indexWhere((message) => message.messageId == messageId);
+    final index = this.messages.indexWhere(
+      (message) => message.messageId == messageId,
+    );
     if (index >= 0) {
       final current = this.messages[index];
       if (!current.isFirstMessage) {
@@ -1872,6 +1901,7 @@ abstract class _TwitchChatStore with Store {
     if (color != null && color.isNotEmpty) {
       this._chatterColors[event.chatterUserId] = color;
     }
+
     /// Replace a prior notice with the same message id (shared-chat
     /// promote / reconnect) so announcement color updates land.
     final existing = this.chatNotifications.indexWhere(
@@ -1988,13 +2018,15 @@ abstract class _TwitchChatStore with Store {
   @action
   void applyMessageDelete(ChatMessageDeleteEvent event) {
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:delete:${event.messageId}')) {
+      '${this.effectiveBroadcasterIdSafe}:delete:${event.messageId}',
+    )) {
       return;
     }
-    final visible = this
-        .messages
-        .any((message) => message.messageId == event.messageId);
-    if (visible && this._stampTombstone(
+    final visible = this.messages.any(
+      (message) => message.messageId == event.messageId,
+    );
+    if (visible &&
+        this._stampTombstone(
           event.messageId,
           const ChatTombstoneInfo.deleted(),
         )) {
@@ -2014,10 +2046,7 @@ abstract class _TwitchChatStore with Store {
       case 'shared_chat_delete':
         final delete = event.delete ?? event.sharedChatDelete;
         if (delete != null) {
-          this.applyModerationDelete(
-            delete.messageId,
-            event.moderatorUserName,
-          );
+          this.applyModerationDelete(delete.messageId, event.moderatorUserName);
         }
       case 'timeout':
       case 'shared_chat_timeout':
@@ -2046,14 +2075,18 @@ abstract class _TwitchChatStore with Store {
   @action
   void applyModerationDelete(String messageId, String actorName) {
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:mod-delete:$messageId:$actorName')) {
+      '${this.effectiveBroadcasterIdSafe}:mod-delete:$messageId:$actorName',
+    )) {
       return;
     }
-    final visible =
-        this.messages.any((message) => message.messageId == messageId);
+    final visible = this.messages.any(
+      (message) => message.messageId == messageId,
+    );
     if (!visible) return;
-    final tombstoned =
-        this._stampTombstone(messageId, const ChatTombstoneInfo.deleted());
+    final tombstoned = this._stampTombstone(
+      messageId,
+      const ChatTombstoneInfo.deleted(),
+    );
     final actorNew = this._deletedMessageActors[messageId] != actorName;
     if (actorNew) this._deletedMessageActors[messageId] = actorName;
     if (tombstoned || actorNew) this.lifecycleVersion++;
@@ -2065,7 +2098,8 @@ abstract class _TwitchChatStore with Store {
   @action
   void applyModerationTimeout(String targetUserId, Duration duration) {
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:mod-timeout:$targetUserId')) {
+      '${this.effectiveBroadcasterIdSafe}:mod-timeout:$targetUserId',
+    )) {
       return;
     }
     final info = ChatTombstoneInfo.timedOut(duration);
@@ -2077,7 +2111,8 @@ abstract class _TwitchChatStore with Store {
   @action
   void applyModerationBan(String targetUserId) {
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:mod-ban:$targetUserId')) {
+      '${this.effectiveBroadcasterIdSafe}:mod-ban:$targetUserId',
+    )) {
       return;
     }
     const info = ChatTombstoneInfo.banned();
@@ -2088,10 +2123,12 @@ abstract class _TwitchChatStore with Store {
   @action
   void applyClearUserMessages(String targetUserId) {
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId')) {
+      '${this.effectiveBroadcasterIdSafe}:purge:$targetUserId',
+    )) {
       return;
     }
-    final info = this._pendingUserPurgeReasons.remove(targetUserId) ??
+    final info =
+        this._pendingUserPurgeReasons.remove(targetUserId) ??
         const ChatTombstoneInfo.deleted();
     this._purgeUserMessages(targetUserId, info);
   }
@@ -2116,7 +2153,8 @@ abstract class _TwitchChatStore with Store {
   bool _stampTombstone(String messageId, ChatTombstoneInfo info) {
     final added = this._deletedMessageIds.add(messageId);
     final previous = this._tombstoneInfos[messageId];
-    final infoChanged = previous?.kind != info.kind ||
+    final infoChanged =
+        previous?.kind != info.kind ||
         previous?.timeoutDuration != info.timeoutDuration;
     this._tombstoneInfos[messageId] = info;
     return added || infoChanged;
@@ -2130,11 +2168,15 @@ abstract class _TwitchChatStore with Store {
   void applyChatClear() {
     if (this.messages.isEmpty) return;
     if (!this._moderationKeyIsNew(
-        '${this.effectiveBroadcasterIdSafe}:clear:${this._arrivalSeq}')) {
+      '${this.effectiveBroadcasterIdSafe}:clear:${this._arrivalSeq}',
+    )) {
       return;
     }
     for (final message in this.messages) {
-      this._stampTombstone(message.messageId, const ChatTombstoneInfo.deleted());
+      this._stampTombstone(
+        message.messageId,
+        const ChatTombstoneInfo.deleted(),
+      );
     }
     this.systemNotices.add(
       ChatSystemNotice(
@@ -2210,7 +2252,8 @@ abstract class _TwitchChatStore with Store {
         reason.contains('user_removed') ||
         reason.startsWith('subscription_failed:401')) {
       this._handleInvalidAuth(
-          'Twitch access was revoked — please log in again');
+        'Twitch access was revoked — please log in again',
+      );
     } else {
       runInAction(() {
         this.chatConnection = TwitchChatConnectionState.failed;

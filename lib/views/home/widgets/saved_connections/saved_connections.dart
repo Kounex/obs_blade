@@ -13,9 +13,7 @@ class SavedConnections extends StatelessWidget {
   static const double _cardHeight = 172.0;
   static const double _cardWidth = 268.0;
 
-  const SavedConnections({
-    super.key,
-  });
+  const SavedConnections({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,21 +36,17 @@ class SavedConnections extends StatelessWidget {
           child: Text(
             'Saved Connections'.toUpperCase(),
             style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                  color: Theme.of(context)
-                      .extension<AppTextColors>()!
-                      .textTertiary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
-                ),
+              color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.6,
+            ),
           ),
         ),
 
         Flexible(
           fit: FlexFit.loose,
           child: Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.lg,
-            ),
+            padding: const EdgeInsets.only(top: AppSpacing.lg),
             child: HiveBuilder<Connection>(
               hiveKey: HiveKeys.SavedConnections,
               builder: (context, savedConnectionsBox, child) {
@@ -154,7 +148,8 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
                 builder: (context, child) {
                   double scale = 1.0;
                   if (this._controller.position.haveDimensions) {
-                    final page = this._controller.page ??
+                    final page =
+                        this._controller.page ??
                         this._controller.initialPage.toDouble();
                     final distance = (page - index).abs();
                     scale = (1.0 - (distance * 0.06)).clamp(0.94, 1.0);
@@ -196,8 +191,9 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
 
                 /// Active page dot = selection -> accent (grammar rule 2;
                 /// the accent group lives on the buttonTheme colorScheme)
-                activeDotColor:
-                    Theme.of(context).buttonTheme.colorScheme!.secondary,
+                activeDotColor: Theme.of(
+                  context,
+                ).buttonTheme.colorScheme!.secondary,
                 dotColor: (muted ?? Colors.grey).withValues(alpha: 0.35),
               ),
             ),
@@ -216,17 +212,16 @@ Widget _animatedConnectionBox(
   int index, {
   required double width,
   required double height,
-}) =>
-    StaggeredEntrance(
-      index: index,
-      scaleFrom: 0.985,
-      child: AnimatedSwitcher(
-        duration: AppMotion.medium,
-        child: ConnectionBox(
-          key: ValueKey<dynamic>(connection.key),
-          connection: connection,
-          width: width,
-          height: height,
-        ),
-      ),
-    );
+}) => StaggeredEntrance(
+  index: index,
+  scaleFrom: 0.985,
+  child: AnimatedSwitcher(
+    duration: AppMotion.medium,
+    child: ConnectionBox(
+      key: ValueKey<dynamic>(connection.key),
+      connection: connection,
+      width: width,
+      height: height,
+    ),
+  ),
+);

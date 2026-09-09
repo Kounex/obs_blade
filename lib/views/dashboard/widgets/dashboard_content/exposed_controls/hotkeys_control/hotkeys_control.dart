@@ -17,9 +17,7 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 
 class HotkeysControl extends StatelessWidget {
-  const HotkeysControl({
-    super.key,
-  });
+  const HotkeysControl({super.key});
 
   void _onHotkeys(BuildContext context) {
     GetIt.instance<DashboardStore>().hotkeys = null;
@@ -29,9 +27,8 @@ class HotkeysControl extends StatelessWidget {
     );
     ModalHandler.showBaseCupertinoBottomSheet(
       context: context,
-      modalWidgetBuilder: (context, controller) => HotkeyList(
-        controller: controller,
-      ),
+      modalWidgetBuilder: (context, controller) =>
+          HotkeyList(controller: controller),
     );
   }
 
@@ -47,9 +44,11 @@ class HotkeysControl extends StatelessWidget {
               child: BaseButton(
                 onPressed: () {
                   !Hive.box<dynamic>(HiveKeys.Settings.name).get(
-                          SettingsKeys
-                              .DontShowHotkeysTechnicalPreviewWarning.name,
-                          defaultValue: false)
+                        SettingsKeys
+                            .DontShowHotkeysTechnicalPreviewWarning
+                            .name,
+                        defaultValue: false,
+                      )
                       ? ModalHandler.showBaseDialog(
                           context: context,
                           dialogWidget: ConfirmationDialog(
@@ -61,19 +60,18 @@ class HotkeysControl extends StatelessWidget {
                             okText: 'Ok',
                             onOk: (checked) {
                               Hive.box<dynamic>(HiveKeys.Settings.name).put(
-                                  SettingsKeys
-                                      .DontShowHotkeysTechnicalPreviewWarning
-                                      .name,
-                                  checked);
+                                SettingsKeys
+                                    .DontShowHotkeysTechnicalPreviewWarning
+                                    .name,
+                                checked,
+                              );
                               _onHotkeys(context);
                             },
                           ),
                         )
                       : _onHotkeys(context);
                 },
-                icon: const Icon(
-                  CupertinoIcons.rectangle_grid_3x2_fill,
-                ),
+                icon: const Icon(CupertinoIcons.rectangle_grid_3x2_fill),
                 text: 'All',
               ),
             ),
@@ -94,7 +92,7 @@ class HotkeysControl extends StatelessWidget {
                       ),
                     )
                     .toList(),
-              )
+              ),
             ],
           ],
         );

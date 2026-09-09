@@ -15,8 +15,10 @@ import 'pagination_control.dart';
 class PaginatedStatistics extends StatefulWidget {
   final List<PastStatsData> sortedFilteredPastStatsData;
 
-  const PaginatedStatistics(
-      {super.key, required this.sortedFilteredPastStatsData});
+  const PaginatedStatistics({
+    super.key,
+    required this.sortedFilteredPastStatsData,
+  });
 
   @override
   _PaginatedStatisticsState createState() => _PaginatedStatisticsState();
@@ -35,30 +37,35 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
 
     return Observer(
       builder: (context) {
-        int amountPages =
-            _getMaxPages(statisticsStore.amountStatisticEntries.number);
+        int amountPages = _getMaxPages(
+          statisticsStore.amountStatisticEntries.number,
+        );
         if (_page > amountPages) {
           _page = amountPages;
         }
 
         final int pageStart =
             (_page - 1) * statisticsStore.amountStatisticEntries.number;
-        final List<PastStatsData> visibleEntries =
-            this.widget.sortedFilteredPastStatsData.sublist(
-                  pageStart,
-                  pageStart +
-                      min(
-                          this.widget.sortedFilteredPastStatsData.length -
-                              pageStart,
-                          statisticsStore.amountStatisticEntries.number),
-                );
+        final List<PastStatsData> visibleEntries = this
+            .widget
+            .sortedFilteredPastStatsData
+            .sublist(
+              pageStart,
+              pageStart +
+                  min(
+                    this.widget.sortedFilteredPastStatsData.length - pageStart,
+                    statisticsStore.amountStatisticEntries.number,
+                  ),
+            );
 
         /// Identity signature of what is currently shown - changes whenever
         /// the page, the sorting or the filtering changes (the entries are
         /// the same object instances across rebuilds), so unrelated Observer
         /// rebuilds don't retrigger the crossfade
-        final int pageSignature =
-            Object.hash(_page, Object.hashAll(visibleEntries));
+        final int pageSignature = Object.hash(
+          _page,
+          Object.hashAll(visibleEntries),
+        );
 
         return Column(
           children: [
@@ -74,9 +81,7 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
                 itemBuilder: (context, index) => StaggeredEntrance(
                   scaleFrom: 0.985,
                   index: index,
-                  child: StatsEntry(
-                    pastStatsData: visibleEntries[index],
-                  ),
+                  child: StatsEntry(pastStatsData: visibleEntries[index]),
                 ),
                 separatorBuilder: (context, index) => const BaseDivider(),
                 itemCount: visibleEntries.length,
@@ -88,8 +93,9 @@ class _PaginatedStatisticsState extends State<PaginatedStatistics> {
               amountPages: amountPages,
               onBackMax: _page > 1 ? () => setState(() => _page = 1) : null,
               onBack: _page > 1 ? () => setState(() => _page--) : null,
-              onForward:
-                  _page < amountPages ? () => setState(() => _page++) : null,
+              onForward: _page < amountPages
+                  ? () => setState(() => _page++)
+                  : null,
               onForwardMax: _page < amountPages
                   ? () => setState(() => _page = amountPages)
                   : null,

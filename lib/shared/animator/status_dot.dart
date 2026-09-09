@@ -35,15 +35,23 @@ class _StatusDotState extends State<StatusDot>
   @override
   void initState() {
     _controller = AnimationController(
-        duration: const Duration(milliseconds: 4000), vsync: this);
+      duration: const Duration(milliseconds: 4000),
+      vsync: this,
+    );
 
-    _opacity = Tween<double>(begin: 0.5, end: 0.0).animate(CurvedAnimation(
+    _opacity = Tween<double>(begin: 0.5, end: 0.0).animate(
+      CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.2, 0.5, curve: Curves.easeOut)));
+        curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
+      ),
+    );
 
-    _scale = Tween<double>(begin: 1.0, end: 2.0).animate(CurvedAnimation(
+    _scale = Tween<double>(begin: 1.0, end: 2.0).animate(
+      CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.2, 0.5, curve: Curves.easeOut)));
+        curve: const Interval(0.2, 0.5, curve: Curves.easeOut),
+      ),
+    );
 
     _controller.repeat();
 
@@ -74,10 +82,7 @@ class _StatusDotState extends State<StatusDot>
             animation: _controller,
             builder: (context, child) => ScaleTransition(
               scale: _scale,
-              child: FadeTransition(
-                opacity: _opacity,
-                child: dot,
-              ),
+              child: FadeTransition(opacity: _opacity, child: dot),
             ),
           ),
           dot,
@@ -100,13 +105,7 @@ class _StatusDotState extends State<StatusDot>
         ),
     ];
     return widget.direction == Axis.horizontal
-        ? Row(
-            mainAxisSize: MainAxisSize.min,
-            children: children,
-          )
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: children,
-          );
+        ? Row(mainAxisSize: MainAxisSize.min, children: children)
+        : Column(mainAxisSize: MainAxisSize.min, children: children);
   }
 }

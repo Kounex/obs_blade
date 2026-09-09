@@ -36,16 +36,17 @@ class BaseButton extends StatelessWidget {
     this.onPressed,
     this.isDestructive = false,
     this.padding,
-  })  : assert(child != null || text != null),
-        super();
+  }) : assert(child != null || text != null),
+       super();
 
   @override
   Widget build(BuildContext context) {
-    final AppTextColors textColors =
-        Theme.of(context).extension<AppTextColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
 
-    final bool darkSurface = Theme.of(context).cardColor.computeLuminance() <=
-        0.2;
+    final bool darkSurface =
+        Theme.of(context).cardColor.computeLuminance() <= 0.2;
 
     ButtonStyle style = ElevatedButton.styleFrom(
       padding: this.padding,
@@ -53,18 +54,18 @@ class BaseButton extends StatelessWidget {
       backgroundColor: this.isDestructive
           ? CupertinoColors.destructiveRed
           : this.secondary
-              ? Colors.transparent
-              : this.color ??
-                  Theme.of(context).buttonTheme.colorScheme!.secondary,
-      minimumSize:
-          this.shrinkWidth ? const Size(0, 36) : const Size(64.0, 44.0),
+          ? Colors.transparent
+          : this.color ?? Theme.of(context).buttonTheme.colorScheme!.secondary,
+      minimumSize: this.shrinkWidth
+          ? const Size(0, 36)
+          : const Size(64.0, 44.0),
       side: !this.isDestructive && this.secondary
-
           /// Ghost border (token-delta §2.6): white 35% - neutral, the accent
           /// is only spent through the label ([AppTextColors.accentText])
           ? BorderSide(
-              color: (darkSurface ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.35),
+              color: (darkSurface ? Colors.white : Colors.black).withValues(
+                alpha: 0.35,
+              ),
               width: 1.0,
             )
           : null,
@@ -74,7 +75,7 @@ class BaseButton extends StatelessWidget {
               surroundingColor: this.isDestructive
                   ? CupertinoColors.destructiveRed
                   : this.color ??
-                      Theme.of(context).buttonTheme.colorScheme!.secondary,
+                        Theme.of(context).buttonTheme.colorScheme!.secondary,
             ),
 
       /// Filled-CTA label contract (token-delta §2.4): 17pt/700 qualifies as
@@ -82,10 +83,7 @@ class BaseButton extends StatelessWidget {
       /// Ghost labels keep the default size (secondary affordance)
       textStyle: this.secondary
           ? null
-          : const TextStyle(
-              fontSize: 17.0,
-              fontWeight: FontWeight.w700,
-            ),
+          : const TextStyle(fontSize: 17.0, fontWeight: FontWeight.w700),
     );
 
     return Pressable(
@@ -94,19 +92,13 @@ class BaseButton extends StatelessWidget {
           ? ElevatedButton.icon(
               style: style,
               icon: this.icon!,
-              label: this.child ??
-                  FittedBox(
-                    child: Text(this.text!),
-                  ),
+              label: this.child ?? FittedBox(child: Text(this.text!)),
               onPressed: onPressed,
             )
           : ElevatedButton(
               style: style,
               onPressed: this.onPressed,
-              child: this.child ??
-                  FittedBox(
-                    child: Text(this.text!),
-                  ),
+              child: this.child ?? FittedBox(child: Text(this.text!)),
             ),
     );
   }

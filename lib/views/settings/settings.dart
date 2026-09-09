@@ -316,22 +316,16 @@ class SettingsView extends StatelessWidget {
                             .textTheme
                             .bodySmall!
                             .copyWith(
-                              color: Theme.of(context)
-                                  .extension<AppTextColors>()!
-                                  .textTertiary,
+                              color: Theme.of(
+                                context,
+                              ).extension<AppTextColors>()!.textTertiary,
                             );
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Version ',
-                              style: versionStyle,
-                            ),
+                            Text('Version ', style: versionStyle),
                             if (snapshot.hasData)
-                              Text(
-                                snapshot.data!.version,
-                                style: versionStyle,
-                              ),
+                              Text(snapshot.data!.version, style: versionStyle),
                           ],
                         );
                       },
@@ -343,10 +337,10 @@ class SettingsView extends StatelessWidget {
                         navigateTo: SettingsTabRoutingKeys.Pro,
                         navigateToResult: Text(
                           (settingsBox.get(
-                                SettingsKeys.BoughtPro.name,
-                                defaultValue: false,
-                              )
-                              as bool)
+                                    SettingsKeys.BoughtPro.name,
+                                    defaultValue: false,
+                                  )
+                                  as bool)
                               ? 'Active'
                               : 'Inactive',
                         ),

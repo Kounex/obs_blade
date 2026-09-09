@@ -279,49 +279,46 @@ void main() {
       }
     });
 
-    test(
-      'configured client id + secret are sent on device-code, token poll '
-      'and refresh requests',
-      () async {
-        var calls = 0;
-        final client = MockClient((request) async {
-          calls++;
-          expect(request.bodyFields['client_id'], 'client-1');
-          expect(request.bodyFields['client_secret'], 'secret-1');
-          if (request.url.path.endsWith('/device/code')) {
-            return http.Response(
-              json.encode({
-                'device_code': 'dev-code-123',
-                'user_code': 'ABCD-EFGH',
-                'verification_url': 'https://www.google.com/device',
-                'expires_in': 1800,
-                'interval': 5,
-              }),
-              200,
-            );
-          }
+    test('configured client id + secret are sent on device-code, token poll '
+        'and refresh requests', () async {
+      var calls = 0;
+      final client = MockClient((request) async {
+        calls++;
+        expect(request.bodyFields['client_id'], 'client-1');
+        expect(request.bodyFields['client_secret'], 'secret-1');
+        if (request.url.path.endsWith('/device/code')) {
           return http.Response(
             json.encode({
-              'access_token': 'access-1',
-              'refresh_token': 'refresh-1',
-              'expires_in': 3600,
-              'scope': 'https://www.googleapis.com/auth/youtube',
+              'device_code': 'dev-code-123',
+              'user_code': 'ABCD-EFGH',
+              'verification_url': 'https://www.google.com/device',
+              'expires_in': 1800,
+              'interval': 5,
             }),
             200,
           );
-        });
-        final service = serviceWith(client);
-
-        await service.requestDeviceCode();
-        await service.pollForToken(
-          kTestDeviceCode,
-          onPending: () {},
-          isCancelled: () => false,
+        }
+        return http.Response(
+          json.encode({
+            'access_token': 'access-1',
+            'refresh_token': 'refresh-1',
+            'expires_in': 3600,
+            'scope': 'https://www.googleapis.com/auth/youtube',
+          }),
+          200,
         );
-        await service.refreshToken('refresh-1');
+      });
+      final service = serviceWith(client);
 
-        expect(calls, 3);
-      },
-    );
+      await service.requestDeviceCode();
+      await service.pollForToken(
+        kTestDeviceCode,
+        onPending: () {},
+        isCancelled: () => false,
+      );
+      await service.refreshToken('refresh-1');
+
+      expect(calls, 3);
+    });
   });
 }

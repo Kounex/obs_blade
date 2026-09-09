@@ -9,9 +9,7 @@ import 'profile_control.dart';
 import 'scene_collection_control.dart';
 
 class ProfileSceneCollection extends StatelessWidget {
-  const ProfileSceneCollection({
-    super.key,
-  });
+  const ProfileSceneCollection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +19,11 @@ class ProfileSceneCollection extends StatelessWidget {
         SettingsKeys.ExposeProfile,
         SettingsKeys.ExposeSceneCollection,
       ],
-      builder: (context, settingsBox, child) => settingsBox
-                  .get(SettingsKeys.ExposeProfile.name, defaultValue: false) ||
+      builder: (context, settingsBox, child) =>
+          settingsBox.get(
+                SettingsKeys.ExposeProfile.name,
+                defaultValue: false,
+              ) ||
               settingsBox.get(
                 SettingsKeys.ExposeSceneCollection.name,
                 defaultValue: false,
@@ -31,18 +32,19 @@ class ProfileSceneCollection extends StatelessWidget {
               bottomPadding: 0,
               child: Row(
                 children: [
-                  if (settingsBox.get(SettingsKeys.ExposeProfile.name,
-                      defaultValue: false)) ...[
-                    const Expanded(
-                      child: ProfileControl(),
-                    ),
+                  if (settingsBox.get(
+                    SettingsKeys.ExposeProfile.name,
+                    defaultValue: false,
+                  )) ...[
+                    const Expanded(child: ProfileControl()),
                     const SizedBox(width: AppSpacing.xl),
                   ],
                   Expanded(
-                    child: settingsBox.get(
-                      SettingsKeys.ExposeSceneCollection.name,
-                      defaultValue: false,
-                    )
+                    child:
+                        settingsBox.get(
+                          SettingsKeys.ExposeSceneCollection.name,
+                          defaultValue: false,
+                        )
                         ? const SceneCollectionControl()
                         : const SizedBox(),
                   ),

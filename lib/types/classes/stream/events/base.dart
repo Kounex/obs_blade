@@ -10,8 +10,8 @@ class BaseEvent implements Message {
   Map<String, dynamic> json;
 
   BaseEvent(Map<String, dynamic> json)
-      : jsonRAW = json,
-        json = json['d']['eventData'] ?? {};
+    : jsonRAW = json,
+      json = json['d']['eventData'] ?? {};
 
   EventType? get eventType {
     try {

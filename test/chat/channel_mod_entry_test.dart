@@ -32,23 +32,20 @@ const _modScopes = [
 ];
 
 Finder shieldFinder() => find.byWidgetPredicate(
-      (w) =>
-          w is Icon &&
-          (w.icon == CupertinoIcons.shield ||
-              w.icon == CupertinoIcons.shield_fill));
+  (w) =>
+      w is Icon &&
+      (w.icon == CupertinoIcons.shield || w.icon == CupertinoIcons.shield_fill),
+);
 
 Widget wrap(Widget child, {double width = 800}) => MaterialApp(
-      theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
-      home: MediaQuery(
-        data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
-        child: Scaffold(
-          body: SizedBox(
-            width: width,
-            child: child,
-          ),
-        ),
-      ),
-    );
+  theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
+  home: MediaQuery(
+    data: const MediaQueryData(textScaler: TextScaler.linear(0.8)),
+    child: Scaffold(
+      body: SizedBox(width: width, child: child),
+    ),
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -85,8 +82,7 @@ void main() {
     /// seed the real flag and register the real store reading it. The
     /// cold-start restore is skipped so no store call fires.
     await settingsBox().put(SettingsKeys.BoughtPro.name, true);
-    await settingsBox()
-        .put(SettingsKeys.ProColdStartRestoreDone.name, true);
+    await settingsBox().put(SettingsKeys.ProColdStartRestoreDone.name, true);
     proStore = ProStore(
       service: ProPurchaseService(gateway: FakeProPurchaseGateway()),
     )..init();
@@ -94,12 +90,24 @@ void main() {
 
     store = TwitchChatStore(
       authService: FakeTwitchAuthService(),
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          FakeTwitchEventSubService(),
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => FakeTwitchEventSubService(),
     );
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
+      ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+    );
   });
 
   tearDown(() async {
@@ -113,32 +121,37 @@ void main() {
   });
 
   testWidgets(
-      'wide cluster with short name shows shield and gear-only options',
-      (tester) async {
-    await tester.runAsync(() async {
-      await seedLoggedIn();
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-    });
+    'wide cluster with short name shows shield and gear-only options',
+    (tester) async {
+      await tester.runAsync(() async {
+        await seedLoggedIn();
+        await settingsBox().put(
+          SettingsKeys.SelectedChatType.name,
+          ChatType.Twitch,
+        );
+        await settingsBox().put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+      });
 
-    await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 800));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 800));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
-    expect(store.canModerateSelectedChannel, isTrue);
-    expect(shieldFinder(), findsOneWidget);
-    expect(find.byType(ChannelModButton), findsOneWidget);
-    final options = tester.widget<NativeChatOptionsButton>(
-      find.byType(NativeChatOptionsButton),
-    );
-    expect(options.modFoldedIntoOptions, isFalse);
-  });
+      expect(store.canModerateSelectedChannel, isTrue);
+      expect(shieldFinder(), findsOneWidget);
+      expect(find.byType(ChannelModButton), findsOneWidget);
+      final options = tester.widget<NativeChatOptionsButton>(
+        find.byType(NativeChatOptionsButton),
+      );
+      expect(options.modFoldedIntoOptions, isFalse);
+    },
+  );
 
-  testWidgets(
-      'narrow cluster folds Mod into a combined options chip',
-      (tester) async {
+  testWidgets('narrow cluster folds Mod into a combined options chip', (
+    tester,
+  ) async {
     await tester.runAsync(() async {
       await seedLoggedIn();
       store.user = const TwitchUser(
@@ -146,10 +159,14 @@ void main() {
         login: 'verylongdisplayname',
         displayName: 'VeryLongDisplayNameThatCannotFit',
       );
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
     });
 
     /// Long display name + mid width: three controls do not fit the right
@@ -164,6 +181,7 @@ void main() {
       find.byType(NativeChatOptionsButton),
     );
     expect(options.modFoldedIntoOptions, isTrue);
+
     /// Combined chip: gear + shield inside the options control.
     expect(
       find.descendant(
@@ -182,56 +200,66 @@ void main() {
   });
 
   testWidgets(
-      'folded options sheet shows featured Mod card; tap opens ChannelModSheet',
-      (tester) async {
-    await tester.runAsync(() async {
-      await seedLoggedIn();
-    });
+    'folded options sheet shows featured Mod card; tap opens ChannelModSheet',
+    (tester) async {
+      await tester.runAsync(() async {
+        await seedLoggedIn();
+      });
 
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(
-        chatType: ChatType.Twitch,
-        modFoldedIntoOptions: true,
-      )),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        wrap(
+          const NativeChatOptionsSheet(
+            chatType: ChatType.Twitch,
+            modFoldedIntoOptions: true,
+          ),
+        ),
+      );
+      await tester.pump();
 
-    expect(find.text('Channel moderation'), findsOneWidget);
-    expect(find.text('Moderation…'), findsNothing);
+      expect(find.text('Channel moderation'), findsOneWidget);
+      expect(find.text('Moderation…'), findsNothing);
 
-    await tester.tap(find.text('Channel moderation'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Channel moderation'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(ChannelModSheet), findsOneWidget);
-  });
+      expect(find.byType(ChannelModSheet), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      'options sheet omits Mod when shield is on the bar (not folded)',
-      (tester) async {
-    await tester.runAsync(() async {
-      await seedLoggedIn();
-    });
+    'options sheet omits Mod when shield is on the bar (not folded)',
+    (tester) async {
+      await tester.runAsync(() async {
+        await seedLoggedIn();
+      });
 
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(
-        chatType: ChatType.Twitch,
-        modFoldedIntoOptions: false,
-      )),
-    );
-    await tester.pump();
+      await tester.pumpWidget(
+        wrap(
+          const NativeChatOptionsSheet(
+            chatType: ChatType.Twitch,
+            modFoldedIntoOptions: false,
+          ),
+        ),
+      );
+      await tester.pump();
 
-    expect(find.text('Channel moderation'), findsNothing);
-    expect(find.text('Moderation…'), findsNothing);
-  });
+      expect(find.text('Channel moderation'), findsNothing);
+      expect(find.text('Moderation…'), findsNothing);
+    },
+  );
 
   testWidgets('WebView engine shows no shield', (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn();
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.webView);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.webView,
+      );
     });
 
     await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 800));
@@ -243,9 +271,9 @@ void main() {
     expect(find.byType(NativeChatOptionsButton), findsNothing);
   });
 
-  testWidgets(
-      'not moderating → no shield, no combined chip, no Mod card',
-      (tester) async {
+  testWidgets('not moderating → no shield, no combined chip, no Mod card', (
+    tester,
+  ) async {
     await tester.runAsync(() async {
       await seedLoggedIn(scopes: const ['user:read:chat']);
       store.user = const TwitchUser(
@@ -253,10 +281,14 @@ void main() {
         login: 'verylongdisplayname',
         displayName: 'VeryLongDisplayNameThatCannotFit',
       );
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
-      await settingsBox()
-          .put(SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
     });
 
     /// Same tight width that folds Mod for moderators — must stay gear-only.
@@ -279,10 +311,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(
-        chatType: ChatType.Twitch,
-        modFoldedIntoOptions: true,
-      )),
+      wrap(
+        const NativeChatOptionsSheet(
+          chatType: ChatType.Twitch,
+          modFoldedIntoOptions: true,
+        ),
+      ),
     );
     await tester.pump();
     expect(find.text('Channel moderation'), findsNothing);

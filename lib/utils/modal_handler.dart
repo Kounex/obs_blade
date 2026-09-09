@@ -26,44 +26,42 @@ class ModalHandler {
     required BuildContext context,
     required Widget content,
     void Function()? onClose,
-  }) async =>
-      showDialog(
-        useSafeArea: false,
-        context: context,
-        builder: (context) => Fader(
-          child: Material(
-            color: Colors.black,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                content,
-                Positioned(
-                  top: 12.0 + MediaQuery.paddingOf(context).top,
-                  right: 12.0 + MediaQuery.paddingOf(context).right,
-                  child: IconButton(
-                    onPressed: () {
-                      onClose?.call();
-                      Navigator.of(context).pop();
-                    },
-                    icon: const Icon(CupertinoIcons.clear),
-                  ),
-                ),
-              ],
+  }) async => showDialog(
+    useSafeArea: false,
+    context: context,
+    builder: (context) => Fader(
+      child: Material(
+        color: Colors.black,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            content,
+            Positioned(
+              top: 12.0 + MediaQuery.paddingOf(context).top,
+              right: 12.0 + MediaQuery.paddingOf(context).right,
+              child: IconButton(
+                onPressed: () {
+                  onClose?.call();
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(CupertinoIcons.clear),
+              ),
             ),
-          ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 
   static Future<T?> showBaseDialog<T>({
     required BuildContext context,
     required Widget dialogWidget,
     bool barrierDismissible = false,
-  }) async =>
-      showAdaptiveDialog<T>(
-        context: context,
-        barrierDismissible: barrierDismissible,
-        builder: (context) => dialogWidget,
-      );
+  }) async => showAdaptiveDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    builder: (context) => dialogWidget,
+  );
 
   static Future<T?> showBaseBottomSheet<T>({
     required BuildContext context,
@@ -79,63 +77,61 @@ class ModalHandler {
     /// top gap for barrier taps pass ~0.72.
     double maxHeightFraction = 1.0,
     double additionalBottomViewInsets = 0,
-  }) async =>
-      showModalBottomSheet(
-        context: context,
-        useRootNavigator: useRootNavigator,
-        isDismissible: barrierDismissible,
-        enableDrag: enableDrag,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (context) => _bottomSheetWrapper(
-          context: context,
-          additionalBottomViewInsets: additionalBottomViewInsets,
-          includeCloseButton: includeCloseButton,
-          modalWidget: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              builder(context),
-              SizedBox(height: MediaQuery.paddingOf(context).bottom),
-            ],
-          ),
-          maxHeight: MediaQuery.sizeOf(context).height * maxHeightFraction,
-          maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
-        ),
-      );
+  }) async => showModalBottomSheet(
+    context: context,
+    useRootNavigator: useRootNavigator,
+    isDismissible: barrierDismissible,
+    enableDrag: enableDrag,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) => _bottomSheetWrapper(
+      context: context,
+      additionalBottomViewInsets: additionalBottomViewInsets,
+      includeCloseButton: includeCloseButton,
+      modalWidget: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          builder(context),
+          SizedBox(height: MediaQuery.paddingOf(context).bottom),
+        ],
+      ),
+      maxHeight: MediaQuery.sizeOf(context).height * maxHeightFraction,
+      maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
+    ),
+  );
 
   static Future<T?> showBaseCupertinoBottomSheet<T>({
     required BuildContext context,
     required Widget Function(BuildContext context, ScrollController controller)
-        modalWidgetBuilder,
+    modalWidgetBuilder,
     bool useRootNavigator = true,
     double maxWidth = double.infinity,
     bool? blurryBackground,
     bool includeCloseButton = true,
     double additionalBottomViewInsets = 0,
-  }) async =>
-      CupertinoScaffold.showCupertinoModalBottomSheet(
-        expand: false,
-        context: context,
-        backgroundColor: Colors.transparent,
-        barrierColor: Colors.black54,
-        shadow: const BoxShadow(
-          color: Colors.transparent,
-          blurRadius: 0,
-          offset: Offset(0, 0),
-        ),
-        useRootNavigator: useRootNavigator,
-        builder: (context) => _bottomSheetWrapper(
-          context: context,
-          additionalBottomViewInsets: additionalBottomViewInsets,
-          blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
-          includeCloseButton: includeCloseButton,
-          modalWidget: modalWidgetBuilder(
-            context,
-            ModalScrollController.of(context)!,
-          ),
-          maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
-        ),
-      );
+  }) async => CupertinoScaffold.showCupertinoModalBottomSheet(
+    expand: false,
+    context: context,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    shadow: const BoxShadow(
+      color: Colors.transparent,
+      blurRadius: 0,
+      offset: Offset(0, 0),
+    ),
+    useRootNavigator: useRootNavigator,
+    builder: (context) => _bottomSheetWrapper(
+      context: context,
+      additionalBottomViewInsets: additionalBottomViewInsets,
+      blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
+      includeCloseButton: includeCloseButton,
+      modalWidget: modalWidgetBuilder(
+        context,
+        ModalScrollController.of(context)!,
+      ),
+      maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
+    ),
+  );
 
   static Widget _bottomSheetWrapper({
     required BuildContext context,
@@ -148,9 +144,9 @@ class ModalHandler {
   }) {
     Widget child = Container(
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .cardColor
-            .withOpacity(blurryBackground ? StylingHelper.opacity_blurry : 1),
+        color: Theme.of(context).cardColor.withOpacity(
+          blurryBackground ? StylingHelper.opacity_blurry : 1,
+        ),
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(kBaseCardBorderRadius),
         ),
@@ -196,7 +192,8 @@ class ModalHandler {
     // Bottom safe inset is applied by the caller (see showBaseBottomSheet).
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom +
+        bottom:
+            MediaQuery.viewInsetsOf(context).bottom +
             (MediaQuery.viewInsetsOf(context).bottom > 0
                 ? additionalBottomViewInsets
                 : 0),
@@ -205,14 +202,8 @@ class ModalHandler {
         alignment: Alignment.bottomCenter,
         heightFactor: 1.0,
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: maxHeight,
-            maxWidth: maxWidth,
-          ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: child,
-          ),
+          constraints: BoxConstraints(maxHeight: maxHeight, maxWidth: maxWidth),
+          child: Material(type: MaterialType.transparency, child: child),
         ),
       ),
     );

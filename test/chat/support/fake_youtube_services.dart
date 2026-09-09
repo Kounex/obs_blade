@@ -20,11 +20,11 @@ class FakeYouTubeAuthService extends YouTubeAuthService {
   List<String> tokenScopes = kYouTubeChatScopes;
 
   static YouTubeToken token({List<String>? scope}) => YouTubeToken(
-        accessToken: 'access-1',
-        refreshToken: 'refresh-1',
-        expiresIn: 3600,
-        scope: scope ?? kYouTubeChatScopes,
-      );
+    accessToken: 'access-1',
+    refreshToken: 'refresh-1',
+    expiresIn: 3600,
+    scope: scope ?? kYouTubeChatScopes,
+  );
 
   @override
   String resolveClientId() => this.clientId;

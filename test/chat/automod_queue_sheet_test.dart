@@ -21,18 +21,19 @@ AutoModMessageHoldEvent heldMessage(
   String userName = 'ShadyUser',
   String text = 'you are ugly',
   String reason = 'automod',
-  AutoModClassification? automod =
-      const AutoModClassification(category: 'aggressive', level: 3),
-}) =>
-    AutoModMessageHoldEvent(
-      messageId: messageId,
-      userId: userId,
-      userLogin: userName.toLowerCase(),
-      userName: userName,
-      message: AutoModMessageContent(text: text),
-      reason: reason,
-      automod: automod,
-    );
+  AutoModClassification? automod = const AutoModClassification(
+    category: 'aggressive',
+    level: 3,
+  ),
+}) => AutoModMessageHoldEvent(
+  messageId: messageId,
+  userId: userId,
+  userLogin: userName.toLowerCase(),
+  userName: userName,
+  message: AutoModMessageContent(text: text),
+  reason: reason,
+  automod: automod,
+);
 
 void main() {
   late Directory tempDir;
@@ -86,9 +87,19 @@ void main() {
     moderationService = FakeTwitchModerationService();
     store = TwitchChatStore(
       authService: authService,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________,
-              _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       moderationService: moderationService,
@@ -99,9 +110,11 @@ void main() {
     store.chatConnection = TwitchChatConnectionState.live;
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<TwitchBadgeStore>(
-        TwitchBadgeStore(service: FakeTwitchBadgeService()));
+      TwitchBadgeStore(service: FakeTwitchBadgeService()),
+    );
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
+      ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+    );
   });
 
   tearDown(() async {
@@ -113,16 +126,19 @@ void main() {
     }
   });
 
-  testWidgets('renders the held messages with meta line and pills',
-      (tester) async {
+  testWidgets('renders the held messages with meta line and pills', (
+    tester,
+  ) async {
     store.applyAutoModMessageHold(heldMessage('am-1'));
-    store.applyAutoModMessageHold(heldMessage(
-      'am-2',
-      userName: 'TermBot',
-      text: 'blocked phrase',
-      reason: 'blocked_term',
-      automod: null,
-    ));
+    store.applyAutoModMessageHold(
+      heldMessage(
+        'am-2',
+        userName: 'TermBot',
+        text: 'blocked phrase',
+        reason: 'blocked_term',
+        automod: null,
+      ),
+    );
 
     await openSheet(tester);
 
@@ -145,8 +161,9 @@ void main() {
     expect(find.text('No held messages'), findsOneWidget);
   });
 
-  testWidgets('Allow confirms, then resolves and drops the row',
-      (tester) async {
+  testWidgets('Allow confirms, then resolves and drops the row', (
+    tester,
+  ) async {
     store.applyAutoModMessageHold(heldMessage('am-1'));
     await openSheet(tester);
 
@@ -183,8 +200,9 @@ void main() {
     expect(find.text('No held messages'), findsOneWidget);
   });
 
-  testWidgets('a failed resolve keeps the row and shows a snackbar',
-      (tester) async {
+  testWidgets('a failed resolve keeps the row and shows a snackbar', (
+    tester,
+  ) async {
     moderationService.autoModThrows = Exception('boom');
     store.applyAutoModMessageHold(heldMessage('am-1'));
     await openSheet(tester);
@@ -203,8 +221,9 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('a new hold appears live; a resolution echo drops the row',
-      (tester) async {
+  testWidgets('a new hold appears live; a resolution echo drops the row', (
+    tester,
+  ) async {
     await openSheet(tester);
     expect(find.text('No held messages'), findsOneWidget);
 

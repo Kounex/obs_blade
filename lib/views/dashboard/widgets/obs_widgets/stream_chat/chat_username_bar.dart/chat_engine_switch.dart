@@ -39,9 +39,9 @@ class ChatEngineSwitch extends StatelessWidget {
     }
 
     final ChatEngine engine = this.settingsBox.get(
-          SettingsKeys.SelectedChatEngine.name,
-          defaultValue: ChatEngine.webView,
-        );
+      SettingsKeys.SelectedChatEngine.name,
+      defaultValue: ChatEngine.webView,
+    );
 
     return Observer(
       builder: (context) {
@@ -60,8 +60,7 @@ class ChatEngineSwitch extends StatelessWidget {
                 child: Text('WebView'),
               ),
               ChatEngine.native: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -81,9 +80,10 @@ class ChatEngineSwitch extends StatelessWidget {
               /// pane renders the locked Pro upsell (and the stores
               /// refuse to connect), so the paywall is one tap away from
               /// there instead of intercepting here
-              this
-                  .settingsBox
-                  .put(SettingsKeys.SelectedChatEngine.name, selected);
+              this.settingsBox.put(
+                SettingsKeys.SelectedChatEngine.name,
+                selected,
+              );
             },
           ),
         );

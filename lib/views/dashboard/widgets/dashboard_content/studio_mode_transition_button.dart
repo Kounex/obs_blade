@@ -13,9 +13,7 @@ import '../../../../../types/enums/request_type.dart';
 import '../../../../../utils/network_helper.dart';
 
 class StudioModeTransitionButton extends StatelessWidget {
-  const StudioModeTransitionButton({
-    super.key,
-  });
+  const StudioModeTransitionButton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +21,7 @@ class StudioModeTransitionButton extends StatelessWidget {
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [
-        SettingsKeys.ExposeStudioControls,
-      ],
+      rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) {
         return Observer(
           builder: (context) {
@@ -51,8 +47,11 @@ class StudioModeTransitionButton extends StatelessWidget {
                   child: child,
                 ),
               ),
-              child: (settingsBox.get(SettingsKeys.ExposeStudioControls.name,
-                          defaultValue: false) &&
+              child:
+                  (settingsBox.get(
+                        SettingsKeys.ExposeStudioControls.name,
+                        defaultValue: false,
+                      ) &&
                       studioMode)
                   ? Align(
                       alignment: Alignment.center,
@@ -63,7 +62,8 @@ class StudioModeTransitionButton extends StatelessWidget {
                           secondary: true,
                           onPressed: () {
                             dashboardStore.setActiveSceneName(
-                                dashboardStore.studioModePreviewSceneName!);
+                              dashboardStore.studioModePreviewSceneName!,
+                            );
                             NetworkHelper.makeRequest(
                               GetIt.instance<NetworkStore>()
                                   .activeSession!
@@ -71,7 +71,7 @@ class StudioModeTransitionButton extends StatelessWidget {
                               RequestType.SetCurrentProgramScene,
                               {
                                 'sceneName':
-                                    dashboardStore.studioModePreviewSceneName
+                                    dashboardStore.studioModePreviewSceneName,
                               },
                             );
                           },

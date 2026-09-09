@@ -16,9 +16,7 @@ const double kExposedButtonsMaxWidth = 92.0;
 const double kExposedControlsSpace = 12.0;
 
 class ExposedControls extends StatelessWidget {
-  const ExposedControls({
-    super.key,
-  });
+  const ExposedControls({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,21 +31,23 @@ class ExposedControls extends StatelessWidget {
       builder: (context, settingsBox, child) {
         List<Widget> exposedControls = [];
 
-        if (settingsBox.get(SettingsKeys.ExposeStreamingControls.name,
-            defaultValue: false)) {
+        if (settingsBox.get(
+          SettingsKeys.ExposeStreamingControls.name,
+          defaultValue: false,
+        )) {
           exposedControls.add(
             DescribedBox(
               label: 'Stream',
               borderColor: Theme.of(context).dividerColor,
-              child: const Center(
-                child: StreamingControls(),
-              ),
+              child: const Center(child: StreamingControls()),
             ),
           );
         }
 
-        if (settingsBox.get(SettingsKeys.ExposeRecordingControls.name,
-            defaultValue: false)) {
+        if (settingsBox.get(
+          SettingsKeys.ExposeRecordingControls.name,
+          defaultValue: false,
+        )) {
           exposedControls.add(
             DescribedBox(
               label: 'Recording',
@@ -57,8 +57,10 @@ class ExposedControls extends StatelessWidget {
           );
         }
 
-        if (settingsBox.get(SettingsKeys.ExposeReplayBufferControls.name,
-            defaultValue: false)) {
+        if (settingsBox.get(
+          SettingsKeys.ExposeReplayBufferControls.name,
+          defaultValue: false,
+        )) {
           exposedControls.add(
             DescribedBox(
               label: 'Replay Buffer',
@@ -68,8 +70,10 @@ class ExposedControls extends StatelessWidget {
           );
         }
 
-        if (settingsBox.get(SettingsKeys.ExposeHotkeys.name,
-            defaultValue: false)) {
+        if (settingsBox.get(
+          SettingsKeys.ExposeHotkeys.name,
+          defaultValue: false,
+        )) {
           exposedControls.add(
             DescribedBox(
               label: 'Hotkeys',
@@ -81,10 +85,7 @@ class ExposedControls extends StatelessWidget {
 
         exposedControls = List.from(
           exposedControls.expand(
-            (control) => [
-              control,
-              const SizedBox(height: 18.0),
-            ],
+            (control) => [control, const SizedBox(height: 18.0)],
           ),
         );
 
@@ -106,10 +107,8 @@ class ExposedControls extends StatelessWidget {
                       const SizedBox(height: 24.0),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                        child: Column(
-                          children: exposedControls,
-                        ),
-                      )
+                        child: Column(children: exposedControls),
+                      ),
                     ],
                   ),
                 ),

@@ -25,32 +25,31 @@ Package fakePackage(
   String packageIdentifier = '\$rc_annual',
   String priceString = '€19.99',
   String? subscriptionPeriod = 'P1Y',
-}) =>
-    Package.fromJson({
-      'identifier': packageIdentifier,
-      'packageType': 'CUSTOM',
-      'product': {
-        'identifier': productId,
-        'description': 'description $productId',
-        'title': 'Pro ($productId)',
-        'price': 19.99,
-        'priceString': priceString,
-        'currencyCode': 'EUR',
-        'subscriptionPeriod': subscriptionPeriod,
-      },
-      'presentedOfferingContext': {'offeringIdentifier': 'default'},
-    });
+}) => Package.fromJson({
+  'identifier': packageIdentifier,
+  'packageType': 'CUSTOM',
+  'product': {
+    'identifier': productId,
+    'description': 'description $productId',
+    'title': 'Pro ($productId)',
+    'price': 19.99,
+    'priceString': priceString,
+    'currencyCode': 'EUR',
+    'subscriptionPeriod': subscriptionPeriod,
+  },
+  'presentedOfferingContext': {'offeringIdentifier': 'default'},
+});
 
 Map<String, dynamic> _entitlementJson({required bool active}) => {
-      'identifier': kProEntitlementId,
-      'isActive': active,
-      'willRenew': active,
-      'latestPurchaseDate': '2026-09-01T00:00:00Z',
-      'originalPurchaseDate': '2026-09-01T00:00:00Z',
-      'productIdentifier': kProYearlyId,
-      'isSandbox': true,
-      if (!active) 'expirationDate': '2026-09-02T00:00:00Z',
-    };
+  'identifier': kProEntitlementId,
+  'isActive': active,
+  'willRenew': active,
+  'latestPurchaseDate': '2026-09-01T00:00:00Z',
+  'originalPurchaseDate': '2026-09-01T00:00:00Z',
+  'productIdentifier': kProYearlyId,
+  'isSandbox': true,
+  if (!active) 'expirationDate': '2026-09-02T00:00:00Z',
+};
 
 /// Minimal `CustomerInfo` JSON — `active` mirrors the dashboard state:
 /// expired entitlements stay in `all` but drop out of `active`.
@@ -59,7 +58,9 @@ CustomerInfo fakeCustomerInfo({required bool proActive}) {
   return CustomerInfo.fromJson({
     'entitlements': {
       'all': {kProEntitlementId: entitlement},
-      'active': proActive ? {kProEntitlementId: entitlement} : <String, dynamic>{},
+      'active': proActive
+          ? {kProEntitlementId: entitlement}
+          : <String, dynamic>{},
     },
     'allPurchaseDates': const <String, dynamic>{},
     'activeSubscriptions': proActive ? [kProYearlyId] : const <String>[],
@@ -76,16 +77,18 @@ CustomerInfo fakeCustomerInfo({required bool proActive}) {
 
 void main() {
   group('proProductFromPackage', () {
-    test('maps the store product fields (package id is NOT the product id)',
-        () {
-      final product = proProductFromPackage(fakePackage(kProYearlyId));
+    test(
+      'maps the store product fields (package id is NOT the product id)',
+      () {
+        final product = proProductFromPackage(fakePackage(kProYearlyId));
 
-      expect(product.id, kProYearlyId);
-      expect(product.title, 'Pro ($kProYearlyId)');
-      expect(product.priceString, '€19.99');
-      expect(product.subscriptionPeriod, 'P1Y');
-      expect(product.storeObject, isA<Package>());
-    });
+        expect(product.id, kProYearlyId);
+        expect(product.title, 'Pro ($kProYearlyId)');
+        expect(product.priceString, '€19.99');
+        expect(product.subscriptionPeriod, 'P1Y');
+        expect(product.storeObject, isA<Package>());
+      },
+    );
 
     test('lifetime package → null subscription period', () {
       final product = proProductFromPackage(
@@ -146,15 +149,17 @@ void main() {
       ]) {
         debugDefaultTargetPlatformOverride = platform;
         expect(revenueCatConfigured, isTrue, reason: '$platform');
-        expect(ProPurchaseService().handlesEntitlement, isTrue,
-            reason: '$platform');
+        expect(
+          ProPurchaseService().handlesEntitlement,
+          isTrue,
+          reason: '$platform',
+        );
       }
       debugDefaultTargetPlatformOverride = null;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
     });
 
-    test('desktop/web-typed platforms (no key) stay on the legacy path',
-        () {
+    test('desktop/web-typed platforms (no key) stay on the legacy path', () {
       debugDefaultTargetPlatformOverride = TargetPlatform.linux;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
 
@@ -185,7 +190,8 @@ void main() {
 
     setUp(() async {
       tempDir = Directory(
-          '${Directory.systemTemp.path}/pro_store_rc_test_${DateTime.now().microsecondsSinceEpoch}');
+        '${Directory.systemTemp.path}/pro_store_rc_test_${DateTime.now().microsecondsSinceEpoch}',
+      );
       harness = HiveTestHarness(tempDir);
       await harness.init();
       await harness.openAllBoxes();
@@ -207,24 +213,28 @@ void main() {
       }
     });
 
-    test('init configures the backend and mirrors an active entitlement '
-        'into BoughtPro (no cold-start restore — RC recovers reinstalls)',
-        () async {
-      backend.entitlement = true;
-      final store = newStore()..init();
+    test(
+      'init configures the backend and mirrors an active entitlement '
+      'into BoughtPro (no cold-start restore — RC recovers reinstalls)',
+      () async {
+        backend.entitlement = true;
+        final store = newStore()..init();
 
-      await until(() => backend.fetchEntitlementCalls > 0);
+        await until(() => backend.fetchEntitlementCalls > 0);
 
-      expect(backend.initCalls, 1);
-      expect(backend.restoreCalls, 0);
-      expect(
-        settingsBox().get(SettingsKeys.ProColdStartRestoreDone.name,
-            defaultValue: false),
-        isFalse,
-      );
-      await until(() => store.isPro);
-      expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
-    });
+        expect(backend.initCalls, 1);
+        expect(backend.restoreCalls, 0);
+        expect(
+          settingsBox().get(
+            SettingsKeys.ProColdStartRestoreDone.name,
+            defaultValue: false,
+          ),
+          isFalse,
+        );
+        await until(() => store.isPro);
+        expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
+      },
+    );
 
     test('inactive entitlement mirrors false (lapsed subscription revokes '
         'isPro even when the flag was stale-true)', () async {
@@ -235,25 +245,28 @@ void main() {
       final store = newStore()..init();
 
       await until(() => backend.fetchEntitlementCalls > 0);
-      await until(() =>
-          settingsBox().get(SettingsKeys.BoughtPro.name) == false);
+      await until(
+        () => settingsBox().get(SettingsKeys.BoughtPro.name) == false,
+      );
 
       expect(store.isPro, isFalse);
     });
 
-    test('entitlement stream updates re-mirror (renewal/lapse mid-session)',
-        () async {
-      backend.entitlement = false;
-      final store = newStore()..init();
-      await until(() => backend.fetchEntitlementCalls > 0);
-      expect(store.isPro, isFalse);
+    test(
+      'entitlement stream updates re-mirror (renewal/lapse mid-session)',
+      () async {
+        backend.entitlement = false;
+        final store = newStore()..init();
+        await until(() => backend.fetchEntitlementCalls > 0);
+        expect(store.isPro, isFalse);
 
-      backend.entitlement = true;
-      backend.entitlementController.add(true);
-      await until(() => store.isPro);
+        backend.entitlement = true;
+        backend.entitlementController.add(true);
+        await until(() => store.isPro);
 
-      expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
-    });
+        expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
+      },
+    );
 
     test('entitlement fetch error keeps the last mirrored state', () async {
       settingsBox().put(SettingsKeys.BoughtPro.name, true);
@@ -280,71 +293,81 @@ void main() {
       expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
     });
 
-    test('explicit restore with an active entitlement sets BoughtPro and '
-        'arms/disarms the dialog flag (RC has no purchase-stream event)',
-        () async {
-      backend.entitlement = false;
-      final store = newStore()..init();
-      await until(() => backend.fetchEntitlementCalls > 0);
+    test(
+      'explicit restore with an active entitlement sets BoughtPro and '
+      'arms/disarms the dialog flag (RC has no purchase-stream event)',
+      () async {
+        backend.entitlement = false;
+        final store = newStore()..init();
+        await until(() => backend.fetchEntitlementCalls > 0);
 
-      backend.restoreResult = true;
-      await store.restore(explicit: true);
+        backend.restoreResult = true;
+        await store.restore(explicit: true);
 
-      expect(backend.restoreCalls, 1);
-      expect(store.isPro, isTrue);
-      expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
-    });
+        expect(backend.restoreCalls, 1);
+        expect(store.isPro, isTrue);
+        expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
+      },
+    );
 
-    test('explicit restore also fires the legacy direct-IAP restore '
-        '(blacksmith is restore-only, not part of the RC entitlement)',
-        () async {
-      backend.entitlement = false;
-      final store = newStore()..init();
-      await until(() => backend.fetchEntitlementCalls > 0);
+    test(
+      'explicit restore also fires the legacy direct-IAP restore '
+      '(blacksmith is restore-only, not part of the RC entitlement)',
+      () async {
+        backend.entitlement = false;
+        final store = newStore()..init();
+        await until(() => backend.fetchEntitlementCalls > 0);
 
-      await store.restore(explicit: true);
+        await store.restore(explicit: true);
 
-      expect(backend.restoreCalls, 1);
-      expect(legacyGateway.restoreCalls, 1);
-    });
+        expect(backend.restoreCalls, 1);
+        expect(legacyGateway.restoreCalls, 1);
+      },
+    );
 
-    test('silent restore does not fire the legacy direct-IAP restore',
-        () async {
-      backend.entitlement = false;
-      final store = newStore()..init();
-      await until(() => backend.fetchEntitlementCalls > 0);
+    test(
+      'silent restore does not fire the legacy direct-IAP restore',
+      () async {
+        backend.entitlement = false;
+        final store = newStore()..init();
+        await until(() => backend.fetchEntitlementCalls > 0);
 
-      await store.restore(explicit: false);
+        await store.restore(explicit: false);
 
-      expect(backend.restoreCalls, 1);
-      expect(legacyGateway.restoreCalls, 0);
-    });
+        expect(backend.restoreCalls, 1);
+        expect(legacyGateway.restoreCalls, 0);
+      },
+    );
 
-    test('a failing legacy restore does not mask the pro restore result',
-        () async {
-      backend.entitlement = false;
-      final store = newStore()..init();
-      await until(() => backend.fetchEntitlementCalls > 0);
+    test(
+      'a failing legacy restore does not mask the pro restore result',
+      () async {
+        backend.entitlement = false;
+        final store = newStore()..init();
+        await until(() => backend.fetchEntitlementCalls > 0);
 
-      backend.restoreResult = true;
-      legacyGateway.restoreError = StateError('plugin restore failed');
-      await store.restore(explicit: true);
+        backend.restoreResult = true;
+        legacyGateway.restoreError = StateError('plugin restore failed');
+        await store.restore(explicit: true);
 
-      expect(store.isPro, isTrue);
-      expect(store.lastError, isNull);
-    });
+        expect(store.isPro, isTrue);
+        expect(store.lastError, isNull);
+      },
+    );
 
-    test('restore error disarms the dialog flag and records lastError',
-        () async {
-      backend.entitlement = false;
-      final store = newStore()..init();
-      await until(() => backend.fetchEntitlementCalls > 0);
+    test(
+      'restore error disarms the dialog flag and records lastError',
+      () async {
+        backend.entitlement = false;
+        final store = newStore()..init();
+        await until(() => backend.fetchEntitlementCalls > 0);
 
-      backend.restoreError = StateError('restore failed');
-      await store.restore(explicit: true);
+        backend.restoreError = StateError('restore failed');
+        await store.restore(explicit: true);
 
-      expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
-      expect(store.lastError, contains('restore failed'));
-    });
+        expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
+        expect(store.lastError, contains('restore failed'));
+      },
+    );
   });
 }

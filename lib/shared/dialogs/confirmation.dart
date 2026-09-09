@@ -27,9 +27,11 @@ class ConfirmationDialog extends StatelessWidget {
     this.okText = 'Yes',
     this.noText = 'No',
     this.enableDontShowAgainOption = false,
-  })  : assert(body != null && bodyWidget == null ||
-            body == null && bodyWidget != null),
-        super();
+  }) : assert(
+         body != null && bodyWidget == null ||
+             body == null && bodyWidget != null,
+       ),
+       super();
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +41,7 @@ class ConfirmationDialog extends StatelessWidget {
       bodyWidget: this.bodyWidget,
       enableDontShowAgainOption: this.enableDontShowAgainOption,
       actions: [
-        DialogActionConfig(
-          child: Text(this.noText),
-          isDefaultAction: true,
-        ),
+        DialogActionConfig(child: Text(this.noText), isDefaultAction: true),
         DialogActionConfig(
           onPressed: this.onOk,
           popOnAction: this.popDialogOnOk,

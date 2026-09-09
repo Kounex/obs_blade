@@ -36,9 +36,8 @@ abstract class AutoModMessageHoldEvent with _$AutoModMessageHoldEvent {
 abstract class AutoModMessageContent with _$AutoModMessageContent {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory AutoModMessageContent({
-    required String text,
-  }) = _AutoModMessageContent;
+  const factory AutoModMessageContent({required String text}) =
+      _AutoModMessageContent;
 
   factory AutoModMessageContent.fromJson(Map<String, Object?> json) =>
       _$AutoModMessageContentFromJson(json);
@@ -50,10 +49,8 @@ abstract class AutoModMessageContent with _$AutoModMessageContent {
 abstract class AutoModClassification with _$AutoModClassification {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory AutoModClassification({
-    String? category,
-    int? level,
-  }) = _AutoModClassification;
+  const factory AutoModClassification({String? category, int? level}) =
+      _AutoModClassification;
 
   factory AutoModClassification.fromJson(Map<String, Object?> json) =>
       _$AutoModClassificationFromJson(json);

@@ -48,10 +48,10 @@ class YouTubeDeviceCodeDialog extends StatelessWidget {
         return BaseAdaptiveDialog(
           title: 'Connect YouTube',
           bodyWidget: switch (store.authState) {
-            YouTubeAuthState.awaitingAuthorization =>
-              _CodeEntryState(store: store),
-            YouTubeAuthState.signingIn =>
-              const _ProgressState('Finishing up…'),
+            YouTubeAuthState.awaitingAuthorization => _CodeEntryState(
+              store: store,
+            ),
+            YouTubeAuthState.signingIn => const _ProgressState('Finishing up…'),
             YouTubeAuthState.error => _ErrorState(store: store),
             _ => const _ProgressState('Contacting Google…'),
           },
@@ -115,8 +115,10 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
   @override
   Widget build(BuildContext context) {
     final code = this.widget.store.pendingUserCode ?? '…';
-    final uri = Uri.parse(this.widget.store.pendingVerificationUrl ??
-        'https://www.google.com/device');
+    final uri = Uri.parse(
+      this.widget.store.pendingVerificationUrl ??
+          'https://www.google.com/device',
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -141,10 +143,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
             ),
             child: Text(
               code,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(letterSpacing: 2.0),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(letterSpacing: 2.0),
             ),
           ),
         ),
@@ -161,10 +162,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
               const SizedBox(width: AppSpacing.xs / 2),
               Text(
                 'Copied to clipboard',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: CupertinoColors.activeGreen),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: CupertinoColors.activeGreen,
+                ),
               ),
             ],
           )
@@ -192,10 +192,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
             ),
             child: Text(
               'Open Google',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.white),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.white),
             ),
           ),
         ),

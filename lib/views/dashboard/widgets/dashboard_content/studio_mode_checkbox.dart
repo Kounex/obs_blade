@@ -12,9 +12,7 @@ import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
 
 class StudioModeCheckbox extends StatelessWidget {
-  const StudioModeCheckbox({
-    super.key,
-  });
+  const StudioModeCheckbox({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,12 +20,12 @@ class StudioModeCheckbox extends StatelessWidget {
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [
-        SettingsKeys.ExposeStudioControls,
-      ],
+      rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) {
-        return settingsBox.get(SettingsKeys.ExposeStudioControls.name,
-                defaultValue: false)
+        return settingsBox.get(
+              SettingsKeys.ExposeStudioControls.name,
+              defaultValue: false,
+            )
             ? Observer(
                 builder: (context) {
                   return BaseCheckbox(

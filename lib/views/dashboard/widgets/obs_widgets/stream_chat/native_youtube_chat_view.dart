@@ -40,8 +40,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
   YouTubeChatStore get _store => GetIt.instance<YouTubeChatStore>();
 
   Future<void> _openModActions(String messageId) async {
-    final index =
-        this._store.messages.indexWhere((message) => message.id == messageId);
+    final index = this._store.messages.indexWhere(
+      (message) => message.id == messageId,
+    );
     if (index < 0) return;
     final message = this._store.messages[index];
     this.setState(() => this._modTargetMessageId = messageId);
@@ -164,10 +165,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     ),
                     child: Text(
                       'Retry',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Colors.white),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: Colors.white),
                     ),
                   ),
                 ),
@@ -241,9 +241,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                       ? Divider(
                           height: 1.0,
                           thickness: 0.5,
-                          color: Theme.of(context)
-                              .dividerColor
-                              .withValues(alpha: 0.35),
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withValues(alpha: 0.35),
                         )
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
@@ -253,10 +253,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                       message: message,
                       settingsBox: settingsBox,
                       highlighted: this._modTargetMessageId == message.id,
-                      onMessageLongPress:
-                          message.isTombstoned || !canModerate
-                              ? null
-                              : () => this._openModActions(message.id),
+                      onMessageLongPress: message.isTombstoned || !canModerate
+                          ? null
+                          : () => this._openModActions(message.id),
                     );
                   },
                 ),
@@ -277,9 +276,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                           decoration: BoxDecoration(
                             color: this._unreadWhileScrolledUp
                                 ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
                             borderRadius: AppRadius.pill,
                           ),
                           child: Text(
@@ -287,10 +286,8 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                                 ? 'New messages ↓'
                                 : 'Paused ↓',
                             style: this._unreadWhileScrolledUp
-                                ? Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(color: Colors.white)
+                                ? Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.white)
                                 : Theme.of(context).textTheme.bodySmall,
                           ),
                         ),

@@ -24,27 +24,26 @@ const _gif = ChatFragmentGif(
 );
 
 ChatMessageEvent _gifEvent() => const ChatMessageEvent(
-      broadcasterUserId: 'b1',
-      chatterUserId: '1',
-      chatterUserLogin: 'viewer',
-      chatterUserName: 'Viewer',
-      messageId: '1',
-      message: ChatMessageText(
-        text: 'dance',
-        fragments: [
-          ChatMessageFragment(type: 'text', text: 'check '),
-          ChatMessageFragment(type: 'gif', text: 'dance', gif: _gif),
-        ],
-      ),
-    );
+  broadcasterUserId: 'b1',
+  chatterUserId: '1',
+  chatterUserLogin: 'viewer',
+  chatterUserName: 'Viewer',
+  messageId: '1',
+  message: ChatMessageText(
+    text: 'dance',
+    fragments: [
+      ChatMessageFragment(type: 'text', text: 'check '),
+      ChatMessageFragment(type: 'gif', text: 'dance', gif: _gif),
+    ],
+  ),
+);
 
 void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
 
   setUp(() async {
-    tempDir =
-        await Directory.systemTemp.createTemp('gif_fragment_row_test');
+    tempDir = await Directory.systemTemp.createTemp('gif_fragment_row_test');
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
@@ -63,10 +62,12 @@ void main() {
 
   testWidgets('a gif fragment becomes an inline image', (tester) async {
     await tester.pumpWidget(
-      _wrap(TwitchChatMessageRow(
-        event: _gifEvent(),
-        settingsBox: Hive.box(HiveKeys.Settings.name),
-      )),
+      _wrap(
+        TwitchChatMessageRow(
+          event: _gifEvent(),
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        ),
+      ),
     );
 
     final richText = tester.widget<RichText>(find.byType(RichText));
@@ -76,8 +77,9 @@ void main() {
     expect((image.image as NetworkImage).url, _gif.url);
   });
 
-  testWidgets('a gif fragment without the gif object stays text',
-      (tester) async {
+  testWidgets('a gif fragment without the gif object stays text', (
+    tester,
+  ) async {
     const event = ChatMessageEvent(
       broadcasterUserId: 'b1',
       chatterUserId: '1',
@@ -91,10 +93,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _wrap(TwitchChatMessageRow(
-        event: event,
-        settingsBox: Hive.box(HiveKeys.Settings.name),
-      )),
+      _wrap(
+        TwitchChatMessageRow(
+          event: event,
+          settingsBox: Hive.box(HiveKeys.Settings.name),
+        ),
+      ),
     );
 
     final richText = tester.widget<RichText>(find.byType(RichText));

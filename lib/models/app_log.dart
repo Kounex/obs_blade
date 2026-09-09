@@ -22,6 +22,11 @@ class AppLog extends HiveObject {
   @HiveField(4)
   bool manually;
 
-  AppLog(this.timestampMS, this.level, this.entry,
-      [this.stackTrace, this.manually = false]);
+  AppLog(
+    this.timestampMS,
+    this.level,
+    this.entry, [
+    this.stackTrace,
+    this.manually = false,
+  ]);
 }

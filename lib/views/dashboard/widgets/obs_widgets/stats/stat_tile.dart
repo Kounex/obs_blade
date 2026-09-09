@@ -68,10 +68,7 @@ class StatTile extends StatelessWidget {
               ),
               if (this.text != null && this.unit != null) ...[
                 const SizedBox(width: AppSpacing.xs),
-                Text(
-                  this.unit!.trim(),
-                  style: textTheme.bodySmall,
-                ),
+                Text(this.unit!.trim(), style: textTheme.bodySmall),
               ],
             ],
           ),
@@ -93,16 +90,18 @@ class StatTileGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int amountInRow = constraints.maxWidth ~/
-            (this
-                    .tiles
-                    .reduce((value, current) =>
-                        value.width >= current.width ? value : current)
+        int amountInRow =
+            constraints.maxWidth ~/
+            (this.tiles
+                    .reduce(
+                      (value, current) =>
+                          value.width >= current.width ? value : current,
+                    )
                     .width +
                 AppSpacing.xl);
         double generalWidth =
             (constraints.maxWidth - (amountInRow - 1) * AppSpacing.xl) /
-                amountInRow;
+            amountInRow;
         return Wrap(
           spacing: AppSpacing.xl,
           runSpacing: AppSpacing.xl,

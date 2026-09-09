@@ -20,11 +20,7 @@ class PressFlash extends StatefulWidget {
   /// as [Pressable])
   final void Function()? onTap;
 
-  const PressFlash({
-    super.key,
-    required this.child,
-    this.onTap,
-  });
+  const PressFlash({super.key, required this.child, this.onTap});
 
   @override
   State<PressFlash> createState() => _PressFlashState();
@@ -49,8 +45,9 @@ class _PressFlashState extends State<PressFlash>
     if (!_enabled) return;
     _controller.animateTo(
       1.0,
-      duration:
-          AppMotion.reduce(this.context) ? Duration.zero : AppMotion.instant,
+      duration: AppMotion.reduce(this.context)
+          ? Duration.zero
+          : AppMotion.instant,
       curve: AppMotion.standard,
     );
   }
@@ -70,10 +67,9 @@ class _PressFlashState extends State<PressFlash>
       return this.widget.child;
     }
 
-    final Color flash =
-        Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black;
+    final Color flash = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
 
     return Listener(
       behavior: HitTestBehavior.translucent,

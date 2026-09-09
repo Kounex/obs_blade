@@ -67,8 +67,9 @@ class _StaggeredEntranceState extends State<StaggeredEntrance>
       return;
     }
 
-    final int clampedIndex =
-        this.widget.index.clamp(0, AppMotion.staggerMax).toInt();
+    final int clampedIndex = this.widget.index
+        .clamp(0, AppMotion.staggerMax)
+        .toInt();
     _delayTimer = Timer(AppMotion.staggerStep * clampedIndex, () {
       if (this.mounted) {
         _controller.forward();
@@ -95,15 +96,13 @@ class _StaggeredEntranceState extends State<StaggeredEntrance>
         );
         if (this.widget.scaleFrom != null) {
           current = Transform.scale(
-            scale: this.widget.scaleFrom! +
+            scale:
+                this.widget.scaleFrom! +
                 (1.0 - this.widget.scaleFrom!) * _curved.value,
             child: current,
           );
         }
-        return Opacity(
-          opacity: _curved.value,
-          child: current,
-        );
+        return Opacity(opacity: _curved.value, child: current);
       },
     );
   }

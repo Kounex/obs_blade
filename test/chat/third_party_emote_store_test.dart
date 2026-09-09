@@ -26,10 +26,14 @@ void main() {
     await store.fetch(broadcasterId: 'user-1');
 
     expect(service.lastBroadcasterId, 'user-1');
-    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
-        FakeThirdPartyEmoteService.peepo.imageUrl);
-    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
-        FakeThirdPartyEmoteService.monka.imageUrl);
+    expect(
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
+      FakeThirdPartyEmoteService.peepo.imageUrl,
+    );
+    expect(
+      store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
+      FakeThirdPartyEmoteService.monka.imageUrl,
+    );
     expect(store.catalogVersion, 1);
   });
 
@@ -44,8 +48,10 @@ void main() {
 
     await store.fetch(broadcasterId: 'user-1');
 
-    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
-        FakeThirdPartyEmoteService.peepoChannelOverride.imageUrl);
+    expect(
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
+      FakeThirdPartyEmoteService.peepoChannelOverride.imageUrl,
+    );
   });
 
   test('7TV wins over BTTV within the same scope', () async {
@@ -59,8 +65,10 @@ void main() {
 
     await store.fetch(broadcasterId: 'user-1');
 
-    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
-        FakeThirdPartyEmoteService.monkaSevenTv.imageUrl);
+    expect(
+      store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
+      FakeThirdPartyEmoteService.monkaSevenTv.imageUrl,
+    );
   });
 
   test('two broadcasters keep separate channel catalogs', () async {
@@ -75,8 +83,10 @@ void main() {
     await store.fetch(broadcasterId: 'chan-2');
 
     /// chan-1's slot survived chan-2's fetch untouched.
-    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-1'),
-        isNotNull);
+    expect(
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-1'),
+      isNotNull,
+    );
     expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-2'), isNull);
     expect(store.emoteImageUrl('monkaS', broadcasterId: 'chan-2'), isNotNull);
     expect(store.emoteImageUrl('monkaS', broadcasterId: 'chan-1'), isNull);
@@ -88,8 +98,10 @@ void main() {
     };
     await store.fetch(broadcasterId: 'chan-1');
 
-    expect(store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-unseen'),
-        FakeThirdPartyEmoteService.peepo.imageUrl);
+    expect(
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'chan-unseen'),
+      FakeThirdPartyEmoteService.peepo.imageUrl,
+    );
   });
 
   test('a failing endpoint keeps the other catalogs', () async {
@@ -101,7 +113,9 @@ void main() {
     await store.fetch(broadcasterId: 'user-1');
 
     expect(
-        store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'), isNotNull);
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
+      isNotNull,
+    );
     expect(store.catalogVersion, 1);
   });
 
@@ -122,7 +136,9 @@ void main() {
     await first;
 
     expect(
-        store.emoteImageUrl('peepoHappy', broadcasterId: 'user-2'), isNotNull);
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'user-2'),
+      isNotNull,
+    );
     expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-2'), isNull);
 
     /// The superseded fetch returned before applying — only the newer

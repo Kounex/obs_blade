@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:confetti/confetti.dart';
-import 'package:flutter/cupertino.dart'
-    show kMinInteractiveDimensionCupertino;
+import 'package:flutter/cupertino.dart' show kMinInteractiveDimensionCupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,10 +14,10 @@ import '../../../utils/styling_helper.dart';
 /// Manage-subscription page of the platform the purchase ran through
 /// (lazy - `Platform` must not be touched at class-load time on web)
 Uri get _manageSubscriptionUri => Uri.parse(
-      !kIsWeb && Platform.isIOS
-          ? 'https://apps.apple.com/account/subscriptions'
-          : 'https://play.google.com/store/account/subscriptions',
-    );
+  !kIsWeb && Platform.isIOS
+      ? 'https://apps.apple.com/account/subscriptions'
+      : 'https://play.google.com/store/account/subscriptions',
+);
 
 /// The already-Pro side of the paywall: thank-you + manage subscription.
 /// Doubles as the purchase-success state — the confetti controller plays
@@ -49,8 +48,9 @@ class ProUnlockedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
-    final AppTextColors textColors =
-        Theme.of(context).extension<AppTextColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
 
     return Stack(
       children: [
@@ -61,7 +61,8 @@ class ProUnlockedView extends StatelessWidget {
           /// (`extendBodyBehindBar` on the wrapper) - the scroll view
           /// owns the bar's top inset
           padding: EdgeInsets.only(
-            top: MediaQuery.paddingOf(context).top +
+            top:
+                MediaQuery.paddingOf(context).top +
                 kMinInteractiveDimensionCupertino,
           ),
           child: Center(
@@ -87,8 +88,8 @@ class ProUnlockedView extends StatelessWidget {
                     'used stays free, forever.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: textColors.textSecondary,
-                        ),
+                      color: textColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   BaseButton(
@@ -103,8 +104,8 @@ class ProUnlockedView extends StatelessWidget {
 
                     /// Reassurance footnote (token-delta §2.1)
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: textColors.textTertiary,
-                        ),
+                      color: textColors.textTertiary,
+                    ),
                   ),
                 ],
               ),

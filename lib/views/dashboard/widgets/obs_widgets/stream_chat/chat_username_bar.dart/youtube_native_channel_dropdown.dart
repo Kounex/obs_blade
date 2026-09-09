@@ -50,7 +50,8 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
       context: context,
       dialogWidget: ConfirmationDialog(
         title: 'Remove chat?',
-        body: '"$label" is removed from your YouTube list — its chat '
+        body:
+            '"$label" is removed from your YouTube list — its chat '
             'history in this session is dropped.',
         okText: 'Remove',
         isYesDestructive: true,
@@ -126,22 +127,24 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
               /// 44pt touch target ([kMinInteractiveDimensionCupertino]) —
               /// same bar-control idiom as [UsernameDropdown].
               constraints: const BoxConstraints(
-                  minHeight: kMinInteractiveDimensionCupertino),
+                minHeight: kMinInteractiveDimensionCupertino,
+              ),
               alignment: Alignment.centerLeft,
               decoration: BoxDecoration(
                 color: StylingHelper.lightenDarkenColor(
-                    Theme.of(context).cardColor),
+                  Theme.of(context).cardColor,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
-                  color:
-                      Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
                   width: 0.0,
                 ),
               ),
               child: DropdownButtonHideUnderline(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
                   child: DropdownButton<String>(
                     value: store.selectedChannelLabel,
                     isExpanded: true,

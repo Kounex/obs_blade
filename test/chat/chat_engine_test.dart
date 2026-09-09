@@ -44,28 +44,35 @@ void main() {
     test('missing key falls back to the WebView default at read time', () {
       expect(
         Hive.box(HiveKeys.Settings.name).get(
-              SettingsKeys.SelectedChatEngine.name,
-              defaultValue: ChatEngine.webView,
-            ),
+          SettingsKeys.SelectedChatEngine.name,
+          defaultValue: ChatEngine.webView,
+        ),
         ChatEngine.webView,
       );
     });
 
-    test('round-trips through the Settings box and survives a cold open',
-        () async {
-      final settings = Hive.box(HiveKeys.Settings.name);
-      await settings.put(
-          SettingsKeys.SelectedChatEngine.name, ChatEngine.native);
-      expect(settings.get(SettingsKeys.SelectedChatEngine.name),
-          ChatEngine.native);
+    test(
+      'round-trips through the Settings box and survives a cold open',
+      () async {
+        final settings = Hive.box(HiveKeys.Settings.name);
+        await settings.put(
+          SettingsKeys.SelectedChatEngine.name,
+          ChatEngine.native,
+        );
+        expect(
+          settings.get(SettingsKeys.SelectedChatEngine.name),
+          ChatEngine.native,
+        );
 
-      await harness.reopenFromDisk();
+        await harness.reopenFromDisk();
 
-      expect(
-        Hive.box(HiveKeys.Settings.name)
-            .get(SettingsKeys.SelectedChatEngine.name),
-        ChatEngine.native,
-      );
-    });
+        expect(
+          Hive.box(
+            HiveKeys.Settings.name,
+          ).get(SettingsKeys.SelectedChatEngine.name),
+          ChatEngine.native,
+        );
+      },
+    );
   });
 }

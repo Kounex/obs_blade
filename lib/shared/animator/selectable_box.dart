@@ -54,11 +54,12 @@ class SelectableBox extends StatelessWidget {
             decoration: BoxDecoration(
               color: this.selected
                   ? this.colorSelected ??
-                      Theme.of(context).buttonTheme.colorScheme!.secondary
+                        Theme.of(context).buttonTheme.colorScheme!.secondary
                   : this.colorUnselected ?? Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: this.child ??
+            child:
+                this.child ??
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: AutoSizeText(
@@ -77,9 +78,8 @@ class SelectableBox extends StatelessWidget {
               border: Border.all(
                 color: (this.selectedStateBoxBorder ?? this.selected)
                     ? this.colorSelectedBorder ??
-                        this.colorSelected ??
-                        Theme.of(context).buttonTheme.colorScheme!.secondary
-
+                          this.colorSelected ??
+                          Theme.of(context).buttonTheme.colorScheme!.secondary
                     /// Inactive state gets a visible hairline (theme
                     /// divider at low opacity, same as [BaseDivider])
                     /// instead of painting the fill color again

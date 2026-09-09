@@ -20,27 +20,27 @@ YouTubeChatMessage ytMessage(
   bool sponsor = false,
   bool verified = false,
   bool tombstoned = false,
-}) =>
-    YouTubeChatMessage(
-      id: id,
-      isTombstoned: tombstoned,
-      snippet: YouTubeChatMessageSnippet(
-        type: YouTubeChatMessageType.textMessage,
-        publishedAt: DateTime.utc(2026, 9, 3),
-        authorChannelId: author,
-        displayMessage: text ?? 'text $id',
-        textMessageDetails:
-            YouTubeTextMessageDetails(messageText: text ?? 'text $id'),
-      ),
-      authorDetails: YouTubeChatAuthorDetails(
-        channelId: author,
-        displayName: authorName ?? 'User $author',
-        isChatOwner: owner,
-        isChatModerator: moderator,
-        isChatSponsor: sponsor,
-        isVerified: verified,
-      ),
-    );
+}) => YouTubeChatMessage(
+  id: id,
+  isTombstoned: tombstoned,
+  snippet: YouTubeChatMessageSnippet(
+    type: YouTubeChatMessageType.textMessage,
+    publishedAt: DateTime.utc(2026, 9, 3),
+    authorChannelId: author,
+    displayMessage: text ?? 'text $id',
+    textMessageDetails: YouTubeTextMessageDetails(
+      messageText: text ?? 'text $id',
+    ),
+  ),
+  authorDetails: YouTubeChatAuthorDetails(
+    channelId: author,
+    displayName: authorName ?? 'User $author',
+    isChatOwner: owner,
+    isChatModerator: moderator,
+    isChatSponsor: sponsor,
+    isVerified: verified,
+  ),
+);
 
 void main() {
   late Directory tempDir;
@@ -49,10 +49,8 @@ void main() {
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
   Widget wrap(Widget child) => MaterialApp(
-        home: Scaffold(
-          body: Column(children: [child]),
-        ),
-      );
+    home: Scaffold(body: Column(children: [child])),
+  );
 
   /// Plain-text of every rendered RichText — the rows build their content
   /// as Text.rich, which `find.text` doesn't see (same idiom as
@@ -76,20 +74,25 @@ void main() {
     }
   });
 
-  testWidgets('text message renders badges, colored author and body',
-      (tester) async {
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: ytMessage(
-        'm1',
-        authorName: 'Some Chatter',
-        text: 'hello stream',
-        owner: true,
-        moderator: true,
-        sponsor: true,
-        verified: true,
+  testWidgets('text message renders badges, colored author and body', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        YouTubeChatMessageRow(
+          message: ytMessage(
+            'm1',
+            authorName: 'Some Chatter',
+            text: 'hello stream',
+            owner: true,
+            moderator: true,
+            sponsor: true,
+            verified: true,
+          ),
+          settingsBox: settingsBox(),
+        ),
       ),
-      settingsBox: settingsBox(),
-    )));
+    );
     await tester.pump();
 
     expect(renderedRichText(tester), contains('Some Chatter'));
@@ -101,10 +104,14 @@ void main() {
   });
 
   testWidgets('no badge icons for a plain chatter', (tester) async {
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: ytMessage('m1'),
-      settingsBox: settingsBox(),
-    )));
+    await tester.pumpWidget(
+      wrap(
+        YouTubeChatMessageRow(
+          message: ytMessage('m1'),
+          settingsBox: settingsBox(),
+        ),
+      ),
+    );
     await tester.pump();
 
     expect(find.byKey(const Key('yt-badge-owner')), findsNothing);
@@ -113,20 +120,26 @@ void main() {
     expect(find.byKey(const Key('yt-badge-verified')), findsNothing);
   });
 
-  testWidgets('tombstoned message dims the body and appends the marker',
-      (tester) async {
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: ytMessage('m1', text: 'gone soon', tombstoned: true),
-      settingsBox: settingsBox(),
-    )));
+  testWidgets('tombstoned message dims the body and appends the marker', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        YouTubeChatMessageRow(
+          message: ytMessage('m1', text: 'gone soon', tombstoned: true),
+          settingsBox: settingsBox(),
+        ),
+      ),
+    );
     await tester.pump();
 
     expect(renderedRichText(tester), contains('gone soon'));
     expect(renderedRichText(tester), contains('—Deleted'));
   });
 
-  testWidgets('super chat renders a tier card with amount and comment',
-      (tester) async {
+  testWidgets('super chat renders a tier card with amount and comment', (
+    tester,
+  ) async {
     final message = YouTubeChatMessage(
       id: 'sc1',
       snippet: YouTubeChatMessageSnippet(
@@ -141,13 +154,14 @@ void main() {
         ),
       ),
       authorDetails: YouTubeChatAuthorDetails(
-          channelId: 'chan-9', displayName: 'Fan Nine'),
+        channelId: 'chan-9',
+        displayName: 'Fan Nine',
+      ),
     );
 
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: message,
-      settingsBox: settingsBox(),
-    )));
+    await tester.pumpWidget(
+      wrap(YouTubeChatMessageRow(message: message, settingsBox: settingsBox())),
+    );
     await tester.pump();
 
     expect(find.byKey(const Key('yt-super-chat-card')), findsOneWidget);
@@ -166,8 +180,9 @@ void main() {
     );
   });
 
-  testWidgets('super sticker renders amount + alt text (no image in the API)',
-      (tester) async {
+  testWidgets('super sticker renders amount + alt text (no image in the API)', (
+    tester,
+  ) async {
     final message = YouTubeChatMessage(
       id: 'ss1',
       snippet: YouTubeChatMessageSnippet(
@@ -177,18 +192,20 @@ void main() {
         superStickerDetails: YouTubeSuperStickerDetails(
           amountDisplayString: '€2.00',
           tier: 1,
-          superStickerMetadata:
-              YouTubeSuperStickerMetadata(altText: 'Dancing banana'),
+          superStickerMetadata: YouTubeSuperStickerMetadata(
+            altText: 'Dancing banana',
+          ),
         ),
       ),
       authorDetails: YouTubeChatAuthorDetails(
-          channelId: 'chan-9', displayName: 'Fan Nine'),
+        channelId: 'chan-9',
+        displayName: 'Fan Nine',
+      ),
     );
 
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: message,
-      settingsBox: settingsBox(),
-    )));
+    await tester.pumpWidget(
+      wrap(YouTubeChatMessageRow(message: message, settingsBox: settingsBox())),
+    );
     await tester.pump();
 
     expect(find.byKey(const Key('yt-super-sticker-card')), findsOneWidget);
@@ -197,8 +214,9 @@ void main() {
     expect(renderedRichText(tester), contains('Dancing banana'));
   });
 
-  testWidgets('member milestone renders a notice row with the comment',
-      (tester) async {
+  testWidgets('member milestone renders a notice row with the comment', (
+    tester,
+  ) async {
     final message = YouTubeChatMessage(
       id: 'mm1',
       snippet: YouTubeChatMessageSnippet(
@@ -211,19 +229,22 @@ void main() {
           userComment: 'a whole year!',
         ),
       ),
-      authorDetails:
-          YouTubeChatAuthorDetails(channelId: 'chan-7', displayName: 'Loyal'),
+      authorDetails: YouTubeChatAuthorDetails(
+        channelId: 'chan-7',
+        displayName: 'Loyal',
+      ),
     );
 
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: message,
-      settingsBox: settingsBox(),
-    )));
+    await tester.pumpWidget(
+      wrap(YouTubeChatMessageRow(message: message, settingsBox: settingsBox())),
+    );
     await tester.pump();
 
     expect(renderedRichText(tester), contains('Loyal'));
-    expect(renderedRichText(tester),
-        contains('has been a member for 12 months'));
+    expect(
+      renderedRichText(tester),
+      contains('has been a member for 12 months'),
+    );
     expect(renderedRichText(tester), contains('a whole year!'));
   });
 
@@ -236,8 +257,10 @@ void main() {
         authorChannelId: 'chan-1',
         newSponsorDetails: YouTubeNewSponsorDetails(memberLevelName: 'Silver'),
       ),
-      authorDetails:
-          YouTubeChatAuthorDetails(channelId: 'chan-1', displayName: 'Newbie'),
+      authorDetails: YouTubeChatAuthorDetails(
+        channelId: 'chan-1',
+        displayName: 'Newbie',
+      ),
     );
     final gifting = YouTubeChatMessage(
       id: 'mg1',
@@ -250,16 +273,25 @@ void main() {
           giftMembershipsLevelName: 'Gold',
         ),
       ),
-      authorDetails:
-          YouTubeChatAuthorDetails(channelId: 'chan-2', displayName: 'Gifter'),
+      authorDetails: YouTubeChatAuthorDetails(
+        channelId: 'chan-2',
+        displayName: 'Gifter',
+      ),
     );
 
-    await tester.pumpWidget(wrap(Column(
-      children: [
-        YouTubeChatMessageRow(message: newMember, settingsBox: settingsBox()),
-        YouTubeChatMessageRow(message: gifting, settingsBox: settingsBox()),
-      ],
-    )));
+    await tester.pumpWidget(
+      wrap(
+        Column(
+          children: [
+            YouTubeChatMessageRow(
+              message: newMember,
+              settingsBox: settingsBox(),
+            ),
+            YouTubeChatMessageRow(message: gifting, settingsBox: settingsBox()),
+          ],
+        ),
+      ),
+    );
     await tester.pump();
 
     expect(renderedRichText(tester), contains('became a member (Silver)'));
@@ -283,14 +315,15 @@ void main() {
           ),
         ),
       ),
-      authorDetails:
-          YouTubeChatAuthorDetails(channelId: 'chan-1', displayName: 'Host'),
+      authorDetails: YouTubeChatAuthorDetails(
+        channelId: 'chan-1',
+        displayName: 'Host',
+      ),
     );
 
-    await tester.pumpWidget(wrap(YouTubeChatMessageRow(
-      message: message,
-      settingsBox: settingsBox(),
-    )));
+    await tester.pumpWidget(
+      wrap(YouTubeChatMessageRow(message: message, settingsBox: settingsBox())),
+    );
     await tester.pump();
 
     expect(find.byKey(const Key('yt-poll-card')), findsOneWidget);
@@ -301,21 +334,26 @@ void main() {
     expect(find.text('7'), findsOneWidget);
   });
 
-  testWidgets('long-press chrome only wraps rows with a handler',
-      (tester) async {
-    await tester.pumpWidget(wrap(Column(
-      children: [
-        YouTubeChatMessageRow(
-          message: ytMessage('plain'),
-          settingsBox: settingsBox(),
+  testWidgets('long-press chrome only wraps rows with a handler', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        Column(
+          children: [
+            YouTubeChatMessageRow(
+              message: ytMessage('plain'),
+              settingsBox: settingsBox(),
+            ),
+            YouTubeChatMessageRow(
+              message: ytMessage('moderatable'),
+              settingsBox: settingsBox(),
+              onMessageLongPress: () {},
+            ),
+          ],
         ),
-        YouTubeChatMessageRow(
-          message: ytMessage('moderatable'),
-          settingsBox: settingsBox(),
-          onMessageLongPress: () {},
-        ),
-      ],
-    )));
+      ),
+    );
     await tester.pump();
 
     expect(find.byType(ChatRowLongPressListener), findsOneWidget);
@@ -324,13 +362,17 @@ void main() {
   testWidgets('author color is stable per channel id', (tester) async {
     Color? first;
     Color? second;
-    await tester.pumpWidget(wrap(Builder(
-      builder: (context) {
-        first = youTubeAuthorColor(context, 'chan-stable');
-        second = youTubeAuthorColor(context, 'chan-stable');
-        return const SizedBox.shrink();
-      },
-    )));
+    await tester.pumpWidget(
+      wrap(
+        Builder(
+          builder: (context) {
+            first = youTubeAuthorColor(context, 'chan-stable');
+            second = youTubeAuthorColor(context, 'chan-stable');
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
 
     expect(first, isNotNull);
     expect(first, second);

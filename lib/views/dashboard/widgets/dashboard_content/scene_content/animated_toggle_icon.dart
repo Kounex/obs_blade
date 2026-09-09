@@ -28,10 +28,7 @@ class AnimatedToggleIcon extends StatelessWidget {
         switchOutCurve: AppMotion.exit,
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
-          child: ScaleTransition(
-            scale: animation,
-            child: child,
-          ),
+          child: ScaleTransition(scale: animation, child: child),
         ),
         child: Icon(
           this.icon,

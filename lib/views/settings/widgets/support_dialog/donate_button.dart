@@ -28,23 +28,24 @@ class DonateButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14.0),
       onPressed: this.purchaseParam != null
           ? () => this.purchaseParam!.productDetails.id.contains('tip')
-              ? InAppPurchase.instance
-                  .buyConsumable(purchaseParam: this.purchaseParam!)
-              : InAppPurchase.instance
-                  .buyNonConsumable(purchaseParam: this.purchaseParam!)
+                ? InAppPurchase.instance.buyConsumable(
+                    purchaseParam: this.purchaseParam!,
+                  )
+                : InAppPurchase.instance.buyNonConsumable(
+                    purchaseParam: this.purchaseParam!,
+                  )
           : this.errorText != null
-              ? () => ModalHandler.showBaseDialog(
-                  context: context,
-                  barrierDismissible: true,
-                  dialogWidget: InfoDialog(body: this.errorText!))
-              : null,
+          ? () => ModalHandler.showBaseDialog(
+              context: context,
+              barrierDismissible: true,
+              dialogWidget: InfoDialog(body: this.errorText!),
+            )
+          : null,
       child: this.price != null || this.errorText != null
           ? Text(
               this.price ?? '-',
               style: const TextStyle(
-                fontFeatures: [
-                  FontFeature.tabularFigures(),
-                ],
+                fontFeatures: [FontFeature.tabularFigures()],
               ),
             )
           : BaseProgressIndicator(size: 18.0),
@@ -55,12 +56,7 @@ class DonateButton extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Text(
-            this.text!,
-            textAlign: TextAlign.left,
-          ),
-        ),
+        Expanded(child: Text(this.text!, textAlign: TextAlign.left)),
         purchaseButton,
       ],
     );

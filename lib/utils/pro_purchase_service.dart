@@ -27,8 +27,7 @@ class InAppPurchaseGateway implements ProPurchaseGateway {
   Future<bool> isAvailable() => InAppPurchase.instance.isAvailable();
 
   @override
-  Future<ProductDetailsResponse> queryProductDetails(
-          Set<String> identifiers) =>
+  Future<ProductDetailsResponse> queryProductDetails(Set<String> identifiers) =>
       InAppPurchase.instance.queryProductDetails(identifiers);
 
   @override
@@ -49,19 +48,18 @@ class InAppPurchaseProBackend implements ProPurchaseBackend {
   final ProPurchaseGateway gateway;
 
   InAppPurchaseProBackend({ProPurchaseGateway? gateway})
-      : this.gateway = gateway ?? InAppPurchaseGateway();
+    : this.gateway = gateway ?? InAppPurchaseGateway();
 
   /// Raw [ProductDetails] → paywall-facing [ProProduct]. IAP's
   /// `ProductDetails` doesn't expose the subscription period portably
   /// (platform extras only), so it stays null on this path — the paywall
   /// hardcodes its cadence copy anyway.
-  static ProProduct proProductFromDetails(ProductDetails details) =>
-      ProProduct(
-        id: details.id,
-        title: details.title,
-        priceString: details.price,
-        storeObject: details,
-      );
+  static ProProduct proProductFromDetails(ProductDetails details) => ProProduct(
+    id: details.id,
+    title: details.title,
+    priceString: details.price,
+    storeObject: details,
+  );
 
   @override
   bool get handlesEntitlement => false;
@@ -82,20 +80,19 @@ class InAppPurchaseProBackend implements ProPurchaseBackend {
   /// exist store-side; `notFoundIDs` is expected, not an error.
   @override
   Future<List<ProProduct>> queryProProducts() async =>
-      (await this.gateway.queryProductDetails(kProProductIds))
-          .productDetails
-          .map(proProductFromDetails)
-          .toList();
+      (await this.gateway.queryProductDetails(
+        kProProductIds,
+      )).productDetails.map(proProductFromDetails).toList();
 
   /// Both the subscriptions and the lifetime buy-out go through
   /// `buyNonConsumable` (the plugin's documented path for subscriptions on
   /// iOS/Android).
   @override
   Future<bool> buy(ProProduct product) => this.gateway.buyNonConsumable(
-        purchaseParam: PurchaseParam(
-          productDetails: product.storeObject! as ProductDetails,
-        ),
-      );
+    purchaseParam: PurchaseParam(
+      productDetails: product.storeObject! as ProductDetails,
+    ),
+  );
 
   /// Restored purchases arrive on the purchase stream with
   /// `PurchaseStatus.restored` — the explicit-vs-silent distinction
@@ -126,14 +123,14 @@ class ProPurchaseService {
     ProPurchaseGateway? gateway,
     ProPurchaseBackend? backend,
     ProPurchaseGateway? legacyGateway,
-  })  : this._legacyGateway =
-            legacyGateway ?? gateway ?? InAppPurchaseGateway(),
-        this._backend = backend ??
-            (gateway != null
-                ? InAppPurchaseProBackend(gateway: gateway)
-                : revenueCatConfigured
-                    ? RevenueCatProGateway()
-                    : InAppPurchaseProBackend());
+  }) : this._legacyGateway = legacyGateway ?? gateway ?? InAppPurchaseGateway(),
+       this._backend =
+           backend ??
+           (gateway != null
+               ? InAppPurchaseProBackend(gateway: gateway)
+               : revenueCatConfigured
+               ? RevenueCatProGateway()
+               : InAppPurchaseProBackend());
 
   /// True when the entitlement comes from this service (RevenueCat
   /// CustomerInfo) rather than the `BoughtPro` box flag / purchase
@@ -163,7 +160,8 @@ class ProPurchaseService {
   /// Live [ProProduct]s for the paywall — empty while the products
   /// don't exist store-side; graceful by contract, never throws for
   /// "nothing found".
-  Future<List<ProProduct>> queryProProducts() => this._backend.queryProProducts();
+  Future<List<ProProduct>> queryProProducts() =>
+      this._backend.queryProProducts();
 
   Future<bool> buy(ProProduct product) => this._backend.buy(product);
 

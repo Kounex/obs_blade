@@ -56,18 +56,16 @@ bool isIgnoredChatUrlMatch(String raw) {
     RegExp(r'^https?://', caseSensitive: false),
     '',
   );
-  final host =
-      withoutScheme.split('/').first.split('?').first.split('#').first;
+  final host = withoutScheme.split('/').first.split('?').first.split('#').first;
   final parts = host.split('.');
   if (parts.length < 2) return true;
   return kChatUrlIgnoredTlds.contains(parts.last.toLowerCase());
 }
 
 /// Matches from [kChatUrlPattern], excluding file-extension lookalikes.
-Iterable<RegExpMatch> chatUrlMatches(String text) =>
-    kChatUrlPattern.allMatches(text).where(
-          (match) => !isIgnoredChatUrlMatch(match.group(0)!),
-        );
+Iterable<RegExpMatch> chatUrlMatches(String text) => kChatUrlPattern
+    .allMatches(text)
+    .where((match) => !isIgnoredChatUrlMatch(match.group(0)!));
 
 /// Strip trailing sentence punctuation and ensure an http(s) scheme.
 /// Returns null when the result is not a usable http(s) URI.
@@ -76,9 +74,10 @@ String? normalizeChatLinkUrl(String rawUrl) {
   if (cleaned.isEmpty) return null;
   final withScheme =
       RegExp(r'^https?://', caseSensitive: false).hasMatch(cleaned)
-          ? cleaned
-          : 'https://$cleaned';
+      ? cleaned
+      : 'https://$cleaned';
   final uri = Uri.tryParse(withScheme);
+
   /// Dart percent-encodes spaces into the host (`not%20a%20url`) — reject
   /// those along with hosts that have no dot (chat never needs localhost).
   if (uri == null ||
@@ -94,10 +93,7 @@ String? normalizeChatLinkUrl(String rawUrl) {
 
 /// Confirm, then open [rawUrl] in an external browser. Trailing sentence
 /// punctuation is stripped for the launch URI but shown in the prompt.
-Future<void> confirmAndOpenChatLink(
-  BuildContext context,
-  String rawUrl,
-) async {
+Future<void> confirmAndOpenChatLink(BuildContext context, String rawUrl) async {
   final launchUrlString = normalizeChatLinkUrl(rawUrl);
   if (launchUrlString == null) return;
   final uri = Uri.parse(launchUrlString);

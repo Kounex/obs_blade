@@ -9,10 +9,7 @@ class SceneContent extends StatelessWidget {
   /// When true, the Audio card is on the left.
   final bool audioFirst;
 
-  const SceneContent({
-    super.key,
-    this.audioFirst = false,
-  });
+  const SceneContent({super.key, this.audioFirst = false});
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +20,7 @@ class SceneContent extends StatelessWidget {
         title: 'Scene Items',
         rightPadding: 12,
         paddingChild: EdgeInsets.all(0),
-        child: SizedBox(
-          height: 400.0,
-          child: SceneItems(),
-        ),
+        child: SizedBox(height: 400.0, child: SceneItems()),
       ),
     );
 
@@ -37,10 +31,7 @@ class SceneContent extends StatelessWidget {
         title: 'Audio',
         leftPadding: 12,
         paddingChild: EdgeInsets.all(0),
-        child: SizedBox(
-          height: 400.0,
-          child: AudioInputs(),
-        ),
+        child: SizedBox(height: 400.0, child: AudioInputs()),
       ),
     );
 

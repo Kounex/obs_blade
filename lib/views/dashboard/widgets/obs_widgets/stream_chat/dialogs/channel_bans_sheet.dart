@@ -63,7 +63,8 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
     if (this.mounted) this.setState(() {});
   }
 
-  String _formatDate(DateTime date) => DateFormat.yMMMd().format(date.toLocal());
+  String _formatDate(DateTime date) =>
+      DateFormat.yMMMd().format(date.toLocal());
 
   Future<void> _confirmUnban(String userId, String userName) async {
     if (this._runningUserId != null) return;
@@ -71,7 +72,8 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
       context: context,
       dialogWidget: ConfirmationDialog(
         title: 'Unban $userName?',
-        body: '$userName will be able to chat in this channel again '
+        body:
+            '$userName will be able to chat in this channel again '
             'immediately.',
         okText: 'Unban',
         noText: 'Cancel',
@@ -99,7 +101,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
             : 'Deny ${request.userName}\'s request?',
         body: approved
             ? '${request.userName} is unbanned and the request is marked '
-                'approved.'
+                  'approved.'
             : 'The ban stays in place and the request is marked denied.',
         okText: approved ? 'Approve' : 'Deny',
         noText: 'Cancel',
@@ -158,9 +160,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
-            child: SingleChildScrollView(
-              child: this._buildBody(context),
-            ),
+            child: SingleChildScrollView(child: this._buildBody(context)),
           ),
         ],
       ),
@@ -195,10 +195,11 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
             child: Text(
               error,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: (Theme.of(context).extension<AppStatusColors>() ??
+                color:
+                    (Theme.of(context).extension<AppStatusColors>() ??
                             AppStatusColors.standard)
                         .unreachable,
-                  ),
+              ),
             ),
           ),
         this._sectionHeader(context, 'Unban requests'),
@@ -211,8 +212,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
             ),
           )
         else
-          for (final request in requests)
-            this._requestRow(context, request),
+          for (final request in requests) this._requestRow(context, request),
         if (ownChannel) ...[
           this._sectionHeader(context, 'Banned users'),
           if (bans.isEmpty)
@@ -238,12 +238,9 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
   }
 
   Widget _sectionHeader(BuildContext context, String title) => Padding(
-        padding: const EdgeInsets.only(
-          top: AppSpacing.sm,
-          bottom: AppSpacing.xs,
-        ),
-        child: Text(title, style: nativeChatSheetSectionStyle(context)),
-      );
+    padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+    child: Text(title, style: nativeChatSheetSectionStyle(context)),
+  );
 
   Widget _requestRow(BuildContext context, TwitchUnbanRequest request) =>
       this._inboxRowCard(
@@ -308,10 +305,9 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
                 children: [
                   Text(
                     userName,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   for (final line in lines)
                     Text(
@@ -348,8 +344,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
                 filled: false,
                 onTap: busy
                     ? null
-                    : () =>
-                        this._confirmResolve(request, approved: false),
+                    : () => this._confirmResolve(request, approved: false),
               ),
               const SizedBox(width: AppSpacing.xs),
               this._pill(
@@ -365,9 +360,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
                 context,
                 label: 'Unban',
                 filled: true,
-                onTap: busy
-                    ? null
-                    : () => this._confirmUnban(userId, userName),
+                onTap: busy ? null : () => this._confirmUnban(userId, userName),
               ),
           ],
         ),
@@ -404,10 +397,10 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
         child: Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: filled
-                    ? Colors.white
-                    : Theme.of(context).textTheme.bodySmall?.color,
-              ),
+            color: filled
+                ? Colors.white
+                : Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
       ),
     );

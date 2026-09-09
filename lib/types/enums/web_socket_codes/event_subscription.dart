@@ -17,7 +17,8 @@ class EventSubscription {
   static const int canvases = 1 << 11;
 
   /// All non-high-volume categories (includes Canvases).
-  static const int all = general |
+  static const int all =
+      general |
       config |
       scenes |
       inputs |

@@ -142,12 +142,13 @@ class PastRecordData extends HiveObject implements PastStatsData {
   /// Update our lists (to see the changes of those values over time)
   /// according to our interval set by [kAmountStreamStatsForAverage]
   void _setListsFromRecordStats() {
-    RecordStats relevantRecordStats =
-        _cacheRecordStats.reduce((master, current) => master
-          ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
-          ..fps = min(master.fps, current.fps)
-          ..cpuUsage = max(master.cpuUsage, current.cpuUsage)
-          ..memoryUsage = max(master.memoryUsage, current.memoryUsage));
+    RecordStats relevantRecordStats = _cacheRecordStats.reduce(
+      (master, current) => master
+        ..kbitsPerSec = min(master.kbitsPerSec, current.kbitsPerSec)
+        ..fps = min(master.fps, current.fps)
+        ..cpuUsage = max(master.cpuUsage, current.cpuUsage)
+        ..memoryUsage = max(master.memoryUsage, current.memoryUsage),
+    );
     this.kbitsPerSecList.add(relevantRecordStats.kbitsPerSec);
     this.fpsList.add(relevantRecordStats.fps);
     this.cpuUsageList.add(relevantRecordStats.cpuUsage);

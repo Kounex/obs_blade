@@ -83,14 +83,18 @@ class AppTextColors extends ThemeExtension<AppTextColors> {
     final bool dark = brightness == Brightness.dark;
     final Color toward = dark ? Colors.white : Colors.black;
     return AppTextColors(
-      textPrimary:
-          dark ? standard.textPrimary : Colors.black.withValues(alpha: 0.6),
-      textSecondary:
-          dark ? standard.textSecondary : Colors.black.withValues(alpha: 0.45),
-      textTertiary:
-          dark ? standard.textTertiary : Colors.black.withValues(alpha: 0.38),
-      textOrnament:
-          dark ? standard.textOrnament : Colors.black.withValues(alpha: 0.25),
+      textPrimary: dark
+          ? standard.textPrimary
+          : Colors.black.withValues(alpha: 0.6),
+      textSecondary: dark
+          ? standard.textSecondary
+          : Colors.black.withValues(alpha: 0.45),
+      textTertiary: dark
+          ? standard.textTertiary
+          : Colors.black.withValues(alpha: 0.38),
+      textOrnament: dark
+          ? standard.textOrnament
+          : Colors.black.withValues(alpha: 0.25),
       accentText: Color.lerp(accent, toward, accentTextMix)!,
       highlightText: Color.lerp(highlight, toward, highlightTextMix)!,
     );
@@ -104,15 +108,14 @@ class AppTextColors extends ThemeExtension<AppTextColors> {
     Color? textOrnament,
     Color? accentText,
     Color? highlightText,
-  }) =>
-      AppTextColors(
-        textPrimary: textPrimary ?? this.textPrimary,
-        textSecondary: textSecondary ?? this.textSecondary,
-        textTertiary: textTertiary ?? this.textTertiary,
-        textOrnament: textOrnament ?? this.textOrnament,
-        accentText: accentText ?? this.accentText,
-        highlightText: highlightText ?? this.highlightText,
-      );
+  }) => AppTextColors(
+    textPrimary: textPrimary ?? this.textPrimary,
+    textSecondary: textSecondary ?? this.textSecondary,
+    textTertiary: textTertiary ?? this.textTertiary,
+    textOrnament: textOrnament ?? this.textOrnament,
+    accentText: accentText ?? this.accentText,
+    highlightText: highlightText ?? this.highlightText,
+  );
 
   @override
   AppTextColors lerp(ThemeExtension<AppTextColors>? other, double t) {

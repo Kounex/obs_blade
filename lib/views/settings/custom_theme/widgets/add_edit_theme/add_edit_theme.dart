@@ -57,9 +57,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
     if (name?.trim().isEmpty ?? true) {
       return 'Please provide a theme name!';
     }
-    if (Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-        .values
-        .any((customTheme) => customTheme.name == name)) {
+    if (Hive.box<CustomTheme>(
+      HiveKeys.CustomTheme.name,
+    ).values.any((customTheme) => customTheme.name == name)) {
       if (this.widget.customTheme != null &&
           this.widget.customTheme!.name != name) {
         return 'A theme with this name already exists!';
@@ -71,27 +71,19 @@ class _AddEditThemeState extends State<AddEditTheme> {
   /// Caption-style section header (design system: uppercase, letterspaced,
   /// section-label text level per token-delta §2.1)
   Widget _sectionHeader(String title) => Padding(
-        padding: const EdgeInsets.only(
-          top: AppSpacing.xxl,
-          bottom: AppSpacing.lg,
-        ),
-        child: Text(
-          title.toUpperCase(),
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color:
-                    Theme.of(context).extension<AppTextColors>()!.textTertiary,
-              ),
-        ),
-      );
+    padding: const EdgeInsets.only(top: AppSpacing.xxl, bottom: AppSpacing.lg),
+    child: Text(
+      title.toUpperCase(),
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: 24.0,
-        left: 24.0,
-        right: 24.0,
-      ),
+      padding: const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
       child: Column(
         children: [
           Row(
@@ -111,18 +103,22 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       if (_name.isValid) {
                         if (this.widget.customTheme != null) {
                           CustomTheme.copyFrom(
-                              _customTheme, this.widget.customTheme!);
+                            _customTheme,
+                            this.widget.customTheme!,
+                          );
                           this.widget.customTheme!.name = _name.text.trim();
-                          this.widget.customTheme!.description =
-                              _description.text.trim();
+                          this.widget.customTheme!.description = _description
+                              .text
+                              .trim();
                           this.widget.customTheme!.dateUpdatedMS =
                               DateTime.now().millisecondsSinceEpoch;
                           this.widget.customTheme!.save();
                         } else {
                           _customTheme.name = _name.text.trim();
                           _customTheme.description = _description.text.trim();
-                          Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-                              .add(_customTheme);
+                          Hive.box<CustomTheme>(
+                            HiveKeys.CustomTheme.name,
+                          ).add(_customTheme);
                         }
                         Navigator.of(context).pop();
                       }
@@ -134,29 +130,31 @@ class _AddEditThemeState extends State<AddEditTheme> {
                     text: 'Delete',
                     onPressed: this.widget.customTheme != null
                         ? () => ModalHandler.showBaseDialog(
-                              context: context,
-                              dialogWidget: ConfirmationDialog(
-                                title: 'Delete Theme',
-                                isYesDestructive: true,
-                                body:
-                                    'Are you sure you want to delete this custom theme? This action can\'t be undone!',
-                                onOk: (_) {
-                                  Box settingsBox =
-                                      Hive.box(HiveKeys.Settings.name);
-                                  if (settingsBox.get(
-                                          SettingsKeys
-                                              .ActiveCustomThemeUUID.name,
-                                          defaultValue: '') ==
-                                      this.widget.customTheme!.uuid) {
-                                    settingsBox.put(
-                                        SettingsKeys.ActiveCustomThemeUUID.name,
-                                        '');
-                                  }
-                                  this.widget.customTheme!.delete();
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            )
+                            context: context,
+                            dialogWidget: ConfirmationDialog(
+                              title: 'Delete Theme',
+                              isYesDestructive: true,
+                              body:
+                                  'Are you sure you want to delete this custom theme? This action can\'t be undone!',
+                              onOk: (_) {
+                                Box settingsBox = Hive.box(
+                                  HiveKeys.Settings.name,
+                                );
+                                if (settingsBox.get(
+                                      SettingsKeys.ActiveCustomThemeUUID.name,
+                                      defaultValue: '',
+                                    ) ==
+                                    this.widget.customTheme!.uuid) {
+                                  settingsBox.put(
+                                    SettingsKeys.ActiveCustomThemeUUID.name,
+                                    '',
+                                  );
+                                }
+                                this.widget.customTheme!.delete();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          )
                         : null,
                   ),
                 ],
@@ -195,7 +193,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                               'If this theme is intended to be a light theme, this option should be checked so text / system UI correctly adapts',
                           active: _customTheme.useLightBrightness,
                           onActiveChanged: (active) => setState(
-                              () => _customTheme.useLightBrightness = active),
+                            () => _customTheme.useLightBrightness = active,
+                          ),
                         ),
                       ],
                     ),
@@ -209,7 +208,8 @@ class _AddEditThemeState extends State<AddEditTheme> {
                         _sectionHeader('Load From'),
                         ThemeLoader(
                           onLoadTheme: (theme) => setState(
-                              () => CustomTheme.copyFrom(theme, _customTheme)),
+                            () => CustomTheme.copyFrom(theme, _customTheme),
+                          ),
                         ),
                       ],
                     ),
@@ -226,8 +226,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           onReset: () =>
                               setState(() => _customTheme.customLogo = null),
                           onSelectLogo: (imageBytes) => setState(
-                            () => _customTheme.customLogo =
-                                base64Encode(imageBytes),
+                            () => _customTheme.customLogo = base64Encode(
+                              imageBytes,
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
@@ -237,9 +238,11 @@ class _AddEditThemeState extends State<AddEditTheme> {
                               'If you want to have a specific background color for your logo instead of the app bar color, you can customise it here',
                           colorHex: _customTheme.logoAppBarColorHex,
                           onReset: () => setState(
-                              () => _customTheme.logoAppBarColorHex = null),
+                            () => _customTheme.logoAppBarColorHex = null,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.logoAppBarColorHex = colorHex),
+                            () => _customTheme.logoAppBarColorHex = colorHex,
+                          ),
                         ),
                       ],
                     ),
@@ -256,10 +259,13 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           description:
                               'Most UI elements are inside Cards so this is kinda the primary color of the app',
                           colorHex: _customTheme.cardColorHex,
-                          onReset: () => setState(() => _customTheme
-                              .cardColorHex = _initialTheme.cardColorHex),
+                          onReset: () => setState(
+                            () => _customTheme.cardColorHex =
+                                _initialTheme.cardColorHex,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.cardColorHex = colorHex),
+                            () => _customTheme.cardColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
@@ -268,22 +274,28 @@ class _AddEditThemeState extends State<AddEditTheme> {
                               'You can set an outline color for the card elements used throughout the app to give them an extra touch',
                           colorHex: _customTheme.cardBorderColorHex,
                           onReset: () => setState(
-                              () => _customTheme.cardBorderColorHex = null),
+                            () => _customTheme.cardBorderColorHex = null,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.cardBorderColorHex = colorHex),
+                            () => _customTheme.cardBorderColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
                           title: 'Divider Color',
                           description:
                               'To separate elements, I mainly used so called Dividers which are basically thin lines. You can even change the color of those',
-                          colorHex: _customTheme.dividerColorHex ??
+                          colorHex:
+                              _customTheme.dividerColorHex ??
                               Theme.of(context).dividerColor.toHex(),
-                          onReset: () => setState(() =>
-                              _customTheme.dividerColorHex =
-                                  StylingHelper.light_divider_color.toHex()),
+                          onReset: () => setState(
+                            () => _customTheme.dividerColorHex = StylingHelper
+                                .light_divider_color
+                                .toHex(),
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.dividerColorHex = colorHex),
+                            () => _customTheme.dividerColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
@@ -291,10 +303,13 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           description:
                               'The top UI element which contains the title of the current view, back navigation etc.',
                           colorHex: _customTheme.appBarColorHex,
-                          onReset: () => setState(() => _customTheme
-                              .appBarColorHex = _initialTheme.appBarColorHex),
+                          onReset: () => setState(
+                            () => _customTheme.appBarColorHex =
+                                _initialTheme.appBarColorHex,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.appBarColorHex = colorHex),
+                            () => _customTheme.appBarColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
@@ -302,10 +317,13 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           description:
                               'The bottom navigation bar containing the tabs for this app',
                           colorHex: _customTheme.tabBarColorHex,
-                          onReset: () => setState(() => _customTheme
-                              .tabBarColorHex = _initialTheme.tabBarColorHex),
+                          onReset: () => setState(
+                            () => _customTheme.tabBarColorHex =
+                                _initialTheme.tabBarColorHex,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.tabBarColorHex = colorHex),
+                            () => _customTheme.tabBarColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
@@ -313,11 +331,13 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           description:
                               'Active state is being displayed with this color like active scene, active tab, etc.',
                           colorHex: _customTheme.highlightColorHex,
-                          onReset: () => setState(() =>
-                              _customTheme.highlightColorHex =
-                                  _initialTheme.highlightColorHex),
+                          onReset: () => setState(
+                            () => _customTheme.highlightColorHex =
+                                _initialTheme.highlightColorHex,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.highlightColorHex = colorHex),
+                            () => _customTheme.highlightColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
@@ -325,10 +345,13 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           description:
                               'Is being used by action / toggle elements like Switch, Button, etc.',
                           colorHex: _customTheme.accentColorHex,
-                          onReset: () => setState(() => _customTheme
-                              .accentColorHex = _initialTheme.accentColorHex),
+                          onReset: () => setState(
+                            () => _customTheme.accentColorHex =
+                                _initialTheme.accentColorHex,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.accentColorHex = colorHex),
+                            () => _customTheme.accentColorHex = colorHex,
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         ThemeRow(
@@ -336,18 +359,21 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           description:
                               'Color for the typical background which behind all the UI elements',
                           colorHex: _customTheme.backgroundColorHex,
-                          onReset: () => setState(() =>
-                              _customTheme.backgroundColorHex =
-                                  _initialTheme.backgroundColorHex),
+                          onReset: () => setState(
+                            () => _customTheme.backgroundColorHex =
+                                _initialTheme.backgroundColorHex,
+                          ),
                           onSave: (colorHex) => setState(
-                              () => _customTheme.backgroundColorHex = colorHex),
+                            () => _customTheme.backgroundColorHex = colorHex,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   SizedBox(
-                      height:
-                          MediaQuery.paddingOf(context).bottom + AppSpacing.xxl),
+                    height:
+                        MediaQuery.paddingOf(context).bottom + AppSpacing.xxl,
+                  ),
                 ],
               ),
             ),

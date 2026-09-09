@@ -5,6 +5,7 @@ class FilterDefaultSettingsResponse extends BaseBatchResponse {
   FilterDefaultSettingsResponse(super.json);
 
   Iterable<GetSourceFilterDefaultSettingsResponse> get defaultSettings =>
-      this.responses.map((response) =>
-          GetSourceFilterDefaultSettingsResponse(response.jsonRAW));
+      this.responses.map(
+        (response) => GetSourceFilterDefaultSettingsResponse(response.jsonRAW),
+      );
 }

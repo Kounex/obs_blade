@@ -17,57 +17,55 @@ YouTubeChatMessage ytMessage(
   String id, {
   String author = 'chan-1',
   String? text,
-}) =>
-    YouTubeChatMessage(
-      id: id,
-      snippet: YouTubeChatMessageSnippet(
-        type: YouTubeChatMessageType.textMessage,
-        publishedAt: DateTime.utc(2026, 9, 3),
-        authorChannelId: author,
-        displayMessage: text ?? 'text $id',
-        textMessageDetails:
-            YouTubeTextMessageDetails(messageText: text ?? 'text $id'),
-      ),
-      authorDetails: YouTubeChatAuthorDetails(
-        channelId: author,
-        displayName: 'User $author',
-      ),
-    );
+}) => YouTubeChatMessage(
+  id: id,
+  snippet: YouTubeChatMessageSnippet(
+    type: YouTubeChatMessageType.textMessage,
+    publishedAt: DateTime.utc(2026, 9, 3),
+    authorChannelId: author,
+    displayMessage: text ?? 'text $id',
+    textMessageDetails: YouTubeTextMessageDetails(
+      messageText: text ?? 'text $id',
+    ),
+  ),
+  authorDetails: YouTubeChatAuthorDetails(
+    channelId: author,
+    displayName: 'User $author',
+  ),
+);
 
 YouTubeChatMessage ytTombstone(String id) => YouTubeChatMessage(
-      id: id,
-      snippet: YouTubeChatMessageSnippet(
-        type: YouTubeChatMessageType.tombstone,
-        publishedAt: DateTime.utc(2026, 9, 3),
-      ),
-    );
+  id: id,
+  snippet: YouTubeChatMessageSnippet(
+    type: YouTubeChatMessageType.tombstone,
+    publishedAt: DateTime.utc(2026, 9, 3),
+  ),
+);
 
 YouTubeChatMessage ytUserBanned(String bannedChannelId) => YouTubeChatMessage(
-      id: 'ban-$bannedChannelId',
-      snippet: YouTubeChatMessageSnippet(
-        type: YouTubeChatMessageType.userBanned,
-        publishedAt: DateTime.utc(2026, 9, 3),
-        authorChannelId: 'mod-1',
-        userBannedDetails: YouTubeUserBannedDetails(
-          banType: 'permanent',
-          bannedUserDetails:
-              YouTubeBannedUserDetails(channelId: bannedChannelId),
-        ),
-      ),
-    );
+  id: 'ban-$bannedChannelId',
+  snippet: YouTubeChatMessageSnippet(
+    type: YouTubeChatMessageType.userBanned,
+    publishedAt: DateTime.utc(2026, 9, 3),
+    authorChannelId: 'mod-1',
+    userBannedDetails: YouTubeUserBannedDetails(
+      banType: 'permanent',
+      bannedUserDetails: YouTubeBannedUserDetails(channelId: bannedChannelId),
+    ),
+  ),
+);
 
 YouTubeLiveChatPage page(
   List<YouTubeChatMessage> messages, {
   String? nextPageToken,
   int pollingIntervalMillis = 1000,
   DateTime? offlineAt,
-}) =>
-    YouTubeLiveChatPage(
-      messages: messages,
-      nextPageToken: nextPageToken,
-      pollingIntervalMillis: pollingIntervalMillis,
-      offlineAt: offlineAt,
-    );
+}) => YouTubeLiveChatPage(
+  messages: messages,
+  nextPageToken: nextPageToken,
+  pollingIntervalMillis: pollingIntervalMillis,
+  offlineAt: offlineAt,
+);
 
 /// Waits until [condition] holds (the poll loop progresses on the event
 /// loop — instant injected sleep) or ~1s passes.
@@ -90,13 +88,13 @@ void main() {
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
   YouTubeChatStore newStore() => YouTubeChatStore(
-        authService: authService,
-        chatService: chatService,
-        sleep: (duration) async {
-          sleepLog.add(duration);
-        },
-        isProResolver: () => true,
-      );
+    authService: authService,
+    chatService: chatService,
+    sleep: (duration) async {
+      sleepLog.add(duration);
+    },
+    isProResolver: () => true,
+  );
 
   /// Configured state: API key + two channels ('A' → video-a-001,
   /// 'B' → video-b-002).
@@ -109,16 +107,15 @@ void main() {
   }
 
   Future<void> seedAuth({List<String>? scopes}) => authBox().put(
-        YouTubeAuth.kBoxKey,
-        YouTubeAuth(
-          accessToken: 'access-1',
-          refreshToken: 'refresh-1',
-          expiresAtMs:
-              DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
-          scopes: scopes ?? kYouTubeChatScopes,
-          channelTitle: 'My Channel',
-        ),
-      );
+    YouTubeAuth.kBoxKey,
+    YouTubeAuth(
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+      scopes: scopes ?? kYouTubeChatScopes,
+      channelTitle: 'My Channel',
+    ),
+  );
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('youtube_store_test');
@@ -141,17 +138,19 @@ void main() {
   });
 
   group('init', () {
-    test('unconfigured without an API key — even with a stored session',
-        () async {
-      await seedAuth();
+    test(
+      'unconfigured without an API key — even with a stored session',
+      () async {
+        await seedAuth();
 
-      await store.init();
+        await store.init();
 
-      expect(store.authState, YouTubeAuthState.unconfigured);
-      expect(store.isConfigured, isFalse);
-      expect(store.canRead, isFalse);
-      expect(chatService.resolveCalls, 0);
-    });
+        expect(store.authState, YouTubeAuthState.unconfigured);
+        expect(store.isConfigured, isFalse);
+        expect(store.canRead, isFalse);
+        expect(chatService.resolveCalls, 0);
+      },
+    );
 
     test('configured without a stored session → signed out', () async {
       configure();
@@ -196,8 +195,7 @@ void main() {
   });
 
   group('channels from settings', () {
-    test('parses ids out of raw values, skips unparseable entries',
-        () async {
+    test('parses ids out of raw values, skips unparseable entries', () async {
       configure();
       settingsBox().put(SettingsKeys.YouTubeUsernames.name, <String, String>{
         'A': 'video-a-001',
@@ -208,14 +206,15 @@ void main() {
       await store.init();
 
       expect(store.channels.map((c) => c.label), ['A', 'B']);
-      expect(store.channels.map((c) => c.videoId),
-          ['video-a-001', 'video-b-002']);
+      expect(store.channels.map((c) => c.videoId), [
+        'video-a-001',
+        'video-b-002',
+      ]);
     });
   });
 
   group('polling', () {
-    test('connectChat refuses to poll without the Pro entitlement',
-        () async {
+    test('connectChat refuses to poll without the Pro entitlement', () async {
       configure();
       store.dispose();
       store = YouTubeChatStore(
@@ -233,8 +232,7 @@ void main() {
 
       expect(chatService.resolveCalls, 0);
       expect(chatService.listCalls, 0);
-      expect(
-          store.chatConnection, isNot(YouTubeChatConnectionState.connected));
+      expect(store.chatConnection, isNot(YouTubeChatConnectionState.connected));
     });
 
     test('buffers messages across multiple poll pages, threading the page '
@@ -261,8 +259,9 @@ void main() {
 
       await store.init();
       await until(() => chatService.resolveCalls >= 1);
-      await until(() =>
-          store.chatConnection == YouTubeChatConnectionState.offline);
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.offline,
+      );
 
       expect(store.chatConnection, YouTubeChatConnectionState.offline);
       expect(store.chatError, isNull);
@@ -272,12 +271,14 @@ void main() {
     test('chatEnded exception → offline, loop stops', () async {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
-      chatService.pollResponses
-          .add(const YouTubeChatEndedException('Listing chat failed'));
+      chatService.pollResponses.add(
+        const YouTubeChatEndedException('Listing chat failed'),
+      );
 
       await store.init();
-      await until(() =>
-          store.chatConnection == YouTubeChatConnectionState.offline);
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.offline,
+      );
 
       expect(store.chatConnection, YouTubeChatConnectionState.offline);
       expect(store.chatError, isNull);
@@ -287,8 +288,9 @@ void main() {
     test('quota exceeded → error + quota flag, polling stops', () async {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
-      chatService.pollResponses
-          .add(const YouTubeQuotaExceededException('Listing chat failed'));
+      chatService.pollResponses.add(
+        const YouTubeQuotaExceededException('Listing chat failed'),
+      );
 
       await store.init();
       await until(() => store.chatQuotaExhausted);
@@ -319,8 +321,7 @@ void main() {
       // not netted); success resets it and the page's own 2s interval
       // drives the next wait, net of the elapsed request time.
       expect(sleepLog[0], const Duration(seconds: 10));
-      expect(sleepLog[1].inMilliseconds,
-          inInclusiveRange(1, 2000));
+      expect(sleepLog[1].inMilliseconds, inInclusiveRange(1, 2000));
     });
 
     test('repeated rate limiting caps the backoff at 60s', () async {
@@ -337,15 +338,12 @@ void main() {
       await store.init();
       await until(() => chatService.listCalls >= 6);
 
-      expect(
-        sleepLog.take(4),
-        [
-          const Duration(seconds: 10),
-          const Duration(seconds: 20),
-          const Duration(seconds: 40),
-          const Duration(seconds: 60),
-        ],
-      );
+      expect(sleepLog.take(4), [
+        const Duration(seconds: 10),
+        const Duration(seconds: 20),
+        const Duration(seconds: 40),
+        const Duration(seconds: 60),
+      ]);
       // The post-success wait is the page's 1s interval net of the
       // elapsed request time.
       expect(sleepLog[4].inMilliseconds, inInclusiveRange(0, 1000));
@@ -359,8 +357,9 @@ void main() {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
       chatService.liveChatIds['video-b-002'] = 'chat-b';
-      chatService.pollResponses
-          .add(page([ytMessage('a1')], nextPageToken: 'ta'));
+      chatService.pollResponses.add(
+        page([ytMessage('a1')], nextPageToken: 'ta'),
+      );
 
       await store.init();
       // A consumes page 1, then parks (call 2 threads token 'ta').
@@ -403,8 +402,7 @@ void main() {
 
     test('a fresh store restores the persisted selection on init', () async {
       configure();
-      settingsBox()
-          .put(SettingsKeys.SelectedYouTubeNativeChannelId.name, 'B');
+      settingsBox().put(SettingsKeys.SelectedYouTubeNativeChannelId.name, 'B');
       chatService.liveChatIds['video-b-002'] = 'chat-b';
 
       await store.init();
@@ -421,42 +419,48 @@ void main() {
       chatService.pollResponses.add(page(const []));
 
       await store.init();
-      await until(() =>
-          store.chatConnection == YouTubeChatConnectionState.connected);
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
 
       expect(await store.sendChatMessage('hello'), isFalse);
       expect(chatService.insertCalls, 0);
     });
 
-    test('signed in + connected → inserts and appends optimistically',
-        () async {
-      configure();
-      await seedAuth();
-      chatService.liveChatIds['video-a-001'] = 'chat-a';
-      chatService.pollResponses.add(page(const []));
+    test(
+      'signed in + connected → inserts and appends optimistically',
+      () async {
+        configure();
+        await seedAuth();
+        chatService.liveChatIds['video-a-001'] = 'chat-a';
+        chatService.pollResponses.add(page(const []));
 
-      await store.init();
-      await until(() =>
-          store.chatConnection == YouTubeChatConnectionState.connected);
+        await store.init();
+        await until(
+          () => store.chatConnection == YouTubeChatConnectionState.connected,
+        );
 
-      expect(await store.sendChatMessage('hello'), isTrue);
-      expect(chatService.insertCalls, 1);
-      expect(chatService.lastInsertMessage, 'hello');
-      expect(store.messages.last.displayText, 'hello');
-      expect(store.sendChatError, isNull);
-    });
+        expect(await store.sendChatMessage('hello'), isTrue);
+        expect(chatService.insertCalls, 1);
+        expect(chatService.lastInsertMessage, 'hello');
+        expect(store.messages.last.displayText, 'hello');
+        expect(store.sendChatError, isNull);
+      },
+    );
 
     test('API failure surfaces in sendChatError', () async {
       configure();
       await seedAuth();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
       chatService.pollResponses.add(page(const []));
-      chatService.insertThrows =
-          const YouTubeForbiddenException('Sending chat message failed (403)');
+      chatService.insertThrows = const YouTubeForbiddenException(
+        'Sending chat message failed (403)',
+      );
 
       await store.init();
-      await until(() =>
-          store.chatConnection == YouTubeChatConnectionState.connected);
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
 
       expect(await store.sendChatMessage('hello'), isFalse);
       expect(store.sendChatError, contains('403'));
@@ -472,32 +476,37 @@ void main() {
       await until(() => store.messages.any((m) => m.id == message.id));
     }
 
-    test('tombstone marks a buffered message; unknown ids are dropped',
-        () async {
-      configure();
-      await connectWith(ytMessage('m1'));
+    test(
+      'tombstone marks a buffered message; unknown ids are dropped',
+      () async {
+        configure();
+        await connectWith(ytMessage('m1'));
 
-      // Positive before: present, not tombstoned.
-      expect(store.messages.single.id, 'm1');
-      expect(store.messages.single.isTombstoned, isFalse);
+        // Positive before: present, not tombstoned.
+        expect(store.messages.single.id, 'm1');
+        expect(store.messages.single.isTombstoned, isFalse);
 
-      chatService.pushPollResponse(
-          page([ytTombstone('m1'), ytTombstone('ghost')]));
-      await until(() => store.messages.single.isTombstoned);
+        chatService.pushPollResponse(
+          page([ytTombstone('m1'), ytTombstone('ghost')]),
+        );
+        await until(() => store.messages.single.isTombstoned);
 
-      // Negative after: tombstoned, still present, ghost never appended.
-      expect(store.messages.single.id, 'm1');
-      expect(store.messages.single.isTombstoned, isTrue);
-    });
+        // Negative after: tombstoned, still present, ghost never appended.
+        expect(store.messages.single.id, 'm1');
+        expect(store.messages.single.isTombstoned, isTrue);
+      },
+    );
 
     test('userBanned purges only that author’s messages', () async {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
-      chatService.pollResponses.add(page([
-        ytMessage('m1', author: 'chan-1'),
-        ytMessage('m2', author: 'chan-2'),
-        ytMessage('m3', author: 'chan-1'),
-      ]));
+      chatService.pollResponses.add(
+        page([
+          ytMessage('m1', author: 'chan-1'),
+          ytMessage('m2', author: 'chan-2'),
+          ytMessage('m3', author: 'chan-1'),
+        ]),
+      );
       await store.init();
       await until(() => store.messages.length == 3);
 
@@ -506,56 +515,65 @@ void main() {
       chatService.pushPollResponse(page([ytUserBanned('chan-1')]));
       await until(() => store.messages.any((m) => m.isTombstoned));
 
-      expect(store.messages.length, 3,
-          reason: 'the ban event itself is not appended as a row');
+      expect(
+        store.messages.length,
+        3,
+        reason: 'the ban event itself is not appended as a row',
+      );
       expect(store.messages[0].isTombstoned, isTrue);
       expect(store.messages[1].isTombstoned, isFalse);
       expect(store.messages[2].isTombstoned, isTrue);
     });
 
-    test('locally-initiated delete + echoed tombstone does not double-apply',
-        () async {
-      configure();
-      await seedAuth();
-      await connectWith(ytMessage('m1'));
+    test(
+      'locally-initiated delete + echoed tombstone does not double-apply',
+      () async {
+        configure();
+        await seedAuth();
+        await connectWith(ytMessage('m1'));
 
-      expect(await store.deleteMessage('m1'), isTrue);
-      expect(chatService.deletedMessageIds, ['m1']);
-      expect(store.messages.single.isTombstoned, isTrue);
+        expect(await store.deleteMessage('m1'), isTrue);
+        expect(chatService.deletedMessageIds, ['m1']);
+        expect(store.messages.single.isTombstoned, isTrue);
 
-      // The poll echo of our own delete must land as a no-op.
-      final callsBefore = chatService.listCalls;
-      chatService.pushPollResponse(page([ytTombstone('m1')]));
-      await until(() => chatService.listCalls > callsBefore);
+        // The poll echo of our own delete must land as a no-op.
+        final callsBefore = chatService.listCalls;
+        chatService.pushPollResponse(page([ytTombstone('m1')]));
+        await until(() => chatService.listCalls > callsBefore);
 
-      expect(store.messages.single.id, 'm1');
-      expect(store.messages.single.isTombstoned, isTrue);
-    });
+        expect(store.messages.single.id, 'm1');
+        expect(store.messages.single.isTombstoned, isTrue);
+      },
+    );
 
-    test('locally-initiated ban + echoed userBanned does not double-apply',
-        () async {
-      configure();
-      await seedAuth();
-      await connectWith(ytMessage('m1', author: 'chan-1'));
+    test(
+      'locally-initiated ban + echoed userBanned does not double-apply',
+      () async {
+        configure();
+        await seedAuth();
+        await connectWith(ytMessage('m1', author: 'chan-1'));
 
-      expect(await store.banUser('chan-1', durationSeconds: 300), isTrue);
-      expect(chatService.banCalls,
-          [(channelId: 'chan-1', durationSeconds: 300)]);
-      expect(store.messages.single.isTombstoned, isTrue);
+        expect(await store.banUser('chan-1', durationSeconds: 300), isTrue);
+        expect(chatService.banCalls, [
+          (channelId: 'chan-1', durationSeconds: 300),
+        ]);
+        expect(store.messages.single.isTombstoned, isTrue);
 
-      final callsBefore = chatService.listCalls;
-      chatService.pushPollResponse(page([ytUserBanned('chan-1')]));
-      await until(() => chatService.listCalls > callsBefore);
+        final callsBefore = chatService.listCalls;
+        chatService.pushPollResponse(page([ytUserBanned('chan-1')]));
+        await until(() => chatService.listCalls > callsBefore);
 
-      expect(store.messages.single.isTombstoned, isTrue);
-    });
+        expect(store.messages.single.isTombstoned, isTrue);
+      },
+    );
 
     test('delete failure surfaces in moderationError', () async {
       configure();
       await seedAuth();
       await connectWith(ytMessage('m1'));
-      chatService.deleteThrows =
-          const YouTubeForbiddenException('Deleting chat message failed (403)');
+      chatService.deleteThrows = const YouTubeForbiddenException(
+        'Deleting chat message failed (403)',
+      );
 
       expect(await store.deleteMessage('m1'), isFalse);
       expect(store.moderationError, contains('403'));
@@ -573,23 +591,26 @@ void main() {
   });
 
   group('startLogin', () {
-    test('success persists the auth (with channel title) and signs in',
-        () async {
-      configure();
+    test(
+      'success persists the auth (with channel title) and signs in',
+      () async {
+        configure();
 
-      await store.startLogin();
+        await store.startLogin();
 
-      expect(store.authState, YouTubeAuthState.signedIn);
-      final stored = authBox().get(YouTubeAuth.kBoxKey);
-      expect(stored?.accessToken, 'access-1');
-      expect(stored?.channelTitle, 'My Channel');
-      expect(store.pendingUserCode, isNull);
-    });
+        expect(store.authState, YouTubeAuthState.signedIn);
+        final stored = authBox().get(YouTubeAuth.kBoxKey);
+        expect(stored?.accessToken, 'access-1');
+        expect(stored?.channelTitle, 'My Channel');
+        expect(store.pendingUserCode, isNull);
+      },
+    );
 
     test('channel-title fetch failure does not fail the sign-in', () async {
       configure();
-      authService.failChannelTitleWith =
-          const YouTubeAuthException('Fetching the YouTube channel failed (500)');
+      authService.failChannelTitleWith = const YouTubeAuthException(
+        'Fetching the YouTube channel failed (500)',
+      );
 
       await store.startLogin();
 
@@ -631,8 +652,9 @@ void main() {
       configure();
       await seedAuth();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
-      chatService.pollResponses
-          .add(const YouTubeQuotaExceededException('Listing chat failed'));
+      chatService.pollResponses.add(
+        const YouTubeQuotaExceededException('Listing chat failed'),
+      );
       await store.init();
       await until(() => store.chatQuotaExhausted);
       expect(store.chatError, isNotNull);
@@ -649,8 +671,9 @@ void main() {
       configure();
       await seedAuth();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
-      chatService.pollResponses
-          .add(const YouTubeQuotaExceededException('Listing chat failed'));
+      chatService.pollResponses.add(
+        const YouTubeQuotaExceededException('Listing chat failed'),
+      );
       await store.init();
       await until(() => store.chatQuotaExhausted);
       expect(store.chatError, isNotNull);

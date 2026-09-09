@@ -20,14 +20,14 @@ enum ChatType {
 
 extension ChatTypeFunctions on ChatType {
   String get text => const {
-        ChatType.Twitch: 'Twitch',
-        ChatType.YouTube: 'YouTube',
-        ChatType.Owncast: 'Owncast',
-      }[this]!;
+    ChatType.Twitch: 'Twitch',
+    ChatType.YouTube: 'YouTube',
+    ChatType.Owncast: 'Owncast',
+  }[this]!;
 
   IconData get icon => const {
-        ChatType.Twitch: JamIcons.twitch,
-        ChatType.YouTube: JamIcons.youtube,
-        ChatType.Owncast: CustomFlutterIcons.owncast_logo,
-      }[this]!;
+    ChatType.Twitch: JamIcons.twitch,
+    ChatType.YouTube: JamIcons.youtube,
+    ChatType.Owncast: CustomFlutterIcons.owncast_logo,
+  }[this]!;
 }

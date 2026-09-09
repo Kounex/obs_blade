@@ -18,10 +18,8 @@ enum ChatEngine {
 }
 
 extension ChatEngineFunctions on ChatEngine {
-  String get text => const {
-        ChatEngine.webView: 'WebView',
-        ChatEngine.native: 'Native',
-      }[this]!;
+  String get text =>
+      const {ChatEngine.webView: 'WebView', ChatEngine.native: 'Native'}[this]!;
 }
 
 /// The single seam deciding whether a native chat engine exists for

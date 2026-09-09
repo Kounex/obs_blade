@@ -46,13 +46,12 @@ class DescribedBox extends StatelessWidget {
               color: labelBackgroundColor ?? Theme.of(context).cardColor,
               child: Text(
                 this.label!,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall!
-                    .copyWith(fontSize: 10.0),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall!.copyWith(fontSize: 10.0),
               ),
             ),
-          )
+          ),
       ],
     );
   }

@@ -9,9 +9,7 @@ import '../../../stores/views/dashboard.dart';
 import '../../../utils/general_helper.dart';
 
 class ReconnectToast extends StatefulWidget {
-  const ReconnectToast({
-    super.key,
-  });
+  const ReconnectToast({super.key});
 
   @override
   _ReconnectToastState createState() => _ReconnectToastState();
@@ -32,47 +30,60 @@ class _ReconnectToastState extends State<ReconnectToast>
   @override
   void initState() {
     _controllerReconnecting = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
 
     _opacityReconnecting = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-            parent: _controllerReconnecting, curve: Curves.easeOut));
+      CurvedAnimation(parent: _controllerReconnecting, curve: Curves.easeOut),
+    );
 
     _offsetReconnecting =
-        Tween<Offset>(begin: const Offset(0, -0.1), end: const Offset(0, 0))
-            .animate(CurvedAnimation(
-                parent: _controllerReconnecting, curve: Curves.easeOut));
+        Tween<Offset>(
+          begin: const Offset(0, -0.1),
+          end: const Offset(0, 0),
+        ).animate(
+          CurvedAnimation(
+            parent: _controllerReconnecting,
+            curve: Curves.easeOut,
+          ),
+        );
 
     _controllerConnected = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
 
     _opacityConnected = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _controllerConnected, curve: Curves.easeOut));
+      CurvedAnimation(parent: _controllerConnected, curve: Curves.easeOut),
+    );
 
     _offsetConnected =
-        Tween<Offset>(begin: const Offset(0, -0.1), end: const Offset(0, 0))
-            .animate(CurvedAnimation(
-                parent: _controllerConnected, curve: Curves.easeOut));
+        Tween<Offset>(
+          begin: const Offset(0, -0.1),
+          end: const Offset(0, 0),
+        ).animate(
+          CurvedAnimation(parent: _controllerConnected, curve: Curves.easeOut),
+        );
 
     _disposers.add(
-      reaction(
-        (_) => GetIt.instance<DashboardStore>().reconnecting,
-        (bool reconnecting) {
-          GeneralHelper.advLog('RECONNECTING!!!!! - $reconnecting');
-          if (reconnecting && _controllerReconnecting.isDismissed) {
-            _controllerReconnecting.forward();
-          } else if (!reconnecting && !_controllerReconnecting.isDismissed) {
-            _controllerReconnecting.reverse();
-            if (_controllerConnected.isDismissed) {
-              _controllerConnected.forward();
-              Future.delayed(
-                const Duration(seconds: 3),
-                () => _controllerConnected.reverse(),
-              );
-            }
+      reaction((_) => GetIt.instance<DashboardStore>().reconnecting, (
+        bool reconnecting,
+      ) {
+        GeneralHelper.advLog('RECONNECTING!!!!! - $reconnecting');
+        if (reconnecting && _controllerReconnecting.isDismissed) {
+          _controllerReconnecting.forward();
+        } else if (!reconnecting && !_controllerReconnecting.isDismissed) {
+          _controllerReconnecting.reverse();
+          if (_controllerConnected.isDismissed) {
+            _controllerConnected.forward();
+            Future.delayed(
+              const Duration(seconds: 3),
+              () => _controllerConnected.reverse(),
+            );
           }
-        },
-      ),
+        }
+      }),
     );
 
     super.initState();
@@ -119,16 +130,11 @@ class _ReconnectToastState extends State<ReconnectToast>
               paintBorder: true,
               constrained: false,
               borderColor: CupertinoColors.activeGreen.color,
-              child: const BaseResult(
-                text: 'Reconnected!',
-              ),
+              child: const BaseResult(text: 'Reconnected!'),
             ),
             builder: (context, child) => FadeTransition(
               opacity: _opacityConnected,
-              child: SlideTransition(
-                position: _offsetConnected,
-                child: child,
-              ),
+              child: SlideTransition(position: _offsetConnected, child: child),
             ),
           ),
         ],

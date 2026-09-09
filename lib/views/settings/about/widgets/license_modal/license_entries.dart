@@ -41,8 +41,10 @@ class LicenseData {
   /// which is to put the application package first, followed by every other
   /// package in case-insensitive alphabetical order.
   void sortPackages([int Function(String a, String b)? compare]) {
-    packages.sort(compare ??
-        (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    packages.sort(
+      compare ??
+          (String a, String b) => a.toLowerCase().compareTo(b.toLowerCase()),
+    );
   }
 }
 
@@ -66,7 +68,6 @@ class _LicenseEntriesState extends State<LicenseEntries> {
           (LicenseData prev, LicenseEntry license) => prev..addLicense(license),
         )
         .then((LicenseData licenseData) => licenseData..sortPackages())
-
         /// Guard against a never-completing registry stream so the modal
         /// lands on the error state instead of a perpetual spinner
         .timeout(const Duration(seconds: 10));
@@ -74,12 +75,12 @@ class _LicenseEntriesState extends State<LicenseEntries> {
   }
 
   List<LicenseEntry> _getLicensesForPackage(
-      LicenseData licenseData, String packageName) {
+    LicenseData licenseData,
+    String packageName,
+  ) {
     List<LicenseEntry> entries = [];
     for (var licenseIndex in licenseData.packageLicenseBindings[packageName]!) {
-      entries.add(
-        licenseData.licenses.elementAt(licenseIndex),
-      );
+      entries.add(licenseData.licenses.elementAt(licenseIndex));
     }
     return entries;
   }
@@ -107,8 +108,9 @@ class _LicenseEntriesState extends State<LicenseEntries> {
             child: ListView.builder(
               shrinkWrap: true,
               controller: this.widget.scrollController,
-              padding:
-                  EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom,
+              ),
               itemCount: snapshot.data!.packages.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,
@@ -116,9 +118,12 @@ class _LicenseEntriesState extends State<LicenseEntries> {
                   CupertinoModalBottomSheetRoute(
                     expanded: true,
                     builder: (context) => LicenseDetail(
-                        package: snapshot.data!.packages[index],
-                        licenseEntries: _getLicensesForPackage(
-                            snapshot.data!, snapshot.data!.packages[index])),
+                      package: snapshot.data!.packages[index],
+                      licenseEntries: _getLicensesForPackage(
+                        snapshot.data!,
+                        snapshot.data!.packages[index],
+                      ),
+                    ),
                   ),
                 ),
                 title: Text(snapshot.data!.packages[index]),

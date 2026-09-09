@@ -36,11 +36,15 @@ class TagBox extends StatelessWidget {
     Widget text = Text(
       this.label ?? '',
       textAlign: TextAlign.center,
-      style: this.labelStyle ??
+      style:
+          this.labelStyle ??
           TextStyle(
-            color: this.labelColor ??
+            color:
+                this.labelColor ??
                 StylingHelper.surroundingAwareAccent(
-                    context: context, surroundingColor: this.color),
+                  context: context,
+                  surroundingColor: this.color,
+                ),
           ),
     );
 
@@ -50,14 +54,13 @@ class TagBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
         color: this.color,
-        borderRadius: BorderRadius.all(
-          Radius.circular(this.borderRadius),
-        ),
+        borderRadius: BorderRadius.all(Radius.circular(this.borderRadius)),
       ),
       child: SizedBox(
         height: this.height,
         width: this.width,
-        child: this.child ??
+        child:
+            this.child ??
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -65,11 +68,7 @@ class TagBox extends StatelessWidget {
                   this.icon!,
                   const SizedBox(width: 6.0),
                 ],
-                this.expand
-                    ? Expanded(
-                        child: text,
-                      )
-                    : text,
+                this.expand ? Expanded(child: text) : text,
               ],
             ),
       ),

@@ -70,8 +70,19 @@ void main() {
     store = TwitchChatStore(
       authService: authService,
       isProResolver: () => true,
-      eventSubFactory: (_, __, ___, ____, _____, ______, _______, ________, _________, __________) =>
-          eventSubService,
+      eventSubFactory:
+          (
+            _,
+            __,
+            ___,
+            ____,
+            _____,
+            ______,
+            _______,
+            ________,
+            _________,
+            __________,
+          ) => eventSubService,
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       moderationService: moderationService,
@@ -82,9 +93,11 @@ void main() {
     store.chatConnection = TwitchChatConnectionState.live;
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
     GetIt.instance.registerSingleton<TwitchBadgeStore>(
-        TwitchBadgeStore(service: FakeTwitchBadgeService()));
+      TwitchBadgeStore(service: FakeTwitchBadgeService()),
+    );
     GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(
-        ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()));
+      ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+    );
   });
 
   tearDown(() async {
@@ -105,8 +118,9 @@ void main() {
     auth.scopes = [...auth.scopes, ...extra];
   }
 
-  testWidgets('renders the request and ban rows for the own channel',
-      (tester) async {
+  testWidgets('renders the request and ban rows for the own channel', (
+    tester,
+  ) async {
     await openSheet(tester);
 
     expect(find.text('Unban requests'), findsOneWidget);
@@ -119,8 +133,9 @@ void main() {
     expect(moderationService.unbanRequestsCalls, 1);
   });
 
-  testWidgets('Unban confirms, then drops the user from both sections',
-      (tester) async {
+  testWidgets('Unban confirms, then drops the user from both sections', (
+    tester,
+  ) async {
     await openSheet(tester);
 
     await tester.tap(find.text('Unban').first);
@@ -139,8 +154,9 @@ void main() {
     expect(find.text('No banned users'), findsOneWidget);
   });
 
-  testWidgets('a failed unban keeps the rows and shows a snackbar',
-      (tester) async {
+  testWidgets('a failed unban keeps the rows and shows a snackbar', (
+    tester,
+  ) async {
     moderationService.unbanThrows = Exception('boom');
 
     await openSheet(tester);
@@ -158,9 +174,11 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('a moderated channel hides the ban list with a note',
-      (tester) async {
+  testWidgets('a moderated channel hides the ban list with a note', (
+    tester,
+  ) async {
     store.moderatedChannelIds.add('chan-mod');
+
     /// selectChannel persists the selection to Hive — real I/O that never
     /// completes inside testWidgets' fake-async zone; runAsync escapes it.
     await tester.runAsync(() => store.selectChannel('chan-mod'));
@@ -252,8 +270,9 @@ void main() {
     expect(find.text('Permanent ban'), findsOneWidget);
   });
 
-  testWidgets('a failed resolve keeps the request and shows a snackbar',
-      (tester) async {
+  testWidgets('a failed resolve keeps the request and shows a snackbar', (
+    tester,
+  ) async {
     grantScopes(const ['moderator:manage:unban_requests']);
     moderationService.resolveUnbanRequestThrows = Exception('boom');
 

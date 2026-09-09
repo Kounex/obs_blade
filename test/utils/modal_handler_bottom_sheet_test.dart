@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
 void main() {
-  testWidgets('barrier tap dismisses when Material wraps only the sheet',
-      (tester) async {
+  testWidgets('barrier tap dismisses when Material wraps only the sheet', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(

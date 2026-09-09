@@ -22,10 +22,7 @@ class CleanListTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                this.title,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+              Text(this.title, style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 this.description,

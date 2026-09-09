@@ -38,9 +38,7 @@ class ActiveRouteObserver extends NavigatorObserver {
 }
 
 class TabBase extends StatefulWidget {
-  const TabBase({
-    super.key,
-  });
+  const TabBase({super.key});
 
   @override
   _TabBaseState createState() => _TabBaseState();
@@ -62,8 +60,9 @@ class _TabBaseState extends State<TabBase> {
     TabsStore tabsStore = GetIt.instance<TabsStore>();
 
     for (var tab in Tabs.values) {
-      tabsStore.navigatorKeys[tab] =
-          GlobalKey<NavigatorState>(debugLabel: tab.name);
+      tabsStore.navigatorKeys[tab] = GlobalKey<NavigatorState>(
+        debugLabel: tab.name,
+      );
       _heroControllers[tab] = HeroController(createRectTween: _createRectTween);
       _tabScrollController[tab] = ScrollController();
 
@@ -101,36 +100,38 @@ class _TabBaseState extends State<TabBase> {
     TabsStore tabsStore = GetIt.instance<TabsStore>();
 
     return Scaffold(
-      body: Observer(builder: (context) {
-        return PopScope(
-          canPop: false,
-          onPopInvoked: (didPop) {
-            if (tabsStore.keyForCurrentTab().currentState!.canPop()) {
-              tabsStore.keyForCurrentTab().currentState!.pop();
-            } else if (tabsStore.activeTab != Tabs.Home) {
-              tabsStore.setActiveTab(Tabs.Home);
-            }
-          },
-          child: _TabSwitchTransition(
-            activeTab: tabsStore.activeTab,
-            child: IndexedStack(
-              index: tabsStore.activeTab.index,
-              children: _tabViews
-                  .map(
-                    (tab, tabView) => MapEntry(
-                      tab,
-                      Offstage(
-                        offstage: tab != tabsStore.activeTab,
-                        child: tabView,
+      body: Observer(
+        builder: (context) {
+          return PopScope(
+            canPop: false,
+            onPopInvoked: (didPop) {
+              if (tabsStore.keyForCurrentTab().currentState!.canPop()) {
+                tabsStore.keyForCurrentTab().currentState!.pop();
+              } else if (tabsStore.activeTab != Tabs.Home) {
+                tabsStore.setActiveTab(Tabs.Home);
+              }
+            },
+            child: _TabSwitchTransition(
+              activeTab: tabsStore.activeTab,
+              child: IndexedStack(
+                index: tabsStore.activeTab.index,
+                children: _tabViews
+                    .map(
+                      (tab, tabView) => MapEntry(
+                        tab,
+                        Offstage(
+                          offstage: tab != tabsStore.activeTab,
+                          child: tabView,
+                        ),
                       ),
-                    ),
-                  )
-                  .values
-                  .toList(),
+                    )
+                    .values
+                    .toList(),
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
       extendBody: true,
       bottomNavigationBar: Observer(
         builder: (context) => GlassBar(
@@ -143,20 +144,22 @@ class _TabBaseState extends State<TabBase> {
             /// hairline border
             backgroundColor: Colors.transparent,
             border: const Border(),
+
             /// Grammar rule 2: active tab ink = accent - accent as text/
             /// glyph spends the accentText variant (token-delta §2.3)
-            activeColor:
-                Theme.of(context).extension<AppTextColors>()!.accentText,
-            inactiveColor:
-                Theme.of(context).extension<AppTextColors>()!.textTertiary,
+            activeColor: Theme.of(
+              context,
+            ).extension<AppTextColors>()!.accentText,
+            inactiveColor: Theme.of(
+              context,
+            ).extension<AppTextColors>()!.textTertiary,
             currentIndex: tabsStore.activeTab.index,
             iconSize: 24.0,
             onTap: (index) {
               Tabs tappedTab = Tabs.values[index];
               if (tabsStore.activeTab == tappedTab) {
                 tabsStore.setPerformTabClickAction(true);
-                if (tabsStore
-                    .navigatorKeys[tappedTab]!.currentState!
+                if (tabsStore.navigatorKeys[tappedTab]!.currentState!
                     .canPop()) {
                   tabsStore.navigatorKeys[tappedTab]!.currentState!.pop();
                 } else if (_tabScrollController[tappedTab]!.hasClients &&
@@ -200,10 +203,7 @@ class _TabSwitchTransition extends StatefulWidget {
   final Tabs activeTab;
   final Widget child;
 
-  const _TabSwitchTransition({
-    required this.activeTab,
-    required this.child,
-  });
+  const _TabSwitchTransition({required this.activeTab, required this.child});
 
   @override
   State<_TabSwitchTransition> createState() => _TabSwitchTransitionState();
@@ -252,10 +252,7 @@ class _TabSwitchTransitionState extends State<_TabSwitchTransition>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _opacity,
-      child: ScaleTransition(
-        scale: _scale,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scale, child: widget.child),
     );
   }
 }

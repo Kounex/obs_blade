@@ -22,19 +22,18 @@ import 'mod_action_sheet.dart';
 Future<void> showYouTubeModActionSheet(
   BuildContext context,
   YouTubeChatMessage message,
-) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
-      builder: (_) => YouTubeModActionSheet(
-        message: message,
-        onFailure: (message) => ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(message))),
-      ),
-    );
+) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (_) => YouTubeModActionSheet(
+    message: message,
+    onFailure: (message) => ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message))),
+  ),
+);
 
 /// Timeout presets (label → seconds) — YouTube bans take a duration in
 /// seconds; these cover the common moderator ladder.
@@ -75,10 +74,7 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
 
   YouTubeChatStore get _store => GetIt.instance<YouTubeChatStore>();
 
-  Future<void> _run(
-    Future<bool> Function() action,
-    String failureText,
-  ) async {
+  Future<void> _run(Future<bool> Function() action, String failureText) async {
     if (this._running) return;
     this.setState(() => this._running = true);
     final ok = await action();
@@ -145,9 +141,9 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
                                 'chat until it expires.',
                             okText: 'Timeout',
                             action: () => this._store.banUser(
-                                  this.widget.message.authorChannelId ?? '',
-                                  durationSeconds: preset.$2,
-                                ),
+                              this.widget.message.authorChannelId ?? '',
+                              durationSeconds: preset.$2,
+                            ),
                             failureText: 'Could not time out the user',
                           ),
                         ),
@@ -193,8 +189,8 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
                             'able to chat until unbanned.',
                         okText: 'Ban',
                         action: () => this._store.banUser(
-                              this.widget.message.authorChannelId ?? '',
-                            ),
+                          this.widget.message.authorChannelId ?? '',
+                        ),
                         failureText: 'Could not ban the user',
                       ),
                     ),
@@ -229,9 +225,7 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
             child: Icon(CupertinoIcons.chevron_back, size: 20.0),
           ),
         ),
-        Expanded(
-          child: Text(title, style: nativeChatSheetTitleStyle(context)),
-        ),
+        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
       ],
     );
   }
@@ -242,12 +236,11 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
     required String label,
     required VoidCallback onTap,
     bool destructive = false,
-  }) =>
-      chatActionRowCard(
-        context,
-        icon: icon,
-        label: label,
-        destructive: destructive,
-        onTap: this._running ? null : onTap,
-      );
+  }) => chatActionRowCard(
+    context,
+    icon: icon,
+    label: label,
+    destructive: destructive,
+    onTap: this._running ? null : onTap,
+  );
 }

@@ -77,9 +77,9 @@ class ActionBlock extends StatelessWidget {
                 child: Text(
                   this.title!.toUpperCase(),
                   style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                    color: Theme.of(context)
-                        .extension<AppTextColors>()!
-                        .textTertiary,
+                    color: Theme.of(
+                      context,
+                    ).extension<AppTextColors>()!.textTertiary,
                   ),
                 ),
               )

@@ -77,28 +77,31 @@ class CustomTheme extends HiveObject {
     this.useLightBrightness, [
     String? uuid,
     int? dateCreatedMS,
-  ])  : this.uuid = uuid ?? const Uuid().v4(),
-        this.dateCreatedMS =
-            dateCreatedMS ?? DateTime.now().millisecondsSinceEpoch;
+  ]) : this.uuid = uuid ?? const Uuid().v4(),
+       this.dateCreatedMS =
+           dateCreatedMS ?? DateTime.now().millisecondsSinceEpoch;
 
   CustomTheme.basic()
-      : this.uuid = const Uuid().v4(),
-        this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch,
+    : this.uuid = const Uuid().v4(),
+      this.dateCreatedMS = DateTime.now().millisecondsSinceEpoch,
 
-        /// Neutral starting point (token-delta §2.5): new themes begin
-        /// from the liquid defaults - card slot = scaffold (the 5% wash
-        /// composes over it), bars = the liquid glass bar tone - instead
-        /// of the legacy blue-navy #101823
-        this.cardColorHex = StylingHelper.scaffold_color.toHex(),
-        this.appBarColorHex = StylingHelper.liquid_bar_color.toHex(),
-        this.tabBarColorHex = StylingHelper.liquid_bar_color.toHex(),
-        this.accentColorHex = StylingHelper.accent_color.toHex(),
-        this.highlightColorHex = StylingHelper.highlight_color.toHex(),
-        this.backgroundColorHex = StylingHelper.background_color.toHex(),
-        this.useLightBrightness = false;
+      /// Neutral starting point (token-delta §2.5): new themes begin
+      /// from the liquid defaults - card slot = scaffold (the 5% wash
+      /// composes over it), bars = the liquid glass bar tone - instead
+      /// of the legacy blue-navy #101823
+      this.cardColorHex = StylingHelper.scaffold_color.toHex(),
+      this.appBarColorHex = StylingHelper.liquid_bar_color.toHex(),
+      this.tabBarColorHex = StylingHelper.liquid_bar_color.toHex(),
+      this.accentColorHex = StylingHelper.accent_color.toHex(),
+      this.highlightColorHex = StylingHelper.highlight_color.toHex(),
+      this.backgroundColorHex = StylingHelper.background_color.toHex(),
+      this.useLightBrightness = false;
 
-  static void copyFrom(CustomTheme fromTheme, CustomTheme toTheme,
-      {bool full = false}) {
+  static void copyFrom(
+    CustomTheme fromTheme,
+    CustomTheme toTheme, {
+    bool full = false,
+  }) {
     if (full) {
       toTheme.name = fromTheme.name;
       toTheme.description = fromTheme.description;

@@ -40,9 +40,9 @@ class StatsEntryPlaceholder extends StatelessWidget {
                 child: Icon(
                   this.icon,
                   size: 30.0,
-                  color: Theme.of(context)
-                      .extension<AppTextColors>()!
-                      .textSecondary,
+                  color: Theme.of(
+                    context,
+                  ).extension<AppTextColors>()!.textSecondary,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),

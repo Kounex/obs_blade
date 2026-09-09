@@ -19,16 +19,17 @@ class ResultEntry extends StatelessWidget {
 
           /// Callout scale for the explanatory copy - readable line height
           /// for multi-line error states
-          textStyle:
-              Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+          textStyle: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(height: 1.5),
           textSpans: [
             TextSpan(text: this.result),
             TextSpan(
               text: '\n\nPull down to try again!',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
             ),
           ],
         ),

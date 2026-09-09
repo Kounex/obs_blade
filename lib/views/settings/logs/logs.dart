@@ -9,9 +9,7 @@ import 'widgets/log_filter.dart';
 import 'widgets/log_grid/log_list.dart';
 
 class LogsView extends StatelessWidget {
-  const LogsView({
-    super.key,
-  });
+  const LogsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +21,11 @@ class LogsView extends StatelessWidget {
         title: 'Logs',
         showScrollBar: true,
         listViewChildren: const [
-          StaggeredEntrance(scaleFrom: 0.985, index: 0, child: LogExplanation()),
+          StaggeredEntrance(
+            scaleFrom: 0.985,
+            index: 0,
+            child: LogExplanation(),
+          ),
           StaggeredEntrance(scaleFrom: 0.985, index: 1, child: LogFilter()),
           StaggeredEntrance(scaleFrom: 0.985, index: 2, child: LogList()),
         ],

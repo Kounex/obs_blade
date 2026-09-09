@@ -24,18 +24,20 @@ class SwitcherCard extends StatelessWidget {
   Widget build(BuildContext context) {
     HomeStore homeStore = GetIt.instance<HomeStore>();
 
-    final AppTextColors textColors =
-        Theme.of(context).extension<AppTextColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
     final bool darkSurface =
         Theme.of(context).cardColor.computeLuminance() <= 0.2;
 
     /// Connect-method segment (v12 user decision): deliberately NEUTRAL -
     /// no accent edge/underline, selection is carried by the thumb fill +
     /// white selected label alone (iOS-style)
-    final Color segBackground =
-        (darkSurface ? Colors.white : Colors.black).withValues(alpha: 0.06);
-    final Color segThumb =
-        darkSurface ? Colors.white.withValues(alpha: 0.13) : Colors.white;
+    final Color segBackground = (darkSurface ? Colors.white : Colors.black)
+        .withValues(alpha: 0.06);
+    final Color segThumb = darkSurface
+        ? Colors.white.withValues(alpha: 0.13)
+        : Colors.white;
 
     Color segIconColor(ConnectMode mode) => homeStore.connectMode == mode
         ? textColors.textPrimary
@@ -49,13 +51,16 @@ class SwitcherCard extends StatelessWidget {
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.0, 0.25),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: AppMotion.emphasized,
-            )),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.0, 0.25),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: AppMotion.emphasized,
+                  ),
+                ),
             child: child,
           ),
         ),
@@ -109,10 +114,7 @@ class SwitcherCard extends StatelessWidget {
                 parent: animation,
                 curve: AppMotion.emphasized,
               );
-              Widget current = FadeTransition(
-                opacity: curved,
-                child: child,
-              );
+              Widget current = FadeTransition(opacity: curved, child: child);
               if (!AppMotion.reduce(context)) {
                 current = AnimatedBuilder(
                   animation: curved,
@@ -124,9 +126,10 @@ class SwitcherCard extends StatelessWidget {
                 );
                 current = SizeTransition(
                   sizeFactor: animation.drive(
-                    Tween(begin: 0.75, end: 1.0).chain(
-                      CurveTween(curve: AppMotion.emphasized),
-                    ),
+                    Tween(
+                      begin: 0.75,
+                      end: 1.0,
+                    ).chain(CurveTween(curve: AppMotion.emphasized)),
                   ),
                   child: current,
                 );

@@ -60,7 +60,8 @@ class _ConnectFormState extends State<ConnectForm> {
     );
 
     _port = TextEditingController(
-        text: this.widget.connection?.port?.toString() ?? '');
+      text: this.widget.connection?.port?.toString() ?? '',
+    );
     _pw = TextEditingController(text: this.widget.connection?.pw);
   }
 
@@ -68,8 +69,9 @@ class _ConnectFormState extends State<ConnectForm> {
     HomeStore homeStore = GetIt.instance<HomeStore>();
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
-    CustomValidationTextEditingController host =
-        homeStore.domainMode ? _hostDomain : _hostIP;
+    CustomValidationTextEditingController host = homeStore.domainMode
+        ? _hostDomain
+        : _hostIP;
     if (_formKey.currentState!.validate() && host.isValid) {
       FocusScope.of(context).unfocus();
       homeStore.typedInConnection.host = host.text;
@@ -134,8 +136,8 @@ class _ConnectFormState extends State<ConnectForm> {
                           : null,
                       onChangeProtocolScheme: (protocolScheme) =>
                           protocolScheme != null
-                              ? homeStore.setProtocolScheme(protocolScheme)
-                              : null,
+                          ? homeStore.setProtocolScheme(protocolScheme)
+                          : null,
                     );
                   },
                 ),
@@ -151,9 +153,7 @@ class _ConnectFormState extends State<ConnectForm> {
                     readOnly: !this.widget.manual,
                     enabled: this.widget.manual,
                     style: const TextStyle(
-                      fontFeatures: [
-                        FontFeature.tabularFigures(),
-                      ],
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
@@ -184,7 +184,8 @@ class _ConnectFormState extends State<ConnectForm> {
                 obscureText: _obscurePW,
                 obscuringCharacter: '●',
                 decoration: InputDecoration(
-                  errorText: snapshot.hasData &&
+                  errorText:
+                      snapshot.hasData &&
                           snapshot.data! ==
                               WebSocketCloseCode.AuthenticationFailed
                       ? 'Wrong password'
@@ -246,13 +247,14 @@ class _ConnectFormState extends State<ConnectForm> {
                                       width: 20.0,
                                       height: 20.0,
                                       child: CupertinoActivityIndicator(
-                                        color: StylingHelper
-                                            .surroundingAwareAccent(
-                                          surroundingColor: Theme.of(context)
-                                              .buttonTheme
-                                              .colorScheme!
-                                              .secondary,
-                                        ),
+                                        color:
+                                            StylingHelper.surroundingAwareAccent(
+                                              surroundingColor:
+                                                  Theme.of(context)
+                                                      .buttonTheme
+                                                      .colorScheme!
+                                                      .secondary,
+                                            ),
                                       ),
                                     )
                                   : const Text(

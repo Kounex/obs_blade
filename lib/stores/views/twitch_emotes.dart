@@ -20,7 +20,7 @@ abstract class _TwitchEmoteStore with Store {
   int _fetchGeneration = 0;
 
   _TwitchEmoteStore({TwitchEmoteService? service})
-      : _service = service ?? TwitchEmoteService();
+    : _service = service ?? TwitchEmoteService();
 
   /// Emotes owned by the logged-in channel, alpha-sorted by name.
   final ObservableList<TwitchUserEmote> channelEmotes = ObservableList();
@@ -96,7 +96,8 @@ abstract class _TwitchEmoteStore with Store {
   /// First-party emotes are nice-to-have: a failed fetch degrades to no
   /// emotes instead of failing chat connect.
   Future<List<TwitchUserEmote>?> _tryFetch(
-      Future<List<TwitchUserEmote>> future) async {
+    Future<List<TwitchUserEmote>> future,
+  ) async {
     try {
       return await future;
     } catch (e) {

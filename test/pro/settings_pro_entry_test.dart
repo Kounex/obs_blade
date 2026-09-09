@@ -25,35 +25,32 @@ void main() {
   /// route arguments (TabBase does this); the Pro route is a sentinel so
   /// the push is assertable
   Widget wrap() => MaterialApp(
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          cupertinoOverrideTheme: const CupertinoThemeData(),
-          appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-          buttonTheme: ButtonThemeData(
-            colorScheme: ColorScheme.fromSwatch(accentColor: Colors.redAccent),
-          ),
+    theme: ThemeData(
+      brightness: Brightness.dark,
+      cupertinoOverrideTheme: const CupertinoThemeData(),
+      appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+      buttonTheme: ButtonThemeData(
+        colorScheme: ColorScheme.fromSwatch(accentColor: Colors.redAccent),
+      ),
 
-          /// Design-system extensions the migrated widgets force-unwrap
-          /// (registered by `App._getCurrentTheme` in real runs)
-          extensions: const [
-            AppStatusColors.standard,
-            AppTextColors.standard,
-          ],
-        ),
-        onGenerateRoute: (routeSettings) => MaterialPageRoute(
-          builder: (_) => routeSettings.name == SettingsTabRoutingKeys.Pro.route
-              ? const Scaffold(body: Text('PAYWALL'))
-              : const SettingsView(),
-          settings: routeSettings.name == SettingsTabRoutingKeys.Pro.route
-              ? routeSettings
-              : RouteSettings(name: '/', arguments: ScrollController()),
-        ),
-      );
+      /// Design-system extensions the migrated widgets force-unwrap
+      /// (registered by `App._getCurrentTheme` in real runs)
+      extensions: const [AppStatusColors.standard, AppTextColors.standard],
+    ),
+    onGenerateRoute: (routeSettings) => MaterialPageRoute(
+      builder: (_) => routeSettings.name == SettingsTabRoutingKeys.Pro.route
+          ? const Scaffold(body: Text('PAYWALL'))
+          : const SettingsView(),
+      settings: routeSettings.name == SettingsTabRoutingKeys.Pro.route
+          ? routeSettings
+          : RouteSettings(name: '/', arguments: ScrollController()),
+    ),
+  );
 
   Finder proRow() => find.ancestor(
-        of: find.text('OBS Blade Pro'),
-        matching: find.byType(BlockEntry),
-      );
+    of: find.text('OBS Blade Pro'),
+    matching: find.byType(BlockEntry),
+  );
 
   /// The Pro row lives in the Support block, well below the fold
   Future<void> scrollToProRow(WidgetTester tester) async {
@@ -79,8 +76,9 @@ void main() {
     }
   });
 
-  testWidgets('not-Pro: row shows Inactive and opens the paywall',
-      (tester) async {
+  testWidgets('not-Pro: row shows Inactive and opens the paywall', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
@@ -98,8 +96,9 @@ void main() {
     expect(find.text('PAYWALL'), findsOneWidget);
   });
 
-  testWidgets('Pro: row shows Active and opens the paywall (manage state)',
-      (tester) async {
+  testWidgets('Pro: row shows Active and opens the paywall (manage state)', (
+    tester,
+  ) async {
     await tester.runAsync(
       () => settingsBox().put(SettingsKeys.BoughtPro.name, true),
     );

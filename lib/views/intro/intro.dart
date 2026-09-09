@@ -66,37 +66,40 @@ class _IntroViewState extends State<IntroView> {
       body: SizedBox.expand(
         child: Container(
           color: Theme.of(context).colorScheme.background,
-          child: Observer(builder: (context) {
-            return AnimatedSwitcher(
-
-              /// Overlapping crossfade (fadeThrough): the incoming stage
-              /// fades + settles in while the outgoing one fades away -
-              /// no dead black gap between stages
-              duration: AppMotion.slow,
-              switchInCurve: AppMotion.standard,
-              switchOutCurve: AppMotion.exit,
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.98, end: 1.0)
-                        .animate(animation),
-                    child: child,
-                  ),
-                );
-              },
-              child: () {
-                switch (GetIt.instance<IntroStore>().stage) {
-                  case IntroStage.GettingStarted:
-                    return const GettingStarted();
-                  case IntroStage.AppSlides:
-                    return BackToStartWrapper(
-                      child: IntroSlides(manually: this.widget.manually),
-                    );
-                }
-              }(),
-            );
-          }),
+          child: Observer(
+            builder: (context) {
+              return AnimatedSwitcher(
+                /// Overlapping crossfade (fadeThrough): the incoming stage
+                /// fades + settles in while the outgoing one fades away -
+                /// no dead black gap between stages
+                duration: AppMotion.slow,
+                switchInCurve: AppMotion.standard,
+                switchOutCurve: AppMotion.exit,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(
+                      scale: Tween<double>(
+                        begin: 0.98,
+                        end: 1.0,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: () {
+                  switch (GetIt.instance<IntroStore>().stage) {
+                    case IntroStage.GettingStarted:
+                      return const GettingStarted();
+                    case IntroStage.AppSlides:
+                      return BackToStartWrapper(
+                        child: IntroSlides(manually: this.widget.manually),
+                      );
+                  }
+                }(),
+              );
+            },
+          ),
         ),
       ),
     );

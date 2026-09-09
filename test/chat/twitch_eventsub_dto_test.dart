@@ -32,15 +32,13 @@ void main() {
             }
           }
         }
-        ''') as Map<String, Object?>,
+        ''')
+            as Map<String, Object?>,
       );
 
       expect(envelope.metadata.messageType, 'session_welcome');
       expect(envelope.metadata.subscriptionType, isNull);
-      expect(
-        envelope.metadata.messageTimestamp,
-        DateTime.utc(2026, 8, 4, 10),
-      );
+      expect(envelope.metadata.messageTimestamp, DateTime.utc(2026, 8, 4, 10));
       expect((envelope.payload['session'] as Map)['id'], 'session-1');
     });
 
@@ -57,15 +55,13 @@ void main() {
           },
           "payload": { "subscription": {}, "event": {} }
         }
-        ''') as Map<String, Object?>,
+        ''')
+            as Map<String, Object?>,
       );
 
       expect(envelope.metadata.messageType, 'notification');
       expect(envelope.metadata.subscriptionType, 'channel.chat.message');
-      expect(
-        envelope.metadata.messageTimestamp,
-        DateTime.utc(2026, 8, 4, 10),
-      );
+      expect(envelope.metadata.messageTimestamp, DateTime.utc(2026, 8, 4, 10));
     });
   });
 
@@ -91,8 +87,10 @@ void main() {
       expect(emoteFragment.type, 'emote');
       expect(emoteFragment.text, 'Kappa');
       expect(emoteFragment.emote?.id, '25');
-      expect(twitchEmoteUrl(emoteFragment.emote!.id),
-          'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark/2.0');
+      expect(
+        twitchEmoteUrl(emoteFragment.emote!.id),
+        'https://static-cdn.jtvnw.net/emoticons/v2/25/default/dark/2.0',
+      );
     });
 
     test('keeps cheermote fragments as plain text', () {
@@ -159,7 +157,8 @@ void main() {
           "message_id": "m1",
           "message": { "text": "hi", "fragments": [] }
         }
-        ''') as Map<String, Object?>,
+        ''')
+            as Map<String, Object?>,
       );
 
       expect(event.badges, isEmpty);

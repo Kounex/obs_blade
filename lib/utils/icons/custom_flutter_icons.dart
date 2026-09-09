@@ -5,6 +5,9 @@ class CustomFlutterIcons {
   static const _kFontFam = 'CustomFlutterIcons';
   static const String? _kFontPkg = null;
 
-  static const IconData owncast_logo =
-      IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData owncast_logo = IconData(
+    0xe800,
+    fontFamily: _kFontFam,
+    fontPackage: _kFontPkg,
+  );
 }

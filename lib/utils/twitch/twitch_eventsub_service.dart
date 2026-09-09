@@ -68,8 +68,7 @@ class TwitchEventSubService {
   /// Lifecycle callbacks — optional; a null callback skips parsing for
   /// that type (tests / non-lifecycle consumers).
   final void Function(ChatMessageDeleteEvent event)? onMessageDelete;
-  final void Function(ChatClearUserMessagesEvent event)?
-      onClearUserMessages;
+  final void Function(ChatClearUserMessagesEvent event)? onClearUserMessages;
   final void Function(ChatClearEvent event)? onChatClear;
 
   /// `channel.moderate` v2 — delete / timeout / ban (tombstone markers +
@@ -136,9 +135,9 @@ class TwitchEventSubService {
     http.Client? client,
     WebSocketChannel Function(Uri)? channelFactory,
     Future<void> Function(Duration)? sleep,
-  })  : _client = client ?? http.Client(),
-        _channelFactory = channelFactory ?? WebSocketChannel.connect,
-        _sleep = sleep ?? Future.delayed;
+  }) : _client = client ?? http.Client(),
+       _channelFactory = channelFactory ?? WebSocketChannel.connect,
+       _sleep = sleep ?? Future.delayed;
 
   Future<void> connect({
     required String accessToken,
@@ -427,6 +426,7 @@ class TwitchEventSubService {
       this._handleDisconnect();
       return;
     }
+
     /// Pending died before welcome — keep the old socket; log and drop
     /// the attempt (Twitch will reconnect again or keepalive continues).
     GeneralHelper.advLog(
@@ -527,7 +527,8 @@ class TwitchEventSubService {
       } catch (e) {
         if (mandatory) {
           GeneralHelper.advLog(
-              'Twitch EventSub: subscription POST failed — $e');
+            'Twitch EventSub: subscription POST failed — $e',
+          );
           this.onRevoked('subscription_failed:$e');
           return false;
         }

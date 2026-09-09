@@ -17,29 +17,28 @@ class SceneItemsPreview extends StatelessWidget {
       required IconData typeIcon,
       required String name,
       required bool visible,
-    }) =>
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: Row(
-            children: [
-              Icon(typeIcon, size: 18.0, color: iconColor),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              Icon(
-                visible ? CupertinoIcons.eye_solid : CupertinoIcons.eye_slash,
-                size: 18.0,
-                color: visible ? iconColor : muted,
-              ),
-            ],
+    }) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(typeIcon, size: 18.0, color: iconColor),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
-        );
+          Icon(
+            visible ? CupertinoIcons.eye_solid : CupertinoIcons.eye_slash,
+            size: 18.0,
+            color: visible ? iconColor : muted,
+          ),
+        ],
+      ),
+    );
 
     return IgnorePointer(
       child: Column(

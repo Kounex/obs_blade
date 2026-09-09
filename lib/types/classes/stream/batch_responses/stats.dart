@@ -9,17 +9,17 @@ class StatsBatchResponse extends BaseBatchResponse {
   StatsBatchResponse(super.json);
 
   GetStreamStatusResponse get streamStatus => this.response(
-        RequestType.GetStreamStatus,
-        (jsonRAW) => GetStreamStatusResponse(jsonRAW),
-      );
+    RequestType.GetStreamStatus,
+    (jsonRAW) => GetStreamStatusResponse(jsonRAW),
+  );
 
   GetRecordStatusResponse get recordStatus => this.response(
-        RequestType.GetRecordStatus,
-        (jsonRAW) => GetRecordStatusResponse(jsonRAW),
-      );
+    RequestType.GetRecordStatus,
+    (jsonRAW) => GetRecordStatusResponse(jsonRAW),
+  );
 
   GetStatsResponse get stats => this.response(
-        RequestType.GetStats,
-        (jsonRAW) => GetStatsResponse(jsonRAW),
-      );
+    RequestType.GetStats,
+    (jsonRAW) => GetStatsResponse(jsonRAW),
+  );
 }

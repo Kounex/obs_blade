@@ -20,12 +20,13 @@ class EnumerationEntry extends StatelessWidget {
     this.order,
     this.levelSpacing = 12.0,
     this.level = 1,
-  })  : assert(text != null || customEntry != null && level > 0),
-        super();
+  }) : assert(text != null || customEntry != null && level > 0),
+       super();
 
   @override
   Widget build(BuildContext context) {
-    double enumerationSize = this.enumerationSize ??
+    double enumerationSize =
+        this.enumerationSize ??
         Theme.of(context).textTheme.bodyLarge!.fontSize!;
 
     return Row(
@@ -42,21 +43,15 @@ class EnumerationEntry extends StatelessWidget {
                   '${this.order.toString()}.',
                   style: TextStyle(fontSize: enumerationSize),
                 )
-              : Text(
-                  '•',
-                  style: TextStyle(fontSize: enumerationSize),
-                ),
+              : Text('•', style: TextStyle(fontSize: enumerationSize)),
         ),
         Flexible(
           child: this.text != null
               ? Text(
                   this.text!,
-                  style:
-                      Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ],
-                          ),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 )
               : this.customEntry!,
         ),

@@ -87,10 +87,8 @@ class _InputDialogState extends State<InputDialog> {
             }
             if (valid) {
               this.widget.onSave(
-                    this._controller.text.isEmpty
-                        ? null
-                        : this._controller.text,
-                  );
+                this._controller.text.isEmpty ? null : this._controller.text,
+              );
               Navigator.of(context).pop();
             }
           },

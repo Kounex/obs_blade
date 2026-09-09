@@ -13,6 +13,5 @@ class AppRadius {
   static const double xl = 20.0;
 
   /// Fully rounded ends (status pills etc.)
-  static const BorderRadius pill =
-      BorderRadius.all(Radius.circular(999.0));
+  static const BorderRadius pill = BorderRadius.all(Radius.circular(999.0));
 }

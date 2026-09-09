@@ -10,10 +10,7 @@ import 'theme_row.dart';
 class ThemeLoader extends StatefulWidget {
   final void Function(CustomTheme theme)? onLoadTheme;
 
-  const ThemeLoader({
-    super.key,
-    this.onLoadTheme,
-  });
+  const ThemeLoader({super.key, this.onLoadTheme});
 
   @override
   _ThemeLoaderState createState() => _ThemeLoaderState();
@@ -29,14 +26,15 @@ class _ThemeLoaderState extends State<ThemeLoader> {
 
     _availableThemes = [
       ...BuiltInThemes.themes,
-      ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values
+      ...Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).values,
     ];
     CustomTheme base = CustomTheme.basic();
     base.name = 'OBS Blade Base';
 
     _availableThemes.add(base);
-    _availableThemes
-        .sort((theme1, theme2) => theme1.name!.compareTo(theme2.name!));
+    _availableThemes.sort(
+      (theme1, theme2) => theme1.name!.compareTo(theme2.name!),
+    );
 
     _selectedTheme = base;
   }

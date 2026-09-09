@@ -19,10 +19,7 @@ const double kRefresherAppBarHeight = 44.0;
 class RefresherAppBar extends StatelessWidget {
   final double? expandedHeight;
 
-  const RefresherAppBar({
-    super.key,
-    this.expandedHeight,
-  });
+  const RefresherAppBar({super.key, this.expandedHeight});
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +54,9 @@ class RefresherAppBar extends StatelessWidget {
                     offset: const Offset(0, 4.0),
                     child: Text(
                       'OBS Blade',
-                      style: CupertinoTheme.of(context)
-                          .textTheme
-                          .navTitleTextStyle,
+                      style: CupertinoTheme.of(
+                        context,
+                      ).textTheme.navTitleTextStyle,
                     ),
                   ),
                 );
@@ -74,19 +71,22 @@ class RefresherAppBar extends StatelessWidget {
             hiveKey: HiveKeys.Settings,
             rebuildKeys: const [
               SettingsKeys.CustomTheme,
-              SettingsKeys.ActiveCustomThemeUUID
+              SettingsKeys.ActiveCustomThemeUUID,
             ],
             builder: (context, settingsBox, child) {
-              CustomTheme? customTheme =
-                  StylingHelper.currentCustomTheme(settingsBox);
+              CustomTheme? customTheme = StylingHelper.currentCustomTheme(
+                settingsBox,
+              );
 
               return Stack(
                 fit: StackFit.expand,
                 children: [
                   Container(
-                    color: customTheme?.logoAppBarColorHex?.hexToColor() ??
+                    color:
+                        customTheme?.logoAppBarColorHex?.hexToColor() ??
                         Colors.transparent,
                   ),
+
                   /// Inset from notch + bottom edge, then contain so the
                   /// logo stays large without overflowing the bar.
                   Padding(
@@ -120,12 +120,12 @@ class RefresherAppBar extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Theme.of(context)
-                                .scaffoldBackgroundColor
-                                .withValues(alpha: 0.9),
-                            Theme.of(context)
-                                .scaffoldBackgroundColor
-                                .withValues(alpha: 0.0),
+                            Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withValues(alpha: 0.9),
+                            Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withValues(alpha: 0.0),
                           ],
                         ),
                       ),
@@ -138,7 +138,7 @@ class RefresherAppBar extends StatelessWidget {
           collapseMode: CollapseMode.parallax,
           stretchModes: const [
             StretchMode.blurBackground,
-            StretchMode.zoomBackground
+            StretchMode.zoomBackground,
           ],
         ),
       ),

@@ -10,10 +10,7 @@ import '../../../shared/general/themed/cupertino_button.dart';
 class BackToStartWrapper extends StatelessWidget {
   final Widget? child;
 
-  const BackToStartWrapper({
-    super.key,
-    this.child,
-  });
+  const BackToStartWrapper({super.key, this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -32,22 +29,21 @@ class BackToStartWrapper extends StatelessWidget {
                   children: [
                     Icon(
                       CupertinoIcons.chevron_left,
-                      color: Theme.of(context)
-                          .cupertinoOverrideTheme!
-                          .primaryColor,
+                      color: Theme.of(
+                        context,
+                      ).cupertinoOverrideTheme!.primaryColor,
                     ),
                     const Text('Getting Started'),
                   ],
                 ),
-                onPressed: () => GetIt.instance<IntroStore>()
-                    .setStage(IntroStage.GettingStarted),
+                onPressed: () => GetIt.instance<IntroStore>().setStage(
+                  IntroStage.GettingStarted,
+                ),
               ),
             ),
           ),
         ),
-        Expanded(
-          child: this.child ?? const SizedBox(),
-        ),
+        Expanded(child: this.child ?? const SizedBox()),
       ],
     );
   }

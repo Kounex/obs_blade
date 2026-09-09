@@ -27,8 +27,9 @@ class IntroSlide extends StatelessWidget {
         bottom: kIntroControlsBottomPadding,
       ),
       child: Column(
-        mainAxisAlignment:
-            hasImage ? MainAxisAlignment.end : MainAxisAlignment.center,
+        mainAxisAlignment: hasImage
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.center,
         children: [
           if (hasImage)
             Flexible(
@@ -44,9 +45,9 @@ class IntroSlide extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
-                        color: Theme.of(context)
-                            .dividerColor
-                            .withValues(alpha: 0.4),
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.4),
                       ),
                     ),
                     clipBehavior: Clip.hardEdge,
@@ -60,10 +61,7 @@ class IntroSlide extends StatelessWidget {
               ),
             )
           else if (this.leading != null) ...[
-            StaggeredEntrance(
-              index: 0,
-              child: this.leading!,
-            ),
+            StaggeredEntrance(index: 0, child: this.leading!),
             const SizedBox(height: AppSpacing.xxl),
           ],
           StaggeredEntrance(

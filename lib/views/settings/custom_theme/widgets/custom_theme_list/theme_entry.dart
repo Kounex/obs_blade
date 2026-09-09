@@ -21,16 +21,18 @@ class ThemeEntry extends StatelessWidget {
   final CustomTheme customTheme;
   final bool isEditable;
 
-  const ThemeEntry(
-      {super.key, required this.customTheme, this.isEditable = true});
+  const ThemeEntry({
+    super.key,
+    required this.customTheme,
+    this.isEditable = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Pressable(
-      onTap: () => Hive.box(HiveKeys.Settings.name).put(
-        SettingsKeys.ActiveCustomThemeUUID.name,
-        this.customTheme.uuid,
-      ),
+      onTap: () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.ActiveCustomThemeUUID.name, this.customTheme.uuid),
       child: Padding(
         padding: const EdgeInsets.only(
           left: AppSpacing.xl,
@@ -58,42 +60,43 @@ class ThemeEntry extends StatelessWidget {
                         child: HiveBuilder<dynamic>(
                           hiveKey: HiveKeys.Settings,
                           rebuildKeys: const [
-                            SettingsKeys.ActiveCustomThemeUUID
+                            SettingsKeys.ActiveCustomThemeUUID,
                           ],
                           builder: (context, settingsBox, child) =>
                               AnimatedSwitcher(
-                            duration: AppMotion.medium,
-                            switchInCurve: AppMotion.standard,
-                            switchOutCurve: AppMotion.exit,
-                            transitionBuilder: (child, animation) =>
-                                FadeTransition(
-                              opacity: animation,
-                              child: ScaleTransition(
-                                scale: CurvedAnimation(
-                                  parent: animation,
-                                  curve: AppMotion.spring,
-                                  reverseCurve: AppMotion.exit,
-                                ),
-                                child: child,
+                                duration: AppMotion.medium,
+                                switchInCurve: AppMotion.standard,
+                                switchOutCurve: AppMotion.exit,
+                                transitionBuilder: (child, animation) =>
+                                    FadeTransition(
+                                      opacity: animation,
+                                      child: ScaleTransition(
+                                        scale: CurvedAnimation(
+                                          parent: animation,
+                                          curve: AppMotion.spring,
+                                          reverseCurve: AppMotion.exit,
+                                        ),
+                                        child: child,
+                                      ),
+                                    ),
+                                child:
+                                    settingsBox.get(
+                                          SettingsKeys
+                                              .ActiveCustomThemeUUID
+                                              .name,
+                                          defaultValue: '',
+                                        ) ==
+                                        this.customTheme.uuid
+                                    ? _ActiveBadge(
+                                        /// Selection state resolves the accent
+                                        /// group (token-delta rule 2), same slot
+                                        /// [BaseButton] reads
+                                        color: Theme.of(
+                                          context,
+                                        ).buttonTheme.colorScheme!.secondary,
+                                      )
+                                    : const SizedBox.shrink(),
                               ),
-                            ),
-                            child: settingsBox.get(
-                                        SettingsKeys
-                                            .ActiveCustomThemeUUID.name,
-                                        defaultValue: '') ==
-                                    this.customTheme.uuid
-                                ? _ActiveBadge(
-
-                                    /// Selection state resolves the accent
-                                    /// group (token-delta rule 2), same slot
-                                    /// [BaseButton] reads
-                                    color: Theme.of(context)
-                                        .buttonTheme
-                                        .colorScheme!
-                                        .secondary,
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
                         ),
                       ),
                     ],
@@ -102,7 +105,8 @@ class ThemeEntry extends StatelessWidget {
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.only(
-                          right: !this.isEditable ? AppSpacing.xl : 0.0),
+                        right: !this.isEditable ? AppSpacing.xl : 0.0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -138,11 +142,11 @@ class ThemeEntry extends StatelessWidget {
                   context: context,
                   modalWidgetBuilder: (context, scrollController) =>
                       AddEditTheme(
-                    customTheme: this.customTheme,
-                    scrollController: scrollController,
-                  ),
+                        customTheme: this.customTheme,
+                        scrollController: scrollController,
+                      ),
                 ),
-              )
+              ),
           ],
         ),
       ),
@@ -167,11 +171,7 @@ class _ActiveBadge extends StatelessWidget {
         color: this.color.withValues(alpha: 0.16),
         border: Border.all(color: this.color, width: 1.5),
       ),
-      child: Icon(
-        CupertinoIcons.checkmark,
-        size: 14.0,
-        color: this.color,
-      ),
+      child: Icon(CupertinoIcons.checkmark, size: 14.0, color: this.color),
     );
   }
 }
@@ -235,10 +235,8 @@ class _ThemePreview extends StatelessWidget {
                         height: 3.0,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(2.0),
-                          color: this
-                                  .customTheme
-                                  .dividerColorHex
-                                  ?.hexToColor() ??
+                          color:
+                              this.customTheme.dividerColorHex?.hexToColor() ??
                               StylingHelper.light_divider_color,
                         ),
                       ),

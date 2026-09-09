@@ -7,19 +7,18 @@ void main() {
   ChatMessageEvent message({
     ChatMessageReply? reply,
     required List<ChatMessageFragment> fragments,
-  }) =>
-      ChatMessageEvent(
-        broadcasterUserId: 'b1',
-        chatterUserId: 'c1',
-        chatterUserLogin: 'alice',
-        chatterUserName: 'Alice',
-        messageId: 'm1',
-        message: ChatMessageText(
-          text: fragments.map((f) => f.text).join(),
-          fragments: fragments,
-        ),
-        reply: reply,
-      );
+  }) => ChatMessageEvent(
+    broadcasterUserId: 'b1',
+    chatterUserId: 'c1',
+    chatterUserLogin: 'alice',
+    chatterUserName: 'Alice',
+    messageId: 'm1',
+    message: ChatMessageText(
+      text: fragments.map((f) => f.text).join(),
+      fragments: fragments,
+    ),
+    reply: reply,
+  );
 
   final reply = ChatMessageReply(
     parentMessageId: 'p1',

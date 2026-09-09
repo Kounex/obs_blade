@@ -83,7 +83,9 @@ void main() {
       expect(foundation.themes, hasLength(FixtureCounts.themes));
       expect(foundation.hiddenScenes, hasLength(FixtureCounts.hiddenScenes));
       expect(
-          foundation.hiddenSceneItems, hasLength(FixtureCounts.hiddenSceneItems));
+        foundation.hiddenSceneItems,
+        hasLength(FixtureCounts.hiddenSceneItems),
+      );
       expect(foundation.appLogs, hasLength(FixtureCounts.appLogs));
       expect(foundation.purchasedTips, hasLength(FixtureCounts.purchasedTips));
       expect(foundation.hotkeys, hasLength(FixtureCounts.hotkeys));
@@ -91,9 +93,7 @@ void main() {
     });
 
     test('connections cover password / domain / port edge cases by name', () {
-      final byName = {
-        for (final c in foundation.connections) c.name!: c,
-      };
+      final byName = {for (final c in foundation.connections) c.name!: c};
       expect(byName['Living Room PC']!.host, '192.168.1.50');
       expect(byName['Living Room PC']!.pw, 'living-room-pw');
       expect(byName['Office Mini-PC (no password)']!.pw, isNull);
@@ -107,13 +107,23 @@ void main() {
         (s) => s.name == 'Starred Raid Night #0',
       );
       expect(raid.starred, isTrue);
-      expect(raid.kbitsPerSecList, hasLength(FixtureCounts.chartSamplesPerSession));
+      expect(
+        raid.kbitsPerSecList,
+        hasLength(FixtureCounts.chartSamplesPerSession),
+      );
       expect(raid.fpsList, hasLength(FixtureCounts.chartSamplesPerSession));
-      expect(raid.cpuUsageList, hasLength(FixtureCounts.chartSamplesPerSession));
       expect(
-          raid.memoryUsageList, hasLength(FixtureCounts.chartSamplesPerSession));
+        raid.cpuUsageList,
+        hasLength(FixtureCounts.chartSamplesPerSession),
+      );
       expect(
-          raid.listEntryDateMS, hasLength(FixtureCounts.chartSamplesPerSession));
+        raid.memoryUsageList,
+        hasLength(FixtureCounts.chartSamplesPerSession),
+      );
+      expect(
+        raid.listEntryDateMS,
+        hasLength(FixtureCounts.chartSamplesPerSession),
+      );
     });
   });
 
@@ -121,38 +131,61 @@ void main() {
     test('every HiveKeys box opens and retains seeded counts', () async {
       await harness.seed(foundation);
 
-      expect(Hive.box<Connection>(HiveKeys.SavedConnections.name).length,
-          FixtureCounts.connections);
-      expect(Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).length,
-          FixtureCounts.pastStreams);
-      expect(Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).length,
-          FixtureCounts.pastRecords);
-      expect(Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).length,
-          FixtureCounts.themes);
-      expect(Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).length,
-          FixtureCounts.hiddenScenes);
-      expect(Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).length,
-          FixtureCounts.hiddenSceneItems);
-      expect(Hive.box<AppLog>(HiveKeys.AppLog.name).length, FixtureCounts.appLogs);
-      expect(Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).length,
-          FixtureCounts.purchasedTips);
-      expect(Hive.box<Hotkey>(HiveKeys.Hotkey.name).length, FixtureCounts.hotkeys);
-      expect(Hive.box(HiveKeys.Settings.name).length, foundation.settings.length);
+      expect(
+        Hive.box<Connection>(HiveKeys.SavedConnections.name).length,
+        FixtureCounts.connections,
+      );
+      expect(
+        Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).length,
+        FixtureCounts.pastStreams,
+      );
+      expect(
+        Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).length,
+        FixtureCounts.pastRecords,
+      );
+      expect(
+        Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).length,
+        FixtureCounts.themes,
+      );
+      expect(
+        Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).length,
+        FixtureCounts.hiddenScenes,
+      );
+      expect(
+        Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).length,
+        FixtureCounts.hiddenSceneItems,
+      );
+      expect(
+        Hive.box<AppLog>(HiveKeys.AppLog.name).length,
+        FixtureCounts.appLogs,
+      );
+      expect(
+        Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).length,
+        FixtureCounts.purchasedTips,
+      );
+      expect(
+        Hive.box<Hotkey>(HiveKeys.Hotkey.name).length,
+        FixtureCounts.hotkeys,
+      );
+      expect(
+        Hive.box(HiveKeys.Settings.name).length,
+        foundation.settings.length,
+      );
     });
 
     test('typed values round-trip through open boxes', () async {
       await harness.seed(foundation);
 
-      final livingRoom = Hive.box<Connection>(HiveKeys.SavedConnections.name)
-          .values
-          .firstWhere((c) => c.name == 'Living Room PC');
+      final livingRoom = Hive.box<Connection>(
+        HiveKeys.SavedConnections.name,
+      ).values.firstWhere((c) => c.name == 'Living Room PC');
       expect(livingRoom.host, '192.168.1.50');
       expect(livingRoom.port, 4455);
       expect(livingRoom.ssid, 'HomeWiFi-5G');
 
-      final midnight = Hive.box<CustomTheme>(HiveKeys.CustomTheme.name)
-          .values
-          .firstWhere((t) => t.uuid == 'theme-uuid-midnight-blade');
+      final midnight = Hive.box<CustomTheme>(
+        HiveKeys.CustomTheme.name,
+      ).values.firstWhere((t) => t.uuid == 'theme-uuid-midnight-blade');
       expect(midnight.accentColorHex, '3D8BFF');
       expect(midnight.useLightBrightness, isFalse);
       expect(midnight.starred, isTrue);
@@ -169,10 +202,9 @@ void main() {
         DashboardElement.values,
       );
 
-      final errorLogs = Hive.box<AppLog>(HiveKeys.AppLog.name)
-          .values
-          .where((l) => l.level == LogLevel.Error)
-          .toList();
+      final errorLogs = Hive.box<AppLog>(
+        HiveKeys.AppLog.name,
+      ).values.where((l) => l.level == LogLevel.Error).toList();
       expect(errorLogs, isNotEmpty);
       expect(errorLogs.first.stackTrace, contains('NetworkStore'));
     });
@@ -180,17 +212,17 @@ void main() {
     test('hidden scene / item helpers still match after persistence', () async {
       await harness.seed(foundation);
 
-      final scene = Hive.box<HiddenScene>(HiveKeys.HiddenScene.name)
-          .values
-          .firstWhere((s) => s.sceneName.startsWith('BRB'));
+      final scene = Hive.box<HiddenScene>(
+        HiveKeys.HiddenScene.name,
+      ).values.firstWhere((s) => s.sceneName.startsWith('BRB'));
       expect(
         scene.isScene(scene.sceneName, scene.connectionName, scene.host),
         isTrue,
       );
 
-      final audioItem = Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name)
-          .values
-          .firstWhere((i) => i.name == 'Mic/Aux');
+      final audioItem = Hive.box<HiddenSceneItem>(
+        HiveKeys.HiddenSceneItem.name,
+      ).values.firstWhere((i) => i.name == 'Mic/Aux');
       expect(audioItem.type, SceneItemType.Audio);
       expect(audioItem.id, isNull);
       expect(
@@ -212,33 +244,56 @@ void main() {
       await harness.seed(foundation);
       await harness.reopenFromDisk();
 
-      expect(Hive.box<Connection>(HiveKeys.SavedConnections.name).length,
-          FixtureCounts.connections);
-      expect(Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).length,
-          FixtureCounts.pastStreams);
-      expect(Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).length,
-          FixtureCounts.pastRecords);
-      expect(Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).length,
-          FixtureCounts.themes);
-      expect(Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).length,
-          FixtureCounts.hiddenScenes);
-      expect(Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).length,
-          FixtureCounts.hiddenSceneItems);
-      expect(Hive.box<AppLog>(HiveKeys.AppLog.name).length, FixtureCounts.appLogs);
-      expect(Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).length,
-          FixtureCounts.purchasedTips);
-      expect(Hive.box<Hotkey>(HiveKeys.Hotkey.name).length, FixtureCounts.hotkeys);
+      expect(
+        Hive.box<Connection>(HiveKeys.SavedConnections.name).length,
+        FixtureCounts.connections,
+      );
+      expect(
+        Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).length,
+        FixtureCounts.pastStreams,
+      );
+      expect(
+        Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).length,
+        FixtureCounts.pastRecords,
+      );
+      expect(
+        Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).length,
+        FixtureCounts.themes,
+      );
+      expect(
+        Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).length,
+        FixtureCounts.hiddenScenes,
+      );
+      expect(
+        Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).length,
+        FixtureCounts.hiddenSceneItems,
+      );
+      expect(
+        Hive.box<AppLog>(HiveKeys.AppLog.name).length,
+        FixtureCounts.appLogs,
+      );
+      expect(
+        Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).length,
+        FixtureCounts.purchasedTips,
+      );
+      expect(
+        Hive.box<Hotkey>(HiveKeys.Hotkey.name).length,
+        FixtureCounts.hotkeys,
+      );
 
-      final livingRoom = Hive.box<Connection>(HiveKeys.SavedConnections.name)
-          .values
-          .firstWhere((c) => c.name == 'Living Room PC');
+      final livingRoom = Hive.box<Connection>(
+        HiveKeys.SavedConnections.name,
+      ).values.firstWhere((c) => c.name == 'Living Room PC');
       expect(livingRoom.pw, 'living-room-pw');
 
-      final stream = Hive.box<PastStreamData>(HiveKeys.PastStreamData.name)
-          .values
-          .firstWhere((s) => s.name == 'Starred Raid Night #0');
+      final stream = Hive.box<PastStreamData>(
+        HiveKeys.PastStreamData.name,
+      ).values.firstWhere((s) => s.name == 'Starred Raid Night #0');
       expect(stream.kbitsPerSecList.first, 2500);
-      expect(stream.listEntryDateMS, hasLength(FixtureCounts.chartSamplesPerSession));
+      expect(
+        stream.listEntryDateMS,
+        hasLength(FixtureCounts.chartSamplesPerSession),
+      );
 
       final settings = Hive.box(HiveKeys.Settings.name);
       expect(settings.get(SettingsKeys.BoughtBlacksmith.name), isTrue);
@@ -256,8 +311,9 @@ void main() {
       await harness.seed(foundation);
       await harness.close();
 
-      final cloneDir =
-          await Directory.systemTemp.createTemp('obs_blade_hive_clone_');
+      final cloneDir = await Directory.systemTemp.createTemp(
+        'obs_blade_hive_clone_',
+      );
       addTearDown(() {
         if (cloneDir.existsSync()) {
           cloneDir.deleteSync(recursive: true);
@@ -274,12 +330,14 @@ void main() {
       await clone.init();
       await clone.openAllBoxes();
 
-      expect(Hive.box<Connection>(HiveKeys.SavedConnections.name).length,
-          FixtureCounts.connections);
       expect(
-        Hive.box<Connection>(HiveKeys.SavedConnections.name)
-            .values
-            .any((c) => c.name == 'Remote domain (stream.kounex.com)'),
+        Hive.box<Connection>(HiveKeys.SavedConnections.name).length,
+        FixtureCounts.connections,
+      );
+      expect(
+        Hive.box<Connection>(
+          HiveKeys.SavedConnections.name,
+        ).values.any((c) => c.name == 'Remote domain (stream.kounex.com)'),
         isTrue,
       );
 

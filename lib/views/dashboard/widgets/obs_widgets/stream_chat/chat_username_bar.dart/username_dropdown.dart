@@ -15,30 +15,43 @@ class UsernameDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ChatType chatType = this.settingsBox.get(
-          SettingsKeys.SelectedChatType.name,
-          defaultValue: ChatType.Twitch,
-        );
+      SettingsKeys.SelectedChatType.name,
+      defaultValue: ChatType.Twitch,
+    );
 
-    final List<DropdownMenuItem<String>> usernameItems = switch (chatType) {
-      ChatType.Twitch => settingsBox.get(SettingsKeys.TwitchUsernames.name,
-          defaultValue: <String>[]),
-      ChatType.YouTube => settingsBox.get(SettingsKeys.YouTubeUsernames.name,
-          defaultValue: <String, String>{}).keys,
-      ChatType.Owncast => settingsBox.get(SettingsKeys.OwncastUsernames.name,
-          defaultValue: <String, String>{}).keys,
-    }
-        .map<DropdownMenuItem<String>>(
-          (chatUsername) => DropdownMenuItem<String>(
-            value: chatUsername,
-            child: Text(
-              chatUsername,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.fade,
-            ),
-          ),
-        )
-        .toList();
+    final List<DropdownMenuItem<String>> usernameItems =
+        switch (chatType) {
+              ChatType.Twitch => settingsBox.get(
+                SettingsKeys.TwitchUsernames.name,
+                defaultValue: <String>[],
+              ),
+              ChatType.YouTube =>
+                settingsBox
+                    .get(
+                      SettingsKeys.YouTubeUsernames.name,
+                      defaultValue: <String, String>{},
+                    )
+                    .keys,
+              ChatType.Owncast =>
+                settingsBox
+                    .get(
+                      SettingsKeys.OwncastUsernames.name,
+                      defaultValue: <String, String>{},
+                    )
+                    .keys,
+            }
+            .map<DropdownMenuItem<String>>(
+              (chatUsername) => DropdownMenuItem<String>(
+                value: chatUsername,
+                child: Text(
+                  chatUsername,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.fade,
+                ),
+              ),
+            )
+            .toList();
 
     return Flexible(
       child: ConstrainedBox(
@@ -48,11 +61,13 @@ class UsernameDropdown extends StatelessWidget {
           /// friendly next to the other bar controls; the button centers
           /// inside
           constraints: const BoxConstraints(
-              minHeight: kMinInteractiveDimensionCupertino),
+            minHeight: kMinInteractiveDimensionCupertino,
+          ),
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
-            color:
-                StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+            color: StylingHelper.lightenDarkenColor(
+              Theme.of(context).cardColor,
+            ),
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
@@ -64,12 +79,15 @@ class UsernameDropdown extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: DropdownButton<String>(
                 value: switch (chatType) {
-                  ChatType.Twitch =>
-                    settingsBox.get(SettingsKeys.SelectedTwitchUsername.name),
-                  ChatType.YouTube =>
-                    settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name),
-                  ChatType.Owncast =>
-                    settingsBox.get(SettingsKeys.SelectedOwncastUsername.name),
+                  ChatType.Twitch => settingsBox.get(
+                    SettingsKeys.SelectedTwitchUsername.name,
+                  ),
+                  ChatType.YouTube => settingsBox.get(
+                    SettingsKeys.SelectedYouTubeUsername.name,
+                  ),
+                  ChatType.Owncast => settingsBox.get(
+                    SettingsKeys.SelectedOwncastUsername.name,
+                  ),
                 },
                 isExpanded: true,
                 isDense: true,
@@ -87,17 +105,13 @@ class UsernameDropdown extends StatelessWidget {
                 ),
                 items: usernameItems,
                 onChanged: (chatUsername) {
-                  settingsBox.put(
-                    switch (chatType) {
-                      ChatType.Twitch =>
-                        SettingsKeys.SelectedTwitchUsername.name,
-                      ChatType.YouTube =>
-                        SettingsKeys.SelectedYouTubeUsername.name,
-                      ChatType.Owncast =>
-                        SettingsKeys.SelectedOwncastUsername.name,
-                    },
-                    chatUsername,
-                  );
+                  settingsBox.put(switch (chatType) {
+                    ChatType.Twitch => SettingsKeys.SelectedTwitchUsername.name,
+                    ChatType.YouTube =>
+                      SettingsKeys.SelectedYouTubeUsername.name,
+                    ChatType.Owncast =>
+                      SettingsKeys.SelectedOwncastUsername.name,
+                  }, chatUsername);
                 },
               ),
             ),

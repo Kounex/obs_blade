@@ -24,15 +24,17 @@ void main() {
     expect(gateway.isAvailableCalls, 2);
   });
 
-  test('queryProProducts returns only found products (notFoundIDs expected)',
-      () async {
-    gateway.storeProducts = [fakeProduct(kProYearlyId)];
+  test(
+    'queryProProducts returns only found products (notFoundIDs expected)',
+    () async {
+      gateway.storeProducts = [fakeProduct(kProYearlyId)];
 
-    final products = await service.queryProProducts();
+      final products = await service.queryProProducts();
 
-    expect(products.map((product) => product.id), [kProYearlyId]);
-    expect(gateway.queryCalls, 1);
-  });
+      expect(products.map((product) => product.id), [kProYearlyId]);
+      expect(gateway.queryCalls, 1);
+    },
+  );
 
   test('queryProProducts with nothing store-side → empty, no throw', () async {
     final products = await service.queryProProducts();
@@ -40,12 +42,14 @@ void main() {
     expect(products, isEmpty);
   });
 
-  test('buy wraps the product in a PurchaseParam (non-consumable path)',
-      () async {
-    expect(await service.buy(fakeProProduct(kProLifetimeId)), isTrue);
-    expect(gateway.buyCalls, 1);
-    expect(gateway.lastBoughtProduct?.id, kProLifetimeId);
-  });
+  test(
+    'buy wraps the product in a PurchaseParam (non-consumable path)',
+    () async {
+      expect(await service.buy(fakeProProduct(kProLifetimeId)), isTrue);
+      expect(gateway.buyCalls, 1);
+      expect(gateway.lastBoughtProduct?.id, kProLifetimeId);
+    },
+  );
 
   test('restore delegates and propagates errors', () async {
     await service.restore();
@@ -56,18 +60,21 @@ void main() {
     await until(() => gateway.restoreCalls == 2);
   });
 
-  test('restoreLegacyPurchases delegates to the legacy direct-IAP gateway',
-      () async {
-    await service.restoreLegacyPurchases();
-    expect(gateway.restoreCalls, 1);
-  });
+  test(
+    'restoreLegacyPurchases delegates to the legacy direct-IAP gateway',
+    () async {
+      await service.restoreLegacyPurchases();
+      expect(gateway.restoreCalls, 1);
+    },
+  );
 
   test('purchaseStream is exposed from the gateway', () async {
     final events = <List<PurchaseDetails>>[];
     final sub = service.purchaseStream!.listen(events.add);
 
-    gateway.purchaseController
-        .add([fakePurchase(kProYearlyId, PurchaseStatus.purchased)]);
+    gateway.purchaseController.add([
+      fakePurchase(kProYearlyId, PurchaseStatus.purchased),
+    ]);
     await until(() => events.isNotEmpty);
 
     expect(events.single.single.productID, kProYearlyId);

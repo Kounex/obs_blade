@@ -18,7 +18,8 @@ void main() {
 
   setUp(() async {
     tempDir = Directory(
-        '${Directory.systemTemp.path}/data_management_pro_test_${DateTime.now().microsecondsSinceEpoch}');
+      '${Directory.systemTemp.path}/data_management_pro_test_${DateTime.now().microsecondsSinceEpoch}',
+    );
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await harness.openAllBoxes();
@@ -31,26 +32,35 @@ void main() {
     }
   });
 
-  test('delete-all preserves BoughtPro and BoughtBlacksmith, clears the rest',
-      () async {
-    settingsBox().put(SettingsKeys.BoughtPro.name, true);
-    settingsBox().put(SettingsKeys.BoughtBlacksmith.name, true);
-    settingsBox().put(SettingsKeys.TrueDark.name, true);
-    settingsBox().put(SettingsKeys.ProColdStartRestoreDone.name, true);
-    Hive.box<AppLog>(HiveKeys.AppLog.name).add(
-      AppLog(DateTime.now().millisecondsSinceEpoch, LogLevel.Info, 'entry',
-          null, false),
-    );
+  test(
+    'delete-all preserves BoughtPro and BoughtBlacksmith, clears the rest',
+    () async {
+      settingsBox().put(SettingsKeys.BoughtPro.name, true);
+      settingsBox().put(SettingsKeys.BoughtBlacksmith.name, true);
+      settingsBox().put(SettingsKeys.TrueDark.name, true);
+      settingsBox().put(SettingsKeys.ProColdStartRestoreDone.name, true);
+      Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+        AppLog(
+          DateTime.now().millisecondsSinceEpoch,
+          LogLevel.Info,
+          'entry',
+          null,
+          false,
+        ),
+      );
 
-    await deleteAllUserDataPreservingEntitlements();
+      await deleteAllUserDataPreservingEntitlements();
 
-    expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
-    expect(settingsBox().get(SettingsKeys.BoughtBlacksmith.name), isTrue);
-    expect(settingsBox().get(SettingsKeys.TrueDark.name), isNull);
-    expect(settingsBox().get(SettingsKeys.ProColdStartRestoreDone.name),
-        isNull);
-    expect(Hive.box<AppLog>(HiveKeys.AppLog.name).isEmpty, isTrue);
-  });
+      expect(settingsBox().get(SettingsKeys.BoughtPro.name), isTrue);
+      expect(settingsBox().get(SettingsKeys.BoughtBlacksmith.name), isTrue);
+      expect(settingsBox().get(SettingsKeys.TrueDark.name), isNull);
+      expect(
+        settingsBox().get(SettingsKeys.ProColdStartRestoreDone.name),
+        isNull,
+      );
+      expect(Hive.box<AppLog>(HiveKeys.AppLog.name).isEmpty, isTrue);
+    },
+  );
 
   test('delete-all with no purchases → flags re-set to false', () async {
     settingsBox().put(SettingsKeys.TrueDark.name, true);

@@ -40,13 +40,21 @@ class FullOverlayState extends State<FullOverlay>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: this.widget.animationDuration);
-    _blur = Tween<double>(begin: 0.0, end: 9.0)
-        .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
-    _opacity = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
-    _scale = Tween<double>(begin: 0.96, end: 1.0)
-        .animate(CurvedAnimation(curve: AppMotion.spring, parent: _controller));
+      vsync: this,
+      duration: this.widget.animationDuration,
+    );
+    _blur = Tween<double>(
+      begin: 0.0,
+      end: 9.0,
+    ).animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+    _opacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+    _scale = Tween<double>(
+      begin: 0.96,
+      end: 1.0,
+    ).animate(CurvedAnimation(curve: AppMotion.spring, parent: _controller));
 
     _controller.forward();
     _closeTimer = Timer(this.widget.showDuration, () => this.closeOverlay());
@@ -80,10 +88,7 @@ class FullOverlayState extends State<FullOverlay>
           child: const AbsorbPointer(),
           builder: (context, child) => FadeTransition(
             opacity: _opacity,
-            child: ColoredBox(
-              color: Colors.black26,
-              child: child,
-            ),
+            child: ColoredBox(color: Colors.black26, child: child),
           ),
         ),
         Center(

@@ -6,7 +6,7 @@ class BaseDropdownItem<T> {
   final Widget? widget;
 
   BaseDropdownItem({required this.value, this.text, this.widget})
-      : assert(text != null || widget != null);
+    : assert(text != null || widget != null);
 }
 
 class BaseDropdown<T> extends StatelessWidget {
@@ -34,63 +34,68 @@ class BaseDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return Align(
-        alignment: this.alignment ?? Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            this.label != null
-                ? Text(
-                    this.label!,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  )
-                : const SizedBox(),
-            DropdownButton<T>(
-              value: this.value,
-              isDense: true,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Align(
+          alignment: this.alignment ?? Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              this.label != null
+                  ? Text(
+                      this.label!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    )
+                  : const SizedBox(),
+              DropdownButton<T>(
+                value: this.value,
+                isDense: true,
 
-              /// Rule 8: the stock underline is a hardcoded framework gray
-              /// (#BDBDBD) - resolve the divider group token instead (same
-              /// convention as [BaseDivider])
-              underline: Container(
-                height: 1.0,
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color:
-                          Theme.of(context).dividerColor.withValues(alpha: 0.4),
-                      width: 0.0,
+                /// Rule 8: the stock underline is a hardcoded framework gray
+                /// (#BDBDBD) - resolve the divider group token instead (same
+                /// convention as [BaseDivider])
+                underline: Container(
+                  height: 1.0,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.4),
+                        width: 0.0,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              onChanged: this.onChanged,
-              items: this
-                      .items
-                      ?.map(
-                        (item) => DropdownMenuItem<T>(
-                          value: item.value,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minWidth: this.minWidth ??
-                                  (this.label != null ? 72 : 0),
-                              maxWidth: constraints.maxWidth - 24,
+                onChanged: this.onChanged,
+                items:
+                    this.items
+                        ?.map(
+                          (item) => DropdownMenuItem<T>(
+                            value: item.value,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth:
+                                    this.minWidth ??
+                                    (this.label != null ? 72 : 0),
+                                maxWidth: constraints.maxWidth - 24,
+                              ),
+                              child:
+                                  item.widget ??
+                                  Text(
+                                    item.text!,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                             ),
-                            child: item.widget ??
-                                Text(
-                                  item.text!,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
                           ),
-                        ),
-                      )
-                      .toList() ??
-                  [],
-            ),
-          ],
-        ),
-      );
-    });
+                        )
+                        .toList() ??
+                    [],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

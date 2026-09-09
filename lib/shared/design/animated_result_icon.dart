@@ -69,7 +69,8 @@ class _AnimatedResultIconState extends State<AnimatedResultIcon>
 
   @override
   Widget build(BuildContext context) {
-    final Color color = this.widget.color ??
+    final Color color =
+        this.widget.color ??
         IconTheme.of(context).color ??
         (Theme.of(context).brightness == Brightness.dark
             ? Colors.white
@@ -125,18 +126,21 @@ class _ResultGlyphPainter extends CustomPainter {
     canvas.save();
     canvas.scale(unit);
 
-    final double circleProgress =
-        _kCircleInterval.transform(progress).clamp(0.0, 1.0);
-    final double glyphProgress =
-        _kGlyphInterval.transform(progress).clamp(0.0, 1.0);
+    final double circleProgress = _kCircleInterval
+        .transform(progress)
+        .clamp(0.0, 1.0);
+    final double glyphProgress = _kGlyphInterval
+        .transform(progress)
+        .clamp(0.0, 1.0);
 
     _drawPartial(
       canvas,
-      Path()
-        ..addOval(Rect.fromCircle(
+      Path()..addOval(
+        Rect.fromCircle(
           center: const Offset(50.0, 50.0),
           radius: 44.0 - strokeWidth / unit / 2.0,
-        )),
+        ),
+      ),
       circleProgress,
       strokePaint,
     );
@@ -193,8 +197,7 @@ class _ResultGlyphPainter extends CustomPainter {
   }
 
   /// Stroke only the leading [progress] fraction of [path]
-  void _drawPartial(
-      Canvas canvas, Path path, double progress, Paint paint) {
+  void _drawPartial(Canvas canvas, Path path, double progress, Paint paint) {
     if (progress <= 0.0) return;
     if (progress >= 1.0) {
       canvas.drawPath(path, paint);

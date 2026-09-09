@@ -14,9 +14,7 @@ import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 
 class QRScan extends StatefulWidget {
-  const QRScan({
-    super.key,
-  });
+  const QRScan({super.key});
 
   @override
   State<QRScan> createState() => _QRScanState();
@@ -65,19 +63,14 @@ class _QRScanState extends State<QRScan> {
               _scanLocked = true;
               Future.delayed(const Duration(seconds: 1), () {
                 if (!mounted) return;
-                Navigator.of(context).pop(
-                  _connectionFromQR(scanData.code!),
-                );
+                Navigator.of(context).pop(_connectionFromQR(scanData.code!));
               });
             } else {
-              Future.delayed(
-                const Duration(seconds: 3),
-                () {
-                  if (_qrScanState != null && !_qrScanState!) {
-                    setState(() => _qrScanState = null);
-                  }
-                },
-              );
+              Future.delayed(const Duration(seconds: 3), () {
+                if (_qrScanState != null && !_qrScanState!) {
+                  setState(() => _qrScanState = null);
+                }
+              });
             }
           } else {
             _qrScanState = null;
@@ -98,8 +91,8 @@ class _QRScanState extends State<QRScan> {
       final pw = uri.path.isEmpty || uri.path == '/'
           ? null
           : uri.path.startsWith('/')
-              ? uri.path.substring(1)
-              : uri.path;
+          ? uri.path.substring(1)
+          : uri.path;
 
       final isSecure = uri.scheme.toLowerCase() == 'obswss';
       final host = isSecure ? 'wss://${uri.host}' : uri.host;
@@ -117,8 +110,9 @@ class _QRScanState extends State<QRScan> {
 
   @override
   Widget build(BuildContext context) {
-    final AppStatusColors statusColors =
-        Theme.of(context).extension<AppStatusColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
 
     /// Keyed scan-state surface - crossfades between camera init / waiting /
     /// found / wrong-code (visual only; the 1s pop and 3s reset timings and
@@ -151,8 +145,9 @@ class _QRScanState extends State<QRScan> {
       leading: Transform.scale(
         scale: 0.8,
         child: const QuestionMarkTooltip(
-            message:
-                'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info'),
+          message:
+              'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info',
+        ),
       ),
       title: 'Quick Connect',
       actions: ThemedCupertinoButton(
@@ -167,11 +162,10 @@ class _QRScanState extends State<QRScan> {
               fit: StackFit.expand,
               alignment: Alignment.center,
               children: [
-                BaseProgressIndicator(
-                  text: 'Initialising camera...',
-                ),
+                BaseProgressIndicator(text: 'Initialising camera...'),
                 QRView(
                   key: _key,
+
                   /// Branded reticle: theme highlight + card-contract radius
                   /// (was the library default red, square)
                   overlay: QrScannerOverlayShape(
@@ -181,11 +175,9 @@ class _QRScanState extends State<QRScan> {
                   formatsAllowed: const [BarcodeFormat.qrcode],
                   onQRViewCreated: (controller) {
                     setState(() => _controller = controller);
-                    _controller!.scannedDataStream.listen(
-                      (scanData) {
-                        _handleScanData(scanData);
-                      },
-                    );
+                    _controller!.scannedDataStream.listen((scanData) {
+                      _handleScanData(scanData);
+                    });
                   },
                   onPermissionSet: (_, permission) {
                     if (!permission) {

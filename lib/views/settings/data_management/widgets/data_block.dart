@@ -46,11 +46,12 @@ class DataBlock extends StatelessWidget {
                   Text(
                     this.caption!.toUpperCase(),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: dangerColor ??
-                              Theme.of(context)
-                                  .extension<AppTextColors>()!
-                                  .textTertiary,
-                        ),
+                      color:
+                          dangerColor ??
+                          Theme.of(
+                            context,
+                          ).extension<AppTextColors>()!.textTertiary,
+                    ),
                   ),
                 ],
               ),

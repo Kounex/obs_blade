@@ -37,15 +37,15 @@ enum DashboardElement {
   OBSStats;
 
   String get name => switch (this) {
-        DashboardElement.ExposedProfile => 'Profiles',
-        DashboardElement.ExposedControls => 'Controls',
-        DashboardElement.SceneButtons => 'Scene Buttons',
-        DashboardElement.StudioModeTransition => 'Studio Mode Transition',
-        DashboardElement.StudioModeConfig => 'Studio Mode Config',
-        DashboardElement.ScenePreview => 'Scene Preview',
-        DashboardElement.SceneItems => 'Scene Items',
-        DashboardElement.SceneItemsAudio => 'Scene Audio',
-        DashboardElement.StreamChat => 'Chat',
-        DashboardElement.OBSStats => 'Stats',
-      };
+    DashboardElement.ExposedProfile => 'Profiles',
+    DashboardElement.ExposedControls => 'Controls',
+    DashboardElement.SceneButtons => 'Scene Buttons',
+    DashboardElement.StudioModeTransition => 'Studio Mode Transition',
+    DashboardElement.StudioModeConfig => 'Studio Mode Config',
+    DashboardElement.ScenePreview => 'Scene Preview',
+    DashboardElement.SceneItems => 'Scene Items',
+    DashboardElement.SceneItemsAudio => 'Scene Audio',
+    DashboardElement.StreamChat => 'Chat',
+    DashboardElement.OBSStats => 'Stats',
+  };
 }

@@ -14,21 +14,16 @@ class HotkeyEntry extends StatelessWidget {
   final Box<Hotkey> hotkeyBox;
   final Hotkey hotkey;
 
-  const HotkeyEntry({
-    super.key,
-    required this.hotkeyBox,
-    required this.hotkey,
-  });
+  const HotkeyEntry({super.key, required this.hotkeyBox, required this.hotkey});
 
   @override
   Widget build(BuildContext context) {
-    final AppStatusColors statusColors =
-        Theme.of(context).extension<AppStatusColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
 
     return ListTile(
-      title: Text(
-        this.hotkey.name.split('.').sublist(1).join(),
-      ),
+      title: Text(this.hotkey.name.split('.').sublist(1).join()),
       subtitle: Text(this.hotkey.name),
       contentPadding: const EdgeInsets.all(0),
       trailing: Row(
@@ -52,16 +47,13 @@ class HotkeyEntry extends StatelessWidget {
           BaseIconButton(
             onTap: () {
               Navigator.of(context).pop();
-              Future.delayed(
-                const Duration(milliseconds: 500),
-                () {
-                  NetworkHelper.makeRequest(
-                    GetIt.instance<NetworkStore>().activeSession!.socket,
-                    RequestType.TriggerHotkeyByName,
-                    {'hotkeyName': this.hotkey.name},
-                  );
-                },
-              );
+              Future.delayed(const Duration(milliseconds: 500), () {
+                NetworkHelper.makeRequest(
+                  GetIt.instance<NetworkStore>().activeSession!.socket,
+                  RequestType.TriggerHotkeyByName,
+                  {'hotkeyName': this.hotkey.name},
+                );
+              });
             },
             icon: CupertinoIcons.play_arrow_solid,
             backgroundColor: Theme.of(context).colorScheme.surface,

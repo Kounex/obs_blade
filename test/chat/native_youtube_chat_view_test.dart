@@ -23,8 +23,7 @@ YouTubeChatMessage ytMessage(String id, {String author = 'chan-1'}) =>
         publishedAt: DateTime.utc(2026, 9, 3),
         authorChannelId: author,
         displayMessage: 'text $id',
-        textMessageDetails:
-            YouTubeTextMessageDetails(messageText: 'text $id'),
+        textMessageDetails: YouTubeTextMessageDetails(messageText: 'text $id'),
       ),
       authorDetails: YouTubeChatAuthorDetails(
         channelId: author,
@@ -40,9 +39,8 @@ void main() {
   Box<YouTubeAuth> authBox() =>
       Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
 
-  Widget wrap() => const MaterialApp(
-        home: Scaffold(body: NativeYouTubeChatView()),
-      );
+  Widget wrap() =>
+      const MaterialApp(home: Scaffold(body: NativeYouTubeChatView()));
 
   String renderedRichText(WidgetTester tester) => tester
       .widgetList<RichText>(find.byType(RichText))
@@ -72,8 +70,9 @@ void main() {
     }
   });
 
-  testWidgets('connecting with an empty buffer shows the spinner copy',
-      (tester) async {
+  testWidgets('connecting with an empty buffer shows the spinner copy', (
+    tester,
+  ) async {
     store.chatConnection = YouTubeChatConnectionState.connecting;
     await tester.pumpWidget(wrap());
     await tester.pump();
@@ -81,21 +80,24 @@ void main() {
     expect(find.text('Connecting to YouTube chat…'), findsOneWidget);
   });
 
-  testWidgets('offline with an empty buffer explains the missing chat',
-      (tester) async {
+  testWidgets('offline with an empty buffer explains the missing chat', (
+    tester,
+  ) async {
     store.chatConnection = YouTubeChatConnectionState.offline;
     await tester.pumpWidget(wrap());
     await tester.pump();
 
     expect(
       find.text(
-          'No active live chat — the stream is offline or chat is disabled.'),
+        'No active live chat — the stream is offline or chat is disabled.',
+      ),
       findsOneWidget,
     );
   });
 
-  testWidgets('error with an empty buffer shows the error and a retry',
-      (tester) async {
+  testWidgets('error with an empty buffer shows the error and a retry', (
+    tester,
+  ) async {
     store.chatConnection = YouTubeChatConnectionState.error;
     store.chatError = 'Lost connection to YouTube chat';
     await tester.pumpWidget(wrap());
@@ -116,8 +118,9 @@ void main() {
     expect(renderedRichText(tester), contains('text m2'));
   });
 
-  testWidgets('mod long-press chrome is absent when signed out',
-      (tester) async {
+  testWidgets('mod long-press chrome is absent when signed out', (
+    tester,
+  ) async {
     store.chatConnection = YouTubeChatConnectionState.connected;
     store.messages.add(ytMessage('m1'));
 
@@ -127,19 +130,20 @@ void main() {
     expect(find.byType(ChatRowLongPressListener), findsNothing);
   });
 
-  testWidgets('mod long-press chrome appears when signed in',
-      (tester) async {
+  testWidgets('mod long-press chrome appears when signed in', (tester) async {
     /// runAsync: the Hive write must not land in the fake-async zone (a
     /// pending write deadlocks tearDown's harness.close()).
-    await tester.runAsync(() => authBox().put(
-          YouTubeAuth.kBoxKey,
-          YouTubeAuth(
-            accessToken: 'access',
-            refreshToken: 'refresh',
-            expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600000,
-            scopes: kYouTubeChatScopes,
-          ),
-        ));
+    await tester.runAsync(
+      () => authBox().put(
+        YouTubeAuth.kBoxKey,
+        YouTubeAuth(
+          accessToken: 'access',
+          refreshToken: 'refresh',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600000,
+          scopes: kYouTubeChatScopes,
+        ),
+      ),
+    );
 
     store.chatConnection = YouTubeChatConnectionState.connected;
     store.messages.add(ytMessage('m1'));

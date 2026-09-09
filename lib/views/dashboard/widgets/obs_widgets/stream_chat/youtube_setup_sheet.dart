@@ -72,8 +72,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
   bool? _keyValid;
   String? _keyError;
 
-  bool get _storeRegistered =>
-      GetIt.instance.isRegistered<YouTubeChatStore>();
+  bool get _storeRegistered => GetIt.instance.isRegistered<YouTubeChatStore>();
 
   YouTubeChatStore? get _store =>
       this._storeRegistered ? GetIt.instance<YouTubeChatStore>() : null;
@@ -89,12 +88,15 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
       return value is String ? value : '';
     }
 
-    this._apiKeyController =
-        TextEditingController(text: read(SettingsKeys.YouTubeApiKey));
-    this._clientIdController =
-        TextEditingController(text: read(SettingsKeys.YouTubeOAuthClientId));
+    this._apiKeyController = TextEditingController(
+      text: read(SettingsKeys.YouTubeApiKey),
+    );
+    this._clientIdController = TextEditingController(
+      text: read(SettingsKeys.YouTubeOAuthClientId),
+    );
     this._clientSecretController = TextEditingController(
-        text: read(SettingsKeys.YouTubeOAuthClientSecret));
+      text: read(SettingsKeys.YouTubeOAuthClientSecret),
+    );
   }
 
   @override
@@ -116,9 +118,10 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
       this._keyError = null;
     });
     try {
-      await this
-          ._chatService
-          .getActiveLiveChatId(kYouTubeApiKeyProbeVideoId, apiKey: key);
+      await this._chatService.getActiveLiveChatId(
+        kYouTubeApiKeyProbeVideoId,
+        apiKey: key,
+      );
       if (!this.mounted) return;
       this.setState(() => this._keyValid = true);
     } on YouTubeApiException catch (e) {
@@ -155,7 +158,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     write(SettingsKeys.YouTubeApiKey, this._apiKeyController.text);
     write(SettingsKeys.YouTubeOAuthClientId, this._clientIdController.text);
     write(
-        SettingsKeys.YouTubeOAuthClientSecret, this._clientSecretController.text);
+      SettingsKeys.YouTubeOAuthClientSecret,
+      this._clientSecretController.text,
+    );
 
     final store = this._store;
     if (store != null) {
@@ -186,10 +191,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
         children: [
           Text(
             '$number.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
@@ -231,10 +235,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
           Text(
             'Key works — save it to enable native chat',
             key: const Key('youtube-setup-key-valid'),
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: CupertinoColors.activeGreen),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: CupertinoColors.activeGreen),
           ),
         ],
       );
@@ -257,10 +260,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             child: Text(
               this._keyError ?? 'YouTube rejected this key',
               key: const Key('youtube-setup-key-invalid'),
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: errorColor),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: errorColor),
             ),
           ),
         ],
@@ -276,7 +278,8 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     Color? color,
     Key? key,
   }) {
-    final effectiveColor = color ??
+    final effectiveColor =
+        color ??
         ChatType.YouTube.brandColor ??
         Theme.of(context).colorScheme.secondary;
     return Pressable(
@@ -296,10 +299,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
         ),
         child: Text(
           label,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: Colors.white),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.white),
         ),
       ),
     );
@@ -307,8 +309,8 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final accent = ChatType.YouTube.brandColor ??
-        Theme.of(context).colorScheme.secondary;
+    final accent =
+        ChatType.YouTube.brandColor ?? Theme.of(context).colorScheme.secondary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -354,13 +356,14 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
               onTap: () async {
                 final uri = Uri.parse('https://console.cloud.google.com');
                 if (await launcher.canLaunchUrl(uri)) {
-                  await launcher.launchUrl(uri,
-                      mode: launcher.LaunchMode.externalApplication);
+                  await launcher.launchUrl(
+                    uri,
+                    mode: launcher.LaunchMode.externalApplication,
+                  );
                 }
               },
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -373,9 +376,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                     Text(
                       'Open console.cloud.google.com',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -392,10 +395,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             const SizedBox(height: AppSpacing.md),
             Text(
               'API key',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: AppSpacing.xs),
             NativeChatTextField(
@@ -411,7 +413,8 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                   context,
                   key: const Key('youtube-setup-test-key'),
                   label: 'Test key',
-                  onTap: this._apiKeyController.text.trim().isEmpty ||
+                  onTap:
+                      this._apiKeyController.text.trim().isEmpty ||
                           this._testing
                       ? null
                       : this._testKey,
@@ -423,10 +426,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             const SizedBox(height: AppSpacing.md),
             CustomExpansionTile(
               headerText: 'Advanced: sign-in (optional)',
-              headerTextStyle: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              headerTextStyle: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               expandedBody: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -467,14 +469,14 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                   Observer(
                     builder: (_) =>
                         this._store!.authState == YouTubeAuthState.signedIn
-                            ? const SizedBox.shrink()
-                            : this._pillButton(
-                                context,
-                                key: const Key('youtube-setup-sign-in'),
-                                label: 'Connect YouTube',
-                                onTap: this._signIn,
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
+                        ? const SizedBox.shrink()
+                        : this._pillButton(
+                            context,
+                            key: const Key('youtube-setup-sign-in'),
+                            label: 'Connect YouTube',
+                            onTap: this._signIn,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
                   ),
               ],
             ),

@@ -19,12 +19,15 @@ abstract class ChatNotificationEvent with _$ChatNotificationEvent {
     required String messageId,
     required String systemMessage,
     required String noticeType,
+
     /// Chatter name color (hex), not the announcement highlight.
     String? color,
     @Default(<ChatMessageBadge>[]) List<ChatMessageBadge> badges,
+
     /// Optional message the chatter attached (often empty — the typed
     /// chat line may arrive separately as `channel.chat.message`).
     ChatMessageText? message,
+
     /// Present when [noticeType] is `announcement` — Helix highlight
     /// (`blue` / `green` / `orange` / `purple` / `primary`).
     ChatNotificationAnnouncement? announcement,
@@ -90,8 +93,7 @@ abstract class ChatNotificationAnnouncement
 }
 
 @Freezed(fromJson: true, toJson: false)
-abstract class ChatNotificationWatchStreak
-    with _$ChatNotificationWatchStreak {
+abstract class ChatNotificationWatchStreak with _$ChatNotificationWatchStreak {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
   const factory ChatNotificationWatchStreak({
@@ -145,8 +147,7 @@ abstract class ChatNotificationCommunitySubGift
 
   factory ChatNotificationCommunitySubGift.fromJson(
     Map<String, Object?> json,
-  ) =>
-      _$ChatNotificationCommunitySubGiftFromJson(json);
+  ) => _$ChatNotificationCommunitySubGiftFromJson(json);
 }
 
 @Freezed(fromJson: true, toJson: false)
@@ -154,9 +155,8 @@ abstract class ChatNotificationBitsBadgeTier
     with _$ChatNotificationBitsBadgeTier {
   // ignore: invalid_annotation_target
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
-  const factory ChatNotificationBitsBadgeTier({
-    required int tier,
-  }) = _ChatNotificationBitsBadgeTier;
+  const factory ChatNotificationBitsBadgeTier({required int tier}) =
+      _ChatNotificationBitsBadgeTier;
 
   factory ChatNotificationBitsBadgeTier.fromJson(Map<String, Object?> json) =>
       _$ChatNotificationBitsBadgeTierFromJson(json);
@@ -183,6 +183,7 @@ abstract class ChatNotificationCharityAmount
   @JsonSerializable(fieldRename: FieldRename.snake, createToJson: false)
   const factory ChatNotificationCharityAmount({
     required int value,
+
     /// Twitch docs alternate `decimal_places` / `decimal_place`.
     @JsonKey(name: 'decimal_places') int? decimalPlaces,
     @JsonKey(name: 'decimal_place') int? decimalPlace,
@@ -220,16 +221,13 @@ class ChatNotificationNotice {
   final int afterSeq;
   final ChatNotificationEvent event;
 
-  const ChatNotificationNotice({
-    required this.afterSeq,
-    required this.event,
-  });
+  const ChatNotificationNotice({required this.afterSeq, required this.event});
 }
 
 String _normalizeNoticeType(String noticeType) =>
     noticeType.startsWith('shared_chat_')
-        ? noticeType.substring('shared_chat_'.length)
-        : noticeType;
+    ? noticeType.substring('shared_chat_'.length)
+    : noticeType;
 
 String? _tierShort(String? subPlan) {
   final value = int.tryParse(subPlan ?? '');
@@ -289,39 +287,35 @@ String? chatNoticeMetaText(ChatNotificationEvent event) {
     'community_sub_gift' ||
     'gift_paid_upgrade' ||
     'prime_paid_upgrade' ||
-    'pay_it_forward' =>
-      (
-        color: ChatNoticeColorSeed.sub,
-        icon: ChatNoticeIconSeed.star,
-      ),
+    'pay_it_forward' => (
+      color: ChatNoticeColorSeed.sub,
+      icon: ChatNoticeIconSeed.star,
+    ),
     'watch_streak' => (
-        color: ChatNoticeColorSeed.streak,
-        icon: ChatNoticeIconSeed.flame,
-      ),
+      color: ChatNoticeColorSeed.streak,
+      icon: ChatNoticeIconSeed.flame,
+    ),
     'raid' || 'unraid' => (
-        color: ChatNoticeColorSeed.raid,
-        icon: ChatNoticeIconSeed.people,
-      ),
+      color: ChatNoticeColorSeed.raid,
+      icon: ChatNoticeIconSeed.people,
+    ),
     'announcement' => (
-        color: ChatNoticeColorSeed.announce,
-        icon: ChatNoticeIconSeed.megaphone,
-      ),
+      color: ChatNoticeColorSeed.announce,
+      icon: ChatNoticeIconSeed.megaphone,
+    ),
     'bits_badge_tier' => (
-        color: ChatNoticeColorSeed.bits,
-        icon: ChatNoticeIconSeed.diamond,
-      ),
+      color: ChatNoticeColorSeed.bits,
+      icon: ChatNoticeIconSeed.diamond,
+    ),
     'charity_donation' => (
-        color: ChatNoticeColorSeed.charity,
-        icon: ChatNoticeIconSeed.heart,
-      ),
+      color: ChatNoticeColorSeed.charity,
+      icon: ChatNoticeIconSeed.heart,
+    ),
     'modiversary' => (
-        color: ChatNoticeColorSeed.mod,
-        icon: ChatNoticeIconSeed.shield,
-      ),
-    _ => (
-        color: ChatNoticeColorSeed.generic,
-        icon: ChatNoticeIconSeed.info,
-      ),
+      color: ChatNoticeColorSeed.mod,
+      icon: ChatNoticeIconSeed.shield,
+    ),
+    _ => (color: ChatNoticeColorSeed.generic, icon: ChatNoticeIconSeed.info),
   };
 }
 
