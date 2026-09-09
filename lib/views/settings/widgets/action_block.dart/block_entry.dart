@@ -59,7 +59,9 @@ class BlockEntry extends StatelessWidget {
         ? () => this.onTap!()
         : null;
 
-    return Pressable(
+    /// Rows flash, they don't scale (token-delta press grammar: scale is
+    /// reserved for elements with real travel)
+    return PressFlash(
       onTap: onPressed,
       child: Container(
         color: Theme.of(context).cardColor,

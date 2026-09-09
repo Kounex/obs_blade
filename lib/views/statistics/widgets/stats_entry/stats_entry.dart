@@ -82,31 +82,59 @@ class StatsEntry extends StatelessWidget {
                         const SizedBox(height: 8.0),
                         Padding(
                           padding: const EdgeInsets.only(left: 0.0),
-                          child: TagBox(
-                            expand: false,
-                            color: this.pastStatsData is PastStreamData
-                                ? Colors.blue[800]
-                                : this.pastStatsData is PastRecordData
-                                    ? CupertinoColors.destructiveRed
-                                    : Colors.grey,
-                            icon: Icon(
-                              this.pastStatsData is PastStreamData
-                                  ? CupertinoIcons.dot_radiowaves_left_right
-                                  : this.pastStatsData is PastRecordData
-                                      ? CupertinoIcons.recordingtape
-                                      : Icons.question_mark,
-                              size: 18.0,
-                              color: Colors.white,
-                            ),
-                            label: this.pastStatsData is PastStreamData
-                                ? 'Stream'
-                                : this.pastStatsData is PastRecordData
-                                    ? 'Recording'
-                                    : 'Unknown',
-                            labelStyle: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
-                                .copyWith(color: Colors.white),
+                          child: Builder(
+                            builder: (context) {
+                              final ThemeData theme = Theme.of(context);
+                              final AppStatusColors statusColors = theme
+                                  .extension<AppStatusColors>()!;
+                              final AppTextColors textColors =
+                                  theme.extension<AppTextColors>()!;
+                              final bool isStream =
+                                  this.pastStatsData is PastStreamData;
+                              final bool isRecord =
+                                  this.pastStatsData is PastRecordData;
+
+                              /// Tint + brightened-text chip idiom
+                              /// (token-delta §2.3): 16% status/highlight
+                              /// tint carrying the …Text derivative -
+                              /// same pattern as the saved-connection
+                              /// Offline badge, never a solid fill
+                              final Color chipText = isStream
+                                  ? textColors.highlightText
+                                  : isRecord
+                                      ? statusColors.recordingText
+                                      : textColors.textSecondary;
+                              return TagBox(
+                                expand: false,
+                                color: isStream
+                                    ? theme.colorScheme.secondary
+                                        .withValues(alpha: 0.16)
+                                    : isRecord
+                                        ? statusColors.recording
+                                            .withValues(alpha: 0.16)
+                                        : Colors.white
+                                            .withValues(alpha: 0.12),
+                                icon: Icon(
+                                  isStream
+                                      ? CupertinoIcons
+                                          .dot_radiowaves_left_right
+                                      : isRecord
+                                          ? CupertinoIcons.recordingtape
+                                          : Icons.question_mark,
+                                  size: 18.0,
+                                  color: chipText,
+                                ),
+                                label: isStream
+                                    ? 'Stream'
+                                    : isRecord
+                                        ? 'Recording'
+                                        : 'Unknown',
+                                labelStyle: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall!
+                                    .copyWith(color: chipText),
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -157,7 +185,9 @@ class StatsEntry extends StatelessWidget {
     );
 
     if (!this.usedInDetail) {
-      entry = Pressable(
+      /// List entries flash like settings rows (token-delta press
+      /// grammar), scale is for elements with real travel
+      entry = PressFlash(
         onTap: () => Navigator.pushNamed(
           context,
           StaticticsTabRoutingKeys.Detail.route,
