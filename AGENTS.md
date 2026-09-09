@@ -130,10 +130,16 @@ ACTIVE), and the RevenueCat keys are pasted
 path (`purchases_flutter`, entitlement `pro`) instead of the legacy
 direct-IAP fallback. Checklist + sandbox dogfood:
 [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md).
-Gates live at the chat-bar
-engine switch (lock badge + intercept), the native chat pane (upsell),
-and the username-bar cluster — all `Observer`s over `ProStore.isPro`;
-WebView chat stays free forever (strategy:
+Gates: the chat-bar
+engine switch always applies (lock badge on the Native segment), and
+enforcement sits behind it — the native chat pane renders the locked
+upsell widget (`Observer` over `ProStore.isPro`, incl. legacy persisted
+`SelectedChatEngine=native`), the username-bar native cluster hides, and
+the stores refuse to connect without the entitlement (`connectChat`
+gates on `isPro` via an injectable `isProResolver` seam — persisted
+engine selections and cold-start session restores can't bring native
+chat up behind the locked pane). WebView chat stays free forever
+(strategy:
 `docs/private/monetization-strategy.md`). Restore = RC restore / cold-start
 guarded `restorePurchases()` (legacy path) + explicit button. On the RC
 path, CustomerInfo entitlement state is the truth (lapsed subscriptions

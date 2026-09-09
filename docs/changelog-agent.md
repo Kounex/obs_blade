@@ -2,6 +2,47 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-09 — 4.0 drift-fix round 2: paywall blur/hero + hardened native-chat gate
+
+Second user review pass on `4.0-liquid-glass`, three directives:
+
+- **Paywall bar blur:** the back-only bar read as solid because the
+  paywall's `customBody` was padded below the bar — the blur had nothing
+  to filter. New opt-in `extendBodyBehindBar` on
+  `TransculentCupertinoNavBarWrapper` (default off; qr_scan /
+  license_modal / order keep their padding): the body extends behind the
+  bar and `ProSalesView`/`ProUnlockedView` own the top inset, so
+  scrolling content passes under the blurred bar like the sliver-based
+  views.
+- **Paywall hero:** bigger bolt-squircle (72→96) on the scene-tile color
+  idiom (§2.2: full-strength accent ring + 12% accent tint fill + accent
+  glyph, replacing the solid accent tile), plus an 'OBS Blade Pro' brand
+  line underneath — the name was stated nowhere after the bar went
+  back-only. Value line stays the pitch headline.
+- **Native chat gate hardened + switch unblocked:** the chat-bar engine
+  switch no longer intercepts — tapping Native always switches, and
+  without Pro the pane renders the locked upsell (padlock tile, "Native
+  chat is locked — unlock it with OBS Blade Pro.", benefits taste,
+  Explore Pro). The real enforcement moved into the stores:
+  `TwitchChatStore.connectChat()` / `YouTubeChatStore.connectChat()` +
+  `YouTubeChatStore.selectChannel()` (which started its poll loop
+  directly) refuse without the entitlement, via an injectable
+  `isProResolver` seam (same pattern as the existing store resolvers) —
+  previously a persisted native engine + stored login connected EventSub
+  / started polling at cold start behind the locked pane. Username-bar
+  native cluster still hides without Pro.
+- Tests: engine-switch intercept test rewritten (switch always applies);
+  new store-gate tests (EventSub never connects / poll loop never starts
+  without Pro); 7 widget-test store constructions got
+  `isProResolver: () => true` (their login flows hit the gate through
+  `startLogin → connectChat`); two paywall tests center-align their
+  `ensureVisible` targets (top-aligned now lands under the translucent
+  bar, which eats the tap).
+- Gotcha: `dart format` on this repo's files produces massive unrelated
+  churn — the checked-in style is NOT the current SDK formatter's
+  output. Don't run it; match surrounding style by hand. (Cost one
+  revert-and-reapply cycle.)
+
 ## 2026-09-09 — 4.0 drift-fix batch: v12 color coding + interaction alignment
 
 User ran the `4.0-liquid-glass` branch and found drift from the ratified

@@ -125,15 +125,24 @@ ratified fixes: neutral white-alpha-over-scaffold surfaces for the
 default theme (custom themes keep card-slot identity; new themes also
 start neutral), press-flash instead of scale on settings/stats rows,
 neutral slider theme, highlight-tinted Close pill, paywall = back-only
-bar + accent bolt-squircle logo. Gates: 760 tests green, analyze at
-baseline, sim-verified on the workstation (default theme). Details:
-`changelog-agent.md` 2026-09-09 drift-fix entry. **Next:** user runs the
+bar + accent bolt-squircle logo. **Round 2 (same day):** paywall body
+extends behind the bar (blur visible again, `extendBodyBehindBar` opt-in
+on the wrapper), hero = 96px scene-tile-idiom squircle (accent ring +
+tint fill) + 'OBS Blade Pro' brand line, and the native-chat Pro gate
+moved into the stores (`connectChat`/`selectChannel` refuse without the
+entitlement via an `isProResolver` seam) so the chat-bar engine switch
+can switch freely — not-Pro lands on the locked upsell pane instead of a
+paywall intercept. Gates: 760+ tests green (incl. new store-gate tests),
+analyze at baseline, sim-verified. Details:
+`changelog-agent.md` 2026-09-09 drift-fix entries. **Next:** user runs the
 updated branch (phone + tablet, incl. **Force
 Tablet Mode** check) → Gate 3 (fresh review of branch diff + on-device
 feel, findings triaged to the user BEFORE applying — standing rule) →
 merge or iterate. Doc debt: mock/contract docs still describe the paywall
 wordmark logo + a §2.5 surface wording that contradicts the ratified
 "neutral over scaffold" — amend with a v13 note if the changes stick.
+Gotcha: **don't run `dart format`** on repo files — the checked-in style
+is not the current SDK formatter's output (massive churn).
 Pre-existing bugs fixed on the branch during
 verification: `text_field_date.dart` LateInitializationError (crashed
 the tablet walk; now a proper StatefulWidget). Still open from the
