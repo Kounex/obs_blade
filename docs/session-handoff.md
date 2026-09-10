@@ -1,5 +1,11 @@
 # Session handoff
 
+> **Active work on `redesign-astra` (2026-09-10):** follow
+> [the new redesign entry point](redesign/README.md) and
+> [its current handoff](redesign/session-handoff.md). The earlier redesign status
+> below is inherited historical context, not instructions for this branch.
+> The user explicitly requested a new design from master and isolated prototypes.
+
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-09** (4.0

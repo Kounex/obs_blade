@@ -1,5 +1,15 @@
 # OBS Blade
 
+## Active project on `redesign-astra`
+
+This branch is a new first-principles redesign from master. After the repository
+startup checks, read `docs/redesign/README.md`, `session-handoff.md`, `progress.md`
+and `decisions.md` in that directory. Those documents govern this redesign.
+Earlier redesign branches and inherited visual-direction documents are historical
+and must not supply its design. Preserve behavior from master source/tests;
+existing screen composition and navigation are open to change. The branch and
+workflow in the active redesign README override older branch/direction notes below.
+
 Flutter remote for OBS Studio via **OBS WebSocket v5** (**iOS/Android — phone and
 tablet / large-screen first-party**). Great UI on both form factors is a product
 requirement, not an afterthought.
