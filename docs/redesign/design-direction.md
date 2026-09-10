@@ -1,8 +1,9 @@
 # Design direction
 
-Status: architecture exploration. No visual style or interaction architecture
-has been selected. These principles follow the user brief and source archaeology;
-the three concepts below are proposals, not ratified decisions.
+Status: session workspace selected, with first-class chat and user-controlled
+focus (D-003). Visual style and exact interactions remain unvalidated. The
+architecture comparison below records alternatives considered; it is not an
+outstanding choice between A/B/C.
 
 ## Principles and rationale
 
@@ -25,17 +26,55 @@ the three concepts below are proposals, not ratified decisions.
   Prefer direct controls and contextual tools where they help the journey.
   Avoid decorative containment, compulsory customization and invisible gestures.
 
-## Three interaction architectures
+## Selected direction: one workspace, adjustable attention
+
+The user accepted A on 2026-09-10 with a significant qualification: specialized
+chat must be a first-class experience when wanted, including space for future
+audience activity. A fixed scene-first hierarchy therefore does not satisfy the
+accepted direction. Keep OBS objects and conversation in one stable workspace,
+with explicit control over which receives attention.
+
+Proposed first prototype behavior:
+
+| Context | Composition and interaction |
+|---|---|
+| Phone, OBS focus | Scene/control workspace with a visible Chat focus action. Chat remains optional; no empty conversation panel consumes control space. |
+| Phone, Chat focus | Conversation, channel context, compose/reply and contextual moderation get the main area. A compact OBS status/action area retains access to sound and scene controls. Verify its behavior with the keyboard open. |
+| Tablet | OBS and chat can remain visible together. Simple emphasis presets allocate more space to either; validate a balanced arrangement as well. Preserve the same selected objects and conversation on resize. |
+| Returning user | Remember explicitly chosen emphasis per device/form factor. No automatic focus change when a stream starts, an event arrives or entitlement changes. Persistence translation is deferred until the prototype proves the interaction. |
+| Focus change | Preserve draft/reply, channel, scroll anchor, unread state, inspected scene and pending commands. Changing visibility does not reconnect either transport. |
+| Chat unavailable | Explain entitlement, configuration, account and network state locally; retain the supported free WebView route and usable OBS controls. |
+
+This is a small focus control, not a customizable dashboard builder. Labels,
+control placement and minimum companion content need visual/interaction testing.
+No new global Prepare/Operate/Review modes are introduced.
+
+Audience activity should remain reviewable without flooding the message stream
+or repeatedly taking focus. Explore a compact recent-activity surface with an
+expandable history; allow a quiet presentation when the user wants conversation
+alone. Existing Twitch chat notifications are verified in
+`TwitchChatStore.chatNotifications` and its merged timeline. Broader event
+coverage, categorization, retention and alert policy are future requirements,
+not implemented capabilities or confirmed cross-platform parity. Prototype
+examples must distinguish existing notices from future simulated events.
+
+**Open product question:** can users enter and use chat before connecting OBS?
+Recommendation: yes. The stores already manage chat transport independently;
+an OBS setup problem should not make audience interaction inaccessible. This
+would add a chat-only entry path and requires deliberate navigation/lifecycle
+work; the current dashboard wrapper still depends on `DashboardStore`.
+
+## Architecture alternatives considered
 
 The common scenario: already streaming from a saved connection, inspect another
 scene, stage a studio preview, adjust global microphone audio, read chat, respond
 to an external OBS change, then recover from a lost connection. Each concept
 must handle the same scenario and both form factors.
 
-### A — Session workspace (provisional recommendation)
+### A — Session workspace (selected with the qualification above)
 
-The active OBS session is the main context. Scenes are navigable objects; an
-inspector exposes their sources, while global sound and conversations are tools
+The original proposal made the active OBS session the main context. Scenes are
+navigable objects; an inspector exposes their sources, while global sound and conversations are tools
 available alongside that context. Inspecting an object is distinct from sending
 it to preview or program. Explicit actions make those targets clear.
 
@@ -99,7 +138,7 @@ Cost: stable routines and willingness to configure are unverified assumptions.
 Configuration adds a persisted model and stale-target migration work. Default
 actions cannot assume meaningful scene names or universal workflows.
 
-## Evaluation and consequential choice
+## Evaluation at selection
 
 | Criterion | A: Session workspace | B: Activity focus | C: Personal surface |
 |---|---|---|---|
@@ -110,23 +149,18 @@ actions cannot assume meaningful scene names or universal workflows.
 | New infrastructure | Session/lifecycle adapter | Adapter plus activity state | Adapter plus persisted action configuration |
 | Tablet value | Concurrent objects/tools | Concurrent tools for chosen task | Increased action capacity + companion |
 
-**Recommend A provisionally:** it follows the verified object relationships and
-requires less new configuration infrastructure. This is an inference from source,
-not evidence about user preference. B is credible if monitoring/chat dominates;
-C is credible if a small repeated repertoire dominates. Do not silently combine
-all three into a larger dashboard to avoid choosing.
-
-**User input required before committing the primary architecture:** should the
-default experience favor broad OBS operation (A), watching chat/output with
-occasional intervention (B), or a few repeated actions (C)? The choice sets the
-default attention hierarchy, not which capabilities survive.
+The recommendation for A followed verified object relationships and lower
+configuration cost. The user selected it with first-class adjustable chat focus.
+That qualification changes the original fixed attention hierarchy; it does not
+adopt B's activity stages or C's user-authored control surface.
 
 ## First slice and design checkpoint
 
-After the choice, build an isolated Flutter prototype for the journey in
-[user-flows](user-flows.md), with fake session/command outcomes and representative
-chat context. Validate phone and tablet composition before extracting tokens or
-integrating transport. Production replacement follows integration and behavioral
+Build an isolated Flutter prototype for the journeys in
+[user-flows](user-flows.md), with fake session/command outcomes and functional
+chat focus, draft, scroll and activity interactions. Resolve the chat-only entry
+question before fixing launch navigation. Validate phone and tablet composition
+before extracting tokens or integrating transport. Production replacement follows integration and behavioral
 validation of the same journey.
 
 ## Contemporary interaction references

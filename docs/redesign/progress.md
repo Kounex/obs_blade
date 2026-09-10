@@ -7,13 +7,15 @@
 - Source archaeology of connection/session/control, chat, history, persistence,
   settings and entitlements; widget-owned policies and integration risks mapped.
 - Canonical project documents established; three materially different interaction
-  architectures evaluated with a provisional recommendation.
+  architectures evaluated. User selected the session workspace with first-class,
+  user-controlled chat focus (D-003).
 
 ## Current workstream
 
-Select the default operating emphasis: session workspace, activity focus or
-personal control surface. The choice is described in `design-direction.md`.
-First slice: connect, understand program/preview, change scene/sound, recover, exit.
+Define the selected workspace with explicit OBS/chat focus. Resolve whether chat
+is accessible before connecting OBS, then prototype both the control journey and
+a functional fake chat loop. See `design-direction.md` and `user-flows.md`.
+The architecture choice is settled; launch availability is the open question.
 
 ## Integration and validation
 
@@ -35,6 +37,9 @@ Verified 2026-09-10 against unchanged master app/test sources, using Flutter
 - Canonical documentation links and explicit source paths resolve; no private
   paths/addresses in the new documents; `git diff --check` passes.
 
+The D-003 update changes documentation only. Source references and documentation
+consistency were checked; the unchanged-code baseline above was not rerun.
+
 No simulator/real OBS/browser visual validation has been performed for the new
 direction; a new interface does not yet exist to validate.
 
@@ -53,7 +58,7 @@ direction; a new interface does not yet exist to validate.
 
 See `current-ui-assumptions.md` for inherited command acknowledgement, retry,
 grouped-source, history and deletion gaps. They remain unfixed and must not be
-mistaken for requirements. Primary architecture awaits a product choice; other
-phases are planned, not blocked by a technical failure. Private-doc mirror
-verification timed out on the original checkout; no private data was changed or
+mistaken for requirements. Chat-only entry awaits a product choice; exact focus
+controls are proposed and need prototype validation. Other phases are planned.
+Private-doc mirror verification timed out on the original checkout; no private data was changed or
 used to establish this design direction.

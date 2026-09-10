@@ -1,66 +1,71 @@
 # Current objective
 
-Choose and prototype a first-principles interaction architecture for OBS Blade,
-then integrate one verified journey. Follow `README.md` for authority and scope.
+Prototype the selected session workspace with first-class, user-controlled chat
+focus, then integrate a verified journey. Read `README.md` for authority/scope.
 
 # Current state
 
-Branch `redesign-astra`, new worktree from master
-`2307081594712f1da712ac23073d1ba3f3b82311`. Earlier redesign branches/artifacts
-are excluded. Original checkout and unrelated IDE edits are preserved.
+Branch `redesign-astra`, separate worktree from master
+`2307081594712f1da712ac23073d1ba3f3b82311`. Historical redesign work is excluded;
+the original checkout and unrelated IDE edits are preserved.
 
-Archaeology and three architecture proposals are documented. Provisional
-recommendation: A, session workspace. No architecture is selected, no prototype
-exists, and production UI/business logic/persistence are unchanged.
+D-003 records the user's acceptance of the workspace with first-class chat.
+Proposed phone OBS/Chat focus and tablet concurrent panes are in
+`design-direction.md`. No runnable prototype or production changes exist.
 
 # Last verified milestone
 
-Branch provenance, source-backed product/behavior maps and documentation checks.
-Baseline tests: 738 passed across chat/WebSocket/persistence/Pro. App/test analysis:
-0 errors, 8 warnings, 372 infos; full analysis additionally fails in standalone
-tool packages. Details and commands: `progress.md`. No new UI has been rendered.
+Source-backed archaeology and 738 passing baseline tests. App/test analysis had
+0 errors, 8 warnings, 372 infos; full analysis also fails in standalone tool
+packages (`progress.md`). Decision update is docs-only; code gates were not rerun.
+No new UI has been rendered. Chat stores independently own transport; their
+current dashboard presentation still depends on DashboardStore.
 
 # Next recommended action
 
-Resolve the product choice in `design-direction.md`; record the answer in
-`decisions.md` and this handoff, then build the selected isolated fake Flutter
-journey. Continue automatically after the answer.
+Resolve chat-only entry before fixing launch navigation. Record the answer and
+continue automatically into the isolated fake Flutter workspace, with phone and
+tablet validation. Do not reopen the choice between architectures A/B/C.
 
 # Important context required for that action
 
-First slice: connect → observe program/preview → change scene and sound → recover
-from interruption → disconnect, on phone and tablet. Use representative chat
-content to test attention balance, without integrating accounts/purchases yet.
-Inspection, preview and program are distinct intents. Command dispatch has no
-caller-visible acknowledgement today; do not claim an optimistic value is confirmed.
-Home/Dashboard widgets own session lifecycle and wakelock; later extract a small
-coordinator/adapter while retaining DashboardStore.
+Both loops belong in the first prototype: connect/scene/audio/recover/exit and
+chat/read/reply/intervene/return. Preserve channel, draft, scroll anchor and
+inspected scene when emphasis changes. OBS and chat readiness are separate.
+Future audience activity needs a reviewable presentation; exact event sources,
+alert policy and retention are not yet specified. Existing Twitch notices are
+available as source evidence; do not imply every proposed event already exists.
+
+Inspection, preview and program differ. Commands currently lack caller-visible
+acknowledgements; optimistic state is not confirmed OBS state. Later migrate
+Home/Dashboard lifecycle and wakelock through a small adapter/coordinator while
+retaining DashboardStore. Planned code home: `lib/redesign/` plus independent
+entrypoint, neither created yet.
 
 # Open questions requiring user input
 
-Default emphasis: A broad OBS operation (recommended), B monitoring/chat with
-occasional intervention, or C a small repertoire of configurable actions?
-This determines primary architecture, not feature removal. No preference has
-been inferred from code, prior redesign work or silence.
+Can users open/use chat before connecting OBS? Recommend yes: source already
+supports independent chat transport and this avoids tying audience interaction
+to OBS setup/availability. No answer yet; do not infer approval from silence.
 
 # Relevant files and symbols
 
-`design-direction.md`, `user-flows.md`, `business-logic-map.md`,
-`current-ui-assumptions.md`; `NetworkStore.setOBSWebSocket`, `DashboardStore`,
-`NetworkHelper.makeRequest`, Home/Dashboard lifecycle. Planned prototype home:
-`lib/redesign/` and an independent entrypoint; neither exists yet.
+`decisions.md` D-003, `design-direction.md`, `user-flows.md`,
+`business-logic-map.md`; `TwitchChatStore.init` / `chatNotifications`,
+`YouTubeChatStore.init`, `StreamChat.build`, `NetworkStore`, `DashboardStore`.
 
 # Do not accidentally change
 
-Production entrypoints, Hive contracts, entitlement/legacy ownership, v5 protocol,
-free WebView access, chat drafts/buffers, confirmation preferences, tablet support
-or unrelated work in the original checkout. No new dependency or generic design
-system before a proven need. Do not restart from the historical redesign branch.
+Production entrypoints, Hive contracts, entitlements/legacy ownership, free
+WebView access, chat buffers/drafts, confirmation preferences or tablet support.
+Do not lock chat permanently into a secondary panel. Focus changes must not
+restart transports or become inferred broadcast stages. Keep appearance,
+new dependencies and persistence translation provisional until validated.
 
 # Recommended next execution
 
-Task class: Product/UX choice and first interaction prototype.
-Recommended model: Astra.
-Recommended reasoning: High for resolving architecture; Medium for the approved prototype.
-Reason: The organizing model affects navigation and every downstream slice;
-once chosen, implementation should follow the explicit scenario and boundaries.
+Task class: Resolve workspace entry semantics, then implement interaction prototype.
+Recommended model: Astra for product judgment; capable implementation model afterward.
+Recommended reasoning: High for entry/lifecycle boundary; Medium for approved prototype.
+Reason: Independent chat entry affects the shell and session ownership; focus
+interactions can then be implemented against explicit fake state and scenarios.

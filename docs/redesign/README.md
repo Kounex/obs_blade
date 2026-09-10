@@ -1,6 +1,7 @@
 # OBS Blade — first-principles redesign
 
-Current phase: product archaeology and UX divergence. Production UI is unchanged.
+Current phase: session workspace selected, with first-class chat and user-controlled
+focus; defining the first prototype. Production UI is unchanged.
 
 ## Baseline and authority
 

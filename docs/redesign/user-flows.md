@@ -35,6 +35,17 @@ Prototype scenarios should include:
 5. Phone with keyboard/large text and tablet with simultaneous context/tools;
    resize without losing selected context or owning a second session.
 
-Show output status and representative chat content in the composition to test
-attention balance. Real purchase/auth/moderation integration and stream/record
-commands are later slices. This is sequencing, not feature removal.
+Per D-003, chat is an equal participant in this first composition checkpoint:
+
+- Focus chat → read and scroll back → begin a draft/reply → open a sound control
+  → return with draft and reading position intact → send successfully or recover
+  from a simulated error. Use realistic fake state, not production accounts.
+- Inspect a representative audience notice, then return to the conversation
+  without losing its place. Future event integrations remain out of scope.
+- Hide chat when unwanted, restore the prior focus and compare phone keyboard
+  use against concurrent tablet panes.
+- Show independent OBS/chat readiness; OBS interruption must not be mislabeled
+  as chat failure. Chat-only entry before OBS connection awaits a product answer.
+
+Real purchase/auth/moderation integration and stream/record commands are later
+slices. This is sequencing, not feature removal.
