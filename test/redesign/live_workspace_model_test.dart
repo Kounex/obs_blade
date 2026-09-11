@@ -19,7 +19,15 @@ void main() {
         model.setReply('Synthetic viewer');
         await model.connect();
         expect(model.program, 'Camera');
-        expect(model.hasAudioControls, isFalse);
+        expect(model.hasAudioControls, isTrue);
+        expect(model.audioInputs.map((input) => input.name), [
+          'Desk mic',
+          'Music',
+        ]);
+        await model.setInputMuted('Desk mic', true);
+        await model.setInputVolume('Music', .4);
+        expect(model.audioInputs.first.muted, isTrue);
+        expect(model.audioInputs.last.volume, .4);
         expect(model.sourceControls.last.name, 'Logo');
         final logo = model.sourceControls.last;
         final visibility = model.setSourceEnabled(logo.target, false);

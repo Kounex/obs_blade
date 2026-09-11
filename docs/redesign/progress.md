@@ -13,18 +13,18 @@
 ## Current workstream
 
 D-005 approves the inspected scene-row policy. D-006 defines confirmed scene state
-and session ownership. An isolated native lab now binds scene inspection,
-Preview/Take and direct Send to the existing WebSocket transport. Native iPhone
-and iPad walkthroughs passed against a synthetic peer; real chat and OBS
-audio controls remain unintegrated. Source visibility now uses real scoped
-scene/group identities; its controller/binding tests pass, with native recapture
-planned after the audio controls are connected.
+and session ownership. The isolated native lab now binds scene inspection,
+Preview/Take, scoped source visibility and actual input mute/volume to the existing
+WebSocket transport. Native phone/tablet walkthroughs pass against a synthetic peer.
+Real chat remains simulated; the next workstream is its independent access/channel
+contract and adapter.
 
-Source milestone: seven focused tests plus the existing redesign/WebSocket suite
-pass (**65 tests**), with clean targeted analysis. Group children retain parent
-owner + item ID; hidden groups do not falsify the child's own enabled flag.
-The source inspector is implemented but its new composition is not yet natively
-captured. Next: actual audio input discovery and independent input actions.
+2026-09-11 source/audio checkpoint: **801 tests pass**, including 63 redesign tests;
+targeted analysis is clean. New tests cover group targets, event/read ordering,
+input capability/identity, unknown outcomes, gain above unity and a refresh during
+a slider drag. Native UI checks cover both new controls, quick audio from chat,
+and draft/reply retention. Phone Back to scenes stays visible during inspector
+scroll; duplicate wide-pane Disconnect is removed. See `live-obs-lab.md`.
 
 ## Integration and validation
 
@@ -71,11 +71,12 @@ Verified 2026-09-10 against unchanged master app/test sources, using Flutter
 
 ## Remaining major areas
 
-1. Expand scoped source/audio targets and the real-chat presentation contract.
+1. Implement the real-chat presentation contract, access/channel projection and
+   safe send/channel-switch ownership.
 2. Connect real chat with independent readiness, entitlement/account/scopes and
    channel state; preserve free WebView availability.
-3. Complete first slice: production lifecycle/preferences, grouped-source/audio
-   targeting, real chat entitlement/account gates and reconnect regressions.
+3. Complete first slice: production lifecycle/preferences, advanced source/audio
+   controls, real chat entitlement/account gates and reconnect regressions.
 4. Stream/record and advanced production tools; complete discovery/QR flows.
 5. Chat/accounts/capabilities, live health/history, settings/customization,
    entitlement/purchases and data management.

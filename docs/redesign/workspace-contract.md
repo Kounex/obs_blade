@@ -25,7 +25,7 @@ names, OBS-confirmed program/preview, actual Studio Mode, inspected scene and
 command result. No hardcoded camera or microphone can masquerade as a real source.
 Name targeting retains compatibility with the existing v5 subset; collection
 changes invalidate targets and outstanding reads. Source/group IDs and audio
-input identity require their own subsequent contract.
+input identity follow the resource scopes below.
 
 Actions: inspect locally; set preview by explicit scene; send scene to program
 outside Studio Mode; Take the current preview in Studio Mode; refresh after an
@@ -68,6 +68,15 @@ child's enabled flag and its effective visibility under a disabled parent.
 Source visibility uses per-item pending state, independent from scene-output
 commands. Collection changes invalidate the entire identity scope. Event updates
 and readback establish enabled state; acknowledgements alone do not toggle it.
-Audio will similarly use actual input names and per-input pending state. Discover
+Audio uses actual input names and per-input pending state. Discover
 supported audio controls from successful OBS capability reads, not guessed names
 or input-kind heuristics. Current implementation status remains in `progress.md`.
+
+Audio values remain OBS-confirmed. GetInputMute's InvalidResourceState response
+excludes non-audio inputs; failed reads otherwise retain unavailable rows rather
+than inventing zero volume. Newer events win older reads. Input/collection changes
+invalidate outstanding identities; commands are not automatically replayed.
+The controller accepts the protocol's 0–20 multiplier range, while the UI keeps
+master's 0–1 adjustment range and displays actual gain above unity. Only releasing
+a slider sends a value; rendering a clamped thumb never changes OBS.
+Source: [official OBS input handlers](https://github.com/obsproject/obs-websocket/blob/master/src/requesthandler/RequestHandler_Inputs.cpp), verified 2026-09-11.

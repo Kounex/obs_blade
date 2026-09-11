@@ -34,7 +34,17 @@ class ObsPeer {
           requests.add(data);
           final type = data['requestType'];
           final fields = data['requestData'] as Map<String, dynamic>;
-          if (type == 'SetSceneItemEnabled') {
+          final input = audioInputs[fields['inputName']];
+          final noAudio =
+              (type == 'GetInputMute' || type == 'GetInputVolume') &&
+              input == null;
+          if (type == 'SetInputMute') {
+            input!['inputMuted'] = fields['inputMuted'];
+            event(socket, 'InputMuteStateChanged', fields);
+          } else if (type == 'SetInputVolume') {
+            input!['inputVolumeMul'] = fields['inputVolumeMul'];
+            event(socket, 'InputVolumeChanged', fields);
+          } else if (type == 'SetSceneItemEnabled') {
             final item = sourceOwners[fields['sceneName']]!.firstWhere(
               (item) => item['sceneItemId'] == fields['sceneItemId'],
             );
@@ -56,8 +66,21 @@ class ObsPeer {
               'd': {
                 'requestType': type,
                 'requestId': data['requestId'],
-                'requestStatus': {'result': true, 'code': 100},
+                'requestStatus': {
+                  'result': !noAudio,
+                  'code': noAudio ? 604 : 100,
+                },
                 'responseData': switch (type) {
+                  'GetInputList' => {
+                    'inputs': [
+                      for (final name in [...audioInputs.keys, 'Image'])
+                        {'inputName': name},
+                    ],
+                  },
+                  'GetInputMute' => {'inputMuted': input?['inputMuted']},
+                  'GetInputVolume' => {
+                    'inputVolumeMul': input?['inputVolumeMul'],
+                  },
                   'GetSceneList' => {
                     'scenes': [
                       {'sceneName': 'Camera', 'sceneIndex': 2},
@@ -88,6 +111,10 @@ class ObsPeer {
   final requests = <Map<String, dynamic>>[];
   String program = 'Camera';
   String preview = 'Break';
+  final audioInputs = <String, Map<String, dynamic>>{
+    'Desk mic': {'inputMuted': false, 'inputVolumeMul': .7},
+    'Music': {'inputMuted': false, 'inputVolumeMul': 1.4},
+  };
   final sourceOwners = <String, List<Map<String, dynamic>>>{
     'Camera': [
       _item(1, 'Face camera', index: 1),

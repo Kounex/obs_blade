@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'workspace_model.dart';
 import 'workspace_sources.dart';
+import 'workspace_audio.dart';
 
 const _border = Color(0xFF334355);
 const _text = Color(0xFFEDF2F7);
@@ -195,8 +196,7 @@ class _ControlPane extends StatelessWidget {
                 onInspect: onInspect,
                 includeAudio: !wide,
               );
-              final details = ListView(
-                padding: const EdgeInsets.all(16),
+              final details = Column(
                 children: [
                   if (!wide)
                     Align(
@@ -207,8 +207,15 @@ class _ControlPane extends StatelessWidget {
                         label: const Text('Back to scenes'),
                       ),
                     ),
-                  _Inspector(model: model),
-                  _DisconnectAction(model: model),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        _Inspector(model: model),
+                        if (!wide) _DisconnectAction(model: model),
+                      ],
+                    ),
+                  ),
                 ],
               );
               if (wide) {
@@ -602,6 +609,7 @@ class _AudioControlState extends State<AudioControl> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.model.isLiveObs) return WorkspaceAudio(model: widget.model);
     final value = _dragValue ?? widget.model.volume;
     final enabled = widget.model.canControl && !widget.model.commandBusy;
     return Column(

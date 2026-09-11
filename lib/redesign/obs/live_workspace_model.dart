@@ -1,6 +1,7 @@
 import '../../models/connection.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/source_control.dart';
+import '../workspace/audio_input_control.dart';
 import 'obs_scene_controller.dart';
 import 'obs_workspace_session.dart';
 
@@ -20,7 +21,22 @@ class LiveWorkspaceModel extends WorkspaceModel {
   @override
   bool get isLiveObs => true;
   @override
-  bool get hasAudioControls => false;
+  bool get hasAudioControls => true;
+  @override
+  List<AudioInputControl> get audioInputs =>
+      _session.audio?.controls ?? const [];
+  @override
+  bool get audioReady => _session.audio?.ready ?? false;
+  @override
+  String? get audioProblem => _session.audio?.problem;
+  @override
+  Future<void> refreshAudio() async => _session.audio?.refresh();
+  @override
+  Future<void> setInputMuted(String name, bool muted) async =>
+      _session.audio?.setMuted(name, muted);
+  @override
+  Future<void> setInputVolume(String name, double volume) async =>
+      _session.audio?.setVolume(name, volume);
   @override
   List<SourceControl> get sourceControls =>
       _session.sources?.controls ?? const [];
@@ -89,7 +105,10 @@ class LiveWorkspaceModel extends WorkspaceModel {
   }
 
   @override
-  Future<void> refreshObs() async => _session.scenes?.refresh();
+  Future<void> refreshObs() async {
+    await _session.scenes?.refresh();
+    await Future.wait([refreshSources(), refreshAudio()]);
+  }
 
   // Unsupported fixture commands must never appear to change real OBS.
   @override

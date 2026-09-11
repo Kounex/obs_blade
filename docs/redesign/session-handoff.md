@@ -1,8 +1,8 @@
 # Current objective
 
 Complete the first session-workspace slice, keeping OBS and first-class chat
-independent. The next integration areas are scoped OBS source/audio controls and
-real chat capability/account/entitlement state.
+independent. OBS scene/source/audio controls are integrated in the lab; next is real chat
+capability/account/entitlement and channel state.
 
 # Current state
 
@@ -15,30 +15,30 @@ D-006 defines confirmed scene state and isolated connection-attempt ownership.
 `lib/main_redesign.dart` is the fully simulated browser/native prototype.
 `lib/main_redesign_obs.dart` is a native-only scene integration lab. It reuses
 NetworkStore/NetworkHelper without production bootstrap, Hive, DI or accounts.
-OBS scenes and scoped source visibility are real; chat/activity remain simulated.
-Audio controls are still hidden pending actual input discovery. The new source
-inspector needs native recapture alongside the coming audio controls. Production UI remains
-unchanged; this is not a complete production workspace replacement.
+OBS scenes, scoped source visibility and actual input mute/volume are real;
+chat/activity remain simulated. Both source/audio native checkpoints pass.
+Production UI remains unchanged; this is not a complete workspace replacement.
 
 # Last verified milestone
 
-2026-09-11: iPhone and iPad native walkthroughs passed with production WebSocket
-transport against a synthetic peer. They exercised inspection, explicit Preview
-and Take, confirmed output, and retained draft/reply after OBS disconnect. Visual
-inspection removed an accidentally retained fake microphone from the live browser.
-Screenshots/limits: `live-obs-lab.md`. Both temporary simulators were removed.
-Subsequent source milestone: 65 redesign/WebSocket tests pass, including seven
-source targeting/event/hierarchy tests; targeted analysis clean.
-Earlier scene gate: 784 tests passed (46 redesign); targeted analysis clean. Broad
-analysis retains baseline 0 errors / 8 warnings / 372 infos. An inherited restore
-test binding issue was fixed in a separate test-only commit. See `progress.md`.
+2026-09-11: **801 tests passed** (chat, WebSocket, persistence, Pro and redesign;
+63 redesign tests). Targeted analysis clean. Native iPhone/iPad walkthroughs pass
+against a synthetic peer using production WebSocket transport. They exercise
+inspection, Preview/Take, grouped visibility, input mute/volume, quick audio from
+chat and draft/reply retention after disconnect. Screenshots inspected; pinned
+phone Back to scenes and removed duplicate tablet Disconnect. Both temporary
+simulators removed. See `live-obs-lab.md`. Broad analysis retains baseline
+0 errors / 8 warnings / 372 infos from the previous scene checkpoint.
 
 # Next recommended action
 
-Integrate actual audio input discovery, mute/volume and per-input outcomes, then
-run the native source/audio composition checkpoint. Keep chat a first-class
-parallel contract: readiness, Pro, account/scopes and channel state must remain
-independent of OBS. Do not reopen A/B/C or the approved scene-row policy.
+Implement the independent real-chat access/channel projection and adapter.
+Readiness, Pro, account/scopes and channel state must remain independent of OBS.
+Audit pending sends versus channel switches before binding user actions; existing
+Twitch send resolves its destination after awaiting token refresh, and YouTube
+appends its completed send to the active message list. Prevent cross-channel
+command/result ownership in the adapter. Do not reopen the approved architecture
+or scene-row policy.
 
 # Important context required for that action
 
@@ -53,7 +53,8 @@ The live model inherits local fake chat/focus as a transitional lab binding, not
 as a production chat adapter. Keep DashboardStore intact. Production lifecycle,
 history, preference translation, wakelock and actual chat gates remain to integrate.
 Grouped source targets use parentGroupName + item ID; displayed scene name alone
-is insufficient. Audio must address actual input identity, never a fixed microphone.
+is insufficient. Audio uses actual input names; read failures disable controls. The UI shows
+reported gain above unity without mutating it and sends volume only on release.
 
 # Open questions requiring user input
 
@@ -74,9 +75,9 @@ behavior. Use synthetic data and temporary simulators for automated validation.
 
 # Recommended next execution
 
-Task class: Scoped source/audio integration and real-chat presentation contract.
+Task class: Real-chat presentation contract and safe store adapter.
 Recommended model: Astra for unresolved boundaries; capable implementation model afterward.
-Recommended reasoning: High for grouped targets/lifetime; Medium for approved implementation.
+Recommended reasoning: High for channel/send lifetime; Medium for approved implementation.
 Reason: New scene command/ownership seams are established. Preserve source scope,
 independent chat state and production policies during expansion. The implementation
 sub-agent previously exhausted quota; avoid re-dispatch until capacity is available.

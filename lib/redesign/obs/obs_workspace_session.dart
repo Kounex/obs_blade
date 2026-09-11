@@ -7,6 +7,7 @@ import '../../stores/shared/network.dart';
 import '../../types/classes/connection_attempt_result.dart';
 import '../../utils/network_helper.dart';
 import 'obs_request_client.dart';
+import 'obs_audio_controller.dart';
 import 'obs_scene_controller.dart';
 import 'obs_source_controller.dart';
 
@@ -18,6 +19,7 @@ class ObsWorkspaceSession extends ChangeNotifier {
   ObsRequestClient? _client;
   ObsSceneController? _scenes;
   ObsSourceController? _sources;
+  ObsAudioController? _audio;
   Future<void> _sourceLoad = Future.value();
   bool _connecting = false;
   bool _disposed = false;
@@ -26,6 +28,7 @@ class ObsWorkspaceSession extends ChangeNotifier {
 
   ObsSceneController? get scenes => _scenes;
   ObsSourceController? get sources => _sources;
+  ObsAudioController? get audio => _audio;
   bool get connecting => _connecting;
   ConnectionAttemptResult? get failure => _failure;
 
@@ -68,10 +71,13 @@ class ObsWorkspaceSession extends ChangeNotifier {
     final scenes = ObsSceneController(client)..addListener(_sceneChanged);
     _scenes = scenes;
     _sources = ObsSourceController(client)..addListener(_changed);
+    final audio = ObsAudioController(client)..addListener(_changed);
+    _audio = audio;
+    final audioLoad = audio.refresh();
     notifyListeners();
     await scenes.refresh();
     if (_disposed || attempt != _attempt) return;
-    await _sourceLoad;
+    await Future.wait([_sourceLoad, audioLoad]);
   }
 
   void disconnect() {
@@ -106,6 +112,9 @@ class ObsWorkspaceSession extends ChangeNotifier {
     _sources?.removeListener(_changed);
     _sources?.dispose();
     _sources = null;
+    _audio?.removeListener(_changed);
+    _audio?.dispose();
+    _audio = null;
     _sourceLoad = Future.value();
     _client?.close();
     _client = null;

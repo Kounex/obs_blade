@@ -403,10 +403,19 @@ class _SessionHeader extends StatelessWidget {
               model.phoneFocus == WorkspaceFocus.chat) ...[
             const SizedBox(width: 8),
             IconButton.outlined(
-              tooltip: 'Quick microphone audio',
-              onPressed: () => showAudioSheet(context, model),
+              tooltip: model.isLiveObs
+                  ? 'Quick audio controls'
+                  : 'Quick microphone audio',
+              onPressed:
+                  model.isLiveObs && model.connection != ObsConnection.connected
+                  ? null
+                  : () => showAudioSheet(context, model),
               icon: Icon(
-                model.muted ? Icons.mic_off_outlined : Icons.mic_outlined,
+                model.isLiveObs
+                    ? Icons.graphic_eq
+                    : model.muted
+                    ? Icons.mic_off_outlined
+                    : Icons.mic_outlined,
               ),
             ),
           ],
@@ -582,33 +591,37 @@ void showAudioSheet(BuildContext context, WorkspaceModel model) {
     backgroundColor: _panel,
     showDragHandle: true,
     builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Microphone',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Global audio · Studio OBS',
-              style: TextStyle(color: _secondary),
-            ),
-            const SizedBox(height: 16),
-            AnimatedBuilder(
-              animation: model,
-              builder: (context, _) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CommandFeedback(model: model),
-                  AudioControl(model: model),
-                ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                model.isLiveObs ? 'Audio' : 'Microphone',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                model.isLiveObs
+                    ? 'Changes follow each input across scenes.'
+                    : 'Global audio · Studio OBS',
+                style: TextStyle(color: _secondary),
+              ),
+              const SizedBox(height: 16),
+              AnimatedBuilder(
+                animation: model,
+                builder: (context, _) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!model.isLiveObs) CommandFeedback(model: model),
+                    AudioControl(model: model),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     ),

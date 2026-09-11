@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'source_control.dart';
+import 'audio_input_control.dart';
 
 enum WorkspaceFocus { obs, balanced, chat }
 
@@ -80,6 +81,12 @@ class WorkspaceModel extends ChangeNotifier {
 
   bool get isLiveObs => false;
   bool get hasAudioControls => true;
+  List<AudioInputControl> get audioInputs => const [];
+  bool get audioReady => true;
+  String? get audioProblem => null;
+  Future<void> refreshAudio() async {}
+  Future<void> setInputMuted(String name, bool muted) async {}
+  Future<void> setInputVolume(String name, double volume) async {}
   List<SourceControl> get sourceControls => const [];
   bool get sourcesReady => true;
   String? get sourceProblem => null;
