@@ -75,6 +75,9 @@ CustomerInfo fakeCustomerInfo({required bool proActive}) {
 }
 
 void main() {
+  // Explicit restore schedules a dialog callback which reads a GlobalKey.
+  // Headless tests still need a binding for its null-context guard to run.
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('proProductFromPackage', () {
     test('maps the store product fields (package id is NOT the product id)',
         () {
@@ -293,6 +296,9 @@ void main() {
       expect(backend.restoreCalls, 1);
       expect(store.isPro, isTrue);
       expect(PurchaseBase.restoreTriggeredExplicitly, isFalse);
+      // Exercise the scheduled headless dialog path within the owning test;
+      // otherwise the callback can outlive this test and fail a later one.
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
     });
 
     test('explicit restore also fires the legacy direct-IAP restore '
