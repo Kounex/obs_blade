@@ -12,16 +12,37 @@
 
 ## Current workstream
 
-First isolated workspace prototype is runnable and visually inspected. Scene-row
-tap policy is approved (D-005). Define UI state/actions and session ownership for integration.
+D-005 approves the inspected scene-row policy. D-006 defines confirmed scene state
+and session ownership. An isolated native lab now binds scene inspection,
+Preview/Take and direct Send to the existing WebSocket transport. Native iPhone
+and iPad walkthroughs passed against a synthetic peer; real chat and OBS
+source/audio controls remain unintegrated.
 
 ## Integration and validation
 
-Production UI, stores, protocol and persistence remain unchanged. Prototype code
+Production UI, stores and persistence remain unchanged. The request enum adds the
+official Studio Mode transition request; custom request envelopes bypass the
+legacy request-context cache. Existing request callers are unchanged. Prototype code
 is in `lib/redesign/workspace/`, with independent `lib/main_redesign.dart`.
-There is no production adapter or stored focus preference yet.
+The native lab entrypoint is `lib/main_redesign_obs.dart`; confirmed scene/session
+adapters live in `lib/redesign/obs/`. This is a partial integration, with simulated
+chat and no stored focus preference. See `live-obs-lab.md` and `workspace-contract.md`.
 
-Verified 2026-09-11: web build, clean targeted analysis, 764-test full gate,
+Verified 2026-09-11 after the scene adapter:
+
+- **784 tests passed**: chat, WebSocket, persistence, Pro and redesign (46 redesign).
+- Simulated browser prototype rebuilt successfully after the shared UI changes.
+- iPhone and iPad native walkthroughs passed against a synthetic WebSocket peer;
+  screenshots inspected and the unsupported microphone fixture removed.
+- Targeted analysis of both lab entrypoints, redesign code/tests and the native
+  walkthrough: **no issues**. Broad `lib test` analysis remains at the baseline
+  **0 errors, 8 warnings, 372 infos**.
+- The first full run exposed an inherited test setup gap in explicit Pro restore:
+  the delayed dialog read a GlobalKey before binding initialization. A separate
+  test-only commit initializes the binding and waits for that callback; all 63 Pro
+  tests and the final full gate pass. Production purchase behavior is unchanged.
+
+Earlier fake-prototype checkpoint (same date): web build, clean targeted analysis, 764-test full gate,
 26-test redesign recheck after accessibility refinements, and phone/tablet
 browser inspection. Scenarios, screenshots and exact limitations are in
 `workspace-prototype.md`. The fake prototype is not an integrated vertical slice.
@@ -42,9 +63,11 @@ Verified 2026-09-10 against unchanged master app/test sources, using Flutter
 
 ## Remaining major areas
 
-1. Approved scene-row policy recorded (D-005); retain the inspected prototype.
-2. Explicit UI state/actions, session ownership, command result strategy and adapter.
-3. Integrated first slice with handshake/reconnect/targeting regressions.
+1. Expand scoped source/audio targets and the real-chat presentation contract.
+2. Connect real chat with independent readiness, entitlement/account/scopes and
+   channel state; preserve free WebView availability.
+3. Complete first slice: production lifecycle/preferences, grouped-source/audio
+   targeting, real chat entitlement/account gates and reconnect regressions.
 4. Stream/record and advanced production tools; complete discovery/QR flows.
 5. Chat/accounts/capabilities, live health/history, settings/customization,
    entitlement/purchases and data management.
@@ -56,6 +79,7 @@ Verified 2026-09-10 against unchanged master app/test sources, using Flutter
 See `current-ui-assumptions.md` for inherited command acknowledgement, retry,
 grouped-source, history and deletion gaps. They remain unfixed and must not be
 mistaken for requirements. Scene-row behavior is approved; no product question currently blocks integration.
-Native device/accessibility validation remains outstanding. Other phases are planned.
+Native phone/tablet layout checks passed against a synthetic peer. Android,
+installed OBS, real chat APIs and accessibility validation remain outstanding. Other phases are planned.
 Private-doc mirror verification timed out on the original checkout; no private data was changed or
 used to establish this design direction.

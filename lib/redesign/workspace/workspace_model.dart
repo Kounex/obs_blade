@@ -28,7 +28,7 @@ class WorkspaceModel extends ChangeNotifier {
   String program = 'Main camera';
   String preview = 'Starting soon';
   String inspectedScene = 'Main camera';
-  final scenes = const [
+  List<String> get scenes => const [
     'Main camera',
     'Starting soon',
     'Screen + camera',
@@ -75,6 +75,13 @@ class WorkspaceModel extends ChangeNotifier {
     const WorkspaceMessage('Mira', 'A little closer would be perfect.'),
     const WorkspaceMessage('ellie', 'Yes! We can see it clearly now.'),
   ];
+
+  bool get isLiveObs => false;
+  bool get hasObsDetails => true;
+  bool get obsStateFresh => connection == ObsConnection.connected;
+  String get connectionName => 'Studio OBS';
+  String? get connectionProblem => null;
+  Future<void> refreshObs() async {}
 
   bool get canControl => connection == ObsConnection.connected;
   bool get commandBusy => pendingCommand != null;

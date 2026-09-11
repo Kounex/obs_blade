@@ -182,76 +182,89 @@ class _LabStrip extends StatelessWidget {
         children: [
           const Icon(Icons.science_outlined, size: 16, color: _secondary),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Workspace lab · simulated',
+              model.isLiveObs
+                  ? 'Live OBS lab · chat simulated'
+                  : 'Workspace lab · simulated',
               style: TextStyle(fontSize: 12, color: _secondary),
             ),
           ),
-          PopupMenuButton<_LabAction>(
-            tooltip: 'Open simulated scenarios and failure controls',
-            onSelected: (action) => _runLabAction(context, action),
-            itemBuilder: (context) => [
-              const PopupMenuItem(enabled: false, child: Text('Scenarios')),
-              const PopupMenuItem(
-                value: _LabAction.live,
-                child: Text('Live session'),
-              ),
-              const PopupMenuItem(
-                value: _LabAction.chatOnly,
-                child: Text('Chat only'),
-              ),
-              const PopupMenuItem(
-                value: _LabAction.firstUse,
-                child: Text('First use'),
-              ),
-              const PopupMenuItem(
-                value: _LabAction.authFailed,
-                child: Text('Wrong password'),
-              ),
-              const PopupMenuItem(
-                value: _LabAction.reconnecting,
-                child: Text('Reconnecting'),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: _LabAction.toggleStudio,
-                enabled: model.canControl && !model.commandBusy,
-                child: Text(
-                  model.studioMode
-                      ? 'Turn Studio Mode off'
-                      : 'Turn Studio Mode on',
+          if (model.isLiveObs)
+            IconButton(
+              tooltip: 'Refresh OBS state',
+              onPressed:
+                  model.connection == ObsConnection.connected &&
+                      !model.commandBusy
+                  ? model.refreshObs
+                  : null,
+              icon: const Icon(Icons.refresh),
+            )
+          else
+            PopupMenuButton<_LabAction>(
+              tooltip: 'Open simulated scenarios and failure controls',
+              onSelected: (action) => _runLabAction(context, action),
+              itemBuilder: (context) => [
+                const PopupMenuItem(enabled: false, child: Text('Scenarios')),
+                const PopupMenuItem(
+                  value: _LabAction.live,
+                  child: Text('Live session'),
                 ),
-              ),
-              const PopupMenuItem(
-                value: _LabAction.rejectCommand,
-                child: Text('Reject next OBS command'),
-              ),
-              const PopupMenuItem(
-                value: _LabAction.failMessage,
-                child: Text('Fail next chat message'),
-              ),
-              PopupMenuItem(
-                value: _LabAction.externalChange,
-                enabled: model.canControl,
-                child: const Text('Simulate external OBS change'),
-              ),
-            ],
-            child: Semantics(
-              button: true,
-              label: 'Scenarios',
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Text('Scenarios', style: TextStyle(color: _secondary)),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, color: _secondary),
-                  ],
+                const PopupMenuItem(
+                  value: _LabAction.chatOnly,
+                  child: Text('Chat only'),
+                ),
+                const PopupMenuItem(
+                  value: _LabAction.firstUse,
+                  child: Text('First use'),
+                ),
+                const PopupMenuItem(
+                  value: _LabAction.authFailed,
+                  child: Text('Wrong password'),
+                ),
+                const PopupMenuItem(
+                  value: _LabAction.reconnecting,
+                  child: Text('Reconnecting'),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: _LabAction.toggleStudio,
+                  enabled: model.canControl && !model.commandBusy,
+                  child: Text(
+                    model.studioMode
+                        ? 'Turn Studio Mode off'
+                        : 'Turn Studio Mode on',
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: _LabAction.rejectCommand,
+                  child: Text('Reject next OBS command'),
+                ),
+                const PopupMenuItem(
+                  value: _LabAction.failMessage,
+                  child: Text('Fail next chat message'),
+                ),
+                PopupMenuItem(
+                  value: _LabAction.externalChange,
+                  enabled: model.canControl,
+                  child: const Text('Simulate external OBS change'),
+                ),
+              ],
+              child: Semantics(
+                button: true,
+                label: 'Scenarios',
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Text('Scenarios', style: TextStyle(color: _secondary)),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down, color: _secondary),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -298,7 +311,9 @@ class _SessionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final connected = model.connection == ObsConnection.connected;
-    final stale = model.connection == ObsConnection.reconnecting;
+    final stale =
+        model.connection == ObsConnection.reconnecting ||
+        (connected && !model.obsStateFresh);
     return Container(
       constraints: const BoxConstraints(minHeight: 74),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -308,7 +323,7 @@ class _SessionHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -319,7 +334,7 @@ class _SessionHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Studio OBS',
+                  model.connectionName,
                   style: TextStyle(fontSize: 13, color: _secondary),
                 ),
               ],
@@ -329,8 +344,8 @@ class _SessionHeader extends StatelessWidget {
             Flexible(
               child: Semantics(
                 label: stale
-                    ? 'OBS reconnecting. Last program ${model.program}. State is stale.'
-                    : 'OBS connected. Program ${model.program}. Live for 1 hour 42 minutes.',
+                    ? 'OBS state unavailable. Last program ${model.program}. State is stale.'
+                    : 'OBS connected. Program ${model.program}.${model.isLiveObs ? '' : ' Live for 1 hour 42 minutes.'}',
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -350,7 +365,11 @@ class _SessionHeader extends StatelessWidget {
                         children: [
                           Text(
                             stale
-                                ? 'RECONNECTING · STALE'
+                                ? model.isLiveObs
+                                      ? 'LAST KNOWN PROGRAM'
+                                      : 'RECONNECTING · STALE'
+                                : model.isLiveObs
+                                ? 'PROGRAM'
                                 : 'PROGRAM · 01:42:18',
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -380,7 +399,8 @@ class _SessionHeader extends StatelessWidget {
               _connectionLabel(model.connection),
               style: const TextStyle(fontSize: 13, color: _secondary),
             ),
-          if (model.phoneFocus == WorkspaceFocus.chat) ...[
+          if (model.hasObsDetails &&
+              model.phoneFocus == WorkspaceFocus.chat) ...[
             const SizedBox(width: 8),
             IconButton.outlined(
               tooltip: 'Quick microphone audio',

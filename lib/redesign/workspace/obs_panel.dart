@@ -62,14 +62,14 @@ class _ConnectionPane extends StatelessWidget {
     final reconnecting = model.connection == ObsConnection.reconnecting;
     final authFailed = model.connection == ObsConnection.failed;
     final title = switch (model.connection) {
-      ObsConnection.connecting => 'Connecting to Studio OBS',
+      ObsConnection.connecting => 'Connecting to ${model.connectionName}',
       ObsConnection.reconnecting => 'Connection interrupted',
       ObsConnection.failed => 'Password not accepted',
       _ => model.hasSavedConnection ? 'OBS not connected' : 'Connect to OBS',
     };
     final detail = switch (model.connection) {
       ObsConnection.connecting =>
-        'Synchronizing scenes and audio. You can keep using chat.',
+        'Synchronizing OBS state. You can keep using chat.',
       ObsConnection.reconnecting =>
         'The values shown before the interruption are stale. Retry to synchronize again.',
       ObsConnection.failed =>
@@ -100,11 +100,14 @@ class _ConnectionPane extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          detail,
+          model.connectionProblem ??
+              (model.isLiveObs && !connecting
+                  ? 'Connect to ${model.connectionName}. This lab operates real OBS scenes; chat is simulated.'
+                  : detail),
           textAlign: TextAlign.center,
           style: const TextStyle(color: _secondary, height: 1.4),
         ),
-        if (authFailed) ...[
+        if (authFailed || (model.isLiveObs && !connecting)) ...[
           const SizedBox(height: 24),
           TextField(
             controller: passwordController,
@@ -150,7 +153,7 @@ class _ConnectionPane extends StatelessWidget {
             icon: const Icon(Icons.power_settings_new),
             label: Text(
               model.hasSavedConnection
-                  ? 'Connect Studio OBS'
+                  ? 'Connect ${model.connectionName}'
                   : 'Connect to OBS',
             ),
           ),
@@ -271,7 +274,8 @@ class _SceneBrowser extends StatelessWidget {
         sliver: SliverToBoxAdapter(
           child: Column(
             children: [
-              if (includeAudio) AudioControl(model: model),
+              if (includeAudio && model.hasObsDetails)
+                AudioControl(model: model),
               _DisconnectAction(model: model),
             ],
           ),
@@ -349,7 +353,11 @@ class _OutputActionBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      model.studioMode ? 'READY IN PREVIEW' : 'SELECTED SCENE',
+                      !model.obsStateFresh
+                          ? 'LAST KNOWN TARGET'
+                          : model.studioMode
+                          ? 'READY IN PREVIEW'
+                          : 'SELECTED SCENE',
                       style: const TextStyle(fontSize: 11, color: _secondary),
                     ),
                     Text(
@@ -399,7 +407,7 @@ class _SignalRail extends StatelessWidget {
         children: [
           Expanded(
             child: _Signal(
-              label: 'PROGRAM',
+              label: model.obsStateFresh ? 'PROGRAM' : 'LAST PROGRAM',
               value: model.program,
               color: _coral,
             ),
@@ -411,7 +419,7 @@ class _SignalRail extends StatelessWidget {
             ),
             Expanded(
               child: _Signal(
-                label: 'PREVIEW',
+                label: model.obsStateFresh ? 'PREVIEW' : 'LAST PREVIEW',
                 value: model.preview,
                 color: _blue,
               ),
@@ -556,20 +564,26 @@ class _Inspector extends StatelessWidget {
             style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Camera source'),
-            subtitle: const Text(
-              'Scene source visibility',
+          if (!model.hasObsDetails)
+            const Text(
+              'Source and audio controls are not connected in this scene-operation lab.',
               style: TextStyle(color: _secondary),
             ),
-            value: model.sourceEnabled,
-            onChanged: model.canControl && !model.commandBusy
-                ? (_) => model.toggleSource()
-                : null,
-          ),
-          const Divider(),
-          AudioControl(model: model),
+          if (model.hasObsDetails)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Camera source'),
+              subtitle: const Text(
+                'Scene source visibility',
+                style: TextStyle(color: _secondary),
+              ),
+              value: model.sourceEnabled,
+              onChanged: model.canControl && !model.commandBusy
+                  ? (_) => model.toggleSource()
+                  : null,
+            ),
+          if (model.hasObsDetails) const Divider(),
+          if (model.hasObsDetails) AudioControl(model: model),
         ],
       ),
     );

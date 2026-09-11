@@ -2,8 +2,9 @@
 
 Current phase: session workspace selected, with first-class chat and user-controlled
 focus. The isolated Flutter prototype has passed its first browser checkpoint;
-scene-row interaction policy is approved (D-005). Work now moves into the
-state/action contract and adapter. Production UI is unchanged.
+scene-row interaction policy is approved (D-005). The first scene adapter has
+passed native phone/tablet checks against a synthetic OBS peer. Real chat and
+source/audio integration remain ahead. Production UI is unchanged.
 
 ## Baseline and authority
 
@@ -38,6 +39,8 @@ a UI model/actions contract and adapt existing logic. Extract shared components
 only after their product semantics prove useful.
 
 Prototype: `lib/redesign/workspace/`, entrypoint `lib/main_redesign.dart`.
-Run instructions, screenshots and validation: [workspace prototype](workspace-prototype.md). Production navigation will remain available during migration.
+Native scene integration: [live OBS lab](live-obs-lab.md),
+[state/action contract](workspace-contract.md).
+Fake prototype run instructions, screenshots and validation: [workspace prototype](workspace-prototype.md). Production navigation will remain available during migration.
 Product decisions with meaningful tradeoffs go to the user with a recommendation;
 routine design/engineering work proceeds autonomously.

@@ -112,3 +112,7 @@ remain future work. OBS retries/outcomes are manually simulated. Global OBS busy
 state is a fixture simplification; production needs command-scoped pending state
 and explicit acknowledgement policy. No live studio-transition behavior is proven
 by the simulated Take action. Keep these limits visible when defining the adapter.
+
+The subsequent native scene integration is separate from this fake fixture:
+[live OBS lab](live-obs-lab.md), [state/action contract](workspace-contract.md).
+Its synthetic-peer native tests do not change this browser prototype's fake scope.

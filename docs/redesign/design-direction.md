@@ -1,7 +1,9 @@
 # Design direction
 
 Status: session workspace selected, with first-class chat and user-controlled
-focus (D-003). Visual style and exact interactions remain unvalidated. The
+focus (D-003). The fake prototype passed a browser checkpoint; the user approved
+scene inspection with explicit output actions (D-005). Visual tokens remain
+provisional while native integration is validated. The
 architecture comparison below records alternatives considered; it is not an
 outstanding choice between A/B/C.
 
@@ -34,7 +36,7 @@ audience activity. A fixed scene-first hierarchy therefore does not satisfy the
 accepted direction. Keep OBS objects and conversation in one stable workspace,
 with explicit control over which receives attention.
 
-Proposed first prototype behavior:
+Selected composition, exercised by the first prototype:
 
 | Context | Composition and interaction |
 |---|---|
@@ -45,8 +47,16 @@ Proposed first prototype behavior:
 | Focus change | Preserve draft/reply, channel, scroll anchor, unread state, inspected scene and pending commands. Changing visibility does not reconnect either transport. |
 | Chat unavailable | Explain entitlement, configuration, account and network state locally; retain the supported free WebView route and usable OBS controls. |
 
+Scene rows inspect on tap; labelled Preview / Send live actions execute commands.
+The persistent Take control acts on the current preview in Studio Mode (D-005).
+Narrow panes open focused scene details; sufficiently wide OBS panes can keep the
+browser and inspector together. This separates investigation from changing output
+while retaining visible one-tap actions. Program/preview always show confirmed OBS
+state, including external changes; see `workspace-contract.md`.
+
 This is a small focus control, not a customizable dashboard builder. Labels,
-control placement and minimum companion content need visual/interaction testing.
+control placement and minimum companion content have an initial browser baseline;
+native, real-data and accessibility validation remain part of integration.
 No new global Prepare/Operate/Review modes are introduced.
 
 Audience activity should remain reviewable without flooding the message stream
@@ -157,10 +167,10 @@ adopt B's activity stages or C's user-authored control surface.
 
 ## First slice and design checkpoint
 
-Build an isolated Flutter prototype for the journeys in
+The isolated Flutter prototype covers the journeys in
 [user-flows](user-flows.md), with fake session/command outcomes and functional
-chat focus, draft, scroll and activity interactions, including chat-only entry. Validate phone and tablet composition
-before extracting tokens or integrating transport. Production replacement follows integration and behavioral
+chat focus, draft, scroll and activity interactions, including chat-only entry. The first phone/tablet browser checkpoint is recorded in `workspace-prototype.md`;
+the additive native scene binding is described in `live-obs-lab.md`. Production replacement follows integration and behavioral
 validation of the same journey.
 
 ## Contemporary interaction references
