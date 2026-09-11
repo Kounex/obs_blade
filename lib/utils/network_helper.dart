@@ -331,7 +331,7 @@ class NetworkHelper {
     /// information we sent initially (like input name etc.) since
     /// in the new protocol (>= 5.X) we don't get this information
     /// in the response anymore
-    if (fields != null && request.name.startsWith('Get')) {
+    if (!customContent && fields != null && request.name.startsWith('Get')) {
       NetworkHelper._requestBodyByUUID[requestUUID] = fields;
     }
 

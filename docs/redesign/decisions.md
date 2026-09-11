@@ -107,3 +107,31 @@ Consequences: This deliberately changes master's scene-row tap policy. Preserve
 large accessible command targets; inspection remains local state. Program and
 preview badges must represent OBS-confirmed values, never the inspected row or
 an optimistic command target. Proceed into the state/action contract and adapter.
+
+## D-006 Confirmed scene projection and isolated session ownership
+
+Status: active
+
+Decision: Give the isolated live lab a session owner with one NetworkStore per
+connection attempt and a bounded scene projection. Correlate replies by request
+ID/type, keep confirmed values separate from commands, and use OBS's dedicated
+Studio Mode transition request for Take. Scope serialization to scene-output
+operations; later audio/source operations need independent resource scopes.
+
+Reason: Source archaeology found widget-owned session lifetime, optimistic scene
+writes and a send-only request helper. Pane/focus changes must not inherit those
+lifetimes. Official v5 documentation identifies the dedicated transition request
+as the equivalent of OBS's Studio Mode Transition button. These are engineering
+choices implementing D-003–005, not additional user approvals.
+
+Alternatives considered: Reuse optimistic DashboardStore scene values as truth;
+replace/split DashboardStore; rewrite WebSocket transport. The bounded projection
+reuses NetworkStore, NetworkHelper and existing protocol types while preserving
+the production monolith and its history/control behavior for later integration.
+
+Consequences: The native development entrypoint can exercise real scene commands
+without production bootstrap, Hive or accounts. Chat remains explicitly simulated
+there. A cancelled handshake cannot own a later session. Reconnect/command failure
+must not automatically repeat output mutations. Production routing, preference
+translation, full DashboardStore lifecycle and real chat integration are still
+required before replacing the shipping workspace. See `workspace-contract.md`.
