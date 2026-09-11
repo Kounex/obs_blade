@@ -34,7 +34,13 @@ class ObsPeer {
           requests.add(data);
           final type = data['requestType'];
           final fields = data['requestData'] as Map<String, dynamic>;
-          if (type == 'SetCurrentPreviewScene') {
+          if (type == 'SetSceneItemEnabled') {
+            final item = sourceOwners[fields['sceneName']]!.firstWhere(
+              (item) => item['sceneItemId'] == fields['sceneItemId'],
+            );
+            item['sceneItemEnabled'] = fields['sceneItemEnabled'];
+            event(socket, 'SceneItemEnableStateChanged', fields);
+          } else if (type == 'SetCurrentPreviewScene') {
             preview = fields['sceneName'] as String;
             event(socket, 'CurrentPreviewSceneChanged', {'sceneName': preview});
           } else if (type == 'TriggerStudioModeTransition') {
@@ -61,6 +67,9 @@ class ObsPeer {
                     'currentProgramSceneName': program,
                     'currentPreviewSceneName': preview,
                   },
+                  'GetSceneItemList' || 'GetGroupSceneItemList' => {
+                    'sceneItems': sourceOwners[fields['sceneName']] ?? [],
+                  },
                   'GetStudioModeEnabled' => {'studioModeEnabled': true},
                   _ => <String, dynamic>{},
                 },
@@ -79,6 +88,31 @@ class ObsPeer {
   final requests = <Map<String, dynamic>>[];
   String program = 'Camera';
   String preview = 'Break';
+  final sourceOwners = <String, List<Map<String, dynamic>>>{
+    'Camera': [
+      _item(1, 'Face camera', index: 1),
+      _item(2, 'Branding', group: true),
+    ],
+    'Desktop': [
+      _item(1, 'Display capture', index: 1),
+      _item(2, 'Branding', group: true),
+    ],
+    'Break': [_item(1, 'Pause title')],
+    'Branding': [_item(1, 'Logo')],
+  };
+
+  static Map<String, dynamic> _item(
+    int id,
+    String name, {
+    int index = 0,
+    bool group = false,
+  }) => {
+    'sceneItemId': id,
+    'sourceName': name,
+    'sceneItemIndex': index,
+    'sceneItemEnabled': true,
+    'isGroup': group,
+  };
 
   Connection get connection => Connection('localhost', server.port);
   static Future<ObsPeer> start({

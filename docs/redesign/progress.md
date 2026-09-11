@@ -16,7 +16,15 @@ D-005 approves the inspected scene-row policy. D-006 defines confirmed scene sta
 and session ownership. An isolated native lab now binds scene inspection,
 Preview/Take and direct Send to the existing WebSocket transport. Native iPhone
 and iPad walkthroughs passed against a synthetic peer; real chat and OBS
-source/audio controls remain unintegrated.
+audio controls remain unintegrated. Source visibility now uses real scoped
+scene/group identities; its controller/binding tests pass, with native recapture
+planned after the audio controls are connected.
+
+Source milestone: seven focused tests plus the existing redesign/WebSocket suite
+pass (**65 tests**), with clean targeted analysis. Group children retain parent
+owner + item ID; hidden groups do not falsify the child's own enabled flag.
+The source inspector is implemented but its new composition is not yet natively
+captured. Next: actual audio input discovery and independent input actions.
 
 ## Integration and validation
 

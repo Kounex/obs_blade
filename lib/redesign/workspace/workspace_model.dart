@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'source_control.dart';
+
 enum WorkspaceFocus { obs, balanced, chat }
 
 enum ObsConnection { disconnected, connecting, connected, reconnecting, failed }
@@ -77,7 +79,12 @@ class WorkspaceModel extends ChangeNotifier {
   ];
 
   bool get isLiveObs => false;
-  bool get hasObsDetails => true;
+  bool get hasAudioControls => true;
+  List<SourceControl> get sourceControls => const [];
+  bool get sourcesReady => true;
+  String? get sourceProblem => null;
+  Future<void> refreshSources() async {}
+  Future<void> setSourceEnabled(ObsSourceTarget target, bool enabled) async {}
   bool get obsStateFresh => connection == ObsConnection.connected;
   String get connectionName => 'Studio OBS';
   String? get connectionProblem => null;

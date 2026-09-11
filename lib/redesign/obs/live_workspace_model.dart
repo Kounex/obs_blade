@@ -1,5 +1,6 @@
 import '../../models/connection.dart';
 import '../workspace/workspace_model.dart';
+import '../workspace/source_control.dart';
 import 'obs_scene_controller.dart';
 import 'obs_workspace_session.dart';
 
@@ -19,7 +20,19 @@ class LiveWorkspaceModel extends WorkspaceModel {
   @override
   bool get isLiveObs => true;
   @override
-  bool get hasObsDetails => false;
+  bool get hasAudioControls => false;
+  @override
+  List<SourceControl> get sourceControls =>
+      _session.sources?.controls ?? const [];
+  @override
+  bool get sourcesReady => _session.sources?.ready ?? false;
+  @override
+  String? get sourceProblem => _session.sources?.problem;
+  @override
+  Future<void> refreshSources() async => _session.sources?.refresh();
+  @override
+  Future<void> setSourceEnabled(ObsSourceTarget target, bool enabled) async =>
+      _session.sources?.setEnabled(target, enabled);
   @override
   bool get obsStateFresh => _session.scenes?.phase == ObsScenePhase.ready;
   @override

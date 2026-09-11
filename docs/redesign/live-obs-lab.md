@@ -3,8 +3,9 @@
 `lib/main_redesign_obs.dart` binds the validated workspace composition to the
 existing OBS WebSocket v5 handshake/transport. It is a development entrypoint;
 production navigation, Hive, saved connections, accounts and purchases are not
-initialized. Chat and activity are explicitly simulated. Only OBS scene operations
-are integrated; unsupported source/audio controls and fake uptime are hidden.
+initialized. Chat and activity are explicitly simulated. Scene operations and scoped source visibility
+are integrated; audio controls and fake uptime remain hidden. Source UI additions
+are awaiting the next native composition checkpoint.
 
 ## Run on a native target
 
@@ -30,6 +31,8 @@ discovery/QR and saved preferences are not implemented in this live lab.
 - `obs_request_client.dart`: request correlation, timeout/disconnect outcomes.
 - `obs_scene_controller.dart`: confirmed scene list/output, local inspection,
   collection-change suspension, event/read ordering, explicit scene commands.
+- `obs_source_controller.dart`: inspected scene/group item identity, hierarchy,
+  per-item confirmation and collection invalidation.
 - `live_workspace_model.dart`: transitional development binding to the prototype;
   inherits only local focus/chat fixture behavior. It is not the real chat adapter.
 - `workspace-contract.md`: canonical state/actions, ownership and remaining seams.
@@ -58,7 +61,7 @@ PNG files under the app's temporary `workspace_scene_shots/` directory. It never
 starts OBS, loads real accounts or opens production Hive boxes. See `progress.md`
 for the latest executed checks; a runnable test is not itself a passing result.
 
-## Native checkpoint — 2026-09-11
+## Initial scene-only native checkpoint — 2026-09-11
 
 Passed on temporary iPhone 17 Pro and iPad Pro 13-inch simulators (iOS 26.5).
 The test tapped scene inspection, Preview and the persistent Take button through
@@ -74,7 +77,6 @@ Screenshots, with synthetic OBS/chat data:
 Visual review found and removed a remaining simulated microphone in the live
 scene browser; the native test now asserts its absence. Phone retains visible
 Preview/Take controls, tablet retains concurrent conversation, and draft/reply
-remain visible after disconnect. The incomplete inspector is intentionally sparse
-until source/audio integration; wide-pane duplicate Disconnect actions remain a
+remain visible after disconnect. These initial screenshots predate the source inspector integration; wide-pane duplicate Disconnect actions remain a
 composition refinement. These screenshots do not validate final content density,
 Android, actual chat authentication/Pro, or an installed OBS server.

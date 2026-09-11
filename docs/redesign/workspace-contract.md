@@ -56,3 +56,18 @@ The isolated live lab may expose actual Studio Mode for validation without readi
 or changing preferences. A complete production adapter must integrate the existing
 DashboardStore lifecycle, telemetry/history and chat stores; the scene adapter is
 an additive, bounded confirmed-state projection, not a replacement dashboard store.
+
+## Source/audio expansion — current work
+
+Source identity is the owning scene/group plus scene-item ID. Group children keep
+the group as their request target; a shared numeric ID in another owner is a
+different item. Inspection changes only the read context, never a command already
+sent. Preserve OBS item ordering, group structure and the distinction between a
+child's enabled flag and its effective visibility under a disabled parent.
+
+Source visibility uses per-item pending state, independent from scene-output
+commands. Collection changes invalidate the entire identity scope. Event updates
+and readback establish enabled state; acknowledgements alone do not toggle it.
+Audio will similarly use actual input names and per-input pending state. Discover
+supported audio controls from successful OBS capability reads, not guessed names
+or input-kind heuristics. Current implementation status remains in `progress.md`.

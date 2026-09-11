@@ -399,7 +399,7 @@ class _SessionHeader extends StatelessWidget {
               _connectionLabel(model.connection),
               style: const TextStyle(fontSize: 13, color: _secondary),
             ),
-          if (model.hasObsDetails &&
+          if (model.hasAudioControls &&
               model.phoneFocus == WorkspaceFocus.chat) ...[
             const SizedBox(width: 8),
             IconButton.outlined(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'workspace_model.dart';
+import 'workspace_sources.dart';
 
 const _border = Color(0xFF334355);
 const _text = Color(0xFFEDF2F7);
@@ -274,7 +275,7 @@ class _SceneBrowser extends StatelessWidget {
         sliver: SliverToBoxAdapter(
           child: Column(
             children: [
-              if (includeAudio && model.hasObsDetails)
+              if (includeAudio && model.hasAudioControls)
                 AudioControl(model: model),
               _DisconnectAction(model: model),
             ],
@@ -564,12 +565,9 @@ class _Inspector extends StatelessWidget {
             style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          if (!model.hasObsDetails)
-            const Text(
-              'Source and audio controls are not connected in this scene-operation lab.',
-              style: TextStyle(color: _secondary),
-            ),
-          if (model.hasObsDetails)
+          if (model.isLiveObs)
+            WorkspaceSources(model: model)
+          else
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Camera source'),
@@ -582,8 +580,8 @@ class _Inspector extends StatelessWidget {
                   ? (_) => model.toggleSource()
                   : null,
             ),
-          if (model.hasObsDetails) const Divider(),
-          if (model.hasObsDetails) AudioControl(model: model),
+          if (model.hasAudioControls) const Divider(),
+          if (model.hasAudioControls) AudioControl(model: model),
         ],
       ),
     );

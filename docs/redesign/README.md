@@ -4,7 +4,8 @@ Current phase: session workspace selected, with first-class chat and user-contro
 focus. The isolated Flutter prototype has passed its first browser checkpoint;
 scene-row interaction policy is approved (D-005). The first scene adapter has
 passed native phone/tablet checks against a synthetic OBS peer. Real chat and
-source/audio integration remain ahead. Production UI is unchanged.
+audio integration remain ahead; source visibility is wired and awaiting the next
+native composition checkpoint. Production UI is unchanged.
 
 ## Baseline and authority
 

@@ -15,8 +15,9 @@ D-006 defines confirmed scene state and isolated connection-attempt ownership.
 `lib/main_redesign.dart` is the fully simulated browser/native prototype.
 `lib/main_redesign_obs.dart` is a native-only scene integration lab. It reuses
 NetworkStore/NetworkHelper without production bootstrap, Hive, DI or accounts.
-OBS scene controls are real; chat/activity remain explicitly simulated. Source
-and microphone fixture controls are hidden in the live lab. Production UI remains
+OBS scenes and scoped source visibility are real; chat/activity remain simulated.
+Audio controls are still hidden pending actual input discovery. The new source
+inspector needs native recapture alongside the coming audio controls. Production UI remains
 unchanged; this is not a complete production workspace replacement.
 
 # Last verified milestone
@@ -26,13 +27,16 @@ transport against a synthetic peer. They exercised inspection, explicit Preview
 and Take, confirmed output, and retained draft/reply after OBS disconnect. Visual
 inspection removed an accidentally retained fake microphone from the live browser.
 Screenshots/limits: `live-obs-lab.md`. Both temporary simulators were removed.
-Final gate: 784 tests passed (46 redesign); targeted analysis clean. Broad
+Subsequent source milestone: 65 redesign/WebSocket tests pass, including seven
+source targeting/event/hierarchy tests; targeted analysis clean.
+Earlier scene gate: 784 tests passed (46 redesign); targeted analysis clean. Broad
 analysis retains baseline 0 errors / 8 warnings / 372 infos. An inherited restore
 test binding issue was fixed in a separate test-only commit. See `progress.md`.
 
 # Next recommended action
 
-Integrate scoped source/audio targets using the existing protocol models. Keep chat a first-class
+Integrate actual audio input discovery, mute/volume and per-input outcomes, then
+run the native source/audio composition checkpoint. Keep chat a first-class
 parallel contract: readiness, Pro, account/scopes and channel state must remain
 independent of OBS. Do not reopen A/B/C or the approved scene-row policy.
 

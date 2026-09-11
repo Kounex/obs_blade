@@ -19,8 +19,16 @@ void main() {
         model.setReply('Synthetic viewer');
         await model.connect();
         expect(model.program, 'Camera');
-        expect(model.hasObsDetails, isFalse);
+        expect(model.hasAudioControls, isFalse);
+        expect(model.sourceControls.last.name, 'Logo');
+        final logo = model.sourceControls.last;
+        final visibility = model.setSourceEnabled(logo.target, false);
         model.inspect('Desktop');
+        await visibility;
+        await model.refreshSources();
+        expect(model.sourceControls.first.name, 'Display capture');
+        expect(model.sourceControls.first.enabled, isTrue);
+        expect(model.sourceControls.last.enabled, isFalse);
         await model.setPreview();
         await model.takeScene();
         expect(model.program, 'Desktop');
