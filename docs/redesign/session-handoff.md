@@ -23,8 +23,8 @@ behavior and real OBS/chat integration remain unverified.
 
 # Next recommended action
 
-Resolve scene-row action policy below, record the answer, then continue into the
-explicit presentation contract and adapter. Do not reopen A/B/C architecture.
+D-005 records the approved tap-to-inspect / explicit command policy. Continue into
+the explicit presentation contract and adapter. Do not reopen A/B/C architecture.
 Prototype run steps are in `workspace-prototype.md`; local preview uses port 49160.
 Check whether the server is still running before presenting its URL.
 
@@ -45,10 +45,7 @@ entry, QR/discovery and real event feeds are not covered by the tiny fake fixtur
 
 # Open questions requiring user input
 
-Scene row: retain tap-to-inspect with explicit Preview/Send (recommended), or
-restore whole-row OBS selection and put inspection behind a separate action?
-This changes master's action policy and touch target; the running prototype makes
-the proposed alternative reviewable. No answer yet.
+None currently. The user approved the recommended scene-row policy on 2026-09-11.
 
 # Relevant files and symbols
 
@@ -66,7 +63,7 @@ reconnect services merely because emphasis changes. Use synthetic data only.
 
 # Recommended next execution
 
-Task class: Interaction-policy decision and consequential adapter architecture.
+Task class: Consequential adapter architecture and approved implementation.
 Recommended model: Astra.
 Recommended reasoning: High for contract/lifecycle; Medium for approved implementation.
 Reason: Confirmed-versus-optimistic state and widget-owned session lifetime are

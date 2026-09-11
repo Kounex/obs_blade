@@ -99,13 +99,11 @@ semantics and element geometry, then use pointer input at the verified control
 position. Allow route animation to settle before taking a new snapshot. Browser
 checks do not establish native VoiceOver/TalkBack or keyboard behavior.
 
-## Remaining scope and next decision
+## Approved interaction and remaining scope
 
-Scene rows currently inspect on tap, with a separate labelled Preview/Send action.
-This changes master's whole-row execution behavior. Before production integration,
-resolve whether to retain that distinction (recommended) or make whole-row taps
-execute and put inspection behind a separate action. Both still offer one-tap
-execution; they trade a large target against a clear separation of intent.
+Scene rows inspect on tap, with a separate labelled Preview/Send action. The user
+approved this recommendation on 2026-09-11 (D-005), deliberately changing master's
+whole-row execution behavior. Preserve this distinction during integration.
 
 The prototype has one synthetic channel/source fixture; manual endpoint entry,
 QR/discovery, actual authentication, entitlement states, platform-specific native

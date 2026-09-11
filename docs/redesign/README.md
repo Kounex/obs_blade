@@ -2,8 +2,8 @@
 
 Current phase: session workspace selected, with first-class chat and user-controlled
 focus. The isolated Flutter prototype has passed its first browser checkpoint;
-scene-row interaction policy is awaiting input before integration. Production UI
-is unchanged.
+scene-row interaction policy is approved (D-005). Work now moves into the
+state/action contract and adapter. Production UI is unchanged.
 
 ## Baseline and authority
 

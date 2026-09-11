@@ -87,3 +87,23 @@ Consequences: The fake prototype includes chat-only entry and OBS reconnection
 while chat remains usable. Preserve existing platform/account/entitlement gates
 when integrating. Background execution guarantees, new event subscriptions and
 multiple simultaneous OBS sessions are not introduced by this decision.
+
+## D-005 Separate scene inspection from output commands
+
+Status: active
+
+Decision: Retain tap-to-inspect on scene rows, with labelled Preview / Send live
+actions and the persistent Take control. On narrow panes inspection opens focused
+details; wide panes can show the scene browser and inspector together.
+
+Reason: The user accepted the recommendation ("your recommendation!", 2026-09-11)
+after reviewing the prototype choice. Inspecting sources should not also change
+the audience's output. Labelled actions keep the execution intent visible.
+
+Alternatives considered: Master's whole-row execution with a separate inspection
+action. It provides a larger execution target, but couples browsing to commands.
+
+Consequences: This deliberately changes master's scene-row tap policy. Preserve
+large accessible command targets; inspection remains local state. Program and
+preview badges must represent OBS-confirmed values, never the inspected row or
+an optimistic command target. Proceed into the state/action contract and adapter.

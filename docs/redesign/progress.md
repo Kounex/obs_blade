@@ -12,9 +12,8 @@
 
 ## Current workstream
 
-First isolated workspace prototype is runnable and visually inspected. Resolve
-scene-row tap policy before making it the production interaction contract; then
-define UI state/actions and session ownership for integration.
+First isolated workspace prototype is runnable and visually inspected. Scene-row
+tap policy is approved (D-005). Define UI state/actions and session ownership for integration.
 
 ## Integration and validation
 
@@ -43,7 +42,7 @@ Verified 2026-09-10 against unchanged master app/test sources, using Flutter
 
 ## Remaining major areas
 
-1. Resolve scene-row action policy and refine the prototype from product feedback.
+1. Approved scene-row policy recorded (D-005); retain the inspected prototype.
 2. Explicit UI state/actions, session ownership, command result strategy and adapter.
 3. Integrated first slice with handshake/reconnect/targeting regressions.
 4. Stream/record and advanced production tools; complete discovery/QR flows.
@@ -56,7 +55,7 @@ Verified 2026-09-10 against unchanged master app/test sources, using Flutter
 
 See `current-ui-assumptions.md` for inherited command acknowledgement, retry,
 grouped-source, history and deletion gaps. They remain unfixed and must not be
-mistaken for requirements. Scene-row behavior awaits user input before integration.
+mistaken for requirements. Scene-row behavior is approved; no product question currently blocks integration.
 Native device/accessibility validation remains outstanding. Other phases are planned.
 Private-doc mirror verification timed out on the original checkout; no private data was changed or
 used to establish this design direction.
