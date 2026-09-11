@@ -58,11 +58,12 @@ coverage, categorization, retention and alert policy are future requirements,
 not implemented capabilities or confirmed cross-platform parity. Prototype
 examples must distinguish existing notices from future simulated events.
 
-**Open product question:** can users enter and use chat before connecting OBS?
-Recommendation: yes. The stores already manage chat transport independently;
-an OBS setup problem should not make audience interaction inaccessible. This
-would add a chat-only entry path and requires deliberate navigation/lifecycle
-work; the current dashboard wrapper still depends on `DashboardStore`.
+**Selected entry behavior (D-004):** users can enter and use chat before
+connecting OBS. The user directed continuation after this recommendation. The
+stores already manage chat transport independently; an OBS setup problem should
+not make audience interaction inaccessible. Integration still needs deliberate
+navigation/lifecycle work: the current dashboard wrapper depends on
+`DashboardStore`.
 
 ## Architecture alternatives considered
 
@@ -158,8 +159,7 @@ adopt B's activity stages or C's user-authored control surface.
 
 Build an isolated Flutter prototype for the journeys in
 [user-flows](user-flows.md), with fake session/command outcomes and functional
-chat focus, draft, scroll and activity interactions. Resolve the chat-only entry
-question before fixing launch navigation. Validate phone and tablet composition
+chat focus, draft, scroll and activity interactions, including chat-only entry. Validate phone and tablet composition
 before extracting tokens or integrating transport. Production replacement follows integration and behavioral
 validation of the same journey.
 

@@ -21,6 +21,7 @@ class WorkspaceModel extends ChangeNotifier {
 
   final Duration delay;
   WorkspaceFocus focus = WorkspaceFocus.obs;
+  WorkspaceFocus _lastSingleFocus = WorkspaceFocus.obs;
   ObsConnection connection = ObsConnection.connected;
   bool hasSavedConnection = true;
   bool studioMode = true;
@@ -78,6 +79,8 @@ class WorkspaceModel extends ChangeNotifier {
   bool get canControl => connection == ObsConnection.connected;
   bool get commandBusy => pendingCommand != null;
   bool get sourceEnabled => _sourceEnabledByScene[inspectedScene] ?? true;
+  WorkspaceFocus get phoneFocus =>
+      focus == WorkspaceFocus.balanced ? _lastSingleFocus : focus;
 
   void _changed() {
     if (!_disposed) notifyListeners();
@@ -85,6 +88,7 @@ class WorkspaceModel extends ChangeNotifier {
 
   void setFocus(WorkspaceFocus value) {
     focus = value;
+    if (value != WorkspaceFocus.balanced) _lastSingleFocus = value;
     _changed();
   }
 

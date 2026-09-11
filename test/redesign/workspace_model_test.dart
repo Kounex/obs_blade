@@ -23,6 +23,13 @@ void main() {
     expect(model.chatPaused, isTrue);
   });
 
+  test('together layout preserves the last deliberate phone focus', () {
+    model.setFocus(WorkspaceFocus.chat);
+    model.setFocus(WorkspaceFocus.balanced);
+    expect(model.focus, WorkspaceFocus.balanced);
+    expect(model.phoneFocus, WorkspaceFocus.chat);
+  });
+
   test(
     'preview changes only on confirmation and preserves command target',
     () async {

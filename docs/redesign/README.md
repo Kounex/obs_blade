@@ -1,7 +1,9 @@
 # OBS Blade — first-principles redesign
 
 Current phase: session workspace selected, with first-class chat and user-controlled
-focus; defining the first prototype. Production UI is unchanged.
+focus. The isolated Flutter prototype has passed its first browser checkpoint;
+scene-row interaction policy is awaiting input before integration. Production UI
+is unchanged.
 
 ## Baseline and authority
 
@@ -35,7 +37,7 @@ prototype with realistic fake state, inspect phone and tablet output, then defin
 a UI model/actions contract and adapt existing logic. Extract shared components
 only after their product semantics prove useful.
 
-Planned code home: `lib/redesign/`, with an independent development entrypoint.
-Neither exists yet. Production navigation will remain available during migration.
+Prototype: `lib/redesign/workspace/`, entrypoint `lib/main_redesign.dart`.
+Run instructions, screenshots and validation: [workspace prototype](workspace-prototype.md). Production navigation will remain available during migration.
 Product decisions with meaningful tradeoffs go to the user with a recommendation;
 routine design/engineering work proceeds autonomously.

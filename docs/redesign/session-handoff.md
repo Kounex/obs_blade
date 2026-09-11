@@ -1,71 +1,74 @@
 # Current objective
 
-Prototype the selected session workspace with first-class, user-controlled chat
-focus, then integrate a verified journey. Read `README.md` for authority/scope.
+Carry the selected session workspace with first-class chat from a verified fake
+prototype into a clean UI contract and production adapter.
 
 # Current state
 
 Branch `redesign-astra`, separate worktree from master
 `2307081594712f1da712ac23073d1ba3f3b82311`. Historical redesign work is excluded;
-the original checkout and unrelated IDE edits are preserved.
+original checkout and its unrelated IDE edits remain separate.
 
-D-003 records the user's acceptance of the workspace with first-class chat.
-Proposed phone OBS/Chat focus and tablet concurrent panes are in
-`design-direction.md`. No runnable prototype or production changes exist.
+D-003 selects the workspace with adjustable chat focus; D-004 permits chat before
+OBS connection. The Flutter prototype runs from `lib/main_redesign.dart` using
+in-memory state only. Production UI, accounts and persistence are untouched.
 
 # Last verified milestone
 
-Source-backed archaeology and 738 passing baseline tests. App/test analysis had
-0 errors, 8 warnings, 372 infos; full analysis also fails in standalone tool
-packages (`progress.md`). Decision update is docs-only; code gates were not rerun.
-No new UI has been rendered. Chat stores independently own transport; their
-current dashboard presentation still depends on DashboardStore.
+2026-09-11: release web build; clean targeted analysis; 764-test full gate;
+26-test redesign recheck after accessibility refinements. Browser-inspected
+phone OBS/chat, tablet emphasis/together, reconnect and simulated password repair.
+Saved screenshots and limitations: `workspace-prototype.md`. Native platform
+behavior and real OBS/chat integration remain unverified.
 
 # Next recommended action
 
-Resolve chat-only entry before fixing launch navigation. Record the answer and
-continue automatically into the isolated fake Flutter workspace, with phone and
-tablet validation. Do not reopen the choice between architectures A/B/C.
+Resolve scene-row action policy below, record the answer, then continue into the
+explicit presentation contract and adapter. Do not reopen A/B/C architecture.
+Prototype run steps are in `workspace-prototype.md`; local preview uses port 49160.
+Check whether the server is still running before presenting its URL.
 
 # Important context required for that action
 
-Both loops belong in the first prototype: connect/scene/audio/recover/exit and
-chat/read/reply/intervene/return. Preserve channel, draft, scroll anchor and
-inspected scene when emphasis changes. OBS and chat readiness are separate.
-Future audience activity needs a reviewable presentation; exact event sources,
-alert policy and retention are not yet specified. Existing Twitch notices are
-available as source evidence; do not imply every proposed event already exists.
+Prototype uses tap-to-inspect plus labelled Preview/Send controls and a persistent
+Take dock. Phone opens focused details; a wide OBS pane shows scenes and details
+alongside chat. Focus and resize preserve draft/reply/scroll controller; together
+layout returns to the last explicit phone focus. OBS/chat readiness is independent.
 
-Inspection, preview and program differ. Commands currently lack caller-visible
-acknowledgements; optimistic state is not confirmed OBS state. Later migrate
-Home/Dashboard lifecycle and wakelock through a small adapter/coordinator while
-retaining DashboardStore. Planned code home: `lib/redesign/` plus independent
-entrypoint, neither created yet.
+The fixture serializes OBS commands; production needs scoped pending state.
+NetworkHelper currently exposes no acknowledgement future, and optimistic scene
+values are not confirmed OBS output. Home/Dashboard widgets own session lifecycle
+and wakelock. Keep DashboardStore; define a small coordinator/adapter seam.
+Existing Take sends SetCurrentProgramScene: verify actual studio-transition
+semantics before integration. Source groups/IDs, accounts, entitlement, manual
+entry, QR/discovery and real event feeds are not covered by the tiny fake fixture.
 
 # Open questions requiring user input
 
-Can users open/use chat before connecting OBS? Recommend yes: source already
-supports independent chat transport and this avoids tying audience interaction
-to OBS setup/availability. No answer yet; do not infer approval from silence.
+Scene row: retain tap-to-inspect with explicit Preview/Send (recommended), or
+restore whole-row OBS selection and put inspection behind a separate action?
+This changes master's action policy and touch target; the running prototype makes
+the proposed alternative reviewable. No answer yet.
 
 # Relevant files and symbols
 
-`decisions.md` D-003, `design-direction.md`, `user-flows.md`,
-`business-logic-map.md`; `TwitchChatStore.init` / `chatNotifications`,
-`YouTubeChatStore.init`, `StreamChat.build`, `NetworkStore`, `DashboardStore`.
+`design-direction.md`, `workspace-prototype.md`, `business-logic-map.md`;
+`lib/redesign/workspace/{workspace_model,workspace_app,obs_panel,chat_panel}.dart`;
+`test/redesign/`; `NetworkStore`, `DashboardStore`, `TwitchChatStore`,
+`YouTubeChatStore`, `StreamChat`.
 
 # Do not accidentally change
 
 Production entrypoints, Hive contracts, entitlements/legacy ownership, free
 WebView access, chat buffers/drafts, confirmation preferences or tablet support.
-Do not lock chat permanently into a secondary panel. Focus changes must not
-restart transports or become inferred broadcast stages. Keep appearance,
-new dependencies and persistence translation provisional until validated.
+Do not assume simulated sends/events/Take are production functionality. Do not
+reconnect services merely because emphasis changes. Use synthetic data only.
 
 # Recommended next execution
 
-Task class: Resolve workspace entry semantics, then implement interaction prototype.
-Recommended model: Astra for product judgment; capable implementation model afterward.
-Recommended reasoning: High for entry/lifecycle boundary; Medium for approved prototype.
-Reason: Independent chat entry affects the shell and session ownership; focus
-interactions can then be implemented against explicit fake state and scenarios.
+Task class: Interaction-policy decision and consequential adapter architecture.
+Recommended model: Astra.
+Recommended reasoning: High for contract/lifecycle; Medium for approved implementation.
+Reason: Confirmed-versus-optimistic state and widget-owned session lifetime are
+real integration gaps. The implementation sub-agent hit its usage limit during
+refinement; avoid re-dispatching until capacity is available and keep process small.

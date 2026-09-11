@@ -63,6 +63,27 @@ change without requiring a different product structure.
 Consequences: The first prototype must exercise a real chat interaction loop
 with fake state, not merely show sample messages beside OBS controls. Preserve
 conversation/draft/scroll state across focus changes. Exact focus controls are
-prototype proposals; chat access before any OBS connection remains an explicit
-open product question. This decision does not select new event integrations,
+prototype proposals; independent chat entry is subsequently resolved by D-004. This decision does not select new event integrations,
 change entitlements or approve new persistence formats.
+
+## D-004 Independent chat availability within the workspace
+
+Status: active
+
+Decision: Proceed with the recommended chat-only entry path. The workspace can
+host chat before OBS is connected and retain it through OBS interruption or
+explicit disconnect. OBS and chat have separate readiness and lifetimes.
+
+Reason: After the recommendation and its entry-path tradeoff were presented,
+the user directed the agent to continue. This is the lead agent's recommended
+implementation choice under that direction, not an inferred change to account
+or entitlement requirements. Chat stores already own independent transport.
+
+Alternatives considered: Require an OBS connection to open chat; maintain a
+separate chat application. The former unnecessarily couples availability; the
+latter duplicates context/navigation for the same audience interaction.
+
+Consequences: The fake prototype includes chat-only entry and OBS reconnection
+while chat remains usable. Preserve existing platform/account/entitlement gates
+when integrating. Background execution guarantees, new event subscriptions and
+multiple simultaneous OBS sessions are not introduced by this decision.

@@ -45,7 +45,7 @@ Per D-003, chat is an equal participant in this first composition checkpoint:
 - Hide chat when unwanted, restore the prior focus and compare phone keyboard
   use against concurrent tablet panes.
 - Show independent OBS/chat readiness; OBS interruption must not be mislabeled
-  as chat failure. Chat-only entry before OBS connection awaits a product answer.
+  as chat failure. Chat-only entry before OBS connection is selected in D-004.
 
 Real purchase/auth/moderation integration and stream/record commands are later
 slices. This is sequencing, not feature removal.
