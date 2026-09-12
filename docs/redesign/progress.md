@@ -38,9 +38,16 @@ projection does not initialize accounts or services. Native phone/tablet gate an
 read-only captures passed and were inspected on 2026-09-12; browser semantics
 interception remains a preview limitation. See `chat-contract.md`.
 
+Send-safety checkpoint: **827 tests pass** (2026-09-12). Nine regression cases
+cover channel switches during token refresh/send, newer replies, logout/disposal,
+video replacement and poll-echo deduplication. Broad analysis retains the existing
+0 errors / 8 warnings / 372 infos. A separate Pro test-only timing fix waits for
+its stream listener before emitting an update.
+
 ## Integration and validation
 
-Production UI, stores and persistence remain unchanged. The request enum adds the
+Production UI and persistence remain unchanged. Chat stores now capture send
+destinations and scope asynchronous completion to the original conversation. The request enum adds the
 official Studio Mode transition request; custom request envelopes bypass the
 legacy request-context cache. Existing request callers are unchanged. Prototype code
 is in `lib/redesign/workspace/`, with independent `lib/main_redesign.dart`.

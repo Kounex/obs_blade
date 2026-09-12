@@ -110,6 +110,8 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   String? lastInsertMessage;
   Object? insertThrows;
   YouTubeChatMessage Function(String message)? insertResult;
+  Completer<YouTubeChatMessage>? insertGate;
+  String? lastInsertChatId;
 
   final List<String> deletedMessageIds = <String>[];
   Object? deleteThrows;
@@ -160,7 +162,9 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   }) async {
     this.insertCalls++;
     this.lastInsertMessage = message;
+    this.lastInsertChatId = liveChatId;
     if (this.insertThrows != null) throw this.insertThrows!;
+    if (this.insertGate != null) return this.insertGate!.future;
     if (this.insertResult != null) return this.insertResult!(message);
     return YouTubeChatMessage(
       id: 'sent-${this.insertCalls}',

@@ -638,6 +638,7 @@ abstract class _YouTubeChatStore with Store {
 
     this.selectedChannelLabel = label;
     this._persistSelectedChannel();
+    this.sendChatError = null;
 
     this.messages.clear();
     if (label != null) {
@@ -744,30 +745,52 @@ abstract class _YouTubeChatStore with Store {
       return false;
     }
     final label = this.selectedChannelLabel;
-    final liveChatId = this._channelBuffers[label]?.liveChatId;
-    if (label == null || liveChatId == null) return false;
+    final buffer = this._channelBuffers[label];
+    final liveChatId = buffer?.liveChatId;
+    final videoId = this._selectedVideoId;
+    if (label == null || buffer == null || liveChatId == null || videoId == null) {
+      return false;
+    }
+    final loginFlow = this._loginFlow;
+    bool ownsDestination() =>
+        loginFlow == this._loginFlow &&
+        identical(buffer, this._channelBuffers[label]) &&
+        this.channels.any((channel) =>
+            channel.label == label && channel.videoId == videoId);
+    bool sameChannel() =>
+        ownsDestination() && this.selectedChannelLabel == label;
     this.sendingChat = true;
     this.sendChatError = null;
 
     try {
       final token = await this._validAccessToken();
+      if (!ownsDestination()) return false;
       final sent = await this._chatService.insert(
         accessToken: token,
         liveChatId: liveChatId,
         message: trimmed,
       );
-      this.messages.add(sent);
-      while (this.messages.length > kMaxMessages) {
-        this.messages.removeAt(0);
+      if (ownsDestination()) {
+        final destination = sameChannel() ? this.messages : buffer.messages;
+        if (!destination.any((message) => message.id == sent.id)) {
+          destination.add(sent);
+          while (destination.length > kMaxMessages) {
+            destination.removeAt(0);
+          }
+        }
       }
       return true;
     } on YouTubeApiException catch (e) {
       GeneralHelper.advLog('YouTube chat send failed — $e');
-      this.sendChatError = e.message;
+      if (sameChannel()) {
+        this.sendChatError = e.message;
+      }
       return false;
     } catch (e) {
       GeneralHelper.advLog('YouTube chat send failed — $e');
-      this.sendChatError = 'Could not send — try again';
+      if (sameChannel()) {
+        this.sendChatError = 'Could not send — try again';
+      }
       return false;
     } finally {
       this.sendingChat = false;

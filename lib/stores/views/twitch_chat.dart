@@ -1012,6 +1012,9 @@ abstract class _TwitchChatStore with Store {
     /// channel — meaningless here.
     this.replyTarget = null;
 
+    // Feedback belongs to the conversation that initiated the send.
+    this.sendChatError = null;
+
     this.chatConnection = TwitchChatConnectionState.connecting;
     this._channelSwitchInProgress = true;
     try {
@@ -1116,33 +1119,51 @@ abstract class _TwitchChatStore with Store {
   @action
   Future<bool> sendChatMessage(String text) async {
     final trimmed = text.trim();
+    final senderId = this.user?.id;
     if (this.authState != TwitchAuthState.loggedIn ||
+        senderId == null ||
         !this.canWriteChat ||
         trimmed.isEmpty ||
         this.sendingChat) {
       return false;
     }
+    final broadcasterId = this.effectiveBroadcasterId;
+    final reply = this.replyTarget;
+    final loginFlow = this._loginFlow;
+    bool sameSession() =>
+        loginFlow == this._loginFlow &&
+        this.user?.id == senderId &&
+        this.isLoggedIn;
+    bool sameChannel() =>
+        sameSession() && this.effectiveBroadcasterIdSafe == broadcasterId;
     this.sendingChat = true;
     this.sendChatError = null;
 
     try {
       final token = await this._validAccessToken();
+      if (!sameSession()) return false;
       final result = await this._messageService.sendChatMessage(
         accessToken: token,
-        senderId: this.user!.id,
-        broadcasterId: this.effectiveBroadcasterId,
+        senderId: senderId,
+        broadcasterId: broadcasterId,
         message: trimmed,
-        replyParentMessageId: this.replyTarget?.messageId,
+        replyParentMessageId: reply?.messageId,
       );
       if (result.isSent) {
-        this.replyTarget = null;
+        if (sameChannel() && identical(this.replyTarget, reply)) {
+          this.replyTarget = null;
+        }
         return true;
       }
-      this.sendChatError = _dropReasonText(result.dropReason);
+      if (sameChannel()) {
+        this.sendChatError = _dropReasonText(result.dropReason);
+      }
       return false;
     } catch (e) {
       GeneralHelper.advLog('Twitch chat send failed — $e');
-      this.sendChatError = 'Could not send — try again';
+      if (sameChannel()) {
+        this.sendChatError = 'Could not send — try again';
+      }
       return false;
     } finally {
       this.sendingChat = false;
@@ -2244,6 +2265,7 @@ abstract class _TwitchChatStore with Store {
   }
 
   Future<void> dispose() async {
+    this._loginFlow++;
     await this._authBoxSub?.cancel();
     this._stopLivePoll();
     await this._disconnectChat();

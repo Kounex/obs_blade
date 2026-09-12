@@ -24,32 +24,23 @@ Production UI remains unchanged; this is not a complete workspace replacement.
 
 # Last verified milestone
 
-**818 tests passed** after chat access work (80 redesign); targeted analysis and
-web build pass. Native phone/tablet Pro and read-only states were inspected on
-2026-09-12, retaining reply/draft; temporary simulators removed. Browser semantics
-interception is a preview limitation, documented in `chat-contract.md`.
-The earlier source/audio native checkpoint remains:
-2026-09-11: **801 tests passed** (chat, WebSocket, persistence, Pro and redesign;
-63 redesign tests). Targeted analysis clean. Native iPhone/iPad walkthroughs pass
-against a synthetic peer using production WebSocket transport. They exercise
-inspection, Preview/Take, grouped visibility, input mute/volume, quick audio from
-chat and draft/reply retention after disconnect. Screenshots inspected; pinned
-phone Back to scenes and removed duplicate tablet Disconnect. Both temporary
-simulators removed. See `live-obs-lab.md`. Broad analysis retains baseline
-0 errors / 8 warnings / 372 infos from the previous scene checkpoint.
+**827 tests passed** after send ownership fixes (2026-09-12), including nine new
+chat regression cases. Broad analysis: existing 0 errors / 8 warnings / 372 infos.
+The Pro stream test now waits for its listener; purchase behavior is unchanged.
+Earlier chat access checkpoint: 818 tests, clean targeted analysis/web build,
+native phone/tablet Pro/read-only captures inspected, temporary simulators removed.
+Earlier source/audio native walkthroughs cover grouped visibility, mute/volume,
+Preview/Take and draft retention through OBS disconnect against a synthetic peer.
+Browser semantics interception remains a documented preview limitation.
 
 # Next recommended action
 
-Fix the channel/send ownership regressions, then bind real chat actions and rich
-messages. The access projection and native visual checkpoint are complete.
-New regression probes are in the existing Twitch/YouTube store test files; the
-source fix is the next unit, separate from the chat access UI checkpoint.
-Readiness, Pro, account/scopes and channel state must remain independent of OBS.
-Audit pending sends versus channel switches before binding user actions; existing
-Twitch send resolves its destination after awaiting token refresh, and YouTube
-appends its completed send to the active message list. Prevent cross-channel
-command/result ownership in the adapter. Do not reopen the approved architecture
-or scene-row policy.
+Complete the conversation-owned composer/channel adapter, then bind rich messages
+and real account/setup actions. Store sends now capture their original destination
+and scope completion; workspace drafts still need independent ownership. Read
+`chat-contract.md`. Fix YouTube label/video buffer invalidation before real channel
+binding: replacing a saved label's video currently retains its old liveChatId.
+Do not reopen the approved architecture or scene-row policy.
 
 # Important context required for that action
 

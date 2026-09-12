@@ -47,12 +47,20 @@ adapter. Capture identity before dispatch and apply completion only to that
 conversation. Do not transfer a failed draft/reply to the next channel. Existing
 stores already buffer channel history; do not duplicate that transport cache.
 
-This boundary needs explicit regression tests before real send binding:
-`TwitchChatStore.sendChatMessage` awaits token refresh before reading effective
-broadcaster/reply; `YouTubeChatStore.sendChatMessage` captures its liveChatId but
-appends the result to the then-active `messages` list. UI-only disabled buttons
-cannot protect against other owners changing those stores. Adapt target capture
-at the store seam if necessary, preserving existing caller behavior.
+The store boundary now captures Twitch destination/reply before token refresh,
+keeps newer replies intact, and scopes failures to the original conversation.
+YouTube accepted sends update the original buffer, deduplicate an earlier poll
+echo, and discard completion after logout or replacement of the saved video.
+Nine regression cases cover these boundaries. UI-only disabled buttons cannot
+protect against other owners changing stores; the workspace still needs its own
+draft lifetime and action serialization.
+
+Send-safety checkpoint (2026-09-12): **827 tests pass** across chat, WebSocket,
+persistence, Pro and redesign. Broad analysis retains 0 errors / 8 warnings /
+372 infos. An inherited Pro test emitted a stream update before subscription;
+its separate test-only fix waits for the listener. Purchase behavior is unchanged.
+Known remaining identity gap: editing a YouTube label's video currently retains
+its old read buffer/liveChatId; fix that before binding channel selection.
 
 ## Rich conversation and culture
 
