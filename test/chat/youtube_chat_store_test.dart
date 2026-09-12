@@ -331,6 +331,56 @@ void main() {
   });
 
   group('channel switch', () {
+    test('removed and re-added label cannot resurrect its retired history', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page([ytMessage('retired')]));
+      await store.init();
+      await until(() => store.messages.isNotEmpty);
+      await settingsBox().put(SettingsKeys.YouTubeUsernames.name, <String, String>{});
+      store.reloadChannels();
+      expect(store.selectedChannelLabel, isNull);
+      expect(store.messages, isEmpty);
+      await settingsBox().put(SettingsKeys.YouTubeUsernames.name,
+          <String, String>{'A': 'video-a-001'});
+      store.reloadChannels();
+      await store.selectChannel('A');
+      expect(store.messages, isEmpty);
+      await until(() => chatService.resolveCalls == 2);
+      expect(chatService.resolveCalls, 2);
+    });
+
+    for (final active in [true, false]) {
+      test('replacing a video invalidates its ${active ? 'active' : 'inactive'} buffer', () async {
+        configure();
+        await seedAuth();
+        chatService.liveChatIds['video-a-001'] = 'chat-a';
+        chatService.liveChatIds['video-b-002'] = 'chat-b';
+        chatService.liveChatIds['video-c-003'] = 'chat-new';
+        chatService.pollResponses.add(page([ytMessage('old-video')], nextPageToken: 'old-token'));
+        await store.init();
+        await until(() => chatService.listCalls >= 2);
+        if (!active) {
+          await store.selectChannel('B');
+          await until(() => chatService.listCalls >= 3);
+        }
+        final resolves = chatService.resolveCalls;
+        final polls = chatService.listPageTokens.length;
+        await settingsBox().put(SettingsKeys.YouTubeUsernames.name,
+            <String, String>{'A': 'video-c-003', 'B': 'video-b-002'});
+        chatService.pollResponses.add(page([ytMessage('new-video')]));
+        store.reloadChannels();
+        if (!active) await store.selectChannel('A');
+        await until(() => chatService.resolveCalls > resolves);
+        expect(chatService.resolveCalls, resolves + 1);
+        await until(() => store.messages.any((m) => m.id == 'new-video'));
+        expect(store.messages.map((m) => m.id), ['new-video']);
+        expect(chatService.listPageTokens[polls], isNull);
+        expect(await store.sendChatMessage('New stream'), true);
+        expect(chatService.lastInsertChatId, 'chat-new');
+      });
+    }
+
     test('swaps buffers, resumes the buffered page token, persists the '
         'selection', () async {
       configure();
@@ -494,8 +544,9 @@ void main() {
           store.messages.add(ytMessage('sent-a'));
         } else if (change == 'video replacement') {
           await settingsBox().put(SettingsKeys.YouTubeUsernames.name,
-              <String, String>{'A': 'video-new-001'});
+              <String, String>{'A': 'video-c-003'});
           store.reloadChannels();
+          expect(store.channels.single.videoId, 'video-c-003');
         } else {
           await store.logout();
         }
