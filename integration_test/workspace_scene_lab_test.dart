@@ -6,6 +6,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:obs_blade/redesign/obs/live_workspace_model.dart';
 import 'package:obs_blade/redesign/workspace/workspace_app.dart';
 import 'package:obs_blade/redesign/workspace/workspace_model.dart';
+import 'package:obs_blade/redesign/workspace/workspace_chat_fixture.dart';
 
 import '../test/redesign/support/obs_peer.dart';
 
@@ -114,6 +115,22 @@ void main() {
           '${Directory.systemTemp.path}/workspace_scene_shots/native-chat-after-disconnect.png',
         ).writeAsBytes(bytes);
       });
+      model.setChatScenario(LabChatScenario.pro);
+      await tester.pumpAndSettle();
+      expect(find.text('Native chat with Pro'), findsOneWidget);
+      expect(find.byKey(const ValueKey('chat-timeline')), findsNothing);
+      await capture(tester, binding, 'native-chat-pro');
+      model.setChatScenario(LabChatScenario.readOnly);
+      await tester.pumpAndSettle();
+      expect(find.text('Preserve this draft'), findsOneWidget);
+      expect(find.text('Update chat permissions'), findsOneWidget);
+      expect(
+        tester
+            .widget<IconButton>(find.byKey(const ValueKey('send-message')))
+            .onPressed,
+        isNull,
+      );
+      await capture(tester, binding, 'native-chat-readonly');
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       model.dispose();

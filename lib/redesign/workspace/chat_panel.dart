@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'workspace_model.dart';
+import '../chat/chat_access.dart';
+import 'chat_access_panel.dart';
 
 const _scaffold = Color(0xFF141B24);
 const _border = Color(0xFF334355);
@@ -9,9 +11,10 @@ const _blue = Color(0xFFB3CEFF);
 const _coral = Color(0xFFF39E8F);
 
 class ChatPanel extends StatefulWidget {
-  const ChatPanel({super.key, required this.model});
+  const ChatPanel({super.key, required this.model, this.onAction});
 
   final WorkspaceModel model;
+  final ValueChanged<ChatIntent>? onAction;
 
   @override
   State<ChatPanel> createState() => _ChatPanelState();
@@ -75,7 +78,19 @@ class _ChatPanelState extends State<ChatPanel> {
   Future<void> _send() async {
     await widget.model.sendMessage();
     if (!mounted) return;
-    if (widget.model.sendError == null) _composer.clear();
+    if (widget.model.draft.isEmpty) _composer.clear();
+  }
+
+  void _requestAction(ChatIntent action) {
+    if (widget.onAction != null) {
+      widget.onAction!(action);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lab preview: ${action.label} is not connected yet.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -83,6 +98,23 @@ class _ChatPanelState extends State<ChatPanel> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compactHeight = constraints.maxHeight < 380;
+        final access = widget.model.chatAccess;
+        if (!access.showsNativeConversation) {
+          return Column(
+            children: [
+              _ChatToolbar(
+                model: widget.model,
+                onShowActivity: () => _showActivity(context),
+              ),
+              Expanded(
+                child: ChatAccessPanel(
+                  access: access,
+                  onAction: _requestAction,
+                ),
+              ),
+            ],
+          );
+        }
         return Column(
           children: [
             _ChatToolbar(
@@ -92,45 +124,70 @@ class _ChatPanelState extends State<ChatPanel> {
             if (widget.model.showActivity && !compactHeight)
               _ActivityRow(onTap: () => _showActivity(context)),
             Expanded(
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: ListView.builder(
-                      key: const ValueKey('chat-timeline'),
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                      itemCount: widget.model.messages.length,
-                      itemBuilder: (context, index) => _MessageRow(
-                        message: widget.model.messages[index],
-                        onReply: () => widget.model.setReply(
-                          widget.model.messages[index].author,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (widget.model.chatPaused)
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: OutlinedButton.icon(
-                          onPressed: _returnLive,
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E2936),
+              child: LayoutBuilder(
+                builder: (context, remaining) => Column(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: ListView.builder(
+                              key: const ValueKey('chat-timeline'),
+                              controller: _scroll,
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                10,
+                                16,
+                                12,
+                              ),
+                              itemCount: widget.model.messages.length,
+                              itemBuilder: (context, index) => _MessageRow(
+                                message: widget.model.messages[index],
+                                onReply: () => widget.model.setReply(
+                                  widget.model.messages[index].author,
+                                ),
+                              ),
+                            ),
                           ),
-                          icon: const Icon(Icons.arrow_downward, size: 18),
-                          label: const Text('Return live'),
+                          if (widget.model.chatPaused)
+                            Positioned(
+                              bottom: 8,
+                              left: 0,
+                              right: 0,
+                              child: Center(
+                                child: OutlinedButton.icon(
+                                  onPressed: _returnLive,
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1E2936),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.arrow_downward,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Return live'),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: remaining.maxHeight * .55,
+                      ),
+                      child: SingleChildScrollView(
+                        reverse: true,
+                        child: _Composer(
+                          model: widget.model,
+                          controller: _composer,
+                          onSend: _send,
+                          onAction: _requestAction,
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            _Composer(
-              model: widget.model,
-              controller: _composer,
-              onSend: _send,
             ),
           ],
         );
@@ -199,53 +256,64 @@ class _ChatToolbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'studio_chat',
+                  model.chatAccess.channelLabel ?? 'Chat',
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(height: 2),
                 Row(
                   children: [
-                    Icon(Icons.circle, size: 8, color: Color(0xFF87C99B)),
+                    Icon(
+                      Icons.circle,
+                      size: 8,
+                      color:
+                          model.chatAccess.showsNativeConversation &&
+                              model.chatAccess.link == ChatLink.connected
+                          ? const Color(0xFF87C99B)
+                          : _secondary,
+                    ),
                     SizedBox(width: 6),
-                    Text(
-                      'Chat connected',
-                      style: TextStyle(fontSize: 12, color: _secondary),
+                    Flexible(
+                      child: Text(
+                        model.chatAccess.statusLabel,
+                        style: TextStyle(fontSize: 12, color: _secondary),
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          PopupMenuButton<String>(
-            tooltip: 'Chat tools',
-            onSelected: (action) {
-              if (action == 'history') {
-                onShowActivity();
-              } else {
-                model.toggleActivity();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'history',
-                child: Text('View recent activity'),
-              ),
-              PopupMenuItem(
-                value: 'toggle',
-                child: Text(
-                  model.showActivity
-                      ? 'Hide recent activity'
-                      : 'Show recent activity',
+          if (model.chatAccess.showsNativeConversation)
+            PopupMenuButton<String>(
+              tooltip: 'Chat tools',
+              onSelected: (action) {
+                if (action == 'history') {
+                  onShowActivity();
+                } else {
+                  model.toggleActivity();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'history',
+                  child: Text('View recent activity'),
                 ),
-              ),
-            ],
-          ),
+                PopupMenuItem(
+                  value: 'toggle',
+                  child: Text(
+                    model.showActivity
+                        ? 'Hide recent activity'
+                        : 'Show recent activity',
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -366,15 +434,17 @@ class _Composer extends StatelessWidget {
     required this.model,
     required this.controller,
     required this.onSend,
+    required this.onAction,
   });
 
   final WorkspaceModel model;
   final TextEditingController controller;
   final Future<void> Function() onSend;
+  final ValueChanged<ChatIntent> onAction;
 
   @override
   Widget build(BuildContext context) {
-    final canSend = model.draft.trim().isNotEmpty && !model.sending;
+    final canSend = model.draft.trim().isNotEmpty && model.chatAccess.canSend;
     return Container(
       padding: EdgeInsets.fromLTRB(
         12,
@@ -389,6 +459,7 @@ class _Composer extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          ChatReadinessNotice(access: model.chatAccess, onAction: onAction),
           if (model.replyTo case final author?)
             Container(
               constraints: const BoxConstraints(minHeight: 48),
@@ -447,8 +518,9 @@ class _Composer extends StatelessWidget {
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: model.setDraft,
                   onSubmitted: canSend ? (_) => onSend() : null,
-                  decoration: const InputDecoration(
-                    labelText: 'Message studio_chat',
+                  decoration: InputDecoration(
+                    labelText:
+                        'Message ${model.chatAccess.channelLabel ?? 'chat'}',
                     hintText: 'Write a message',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 14,

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 import 'source_control.dart';
 import 'audio_input_control.dart';
+import '../chat/chat_access.dart';
+import 'workspace_chat_fixture.dart';
 
 enum WorkspaceFocus { obs, balanced, chat }
 
@@ -51,6 +53,16 @@ class WorkspaceModel extends ChangeNotifier {
   bool showActivity = true;
   bool rejectNextCommand = false;
   bool rejectNextMessage = false;
+  LabChatScenario _chatScenario = LabChatScenario.ready;
+  ChatAccess get chatAccess => chatFixture(_chatScenario, sending: sending);
+
+  void setChatScenario(LabChatScenario scenario) {
+    _chatEpoch++;
+    sending = false;
+    _chatScenario = scenario;
+    _changed();
+  }
+
   bool _disposed = false;
   int _obsEpoch = 0;
   int _chatEpoch = 0;
@@ -242,7 +254,7 @@ class WorkspaceModel extends ChangeNotifier {
 
   Future<void> sendMessage() async {
     final text = draft.trim();
-    if (text.isEmpty || sending) return;
+    if (text.isEmpty || !chatAccess.canSend) return;
     final epoch = ++_chatEpoch;
     final reject = rejectNextMessage;
     rejectNextMessage = false;

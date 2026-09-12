@@ -16,8 +16,11 @@ D-005 approves the inspected scene-row policy. D-006 defines confirmed scene sta
 and session ownership. The isolated native lab now binds scene inspection,
 Preview/Take, scoped source visibility and actual input mute/volume to the existing
 WebSocket transport. Native phone/tablet walkthroughs pass against a synthetic peer.
-Real chat remains simulated; the next workstream is its independent access/channel
-contract and adapter.
+Real chat remains simulated. A read-only projection now maps existing Pro and
+Twitch/YouTube state into an independent access contract. The lab exposes native
+gate/read-only/reconnect/quota states through **Demo chat state**. Its account,
+purchase, setup and WebView actions are typed but deliberately unconnected.
+Next: real channel/action ownership and typed rich-message integration.
 
 2026-09-11 source/audio checkpoint: **801 tests pass**, including 63 redesign tests;
 targeted analysis is clean. New tests cover group targets, event/read ordering,
@@ -25,6 +28,15 @@ input capability/identity, unknown outcomes, gain above unity and a refresh duri
 a slider drag. Native UI checks cover both new controls, quick audio from chat,
 and draft/reply retention. Phone Back to scenes stays visible during inspector
 scroll; duplicate wide-pane Disconnect is removed. See `live-obs-lab.md`.
+
+Chat access checkpoint: **818 tests pass** (80 redesign). Targeted analysis clean;
+web build succeeds. Native Pro gating takes precedence over login/setup, WebView
+stays free, and read-only chat retains conversation and drafting. Large-text
+phone checks and the existing keyboard regression pass. Composer context scrolls
+within available height while the entry/send row remains reachable. The store
+projection does not initialize accounts or services. Native phone/tablet gate and
+read-only captures passed and were inspected on 2026-09-12; browser semantics
+interception remains a preview limitation. See `chat-contract.md`.
 
 ## Integration and validation
 

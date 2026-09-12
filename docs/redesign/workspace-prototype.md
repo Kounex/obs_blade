@@ -116,3 +116,11 @@ by the simulated Take action. Keep these limits visible when defining the adapte
 The subsequent native scene integration is separate from this fake fixture:
 [live OBS lab](live-obs-lab.md), [state/action contract](workspace-contract.md).
 Its synthetic-peer native tests do not change this browser prototype's fake scope.
+
+## Chat access review states
+
+The **Demo chat state** menu selects synthetic native Pro, sign-in/setup,
+read-only, reconnecting, ended and quota states. The browser entry also accepts
+`?chat=pro&focus=chat` or `?chat=readOnly&focus=chat`; invalid values use defaults.
+These are lab fixtures. Real-store access projection, native captures and browser
+limitations are recorded in [the chat contract](chat-contract.md).

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'chat_panel.dart';
 import 'obs_panel.dart';
 import 'workspace_model.dart';
+import 'workspace_chat_fixture.dart';
 
 const _scaffold = Color(0xFF141B24);
 const _panel = Color(0xFF1E2936);
@@ -187,8 +188,19 @@ class _LabStrip extends StatelessWidget {
               model.isLiveObs
                   ? 'Live OBS lab · chat simulated'
                   : 'Workspace lab · simulated',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12, color: _secondary),
             ),
+          ),
+          PopupMenuButton<LabChatScenario>(
+            tooltip: 'Demo chat state',
+            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            onSelected: model.setChatScenario,
+            itemBuilder: (_) => [
+              for (final scenario in LabChatScenario.values)
+                PopupMenuItem(value: scenario, child: Text(scenario.label)),
+            ],
           ),
           if (model.isLiveObs)
             IconButton(
@@ -250,20 +262,7 @@ class _LabStrip extends StatelessWidget {
                   child: const Text('Simulate external OBS change'),
                 ),
               ],
-              child: Semantics(
-                button: true,
-                label: 'Scenarios',
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Text('Scenarios', style: TextStyle(color: _secondary)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_drop_down, color: _secondary),
-                    ],
-                  ),
-                ),
-              ),
+              icon: const Icon(Icons.tune, color: _secondary),
             ),
         ],
       ),

@@ -1,8 +1,8 @@
 # Current objective
 
 Complete the first session-workspace slice, keeping OBS and first-class chat
-independent. OBS scene/source/audio controls are integrated in the lab; next is real chat
-capability/account/entitlement and channel state.
+independent. OBS scene/source/audio controls and synthetic chat access states are implemented
+in the lab. Next is real chat channel/send ownership and rich-message binding.
 
 # Current state
 
@@ -17,10 +17,18 @@ D-006 defines confirmed scene state and isolated connection-attempt ownership.
 NetworkStore/NetworkHelper without production bootstrap, Hive, DI or accounts.
 OBS scenes, scoped source visibility and actual input mute/volume are real;
 chat/activity remain simulated. Both source/audio native checkpoints pass.
+`ChatAccess` and `projectChatAccess` map actual store access facts without service
+initialization. The lab uses synthetic snapshots for its gate/read-only states;
+account/setup/purchase/WebView navigation is not wired.
 Production UI remains unchanged; this is not a complete workspace replacement.
 
 # Last verified milestone
 
+**818 tests passed** after chat access work (80 redesign); targeted analysis and
+web build pass. Native phone/tablet Pro and read-only states were inspected on
+2026-09-12, retaining reply/draft; temporary simulators removed. Browser semantics
+interception is a preview limitation, documented in `chat-contract.md`.
+The earlier source/audio native checkpoint remains:
 2026-09-11: **801 tests passed** (chat, WebSocket, persistence, Pro and redesign;
 63 redesign tests). Targeted analysis clean. Native iPhone/iPad walkthroughs pass
 against a synthetic peer using production WebSocket transport. They exercise
@@ -32,7 +40,10 @@ simulators removed. See `live-obs-lab.md`. Broad analysis retains baseline
 
 # Next recommended action
 
-Implement the independent real-chat access/channel projection and adapter.
+Fix the channel/send ownership regressions, then bind real chat actions and rich
+messages. The access projection and native visual checkpoint are complete.
+New regression probes are in the existing Twitch/YouTube store test files; the
+source fix is the next unit, separate from the chat access UI checkpoint.
 Readiness, Pro, account/scopes and channel state must remain independent of OBS.
 Audit pending sends versus channel switches before binding user actions; existing
 Twitch send resolves its destination after awaiting token refresh, and YouTube
@@ -42,7 +53,7 @@ or scene-row policy.
 
 # Important context required for that action
 
-Read `workspace-contract.md` and `live-obs-lab.md`. The correlated request client
+Read `chat-contract.md`, `workspace-contract.md` and `live-obs-lab.md`. The correlated request client
 never retries mutations or treats acknowledgements as observed state. Scene events
 win over older snapshots; collection changes suspend reads/commands. Take uses
 TriggerStudioModeTransition. Scene order follows master's descending sceneIndex.
