@@ -249,6 +249,10 @@ void main() {
       backend.entitlement = false;
       final store = newStore()..init();
       await until(() => backend.fetchEntitlementCalls > 0);
+      // Fetch invocation precedes the awaited Hive mirror and subscription.
+      // This test models a mid-session update, so wait for its actual listener.
+      await until(() => backend.entitlementController.hasListener);
+      expect(backend.entitlementController.hasListener, isTrue);
       expect(store.isPro, isFalse);
 
       backend.entitlement = true;
