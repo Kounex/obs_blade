@@ -2,112 +2,68 @@
 
 ## Completed
 
-- New `redesign-astra` worktree created directly from current master; base and
-  historical-work boundary recorded. Original checkout's IDE edits preserved.
-- Source archaeology of connection/session/control, chat, history, persistence,
-  settings and entitlements; widget-owned policies and integration risks mapped.
-- Canonical project documents established; three materially different interaction
-  architectures evaluated. User selected the session workspace with first-class,
-  user-controlled chat focus (D-003).
+- Clean `redesign-astra` worktree from master; base recorded, original IDE edits
+  preserved. Product archaeology and canonical project documentation established.
+- Three interaction architectures evaluated; session workspace selected with
+  adjustable OBS/chat emphasis and independent chat entry (D-003–004).
+- Fake phone/tablet prototype visually checked; scene policy approved (D-005).
+- Native OBS lab binds confirmed scenes/Preview/Take, grouped source visibility
+  and input mute/volume. Native phone/tablet checks passed with a synthetic peer.
+- Chat access/read-only/Pro states visually checked on native phone/tablet.
+- Store send ownership fixed; YouTube replaced/removed video buffers retired.
+- Chat composition/action adapter and typed timeline projection implemented.
+  Draft/reply ownership, entitlement/readiness guards, channel serialization and
+  native message metadata are tested. D-007 records the lifetime policy.
 
 ## Current workstream
 
-D-005 approves the inspected scene-row policy. D-006 defines confirmed scene state
-and session ownership. The isolated native lab now binds scene inspection,
-Preview/Take, scoped source visibility and actual input mute/volume to the existing
-WebSocket transport. Native phone/tablet walkthroughs pass against a synthetic peer.
-Real chat remains simulated. A read-only projection now maps existing Pro and
-Twitch/YouTube state into an independent access contract. The lab exposes native
-gate/read-only/reconnect/quota states through **Demo chat state**. Its account,
-purchase, setup and WebView actions are typed but deliberately unconnected.
-Next: real channel/action ownership and typed rich-message integration.
-
-2026-09-11 source/audio checkpoint: **801 tests pass**, including 63 redesign tests;
-targeted analysis is clean. New tests cover group targets, event/read ordering,
-input capability/identity, unknown outcomes, gain above unity and a refresh during
-a slider drag. Native UI checks cover both new controls, quick audio from chat,
-and draft/reply retention. Phone Back to scenes stays visible during inspector
-scroll; duplicate wide-pane Disconnect is removed. See `live-obs-lab.md`.
-
-Chat access checkpoint: **818 tests pass** (80 redesign). Targeted analysis clean;
-web build succeeds. Native Pro gating takes precedence over login/setup, WebView
-stays free, and read-only chat retains conversation and drafting. Large-text
-phone checks and the existing keyboard regression pass. Composer context scrolls
-within available height while the entry/send row remains reachable. The store
-projection does not initialize accounts or services. Native phone/tablet gate and
-read-only captures passed and were inspected on 2026-09-12; browser semantics
-interception remains a preview limitation. See `chat-contract.md`.
-
-Send-safety checkpoint: **827 tests pass** (2026-09-12). Nine regression cases
-cover channel switches during token refresh/send, newer replies, logout/disposal,
-video replacement and poll-echo deduplication. Broad analysis retains the existing
-0 errors / 8 warnings / 372 infos. A separate Pro test-only timing fix waits for
-its stream listener before emitting an update.
+Bind real chat UI and host actions into the session workspace. The new controller
+accepts initialized stores and observes actual messages/access state. The visible
+labs still use synthetic chat. Login/setup/purchases, free WebView hosting,
+rich rendering, moderation and appearance/catalog dependencies need UI binding.
 
 ## Integration and validation
 
-Production UI and persistence remain unchanged. Chat stores now capture send
-destinations and scope asynchronous completion to the original conversation. The request enum adds the
-official Studio Mode transition request; custom request envelopes bypass the
-legacy request-context cache. Existing request callers are unchanged. Prototype code
-is in `lib/redesign/workspace/`, with independent `lib/main_redesign.dart`.
-The native lab entrypoint is `lib/main_redesign_obs.dart`; confirmed scene/session
-adapters live in `lib/redesign/obs/`. This is a partial integration, with simulated
-chat and no stored focus preference. See `live-obs-lab.md` and `workspace-contract.md`.
+Production navigation/UI and persistence formats remain unchanged. Chat stores
+have targeted ownership fixes; the OBS request helper has the previously verified
+custom-envelope/Studio Mode transition seam. DashboardStore remains intact.
 
-Verified 2026-09-11 after the scene adapter:
+Final chat adapter gate (2026-09-12): **848 tests pass** across chat, WebSocket,
+persistence, Pro and redesign (98 redesign).
+Targeted analysis of redesign code/tests, both lab entrypoints and the native
+walkthrough is clean. Broad analysis retains
+0 errors / 8 warnings / 372 infos. An inherited Pro test timing failure was fixed
+separately by waiting for the entitlement stream listener; purchase behavior is
+unchanged.
 
-- **784 tests passed**: chat, WebSocket, persistence, Pro and redesign (46 redesign).
-- Simulated browser prototype rebuilt successfully after the shared UI changes.
-- iPhone and iPad native walkthroughs passed against a synthetic WebSocket peer;
-  screenshots inspected and the unsupported microphone fixture removed.
-- Targeted analysis of both lab entrypoints, redesign code/tests and the native
-  walkthrough: **no issues**. Broad `lib test` analysis remains at the baseline
-  **0 errors, 8 warnings, 372 infos**.
-- The first full run exposed an inherited test setup gap in explicit Pro restore:
-  the delayed dialog read a GlobalKey before binding initialization. A separate
-  test-only commit initializes the binding and waits for that callback; all 63 Pro
-  tests and the final full gate pass. Production purchase behavior is unchanged.
-
-Earlier fake-prototype checkpoint (same date): web build, clean targeted analysis, 764-test full gate,
-26-test redesign recheck after accessibility refinements, and phone/tablet
-browser inspection. Scenarios, screenshots and exact limitations are in
-`workspace-prototype.md`. The fake prototype is not an integrated vertical slice.
-
-Verified 2026-09-10 against unchanged master app/test sources, using Flutter
-3.47.2 / Dart 3.13.2:
-
-- `flutter test test/chat/ test/websocket/ test/persistence/ test/pro/`:
-  **738 passed**.
-- `flutter analyze`: nonzero, 1,264 baseline diagnostics. All 764 errors are
-  under standalone `tool/` packages, including unresolved package imports and
-  generated YouTube spike types in this fresh worktree.
-- `flutter analyze --no-pub lib test`: **0 errors, 8 warnings, 372 infos**;
-  nonzero exit. Existing unused declarations/imports and lints remain; this is
-  not a clean analyzer gate. No unrelated cleanup was performed.
-- Canonical documentation links and explicit source paths resolve; no private
-  paths/addresses in the new documents; `git diff --check` passes.
+Earlier visual evidence remains current: native phone/tablet source/audio and
+chat gate/read-only walkthroughs, plus fake browser prototype captures. No UI
+composition changed in the latest store/adapter units, so visual checks were not
+repeated. Details: `chat-contract.md`, `live-obs-lab.md`, `workspace-prototype.md`.
 
 ## Remaining major areas
 
-1. Implement the real-chat presentation contract, access/channel projection and
-   safe send/channel-switch ownership.
-2. Connect real chat with independent readiness, entitlement/account/scopes and
-   channel state; preserve free WebView availability.
-3. Complete first slice: production lifecycle/preferences, advanced source/audio
-   controls, real chat entitlement/account gates and reconnect regressions.
-4. Stream/record and advanced production tools; complete discovery/QR flows.
-5. Chat/accounts/capabilities, live health/history, settings/customization,
-   entitlement/purchases and data management.
-6. Proven shared tokens/components, preference translation, accessibility,
-   large-screen/device validation and staged production migration.
+1. Bind specialized chat rendering, channel picker and composer; validate rich
+   deterministic states on phone/tablet, then connect account/setup host actions.
+2. Complete first slice: production session lifecycle/preferences/history,
+   advanced source/audio controls and reconnect/accessibility regressions.
+3. Stream/record and advanced production tools; discovery/QR and saved connections.
+4. Chat accounts/capabilities, live health/history, settings/customization,
+   entitlements/purchases and data management.
+5. Extract proven shared tokens/components, translate preferences and complete
+   Android/large-screen/device validation before staged production migration.
 
 ## Known debt and blockers
 
-See `current-ui-assumptions.md` for inherited command acknowledgement, retry,
-grouped-source, history and deletion gaps. They remain unfixed and must not be
-mistaken for requirements. Scene-row behavior is approved; no product question currently blocks integration.
-Native phone/tablet layout checks passed against a synthetic peer. Android,
-installed OBS, real chat APIs and accessibility validation remain outstanding. Other phases are planned.
-Private-doc mirror verification timed out on the original checkout; no private data was changed or
-used to establish this design direction.
+- No product question currently blocks implementation. The approved architecture
+  and scene-row policy should not be reopened accidentally.
+- Browser semantics interception remains a preview limitation; native checks pass.
+- Installed OBS, real chat APIs, Android runtime and full accessibility validation
+  remain outstanding. Synthetic fixtures do not establish those integrations.
+- YouTube lacks stable persisted account identity; its new drafts reset across
+  signed-in status changes. Preserving them through same-account reauthorization
+  requires a verified identity seam, not a display-title comparison.
+- Other inherited gaps remain in `current-ui-assumptions.md`; do not treat them
+  as requirements. Root-wide analysis has unrelated standalone-tool package errors.
+- Private-doc mirror verification timed out in the original checkout. No private
+  data was changed or used to establish this direction.

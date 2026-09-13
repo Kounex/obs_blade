@@ -1306,6 +1306,7 @@ void main() {
 
       eventSubService.onSwitchChannel = (broadcasterId) async {
         expect(broadcasterId, 'chan-1');
+        expect(store.isSwitchingChannel, isTrue);
         store.appendChatMessageForTest(
           chatMessage('new-live', 'u2').copyWith(broadcasterUserId: 'chan-1'),
         );
@@ -1316,6 +1317,7 @@ void main() {
 
       await store.selectChannel('chan-1');
       eventSubService.onSwitchChannel = null;
+      expect(store.isSwitchingChannel, isFalse);
       expect(
         store.messages.map((message) => message.messageId),
         ['new-live'],

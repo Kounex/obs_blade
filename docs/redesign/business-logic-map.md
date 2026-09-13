@@ -61,3 +61,19 @@ Before integration, add focused contract tests for explicit readiness, stale
 state, program/preview targets, grouped-source commands and ownership on exit.
 Prototype simulations must distinguish dispatch from confirmation even before
 the production command interface can supply acknowledgements.
+
+
+## New chat migration seams
+
+- `lib/redesign/chat/chat_composer_controller.dart`: `ChatComposerController`
+  observes injected stores/Pro, owns per-conversation drafts and actual Twitch
+  reply objects, and serializes selection/send actions. No service bootstrap or
+  disposal; no OBS dependency. Host owns persisted platform/engine selection.
+- `lib/redesign/chat/chat_timeline.dart`: typed message/notice/pin projection,
+  including lifecycle metadata. Renderers still need appearance/catalog/moderation
+  dependencies; this is not a replacement native renderer yet.
+- Chat-store sends capture destinations before awaiting tokens and scope results.
+  YouTube reload retires buffers for removed/replaced videos. Twitch exposes
+  `isSwitchingChannel` so old rows are not labelled as the new conversation.
+- Regression evidence: chat store tests plus
+  `test/redesign/chat_composer_controller_test.dart` and `chat_timeline_test.dart`.

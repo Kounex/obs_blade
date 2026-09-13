@@ -33,7 +33,12 @@ Evidence: `StreamChat._buildNativeChatSlot`, `TwitchChatStore.canWriteChat`,
 `ProStore.isPro`. The projection has tests for the gate order, free fallback,
 read-only states, video identity and reactive entitlement revocation.
 
-## Conversation identity and action ownership — next adapter
+## Conversation identity and action ownership
+
+`ChatComposerController` now adapts real store actions and owns in-memory drafts
+and replies above pane composition. Its host injects initialized stores; it never
+initializes/disposes services or persists engine/platform preferences. It is tested
+but not yet bound to the lab UI.
 
 Use platform + account identity + Twitch broadcaster ID / YouTube video ID for
 conversation-local state. Display names and YouTube configuration labels are not
@@ -42,8 +47,8 @@ Preserve drafts and scroll state above pane composition, in memory only. Account
 logout clears account-owned context; an OBS disconnect does not. A reply must
 retain its platform message ID and channel, never just the displayed author.
 
-Serialize destination changes against a pending send in the workspace action
-adapter. Capture identity before dispatch and apply completion only to that
+The controller serializes destination changes against a pending send and rejects
+stale picker choices. It reads entitlement/readiness again at action time. Capture identity before dispatch and apply completion only to that
 conversation. Do not transfer a failed draft/reply to the next channel. Existing
 stores already buffer channel history; do not duplicate that transport cache.
 
@@ -52,19 +57,32 @@ keeps newer replies intact, and scopes failures to the original conversation.
 YouTube accepted sends update the original buffer, deduplicate an earlier poll
 echo, and discard completion after logout or replacement of the saved video.
 Nine regression cases cover these boundaries. UI-only disabled buttons cannot
-protect against other owners changing stores; the workspace still needs its own
+protect against other owners changing stores; the workspace controller supplies independent
 draft lifetime and action serialization.
 
 Send-safety checkpoint (2026-09-12): **827 tests pass** across chat, WebSocket,
 persistence, Pro and redesign. Broad analysis retains 0 errors / 8 warnings /
 372 infos. An inherited Pro test emitted a stream update before subscription;
 its separate test-only fix waits for the listener. Purchase behavior is unchanged.
-Known remaining identity gap: editing a YouTube label's video currently retains
-its old read buffer/liveChatId; fix that before binding channel selection.
+YouTube settings reload now retires messages, cursors and liveChatId when a label
+changes video or disappears. Three regression cases cover active/inactive video
+replacement and removal/re-addition. The earlier replacement fixture used an
+invalid-length video ID and exercised removal; it now uses a valid ID and asserts
+the parsed replacement explicitly.
+
+Twitch drafts survive permission renewal while the same user remains known.
+Logout/account replacement clears account context. YouTube's persisted auth has
+no stable account ID: its composer uses an opaque in-memory sign-in lifetime, not
+a title or token. An auth-state transition across signed-in status clears YouTube
+drafts conservatively; retaining drafts through same-account reauthorization needs
+a verified identity seam. No Hive schema change is introduced (D-007).
 
 ## Rich conversation and culture
 
-Keep typed platform messages through the adapter. Preserve Twitch first/third-party
+`chat_timeline.dart` projects sealed message/notice entries and the active pin.
+The controller observes messages and lifecycle changes, hides native rows behind
+the Pro gate, and suppresses old Twitch rows during a channel buffer swap. It
+keeps typed platform messages through the adapter. Preserve Twitch first/third-party
 emotes, role badges and category settings, reply references, content-visible
 tombstones, pause/return-live, channel notices and per-action moderation scopes.
 YouTube capabilities must reflect its implementation; do not imply Twitch-only
@@ -86,9 +104,17 @@ the lab explicitly reports that login/setup/purchase navigation is not wired.
 It never simulates a completed purchase or signs into an account.
 
 Production integration still needs account/setup navigation, free WebView hosting,
-channel selection and guarded sends, typed message rendering, moderation, emote
+binding the tested channel/send controller, typed message rendering, moderation, emote
 and badge dependencies, and lifecycle validation. These are remaining work, not
 features established by the access projection tests.
+
+## Adapter checkpoint — 2026-09-12
+
+**848 tests pass** across chat, WebSocket, persistence, Pro and redesign (98 redesign).
+The 18 new controller/timeline tests cover conversation ownership, external channel
+changes, pending completion, logout, permission renewal, reactive gating and typed
+message/lifecycle preservation. Targeted redesign/lab analysis is clean. These are
+store/contract checks; the new controller is not yet a user-facing rich chat pane.
 
 ## Native checkpoint — 2026-09-12
 
@@ -100,7 +126,7 @@ and draft, with Send disabled. Native screenshots inspected:
 [tablet Pro](prototype-shots/tablet-native-chat-pro.png),
 [tablet read-only](prototype-shots/tablet-native-chat-readonly.png).
 Both temporary simulators were removed. This validates state composition, not real
-sign-in, purchase or permission-upgrade flows. The latest full gate is 818 passing
+sign-in, purchase or permission-upgrade flows. That visual checkpoint had 818 passing
 tests (80 redesign), with clean targeted analysis and a successful web build.
 
 The fake browser entry accepts `?chat=readOnly&focus=chat` (enum names) for

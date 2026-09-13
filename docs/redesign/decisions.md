@@ -135,3 +135,29 @@ there. A cancelled handshake cannot own a later session. Reconnect/command failu
 must not automatically repeat output mutations. Production routing, preference
 translation, full DashboardStore lifecycle and real chat integration are still
 required before replacing the shipping workspace. See `workspace-contract.md`.
+
+
+## D-007 Conversation-owned composition and typed chat data
+
+Status: active
+
+Decision: Keep workspace drafts/replies in memory, keyed by platform, account
+identity and broadcaster/video identity. Serialize workspace channel changes with
+sends; completion may only update the original unchanged draft. Preserve native
+message/notice DTOs, pins and tombstone metadata through a typed projection.
+
+Reason: Pane focus and OBS connectivity must not own chat lifetime. Existing send
+callbacks could target or update the wrong channel after an await. YouTube labels
+can be edited to point to a new video. Plain sample messages would erase the
+specialized native-chat capabilities the user explicitly prioritized.
+
+Alternatives considered: One global draft; render directly from mutable stores;
+persist a new account identity field immediately. These either leak composition
+between conversations or expand migration scope before the presentation is bound.
+
+Consequences: Twitch drafts survive same-user permission renewal. Logout/account
+replacement clears account-owned context. YouTube has no persisted stable account
+ID, so signed-in status changes reset its drafts conservatively using an opaque
+session identity; do not key by display title or credentials. Preserve free
+WebView and existing entitlements. Account/setup actions, rich rendering and
+scroll restoration still need UI integration. See `chat-contract.md`.

@@ -278,6 +278,11 @@ abstract class _TwitchChatStore with Store {
   /// `broadcasterUserId` so the clear cannot drop mid-switch arrivals.
   bool _channelSwitchInProgress = false;
 
+  /// While resubscribing, the visible containers still belong to the previous
+  /// channel. Presentation observes chatConnection + lifecycleVersion alongside
+  /// this flag; completion bumps lifecycleVersion after swapping the buffers.
+  bool get isSwitchingChannel => this._channelSwitchInProgress;
+
   /// Recently applied moderation keys (deletes / purges / clears) — local
   /// mod actions tombstone immediately and the EventSub echo must not
   /// double-apply (also fixes duplicate `/clear` double-banners). Bounded
