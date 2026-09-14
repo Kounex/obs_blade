@@ -174,11 +174,11 @@ guard, shared chat-row DI seams — each with astra's tests, gates green
 on astra (tip still `54141fe1`) — excluded. **Low-risk defect fixes LANDED
 too (2026-09-14, 2 commits):** Statistics filter state survives rebuilds
 (reset moved out of `build`), dead `DurationFilter.Between` removed, and
-delete-all-data now clears `PastRecordData`/`Hotkey`/`PurchasedTip`. Flagged
-but NOT fixed (same pattern, out of scope): `resetLazySingleton` in `build`
-in logs/intro/dashboard; the Statistics category entry in data management
-leaves `PastRecordData` behind. **Next:** the command-ack layer (#3) and
-the interaction ports are separate later phases.
+delete-all-data now clears `PastRecordData`/`Hotkey`/`PurchasedTip`.
+Flagged leftovers then fixed too (2 more commits): logs-view reset moved out
+of `build` (intro/dashboard were already clean), and the Statistics category
+entry in data management now clears recordings as well. **Next:** the
+command-ack layer (#3) and the interaction ports are separate later phases.
 User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +
 inspect-first trade-offs before the porting phase.
 

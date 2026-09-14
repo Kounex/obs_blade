@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-14 — Flagged leftovers fixed: logs reset + statistics category clear
+
+Follow-up to the defect-fix wave (user-approved): the two same-pattern
+leftovers flagged in the previous entry are now fixed (TDD red-green each):
+
+- **LogsView** reset `LogsStore` in `build` (wiped log filters whenever an
+  ancestor rebuilt the view) — converted to a StatefulWidget, reset moved to
+  `initState`. Correction to the earlier flag: `intro.dart` and
+  `dashboard.dart` already reset in `initState` — grep hit without context;
+  no change needed there. New `test/settings/` home (`logs_view_test.dart`).
+- **Statistics category entry** in data management now also clears
+  `PastRecordData` (it claimed "all entries listed in the statistics tab" but
+  left recordings behind); description wording updated. Widget test drives
+  the confirm flow (`data_management_view_test.dart`). Test gotcha reused:
+  the confirm callback's Hive writes need `tester.runAsync`, real I/O inside
+  the fake-async zone hangs the suite at shutdown.
+
+Gates: 758 tests green, analyze at the 472 baseline. 2 commits on
+`4.0-liquid-glass`.
+
 ## 2026-09-14 — Astra audit defect fixes: Statistics filters + delete-all-data
 
 Two low-risk defect pairs from `docs/redesign-astra-audit.md`'s verified
