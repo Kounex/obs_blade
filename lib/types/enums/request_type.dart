@@ -180,6 +180,9 @@ enum RequestType {
   /// {'sceneName': String } - Scene to set as the current preview scene
   SetCurrentPreviewScene,
 
+  /// Triggers OBS's Studio Mode Transition button (WebSocket v5.0+).
+  TriggerStudioModeTransition,
+
   /// Sets the volume setting of an input.
   ///
   /// {'inputName': String } - Name of the input to set the volume of
