@@ -49,13 +49,11 @@ enum TimeUnit {
 
 enum DurationFilter {
   Shorter,
-  Longer,
-  Between;
+  Longer;
 
   String get text => {
     DurationFilter.Shorter: 'Shorter than...',
     DurationFilter.Longer: 'Longer than...',
-    DurationFilter.Between: 'Between...',
   }[this]!;
 }
 

@@ -33,6 +33,16 @@ class StatisticsView extends StatefulWidget {
 class _StatisticsViewState extends State<StatisticsView> {
   final Random _random = Random();
 
+  @override
+  void initState() {
+    super.initState();
+
+    /// Filter/sort state starts fresh when the route is created. This used to
+    /// reset in [build], which wiped it on every rebuild - e.g. when a detail
+    /// route was pushed on top (ModalRoute dependency flips isCurrent).
+    GetIt.instance.resetLazySingleton<StatisticsStore>();
+  }
+
   // late List<PastStreamData> _pastStreamData;
 
   // final List<String> _mockedStreamNames = [
@@ -192,8 +202,6 @@ class _StatisticsViewState extends State<StatisticsView> {
                 return data.totalTime! >
                     statisticsStore.durationFilterAmount! *
                         statisticsStore.durationFilterTimeUnit.factorToS;
-              case DurationFilter.Between:
-                return true;
             }
           }
           return true;
@@ -214,7 +222,6 @@ class _StatisticsViewState extends State<StatisticsView> {
 
   @override
   Widget build(BuildContext context) {
-    GetIt.instance.resetLazySingleton<StatisticsStore>();
     StatisticsStore statisticsStore = GetIt.instance<StatisticsStore>();
 
     return Scaffold(
