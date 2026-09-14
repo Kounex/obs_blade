@@ -108,7 +108,7 @@ class DataManagementView extends StatelessWidget {
                 DataEntry(
                   title: 'Statistics',
                   description:
-                      'All entries listed in the statistics tab which are created for every live stream OBS Blade is connected to.',
+                      'All entries listed in the statistics tab which are created for every live stream or recording OBS Blade is connected to.',
                   onClear: () {
                     /// Since the user might be in a detailed statistic view, we pop until
                     /// we are back in the root view
@@ -119,6 +119,10 @@ class DataManagementView extends StatelessWidget {
 
                     Hive.box<PastStreamData>(
                       HiveKeys.PastStreamData.name,
+                    ).clear();
+
+                    Hive.box<PastRecordData>(
+                      HiveKeys.PastRecordData.name,
                     ).clear();
 
                     Hive.box<AppLog>(HiveKeys.AppLog.name).add(
