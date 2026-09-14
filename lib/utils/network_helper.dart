@@ -396,7 +396,7 @@ class NetworkHelper {
                 : {
                     'requestType': request.name,
                     'requestId': requestUUID,
-                    'requestData': {if (fields != null) ...fields},
+                    'requestData': {...?fields},
                   },
           ),
         ),
