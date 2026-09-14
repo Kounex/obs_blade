@@ -8,7 +8,10 @@ import '../../../models/custom_theme.dart';
 import '../../../models/enums/log_level.dart';
 import '../../../models/hidden_scene.dart';
 import '../../../models/hidden_scene_item.dart';
+import '../../../models/hotkey.dart';
+import '../../../models/past_record_data.dart';
 import '../../../models/past_stream_data.dart';
+import '../../../models/purchased_tip.dart';
 import '../../../models/twitch_auth.dart';
 import '../../../models/youtube_auth.dart';
 import '../../../shared/design/design.dart';
@@ -31,12 +34,15 @@ import 'widgets/data_entry.dart';
 Future<void> deleteAllUserDataPreservingEntitlements() async {
   await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
   await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).clear();
+  await Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).clear();
   await Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();
   await Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).clear();
   await Hive.box<CustomTheme>(HiveKeys.CustomTheme.name).clear();
   await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
   await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
   await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
+  await Hive.box<Hotkey>(HiveKeys.Hotkey.name).clear();
+  await Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).clear();
 
   bool boughtBlacksmith = Hive.box(
     HiveKeys.Settings.name,
