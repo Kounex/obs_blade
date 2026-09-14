@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
+import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
@@ -42,6 +44,8 @@ String? chatNoticeBannerLabel(String noticeType) {
 class TwitchChatNotificationRow extends StatelessWidget {
   final ChatNotificationEvent event;
   final Box settingsBox;
+  final TwitchBadgeStore? badgeStore;
+  final ThirdPartyEmoteStore? emoteStore;
 
   /// When the next timeline item is a chat message from the same
   /// chatter, the accent continues onto that row (caller sets both).
@@ -64,6 +68,8 @@ class TwitchChatNotificationRow extends StatelessWidget {
     super.key,
     required this.event,
     required this.settingsBox,
+    this.badgeStore,
+    this.emoteStore,
     this.accentContinues = false,
     this.showAttachedMessage = true,
     this.mentionHexFor,
@@ -152,6 +158,8 @@ class TwitchChatNotificationRow extends StatelessWidget {
               badges: this.event.badges,
             ),
             settingsBox: this.settingsBox,
+            badgeStore: this.badgeStore,
+            emoteStore: this.emoteStore,
             mentionHexFor: this.mentionHexFor,
             onAuthorTap: this.onAuthorTap,
             onMentionTap: this.onMentionTap,

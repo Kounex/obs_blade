@@ -36,6 +36,11 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// ([NativeChatAppearance]), read with defaults.
   final Box settingsBox;
 
+  /// Explicit catalog dependencies for isolated hosts. Existing dashboard callers
+  /// retain their registered stores until their presentation is migrated.
+  final TwitchBadgeStore? badgeStore;
+  final ThirdPartyEmoteStore? emoteStore;
+
   /// Moderation tombstone — username/badges stay; the body renders its
   /// original content dimmed (Twitch mod view) with a kind-specific
   /// marker (` —Deleted` / ` —Timed out (10m)` / ` —Banned`).
@@ -92,6 +97,8 @@ class TwitchChatMessageRow extends StatelessWidget {
     super.key,
     required this.event,
     required this.settingsBox,
+    this.badgeStore,
+    this.emoteStore,
     this.isDeleted = false,
     this.deletedMarker = ' —Deleted',
     this.deletedActor,
@@ -155,7 +162,7 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// are skipped silently.
   List<Widget> _badgeWidgets() {
     if (this.event.badges.isEmpty) return const [];
-    final badgeStore = GetIt.instance<TwitchBadgeStore>();
+    final badgeStore = this.badgeStore ?? GetIt.instance<TwitchBadgeStore>();
     return [
       for (final badge in this.event.badges)
         if (this.settingsBox.get(
@@ -318,7 +325,8 @@ class TwitchChatMessageRow extends StatelessWidget {
     )) {
       return this._linkAwareTextSpans(context, text);
     }
-    final emoteStore = GetIt.instance<ThirdPartyEmoteStore>();
+    final emoteStore =
+        this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>();
     final tokens = text.split(' ');
     return [
       for (var i = 0; i < tokens.length; i++) ...[
@@ -687,8 +695,7 @@ class ChatRowLongPressListenerState extends State<ChatRowLongPressListener> {
     this._activePointer = null;
     this._downPosition = null;
 
-    /// Sheet wash continues via [highlighted] after parent setState in
-    /// [onLongPress] (runs before this pointer-up in the event queue).
+    /// The parent owns persistent sheet selection through [highlighted].
     this._setHolding(false);
   }
 
@@ -705,8 +712,9 @@ class ChatRowLongPressListenerState extends State<ChatRowLongPressListener> {
           this._setHolding(true);
         });
         this._longPressTimer = Timer(_longPressDelay, () {
-          this._highlightTimer?.cancel();
-          this._setHolding(true);
+          // The action can open a modal and interrupt pointer delivery. Retire
+          // local hold state now; the parent owns any lasting sheet selection.
+          this._cancelPending();
           HapticFeedback.mediumImpact();
           this.widget.onLongPress();
         });
