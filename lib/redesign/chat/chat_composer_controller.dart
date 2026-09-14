@@ -42,6 +42,7 @@ class ChatComposerController extends ChangeNotifier {
   ChatEngine get _engine => _presentation.value.engine;
   List<ChatChannelChoice> _channels = const [];
   String? _twitchAccount;
+  Object _twitchSession = Object();
   bool _youtubeSignedIn = false;
   Object? _youtubeAccount;
   ChatConversation? _conversation;
@@ -97,6 +98,7 @@ class ChatComposerController extends ChangeNotifier {
     if (twitchAccount != _twitchAccount) {
       _drafts.removeWhere((key, _) => key.platform == ChatType.Twitch);
       _twitchAccount = twitchAccount;
+      _twitchSession = Object();
     }
     if (youtubeSignedIn != _youtubeSignedIn) {
       _drafts.removeWhere((key, _) => key.platform == ChatType.YouTube);
@@ -127,7 +129,7 @@ class ChatComposerController extends ChangeNotifier {
         : (
             platform: _platform,
             account: _platform == ChatType.Twitch
-                ? twitchAccount
+                ? (id: twitchAccount, session: _twitchSession)
                 : _youtubeAccount,
             channel: channel,
           );

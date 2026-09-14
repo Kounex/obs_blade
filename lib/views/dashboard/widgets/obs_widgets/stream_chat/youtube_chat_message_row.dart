@@ -260,7 +260,8 @@ class YouTubeChatMessageRow extends StatelessWidget {
               Text(
                 amountDisplayString,
                 style: baseStyle?.copyWith(
-                  color: tierColor,
+                  // Tier hues remain on the card; the amount needs the normal
+                  // foreground contrast in both light and dark themes.
                   fontWeight: FontWeight.w800,
                 ),
               ),

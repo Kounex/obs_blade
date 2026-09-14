@@ -54,7 +54,8 @@ These are new project requirements, not claims that master already passes:
 
 ## Choices still open
 
-Primary organizing model, exact navigation, pane rules/breakpoints, appearance,
+The session workspace, adjustable OBS/chat focus and explicit scene commands
+are settled by D-003–005. Broader navigation, final breakpoints, appearance,
 density, motion and theme translation remain open. Current 700/640 layout values,
 Material/Cupertino widgets, tab count and existing theme slots are implementation
 facts, not immutable requirements. New dependencies need a demonstrated need and

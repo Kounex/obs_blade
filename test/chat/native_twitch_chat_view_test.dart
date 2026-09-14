@@ -538,6 +538,29 @@ void main() {
       expect(pressed, isFalse);
     });
 
+    testWidgets('completed long press releases local wash before pointer lift',
+        (tester) async {
+      var pressed = false;
+      await tester.pumpWidget(wrap(TwitchChatMessageRow(
+        event: textEvent('1', 'Viewer32', 'Hi chat'),
+        settingsBox: Hive.box(HiveKeys.Settings.name),
+        onMessageLongPress: () => pressed = true,
+      )));
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.textContaining('Hi chat')),
+      );
+      await tester.pump(const Duration(milliseconds: 550));
+      expect(pressed, isTrue);
+      final wash = tester.widget<ColoredBox>(find.descendant(
+        of: find.byType(ChatRowLongPressListener),
+        matching: find.byType(ColoredBox),
+      ).first);
+      // A modal opened by the callback can interrupt pointer delivery. Only
+      // explicit parent selection may keep the wash after the action fires.
+      expect(wash.color, Colors.transparent);
+      await gesture.up();
+    });
+
     testWidgets('author tap still works when mod long-press is wired',
         (tester) async {
       var tapped = false;

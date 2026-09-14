@@ -14,37 +14,41 @@
 - Chat composition/action adapter and typed timeline projection implemented.
   Draft/reply ownership, entitlement/readiness guards, channel serialization and
   native message metadata are tested. D-007 records the lifetime policy.
+- Native rich chat pane binds typed Twitch/YouTube rows, channel selection, replies,
+  drafts and sends. Phone/tablet walkthroughs passed with synthetic stores; native
+  long-press/following and Super Chat amount contrast defects are corrected.
 
 ## Current workstream
 
-Bind real chat UI and host actions into the session workspace. The new controller
-accepts initialized stores and observes actual messages/access state. The visible
-labs still use synthetic chat. Login/setup/purchases, free WebView hosting,
-rich rendering, moderation and appearance/catalog dependencies need UI binding.
+Complete advanced chat interactions and host actions. The native pane now binds
+real presentation/controller code to synthetic stores. Account/setup/purchases,
+free WebView hosting, moderation/user cards, pin actions, emote picking and
+appearance editing remain unbound. Catalog rendering accepts explicit stores;
+fixture captures do not establish downloaded badge/emote artwork.
 
 ## Integration and validation
 
-Production navigation/UI and persistence formats remain unchanged. Chat stores
+Production navigation and persistence formats remain unchanged. Shared chat rows
+have dependency injection seams plus hold-wash and amount-readability fixes. Chat stores
 have targeted ownership fixes; the OBS request helper has the previously verified
 custom-envelope/Studio Mode transition seam. DashboardStore remains intact.
 
-Final chat adapter gate (2026-09-12): **848 tests pass** across chat, WebSocket,
-persistence, Pro and redesign (98 redesign).
-Targeted analysis of redesign code/tests, both lab entrypoints and the native
-walkthrough is clean. Broad analysis retains
-0 errors / 8 warnings / 372 infos. An inherited Pro test timing failure was fixed
-separately by waiting for the entitlement stream listener; purchase behavior is
-unchanged.
+Final native-pane gate (2026-09-14): **859 tests pass** across chat, WebSocket,
+persistence, Pro and redesign (108 redesign). Targeted redesign/lab analysis is
+clean; broad analysis retains **0 errors / 8 warnings / 372 infos**.
 
-Earlier visual evidence remains current: native phone/tablet source/audio and
-chat gate/read-only walkthroughs, plus fake browser prototype captures. No UI
-composition changed in the latest store/adapter units, so visual checks were not
-repeated. Details: `chat-contract.md`, `live-obs-lab.md`, `workspace-prototype.md`.
+Native rich chat inspection passed on phone/tablet with continuous rendering and
+explicit tail/highlight assertions. Ten pane tests cover drafts, channel changes,
+reply/resize lifetime, scrolling, Pro/write access, keyboard/large text, amount
+contrast and message identity during buffer trimming. A shared-row regression
+covers hold termination. The last identity-only change passed the final full gate;
+it changes gesture ownership, not the captured composition. Temporary simulators
+were removed. See `chat-contract.md` for captures and evidence boundaries.
 
 ## Remaining major areas
 
-1. Bind specialized chat rendering, channel picker and composer; validate rich
-   deterministic states on phone/tablet, then connect account/setup host actions.
+1. Preserve remaining specialized chat interactions (emote picker, appearance,
+   user cards/moderation, pin actions), then connect account/setup host actions.
 2. Complete first slice: production session lifecycle/preferences/history,
    advanced source/audio controls and reconnect/accessibility regressions.
 3. Stream/record and advanced production tools; discovery/QR and saved connections.

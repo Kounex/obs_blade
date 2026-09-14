@@ -5,7 +5,9 @@ focus. The isolated Flutter prototype has passed its first browser checkpoint;
 scene-row interaction policy is approved (D-005). The first scene adapter has
 passed native phone/tablet checks against a synthetic OBS peer. Scoped source visibility and actual audio inputs
 have also passed native phone/tablet checks. Chat access, conversation-owned draft/actions and typed timeline projections are
-implemented and tested; real message/action UI binding remains ahead (see [chat contract](chat-contract.md)). Production UI is unchanged.
+bound to a native rich chat pane in a synthetic-store lab (see [chat contract](chat-contract.md)). Account/setup and advanced chat host actions remain ahead.
+Production navigation is unchanged; shared chat rows have small gesture and
+readability fixes.
 
 ## Baseline and authority
 
@@ -40,6 +42,7 @@ a UI model/actions contract and adapt existing logic. Extract shared components
 only after their product semantics prove useful.
 
 Prototype: `lib/redesign/workspace/`, entrypoint `lib/main_redesign.dart`.
+Native chat presentation: `lib/main_redesign_chat.dart` (synthetic stores).
 Native scene integration: [live OBS lab](live-obs-lab.md),
 [state/action contract](workspace-contract.md).
 Fake prototype run instructions, screenshots and validation: [workspace prototype](workspace-prototype.md). Production navigation will remain available during migration.

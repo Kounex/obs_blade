@@ -164,12 +164,14 @@ void main() {
     'logout clears all account drafts and late completion cannot restore them',
     () async {
       controller.setText('Private draft');
+      final originalConversation = controller.conversation;
       twitch.pending = Completer<bool>();
       final send = controller.send();
       twitch.authState = TwitchAuthState.loggedOut;
       twitch.pending!.complete(false);
       await send;
       twitch.authState = TwitchAuthState.loggedIn;
+      expect(controller.conversation, isNot(originalConversation));
       expect(controller.text, isEmpty);
       expect(controller.error, isNull);
     },

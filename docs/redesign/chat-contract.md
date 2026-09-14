@@ -38,7 +38,7 @@ read-only states, video identity and reactive entitlement revocation.
 `ChatComposerController` now adapts real store actions and owns in-memory drafts
 and replies above pane composition. Its host injects initialized stores; it never
 initializes/disposes services or persists engine/platform preferences. It is tested
-but not yet bound to the lab UI.
+and bound to `WorkspaceChatPane` in the isolated native chat lab.
 
 Use platform + account identity + Twitch broadcaster ID / YouTube video ID for
 conversation-local state. Display names and YouTube configuration labels are not
@@ -71,7 +71,9 @@ invalid-length video ID and exercised removal; it now uses a valid ID and assert
 the parsed replacement explicitly.
 
 Twitch drafts survive permission renewal while the same user remains known.
-Logout/account replacement clears account context. YouTube's persisted auth has
+Logout/account replacement clears account context. Twitch conversation identity also
+contains an in-memory sign-in epoch, preventing old scroll/reveal state from
+returning after a later login to the same account. YouTube's persisted auth has
 no stable account ID: its composer uses an opaque in-memory sign-in lifetime, not
 a title or token. An auth-state transition across signed-in status clears YouTube
 drafts conservatively; retaining drafts through same-account reauthorization needs
@@ -104,8 +106,9 @@ the lab explicitly reports that login/setup/purchase navigation is not wired.
 It never simulates a completed purchase or signs into an account.
 
 Production integration still needs account/setup navigation, free WebView hosting,
-binding the tested channel/send controller, typed message rendering, moderation, emote
-and badge dependencies, and lifecycle validation. These are remaining work, not
+moderation/user-card actions, emote picker and appearance controls, and lifecycle
+validation against real accounts. The native lab binds channel/send actions, typed
+message rows, and explicit badge/emote catalog dependencies. These are remaining work, not
 features established by the access projection tests.
 
 ## Adapter checkpoint — 2026-09-12
@@ -114,7 +117,7 @@ features established by the access projection tests.
 The 18 new controller/timeline tests cover conversation ownership, external channel
 changes, pending completion, logout, permission renewal, reactive gating and typed
 message/lifecycle preservation. Targeted redesign/lab analysis is clean. These are
-store/contract checks; the new controller is not yet a user-facing rich chat pane.
+store/contract checks; the following native-pane checkpoint adds UI evidence.
 
 ## Native checkpoint — 2026-09-12
 
@@ -135,3 +138,66 @@ pointer interceptor after menu use; capture also intermittently timed out. This
 is an unresolved browser-preview limitation. Native interaction/visual evidence
 and widget tests are the checkpoint authority; browser interaction is not declared
 clean. Production targets remain iOS/Android, not web.
+
+
+## Native rich chat lab
+
+Run `flutter run -t lib/main_redesign_chat.dart` on a native device or simulator.
+This entrypoint uses actual presentation/controller code with synthetic chat
+stores and a temporary settings box. It does not initialize saved accounts,
+production settings, global service registrations, purchases or chat APIs. OBS
+controls in this entrypoint remain simulated; use the separate OBS lab for its
+transport adapter.
+
+`WorkspaceApp.chatPane` accepts the injected pane and preserves its subtree across
+phone/tablet composition changes. `WorkspaceChatPane` binds channel selection,
+per-conversation drafts, actual Twitch reply targets, guarded sends and local
+readiness/Pro gates. `WorkspaceChatTimeline` reuses platform-specific rows, keeps
+notice visibility/category settings, typed replies and tombstones, and displays
+the current pin. Badge/emote catalogs are explicit dependencies; existing
+production callers retain their original defaults. The fixture does not fetch
+badge/emote artwork, so captures do not establish remote catalog rendering.
+
+Scroll position and manual pause belong to the conversation. Following the latest
+message responds to content and viewport metrics, including reply/keyboard size
+changes; a paused reader keeps their position. Programmatic following must not
+be mistaken for manual scrolling. Host actions for accounts, setup, free WebView,
+channel management and purchases remain explicit unbound lab intents. Moderation,
+user cards, pin actions, emote picking and appearance editing remain work ahead;
+this pane is not ready to replace the production chat surface.
+
+
+Visual refinement found and corrected two interaction defects: a stationary native
+long press could claim scrolling without movement, and modal presentation could
+leave a row's local hold wash active. Following now claims scroll ownership only
+on movement; local hold ends when its callback fires, while explicit sheet
+selection remains parent-owned. Native tests assert less than one logical pixel
+after the timeline tail and transparent local wash after choosing Reply.
+
+The YouTube tier-1 amount also failed text contrast in the workspace: `#1565C0`
+over its 15% tint on `#141B24` gives RGB (20.15, 38.10, 59.40), only **2.66:1**.
+Amounts now use the ordinary `#EDF2F7` text foreground (**13.58:1** here); tier
+color remains on card tint/border. The pane regression computes relative
+luminance against that alpha-composited background and requires at least 4.5:1.
+This measurement covers the workspace fixture, not every user-defined theme.
+
+
+Native phone and tablet walkthroughs passed on 2026-09-13. Captures inspected:
+[phone reply](prototype-shots/phone-native-rich-reply.png),
+[tablet reply](prototype-shots/tablet-native-rich-reply.png),
+[tablet YouTube](prototype-shots/tablet-native-rich-youtube.png),
+[phone Pro](prototype-shots/phone-native-rich-pro.png).
+The ten pane tests cover channel drafts, actual reply identity and reparenting,
+paused scroll, live viewport following, sending, Pro revocation, write-permission
+loss, keyboard/large text and specialized YouTube rendering/amount contrast.
+Buffer trimming during a hold is covered too: rows carry conversation + entry
+identity so a recycled list position cannot open actions for another message.
+The shared-row regression also verifies hold termination before pointer-up.
+Targeted analysis is clean. Temporary simulators were removed. These fixtures
+establish native presentation behavior, not real account/API integration.
+
+
+Final native-pane gate (2026-09-14): **859 tests pass** across chat, WebSocket,
+persistence, Pro and redesign (108 redesign). Targeted analysis is clean; broad
+analysis retains 0 errors / 8 warnings / 372 infos. The final row-identity change
+is covered by the full gate and does not change the captured composition.

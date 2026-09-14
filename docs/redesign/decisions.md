@@ -159,5 +159,5 @@ Consequences: Twitch drafts survive same-user permission renewal. Logout/account
 replacement clears account-owned context. YouTube has no persisted stable account
 ID, so signed-in status changes reset its drafts conservatively using an opaque
 session identity; do not key by display title or credentials. Preserve free
-WebView and existing entitlements. Account/setup actions, rich rendering and
-scroll restoration still need UI integration. See `chat-contract.md`.
+WebView and existing entitlements. Rich rows, composition and scroll restoration are bound in the synthetic native
+lab. Account/setup and advanced chat host actions still need integration. See `chat-contract.md`.

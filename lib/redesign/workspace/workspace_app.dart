@@ -14,9 +14,10 @@ const _blue = Color(0xFFB3CEFF);
 const _coral = Color(0xFFF39E8F);
 
 class WorkspaceApp extends StatefulWidget {
-  const WorkspaceApp({super.key, this.model});
+  const WorkspaceApp({super.key, this.model, this.chatPane});
 
   final WorkspaceModel? model;
+  final Widget? chatPane;
 
   @override
   State<WorkspaceApp> createState() => _WorkspaceAppState();
@@ -88,7 +89,7 @@ class _WorkspaceAppState extends State<WorkspaceApp> {
           thumbColor: _blue,
         ),
       ),
-      home: _WorkspaceShell(model: _model),
+      home: _WorkspaceShell(model: _model, chatPane: widget.chatPane),
     );
   }
 }
@@ -106,7 +107,9 @@ enum _LabAction {
 }
 
 class _WorkspaceShell extends StatefulWidget {
-  const _WorkspaceShell({required this.model});
+  const _WorkspaceShell({required this.model, this.chatPane});
+
+  final Widget? chatPane;
 
   final WorkspaceModel model;
 
@@ -129,7 +132,7 @@ class _WorkspaceShellState extends State<_WorkspaceShell> {
           body: SafeArea(
             child: Column(
               children: [
-                _LabStrip(model: model),
+                _LabStrip(model: model, externalChat: widget.chatPane != null),
                 _SessionHeader(model: model),
                 Expanded(
                   child: LayoutBuilder(
@@ -143,12 +146,22 @@ class _WorkspaceShellState extends State<_WorkspaceShell> {
                                 ? _TabletWorkspace(
                                     model: model,
                                     obsPaneKey: _obsPaneKey,
-                                    chatPaneKey: _chatPaneKey,
+                                    chatPane: KeyedSubtree(
+                                      key: _chatPaneKey,
+                                      child:
+                                          widget.chatPane ??
+                                          ChatPanel(model: model),
+                                    ),
                                   )
                                 : _PhoneWorkspace(
                                     model: model,
                                     obsPaneKey: _obsPaneKey,
-                                    chatPaneKey: _chatPaneKey,
+                                    chatPane: KeyedSubtree(
+                                      key: _chatPaneKey,
+                                      child:
+                                          widget.chatPane ??
+                                          ChatPanel(model: model),
+                                    ),
                                   ),
                           ),
                         ],
@@ -166,7 +179,9 @@ class _WorkspaceShellState extends State<_WorkspaceShell> {
 }
 
 class _LabStrip extends StatelessWidget {
-  const _LabStrip({required this.model});
+  const _LabStrip({required this.model, this.externalChat = false});
+
+  final bool externalChat;
 
   final WorkspaceModel model;
 
@@ -185,7 +200,9 @@ class _LabStrip extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              model.isLiveObs
+              externalChat
+                  ? 'Workspace lab · chat adapter'
+                  : model.isLiveObs
                   ? 'Live OBS lab · chat simulated'
                   : 'Workspace lab · simulated',
               maxLines: 1,
@@ -193,15 +210,16 @@ class _LabStrip extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: _secondary),
             ),
           ),
-          PopupMenuButton<LabChatScenario>(
-            tooltip: 'Demo chat state',
-            icon: const Icon(Icons.chat_bubble_outline, size: 18),
-            onSelected: model.setChatScenario,
-            itemBuilder: (_) => [
-              for (final scenario in LabChatScenario.values)
-                PopupMenuItem(value: scenario, child: Text(scenario.label)),
-            ],
-          ),
+          if (!externalChat)
+            PopupMenuButton<LabChatScenario>(
+              tooltip: 'Demo chat state',
+              icon: const Icon(Icons.chat_bubble_outline, size: 18),
+              onSelected: model.setChatScenario,
+              itemBuilder: (_) => [
+                for (final scenario in LabChatScenario.values)
+                  PopupMenuItem(value: scenario, child: Text(scenario.label)),
+              ],
+            ),
           if (model.isLiveObs)
             IconButton(
               tooltip: 'Refresh OBS state',
@@ -252,10 +270,11 @@ class _LabStrip extends StatelessWidget {
                   value: _LabAction.rejectCommand,
                   child: Text('Reject next OBS command'),
                 ),
-                const PopupMenuItem(
-                  value: _LabAction.failMessage,
-                  child: Text('Fail next chat message'),
-                ),
+                if (!externalChat)
+                  const PopupMenuItem(
+                    value: _LabAction.failMessage,
+                    child: Text('Fail next chat message'),
+                  ),
                 PopupMenuItem(
                   value: _LabAction.externalChange,
                   enabled: model.canControl,
@@ -522,12 +541,12 @@ class _PhoneWorkspace extends StatelessWidget {
   const _PhoneWorkspace({
     required this.model,
     required this.obsPaneKey,
-    required this.chatPaneKey,
+    required this.chatPane,
   });
 
   final WorkspaceModel model;
   final GlobalKey obsPaneKey;
-  final GlobalKey chatPaneKey;
+  final Widget chatPane;
 
   @override
   Widget build(BuildContext context) {
@@ -536,7 +555,7 @@ class _PhoneWorkspace extends StatelessWidget {
       index: index,
       children: [
         ObsPanel(key: obsPaneKey, model: model),
-        ChatPanel(key: chatPaneKey, model: model),
+        chatPane,
       ],
     );
   }
@@ -546,12 +565,12 @@ class _TabletWorkspace extends StatelessWidget {
   const _TabletWorkspace({
     required this.model,
     required this.obsPaneKey,
-    required this.chatPaneKey,
+    required this.chatPane,
   });
 
   final WorkspaceModel model;
   final GlobalKey obsPaneKey;
-  final GlobalKey chatPaneKey;
+  final Widget chatPane;
 
   @override
   Widget build(BuildContext context) {
@@ -573,9 +592,7 @@ class _TabletWorkspace extends StatelessWidget {
               child: ObsPanel(key: obsPaneKey, model: model),
             ),
             const VerticalDivider(width: 1, thickness: 1, color: _border),
-            Expanded(
-              child: ChatPanel(key: chatPaneKey, model: model),
-            ),
+            Expanded(child: chatPane),
           ],
         );
       },

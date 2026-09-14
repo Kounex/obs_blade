@@ -70,8 +70,11 @@ the production command interface can supply acknowledgements.
   reply objects, and serializes selection/send actions. No service bootstrap or
   disposal; no OBS dependency. Host owns persisted platform/engine selection.
 - `lib/redesign/chat/chat_timeline.dart`: typed message/notice/pin projection,
-  including lifecycle metadata. Renderers still need appearance/catalog/moderation
-  dependencies; this is not a replacement native renderer yet.
+  including lifecycle metadata. `workspace_chat_timeline.dart` reuses specialized
+  platform rows with injected settings and badge/emote catalogs.
+- `lib/redesign/chat/workspace_chat_pane.dart`: channel picker, conversation-owned
+  composition and readiness/Pro gates. Native synthetic host: `main_redesign_chat.dart`.
+  Account/setup, moderation and other host actions are still unbound.
 - Chat-store sends capture destinations before awaiting tokens and scope results.
   YouTube reload retires buffers for removed/replaced videos. Twitch exposes
   `isSwitchingChannel` so old rows are not labelled as the new conversation.
