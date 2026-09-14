@@ -13,6 +13,7 @@ import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/utils/network_helper.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_obs_peer.dart';
@@ -295,4 +296,94 @@ void main() {
       expect(dashboardStore.commandFailureNotice, isNotNull);
     },
   );
+
+  test('successful mutation: no notice, no re-read', () async {
+    peer.responseData['GetInputMute'] = {'inputMuted': true};
+    await connect();
+
+    final ack = await dashboardStore.sendMutation(
+      RequestType.SetInputMute,
+      fields: {'inputName': 'Mic', 'inputMuted': true},
+      label: 'Audio mute',
+    );
+
+    expect(ack.success, isTrue);
+    expect(dashboardStore.commandFailureNotice, isNull);
+    expect(requestsOf('GetInputMute'), isEmpty);
+  });
+
+  test('rejected studio-mode transition re-reads GetSceneList', () async {
+    peer.responseData['GetSceneList'] = {
+      'scenes': [
+        {'sceneName': 'Camera', 'sceneIndex': 0},
+      ],
+      'currentProgramSceneName': 'Camera',
+      'currentPreviewSceneName': 'Camera',
+    };
+    peer.droppedRequestTypes.add('GetSceneItemList');
+    await connect();
+    dashboardStore.handleStream();
+    peer.rejections['TriggerStudioModeTransition'] =
+        RequestStatus.InvalidResourceState.identifier;
+
+    final ack = await dashboardStore.sendMutation(
+      RequestType.TriggerStudioModeTransition,
+      label: 'Transition',
+    );
+
+    expect(ack.failureKind, ObsRequestFailureKind.rejected);
+    await waitFor(
+      () => requestsOf('GetSceneList').isNotEmpty,
+      'GetSceneList re-read after failed transition',
+    );
+  });
+
+  test('dedup distinguishes different inputs of the same command', () async {
+    await connect();
+    peer.rejections['SetInputMute'] = RequestStatus.GenericError.identifier;
+
+    final notices = <CommandFailureNotice>[];
+    final dispose = autorun((_) {
+      final notice = dashboardStore.commandFailureNotice;
+      if (notice != null) notices.add(notice);
+    });
+
+    await dashboardStore.sendMutation(
+      RequestType.SetInputMute,
+      fields: {'inputName': 'Mic', 'inputMuted': true},
+      label: 'Audio mute',
+    );
+    await dashboardStore.sendMutation(
+      RequestType.SetInputMute,
+      fields: {'inputName': 'Aux', 'inputMuted': true},
+      label: 'Audio mute',
+    );
+
+    /// Two DIFFERENT inputs failing are two user-facing failures - the storm
+    /// rule must not hide the second one
+    expect(notices, hasLength(2));
+
+    dispose();
+  });
+
+  test('timeout re-reads the confirmed state too', () async {
+    await connect();
+    NetworkHelper.requestAckTimeout = const Duration(milliseconds: 100);
+    addTearDown(
+      () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+    );
+    peer.droppedRequestTypes.add('SetInputMute');
+
+    final ack = await dashboardStore.sendMutation(
+      RequestType.SetInputMute,
+      fields: {'inputName': 'Mic', 'inputMuted': true},
+      label: 'Audio mute',
+    );
+
+    expect(ack.failureKind, ObsRequestFailureKind.timeout);
+    await waitFor(
+      () => requestsOf('GetInputMute').isNotEmpty,
+      'GetInputMute re-read after timeout',
+    );
+  });
 }

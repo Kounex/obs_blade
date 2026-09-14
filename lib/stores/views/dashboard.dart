@@ -424,8 +424,13 @@ abstract class _DashboardStore with Store {
     Map<String, dynamic>? fields, {
     String? label,
   }) {
-    _resyncAfterFailedMutation(ack.requestType, fields);
-    _surfaceCommandFailure(ack, label: label);
+    /// A dead session has nothing to re-read - and during reconnect the fresh
+    /// socket may not be identified yet, so resync reads could get it closed
+    /// by OBS. The post-connect init burst re-reads everything anyway.
+    if (ack.failureKind != ObsRequestFailureKind.connectionLost) {
+      _resyncAfterFailedMutation(ack.requestType, fields);
+    }
+    _surfaceCommandFailure(ack, fields: fields, label: label);
   }
 
   /// Re-reads the confirmed state for a failed mutation via the matching
@@ -523,7 +528,11 @@ abstract class _DashboardStore with Store {
     }
   }
 
-  void _surfaceCommandFailure(ObsRequestAck ack, {String? label}) {
+  void _surfaceCommandFailure(
+    ObsRequestAck ack, {
+    Map<String, dynamic>? fields,
+    String? label,
+  }) {
     final what = label ?? ack.requestType?.name ?? 'Command';
 
     GeneralHelper.advLog(
@@ -540,9 +549,16 @@ abstract class _DashboardStore with Store {
     if (!toastsEnabled) return;
 
     final now = DateTime.now();
+
+    /// Dedup identity: the same command failing on the SAME target is one
+    /// failure (retries); different targets (two inputs, two scenes) are
+    /// distinct failures and each surfaces. Connection-loss storms always
+    /// collapse to one aggregate notice.
+    final target =
+        fields?['inputName'] ?? fields?['sceneName'] ?? fields?['sceneItemId'];
     final dedupKey = ack.failureKind == ObsRequestFailureKind.connectionLost
         ? 'connectionLost'
-        : '${ack.failureKind}:${ack.requestType}';
+        : '${ack.failureKind}:${ack.requestType}:$target';
     if (dedupKey == _lastCommandFailureToastKey &&
         now.difference(_lastCommandFailureToastAt) <
             _commandFailureToastDedupWindow) {
