@@ -40,7 +40,9 @@ import '../../types/classes/api/record_stats.dart';
 import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/stream_stats.dart';
+import '../../types/classes/command_failure_notice.dart';
 import '../../types/classes/default_filter.dart';
+import '../../types/classes/obs_request_ack.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/classes/stream/events/current_preview_scene_changed.dart';
 import '../../types/classes/stream/events/current_program_scene_changed.dart';
@@ -210,6 +212,13 @@ abstract class _DashboardStore with Store {
   @observable
   bool reconnecting = false;
 
+  /// Latest definitively failed OBS command (command-ack layer) - consumed by
+  /// the command failure toast in the dashboard. A new instance is set for
+  /// every surfaced failure (deduped, see [_surfaceCommandFailure]) so
+  /// reactions fire even for repeated identical failures
+  @observable
+  CommandFailureNotice? commandFailureNotice;
+
   /// Toggles the visibility of the hide/show sliding pane of the scene items
   @observable
   bool editSceneItemVisibility = false;
@@ -373,6 +382,189 @@ abstract class _DashboardStore with Store {
     _getStatsTimer = null;
   }
 
+  /// Toast dedup for [_surfaceCommandFailure]: the same failure kind in a
+  /// short window (and any connection-loss storm) surfaces once
+  static const Duration _commandFailureToastDedupWindow = Duration(seconds: 4);
+  String? _lastCommandFailureToastKey;
+  DateTime _lastCommandFailureToastAt = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Sends a mutation ([request]) through the command-ack layer and awaits
+  /// OBS' answer. On **definitive** failure (explicit rejection or hard
+  /// timeout) or connection loss this:
+  ///
+  /// 1. re-reads the confirmed state from OBS via the matching `Get*`
+  ///    request - the existing response handlers apply it (self-healing;
+  ///    optimistic writes are never trusted as confirmed state)
+  /// 2. surfaces a deduped toast via [commandFailureNotice] (respects the
+  ///    [SettingsKeys.CommandFailureToasts] kill-switch - off = log-only)
+  /// 3. writes the failure to the logs
+  ///
+  /// The returned [Future] exists for tests / interested callers - call
+  /// sites can keep ignoring it.
+  Future<ObsRequestAck> sendMutation(
+    RequestType request, {
+    Map<String, dynamic>? fields,
+    String? label,
+  }) async {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    final ack = session == null
+        ? ObsRequestAck.connectionLost(request)
+        : await NetworkHelper.makeRequest(session.socket, request, fields);
+
+    if (!ack.success) {
+      _handleFailedMutation(ack, fields, label: label);
+    }
+
+    return ack;
+  }
+
+  @action
+  void _handleFailedMutation(
+    ObsRequestAck ack,
+    Map<String, dynamic>? fields, {
+    String? label,
+  }) {
+    _resyncAfterFailedMutation(ack.requestType, fields);
+    _surfaceCommandFailure(ack, label: label);
+  }
+
+  /// Re-reads the confirmed state for a failed mutation via the matching
+  /// `Get*` request(s) - the existing response handlers apply it, so the UI
+  /// converges back to what OBS actually has
+  void _resyncAfterFailedMutation(
+    RequestType? requestType,
+    Map<String, dynamic>? fields,
+  ) {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+
+    switch (requestType) {
+      case RequestType.SetCurrentProgramScene:
+      case RequestType.SetCurrentPreviewScene:
+      case RequestType.TriggerStudioModeTransition:
+        NetworkHelper.makeRequest(session.socket, RequestType.GetSceneList);
+        break;
+      case RequestType.SetSceneItemEnabled:
+        _requestDisplayedSceneItems();
+        break;
+      case RequestType.SetInputMute:
+        if (fields?['inputName'] != null) {
+          NetworkHelper.makeRequest(session.socket, RequestType.GetInputMute, {
+            'inputName': fields!['inputName'],
+          });
+        }
+        break;
+      case RequestType.SetInputVolume:
+        if (fields?['inputName'] != null) {
+          NetworkHelper.makeRequest(
+            session.socket,
+            RequestType.GetInputVolume,
+            {'inputName': fields!['inputName']},
+          );
+        }
+        break;
+      case RequestType.SetInputAudioSyncOffset:
+        if (fields?['inputName'] != null) {
+          NetworkHelper.makeRequest(
+            session.socket,
+            RequestType.GetInputAudioSyncOffset,
+            {'inputName': fields!['inputName']},
+          );
+        }
+        break;
+      case RequestType.ToggleStream:
+      case RequestType.ToggleRecord:
+      case RequestType.ToggleRecordPause:
+        _requestStatsBatch();
+        break;
+      case RequestType.ToggleReplayBuffer:
+        NetworkHelper.makeRequest(
+          session.socket,
+          RequestType.GetReplayBufferStatus,
+        );
+        break;
+      case RequestType.ToggleVirtualCam:
+        NetworkHelper.makeRequest(
+          session.socket,
+          RequestType.GetVirtualCamStatus,
+        );
+        break;
+      case RequestType.SetStudioModeEnabled:
+        NetworkHelper.makeRequest(
+          session.socket,
+          RequestType.GetStudioModeEnabled,
+        );
+        break;
+      case RequestType.SetCurrentSceneTransition:
+      case RequestType.SetCurrentSceneTransitionDuration:
+        NetworkHelper.makeRequest(
+          session.socket,
+          RequestType.GetCurrentSceneTransition,
+        );
+        break;
+      case RequestType.SetCurrentProfile:
+        NetworkHelper.makeRequest(session.socket, RequestType.GetProfileList);
+        break;
+      case RequestType.SetCurrentSceneCollection:
+        NetworkHelper.makeRequest(
+          session.socket,
+          RequestType.GetSceneCollectionList,
+        );
+        break;
+      case RequestType.SetSourceFilterEnabled:
+      case RequestType.SetSourceFilterSettings:
+        fetchSceneItemsFilters();
+        break;
+      default:
+
+        /// No persisted state to re-read (TriggerHotkeyByName,
+        /// SaveReplayBuffer, ...) - the toast alone surfaces the failure
+        break;
+    }
+  }
+
+  void _surfaceCommandFailure(ObsRequestAck ack, {String? label}) {
+    final what = label ?? ack.requestType?.name ?? 'Command';
+
+    GeneralHelper.advLog(
+      'OBS command failed ($what): ${ack.describe()}',
+      level: LogLevel.Warning,
+      includeInLogs: true,
+    );
+
+    final toastsEnabled =
+        Hive.box(
+              HiveKeys.Settings.name,
+            ).get(SettingsKeys.CommandFailureToasts.name, defaultValue: true)
+            as bool;
+    if (!toastsEnabled) return;
+
+    final now = DateTime.now();
+    final dedupKey = ack.failureKind == ObsRequestFailureKind.connectionLost
+        ? 'connectionLost'
+        : '${ack.failureKind}:${ack.requestType}';
+    if (dedupKey == _lastCommandFailureToastKey &&
+        now.difference(_lastCommandFailureToastAt) <
+            _commandFailureToastDedupWindow) {
+      return;
+    }
+    _lastCommandFailureToastKey = dedupKey;
+    _lastCommandFailureToastAt = now;
+
+    this.commandFailureNotice = CommandFailureNotice(
+      message: switch (ack.failureKind) {
+        ObsRequestFailureKind.rejected =>
+          '$what failed - OBS rejected the command',
+        ObsRequestFailureKind.timeout =>
+          '$what failed - OBS did not answer in time',
+        ObsRequestFailureKind.connectionLost =>
+          '$what failed - connection to OBS was lost',
+        null => '$what failed',
+      },
+      ack: ack,
+    );
+  }
+
   void handleStream() {
     _obsStreamSubscription?.cancel();
     _obsStreamSubscription = GetIt.instance<NetworkStore>()
@@ -430,17 +622,21 @@ abstract class _DashboardStore with Store {
     _getStatsTimer?.cancel();
     _getStatsTimer = Timer.periodic(
       const Duration(milliseconds: 1000),
-      (_) => NetworkHelper.makeBatchRequest(
-        GetIt.instance<NetworkStore>().activeSession!.socket,
-        RequestBatchType.Stats,
-        [
-          RequestBatchObject(RequestType.GetStreamStatus),
-          RequestBatchObject(RequestType.GetRecordStatus),
-          RequestBatchObject(RequestType.GetStats),
-        ],
-      ),
+      (_) => _requestStatsBatch(),
     );
   }
+
+  /// One-off stats batch (stream / record / OBS status) - the periodic poll
+  /// and the re-read after failed stream / record mutations both use this
+  void _requestStatsBatch() => NetworkHelper.makeBatchRequest(
+    GetIt.instance<NetworkStore>().activeSession!.socket,
+    RequestBatchType.Stats,
+    [
+      RequestBatchObject(RequestType.GetStreamStatus),
+      RequestBatchObject(RequestType.GetRecordStatus),
+      RequestBatchObject(RequestType.GetStats),
+    ],
+  );
 
   /// If we are live and have no [PastStreamData]
   /// instance (null) we need to check if we create a completely new

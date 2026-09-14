@@ -595,6 +595,28 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$commandFailureNoticeAtom = Atom(
+    name: '_DashboardStore.commandFailureNotice',
+    context: context,
+  );
+
+  @override
+  CommandFailureNotice? get commandFailureNotice {
+    _$commandFailureNoticeAtom.reportRead();
+    return super.commandFailureNotice;
+  }
+
+  @override
+  set commandFailureNotice(CommandFailureNotice? value) {
+    _$commandFailureNoticeAtom.reportWrite(
+      value,
+      super.commandFailureNotice,
+      () {
+        super.commandFailureNotice = value;
+      },
+    );
+  }
+
   late final _$editSceneItemVisibilityAtom = Atom(
     name: '_DashboardStore.editSceneItemVisibility',
     context: context,
@@ -731,6 +753,22 @@ mixin _$DashboardStore on _DashboardStore, Store {
     name: '_DashboardStore',
     context: context,
   );
+
+  @override
+  void _handleFailedMutation(
+    ObsRequestAck ack,
+    Map<String, dynamic>? fields, {
+    String? label,
+  }) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+      name: '_DashboardStore._handleFailedMutation',
+    );
+    try {
+      return super._handleFailedMutation(ack, fields, label: label);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
 
   @override
   void init() {
@@ -884,6 +922,7 @@ scenePreviewImageBytes: ${scenePreviewImageBytes},
 manualScreenshotImageBytes: ${manualScreenshotImageBytes},
 isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
+commandFailureNotice: ${commandFailureNotice},
 editSceneItemVisibility: ${editSceneItemVisibility},
 editAudioVisibility: ${editAudioVisibility},
 studioMode: ${studioMode},

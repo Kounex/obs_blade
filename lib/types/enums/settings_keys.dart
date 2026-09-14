@@ -252,6 +252,12 @@ enum SettingsKeys {
   /// lost indefinetily instead of an amount of retries before aborting
   UnlimitedReconnects,
 
+  /// [bool]: If true, a toast is shown in the dashboard when an OBS command
+  /// (scene switch, mute, ...) definitively fails (rejected / timed out /
+  /// connection lost) after the state has been re-synced from OBS. If false,
+  /// failures are only written to the logs. Active by default
+  CommandFailureToasts,
+
   /// [List<DashboardElement>]: A list which represents the order in which the
   /// elements in the dashboard will be shown
   DashboardElementsOrder,
@@ -370,6 +376,7 @@ enum SettingsKeys {
     SettingsKeys.ExposeHotkeys: 'expose-hotkeys',
     SettingsKeys.ExposeInputAudioSyncOffset: 'expose-input-audio-sync-offset',
     SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
+    SettingsKeys.CommandFailureToasts: 'command-failure-toasts',
     SettingsKeys.DashboardElementsOrder: 'dashboard-elements-order',
     SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
     SettingsKeys.DontShowHidingSceneItemsWarning:

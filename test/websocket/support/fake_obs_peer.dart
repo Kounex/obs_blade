@@ -101,7 +101,8 @@ class FakeObsPeer {
     if (socket.closeCode != null) return;
 
     final rejectionCode = rejections[type];
-    socket.add(
+    _safeAdd(
+      socket,
       jsonEncode({
         'op': 7,
         'd': {
@@ -120,6 +121,14 @@ class FakeObsPeer {
     );
   }
 
+  /// Adding races with teardown closes - a dead peer socket must never fail
+  /// the test with an unhandled error
+  void _safeAdd(WebSocket socket, String payload) {
+    try {
+      socket.add(payload);
+    } catch (_) {}
+  }
+
   Future<void> _ackBatch(WebSocket socket, Map<String, dynamic> data) async {
     final batchRequests = List<Map<String, dynamic>>.from(
       data['requests'] as List,
@@ -132,7 +141,8 @@ class FakeObsPeer {
     if (ackDelay != null) await Future<void>.delayed(ackDelay!);
     if (socket.closeCode != null) return;
 
-    socket.add(
+    _safeAdd(
+      socket,
       jsonEncode({
         'op': 9,
         'd': {
@@ -163,7 +173,8 @@ class FakeObsPeer {
   /// Emits an event (op 5) to every connected socket
   void event(String eventType, Map<String, dynamic> eventData) {
     for (final socket in sockets) {
-      socket.add(
+      _safeAdd(
+        socket,
         jsonEncode({
           'op': 5,
           'd': {
