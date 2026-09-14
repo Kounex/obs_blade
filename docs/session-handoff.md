@@ -177,8 +177,20 @@ too (2026-09-14, 2 commits):** Statistics filter state survives rebuilds
 delete-all-data now clears `PastRecordData`/`Hotkey`/`PurchasedTip`.
 Flagged leftovers then fixed too (2 more commits): logs-view reset moved out
 of `build` (intro/dashboard were already clean), and the Statistics category
-entry in data management now clears recordings as well. **Next:** the
-command-ack layer (#3) and the interaction ports are separate later phases.
+entry in data management now clears recordings as well. **Command-ack layer
+(astra phase 2) BUILT on branch `command-ack-layer` (2026-09-14, 7 commits):**
+awaitable per-UUID acks for every OBS request/batch
+(`NetworkHelper` → typed `ObsRequestAck`/`ObsBatchAck`), all DashboardStore
+mutations routed through the ack policy (self-healing `Get*` re-read + deduped
+failure toast, settings kill-switch default ON), studio-mode button now sends a
+real `TriggerStudioModeTransition`. Reviewer SHIP-WITH-FIXES applied; fake-peer
+tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
+`superpowers/specs/2026-09-14-command-ack-layer-design.md`. **Merge into
+`4.0-liquid-glass` only after user dogfood** against real OBS. Found but
+unfixed (follow-up): `fetchSceneItemsFilters` throws on empty batches (scene
+with no items). **Next after the merge:** the interaction ports
+(confirmed-state projection, inspect-vs-command + Take bar, chat independence,
+stale-state honesty).
 User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +
 inspect-first trade-offs before the porting phase.
 
@@ -236,6 +248,7 @@ in `docs/private/maintainer-workflow.md`.
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
+| [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, on `command-ack-layer` pending dogfood |
 | [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |

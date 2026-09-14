@@ -2,6 +2,44 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-14 — Command-ack layer (astra phase 2) built on `command-ack-layer`
+
+Astra phase 2 per the ratified mini-design
+(`superpowers/specs/2026-09-14-command-ack-layer-design.md`): OBS commands are
+now awaitable — every request/batch registers a per-UUID completer answered by
+the op-7/op-9 response, resolving to a typed `ObsRequestAck`/`ObsBatchAck`
+(success / rejected(code, comment) / timeout / connectionLost). Fire-and-forget
+callers keep working unchanged; `DashboardStore.sendMutation` routes all
+DashboardStore mutations through the ack policy — on definitive failure it
+re-reads the confirmed state via the matching `Get*` (self-healing, no
+optimistic rollback by hand) and surfaces a deduped toast (per-failure-target
+dedup key; slider ticks stay fire-and-forget, `onChangeEnd` commits are acked).
+Kill-switch: Settings entry (`SettingsKeys.CommandFailureToasts`, default ON).
+The studio-mode button now sends a real `TriggerStudioModeTransition` — it
+previously never sent any transition request (pure optimistic UI) and now
+self-heals on rejection. 15 call sites converted.
+
+Reviewer pass (independent subagent): SHIP-WITH-FIXES — fixes applied: no
+state re-read on `connectionLost` (dead socket would burn a reconnect cycle;
+the post-connect init burst re-reads anyway) and the toast dedup key now
+includes the failure target so e.g. two different inputs failing in a storm
+each surface once. New test seam: `test/websocket/support/fake_obs_peer.dart`
+(loopback v5 peer scripting rejections/drops) + `command_ack_test.dart`,
+`command_ack_dashboard_store_test.dart`, `command_failure_toasts_entry_test.dart`.
+Real-OBS gate per the ratified design: new `tool/obs_local/ack_smoke.dart`
+proved rejection (code 600), success-with-restore and mixed-outcome batches
+against OBS 32.2.1 / obs-websocket 5.7.4 (docs: `local-obs-e2e.md`).
+
+Known pre-existing bug FOUND, unfixed by design (follow-up candidate):
+`fetchSceneItemsFilters` throws "No element" in
+`BaseBatchResponse.batchRequestType`'s `firstWhere` when a scene has no items
+(empty batch) — unhandled async error in production.
+
+Gates: 780 tests green (chat/websocket/persistence/pro/statistics/settings),
+analyze at the 472 baseline, real-OBS smoke OK. 7 commits on
+`command-ack-layer` (off `4.0-liquid-glass`); merge back only after user
+dogfood per the ratified gate.
+
 ## 2026-09-14 — Flagged leftovers fixed: logs reset + statistics category clear
 
 Follow-up to the defect-fix wave (user-approved): the two same-pattern
