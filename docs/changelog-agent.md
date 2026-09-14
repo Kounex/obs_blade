@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-14 — Astra redesign audit: progressive adoption ratified
+
+Full audit of the sibling first-principles redesign (branch `redesign-astra`,
+session-workspace architecture): code audit of `lib/redesign/`, digest of its
+nine governing docs, review of 22 prototype captures, and source-level
+verification of its claims about master's UI. All six defect claims confirmed
+on master AND unfixed on `4.0-liquid-glass`: SceneButton tap multiplexing
+(browsing = live command), the mislabeled studio-transition button (sends
+`SetCurrentProgramScene`), the fire-and-forget command layer (void returns,
+log-only failures, no optimistic rollback), hardcoded chat WebView gesture
+Y-bounds, Statistics Between-filter no-op + filter reset on rebuild,
+delete-all-data box omissions (`PastRecordData`/`Hotkey`/`PurchasedTip`).
+Verdict, ratified by the user: **progressive adoption** — keep the On Air/4.0
+visual identity (incl. the transition-duration-synced scene-tile fade in
+`SelectableBox`), adopt astra's interaction + state architecture in stages:
+harvest its tested production fixes first, port confirmed-state projection /
+inspect-vs-command / chat independence / stale-state honesty after the 4.0
+merge; astra stays a design lab. Audit, harvest list, staging:
+`docs/redesign-astra-audit.md`. Docs-only change.
+
 ## 2026-09-10 — One-time tall-style reformat (404 files) + verification workflow change
 
 Root cause writeup (user asked why `dart format` churns): the pubspec SDK

@@ -155,6 +155,21 @@ settings-row hit-test miss. Runner scheme no longer has the StoreKit
 config attached (real sandbox dogfood); re-attach temporarily for
 ASC-style paywall shots.
 
+**Astra redesign audited + verdict ratified (2026-09-14):** full audit of the
+sibling first-principles redesign (branch `redesign-astra` — session
+workspace, first-class chat) landed in
+[`redesign-astra-audit.md`](redesign-astra-audit.md), incl. six verified
+master defects (none fixed by 4.0) and a tested harvest list on the astra
+branch. User ratified **progressive adoption**: keep the On Air/4.0 visual
+identity; harvest astra's production fixes first (land on `4.0-liquid-glass`
+or post-merge to dodge format-migration conflicts); after the 4.0 merge, port
+confirmed-state projection, scene inspect-vs-command + Take bar, chat
+independence, stale-state honesty into the dashboard; astra stays a design
+lab — its shell roadmap is parked unless the workspace becomes a live
+candidate (5.0 decision with usage evidence). User to run the astra labs
+(`lib/main_redesign*.dart`) to feel focus-swap + inspect-first trade-offs
+before the porting phase.
+
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
 any future non-sliver full-screen tab route.
@@ -208,6 +223,7 @@ in `docs/private/maintainer-workflow.md`.
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
+| [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
 | [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |
