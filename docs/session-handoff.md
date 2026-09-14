@@ -161,14 +161,22 @@ workspace, first-class chat) landed in
 [`redesign-astra-audit.md`](redesign-astra-audit.md), incl. six verified
 master defects (none fixed by 4.0) and a tested harvest list on the astra
 branch. User ratified **progressive adoption**: keep the On Air/4.0 visual
-identity; harvest astra's production fixes first (land on `4.0-liquid-glass`
-or post-merge to dodge format-migration conflicts); after the 4.0 merge, port
+identity; harvest astra's production fixes first; after the 4.0 merge, port
 confirmed-state projection, scene inspect-vs-command + Take bar, chat
 independence, stale-state honesty into the dashboard; astra stays a design
 lab — its shell roadmap is parked unless the workspace becomes a live
-candidate (5.0 decision with usage evidence). User to run the astra labs
-(`lib/main_redesign*.dart`) to feel focus-swap + inspect-first trade-offs
-before the porting phase.
+candidate (5.0 decision with usage evidence). **Harvest phase 1 LANDED on
+`4.0-liquid-glass` (2026-09-14, 5 commits):** send-race ownership fixes
+(Twitch + YouTube), YouTube buffer retirement on video replacement,
+`TriggerStudioModeTransition` request type, network-helper custom-envelope
+guard, shared chat-row DI seams — each with astra's tests, gates green
+(details: `changelog-agent.md`). The emote-picker unit was never committed
+on astra (tip still `54141fe1`) — excluded. **Next candidates (confirm scope
+with user first):** low-risk defect fixes from the audit table — Statistics
+`Between` filter + filter reset, delete-all-data box omissions. The
+command-ack layer (#3) and the interaction ports are separate later phases.
+User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +
+inspect-first trade-offs before the porting phase.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for

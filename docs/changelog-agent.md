@@ -2,6 +2,37 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-14 — Astra harvest phase 1: production fixes land on `4.0-liquid-glass`
+
+User chose `4.0-liquid-glass` as the harvest target (audit sequencing note:
+landing on master now would guarantee format-migration merge friction).
+Five units cherry-picked from `origin/redesign-astra` as scoped path-applies
+(`git diff <commit> -- <paths> | git apply --3way`) — astra's `docs/redesign/`
+governing docs, `lib/redesign/` shell and `test/redesign/` deliberately
+excluded; three hunks needed manual resolution (tall-style vs short-style
+context clashes, astra semantics kept in 4.0 formatting):
+
+- `0d0c978b` → send-race ownership fixes: `twitch_chat.dart` /
+  `youtube_chat.dart` capture destination/reply/session before awaiting token
+  refresh; feedback and reply-clear only land on the owning conversation;
+  YouTube sends append to the owning buffer when it isn't selected.
+- `d8621562` → YouTube buffer retirement: a saved label whose video id changed
+  retires cursor/liveChatId/messages/moderation keys; retired selection clears
+  the visible destination instead of resurrecting stale history.
+- `b88494a6` (partial) → `RequestType.TriggerStudioModeTransition` (v5.0+;
+  prerequisite for defect #2) + `network_helper.dart` guard: custom envelopes
+  no longer pollute `_requestBodyByUUID`.
+- `54141fe1` (partial) → shared chat rows (`twitch_chat_message_row`,
+  `twitch_chat_notification_row`, `youtube_chat_message_row`) accept optional
+  `TwitchBadgeStore`/`ThirdPartyEmoteStore` (GetIt fallback; zero caller
+  churn); bundled: long-press retires local hold state when the action fires
+  (modal can't stick the wash) + super-chat amount uses foreground contrast.
+
+Emote-picker unit NOT harvested: astra tip is still `54141fe1` — the WIP was
+never committed (also noted in the handoff). Gates: 753 tests green
+(chat/websocket/persistence/pro), analyze byte-identical to the 472-issue
+baseline in touched files. 5 commits on `4.0-liquid-glass`.
+
 ## 2026-09-14 — Astra redesign audit: progressive adoption ratified
 
 Full audit of the sibling first-principles redesign (branch `redesign-astra`,
