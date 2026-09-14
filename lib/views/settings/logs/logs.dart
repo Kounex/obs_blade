@@ -8,13 +8,25 @@ import 'widgets/log_explanation.dart';
 import 'widgets/log_filter.dart';
 import 'widgets/log_grid/log_list.dart';
 
-class LogsView extends StatelessWidget {
+class LogsView extends StatefulWidget {
   const LogsView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    GetIt.instance.resetLazySingleton<LogsStore>();
+  State<LogsView> createState() => _LogsViewState();
+}
 
+class _LogsViewState extends State<LogsView> {
+  @override
+  void initState() {
+    super.initState();
+
+    /// Filter state starts fresh when the route is created. This used to
+    /// reset in [build], which wiped it on every rebuild.
+    GetIt.instance.resetLazySingleton<LogsStore>();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: TransculentCupertinoNavBarWrapper(
         previousTitle: 'Settings',
