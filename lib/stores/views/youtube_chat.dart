@@ -683,20 +683,46 @@ abstract class _YouTubeChatStore with Store {
   }
 
   /// Re-read the channel list from settings (after the user edited
-  /// [SettingsKeys.YouTubeUsernames] outside this store). Channels whose
-  /// label vanished drop their buffer; a vanished selection falls back to
-  /// none.
+  /// [SettingsKeys.YouTubeUsernames] outside this store). A label whose video
+  /// changed is a new conversation: retire its cursor, liveChatId and messages.
+  /// A vanished selection falls back to none.
   @action
   void reloadChannels() {
     final parsed = this._readChannelsFromSettings();
+    final videos = {
+      for (final channel in parsed) channel.label: channel.videoId,
+    };
+    final retired = {
+      for (final channel in this.channels)
+        if (videos[channel.label] != channel.videoId) channel.label,
+    };
+    final selected = this.selectedChannelLabel;
+    final retireSelection =
+        selected != null &&
+        (retired.contains(selected) || !videos.containsKey(selected));
+    if (retireSelection) {
+      // Invalidate in-flight reads before clearing their visible destination.
+      // Do not call selectChannel: it would save the retired messages again.
+      this._stopPolling();
+      this.messages.clear();
+    }
     this.channels
       ..clear()
       ..addAll(parsed);
-    final labels = parsed.map((channel) => channel.label).toSet();
-    this._channelBuffers.removeWhere((label, _) => !labels.contains(label));
-    if (this.selectedChannelLabel != null &&
-        !labels.contains(this.selectedChannelLabel)) {
-      unawaited(this.selectChannel(null));
+    this._channelBuffers.removeWhere(
+      (label, _) => retired.contains(label) || !videos.containsKey(label),
+    );
+    bool retiredModeration(String key) =>
+        retired.any((label) => key.startsWith('$label:'));
+    this._appliedModerationKeys.removeWhere(retiredModeration);
+    this._appliedModerationOrder.removeWhere(retiredModeration);
+    if (retireSelection) {
+      if (!videos.containsKey(selected)) {
+        this.selectedChannelLabel = null;
+        this._persistSelectedChannel();
+      } else if (this.canRead) {
+        this._restartPolling();
+      }
     }
   }
 
