@@ -171,10 +171,14 @@ candidate (5.0 decision with usage evidence). **Harvest phase 1 LANDED on
 `TriggerStudioModeTransition` request type, network-helper custom-envelope
 guard, shared chat-row DI seams — each with astra's tests, gates green
 (details: `changelog-agent.md`). The emote-picker unit was never committed
-on astra (tip still `54141fe1`) — excluded. **Next candidates (confirm scope
-with user first):** low-risk defect fixes from the audit table — Statistics
-`Between` filter + filter reset, delete-all-data box omissions. The
-command-ack layer (#3) and the interaction ports are separate later phases.
+on astra (tip still `54141fe1`) — excluded. **Low-risk defect fixes LANDED
+too (2026-09-14, 2 commits):** Statistics filter state survives rebuilds
+(reset moved out of `build`), dead `DurationFilter.Between` removed, and
+delete-all-data now clears `PastRecordData`/`Hotkey`/`PurchasedTip`. Flagged
+but NOT fixed (same pattern, out of scope): `resetLazySingleton` in `build`
+in logs/intro/dashboard; the Statistics category entry in data management
+leaves `PastRecordData` behind. **Next:** the command-ack layer (#3) and
+the interaction ports are separate later phases.
 User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +
 inspect-first trade-offs before the porting phase.
 

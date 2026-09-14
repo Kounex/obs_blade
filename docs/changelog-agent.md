@@ -2,6 +2,33 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-14 — Astra audit defect fixes: Statistics filters + delete-all-data
+
+Two low-risk defect pairs from `docs/redesign-astra-audit.md`'s verified
+master-defect table (user-confirmed scope; TDD red-green each):
+
+- **Statistics filter state wiped on rebuilds** — `StatisticsView.build`
+  called `GetIt.resetLazySingleton<StatisticsStore>()`; a detail-navigation
+  roundtrip flips the `ModalRoute.of` dependency (`isCurrent`), re-runs
+  `build`, and silently cleared active filters. Reset moved to `initState`
+  (fresh per route creation, survives rebuilds + tab switches). Regression
+  test reproduces the roundtrip (`test/statistics/statistics_view_test.dart`
+  — new `test/statistics/` home).
+- **`DurationFilter.Between` returned true for everything** — born
+  unreachable in f541d1ab (2022, 3.0 RC): added to the enum but never to
+  `kActiveDurationFilters`. Removed the enum value + dead switch case
+  (zero user-facing change — it was never selectable). A real two-bound
+  Between filter is new UI, not a defect fix — not built.
+- **Delete-all-data omissions** — `deleteAllUserDataPreservingEntitlements`
+  now also clears the `PastRecordData`, `Hotkey` and `PurchasedTip` boxes
+  (test extended in `test/pro/data_management_delete_all_test.dart`).
+
+Same-pattern leftovers NOT fixed (out of scope, flagged): `resetLazySingleton`
+in `build` also lives in `logs.dart`, `intro.dart`, `dashboard.dart`; the
+Statistics category entry in data management clears only `PastStreamData`
+(recordings survive "All statistics" deletion). Gates: 756 tests green,
+analyze at the 472 baseline. 2 commits on `4.0-liquid-glass`.
+
 ## 2026-09-14 — Astra harvest phase 1: production fixes land on `4.0-liquid-glass`
 
 User chose `4.0-liquid-glass` as the harvest target (audit sequencing note:
