@@ -9,6 +9,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../../../../stores/shared/network.dart';
+import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/input.dart';
 import '../../../../../../types/enums/request_type.dart';
 import '../../../../../../utils/network_helper.dart';
@@ -112,17 +113,16 @@ class _AudioSliderState extends State<AudioSlider> {
                           minValue: -950,
                           maxValue: 20000,
                           suffix: 'ms',
-                          onDone: () => NetworkHelper.makeRequest(
-                            GetIt.instance<NetworkStore>()
-                                .activeSession!
-                                .socket,
-                            RequestType.SetInputAudioSyncOffset,
-                            {
-                              'inputName': this.widget.input.inputName,
-                              'inputAudioSyncOffset':
-                                  int.tryParse(_controller.text) ?? 0,
-                            },
-                          ),
+                          onDone: () =>
+                              GetIt.instance<DashboardStore>().sendMutation(
+                                RequestType.SetInputAudioSyncOffset,
+                                fields: {
+                                  'inputName': this.widget.input.inputName,
+                                  'inputAudioSyncOffset':
+                                      int.tryParse(_controller.text) ?? 0,
+                                },
+                                label: 'Audio sync offset',
+                              ),
                         )
                       : const SizedBox(),
                 ),
@@ -199,13 +199,13 @@ class _AudioSliderState extends State<AudioSlider> {
             children: [
               Pressable(
                 haptic: true,
-                onTap: () => NetworkHelper.makeRequest(
-                  networkStore.activeSession!.socket,
+                onTap: () => GetIt.instance<DashboardStore>().sendMutation(
                   RequestType.SetInputMute,
-                  {
+                  fields: {
                     'inputName': this.widget.input.inputName,
                     'inputMuted': !this.widget.input.inputMuted,
                   },
+                  label: 'Audio mute',
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),
@@ -235,6 +235,13 @@ class _AudioSliderState extends State<AudioSlider> {
                     /// Track/fill/knob come from the sliderTheme (token-
                     /// delta §2 variant A: hairline track, highlight 55%
                     /// fill, neutral knob) - no per-widget color override
+                    ///
+                    /// Ticks stay fire-and-forget: the thumb is bound to
+                    /// OBS-fed state and dragging must not block. The final
+                    /// value is committed through the command-ack layer on
+                    /// [Slider.onChangeEnd] - a failed commit re-reads the
+                    /// confirmed volume (socket order guarantees the commit
+                    /// wins over in-flight ticks)
                     onChanged: (volume) => NetworkHelper.makeRequest(
                       networkStore.activeSession!.socket,
                       RequestType.SetInputVolume,
@@ -243,6 +250,15 @@ class _AudioSliderState extends State<AudioSlider> {
                         'inputVolumeMul': volume,
                       },
                     ),
+                    onChangeEnd: (volume) =>
+                        GetIt.instance<DashboardStore>().sendMutation(
+                          RequestType.SetInputVolume,
+                          fields: {
+                            'inputName': this.widget.input.inputName,
+                            'inputVolumeMul': volume,
+                          },
+                          label: 'Volume',
+                        ),
                   ),
                 ),
               ),

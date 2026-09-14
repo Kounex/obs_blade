@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../stores/shared/network.dart';
+import '../../../stores/views/dashboard.dart';
 import '../../../types/enums/request_type.dart';
 import '../../../utils/modal_handler.dart';
-import '../../../utils/network_helper.dart';
 import '../widgets/dashboard_content/dialogs/start_stop_recording_dialog.dart';
 import '../widgets/dashboard_content/dialogs/start_stop_streaming_dialog.dart';
 
@@ -21,15 +20,16 @@ class RecordStreamService {
             context: context,
             dialogWidget: StartStopRecordingDialog(
               isRecording: isRecording,
-              onRecordStartStop: () => NetworkHelper.makeRequest(
-                GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.ToggleRecord,
-              ),
+              onRecordStartStop: () =>
+                  GetIt.instance<DashboardStore>().sendMutation(
+                    RequestType.ToggleRecord,
+                    label: 'Recording start/stop',
+                  ),
             ),
           )
-        : NetworkHelper.makeRequest(
-            GetIt.instance<NetworkStore>().activeSession!.socket,
+        : GetIt.instance<DashboardStore>().sendMutation(
             RequestType.ToggleRecord,
+            label: 'Recording start/stop',
           );
   }
 
@@ -45,15 +45,16 @@ class RecordStreamService {
             context: context,
             dialogWidget: StartStopStreamingDialog(
               isLive: isLive,
-              onStreamStartStop: () => NetworkHelper.makeRequest(
-                GetIt.instance<NetworkStore>().activeSession!.socket,
-                RequestType.ToggleStream,
-              ),
+              onStreamStartStop: () =>
+                  GetIt.instance<DashboardStore>().sendMutation(
+                    RequestType.ToggleStream,
+                    label: 'Stream start/stop',
+                  ),
             ),
           )
-        : NetworkHelper.makeRequest(
-            GetIt.instance<NetworkStore>().activeSession!.socket,
+        : GetIt.instance<DashboardStore>().sendMutation(
             RequestType.ToggleStream,
+            label: 'Stream start/stop',
           );
   }
 }

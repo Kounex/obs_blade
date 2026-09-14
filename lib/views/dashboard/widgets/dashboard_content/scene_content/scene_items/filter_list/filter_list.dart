@@ -11,7 +11,6 @@ import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
-import 'package:obs_blade/utils/network_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/filter_list/dynamic_input.dart';
 
 import '../../animated_toggle_icon.dart';
@@ -118,17 +117,16 @@ class _FilterListState extends State<FilterList> {
                           titleStyle: Theme.of(context).textTheme.bodyLarge,
                           trailingTitleWidget: Pressable(
                             haptic: true,
-                            onTap: () => NetworkHelper.makeRequest(
-                              GetIt.instance<NetworkStore>()
-                                  .activeSession!
-                                  .socket,
-                              RequestType.SetSourceFilterEnabled,
-                              {
-                                'sourceName': sceneItem.sourceName,
-                                'filterName': filter.filterName,
-                                'filterEnabled': !filter.filterEnabled,
-                              },
-                            ),
+                            onTap: () =>
+                                GetIt.instance<DashboardStore>().sendMutation(
+                                  RequestType.SetSourceFilterEnabled,
+                                  fields: {
+                                    'sourceName': sceneItem.sourceName,
+                                    'filterName': filter.filterName,
+                                    'filterEnabled': !filter.filterEnabled,
+                                  },
+                                  label: 'Filter toggle',
+                                ),
                             child: Padding(
                               padding: const EdgeInsets.all(AppSpacing.sm),
                               child: AnimatedToggleIcon(
@@ -156,22 +154,25 @@ class _FilterListState extends State<FilterList> {
                                       label: filterSetting.key,
                                       value: filterSetting.value,
                                       onUpdate: (updatedValue) {
-                                        NetworkHelper.makeRequest(
-                                          GetIt.instance<NetworkStore>()
-                                              .activeSession!
-                                              .socket,
-                                          RequestType.SetSourceFilterSettings,
-                                          {
-                                            'sourceName': sceneItem.sourceName,
-                                            'filterName': filter.filterName,
-                                            'filterSettings': {}
-                                              ..addAll(filter.filterSettings)
-                                              ..update(
-                                                filterSetting.key,
-                                                (value) => updatedValue,
-                                              ),
-                                          },
-                                        );
+                                        GetIt.instance<DashboardStore>()
+                                            .sendMutation(
+                                              RequestType
+                                                  .SetSourceFilterSettings,
+                                              fields: {
+                                                'sourceName':
+                                                    sceneItem.sourceName,
+                                                'filterName': filter.filterName,
+                                                'filterSettings': {}
+                                                  ..addAll(
+                                                    filter.filterSettings,
+                                                  )
+                                                  ..update(
+                                                    filterSetting.key,
+                                                    (value) => updatedValue,
+                                                  ),
+                                              },
+                                              label: 'Filter settings',
+                                            );
                                       },
                                     ),
                                   ),

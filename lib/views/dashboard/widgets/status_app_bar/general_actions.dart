@@ -94,9 +94,9 @@ class GeneralActions extends StatelessWidget {
                         '${dashboardStore.isRecordingPaused ? 'Resume' : 'Pause'} Recording',
                     leadingIcon: CupertinoIcons.playpause_fill,
                     onAction: dashboardStore.isRecording
-                        ? () => NetworkHelper.makeRequest(
-                            networkStore.activeSession!.socket,
+                        ? () => dashboardStore.sendMutation(
                             RequestType.ToggleRecordPause,
+                            label: 'Recording pause/resume',
                           )
                         : null,
                   ),
@@ -119,9 +119,9 @@ class GeneralActions extends StatelessWidget {
                           ),
                         );
                       }
-                      NetworkHelper.makeRequest(
-                        networkStore.activeSession!.socket,
+                      dashboardStore.sendMutation(
                         RequestType.ToggleReplayBuffer,
+                        label: 'Replay buffer start/stop',
                       );
                     },
                   ),
@@ -129,9 +129,9 @@ class GeneralActions extends StatelessWidget {
                     title: 'Save Replay Buffer',
                     leadingIcon: CupertinoIcons.arrow_down_doc_fill,
                     onAction: dashboardStore.isReplayBufferActive
-                        ? () => NetworkHelper.makeRequest(
-                            networkStore.activeSession!.socket,
+                        ? () => dashboardStore.sendMutation(
                             RequestType.SaveReplayBuffer,
+                            label: 'Save replay buffer',
                           )
                         : null,
                   ),
@@ -141,9 +141,9 @@ class GeneralActions extends StatelessWidget {
                       '${dashboardStore.isVirtualCamActive ? 'Stop' : 'Start'} Virtual Camera',
                   leadingIcon: CupertinoIcons.camera_on_rectangle_fill,
                   onAction: () {
-                    NetworkHelper.makeRequest(
-                      networkStore.activeSession!.socket,
+                    dashboardStore.sendMutation(
                       RequestType.ToggleVirtualCam,
+                      label: 'Virtual cam start/stop',
                     );
                   },
                 ),

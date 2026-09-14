@@ -8,9 +8,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 
 import '../../../../../shared/general/base/button.dart';
-import '../../../../../stores/shared/network.dart';
 import '../../../../../types/enums/request_type.dart';
-import '../../../../../utils/network_helper.dart';
 
 class StudioModeTransitionButton extends StatelessWidget {
   const StudioModeTransitionButton({super.key});
@@ -64,15 +62,15 @@ class StudioModeTransitionButton extends StatelessWidget {
                             dashboardStore.setActiveSceneName(
                               dashboardStore.studioModePreviewSceneName!,
                             );
-                            NetworkHelper.makeRequest(
-                              GetIt.instance<NetworkStore>()
-                                  .activeSession!
-                                  .socket,
-                              RequestType.SetCurrentProgramScene,
-                              {
-                                'sceneName':
-                                    dashboardStore.studioModePreviewSceneName,
-                              },
+
+                            /// The actual studio-mode transition (was
+                            /// SetCurrentProgramScene before - defect #2):
+                            /// OBS swaps program/preview and confirms via
+                            /// events; on failure the store re-reads
+                            /// GetSceneList
+                            dashboardStore.sendMutation(
+                              RequestType.TriggerStudioModeTransition,
+                              label: 'Studio transition',
                             );
                           },
                         ),

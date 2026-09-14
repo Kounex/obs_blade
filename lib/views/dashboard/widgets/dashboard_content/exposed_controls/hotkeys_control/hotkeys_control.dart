@@ -84,11 +84,12 @@ class HotkeysControl extends StatelessWidget {
                     .map(
                       (hotkey) => BaseButton(
                         child: Text(hotkey.name),
-                        onPressed: () => NetworkHelper.makeRequest(
-                          GetIt.instance<NetworkStore>().activeSession!.socket,
-                          RequestType.TriggerHotkeyByName,
-                          {'hotkeyName': hotkey.name},
-                        ),
+                        onPressed: () =>
+                            GetIt.instance<DashboardStore>().sendMutation(
+                              RequestType.TriggerHotkeyByName,
+                              fields: {'hotkeyName': hotkey.name},
+                              label: 'Hotkey trigger',
+                            ),
                       ),
                     )
                     .toList(),

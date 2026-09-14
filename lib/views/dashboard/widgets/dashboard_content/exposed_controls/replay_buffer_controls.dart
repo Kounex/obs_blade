@@ -5,12 +5,10 @@ import 'package:get_it/get_it.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
-import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/request_type.dart';
 import '../../../../../types/enums/settings_keys.dart';
-import '../../../../../utils/network_helper.dart';
 import '../../../../../utils/overlay_handler.dart';
 import 'exposed_controls.dart';
 
@@ -43,9 +41,9 @@ class ReplayBufferControls extends StatelessWidget {
                       ),
                     );
                   }
-                  NetworkHelper.makeRequest(
-                    GetIt.instance<NetworkStore>().activeSession!.socket,
+                  dashboardStore.sendMutation(
                     RequestType.ToggleReplayBuffer,
+                    label: 'Replay buffer start/stop',
                   );
                 },
                 icon: Icon(
@@ -64,9 +62,9 @@ class ReplayBufferControls extends StatelessWidget {
             Expanded(
               child: BaseButton(
                 onPressed: dashboardStore.isReplayBufferActive
-                    ? () => NetworkHelper.makeRequest(
-                        GetIt.instance<NetworkStore>().activeSession!.socket,
+                    ? () => dashboardStore.sendMutation(
                         RequestType.SaveReplayBuffer,
+                        label: 'Save replay buffer',
                       )
                     : null,
                 icon: const Icon(CupertinoIcons.arrow_down_doc_fill),

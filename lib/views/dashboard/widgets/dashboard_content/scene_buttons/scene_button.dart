@@ -5,13 +5,11 @@ import 'package:obs_blade/shared/animator/selectable_box.dart';
 import 'package:obs_blade/shared/design/design.dart';
 
 import '../../../../../shared/general/hive_builder.dart';
-import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/classes/api/scene.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/request_type.dart';
 import '../../../../../types/enums/settings_keys.dart';
-import '../../../../../utils/network_helper.dart';
 
 class SceneButton extends StatelessWidget {
   final Scene scene;
@@ -79,17 +77,17 @@ class SceneButton extends StatelessWidget {
                   dashboardStore.setStudioModePreviewSceneName(
                     this.scene.sceneName,
                   );
-                  NetworkHelper.makeRequest(
-                    GetIt.instance<NetworkStore>().activeSession!.socket,
+                  dashboardStore.sendMutation(
                     RequestType.SetCurrentPreviewScene,
-                    {'sceneName': this.scene.sceneName},
+                    fields: {'sceneName': this.scene.sceneName},
+                    label: 'Preview scene switch',
                   );
                 } else {
                   dashboardStore.setActiveSceneName(this.scene.sceneName);
-                  NetworkHelper.makeRequest(
-                    GetIt.instance<NetworkStore>().activeSession!.socket,
+                  dashboardStore.sendMutation(
                     RequestType.SetCurrentProgramScene,
-                    {'sceneName': this.scene.sceneName},
+                    fields: {'sceneName': this.scene.sceneName},
+                    label: 'Scene switch',
                   );
                 }
               }

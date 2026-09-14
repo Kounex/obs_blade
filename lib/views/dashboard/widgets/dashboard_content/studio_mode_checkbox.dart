@@ -3,10 +3,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/base/checkbox.dart';
-import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
-import '../../../../../utils/network_helper.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
@@ -32,10 +30,10 @@ class StudioModeCheckbox extends StatelessWidget {
                     value: dashboardStore.studioMode,
                     text: 'Studio Mode',
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    onChanged: (studioMode) => NetworkHelper.makeRequest(
-                      GetIt.instance<NetworkStore>().activeSession!.socket,
+                    onChanged: (studioMode) => dashboardStore.sendMutation(
                       RequestType.SetStudioModeEnabled,
-                      {'studioModeEnabled': studioMode},
+                      fields: {'studioModeEnabled': studioMode},
+                      label: 'Studio mode',
                     ),
                   );
                 },

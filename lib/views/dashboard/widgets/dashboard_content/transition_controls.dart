@@ -3,10 +3,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/general/cupertino_number_text_field.dart';
 
-import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
-import '../../../../../utils/network_helper.dart';
 
 class TransitionControls extends StatelessWidget {
   const TransitionControls({super.key});
@@ -18,10 +16,10 @@ class TransitionControls extends StatelessWidget {
         const TextPosition(offset: 1),
       );
     }
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
+    GetIt.instance<DashboardStore>().sendMutation(
       RequestType.SetCurrentSceneTransitionDuration,
-      {'transitionDuration': int.tryParse(controller.text) ?? 0},
+      fields: {'transitionDuration': int.tryParse(controller.text) ?? 0},
+      label: 'Transition duration',
     );
   }
 
@@ -61,10 +59,10 @@ class TransitionControls extends StatelessWidget {
                       ),
                     )
                     .toList(),
-                onChanged: (selectedTransition) => NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
+                onChanged: (selectedTransition) => dashboardStore.sendMutation(
                   RequestType.SetCurrentSceneTransition,
-                  {'transitionName': selectedTransition},
+                  fields: {'transitionName': selectedTransition},
+                  label: 'Transition',
                 ),
               ),
               const SizedBox(width: 24.0),

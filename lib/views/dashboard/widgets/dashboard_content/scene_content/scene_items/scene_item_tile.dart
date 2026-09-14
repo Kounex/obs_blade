@@ -6,13 +6,11 @@ import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_conten
 
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
-import '../../../../../../stores/shared/network.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/scene_item.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/request_type.dart';
 import '../../../../../../types/enums/settings_keys.dart';
-import '../../../../../../utils/network_helper.dart';
 import '../animated_toggle_icon.dart';
 
 class SceneItemTile extends StatelessWidget {
@@ -87,10 +85,9 @@ class SceneItemTile extends StatelessWidget {
               rebuildKeys: const [SettingsKeys.ExposeStudioControls],
               builder: (context, settingsBox, child) => Pressable(
                 haptic: true,
-                onTap: () => NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
+                onTap: () => dashboardStore.sendMutation(
                   RequestType.SetSceneItemEnabled,
-                  {
+                  fields: {
                     /// Groups in WebSocket 5.X and higher is weird, therefore
                     /// we need to use the parents scene item name as the
                     /// 'sceneName' property if we are toggling a child of a
@@ -107,6 +104,7 @@ class SceneItemTile extends StatelessWidget {
                     'sceneItemId': this.sceneItem.sceneItemId,
                     'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
                   },
+                  label: 'Source visibility',
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),

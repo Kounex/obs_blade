@@ -3,10 +3,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/base/dropdown.dart';
-import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
-import '../../../../../utils/network_helper.dart';
 
 class SceneCollectionControl extends StatelessWidget {
   const SceneCollectionControl({super.key});
@@ -38,10 +36,10 @@ class SceneCollectionControl extends StatelessWidget {
           label: 'Scene Collection',
           onChanged: (sceneCollection) {
             if (sceneCollection != dashboardStore.currentSceneCollectionName) {
-              NetworkHelper.makeRequest(
-                GetIt.instance<NetworkStore>().activeSession!.socket,
+              dashboardStore.sendMutation(
                 RequestType.SetCurrentSceneCollection,
-                {'sceneCollectionName': sceneCollection},
+                fields: {'sceneCollectionName': sceneCollection},
+                label: 'Scene collection switch',
               );
             }
           },

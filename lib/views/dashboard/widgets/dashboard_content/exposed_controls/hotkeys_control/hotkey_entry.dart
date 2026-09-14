@@ -6,9 +6,8 @@ import 'package:hive_ce/hive.dart';
 import '../../../../../../models/hotkey.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/icon_button.dart';
-import '../../../../../../stores/shared/network.dart';
+import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/enums/request_type.dart';
-import '../../../../../../utils/network_helper.dart';
 
 class HotkeyEntry extends StatelessWidget {
   final Box<Hotkey> hotkeyBox;
@@ -48,10 +47,10 @@ class HotkeyEntry extends StatelessWidget {
             onTap: () {
               Navigator.of(context).pop();
               Future.delayed(const Duration(milliseconds: 500), () {
-                NetworkHelper.makeRequest(
-                  GetIt.instance<NetworkStore>().activeSession!.socket,
+                GetIt.instance<DashboardStore>().sendMutation(
                   RequestType.TriggerHotkeyByName,
-                  {'hotkeyName': this.hotkey.name},
+                  fields: {'hotkeyName': this.hotkey.name},
+                  label: 'Hotkey trigger',
                 );
               });
             },

@@ -4,12 +4,10 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
-import '../../../../../stores/shared/network.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/request_type.dart';
 import '../../../../../types/enums/settings_keys.dart';
-import '../../../../../utils/network_helper.dart';
 import '../../../services/record_stream.dart';
 import 'exposed_controls.dart';
 
@@ -61,9 +59,9 @@ class RecordingControls extends StatelessWidget {
             Expanded(
               child: BaseButton(
                 onPressed: dashboardStore.isRecording
-                    ? () => NetworkHelper.makeRequest(
-                        GetIt.instance<NetworkStore>().activeSession!.socket,
+                    ? () => dashboardStore.sendMutation(
                         RequestType.ToggleRecordPause,
+                        label: 'Recording pause/resume',
                       )
                     : null,
                 icon: Icon(
