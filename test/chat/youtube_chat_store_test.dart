@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -466,6 +467,87 @@ void main() {
       expect(store.sendChatError, contains('403'));
       expect(store.messages, isEmpty);
     });
+
+    test('completed send stays in the original channel buffer', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.liveChatIds['video-b-002'] = 'chat-b';
+      chatService.pollResponses.add(page([ytMessage('a-before')]));
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+      chatService.insertGate = Completer<YouTubeChatMessage>();
+      final pending = store.sendChatMessage('For A');
+      await until(() => chatService.insertCalls == 1);
+      chatService.pollResponses.add(page([ytMessage('b-before')]));
+      await store.selectChannel('B');
+      await until(() => store.messages.any((m) => m.id == 'b-before'));
+      chatService.insertGate!.complete(ytMessage('sent-a', text: 'For A'));
+      expect(await pending, isTrue);
+      expect(chatService.lastInsertChatId, 'chat-a');
+      expect(store.messages.map((m) => m.id), ['b-before']);
+      await store.selectChannel('A');
+      expect(store.messages.map((m) => m.id), ['a-before', 'sent-a']);
+    });
+
+    test('late send failure does not become the next channel error', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page(const []));
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+      chatService.insertGate = Completer<YouTubeChatMessage>();
+      final pending = store.sendChatMessage('For A');
+      await until(() => chatService.insertCalls == 1);
+      await store.selectChannel('B');
+      chatService.insertGate!.completeError(
+        const YouTubeForbiddenException('Synthetic failure'),
+      );
+      expect(await pending, isFalse);
+      expect(store.sendChatError, isNull);
+      expect(store.sendingChat, isFalse);
+    });
+
+    for (final change in ['poll echo', 'video replacement', 'logout']) {
+      test(
+        'pending send handles $change without stale or duplicate rows',
+        () async {
+          configure();
+          await seedAuth();
+          chatService.liveChatIds['video-a-001'] = 'chat-a';
+          chatService.pollResponses.add(page(const []));
+          await store.init();
+          await until(
+            () => store.chatConnection == YouTubeChatConnectionState.connected,
+          );
+          chatService.insertGate = Completer<YouTubeChatMessage>();
+          final pending = store.sendChatMessage('For A');
+          await until(() => chatService.insertCalls == 1);
+          if (change == 'poll echo') {
+            store.messages.add(ytMessage('sent-a'));
+          } else if (change == 'video replacement') {
+            await settingsBox().put(
+              SettingsKeys.YouTubeUsernames.name,
+              <String, String>{'A': 'video-new-001'},
+            );
+            store.reloadChannels();
+          } else {
+            await store.logout();
+          }
+          chatService.insertGate!.complete(ytMessage('sent-a'));
+          expect(await pending, isTrue);
+          expect(
+            store.messages.map((m) => m.id),
+            change == 'poll echo' ? ['sent-a'] : isEmpty,
+          );
+        },
+      );
+    }
   });
 
   group('lifecycle', () {

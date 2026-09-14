@@ -802,6 +802,62 @@ void main() {
       expect(await store.sendChatMessage('hi'), isTrue);
       expect(messageService.lastReplyParentMessageId, isNull);
     });
+
+    test(
+      'captures channel and reply before awaiting the access token',
+      () async {
+        await login();
+        store.setReplyTarget(chatMessage('original-reply', 'u7'));
+        final pending = store.sendChatMessage('For the original channel');
+        store.selectedChannelId = 'other-channel';
+        final nextReply = chatMessage('next-reply', 'u8');
+        store.setReplyTarget(nextReply);
+        expect(await pending, isTrue);
+        expect(messageService.lastBroadcasterId, 'user-1');
+        expect(messageService.lastReplyParentMessageId, 'original-reply');
+        expect(store.replyTarget, same(nextReply));
+      },
+    );
+
+    test(
+      'completion does not clear a newer reply in the same channel',
+      () async {
+        await login();
+        messageService.sendGate = Completer<TwitchSendResult>();
+        store.setReplyTarget(chatMessage('original-reply', 'u7'));
+        final pending = store.sendChatMessage('First reply');
+        await Future<void>.delayed(Duration.zero);
+        final nextReply = chatMessage('next-reply', 'u8');
+        store.setReplyTarget(nextReply);
+        messageService.sendGate!.complete(
+          const TwitchSendResult(messageId: 'sent', isSent: true),
+        );
+        expect(await pending, isTrue);
+        expect(store.replyTarget, same(nextReply));
+      },
+    );
+
+    test('send failure does not belong to a newly selected channel', () async {
+      await login();
+      messageService.sendGate = Completer<TwitchSendResult>();
+      final pending = store.sendChatMessage('Old channel');
+      await Future<void>.delayed(Duration.zero);
+      store.selectedChannelId = 'other-channel';
+      messageService.sendGate!.complete(
+        const TwitchSendResult(messageId: '', isSent: false),
+      );
+      expect(await pending, isFalse);
+      expect(store.sendChatError, isNull);
+      expect(store.sendingChat, isFalse);
+    });
+
+    test('disposing before token resolution prevents dispatch', () async {
+      await login();
+      final pending = store.sendChatMessage('Cancelled session');
+      await store.dispose();
+      expect(await pending, isFalse);
+      expect(messageService.calls, 0);
+    });
   });
 
   group('third-party emote wiring', () {
