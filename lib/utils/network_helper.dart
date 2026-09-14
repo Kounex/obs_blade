@@ -15,6 +15,9 @@ import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
 import '../models/enums/log_level.dart';
+import '../types/classes/obs_request_ack.dart';
+import '../types/classes/stream/batch_responses/base.dart';
+import '../types/classes/stream/responses/base.dart';
 import '../types/enums/request_type.dart';
 import '../types/exceptions/network.dart';
 import 'general_helper.dart';
@@ -37,9 +40,39 @@ class RequestBatchObject {
   RequestBatchObject(this.type, [this.body]) : uuid = const Uuid().v4();
 }
 
+/// A request which has been sent and is waiting for its ack (RequestResponse)
+/// from OBS - see [NetworkHelper.makeRequest]
+class _PendingRequestAck {
+  final RequestType? requestType;
+  final Completer<ObsRequestAck> completer = Completer();
+  Timer? timeoutTimer;
+
+  _PendingRequestAck(this.requestType);
+}
+
+/// Batch equivalent of [_PendingRequestAck]
+class _PendingBatchAck {
+  final Completer<ObsBatchAck> completer = Completer();
+  Timer? timeoutTimer;
+}
+
 class NetworkHelper {
   static Map<String, Map<String, dynamic>?> _requestBodyByUUID = {};
   static Map<String, List<RequestBatchObject>> _requestBatchByUUID = {};
+  static Map<String, _PendingRequestAck> _pendingRequestByUUID = {};
+  static Map<String, _PendingBatchAck> _pendingBatchByUUID = {};
+
+  /// How long an acked request ([makeRequest] / [makeBatchRequest]) waits
+  /// for OBS to answer before it counts as failed (hard timeout). Generous
+  /// on purpose - slow-but-eventually-successful acks must not surface as
+  /// failures. Tests lower this to keep the suite fast.
+  static Duration requestAckTimeout = const Duration(seconds: 10);
+
+  /// Amount of request / batch acks still waiting for an answer - test hook
+  /// to assert pending-map hygiene (late acks, timeouts, disconnects must
+  /// not leak entries)
+  static int get pendingAckCount =>
+      _pendingRequestByUUID.length + _pendingBatchByUUID.length;
 
   /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port). Currently using a
@@ -60,6 +93,10 @@ class NetworkHelper {
   }) {
     NetworkHelper._requestBodyByUUID = {};
     NetworkHelper._requestBatchByUUID = {};
+
+    /// A new socket means the previous one (if any) is gone - requests still
+    /// waiting for their ack on it will never be answered
+    NetworkHelper.failAllPendingAcks();
 
     return IOWebSocketChannel.connect(
       NetworkHelper.websocketUri(connection),
@@ -319,7 +356,15 @@ class NetworkHelper {
 
   /// Making a request to the OBS WebSocket to trigger a request being
   /// sent back through the stream so we every listener can act accordingly
-  static void makeRequest(
+  ///
+  /// Returns the ack of the request (command-ack layer): the returned
+  /// [Future] completes once OBS answers - with a rejection when
+  /// `requestStatus.result` is false, with [ObsRequestFailureKind.timeout]
+  /// after [requestAckTimeout] and with [ObsRequestFailureKind.connectionLost]
+  /// when the connection drops first. Callers which don't care (polling
+  /// reads, slider ticks, ...) can keep ignoring the result - fire-and-forget
+  /// keeps working unchanged.
+  static Future<ObsRequestAck> makeRequest(
     IOWebSocketChannel channel,
     RequestType request, [
     Map<String, dynamic>? fields,
@@ -340,25 +385,41 @@ class NetworkHelper {
       NetworkHelper._requestBodyByUUID[requestUUID] = fields;
     }
 
-    channel.sink.add(
-      json.encode(
-        _requestObject(
-          customContent
-              ? fields!
-              : {
-                  'requestType': request.name,
-                  'requestId': requestUUID,
-                  'requestData': {if (fields != null) ...fields},
-                },
+    final pending = _trackRequestAck(requestUUID, request);
+
+    try {
+      channel.sink.add(
+        json.encode(
+          _requestObject(
+            customContent
+                ? fields!
+                : {
+                    'requestType': request.name,
+                    'requestId': requestUUID,
+                    'requestData': {if (fields != null) ...fields},
+                  },
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      _completeAckOnSendFailure(
+        requestUUID,
+        pending,
+        ObsRequestAck.connectionLost(request),
+      );
+    }
+
+    return pending.completer.future;
   }
 
   /// Making use of the batch request capability to request information
   /// bundled together - useful since now the API divided information
   /// in several entities so we can choose what exactly we need
-  static void makeBatchRequest(
+  ///
+  /// Same ack semantics as [makeRequest]: the returned [Future] carries the
+  /// per-request statuses of the batch (v5 batches answer with one status
+  /// per entry) once OBS responds.
+  static Future<ObsBatchAck> makeBatchRequest(
     IOWebSocketChannel channel,
     RequestBatchType batchRequest,
     List<RequestBatchObject> batch,
@@ -373,7 +434,171 @@ class NetworkHelper {
       NetworkHelper._requestBatchByUUID[requestUUID] = batch;
     }
 
-    channel.sink.add(json.encode(_requestBatchObject(requestUUID, batch)));
+    final pending = _trackBatchAck(requestUUID);
+
+    try {
+      channel.sink.add(json.encode(_requestBatchObject(requestUUID, batch)));
+    } catch (e) {
+      _completeAckOnSendFailure(
+        requestUUID,
+        pending,
+        const ObsBatchAck.connectionLost(),
+      );
+    }
+
+    return pending.completer.future;
+  }
+
+  static _PendingRequestAck _trackRequestAck(
+    String requestUUID,
+    RequestType? requestType,
+  ) {
+    final pending = _PendingRequestAck(requestType);
+    NetworkHelper._pendingRequestByUUID[requestUUID] = pending;
+    pending.timeoutTimer = Timer(NetworkHelper.requestAckTimeout, () {
+      if (NetworkHelper._pendingRequestByUUID.remove(requestUUID) == null ||
+          pending.completer.isCompleted) {
+        return;
+      }
+      GeneralHelper.advLog(
+        'Request timed out waiting for ack: $requestType',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+      pending.completer.complete(ObsRequestAck.timeout(requestType));
+    });
+    return pending;
+  }
+
+  static _PendingBatchAck _trackBatchAck(String requestUUID) {
+    final pending = _PendingBatchAck();
+    NetworkHelper._pendingBatchByUUID[requestUUID] = pending;
+    pending.timeoutTimer = Timer(NetworkHelper.requestAckTimeout, () {
+      if (NetworkHelper._pendingBatchByUUID.remove(requestUUID) == null ||
+          pending.completer.isCompleted) {
+        return;
+      }
+      GeneralHelper.advLog(
+        'Batch request timed out waiting for ack',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+      pending.completer.complete(const ObsBatchAck.timeout());
+    });
+    return pending;
+  }
+
+  static void _completeAckOnSendFailure(
+    String requestUUID,
+    Object pending,
+    Object ack,
+  ) {
+    if (pending is _PendingRequestAck) {
+      if (NetworkHelper._pendingRequestByUUID.remove(requestUUID) == null) {
+        return;
+      }
+      pending.timeoutTimer?.cancel();
+      if (!pending.completer.isCompleted) {
+        pending.completer.complete(ack as ObsRequestAck);
+      }
+    } else if (pending is _PendingBatchAck) {
+      if (NetworkHelper._pendingBatchByUUID.remove(requestUUID) == null) {
+        return;
+      }
+      pending.timeoutTimer?.cancel();
+      if (!pending.completer.isCompleted) {
+        pending.completer.complete(ack as ObsBatchAck);
+      }
+    }
+  }
+
+  /// Completes the pending ack for [response] - called by the central
+  /// response dispatch for **every** RequestResponse, including error
+  /// statuses. Unknown request ids (late acks for timed out requests,
+  /// responses to requests sent before a reconnect) are dropped, never
+  /// misrouted.
+  static void completeRequestAck(BaseResponse response) {
+    final pending = NetworkHelper._pendingRequestByUUID.remove(response.uuid);
+    if (pending == null || pending.completer.isCompleted) return;
+
+    pending.timeoutTimer?.cancel();
+
+    final status = response.status;
+    pending.completer.complete(
+      status.result
+          ? ObsRequestAck.success(pending.requestType)
+          : ObsRequestAck.rejected(
+              pending.requestType,
+              status.code,
+              status.comment,
+            ),
+    );
+  }
+
+  /// Batch equivalent of [completeRequestAck] - surfaces the per-request
+  /// statuses the v5 batch response carries.
+  static void completeBatchRequestAck(BaseBatchResponse batchResponse) {
+    final pending = NetworkHelper._pendingBatchByUUID.remove(
+      batchResponse.uuid,
+    );
+    if (pending == null || pending.completer.isCompleted) return;
+
+    pending.timeoutTimer?.cancel();
+
+    pending.completer.complete(
+      ObsBatchAck(
+        results: batchResponse.responses.map((response) {
+          final status = response.status;
+          RequestType? requestType;
+          try {
+            requestType = response.requestType;
+          } catch (_) {
+            /// Unknown request types (newer OBS API) must not break the ack
+          }
+          return status.result
+              ? ObsRequestAck.success(requestType)
+              : ObsRequestAck.rejected(
+                  requestType,
+                  status.code,
+                  status.comment,
+                );
+        }).toList(),
+      ),
+    );
+  }
+
+  /// Fails every pending request / batch ack at once - called when the
+  /// connection drops or the session is closed so awaiting callers resolve
+  /// with [ObsRequestFailureKind.connectionLost] instead of hanging until
+  /// their timeout. Awaiting call sites aggregate this into a single notice.
+  static void failAllPendingAcks() {
+    final pendingRequests = NetworkHelper._pendingRequestByUUID.values.toList();
+    final pendingBatches = NetworkHelper._pendingBatchByUUID.values.toList();
+    NetworkHelper._pendingRequestByUUID = {};
+    NetworkHelper._pendingBatchByUUID = {};
+
+    for (final pending in pendingRequests) {
+      pending.timeoutTimer?.cancel();
+      if (!pending.completer.isCompleted) {
+        pending.completer.complete(
+          ObsRequestAck.connectionLost(pending.requestType),
+        );
+      }
+    }
+    for (final pending in pendingBatches) {
+      pending.timeoutTimer?.cancel();
+      if (!pending.completer.isCompleted) {
+        pending.completer.complete(const ObsBatchAck.connectionLost());
+      }
+    }
+
+    if (pendingRequests.isNotEmpty || pendingBatches.isNotEmpty) {
+      GeneralHelper.advLog(
+        'Connection lost - failing ${pendingRequests.length + pendingBatches.length} pending request(s)',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+    }
   }
 
   static Map<String, dynamic> _requestObject(

@@ -183,6 +183,7 @@ abstract class _NetworkStore with Store {
     this.obsTerminated = !manually;
     _cancelAuthSubscription();
     _cancelMessagePump();
+    NetworkHelper.failAllPendingAcks();
     if (this.activeSession != null) {
       this.activeSession!.socket.sink.close();
       this.activeSession = null;
@@ -315,6 +316,11 @@ abstract class _NetworkStore with Store {
 
   /// Yields protocol messages for the active session without owning/closing
   /// the socket. Prefer [handleStream] / dashboard listen via this stream.
+  ///
+  /// Also the central response dispatch for the command-ack layer: every
+  /// (batch) response completes its pending ack here, before listeners get
+  /// the message - including error statuses; late acks for timed out
+  /// requests are dropped inside the completion calls.
   Stream<Message> watchOBSStream() async* {
     final stream = this.activeSession?.socketStream;
     if (stream == null) return;
@@ -325,21 +331,28 @@ abstract class _NetworkStore with Store {
       if (op == WebSocketOpCode.Event.identifier) {
         yield BaseEvent(fullJSON);
       } else if (op == WebSocketOpCode.RequestResponse.identifier) {
-        yield BaseResponse(fullJSON);
+        final response = BaseResponse(fullJSON);
+        NetworkHelper.completeRequestAck(response);
+        yield response;
       } else if (op == WebSocketOpCode.RequestBatchResponse.identifier) {
-        yield BaseBatchResponse(fullJSON);
+        final batchResponse = BaseBatchResponse(fullJSON);
+        NetworkHelper.completeBatchRequestAck(batchResponse);
+        yield batchResponse;
       }
     }
   }
 
   /// NetworkStore-owned pump for session-level events (e.g. ExitStarted).
   /// Cancels any previous pump first so reconnect does not stack listeners.
+  ///
+  /// [onDone]: the socket dropped - fail all pending acks at once so
+  /// awaiting callers resolve (aggregated surfacing) instead of timing out.
   void handleStream() {
     _cancelMessagePump();
     _messagePumpSubscription = this.watchOBSStream().listen((message) {
       if (message is BaseEvent) {
         _handleEvent(message);
       }
-    });
+    }, onDone: () => NetworkHelper.failAllPendingAcks());
   }
 }
