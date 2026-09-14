@@ -25,6 +25,10 @@ tool/obs_local/obs_test_env.sh start
 # 2. Automated gate: handshake + basic requests against real OBS
 dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>
 
+# 2b. Command-ack gate: acked mutations against real OBS — rejection,
+#     success (state restored), and a mixed-outcome batch
+dart run tool/obs_local/ack_smoke.dart --password <obs-ws-password>
+
 # 3. Run the app on the booted simulator (id from `flutter devices`)
 flutter run -d <sim-id>
 
@@ -91,6 +95,11 @@ app (`ConnectionAttemptResult`), not a generic failure.
   GetVersion/GetSceneList/GetInputList probe (exit 0/1). Uses
   `package:web_socket_channel` + `package:crypto` from the app’s deps; no new
   dependencies.
+- `tool/obs_local/ack_smoke.dart` — command-ack layer probe: rejected mutation
+  (bogus scene switch → `requestStatus.result == false`), successful mutation
+  (scene switch away + back, or input mute toggle; OBS state restored), and a
+  mixed-outcome RequestBatch. Imports the handshake machinery from
+  `ws_smoke.dart`; same run flags.
 
 Handshake semantics intentionally mirror
 [`lib/utils/authentication_helper.dart`](../lib/utils/authentication_helper.dart)
