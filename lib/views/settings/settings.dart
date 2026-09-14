@@ -92,6 +92,24 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
+                      BlockEntry(
+                        leading: CupertinoIcons.exclamationmark_bubble_fill,
+                        title: 'Command Failure Alerts',
+                        help:
+                            'Shows a toast in the dashboard when a command sent to OBS (like switching scenes or muting a source) gets rejected or times out. The affected state is always re-synced from OBS either way - turn this off to only write such failures to the logs.',
+                        trailing: BaseAdaptiveSwitch(
+                          value: settingsBox.get(
+                            SettingsKeys.CommandFailureToasts.name,
+                            defaultValue: true,
+                          ),
+                          onChanged: (commandFailureToasts) {
+                            settingsBox.put(
+                              SettingsKeys.CommandFailureToasts.name,
+                              commandFailureToasts,
+                            );
+                          },
+                        ),
+                      ),
                       const BlockEntry(
                         leading: CupertinoIcons.archivebox_fill,
                         title: 'Data Management',

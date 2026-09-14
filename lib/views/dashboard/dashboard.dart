@@ -19,6 +19,7 @@ import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
 import 'widgets/dialogs/save_edit_connection.dart';
+import 'widgets/command_failure_toast.dart';
 import 'widgets/reconnect_toast.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
 
@@ -188,9 +189,19 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           Positioned(
             top: kToolbarHeight + MediaQuery.paddingOf(context).top,
-            child: const Align(
+            child: Align(
               alignment: Alignment.center,
-              child: FittedBox(fit: BoxFit.scaleDown, child: ReconnectToast()),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    ReconnectToast(),
+                    SizedBox(height: 8.0),
+                    CommandFailureToast(),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
