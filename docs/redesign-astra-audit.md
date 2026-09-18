@@ -150,3 +150,9 @@ the `WorkspaceModel` fake/base duality, the no-routes navigation model.
   trade-offs above before the porting phase.
 - Porting phase needs the preference-translation design astra deferred
   (hidden scenes, studio-control visibility, confirmations, wakelock, retry).
+- 2026-09-18 addendum: the inspect-vs-command + Take bar port was **dropped**
+  (user-ratified) — OBS Studio Mode already is the opt-in inspect-first flow
+  and the app mirrors it (`SetCurrentPreviewScene` on tap + real
+  `TriggerStudioModeTransition`, gated by `ExposeStudioControls`). The
+  preference-translation scope narrows to hidden scenes / wakelock / retry
+  for the confirmed-state + chat-independence ports.

@@ -2,6 +2,22 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-18 — Astra porting scope: inspect-vs-command dropped (Studio Mode covers it)
+
+Design decision, user-ratified: the "inspect-vs-command + Take bar" port from
+the astra roadmap is dropped. OBS itself ships the inspect-first concept as
+**Studio Mode**, and the app already mirrors OBS's semantics: with studio mode
+enabled (opt-in via `SettingsKeys.ExposeStudioControls` + the dashboard
+studio-mode checkbox) a scene tap sends `SetCurrentPreviewScene` (inspect —
+`scene_button.dart`) and the transition button sends a real
+`TriggerStudioModeTransition` (the "Take" commit — made real by the
+command-ack wave). An always-on inspect layer would duplicate a concept OBS
+users already have and diverge from OBS behavior. Remaining phase-3 ports:
+confirmed-state projection (incl. STALE surfacing) and chat independence.
+Preference-translation scope narrows accordingly — the Take-dock /
+`ExposeStudioControls` collision is gone; hidden-scenes / wakelock / retry
+mapping is still owed before the confirmed-state port.
+
 ## 2026-09-18 — Empty-batch crash fix (fetchSceneItemsFilters follow-up)
 
 The latent bug found during the command-ack wave is fixed: a scene with no

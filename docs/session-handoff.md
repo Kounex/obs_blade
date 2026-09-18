@@ -190,11 +190,18 @@ tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
 — approved.** The wave's follow-up is FIXED
 (2026-09-18, `9d6619b2`): `makeBatchRequest` never sends an empty batch, so
 `fetchSceneItemsFilters` can no longer hit the `batchRequestType` "No
-element" crash (scene with no items / profile with no inputs). **Next:** the interaction ports
-(confirmed-state projection, inspect-vs-command + Take bar, chat independence,
-stale-state honesty).
-User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +
-inspect-first trade-offs before the porting phase.
+element" crash (scene with no items / profile with no inputs). **Next:** the
+interaction ports (confirmed-state projection incl. STALE surfacing, chat
+independence). **inspect-vs-command + Take bar will NOT be ported
+(2026-09-18, user-ratified):** OBS itself already ships the inspect-first
+concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
+→ scene tap sends `SetCurrentPreviewScene`, transition button sends a real
+`TriggerStudioModeTransition`; opt-in via `SettingsKeys.ExposeStudioControls`.
+An always-on inspect layer would double up with Studio Mode and diverge from
+OBS behavior. This also dissolves the Take-dock side of the deferred
+preference-translation work (audit open threads).
+User to run the astra labs (`lib/main_redesign*.dart`) to feel the
+chat-independence (focus-swap) trade-off before that port.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
