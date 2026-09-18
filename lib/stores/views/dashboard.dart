@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -74,6 +75,7 @@ import '../../types/enums/event_type.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/request_type.dart';
 import '../../types/enums/settings_keys.dart';
+import '../../utils/event_read_ordering.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
 import '../../utils/overlay_handler.dart';
@@ -82,6 +84,13 @@ import '../shared/network.dart';
 part 'dashboard.g.dart';
 
 int kMinimumTotalTimeForStatisticInS = 10;
+
+/// Tag captured by [EventOrdering.capture] when a read is sent
+typedef _ReadTag = ({int epoch, int seq});
+
+/// Scenes-domain fields journaled by [EventOrdering] - an event for one
+/// field blocks only that field's half of a stale read, not the others
+enum _SceneField { program, preview, studioMode }
 
 class DashboardStore = _DashboardStore with _$DashboardStore;
 
@@ -282,6 +291,14 @@ abstract class _DashboardStore with Store {
 
   final List<DefaultFilter> _defaultFilters = [];
 
+  /// Scenes-domain ordering journal ("events beat stale reads"): a scene
+  /// value event beats a GetSceneList / GetStudioModeEnabled response whose
+  /// request was sent before the event arrived. Tags are captured at send
+  /// time (FIFO per read type) and checked when the response is applied.
+  final EventOrdering<_SceneField> _sceneOrdering = EventOrdering();
+  final Queue<_ReadTag> _sceneListTags = Queue();
+  final Queue<_ReadTag> _studioModeTags = Queue();
+
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
   void initialRequests() {
@@ -301,10 +318,7 @@ abstract class _DashboardStore with Store {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetProfileList,
     );
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetStudioModeEnabled,
-    );
+    _sendGetStudioModeEnabled();
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetRecordStatus,
@@ -335,10 +349,7 @@ abstract class _DashboardStore with Store {
   /// scene collection or if we want to refresh the information for the
   /// current scene collection)
   void _sceneCollectionRequests() {
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetSceneList,
-    );
+    _sendGetSceneList();
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetInputList,
@@ -374,6 +385,25 @@ abstract class _DashboardStore with Store {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneItemList,
       {'sceneName': sceneName},
+    );
+  }
+
+  /// Every GetSceneList send goes through here so its response can be
+  /// matched against scene events that arrived while it was in flight
+  void _sendGetSceneList() {
+    _sceneListTags.add(_sceneOrdering.capture());
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetSceneList,
+    );
+  }
+
+  /// GetStudioModeEnabled pendant of [_sendGetSceneList]
+  void _sendGetStudioModeEnabled() {
+    _studioModeTags.add(_sceneOrdering.capture());
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetStudioModeEnabled,
     );
   }
 
@@ -447,7 +477,7 @@ abstract class _DashboardStore with Store {
       case RequestType.SetCurrentProgramScene:
       case RequestType.SetCurrentPreviewScene:
       case RequestType.TriggerStudioModeTransition:
-        NetworkHelper.makeRequest(session.socket, RequestType.GetSceneList);
+        _sendGetSceneList();
         break;
       case RequestType.SetSceneItemEnabled:
         _requestDisplayedSceneItems();
@@ -495,10 +525,7 @@ abstract class _DashboardStore with Store {
         );
         break;
       case RequestType.SetStudioModeEnabled:
-        NetworkHelper.makeRequest(
-          session.socket,
-          RequestType.GetStudioModeEnabled,
-        );
+        _sendGetStudioModeEnabled();
         break;
       case RequestType.SetCurrentSceneTransition:
       case RequestType.SetCurrentSceneTransitionDuration:
@@ -1084,10 +1111,7 @@ abstract class _DashboardStore with Store {
 
         break;
       case EventType.SceneListChanged:
-        NetworkHelper.makeRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestType.GetSceneList,
-        );
+        _sendGetSceneList();
         break;
       case EventType.CurrentSceneTransitionChanged:
         NetworkHelper.makeRequest(
@@ -1109,6 +1133,7 @@ abstract class _DashboardStore with Store {
         StudioModeStateChangedEvent studioModeStateChangedEvent =
             StudioModeStateChangedEvent(event.jsonRAW);
 
+        _sceneOrdering.noteEvent(_SceneField.studioMode);
         this.studioMode = studioModeStateChangedEvent.studioModeEnabled;
 
         if (Hive.box(HiveKeys.Settings.name).get(
@@ -1116,16 +1141,14 @@ abstract class _DashboardStore with Store {
               defaultValue: false,
             ) &&
             this.studioMode) {
-          NetworkHelper.makeRequest(
-            GetIt.instance<NetworkStore>().activeSession!.socket,
-            RequestType.GetSceneList,
-          );
+          _sendGetSceneList();
         }
         break;
       case EventType.CurrentProgramSceneChanged:
         CurrentProgramSceneChangedEvent currentProgramSceneChangedEvent =
             CurrentProgramSceneChangedEvent(event.jsonRAW);
 
+        _sceneOrdering.noteEvent(_SceneField.program);
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
         _requestDisplayedSceneItems();
         break;
@@ -1133,6 +1156,7 @@ abstract class _DashboardStore with Store {
         CurrentPreviewSceneChangedEvent currentPreviewSceneChangedEvent =
             CurrentPreviewSceneChangedEvent(event.jsonRAW);
 
+        _sceneOrdering.noteEvent(_SceneField.preview);
         this.studioModePreviewSceneName =
             currentPreviewSceneChangedEvent.sceneName;
 
@@ -1328,9 +1352,21 @@ abstract class _DashboardStore with Store {
           response.jsonRAW,
         );
 
-        this.activeSceneName = getSceneListResponse.currentProgramSceneName;
-        this.studioModePreviewSceneName =
-            getSceneListResponse.currentPreviewSceneName;
+        /// A scene event that arrived after this read was sent beats its
+        /// (stale) value - per field; an empty tag queue means the response
+        /// belongs to an untracked send and applies as before
+        final sceneListTag = _sceneListTags.isEmpty
+            ? null
+            : _sceneListTags.removeFirst();
+        if (sceneListTag == null ||
+            _sceneOrdering.shouldApplyRead(_SceneField.program, sceneListTag)) {
+          this.activeSceneName = getSceneListResponse.currentProgramSceneName;
+        }
+        if (sceneListTag == null ||
+            _sceneOrdering.shouldApplyRead(_SceneField.preview, sceneListTag)) {
+          this.studioModePreviewSceneName =
+              getSceneListResponse.currentPreviewSceneName;
+        }
         this.scenes = ObservableList.of(
           [...getSceneListResponse.scenes]
             ..sort((a, b) => b.sceneIndex - a.sceneIndex),
@@ -1494,16 +1530,22 @@ abstract class _DashboardStore with Store {
         GetStudioModeEnabledResponse getStudioModeEnabledResponse =
             GetStudioModeEnabledResponse(response.jsonRAW);
 
-        this.studioMode = getStudioModeEnabledResponse.studioModeEnabled;
+        final studioModeTag = _studioModeTags.isEmpty
+            ? null
+            : _studioModeTags.removeFirst();
+        if (studioModeTag == null ||
+            _sceneOrdering.shouldApplyRead(
+              _SceneField.studioMode,
+              studioModeTag,
+            )) {
+          this.studioMode = getStudioModeEnabledResponse.studioModeEnabled;
+        }
         if (Hive.box(HiveKeys.Settings.name).get(
               SettingsKeys.ExposeStudioControls.name,
               defaultValue: false,
             ) &&
             this.studioMode) {
-          NetworkHelper.makeRequest(
-            GetIt.instance<NetworkStore>().activeSession!.socket,
-            RequestType.GetSceneList,
-          );
+          _sendGetSceneList();
         }
         break;
       // case RequestType.GetStreamStatus:
