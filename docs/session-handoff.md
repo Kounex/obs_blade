@@ -190,9 +190,22 @@ tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
 — approved.** The wave's follow-up is FIXED
 (2026-09-18, `9d6619b2`): `makeBatchRequest` never sends an empty batch, so
 `fetchSceneItemsFilters` can no longer hit the `batchRequestType` "No
-element" crash (scene with no items / profile with no inputs). **Next:** the
-interaction ports (confirmed-state projection incl. STALE surfacing, chat
-independence). **inspect-vs-command + Take bar will NOT be ported
+element" crash (scene with no items / profile with no inputs). **Next:** the remaining interaction ports (STALE/pending-state surfacing, chat
+independence). **Confirmed-state ordering (astra phase 3, wave 1) BUILT on
+branch `confirmed-state-ordering` (2026-09-18, 5 commits, pushed):** pure
+`EventOrdering` (epochs + per-key event journals) + DashboardStore FIFO
+tag seams gate stale read responses across scenes / scene-item visibility /
+audio volume+mute; epoch resets on session re-attach, collection change,
+`SceneListChanged`, `InputNameChanged`, and a new typed `SceneNameChanged`
+(protocol-verified). Gates: 800 tests green, analyze at the 472 baseline;
+final whole-branch review APPROVED FOR DOGFOOD
+(`.superpowers/sdd/final-review-ordering.md`); design spec/plan under
+`docs/superpowers/`. **Next: user dogfoods the branch against real OBS**
+(rapid scene switching during events, visibility toggles, slider drags,
+studio-mode toggling) → merge into `4.0-liquid-glass` on OK. Follow-ups
+logged: syncOffset gating; dead-socket queue wipe at the
+`_checkOBSConnection` success seam (defect class in
+`superpowers/plan-defect-checklist.md`). **inspect-vs-command + Take bar will NOT be ported
 (2026-09-18, user-ratified):** OBS itself already ships the inspect-first
 concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
 → scene tap sends `SetCurrentPreviewScene`, transition button sends a real

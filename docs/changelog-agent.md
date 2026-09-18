@@ -2,6 +2,40 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-18 — Confirmed-state ordering (astra phase 3, wave 1) built on `confirmed-state-ordering`
+
+First interaction port per the ratified progressive-adoption verdict
+(`redesign-astra-audit.md`): DashboardStore applied every read response blind,
+so rapid event→re-read races let a stale response clobber fresher event-set
+state (scene switches during transition spam, visibility toggles, slider
+drags). The wave adds a pure `EventOrdering` component
+(`lib/utils/event_read_ordering.dart` — epochs + per-key event journals) plus
+in-place DashboardStore seams: tracked read sends push epoch-capturing
+`_ReadTag`s onto per-target FIFO queues; responses pop FIFO and apply only if
+the tag's epoch matches the current epoch and the journaled events allow it.
+Domains: scenes (program/preview/studioMode), scene-item visibility (incl.
+group children), audio volume/mute. Epoch resets land on session re-attach
+(`initialRequests`), scene-collection changing/changed, `SceneListChanged`,
+`InputNameChanged`, and a new `SceneNameChanged` case — which also added the
+enum value + typed event class (wire shape `sceneUuid`/`oldSceneName`/
+`sceneName` verified against the official obs-websocket protocol doc, v5.0.0+).
+Optimistic UX deliberately unchanged; syncOffset deliberately ungated
+(follow-up); STALE/pending surfacing is a later wave. Spec:
+`superpowers/specs/2026-09-18-confirmed-state-ordering-design.md`; plan:
+`superpowers/plans/2026-09-18-confirmed-state-ordering.md`. One plan defect
+ratified at review (D1): the plan-mandated unconditional tag-queue clears
+contradict the FIFO pop invariant (empty queue = apply ungated, so a stale
+response pops a fresh send's tag and applies) — epochs-only is correct on a
+live socket; the dead-socket residual (first k post-reconnect responses per
+queue get epoch-gated) is track-don't-fix, defect class appended to
+`superpowers/plan-defect-checklist.md`, eventual wipe belongs at the
+`_checkOBSConnection` success seam. Gates: full suite 800 green
+(chat/websocket/persistence/pro/statistics/settings/utils), analyze exactly at
+the 472 baseline; final whole-branch review APPROVED FOR DOGFOOD
+(`.superpowers/sdd/final-review-ordering.md`). 5 commits on
+`confirmed-state-ordering` (`2c11fdde..c9911323`, pushed). **Pending: user
+dogfood vs real OBS → merge into `4.0-liquid-glass` on OK.**
+
 ## 2026-09-18 — Astra porting scope: inspect-vs-command dropped (Studio Mode covers it)
 
 Design decision, user-ratified: the "inspect-vs-command + Take bar" port from

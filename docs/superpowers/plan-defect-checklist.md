@@ -142,6 +142,14 @@ un-indented, so indentation-anchored greps undercount — anchor on the
 severity token or the `N issues found` totals line (moderation-actor
 Task 5 review, a9af493).
 
+**Correlation-state clears vs. FIFO pops:** a plan that mandates clearing
+in-flight correlation state (tag queues, pending maps) at a reset seam must
+first check whether the live transport still delivers responses that pop FIFO
+— clearing lets a stale response pop a fresh send's tag and apply ungated,
+deterministically breaking the plan's own staleness tests (confirmed-state
+ordering Task 5, c9911323; ratified: epoch/identity gates on live transports,
+wipes only at provably-dead-transport seams like a new-socket attach).
+
 **Doc claims:** numbers and behavior statements in changelog/handoff/
 specs drift from the code — spot-check before committing (emote-picker
 Task 7: changelog said 44pt cells, shipped is 56pt, caught pre-dispatch
