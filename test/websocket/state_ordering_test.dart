@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/utils/network_helper.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_obs_peer.dart';
@@ -188,4 +190,114 @@ void main() {
       expect(dashboardStore.studioModePreviewSceneName, 'Break');
     },
   );
+
+  /// Same ordering guarantee for the scene-item visibility domain: a
+  /// SceneItemEnableStateChanged event that arrives while a GetSceneItemList
+  /// re-read is in flight must survive the (older) response
+  group('scene-item visibility ordering', () {
+    void setupItemListPeer() {
+      peer.responseData['GetSceneList'] = {
+        'scenes': [
+          {'sceneName': 'Camera', 'sceneIndex': 0},
+        ],
+        'currentProgramSceneName': 'Camera',
+        'currentPreviewSceneName': 'Camera',
+      };
+      peer.responseData['GetSceneItemList'] = {
+        'sceneItems': [
+          {
+            'sceneItemId': 7,
+            'sceneItemIndex': 0,
+            'sceneItemEnabled': true,
+            'sourceName': 't1',
+            'isGroup': false,
+          },
+        ],
+      };
+
+      /// The non-empty item list triggers a FilterList batch - its ack must
+      /// not hang at teardown, so drop it and let the short timeout clean up
+      peer.droppedRequestTypes.add('GetSourceFilterList');
+      NetworkHelper.requestAckTimeout = const Duration(milliseconds: 300);
+      addTearDown(
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+      );
+    }
+
+    Future<void> applyInitialItemList() async {
+      await connect();
+      dashboardStore.handleStream();
+
+      /// Tests skip initialRequests - a program-scene event both sets the
+      /// displayed scene and triggers the item read
+      peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+      await waitFor(
+        () => dashboardStore.currentSceneItems.isNotEmpty,
+        'initial GetSceneItemList applied',
+      );
+      expect(dashboardStore.currentSceneItems.single.sceneItemEnabled, isTrue);
+    }
+
+    test(
+      'visibility event during in-flight GetSceneItemList beats the stale read',
+      () async {
+        setupItemListPeer();
+        await applyInitialItemList();
+
+        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+        await waitFor(
+          () => requestsOf('GetSceneItemList').length == 2,
+          'GetSceneItemList re-read in flight',
+        );
+
+        /// arrives AFTER the re-read was sent, carrying newer state
+        peer.event('SceneItemEnableStateChanged', {
+          'sceneName': 'Camera',
+          'sceneItemId': 7,
+          'sceneItemEnabled': false,
+        });
+        await waitFor(
+          () =>
+              dashboardStore.currentSceneItems.single.sceneItemEnabled == false,
+          'event value applied',
+        );
+
+        /// the stale read (enabled: true) resolves now - it must not
+        /// overwrite the event value
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        expect(
+          dashboardStore.currentSceneItems.single.sceneItemEnabled,
+          isFalse,
+        );
+      },
+    );
+
+    test('no mid-flight event: the item re-read applies normally', () async {
+      setupItemListPeer();
+      await applyInitialItemList();
+
+      /// optimistic local write the confirmed re-read must overwrite (no
+      /// over-blocking)
+      dashboardStore.currentSceneItems = ObservableList.of([
+        dashboardStore.currentSceneItems.single.copyWith(
+          sceneItemEnabled: false,
+        ),
+      ]);
+
+      peer.ackDelay = const Duration(milliseconds: 300);
+      peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+      await waitFor(
+        () => requestsOf('GetSceneItemList').length == 2,
+        'GetSceneItemList re-read in flight',
+      );
+
+      await waitFor(
+        () => dashboardStore.currentSceneItems.single.sceneItemEnabled == true,
+        're-read applies the confirmed visibility',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(dashboardStore.currentSceneItems.single.sceneItemEnabled, isTrue);
+    });
+  });
 }

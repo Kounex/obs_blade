@@ -299,6 +299,14 @@ abstract class _DashboardStore with Store {
   final Queue<_ReadTag> _sceneListTags = Queue();
   final Queue<_ReadTag> _studioModeTags = Queue();
 
+  /// Scene-item-visibility pendant of the scenes-domain journal, keyed by
+  /// (scene name, scene item id) since item ids are only unique per scene.
+  /// Tag queues are FIFO per requested (group) scene - the GetSceneItemList /
+  /// GetGroupSceneItemList responses carry no scene name of their own
+  final EventOrdering<(String, int)> _sceneItemOrdering = EventOrdering();
+  final Map<String, Queue<_ReadTag>> _sceneItemListTags = {};
+  final Map<String, Queue<_ReadTag>> _groupSceneItemListTags = {};
+
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
   void initialRequests() {
@@ -381,11 +389,7 @@ abstract class _DashboardStore with Store {
     final sceneName = _displayedSceneName;
     if (sceneName == null) return;
 
-    NetworkHelper.makeRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetSceneItemList,
-      {'sceneName': sceneName},
-    );
+    _sendGetSceneItemList(sceneName);
   }
 
   /// Every GetSceneList send goes through here so its response can be
@@ -404,6 +408,32 @@ abstract class _DashboardStore with Store {
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetStudioModeEnabled,
+    );
+  }
+
+  /// GetSceneItemList pendant of [_sendGetSceneList] - the tag is kept per
+  /// requested scene since the response carries no scene name of its own
+  void _sendGetSceneItemList(String sceneName) {
+    (_sceneItemListTags[sceneName] ??= Queue()).add(
+      _sceneItemOrdering.capture(),
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetSceneItemList,
+      {'sceneName': sceneName},
+    );
+  }
+
+  /// GetGroupSceneItemList pendant of [_sendGetSceneItemList], keyed by the
+  /// group source name
+  void _sendGetGroupSceneItemList(String sourceName) {
+    (_groupSceneItemListTags[sourceName] ??= Queue()).add(
+      _sceneItemOrdering.capture(),
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetGroupSceneItemList,
+      {'sceneName': sourceName},
     );
   }
 
@@ -1249,6 +1279,11 @@ abstract class _DashboardStore with Store {
           break;
         }
 
+        _sceneItemOrdering.noteEvent((
+          sceneItemEnableStateChangedEvent.sceneName,
+          sceneItemEnableStateChangedEvent.sceneItemId,
+        ));
+
         this.currentSceneItems = ObservableList.of(
           this.currentSceneItems.map((sceneItem) {
             if (sceneItem.sceneItemId ==
@@ -1372,20 +1407,9 @@ abstract class _DashboardStore with Store {
             ..sort((a, b) => b.sceneIndex - a.sceneIndex),
         );
 
-        NetworkHelper.makeRequest(
-          GetIt.instance<NetworkStore>().activeSession!.socket,
-          RequestType.GetSceneItemList,
-          {
-            'sceneName':
-                Hive.box(HiveKeys.Settings.name).get(
-                      SettingsKeys.ExposeStudioControls.name,
-                      defaultValue: false,
-                    ) &&
-                    this.studioMode
-                ? this.studioModePreviewSceneName
-                : this.activeSceneName,
-          },
-        );
+        /// The displayed scene may have just been applied above - refresh its
+        /// items (routed through the tagging wrapper like every send)
+        _requestDisplayedSceneItems();
         break;
       case RequestType.GetSceneCollectionList:
         GetSceneCollectionListResponse getSceneCollectionListResponse =
@@ -1412,8 +1436,41 @@ abstract class _DashboardStore with Store {
         GetSceneItemListResponse getSceneItemListResponse =
             GetSceneItemListResponse(response.jsonRAW);
 
+        /// The response carries no scene name - resolve it from the tracked
+        /// request body and pop the tag captured when the read was sent. An
+        /// enable-state event that arrived after the send beats this read.
+        final sceneName =
+            NetworkHelper.getRequestBodyForUUID(response.uuid)?['sceneName']
+                as String?;
+        final itemListTag =
+            sceneName != null &&
+                (_sceneItemListTags[sceneName]?.isNotEmpty ?? false)
+            ? _sceneItemListTags[sceneName]!.removeFirst()
+            : null;
+
+        SceneItem applyItem(SceneItem item) {
+          if (sceneName == null || itemListTag == null) return item;
+          final id = item.sceneItemId;
+          if (id == null) return item;
+          if (_sceneItemOrdering.shouldApplyRead((
+            sceneName,
+            id,
+          ), itemListTag)) {
+            return item;
+          }
+          // an event beat this read - keep the event value already in state
+          for (final current in this.currentSceneItems) {
+            if (current.sceneItemId == id) {
+              return item.copyWith(sceneItemEnabled: current.sceneItemEnabled);
+            }
+          }
+          return item;
+        }
+
         this.currentSceneItems =
-            ObservableList.of(getSceneItemListResponse.sceneItems)..sort(
+            ObservableList.of(
+              getSceneItemListResponse.sceneItems.map(applyItem),
+            )..sort(
               (sc1, sc2) =>
                   (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0),
             );
@@ -1421,12 +1478,9 @@ abstract class _DashboardStore with Store {
         this.fetchSceneItemsFilters();
 
         for (final sceneItem in this.currentSceneItems) {
-          if (sceneItem.isGroup ?? false) {
-            NetworkHelper.makeRequest(
-              GetIt.instance<NetworkStore>().activeSession!.socket,
-              RequestType.GetGroupSceneItemList,
-              {'sceneName': sceneItem.sourceName},
-            );
+          final groupSourceName = sceneItem.sourceName;
+          if ((sceneItem.isGroup ?? false) && groupSourceName != null) {
+            _sendGetGroupSceneItemList(groupSourceName);
           }
         }
 
@@ -1446,14 +1500,43 @@ abstract class _DashboardStore with Store {
           );
           break;
         }
-        final parentSceneItemName = requestBody['sceneName'];
+        final parentSceneItemName = requestBody['sceneName'] as String?;
+
+        /// Same ordering gate as GetSceneItemList, keyed by the group source
+        /// name + child item id - only the child's enabled state is gated
+        final groupItemListTag =
+            parentSceneItemName != null &&
+                (_groupSceneItemListTags[parentSceneItemName]?.isNotEmpty ??
+                    false)
+            ? _groupSceneItemListTags[parentSceneItemName]!.removeFirst()
+            : null;
+
+        SceneItem applyChild(SceneItem child) {
+          final item = child.copyWith(parentGroupName: parentSceneItemName);
+          if (parentSceneItemName == null || groupItemListTag == null) {
+            return item;
+          }
+          final id = item.sceneItemId;
+          if (id == null) return item;
+          if (_sceneItemOrdering.shouldApplyRead((
+            parentSceneItemName,
+            id,
+          ), groupItemListTag)) {
+            return item;
+          }
+          // an event beat this read - keep the event value already in state
+          for (final current in this.currentSceneItems) {
+            if (current.parentGroupName == parentSceneItemName &&
+                current.sceneItemId == id) {
+              return item.copyWith(sceneItemEnabled: current.sceneItemEnabled);
+            }
+          }
+          return item;
+        }
 
         List<SceneItem> childrenSceneItems = getGroupSceneItemListResponse
             .sceneItems
-            .map(
-              (sceneItem) =>
-                  sceneItem.copyWith(parentGroupName: parentSceneItemName),
-            )
+            .map(applyChild)
             .toList();
 
         final parentIndex = this.currentSceneItems.indexWhere(
