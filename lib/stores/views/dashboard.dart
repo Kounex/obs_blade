@@ -92,6 +92,11 @@ typedef _ReadTag = ({int epoch, int seq});
 /// field blocks only that field's half of a stale read, not the others
 enum _SceneField { program, preview, studioMode }
 
+/// Audio-domain pendant of [_SceneField] - an InputVolumeChanged event
+/// blocks only stale volume reads, an InputMuteStateChanged event only
+/// stale mute reads
+enum _AudioField { volume, mute }
+
 class DashboardStore = _DashboardStore with _$DashboardStore;
 
 abstract class _DashboardStore with Store {
@@ -307,6 +312,15 @@ abstract class _DashboardStore with Store {
   final Map<String, Queue<_ReadTag>> _sceneItemListTags = {};
   final Map<String, Queue<_ReadTag>> _groupSceneItemListTags = {};
 
+  /// Audio-domain pendant of the scenes-domain journal, keyed by
+  /// (input name, field). One tag queue for the Input batch that follows
+  /// GetInputList (the batch response carries no per-input identity beyond
+  /// the request bodies) and one FIFO queue per single
+  /// GetInputVolume / GetInputMute read
+  final EventOrdering<(String, _AudioField)> _audioOrdering = EventOrdering();
+  final Queue<_ReadTag> _inputBatchTags = Queue();
+  final Map<(String, _AudioField), Queue<_ReadTag>> _inputReadTags = {};
+
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
   void initialRequests() {
@@ -437,6 +451,31 @@ abstract class _DashboardStore with Store {
     );
   }
 
+  /// GetInputVolume pendant of [_sendGetSceneList] - the tag is kept per
+  /// (input name, field) since one read must never gate another input's
+  void _sendGetInputVolume(String inputName) {
+    (_inputReadTags[(inputName, _AudioField.volume)] ??= Queue()).add(
+      _audioOrdering.capture(),
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetInputVolume,
+      {'inputName': inputName},
+    );
+  }
+
+  /// GetInputMute pendant of [_sendGetInputVolume]
+  void _sendGetInputMute(String inputName) {
+    (_inputReadTags[(inputName, _AudioField.mute)] ??= Queue()).add(
+      _audioOrdering.capture(),
+    );
+    NetworkHelper.makeRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetInputMute,
+      {'inputName': inputName},
+    );
+  }
+
   void _pauseStatsPolling() {
     _getStatsTimer?.cancel();
     _getStatsTimer = null;
@@ -514,18 +553,12 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.SetInputMute:
         if (fields?['inputName'] != null) {
-          NetworkHelper.makeRequest(session.socket, RequestType.GetInputMute, {
-            'inputName': fields!['inputName'],
-          });
+          _sendGetInputMute(fields!['inputName'] as String);
         }
         break;
       case RequestType.SetInputVolume:
         if (fields?['inputName'] != null) {
-          NetworkHelper.makeRequest(
-            session.socket,
-            RequestType.GetInputVolume,
-            {'inputName': fields!['inputName']},
-          );
+          _sendGetInputVolume(fields!['inputName'] as String);
         }
         break;
       case RequestType.SetInputAudioSyncOffset:
@@ -1217,6 +1250,10 @@ abstract class _DashboardStore with Store {
         InputVolumeChangedEvent inputVolumeChangedEvent =
             InputVolumeChangedEvent(event.jsonRAW);
 
+        _audioOrdering.noteEvent((
+          inputVolumeChangedEvent.inputName,
+          _AudioField.volume,
+        ));
         this.allInputs = ObservableList.of(
           this.allInputs.map((input) {
             if (input.inputName == inputVolumeChangedEvent.inputName) {
@@ -1258,6 +1295,10 @@ abstract class _DashboardStore with Store {
         InputMuteStateChangedEvent inputMuteStateChangedEvent =
             InputMuteStateChangedEvent(event.jsonRAW);
 
+        _audioOrdering.noteEvent((
+          inputMuteStateChangedEvent.inputName,
+          _AudioField.mute,
+        ));
         this.allInputs = ObservableList.of(
           this.allInputs.map((input) {
             if (input.inputName == inputMuteStateChangedEvent.inputName) {
@@ -1564,6 +1605,9 @@ abstract class _DashboardStore with Store {
 
         this.allInputs = ObservableList.of(getInputListResponse.inputs);
 
+        /// Tag the batch so an InputVolumeChanged / InputMuteStateChanged
+        /// event that arrives while it is in flight beats its stale values
+        _inputBatchTags.add(_audioOrdering.capture());
         NetworkHelper.makeBatchRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestBatchType.Input,
@@ -1701,6 +1745,28 @@ abstract class _DashboardStore with Store {
         );
         if (requestData == null) break;
 
+        /// An InputVolumeChanged event that arrived after this read was sent
+        /// beats its (stale) value - keep the event value already in state.
+        /// An empty tag queue means the response belongs to an untracked
+        /// send and applies as before
+        final volumeInputName = requestData['inputName'] as String?;
+        final volumeTag =
+            volumeInputName != null &&
+                (_inputReadTags[(volumeInputName, _AudioField.volume)]
+                        ?.isNotEmpty ??
+                    false)
+            ? _inputReadTags[(volumeInputName, _AudioField.volume)]!
+                  .removeFirst()
+            : null;
+        if (volumeTag != null &&
+            volumeInputName != null &&
+            !_audioOrdering.shouldApplyRead((
+              volumeInputName,
+              _AudioField.volume,
+            ), volumeTag)) {
+          break;
+        }
+
         this.allInputs = ObservableList.of(
           this.allInputs.map((input) {
             if (input.inputName == requestData['inputName']) {
@@ -1721,6 +1787,24 @@ abstract class _DashboardStore with Store {
 
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
         if (requestData == null) break;
+
+        /// InputMuteStateChanged pendant of the GetInputVolume gate above
+        final muteInputName = requestData['inputName'] as String?;
+        final muteTag =
+            muteInputName != null &&
+                (_inputReadTags[(muteInputName, _AudioField.mute)]
+                        ?.isNotEmpty ??
+                    false)
+            ? _inputReadTags[(muteInputName, _AudioField.mute)]!.removeFirst()
+            : null;
+        if (muteTag != null &&
+            muteInputName != null &&
+            !_audioOrdering.shouldApplyRead((
+              muteInputName,
+              _AudioField.mute,
+            ), muteTag)) {
+          break;
+        }
 
         this.allInputs = ObservableList.of(
           this.allInputs.map((input) {
@@ -1972,6 +2056,14 @@ abstract class _DashboardStore with Store {
           inputsBatchResponse.uuid,
         )!;
 
+        /// Pop the tag captured when this batch was sent - an
+        /// InputVolumeChanged / InputMuteStateChanged event that arrived
+        /// after the send beats the batch's (stale) values for that input.
+        /// An empty queue means the batch was untracked and applies as before
+        final inputBatchTag = _inputBatchTags.isEmpty
+            ? null
+            : _inputBatchTags.removeFirst();
+
         final validGetInputMuteRespones = inputsBatchResponse.inputsMute.where(
           (getInputMuteRespone) =>
               getInputMuteRespone.status.code !=
@@ -2055,15 +2147,38 @@ abstract class _DashboardStore with Store {
                       syncOffsetObject['inputName'] == tempInput.inputName,
                 );
 
+                /// Gated per input + field: an event that beat this batch
+                /// keeps the event value already in state; syncOffset is
+                /// deliberately not gated (no event journals it)
+                final batchInputName = tempInput.inputName;
+                final applyVolume =
+                    inputBatchTag == null ||
+                    batchInputName == null ||
+                    _audioOrdering.shouldApplyRead((
+                      batchInputName,
+                      _AudioField.volume,
+                    ), inputBatchTag);
+                final applyMute =
+                    inputBatchTag == null ||
+                    batchInputName == null ||
+                    _audioOrdering.shouldApplyRead((
+                      batchInputName,
+                      _AudioField.mute,
+                    ), inputBatchTag);
+
                 tempInput = tempInput.copyWith(
-                  inputVolumeDb:
-                      (volumeObject['response'] as GetInputVolumeResponse)
-                          .inputVolumeDb,
-                  inputVolumeMul:
-                      (volumeObject['response'] as GetInputVolumeResponse)
-                          .inputVolumeMul,
-                  inputMuted: (muteObject['response'] as GetInputMuteResponse)
-                      .inputMuted,
+                  inputVolumeDb: applyVolume
+                      ? (volumeObject['response'] as GetInputVolumeResponse)
+                            .inputVolumeDb
+                      : tempInput.inputVolumeDb,
+                  inputVolumeMul: applyVolume
+                      ? (volumeObject['response'] as GetInputVolumeResponse)
+                            .inputVolumeMul
+                      : tempInput.inputVolumeMul,
+                  inputMuted: applyMute
+                      ? (muteObject['response'] as GetInputMuteResponse)
+                            .inputMuted
+                      : tempInput.inputMuted,
                   syncOffset:
                       (syncOffsetObject['response']
                               as GetInputAudioSyncOffsetResponse)

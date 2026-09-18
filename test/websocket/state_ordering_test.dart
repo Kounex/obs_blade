@@ -10,6 +10,8 @@ import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 
+import 'package:obs_blade/types/classes/api/input.dart';
+
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_obs_peer.dart';
 
@@ -299,5 +301,176 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 400));
       expect(dashboardStore.currentSceneItems.single.sceneItemEnabled, isTrue);
     });
+  });
+
+  /// Same ordering guarantee for the audio volume/mute domain: an
+  /// InputVolumeChanged / InputMuteStateChanged event that arrives while a
+  /// GetInputVolume / GetInputMute re-read is in flight must survive the
+  /// (older) response
+  group('audio volume/mute ordering', () {
+    Input mic() => dashboardStore.allInputs.singleWhere(
+      (input) => input.inputName == 'Mic',
+    );
+
+    void setupAudioPeer() {
+      peer.responseData['GetSceneList'] = {
+        'scenes': [
+          {'sceneName': 'Camera', 'sceneIndex': 0},
+        ],
+        'currentProgramSceneName': 'Camera',
+        'currentPreviewSceneName': 'Camera',
+      };
+      peer.droppedRequestTypes.add('GetSceneItemList'); // keep the chain quiet
+      peer.responseData['GetInputList'] = {
+        'inputs': [
+          {'inputName': 'Mic'},
+        ],
+      };
+
+      /// The Input batch (follows GetInputList automatically) and the single
+      /// re-reads answer from these - the confirmed-but-stale values
+      peer.responseData['GetInputVolume'] = {
+        'inputVolumeMul': 0.5,
+        'inputVolumeDb': -9.0,
+      };
+      peer.responseData['GetInputMute'] = {'inputMuted': false};
+      peer.responseData['GetInputAudioSyncOffset'] = {
+        'inputAudioSyncOffset': 0,
+      };
+
+      /// ackDelay must stay strictly below the ack timeout so the timeout
+      /// can never fire coincident with a delayed response
+      NetworkHelper.requestAckTimeout = const Duration(milliseconds: 800);
+      addTearDown(
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+      );
+    }
+
+    Future<void> applyInitialInputState() async {
+      await connect();
+      dashboardStore.handleStream();
+      dashboardStore.initialRequests();
+
+      await waitFor(
+        () => dashboardStore.allInputs.any((input) => input.inputName == 'Mic'),
+        'initial GetInputList applied',
+      );
+      await waitFor(
+        () => mic().inputVolumeMul == 0.5,
+        'initial Input batch applied',
+      );
+      expect(mic().inputVolumeDb, -9.0);
+      expect(mic().inputMuted, isFalse);
+    }
+
+    test(
+      'volume event during in-flight GetInputVolume beats the stale re-read',
+      () async {
+        setupAudioPeer();
+        await applyInitialInputState();
+
+        peer.rejections['SetInputVolume'] =
+            RequestStatus.GenericError.identifier;
+        peer.ackDelay = const Duration(milliseconds: 300);
+        final ackFuture = dashboardStore.sendMutation(
+          RequestType.SetInputVolume,
+          fields: {'inputName': 'Mic', 'inputVolumeMul': 0.8},
+          label: 'Volume',
+        );
+        await waitFor(
+          () => requestsOf('GetInputVolume').isNotEmpty,
+          'GetInputVolume re-read in flight',
+        );
+
+        /// arrives AFTER the re-read was sent, carrying newer state
+        peer.event('InputVolumeChanged', {
+          'inputName': 'Mic',
+          'inputVolumeMul': 0.9,
+          'inputVolumeDb': -0.9,
+        });
+        final ack = await ackFuture;
+        expect(ack.success, isFalse);
+
+        await waitFor(() => mic().inputVolumeMul == 0.9, 'event value applied');
+
+        /// the stale re-read (0.5) resolves now - it must not overwrite the
+        /// event value
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        expect(mic().inputVolumeMul, 0.9);
+        expect(mic().inputVolumeDb, -0.9);
+      },
+    );
+
+    test('no mid-flight event: the volume re-read applies normally', () async {
+      setupAudioPeer();
+      await applyInitialInputState();
+
+      /// Change the value first - with no read in flight the event applies
+      /// directly. (Asserting 0.5 right after the rejection would be
+      /// vacuous: the initial batch already applied 0.5.)
+      peer.event('InputVolumeChanged', {
+        'inputName': 'Mic',
+        'inputVolumeMul': 0.9,
+        'inputVolumeDb': -0.9,
+      });
+      await waitFor(
+        () => mic().inputVolumeMul == 0.9,
+        'event applied with no read in flight',
+      );
+
+      peer.rejections['SetInputVolume'] = RequestStatus.GenericError.identifier;
+      peer.ackDelay = const Duration(milliseconds: 300);
+      final ack = await dashboardStore.sendMutation(
+        RequestType.SetInputVolume,
+        fields: {'inputName': 'Mic', 'inputVolumeMul': 0.8},
+        label: 'Volume',
+      );
+      expect(ack.success, isFalse);
+
+      /// no event during the re-read - it must apply and roll the value back
+      /// to the confirmed 0.5 (no over-blocking)
+      await waitFor(
+        () => mic().inputVolumeMul == 0.5,
+        're-read applies the confirmed volume',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(mic().inputVolumeMul, 0.5);
+      expect(mic().inputVolumeDb, -9.0);
+    });
+
+    test(
+      'mute event during in-flight GetInputMute beats the stale re-read',
+      () async {
+        setupAudioPeer();
+        await applyInitialInputState();
+
+        peer.rejections['SetInputMute'] = RequestStatus.GenericError.identifier;
+        peer.ackDelay = const Duration(milliseconds: 300);
+        final ackFuture = dashboardStore.sendMutation(
+          RequestType.SetInputMute,
+          fields: {'inputName': 'Mic', 'inputMuted': true},
+          label: 'Mute',
+        );
+        await waitFor(
+          () => requestsOf('GetInputMute').isNotEmpty,
+          'GetInputMute re-read in flight',
+        );
+
+        /// arrives AFTER the re-read was sent, carrying newer state
+        peer.event('InputMuteStateChanged', {
+          'inputName': 'Mic',
+          'inputMuted': true,
+        });
+        final ack = await ackFuture;
+        expect(ack.success, isFalse);
+
+        await waitFor(() => mic().inputMuted, 'event value applied');
+
+        /// the stale re-read (false) resolves now - it must not overwrite
+        /// the event value
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        expect(mic().inputMuted, isTrue);
+      },
+    );
   });
 }
