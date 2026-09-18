@@ -187,9 +187,10 @@ real `TriggerStudioModeTransition`. Reviewer SHIP-WITH-FIXES applied; fake-peer
 tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
 `superpowers/specs/2026-09-14-command-ack-layer-design.md`. **MERGED into
 `4.0-liquid-glass` (2026-09-18, fast-forward to `c295c218`) after user dogfood
-— approved.** Found but
-unfixed (follow-up): `fetchSceneItemsFilters` throws on empty batches (scene
-with no items). **Next:** the interaction ports
+— approved.** The wave's follow-up is FIXED
+(2026-09-18, `9d6619b2`): `makeBatchRequest` never sends an empty batch, so
+`fetchSceneItemsFilters` can no longer hit the `batchRequestType` "No
+element" crash (scene with no items / profile with no inputs). **Next:** the interaction ports
 (confirmed-state projection, inspect-vs-command + Take bar, chat independence,
 stale-state honesty).
 User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +

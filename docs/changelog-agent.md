@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-18 — Empty-batch crash fix (fetchSceneItemsFilters follow-up)
+
+The latent bug found during the command-ack wave is fixed: a scene with no
+scene items (`FilterList`) or a profile with no inputs (`Input`) made
+`makeBatchRequest` send an empty RequestBatch; OBS answers those with an
+empty results list and `BaseBatchResponse.batchRequestType`'s `firstWhere`
+threw "No element" — an unhandled async error in `_handleBatchResponse`
+(reproduced as a RED test carrying the exact production `StateError` before
+the fix). Root-cause fix at the chokepoint: `makeBatchRequest` short-circuits
+empty batches (nothing to ask = nothing to send) with an immediate successful
+empty `ObsBatchAck`. The `FilterDefaultSettings` call site already guarded
+with `isNotEmpty` — that guard stays (explicit, harmless). Regression tests:
+unit level (nothing on the wire, empty success ack, no pending leak) and
+store level (full crash chain: rejected scene switch → GetSceneList re-read →
+GetSceneItemList with empty `sceneItems`). Gates: `test/websocket/` 35 green,
+analyze at the 472 baseline. 1 commit on `4.0-liquid-glass` (`9d6619b2`).
+
 ## 2026-09-14 — Command-ack layer (astra phase 2) built on `command-ack-layer`
 
 Astra phase 2 per the ratified mini-design
