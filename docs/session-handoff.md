@@ -185,10 +185,11 @@ mutations routed through the ack policy (self-healing `Get*` re-read + deduped
 failure toast, settings kill-switch default ON), studio-mode button now sends a
 real `TriggerStudioModeTransition`. Reviewer SHIP-WITH-FIXES applied; fake-peer
 tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
-`superpowers/specs/2026-09-14-command-ack-layer-design.md`. **Merge into
-`4.0-liquid-glass` only after user dogfood** against real OBS. Found but
+`superpowers/specs/2026-09-14-command-ack-layer-design.md`. **MERGED into
+`4.0-liquid-glass` (2026-09-18, fast-forward to `c295c218`) after user dogfood
+— approved.** Found but
 unfixed (follow-up): `fetchSceneItemsFilters` throws on empty batches (scene
-with no items). **Next after the merge:** the interaction ports
+with no items). **Next:** the interaction ports
 (confirmed-state projection, inspect-vs-command + Take bar, chat independence,
 stale-state honesty).
 User to run the astra labs (`lib/main_redesign*.dart`) to feel focus-swap +
@@ -248,7 +249,7 @@ in `docs/private/maintainer-workflow.md`.
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
-| [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, on `command-ack-layer` pending dogfood |
+| [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 |
 | [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |

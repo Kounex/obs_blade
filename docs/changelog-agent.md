@@ -37,8 +37,10 @@ Known pre-existing bug FOUND, unfixed by design (follow-up candidate):
 
 Gates: 780 tests green (chat/websocket/persistence/pro/statistics/settings),
 analyze at the 472 baseline, real-OBS smoke OK. 7 commits on
-`command-ack-layer` (off `4.0-liquid-glass`); merge back only after user
-dogfood per the ratified gate.
+`command-ack-layer` (off `4.0-liquid-glass`). **Merged into
+`4.0-liquid-glass` on 2026-09-18 (fast-forward to `c295c218`) after user
+dogfood against real OBS (scene switches, sliders, studio-mode transitions,
+OBS quit/restart reconnect flow, kill-switch toggle) — approved.**
 
 ## 2026-09-14 — Flagged leftovers fixed: logs reset + statistics category clear
 
