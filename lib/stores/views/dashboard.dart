@@ -321,9 +321,25 @@ abstract class _DashboardStore with Store {
   final Queue<_ReadTag> _inputBatchTags = Queue();
   final Map<(String, _AudioField), Queue<_ReadTag>> _inputReadTags = {};
 
+  /// Invalidate every in-flight read tag and all journaled events - the
+  /// state base changed wholesale (session (re-)attach, scene-collection
+  /// change), so reads sent before this point must not apply. The tag queues
+  /// are deliberately NOT cleared: on a live socket each in-flight response
+  /// still pops its own send's tag (FIFO) and fails the epoch check, while
+  /// clearing would let a stale response pop a fresh send's tag and apply
+  /// ungated.
+  void _resetOrdering() {
+    _sceneOrdering.newEpoch();
+    _sceneItemOrdering.newEpoch();
+    _audioOrdering.newEpoch();
+  }
+
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
   void initialRequests() {
+    /// Session (re-)attach: reads sent before this burst belong to the old
+    /// session/state base and must not apply
+    _resetOrdering();
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetVersion,
@@ -1130,6 +1146,7 @@ abstract class _DashboardStore with Store {
       case EventType.CurrentSceneCollectionChanging:
 
         /// OBS: requests during a collection change are undefined / crash-risk.
+        _resetOrdering();
         _handleRequestsEvents = false;
         _pauseStatsPolling();
         break;
@@ -1147,6 +1164,9 @@ abstract class _DashboardStore with Store {
         this.currentSceneCollectionName =
             currentSceneCollectionChangedEvent.sceneCollectionName;
 
+        /// The new collection is a fresh state base - invalidate everything
+        /// in flight before the refresh burst re-reads it
+        _resetOrdering();
         _handleRequestsEvents = true;
         _sceneCollectionRequests();
         _periodicStatsRequest();
@@ -1174,6 +1194,20 @@ abstract class _DashboardStore with Store {
 
         break;
       case EventType.SceneListChanged:
+
+        /// Structural change: every in-flight scene / scene-item read
+        /// predates it and must not apply (audio is unaffected). The re-read
+        /// captures fresh tags in the new epoch.
+        _sceneOrdering.newEpoch();
+        _sceneItemOrdering.newEpoch();
+        _sendGetSceneList();
+        break;
+      case EventType.SceneNameChanged:
+
+        /// A rename invalidates name-keyed journals (items, audio) and the
+        /// scene list holds a stale name until re-read
+        _sceneItemOrdering.newEpoch();
+        _audioOrdering.newEpoch();
         _sendGetSceneList();
         break;
       case EventType.CurrentSceneTransitionChanged:
@@ -1241,6 +1275,10 @@ abstract class _DashboardStore with Store {
         _sceneCollectionRequests();
         break;
       case EventType.InputNameChanged:
+
+        /// A rename invalidates the name-keyed audio journal - in-flight
+        /// input reads keyed by the old name must not apply
+        _audioOrdering.newEpoch();
         _sceneCollectionRequests();
         break;
       case EventType.SceneItemListReindexed:

@@ -473,4 +473,243 @@ void main() {
       },
     );
   });
+
+  /// Epoch resets: structural events (scene-list change, renames) and the
+  /// session re-attach burst invalidate in-flight read tags wholesale, so a
+  /// stale response resolving afterwards must not apply
+  group('epoch resets', () {
+    /// ackDelay must stay strictly below the ack timeout so the timeout can
+    /// never fire coincident with a delayed response
+    void setupShortAckTimeout() {
+      NetworkHelper.requestAckTimeout = const Duration(milliseconds: 800);
+      addTearDown(
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+      );
+    }
+
+    test(
+      'SceneListChanged invalidates an in-flight GetSceneList re-read',
+      () async {
+        peer.responseData['GetSceneList'] = {
+          'scenes': [
+            {'sceneName': 'Camera', 'sceneIndex': 0},
+            {'sceneName': 'Break', 'sceneIndex': 1},
+          ],
+          'currentProgramSceneName': 'Camera',
+          'currentPreviewSceneName': 'Camera',
+        };
+        peer.droppedRequestTypes.add('GetSceneItemList'); // keep chain quiet
+        setupShortAckTimeout();
+        await connect();
+        dashboardStore.handleStream();
+
+        /// Optimistic write the stale re-read would roll back - makes a
+        /// stale application observable in the recording
+        dashboardStore.setActiveSceneName('Nope');
+        final recordedNames = <String?>[];
+        final disposeRecording = autorun((_) {
+          recordedNames.add(dashboardStore.activeSceneName);
+        });
+        addTearDown(() => disposeRecording());
+
+        peer.rejections['SetCurrentProgramScene'] =
+            RequestStatus.InvalidResourceType.identifier;
+        peer.ackDelay = const Duration(milliseconds: 300);
+        final ackFuture = dashboardStore.sendMutation(
+          RequestType.SetCurrentProgramScene,
+          fields: {'sceneName': 'Nope'},
+          label: 'Scene switch',
+        );
+        await waitFor(
+          () => requestsOf('GetSceneList').isNotEmpty,
+          'GetSceneList re-read in flight',
+        );
+
+        /// Structural change lands while the re-read is in flight (delayed
+        /// so the fresh tracked re-read it triggers acks well after the
+        /// stale one - the responseData swap below must land between the
+        /// two acks). The event handler also sends a fresh GetSceneList.
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        peer.event('SceneListChanged', {
+          'scenes': [
+            {'sceneName': 'Camera', 'sceneIndex': 0},
+            {'sceneName': 'Break', 'sceneIndex': 1},
+          ],
+        });
+        await ackFuture;
+
+        /// The stale response still carries 'Camera'; once it has been
+        /// processed (its item-refresh chain request is the signal), swap
+        /// the map so the fresh re-read's response carries 'Break'
+        await waitFor(
+          () => requestsOf('GetSceneItemList').isNotEmpty,
+          'stale GetSceneList response processed',
+        );
+        peer.responseData['GetSceneList']!['currentProgramSceneName'] = 'Break';
+
+        await waitFor(
+          () => dashboardStore.activeSceneName == 'Break',
+          'fresh re-read applies the post-change state',
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+
+        /// The epoch reset gated the stale response: 'Camera' must never
+        /// have landed after the SceneListChanged event
+        expect(recordedNames, isNot(contains('Camera')));
+        expect(dashboardStore.activeSceneName, 'Break');
+      },
+    );
+
+    test(
+      'SceneNameChanged invalidates an in-flight GetSceneItemList re-read',
+      () async {
+        peer.responseData['GetSceneList'] = {
+          'scenes': [
+            {'sceneName': 'Camera', 'sceneIndex': 0},
+          ],
+          'currentProgramSceneName': 'Camera',
+          'currentPreviewSceneName': 'Camera',
+        };
+        peer.responseData['GetSceneItemList'] = {
+          'sceneItems': [
+            {
+              'sceneItemId': 7,
+              'sceneItemIndex': 0,
+              'sceneItemEnabled': true,
+              'sourceName': 't1',
+              'isGroup': false,
+            },
+          ],
+        };
+        peer.droppedRequestTypes.add('GetSourceFilterList');
+
+        /// The rename handler re-reads the scene list; if that response were
+        /// answered it would chain a FRESH item read whose confirmed value
+        /// legitimately overwrites the event value below - masking the stale
+        /// re-read this test gates. Dropping it keeps the assertion focused.
+        peer.droppedRequestTypes.add('GetSceneList');
+        setupShortAckTimeout();
+        await connect();
+        dashboardStore.handleStream();
+
+        peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+        await waitFor(
+          () => dashboardStore.currentSceneItems.isNotEmpty,
+          'initial GetSceneItemList applied',
+        );
+        expect(
+          dashboardStore.currentSceneItems.single.sceneItemEnabled,
+          isTrue,
+        );
+
+        /// The event-set value that must survive the stale re-read
+        peer.event('SceneItemEnableStateChanged', {
+          'sceneName': 'Camera',
+          'sceneItemId': 7,
+          'sceneItemEnabled': false,
+        });
+        await waitFor(
+          () =>
+              dashboardStore.currentSceneItems.single.sceneItemEnabled == false,
+          'event value applied',
+        );
+
+        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+        await waitFor(
+          () => requestsOf('GetSceneItemList').length == 2,
+          'GetSceneItemList re-read in flight',
+        );
+
+        /// Rename lands while the re-read is in flight (wire shape per the
+        /// obs-websocket protocol: sceneUuid / oldSceneName / sceneName)
+        peer.event('SceneNameChanged', {
+          'sceneUuid': 'uuid-camera',
+          'oldSceneName': 'Camera',
+          'sceneName': 'Cam',
+        });
+
+        /// The stale re-read (enabled: true) resolves now - the item-journal
+        /// epoch reset must gate it
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        expect(
+          dashboardStore.currentSceneItems.single.sceneItemEnabled,
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'session re-attach (initialRequests) invalidates an in-flight GetSceneList re-read',
+      () async {
+        peer.responseData['GetSceneList'] = {
+          'scenes': [
+            {'sceneName': 'Camera', 'sceneIndex': 0},
+            {'sceneName': 'Break', 'sceneIndex': 1},
+          ],
+          'currentProgramSceneName': 'Camera',
+          'currentPreviewSceneName': 'Camera',
+        };
+        peer.droppedRequestTypes.add('GetSceneItemList'); // keep chain quiet
+        setupShortAckTimeout();
+        await connect();
+        dashboardStore.handleStream();
+        dashboardStore.initialRequests();
+        await waitFor(
+          () => dashboardStore.activeSceneName == 'Camera',
+          'initial burst applied the program scene',
+        );
+        final itemReadBaseline = requestsOf('GetSceneItemList').length;
+
+        /// Optimistic write the stale re-read would roll back - makes a
+        /// stale application observable in the recording
+        dashboardStore.setActiveSceneName('Nope');
+        final recordedNames = <String?>[];
+        final disposeRecording = autorun((_) {
+          recordedNames.add(dashboardStore.activeSceneName);
+        });
+        addTearDown(() => disposeRecording());
+
+        peer.rejections['SetCurrentProgramScene'] =
+            RequestStatus.InvalidResourceType.identifier;
+        peer.ackDelay = const Duration(milliseconds: 300);
+        final ackFuture = dashboardStore.sendMutation(
+          RequestType.SetCurrentProgramScene,
+          fields: {'sceneName': 'Nope'},
+          label: 'Scene switch',
+        );
+        await waitFor(
+          () => requestsOf('GetSceneList').length == 2,
+          'GetSceneList re-read in flight',
+        );
+
+        /// Re-attach while the re-read is in flight (delayed so the burst's
+        /// fresh GetSceneList acks well after the stale one - the
+        /// responseData swap below must land between the two acks)
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        dashboardStore.initialRequests();
+        await ackFuture;
+
+        /// The stale response still carries 'Camera'; once it has been
+        /// processed (its item-refresh chain request is the signal), swap
+        /// the map so the burst's fresh response carries 'Break'
+        await waitFor(
+          () => requestsOf('GetSceneItemList').length > itemReadBaseline,
+          'stale GetSceneList response processed',
+        );
+        peer.responseData['GetSceneList']!['currentProgramSceneName'] = 'Break';
+
+        await waitFor(
+          () => dashboardStore.activeSceneName == 'Break',
+          're-attach burst re-read applies the fresh state',
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+
+        /// The epoch reset gated the stale response: 'Camera' must never
+        /// have landed after the re-attach
+        expect(recordedNames, isNot(contains('Camera')));
+        expect(dashboardStore.activeSceneName, 'Break');
+      },
+    );
+  });
 }

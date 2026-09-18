@@ -22,6 +22,9 @@ enum EventType {
   /// Note: This event is not fired when the scenes are reordered.
   SceneListChanged,
 
+  /// The name of a scene has changed.
+  SceneNameChanged,
+
   /// A scene transition has started.
   SceneTransitionStarted,
 
