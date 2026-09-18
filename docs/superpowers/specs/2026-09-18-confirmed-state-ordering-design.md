@@ -120,10 +120,12 @@ self-correcting via the next event/read; documented, not handled.
   send site (initial connect burst, `_resyncAfterFailedMutation`,
   event-triggered re-reads). In the `GetSceneList` case of `_handleResponse`
   (:1298): pop the tag, then apply `currentProgramSceneName` /
-  `currentPreviewSceneName` / `studioModeEnabled` each gated on
-  `shouldApplyRead(field, tag)` **per field** (a preview event must not block
-  the program field). Empty queue (response to a pre-feature send) = apply
-  ungated, today's behavior.
+  `currentPreviewSceneName` each gated on `shouldApplyRead(field, tag)` **per
+  field** (a preview event must not block the program field). Studio mode is
+  its own request in master: a `_studioModeTags` queue rides the
+  `GetStudioModeEnabled` sends (:306, :500) and gates its response apply
+  (:1497). Empty queue (response to a pre-feature send) = apply ungated,
+  today's behavior.
 - **Scene items:** `_sceneItemTags[sceneName]` queues, enqueued per send of
   `GetSceneItemList` (:1341 chain, `_requestDisplayedSceneItems` :373) and
   per `GetGroupSceneItemList` send (:1389). At apply (:1379 ff.): pop that
