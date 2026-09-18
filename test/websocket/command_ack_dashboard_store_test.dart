@@ -386,4 +386,43 @@ void main() {
       'GetInputMute re-read after timeout',
     );
   });
+
+  test('scene with no scene items does not send an empty filter batch '
+      '(batchRequestType crash regression)', () async {
+    peer.responseData['GetSceneList'] = {
+      'scenes': [
+        {'sceneName': 'Camera', 'sceneIndex': 0},
+      ],
+      'currentProgramSceneName': 'Camera',
+      'currentPreviewSceneName': 'Camera',
+    };
+    peer.responseData['GetSceneItemList'] = {'sceneItems': <dynamic>[]};
+    await connect();
+    dashboardStore.handleStream();
+
+    /// Failed scene switch -> GetSceneList re-read -> GetSceneItemList
+    /// chain -> empty sceneItems used to send an empty FilterList batch
+    /// whose empty response crashed batchRequestType ("No element")
+    peer.rejections['SetCurrentProgramScene'] =
+        RequestStatus.InvalidResourceType.identifier;
+    final ack = await dashboardStore.sendMutation(
+      RequestType.SetCurrentProgramScene,
+      fields: {'sceneName': 'Nope'},
+      label: 'Scene switch',
+    );
+    expect(ack.success, isFalse);
+
+    await waitFor(
+      () => requestsOf('GetSceneItemList').isNotEmpty,
+      'GetSceneItemList chained after the re-read',
+    );
+
+    /// Give the (previously crashing) filter batch a chance to go out
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+
+    expect(
+      peer.batches.where((batch) => (batch['requests'] as List).isEmpty),
+      isEmpty,
+    );
+  });
 }

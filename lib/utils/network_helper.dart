@@ -424,6 +424,15 @@ class NetworkHelper {
     RequestBatchType batchRequest,
     List<RequestBatchObject> batch,
   ) {
+    /// Nothing to ask: never put an empty batch on the wire - OBS answers
+    /// with an empty results list, which the response path cannot type
+    /// (BaseBatchResponse.batchRequestType throws "No element" on it).
+    /// Awaiting callers get an immediate, successful empty ack.
+    if (batch.isEmpty) {
+      GeneralHelper.advLog('Skipping empty batch: $batchRequest');
+      return Future.value(const ObsBatchAck());
+    }
+
     if (batchRequest != RequestBatchType.Stats) {
       GeneralHelper.advLog('Outgoing Batch: $batchRequest');
     }

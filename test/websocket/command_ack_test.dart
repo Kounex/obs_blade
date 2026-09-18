@@ -221,5 +221,23 @@ void main() {
       expect(ack.failureKind, ObsRequestFailureKind.timeout);
       expect(NetworkHelper.pendingAckCount, 0);
     });
+
+    test(
+      'empty batch: never hits the wire, resolves as empty success',
+      () async {
+        await connect();
+
+        final ack = await NetworkHelper.makeBatchRequest(
+          networkStore.activeSession!.socket,
+          RequestBatchType.FilterList,
+          const <RequestBatchObject>[],
+        );
+
+        expect(ack.success, isTrue);
+        expect(ack.results, isEmpty);
+        expect(peer.batches, isEmpty);
+        expect(NetworkHelper.pendingAckCount, 0);
+      },
+    );
   });
 }
