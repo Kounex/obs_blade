@@ -7,7 +7,7 @@ class ResizeableScenePreview extends StatefulWidget {
   /// Rendered height of the drag handle (incl. its border) - layouts placing
   /// the preview in a fixed-height column need the exact number to do their
   /// height math
-  static const double dragHandleHeight = 24.0;
+  static const double dragHandleHeight = 18.0;
 
   final bool resizeable;
 
@@ -73,7 +73,6 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
                 }
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 2.0),
                 width: 64.0,
 
                 /// Hack: without the color attribute, the container
@@ -82,7 +81,7 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
                 color: Colors.transparent,
                 child: const RotatedBox(
                   quarterTurns: 1,
-                  child: Icon(Icons.drag_indicator, size: 16.0),
+                  child: Icon(Icons.drag_indicator, size: 14.0),
                 ),
               ),
             ),
