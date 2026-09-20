@@ -4,6 +4,11 @@ import 'package:obs_blade/utils/styling_helper.dart';
 import 'scene_preview/scene_preview.dart';
 
 class ResizeableScenePreview extends StatefulWidget {
+  /// Rendered height of the drag handle (incl. its border) - layouts placing
+  /// the preview in a fixed-height column need the exact number to do their
+  /// height math
+  static const double dragHandleHeight = 34.0;
+
   final bool resizeable;
 
   final double minHeight;
@@ -48,6 +53,7 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
         ),
         if (this.widget.resizeable)
           Container(
+            height: ResizeableScenePreview.dragHandleHeight,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,

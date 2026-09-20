@@ -9,8 +9,9 @@ import '../dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 /// Chat tab root: the standalone home for stream chat - usable with or
 /// without an OBS session (chat state lives in the global settings box and
 /// the GetIt chat stores; the stores connect on login restore / channel
-/// select regardless of any surface). The dashboard chat pane is untouched
-/// and remains the live co-display surface.
+/// select regardless of any surface). The regular dashboard carries no chat
+/// pane; the streaming-mode cockpit embeds chat as its live co-display
+/// surface.
 class ChatView extends StatelessWidget {
   const ChatView({super.key});
 
