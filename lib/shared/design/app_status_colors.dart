@@ -42,6 +42,16 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
   /// Favorite / star-on
   final Color favorite;
 
+  /// Destructive actions + error states - same value as [recording] but a
+  /// separately ownable group for the future custom-theme surface
+  final Color destructive;
+
+  /// [destructive] as small text on same-hue tints (validation/error text)
+  final Color destructiveText;
+
+  /// Log-level info blue - deliberately not the themable highlight slot
+  final Color info;
+
   const AppStatusColors({
     required this.live,
     required this.recording,
@@ -51,6 +61,9 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
     required this.program,
     required this.recordingText,
     required this.favorite,
+    required this.destructive,
+    required this.destructiveText,
+    required this.info,
   });
 
   /// App-wide defaults (dark variants of the Cupertino status palette -
@@ -64,6 +77,9 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
     program: Color(0xFFFF453A),
     recordingText: Color(0xFFFF6B60),
     favorite: Color(0xFFFFD60A),
+    destructive: Color(0xFFFF453A),
+    destructiveText: Color(0xFFFF6B60),
+    info: Color(0xFF64D2FF),
   );
 
   /// Darkened [program] fill for the PGM tag carrying white text
@@ -80,6 +96,9 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
     Color? program,
     Color? recordingText,
     Color? favorite,
+    Color? destructive,
+    Color? destructiveText,
+    Color? info,
   }) => AppStatusColors(
     live: live ?? this.live,
     recording: recording ?? this.recording,
@@ -89,6 +108,9 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
     program: program ?? this.program,
     recordingText: recordingText ?? this.recordingText,
     favorite: favorite ?? this.favorite,
+    destructive: destructive ?? this.destructive,
+    destructiveText: destructiveText ?? this.destructiveText,
+    info: info ?? this.info,
   );
 
   @override
@@ -105,6 +127,9 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
       program: Color.lerp(program, other.program, t)!,
       recordingText: Color.lerp(recordingText, other.recordingText, t)!,
       favorite: Color.lerp(favorite, other.favorite, t)!,
+      destructive: Color.lerp(destructive, other.destructive, t)!,
+      destructiveText: Color.lerp(destructiveText, other.destructiveText, t)!,
+      info: Color.lerp(info, other.info, t)!,
     );
   }
 }
