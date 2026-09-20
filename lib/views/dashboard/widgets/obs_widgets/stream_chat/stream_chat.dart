@@ -81,6 +81,11 @@ class StreamChat extends StatefulWidget {
   final bool usernameRowExpandable;
   final bool usernameRowBeneath;
 
+  /// Don't render the [ChatUsernameBar] inline - the host floats it as an
+  /// overlay instead (streaming mode, where every vertical pixel goes to
+  /// the chat window). The other usernameRow* flags are inert while hidden.
+  final bool hideUsernameBar;
+
   /// Route the locked-Pro upsell pill pushes. Null = the Home tab's
   /// paywall route (the dashboard context); other tab hosts pass their own
   /// paywall route so the push resolves on their navigator.
@@ -91,6 +96,7 @@ class StreamChat extends StatefulWidget {
     this.usernameRowPadding = false,
     this.usernameRowExpandable = false,
     this.usernameRowBeneath = false,
+    this.hideUsernameBar = false,
     this.proRoute,
   });
 
@@ -261,7 +267,8 @@ class _StreamChatState extends State<StreamChat>
     super.build(context);
     return Column(
       children: [
-        if (!this.widget.usernameRowBeneath) usernameBar,
+        if (!this.widget.hideUsernameBar && !this.widget.usernameRowBeneath)
+          usernameBar,
         Expanded(
           child: HiveBuilder<dynamic>(
             hiveKey: HiveKeys.Settings,
@@ -329,7 +336,8 @@ class _StreamChatState extends State<StreamChat>
             },
           ),
         ),
-        if (this.widget.usernameRowBeneath) usernameBar,
+        if (!this.widget.hideUsernameBar && this.widget.usernameRowBeneath)
+          usernameBar,
       ],
     );
   }

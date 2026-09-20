@@ -262,6 +262,17 @@ enum SettingsKeys {
   /// elements in the dashboard will be shown
   DashboardElementsOrder,
 
+  /// [bool]: Whether the floating stream-health pill (bitrate / dropped
+  /// frames / cpu) overlays the scene preview in streaming mode. On by
+  /// default - toggled via the floating chart button on the preview
+  StreamingModeStatsOverlay,
+
+  /// [bool]: Whether the floating chat-header panel (platform / channel /
+  /// engine / account controls) is currently open over the chat in
+  /// streaming mode. Hidden by default - toggled via the floating tune
+  /// button on the chat
+  StreamingModeChatHeaderOpen,
+
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
   /// IMPORTANT: Name should always start with 'DontShow'/'dont-show'
@@ -378,6 +389,8 @@ enum SettingsKeys {
     SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
     SettingsKeys.CommandFailureToasts: 'command-failure-toasts',
     SettingsKeys.DashboardElementsOrder: 'dashboard-elements-order',
+    SettingsKeys.StreamingModeStatsOverlay: 'streaming-mode-stats-overlay',
+    SettingsKeys.StreamingModeChatHeaderOpen: 'streaming-mode-chat-header-open',
     SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
     SettingsKeys.DontShowHidingSceneItemsWarning:
         'dont-show-hiding-scene-items-warning',
