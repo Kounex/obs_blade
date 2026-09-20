@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../../models/enums/log_level.dart';
 import '../../../../shared/design/design.dart';
 
-/// Semantic color per log level: Warning/Error map onto the theme-registered
-/// status colors, Info keeps its established blue (no matching status slot).
-/// Level semantics (blue / amber / red) are preserved.
+/// Semantic color per log level: Warning/Error/Info map onto the
+/// theme-registered status colors. Level semantics (blue / amber / red)
+/// are preserved.
 Color logLevelColor(BuildContext context, LogLevel level) {
   final AppStatusColors statusColors = Theme.of(
     context,
   ).extension<AppStatusColors>()!;
   return switch (level) {
-    LogLevel.Info => Colors.lightBlueAccent,
+    LogLevel.Info => statusColors.info,
     LogLevel.Warning => statusColors.warning,
     LogLevel.Error => statusColors.recording,
   };
