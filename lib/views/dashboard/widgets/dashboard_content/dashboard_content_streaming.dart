@@ -19,9 +19,11 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream
 /// so the video and chat own the space: the stream-health stats float over
 /// the preview as a pill (chart toggle), and the chat header (platform /
 /// channel / engine / account) floats over the chat as a card (tune
-/// toggle). Both toggle states persist in the settings box. Phone stacks
-/// the blocks; tablet puts preview + buttons left and chat full-height on
-/// the right.
+/// toggle). Both toggle states persist in the settings box; the tune
+/// toggle is draggable along the chat's right edge (clamped clear of the
+/// window header and the input-dock / pause-chip zone, persisted as a
+/// height fraction). Phone stacks the blocks; tablet puts preview +
+/// buttons left and chat full-height on the right.
 ///
 /// Deliberately full-bleed (ratified media exception to the dashboard's
 /// content-card grid): the preview keeps maximum width, the scene buttons
@@ -38,11 +40,23 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
   /// [SceneButtons] renders its horizontal-scroll row at size + 24
   static const double _sceneButtonsHeight = 64.0 + 24.0;
 
-  /// Overlay toggle hit target; the chat panel docks directly beneath it
+  /// Overlay toggle hit target; the chat panel docks directly beside it
   static const double _toggleSize = 32.0;
+
+  /// Top clamp for the draggable chat toggle - keeps it clear of the native
+  /// chat window's own header row (title + status tag)
+  static const double _toggleMinDy = 52.0;
+
+  /// Bottom clamp margin - keeps the toggle roughly above the chat input
+  /// dock and the centered pause chip
+  static const double _toggleBottomMargin = 72.0;
 
   late bool _statsOverlay;
   late bool _headerOpen;
+
+  /// Vertical position of the chat-header toggle: 0..1 fraction of its
+  /// draggable range (1.0 = bottom, the default)
+  late double _toggleDyFraction;
 
   @override
   void initState() {
@@ -60,6 +74,14 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
               defaultValue: false,
             )
             as bool;
+    this._toggleDyFraction =
+        (settingsBox.get(
+                  SettingsKeys.StreamingModeChatToggleDyFraction.name,
+                  defaultValue: 1.0,
+                )
+                as num)
+            .toDouble()
+            .clamp(0.0, 1.0);
   }
 
   void _toggleStats() => setState(() {
@@ -101,52 +123,84 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
         ],
       );
 
-  Widget _chatWithOverlays() => Stack(
-    fit: StackFit.expand,
-    children: [
-      const StreamChat(usernameRowPadding: true, hideUsernameBar: true),
-      Positioned(
-        top: AppSpacing.sm,
-        right: AppSpacing.sm,
-        child: _ChatHeaderToggleButton(
-          active: this._headerOpen,
-          onTap: this._toggleHeader,
-        ),
-      ),
-      Positioned(
-        top: AppSpacing.sm + _toggleSize + AppSpacing.sm,
-        left: AppSpacing.sm,
-        right: AppSpacing.sm,
+  Widget _chatWithOverlays() => LayoutBuilder(
+    builder: (context, constraints) {
+      final double height = constraints.maxHeight;
+      final double maxDy = math.max(
+        height - _toggleBottomMargin - _toggleSize,
+        _toggleMinDy,
+      );
+      final double range = maxDy - _toggleMinDy;
+      final double dy = range <= 0
+          ? _toggleMinDy
+          : (_toggleMinDy + this._toggleDyFraction * range).clamp(
+              _toggleMinDy,
+              maxDy,
+            );
 
-        /// SizedBox.shrink keeps the AnimatedSwitcher's layout stable while
-        /// the panel is gone
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.0, -0.04),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
+      /// Panel opens toward the roomier side of the toggle
+      final bool opensDown = dy + _toggleSize / 2 < height / 2;
+
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          const StreamChat(usernameRowPadding: true, hideUsernameBar: true),
+          Positioned(
+            top: dy,
+            right: AppSpacing.sm,
+            child: _ChatHeaderToggleButton(
+              active: this._headerOpen,
+              onTap: this._toggleHeader,
+              onVerticalDragUpdate: range <= 0
+                  ? null
+                  : (details) => setState(() {
+                      this._toggleDyFraction =
+                          ((dy + details.delta.dy - _toggleMinDy) / range)
+                              .clamp(0.0, 1.0);
+                    }),
+              onVerticalDragEnd: (_) => Hive.box(HiveKeys.Settings.name).put(
+                SettingsKeys.StreamingModeChatToggleDyFraction.name,
+                this._toggleDyFraction,
+              ),
             ),
           ),
-          child: this._headerOpen
-              ? Material(
-                  key: const ValueKey('chat-header-panel'),
-                  elevation: 8.0,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  color: Theme.of(context).cardColor,
-                  child: const Padding(
-                    padding: EdgeInsets.all(AppSpacing.sm),
-                    child: ChatUsernameBar(),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-      ),
-    ],
+          Positioned(
+            top: opensDown ? dy + _toggleSize + AppSpacing.sm : null,
+            bottom: opensDown ? null : height - dy + AppSpacing.sm,
+            left: AppSpacing.sm,
+            right: AppSpacing.sm,
+
+            /// SizedBox.shrink keeps the AnimatedSwitcher's layout stable
+            /// while the panel is gone
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(0.0, opensDown ? -0.04 : 0.04),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              ),
+              child: this._headerOpen
+                  ? Material(
+                      key: const ValueKey('chat-header-panel'),
+                      elevation: 8.0,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      color: Theme.of(context).cardColor,
+                      child: const Padding(
+                        padding: EdgeInsets.all(AppSpacing.sm),
+                        child: ChatUsernameBar(),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      );
+    },
   );
 
   @override
@@ -209,24 +263,31 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
 /// Small translucent circular button floating over video / chat content -
 /// white when its overlay is on, dimmed when off. [badgeColor] paints a
 /// status dot on the top-right edge (chat-header toggle: is a chat
-/// channel/username selected at all).
+/// channel/username selected at all). Optional vertical-drag callbacks turn
+/// it into an edge-docked draggable (tap still fires on a clean touch).
 class _OverlayToggleButton extends StatelessWidget {
   final IconData icon;
   final bool active;
   final VoidCallback onTap;
   final Color? badgeColor;
+  final GestureDragUpdateCallback? onVerticalDragUpdate;
+  final GestureDragEndCallback? onVerticalDragEnd;
 
   const _OverlayToggleButton({
     required this.icon,
     required this.active,
     required this.onTap,
     this.badgeColor,
+    this.onVerticalDragUpdate,
+    this.onVerticalDragEnd,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: this.onTap,
+      onVerticalDragUpdate: this.onVerticalDragUpdate,
+      onVerticalDragEnd: this.onVerticalDragEnd,
       child: Container(
         width: 32.0,
         height: 32.0,
@@ -269,8 +330,15 @@ class _OverlayToggleButton extends StatelessWidget {
 class _ChatHeaderToggleButton extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
+  final GestureDragUpdateCallback? onVerticalDragUpdate;
+  final GestureDragEndCallback? onVerticalDragEnd;
 
-  const _ChatHeaderToggleButton({required this.active, required this.onTap});
+  const _ChatHeaderToggleButton({
+    required this.active,
+    required this.onTap,
+    this.onVerticalDragUpdate,
+    this.onVerticalDragEnd,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -300,6 +368,8 @@ class _ChatHeaderToggleButton extends StatelessWidget {
           active: this.active,
           onTap: this.onTap,
           badgeColor: chatActive ? Colors.greenAccent : Colors.white38,
+          onVerticalDragUpdate: this.onVerticalDragUpdate,
+          onVerticalDragEnd: this.onVerticalDragEnd,
         );
       },
     );

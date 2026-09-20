@@ -273,6 +273,12 @@ enum SettingsKeys {
   /// button on the chat
   StreamingModeChatHeaderOpen,
 
+  /// [double]: Vertical position of the floating chat-header toggle in
+  /// streaming mode as a 0..1 fraction of its draggable range (right edge,
+  /// clamped between the window header zone and the input dock).
+  /// 1.0 = bottom (default)
+  StreamingModeChatToggleDyFraction,
+
   /// ******************************************************************************
   /// "Don't show dialog again" - settings set by user by checkbox in dialog
   /// IMPORTANT: Name should always start with 'DontShow'/'dont-show'
@@ -391,6 +397,8 @@ enum SettingsKeys {
     SettingsKeys.DashboardElementsOrder: 'dashboard-elements-order',
     SettingsKeys.StreamingModeStatsOverlay: 'streaming-mode-stats-overlay',
     SettingsKeys.StreamingModeChatHeaderOpen: 'streaming-mode-chat-header-open',
+    SettingsKeys.StreamingModeChatToggleDyFraction:
+        'streaming-mode-chat-toggle-dy-fraction',
     SettingsKeys.DontShowPreviewWarning: 'dont-show-preview-warning',
     SettingsKeys.DontShowHidingSceneItemsWarning:
         'dont-show-hiding-scene-items-warning',
