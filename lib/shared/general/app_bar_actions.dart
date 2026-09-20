@@ -39,89 +39,97 @@ class AppBarActions extends StatelessWidget {
     required this.actions,
   });
 
+  /// The adaptive action-sheet opener, reusable outside an app bar context:
+  /// Cupertino action sheet on Apple platforms, modal bottom sheet elsewhere
+  static void showActions(
+    BuildContext context, {
+    String? actionSheetTitle,
+    required List<AppBarActionEntry> actions,
+  }) => switch (Theme.of(context).platform) {
+    TargetPlatform.iOS || TargetPlatform.macOS => showCupertinoModalPopup(
+      context: context,
+      builder: (context) {
+        return CupertinoActionSheet(
+          title: actionSheetTitle != null ? Text(actionSheetTitle) : null,
+          actions: actions
+              .map(
+                (action) => CupertinoActionSheetAction(
+                  isDestructiveAction: action.isDestructive,
+                  onPressed: () {
+                    if (action.onAction != null) {
+                      Navigator.of(context).pop();
+                      action.onAction!.call();
+                    }
+                  },
+                  child: Text(
+                    action.title,
+                    style: action.onAction == null
+                        ? const TextStyle(color: CupertinoColors.inactiveGray)
+                        : null,
+                  ),
+                ),
+              )
+              .toList(),
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        );
+      },
+    ),
+    _ => ModalHandler.showBaseBottomSheet(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (actionSheetTitle != null) ...[
+            Text(actionSheetTitle),
+            const BaseDivider(),
+          ],
+          ...ListTile.divideTiles(
+            context: context,
+            color: StylingHelper.light_divider_color.withOpacity(0.0),
+            tiles: actions.map(
+              (action) => ListTile(
+                onTap: () {
+                  if (action.onAction != null) {
+                    Navigator.of(context).pop();
+                    action.onAction!.call();
+                  }
+                },
+                enabled: action.onAction != null,
+                title: Text(action.title),
+                leading:
+                    action.leading ??
+                    (action.leadingIcon != null
+                        ? Icon(action.leadingIcon, size: 24.0)
+                        : null),
+                trailing: action.trailing,
+                visualDensity: VisualDensity.comfortable,
+                textColor: action.isDestructive
+                    ? CupertinoColors.destructiveRed
+                    : null,
+                iconColor: action.isDestructive
+                    ? CupertinoColors.destructiveRed
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  };
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(CupertinoIcons.ellipsis),
-      onPressed: () => switch (Theme.of(context).platform) {
-        TargetPlatform.iOS || TargetPlatform.macOS => showCupertinoModalPopup(
-          context: context,
-          builder: (context) {
-            return CupertinoActionSheet(
-              title: this.actionSheetTitle != null
-                  ? Text(this.actionSheetTitle!)
-                  : null,
-              actions: this.actions
-                  .map(
-                    (action) => CupertinoActionSheetAction(
-                      isDestructiveAction: action.isDestructive,
-                      onPressed: () {
-                        if (action.onAction != null) {
-                          Navigator.of(context).pop();
-                          action.onAction!.call();
-                        }
-                      },
-                      child: Text(
-                        action.title,
-                        style: action.onAction == null
-                            ? const TextStyle(
-                                color: CupertinoColors.inactiveGray,
-                              )
-                            : null,
-                      ),
-                    ),
-                  )
-                  .toList(),
-              cancelButton: CupertinoActionSheetAction(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-            );
-          },
-        ),
-        _ => ModalHandler.showBaseBottomSheet(
-          context: context,
-          barrierDismissible: true,
-          builder: (context) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (this.actionSheetTitle != null) ...[
-                Text(this.actionSheetTitle!),
-                const BaseDivider(),
-              ],
-              ...ListTile.divideTiles(
-                context: context,
-                color: StylingHelper.light_divider_color.withOpacity(0.0),
-                tiles: this.actions.map(
-                  (action) => ListTile(
-                    onTap: () {
-                      if (action.onAction != null) {
-                        Navigator.of(context).pop();
-                        action.onAction!.call();
-                      }
-                    },
-                    enabled: action.onAction != null,
-                    title: Text(action.title),
-                    leading:
-                        action.leading ??
-                        (action.leadingIcon != null
-                            ? Icon(action.leadingIcon, size: 24.0)
-                            : null),
-                    trailing: action.trailing,
-                    visualDensity: VisualDensity.comfortable,
-                    textColor: action.isDestructive
-                        ? CupertinoColors.destructiveRed
-                        : null,
-                    iconColor: action.isDestructive
-                        ? CupertinoColors.destructiveRed
-                        : null,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      },
+      onPressed: () => AppBarActions.showActions(
+        context,
+        actionSheetTitle: this.actionSheetTitle,
+        actions: this.actions,
+      ),
     );
   }
 }

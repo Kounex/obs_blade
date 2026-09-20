@@ -165,21 +165,43 @@ class ConnectionBox extends StatelessWidget {
                     ),
 
                     /// Ellipsis menu (Edit / Delete) via the app's adaptive
-                    /// action-sheet idiom - replaces the pencil glyph
-                    AppBarActions(
-                      actions: [
-                        AppBarActionEntry(
-                          title: 'Edit',
-                          leadingIcon: CupertinoIcons.pencil,
-                          onAction: () => this._edit(context),
+                    /// action-sheet idiom - replaces the pencil glyph. Slim
+                    /// trigger vertically centered on the reachability pill
+                    /// (same top margin, same height band) - an app-bar
+                    /// IconButton's chrome landed the glyph off-line
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      child: Pressable(
+                        onTap: () => AppBarActions.showActions(
+                          context,
+                          actions: [
+                            AppBarActionEntry(
+                              title: 'Edit',
+                              leadingIcon: CupertinoIcons.pencil,
+                              onAction: () => this._edit(context),
+                            ),
+                            AppBarActionEntry(
+                              title: 'Delete',
+                              leadingIcon: CupertinoIcons.trash,
+                              isDestructive: true,
+                              onAction: () => this._delete(context),
+                            ),
+                          ],
                         ),
-                        AppBarActionEntry(
-                          title: 'Delete',
-                          leadingIcon: CupertinoIcons.trash,
-                          isDestructive: true,
-                          onAction: () => this._delete(context),
+                        child: Container(
+                          height: 26.0,
+                          constraints: const BoxConstraints(minWidth: 40.0),
+                          alignment: Alignment.center,
+
+                          /// Transparent fill so the full box stays hittable
+                          color: Colors.transparent,
+                          child: Icon(
+                            CupertinoIcons.ellipsis,
+                            size: 20.0,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
