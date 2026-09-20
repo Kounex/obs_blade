@@ -103,7 +103,6 @@ class SwitcherCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           const BaseDivider(),
           AnimatedSwitcher(
-            key: ValueKey(this.title),
             duration: AppMotion.medium,
 
             /// Pane switches (token-delta §4 delta 4): 12px rise + fade at

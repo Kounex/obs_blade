@@ -19,35 +19,38 @@ class ConnectBox extends StatelessWidget {
     return Observer(
       builder: (context) => SwitcherCard(
         title: homeStore.connectMode.text,
-        child: () {
-          switch (homeStore.connectMode) {
-            case ConnectMode.Autodiscover:
-              return const AutoDiscovery();
-            case ConnectMode.QR:
+        child: KeyedSubtree(
+          key: ValueKey(homeStore.connectMode),
+          child: () {
+            switch (homeStore.connectMode) {
+              case ConnectMode.Autodiscover:
+                return const AutoDiscovery();
+              case ConnectMode.QR:
 
-              /// Horizontal inset lives inside [QuickConnect] so its
-              /// divider runs full-bleed like the other connect cards
-              return const Padding(
-                padding: EdgeInsets.only(top: 20.0, bottom: 18.0),
-                child: QuickConnect(),
-              );
-            case ConnectMode.Manual:
-              return Padding(
-                padding: const EdgeInsets.only(
-                  left: 24.0,
-                  right: 24.0,
-                  bottom: 18.0,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: ConnectForm(
-                    connection: homeStore.typedInConnection,
-                    manual: true,
+                /// Horizontal inset lives inside [QuickConnect] so its
+                /// divider runs full-bleed like the other connect cards
+                return const Padding(
+                  padding: EdgeInsets.only(top: 20.0, bottom: 18.0),
+                  child: QuickConnect(),
+                );
+              case ConnectMode.Manual:
+                return Padding(
+                  padding: const EdgeInsets.only(
+                    left: 24.0,
+                    right: 24.0,
+                    bottom: 18.0,
                   ),
-                ),
-              );
-          }
-        }(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: ConnectForm(
+                      connection: homeStore.typedInConnection,
+                      manual: true,
+                    ),
+                  ),
+                );
+            }
+          }(),
+        ),
       ),
     );
   }
