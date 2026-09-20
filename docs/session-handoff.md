@@ -190,9 +190,9 @@ tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
 — approved.** The wave's follow-up is FIXED
 (2026-09-18, `9d6619b2`): `makeBatchRequest` never sends an empty batch, so
 `fetchSceneItemsFilters` can no longer hit the `batchRequestType` "No
-element" crash (scene with no items / profile with no inputs). **Next:** the remaining interaction ports (STALE/pending-state surfacing, chat
-independence). **Confirmed-state ordering (astra phase 3, wave 1) MERGED into
-`4.0-liquid-glass` (2026-09-20, fast-forward to `191f1f13`) after user
+element" crash (scene with no items / profile with no inputs). **Next:** the remaining interaction ports (chat independence; syncOffset
+gating follow-up). **Confirmed-state ordering (astra phase 3, wave 1) MERGED
+into `4.0-liquid-glass` (2026-09-20, fast-forward to `191f1f13`) after user
 dogfood — approved.** Pure `EventOrdering` (epochs + per-key event journals)
 + DashboardStore FIFO tag seams gate stale read responses across scenes /
 scene-item visibility / audio volume+mute; epoch resets on session re-attach,
@@ -201,10 +201,16 @@ collection change, `SceneListChanged`, `InputNameChanged`, and a new typed
 FIXED in the merge commit: dead-transport read tags are wiped at the
 `initialRequests()` fresh-socket seam (`_wipeOrderingQueues()`), so
 post-reconnect bursts apply immediately (regression test = real socket swap
-through the fake peer). Follow-ups still logged: syncOffset gating;
-STALE/pending surfacing is the next confirmed-state wave; chat independence
-needs the user to run the astra labs (`lib/main_redesign*.dart`) first to
-feel the focus-swap trade-off. **inspect-vs-command + Take bar will NOT be ported
+through the fake peer). **Stale-state honesty (wave 2) LANDED on
+`4.0-liquid-glass` (2026-09-20, `f7e2833a` + `407acf31`):**
+`obsStateStale` predicate (= `reconnecting`, seam for future drivers),
+`sendMutation` refuses sends while stale (`ObsRequestAck.notSent`, no
+resync/toast), per-pane "LAST KNOWN STATE" badges (Scenes/Scene Items/
+Audio), `StaleGuard` lockout on every mutation control, honest toast copy.
+Gates: 803 tests green, analyze 472. **Pending: user dogfood** (quit OBS
+mid-session → badges + lockout; restart → snap back). Chat independence
+still needs the user to run the astra labs (`lib/main_redesign*.dart`)
+first to feel the focus-swap trade-off. **inspect-vs-command + Take bar will NOT be ported
 (2026-09-18, user-ratified):** OBS itself already ships the inspect-first
 concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
 → scene tap sends `SetCurrentPreviewScene`, transition button sends a real

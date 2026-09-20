@@ -2,6 +2,41 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-20 — Stale-state honesty (astra phase 3, wave 2) on `4.0-liquid-glass`
+
+Second interaction port per the ratified progressive-adoption verdict:
+during a reconnect the dashboard used to keep rendering values as if live
+while taps sent mutations into the dead socket (intent silently lost; only a
+small toast hinted at it). Now, per the ratified design
+(`superpowers/specs/2026-09-20-stale-state-honesty-design.md`, astra's
+"stale = confirmation channel gone" concept, not its code):
+
+- **`DashboardStore.obsStateStale`** — one plain-getter predicate (=
+  `reconnecting`; deliberately NOT `@computed`, no codegen; documented seam
+  for future drivers like the collection-changing window).
+- **`sendMutation` guard** — refuses sends while stale and returns the new
+  `ObsRequestAck.notSent` (`ObsRequestFailureKind.notSent`), bypassing the
+  resync re-read + failure toast by construction (the reconnect burst
+  re-reads everything, and lands immediately thanks to the D1 wipe).
+- **Per-pane `StaleStateBadge`** ("LAST KNOWN STATE - reconnecting to OBS",
+  neutral token color, `AppMotion.medium` switcher) docked above the
+  Scenes / Scene Items / Audio pane content — one uniform anchor per pane,
+  covering phone tabs, tablet side-by-side, and standalone card layouts.
+  Values are never dimmed or hidden (astra's honesty rule).
+- **`StaleGuard`** (`Observer` → `IgnorePointer` + 0.45 opacity) wraps every
+  mutation control: scene buttons, scene-item tiles + slide actions, audio
+  sliders/mutes, studio-mode + transition controls, profile/scene-collection
+  pickers, exposed controls (stream/record/replay/hotkeys), filter toggles +
+  settings, and the app-bar actions menu. Never wraps a scrollable.
+- **Toast honesty:** "values shown are the last known state" added to the
+  reconnect toast; `RECONNECTING!!!!!` debug log dropped.
+
+S-tier wave, 2 production commits + docs (`f7e2833a` guard, `407acf31` UI).
+Gates: full suite **803 green** (3 new guard tests in
+`command_ack_dashboard_store_test.dart`), analyze at the 472 baseline.
+**Pending: user dogfood** (quit OBS / kill network mid-session → badges +
+lockout; restart → snap back).
+
 ## 2026-09-20 — Ordering wave MERGED into `4.0-liquid-glass` + dead-transport tag wipe (D1 fix)
 
 User dogfood approved the confirmed-state ordering wave → merged
