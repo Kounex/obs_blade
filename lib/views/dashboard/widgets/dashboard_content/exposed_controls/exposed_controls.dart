@@ -99,7 +99,10 @@ class ExposedControls extends StatelessWidget {
 
         return exposedControls.isNotEmpty
             ? BaseCard(
+                topPadding: 0.0,
+                rightPadding: AppSpacing.md,
                 bottomPadding: 0.0,
+                leftPadding: AppSpacing.md,
                 paddingChild: const EdgeInsets.symmetric(vertical: 18.0),
                 child: CustomExpansionTile(
                   headerText: 'Exposed Controls',

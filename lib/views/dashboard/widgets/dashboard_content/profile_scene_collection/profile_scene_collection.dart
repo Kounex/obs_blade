@@ -29,7 +29,10 @@ class ProfileSceneCollection extends StatelessWidget {
                 defaultValue: false,
               )
           ? BaseCard(
-              bottomPadding: 0,
+              topPadding: 0.0,
+              rightPadding: AppSpacing.md,
+              bottomPadding: 0.0,
+              leftPadding: AppSpacing.md,
               child: Row(
                 children: [
                   if (settingsBox.get(

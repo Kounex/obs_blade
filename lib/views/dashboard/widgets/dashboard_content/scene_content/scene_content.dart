@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
-import '../../../../../shared/general/base/card.dart';
+import '../dashboard_element_card.dart';
 import 'audio_inputs/audio_inputs.dart';
 import 'scene_items/scene_items.dart';
 
@@ -13,13 +13,14 @@ class SceneContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// 12px outer side margins + a 12px gutter (6px per card side) - the
+    /// tablet rendering of the dashboard's content-card grid
     final Widget itemsCard = StaggeredEntrance(
       index: this.audioFirst ? 1 : 0,
       scaleFrom: 0.985,
-      child: const BaseCard(
+      child: const DashboardElementCard(
         title: 'Scene Items',
-        rightPadding: 12,
-        paddingChild: EdgeInsets.all(0),
+        margin: EdgeInsets.only(left: AppSpacing.md, right: AppSpacing.md / 2),
         child: SizedBox(height: 400.0, child: SceneItems()),
       ),
     );
@@ -27,10 +28,9 @@ class SceneContent extends StatelessWidget {
     final Widget audioCard = StaggeredEntrance(
       index: this.audioFirst ? 0 : 1,
       scaleFrom: 0.985,
-      child: const BaseCard(
+      child: const DashboardElementCard(
         title: 'Audio',
-        leftPadding: 12,
-        paddingChild: EdgeInsets.all(0),
+        margin: EdgeInsets.only(left: AppSpacing.md / 2, right: AppSpacing.md),
         child: SizedBox(height: 400.0, child: AudioInputs()),
       ),
     );

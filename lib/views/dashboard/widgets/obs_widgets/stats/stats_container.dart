@@ -31,7 +31,9 @@ class StatsContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return BaseCard(
       topPadding: 0.0,
+      rightPadding: AppSpacing.md,
       bottomPadding: 0.0,
+      leftPadding: AppSpacing.md,
       titlePadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,

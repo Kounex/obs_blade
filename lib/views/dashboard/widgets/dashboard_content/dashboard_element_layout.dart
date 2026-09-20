@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../models/enums/dashboard_element.dart';
 import '../../../../shared/design/design.dart';
-import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import '../obs_widgets/stats/stats.dart';
+import 'dashboard_element_card.dart';
 import 'exposed_controls/exposed_controls.dart';
 import 'profile_scene_collection/profile_scene_collection.dart';
 import 'scene_buttons/scene_buttons.dart';
@@ -24,10 +24,23 @@ const Set<DashboardElement> _kScenePair = {
 
 /// Builds the regular (non-streaming) dashboard body from
 /// [DashboardElementsOrder], composing adjacent Scene Items/Audio into the
-/// existing mobile-tab / tablet-row layouts.
+/// existing mobile-card / tablet-row layouts.
+///
+/// Vertical rhythm lives here and nowhere else: [AppSpacing.md] between
+/// element blocks; the cards/bare rows carry no vertical outer margin.
 List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
   final List<Widget> columnChildren = [];
   final Set<DashboardElement> consumed = {};
+
+  void addBlock(List<Widget> block) {
+    if (block.isEmpty) {
+      return;
+    }
+    if (columnChildren.isNotEmpty) {
+      columnChildren.add(const SizedBox(height: AppSpacing.md));
+    }
+    columnChildren.addAll(block);
+  }
 
   for (int i = 0; i < order.length; i++) {
     final DashboardElement current = order[i];
@@ -43,27 +56,21 @@ List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
         current != next) {
       consumed.add(next);
       final bool audioFirst = current == DashboardElement.SceneItemsAudio;
-      columnChildren.add(
+      addBlock([
         ResponsiveWidgetWrapper(
-          mobileWidget: SceneContentMobile(audioFirst: audioFirst),
+          mobileWidget: DashboardElementCard(
+            child: SceneContentMobile(audioFirst: audioFirst),
+          ),
           tabletWidget: SceneContent(audioFirst: audioFirst),
         ),
-      );
-      columnChildren.add(const SizedBox(height: AppSpacing.xl));
+      ]);
       continue;
     }
 
-    columnChildren.addAll(_buildStandalone(current));
+    addBlock(_buildStandalone(current));
   }
 
-  // Trim trailing spacer if the last composed block added one and nothing
-  // followed that needed it — harmless if left; keep structure simple.
-  return [
-    Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-      child: Column(children: columnChildren),
-    ),
-  ];
+  return [Column(children: columnChildren)];
 }
 
 List<Widget> _buildStandalone(DashboardElement element) {
@@ -71,7 +78,7 @@ List<Widget> _buildStandalone(DashboardElement element) {
     case DashboardElement.ExposedProfile:
       return const [ProfileSceneCollection()];
     case DashboardElement.ExposedControls:
-      return const [ExposedControls(), SizedBox(height: AppSpacing.xl)];
+      return const [ExposedControls()];
     case DashboardElement.SceneButtons:
       return const [
         StaleStateBadge(),
@@ -79,19 +86,15 @@ List<Widget> _buildStandalone(DashboardElement element) {
           child: Padding(
             padding: EdgeInsets.only(
               top: AppSpacing.xxl,
-              left: 18.0,
-              right: 18.0,
+              left: AppSpacing.md,
+              right: AppSpacing.md,
             ),
             child: SceneButtons(),
           ),
         ),
-        SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.StudioModeTransition:
-      return const [
-        StaleGuard(child: StudioModeTransitionButton()),
-        SizedBox(height: AppSpacing.xl),
-      ];
+      return const [StaleGuard(child: StudioModeTransitionButton())];
     case DashboardElement.StudioModeConfig:
       return const [
         StaleGuard(
@@ -99,41 +102,36 @@ List<Widget> _buildStandalone(DashboardElement element) {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               StudioModeCheckbox(),
-              SizedBox(width: AppSpacing.xl),
+              SizedBox(width: AppSpacing.md),
             ],
           ),
         ),
-        SizedBox(height: AppSpacing.xl),
+        SizedBox(height: AppSpacing.md),
         StaleGuard(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TransitionControls(),
-              SizedBox(width: AppSpacing.xl),
+              SizedBox(width: AppSpacing.md),
             ],
           ),
         ),
-        SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.ScenePreview:
-      return const [ScenePreview(), SizedBox(height: AppSpacing.xl)];
+      return const [DashboardElementCard(child: ScenePreview())];
     case DashboardElement.SceneItems:
       return const [
-        BaseCard(
+        DashboardElementCard(
           title: 'Scene Items',
-          paddingChild: EdgeInsets.all(0),
           child: SizedBox(height: 400.0, child: SceneItems()),
         ),
-        SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.SceneItemsAudio:
       return const [
-        BaseCard(
+        DashboardElementCard(
           title: 'Audio',
-          paddingChild: EdgeInsets.all(0),
           child: SizedBox(height: 400.0, child: AudioInputs()),
         ),
-        SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.StreamChat:
       // Retired — chat is a dedicated tab now; the element is filtered from
@@ -155,13 +153,11 @@ List<Widget> _buildStandalone(DashboardElement element) {
               ),
             ),
           ),
-          tabletWidget: BaseCard(
+          tabletWidget: DashboardElementCard(
             title: 'Stats',
-            paddingChild: EdgeInsets.all(0),
             child: SizedBox(height: 650.0, child: Stats()),
           ),
         ),
-        SizedBox(height: AppSpacing.xl),
       ];
   }
 }
