@@ -101,7 +101,11 @@ pause chip. Mod tooling (wave 3): Warn… compose in the mod action sheet,
 unban-request Approve/Deny in the ban inbox, and a live AutoMod queue sheet
 (`automod.message.hold/.update` v2 → `TwitchChatStore.autoModQueue`) behind
 the channel mod sheet — one `kTwitchManageModToolingScopes` scope-upgrade
-bundle, pre-upgrade tokens get the re-login CTA on the gated rows. Next:
+bundle, pre-upgrade tokens get the re-login CTA on the gated rows. Chat is
+also a **dedicated tab** (`Tabs.Chat` — usable without an OBS session; the
+dashboard pane is removed) and the **streaming-mode dashboard** embeds chat
+as its live co-display surface (floating header overlay via the
+`StreamChat.hideUsernameBar` seam). Next:
 availability/entitlement gate decision (gates wave 4) — see chat audit +
 handoff.
 

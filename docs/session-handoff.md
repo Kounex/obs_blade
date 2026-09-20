@@ -2,13 +2,12 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-10** (4.0
-restrained-Liquid-Glass redesign **implemented on branch
-`4.0-liquid-glass`** — waves 1–3d + drift-fix rounds 1–2 landed, gates
-green, phone + tablet sim-verified; tree then got a one-time tall-style
-`dart format` pass — 404 files, mechanical).
-Store products + RevenueCat wired; next: user eyes on the updated branch
-(phone AND tablet) → Gate 3 → merge).
+Read this first after `AGENTS.md`. Last reset: **2026-09-20** (branch
+`4.0-liquid-glass`: chat independence incl. dashboard-pane removal,
+streaming-mode cockpit with floating chrome, saved-connection card
+refresh — all dogfood-approved; details below + `changelog-agent.md`
+2026-09-20. Store products + RevenueCat wired; next: 4.0 Gate 3 branch
+review → merge).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -216,11 +215,12 @@ dependency was purely navigational; chat stores + config were already
 OBS-free). Two `StreamChat` seams (defaults = dashboard behavior):
 `scrollArbitration: false` skips the dashboard-only WebView pointer band +
 `DashboardStore` lookup; `proRoute` resolves the Pro upsell on the chat
-tab's navigator (`/tabs/chat/pro`). Dashboard chat pane untouched. Design:
+tab's navigator (`/tabs/chat/pro`). The dashboard chat pane was removed in
+the same-day follow-through (`d63e9bdc`) — see the follow-up paragraph
+below. Design:
 `superpowers/specs/2026-09-20-chat-independence-design.md`; plan:
 `superpowers/plans/2026-09-20-chat-independence.md`. Gates: chat suite 663
-green, analyze 472. **Pending: user dogfood** (pre-connect chat
-reachability, Dashboard↔Chat tab switching, tablet 640 column). Follow-ups:
+green, analyze 472. **Dogfooded + approved (2026-09-20).** Follow-ups:
 conversation-owned drafts wave; optional live-session strip (program pill +
 quick mic — the astra focus-swap translation). **inspect-vs-command + Take bar will NOT be ported
 (2026-09-18, user-ratified):** OBS itself already ships the inspect-first
@@ -230,6 +230,26 @@ concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
 An always-on inspect layer would double up with Studio Mode and diverge from
 OBS behavior. This also dissolves the Take-dock side of the deferred
 preference-translation work (audit open threads).
+
+**Chat follow-through + streaming-mode cockpit + saved-connection refresh
+LANDED (2026-09-20, 13 commits, all dogfood-approved):** dashboard chat pane
+removed + `pointerOnChat` arbitration retired (fixes the reconnect tap-dead
+bug at the root); unified tab-bar bottom clearance `tabBarBottomPadding()`
+(`lib/shared/design/tab_bar_metrics.dart`); dashboard content-card grid —
+composer-owned 12px sides/gaps, content=card / actions=bare,
+visibility-aware (no stray gaps from toggled-off elements), phone stats =
+auto-height measured pages, tablet stats still fixed 650 (follow-up
+candidate); element ordering verified sound (no reachable missing-element
+case — enum born complete); streaming mode rebuilt as the live cockpit —
+drag-resizable full-bleed preview (18pt handle), floating stats pill over
+the preview + floating draggable chat-header toggle over the chat (both
+persisted via new `StreamingMode*` settings keys), tablet side-by-side;
+saved-connection cards — green Online pill (supersedes neutral-online
+grammar), ellipsis Edit/Delete sheet (`AppBarActions.showActions` extracted
+as a reusable static), filled-accent Connect when reachable, "Last used:" /
+"Never used" stamp (additive `@HiveField(6) lastConnectedMs` — legacy boxes
+decode null). Details + hashes: `changelog-agent.md` 2026-09-20. Gates:
+analyze 472 baseline, suites green.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for

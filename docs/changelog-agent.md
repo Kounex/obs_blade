@@ -1494,3 +1494,69 @@ for iframe subresources). Fix: merged single-document shell
 (`all-views-v3.html`), verified in the user's real browser via
 kimi-webbridge. Durable lessons documented in
 `docs/superpowers/visual-companion-gotchas.md` (indexed in AGENTS.md).
+
+
+## 2026-09-20 — Chat independence follow-through, streaming-mode cockpit, saved-connection refresh
+
+All on branch `4.0-liquid-glass`, user-dogfooded per wave (iPhone 17 Pro sim,
+local OBS test env). Gates throughout: analyze at the 472-issue baseline,
+`dart format` on touched files, suites green per AGENTS.md test selection.
+
+- **Chat tab follow-through wave 2 (post-dogfood fixes, landed earlier same
+  day before this entry's wave):** 1-line connect pills via AutoSizeText,
+  scene-button color-fade fixed (alphaBlend tween), phone stats double-card
+  removed, scene-content card background, chat-tab height fix.
+- **Tab-bar bottom clearance unified (`48be2608`):** single helper
+  `tabBarBottomPadding(context)` in `lib/shared/design/tab_bar_metrics.dart`
+  (MediaQuery padding.bottom + AppSpacing.md; TabBase's extendBody Scaffold
+  injects the bar's full 84pt extent). All tab screens use it; root-navigator
+  modals keep the raw inset.
+- **Dashboard chat pane removed (`d63e9bdc`):** `pointerOnChat` arbitration
+  retired with it — this fixed the reconnect tap-dead bug at the root
+  (user-confirmed). Chat lives in the dedicated tab + streaming mode only.
+- **Dashboard content-card grid (`57264645` + `09655fbe` + `ec3158a6`):**
+  composer-owned rhythm in `dashboard_element_layout.dart` — 12px side
+  margins, 12px gaps, content = card / actions = bare (scene buttons a
+  ratified exception). Visibility-aware: toggled-off elements (Expose* flags,
+  studio mode) leave no stray gaps. Stats: phone = auto-height measured
+  pages (`_SizeReportingWidget`), non-scrollable pages, dots padded; tablet
+  keeps the fixed 650 card (known follow-up candidate). Leading md so the
+  first block never hugs the app bar.
+- **Dashboard element ordering VERIFIED:** reorder persists live via
+  `DashboardElementsOrder` HiveBuilder key; composer respects arbitrary order
+  (Scene Items/Audio merge only when adjacent); retired `StreamChat` value
+  filtered at both read sites. The classic "persisted order misses a newer
+  element" case is not reachable — the enum was born with all 10 values
+  (`a64f93b5`); if an 11th element is ever added, append-missing-at-read
+  hardening is required.
+- **Streaming-mode cockpit (chat restored):** `d63e9bdc` had also dropped
+  chat from streaming mode — rebuilt (`3528bd75`): drag-resizable full-bleed
+  preview (`ResizeableScenePreview` handle re-enabled, height constant-driven
+  as `dragHandleHeight`), stream-health strip, scene buttons, chat filling
+  the rest; tablet = preview+buttons left, chat full-height right (flex 3:2).
+- **Floating chrome (`fe022ddf` + `664a040b`):** health strip became
+  `StreamHealthPill` overlaying the preview (chart toggle, top-left pill /
+  top-right button); chat header (`ChatUsernameBar`) leaves the layout —
+  `StreamChat.hideUsernameBar` seam — and slides in as an overlay card via a
+  floating tune toggle. Tune toggle defaults bottom-right above the input
+  dock (top-right collided with the native window's own status tag), drags
+  vertically along the right edge (clamped clear of header + input/pause-chip
+  zones), position persisted as a height fraction. Panel opens toward the
+  roomier side. New settings keys: `StreamingModeStatsOverlay` (default on),
+  `StreamingModeChatHeaderOpen` (default off), `StreamingModeChatToggleDyFraction`
+  (default 1.0). Toggle badge dot = "any chat selected" per-platform rule.
+- **Preview handle slimmed (`f207ef22`, `c33cd438`):** 34 → 24 → 18pt bar,
+  grip icon rotated 90° at 14pt.
+- **Saved-connection card refresh (`dd82fb9e`, `ed4a6d7d`, `7f0ea927`,
+  `bc0b7ca1`, `79c76a5d`):** Online pill is GREEN (`AppStatusColors.reachable`,
+  mirror of Offline) — supersedes the v12 "online stays neutral" grammar note;
+  Connect is filled accent when reachable, ghost otherwise (supersedes the
+  all-ghost demotion); pencil replaced by the adaptive ellipsis action sheet
+  (Edit / Delete) — `AppBarActions.showActions` extracted as a reusable
+  static, card trigger is a slim pill-aligned Pressable; "Last used: x ago" /
+  "Never used" stamp via new additive `@HiveField(6) int? lastConnectedMs`
+  on `Connection` (build_runner regen, legacy boxes decode null, persistence
+  suite green) + `lib/utils/relative_time.dart`; stamps only on fully
+  established sessions (handshake success sentinel `DontClose`).
+- Test adds: `test/dashboard/stream_health_pill_test.dart`,
+  `test/utils/relative_time_test.dart`.
