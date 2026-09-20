@@ -74,14 +74,27 @@ class App extends StatelessWidget {
         ? ThemeData.light()
         : ThemeData.dark());
 
-    final TextTheme appTextTheme = buildAppTextTheme(baseThemeData.textTheme);
-
     /// Resolved color groups (token-delta §1 rule 8): accent = brand /
     /// selection, highlight = interactive control states + transient
     /// affordances. Every colored element resolves one of these (or a
     /// status/text extension) - never a framework default.
     final Color accent = accentColor ?? StylingHelper.accent_color;
     final Color highlight = hightlightColor ?? StylingHelper.highlight_color;
+
+    final AppTextColors appTextColors =
+        accentColor != null && hightlightColor != null
+        ? AppTextColors.derive(
+            accent: accentColor,
+            highlight: hightlightColor,
+            brightness: brightness ?? Brightness.dark,
+          )
+        : AppTextColors.standard;
+
+    final TextTheme appTextTheme = buildAppTextTheme(
+      baseThemeData.textTheme,
+      textSecondary: appTextColors.textSecondary,
+      textTertiary: appTextColors.textTertiary,
+    );
 
     final bool dark = brightness != Brightness.light;
 
@@ -130,7 +143,7 @@ class App extends StatelessWidget {
       onSecondary: onGroup(highlight),
       surface: dark ? liquidCard : Colors.white,
       onSurface: dark ? Colors.white : Colors.black,
-      error: Colors.red[700]!,
+      error: AppStatusColors.standard.destructive,
       onError: dark ? Colors.black : Colors.white,
       background: backgroundColor ?? scaffold,
     );
@@ -145,7 +158,7 @@ class App extends StatelessWidget {
             return base.copyWith(color: baseThemeData.disabledColor);
           }
           if (states.contains(WidgetState.error)) {
-            return base.copyWith(color: baseThemeData.colorScheme.error);
+            return base.copyWith(color: AppStatusColors.standard.destructive);
           }
           if (states.contains(WidgetState.focused)) {
             return base.copyWith(
@@ -164,7 +177,7 @@ class App extends StatelessWidget {
       highlightColor: Colors.transparent,
 
       textSelectionTheme: TextSelectionThemeData(
-        selectionColor: accentColor ?? StylingHelper.highlight_color,
+        selectionColor: hightlightColor ?? StylingHelper.highlight_color,
       ),
 
       dividerTheme: DividerThemeData(
@@ -195,12 +208,16 @@ class App extends StatelessWidget {
       /// Consistent label/hint rendering for every field: 15pt inline
       /// label shrinking to a 12pt floating label, callout-grey family
       inputDecorationTheme: InputDecorationThemeData(
-        hintStyle: appTextTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
+        hintStyle: appTextTheme.bodyMedium?.copyWith(
+          color: appTextColors.textSecondary,
+        ),
         labelStyle: statefulLabelStyle(
-          appTextTheme.bodyMedium!.copyWith(color: Colors.grey[500]),
+          appTextTheme.bodyMedium!.copyWith(color: appTextColors.textSecondary),
         ),
         floatingLabelStyle: statefulLabelStyle(
-          appTextTheme.labelMedium!.copyWith(color: Colors.grey[500]),
+          appTextTheme.labelMedium!.copyWith(
+            color: appTextColors.textSecondary,
+          ),
         ),
       ),
 
@@ -225,13 +242,7 @@ class App extends StatelessWidget {
       /// [GlassBar] (all floating bars).
       extensions: [
         AppStatusColors.standard,
-        accentColor != null && hightlightColor != null
-            ? AppTextColors.derive(
-                accent: accentColor,
-                highlight: hightlightColor,
-                brightness: brightness ?? Brightness.dark,
-              )
-            : AppTextColors.standard,
+        appTextColors,
         AppGlass.forBar(appBarColor ?? StylingHelper.liquid_bar_color),
       ],
 
@@ -289,9 +300,8 @@ class App extends StatelessWidget {
       ),
 
       tabBarTheme: TabBarThemeData(
-        labelColor: brightness != null && brightness == Brightness.light
-            ? Colors.black
-            : Colors.white,
+        labelColor: appTextColors.accentText,
+        unselectedLabelColor: appTextColors.textTertiary,
       ),
 
       appBarTheme: AppBarTheme(
@@ -314,8 +324,9 @@ class App extends StatelessWidget {
 
       cupertinoOverrideTheme: CupertinoThemeData(
         scaffoldBackgroundColor: scaffold,
+        primaryColor: hightlightColor ?? StylingHelper.highlight_color,
         textTheme: CupertinoTextThemeData(
-          primaryColor: hightlightColor ?? StylingHelper.highlight_color,
+          primaryColor: appTextColors.highlightText,
         ),
         barBackgroundColor: (tabBarColor ?? StylingHelper.liquid_bar_color)
             .withOpacity(StylingHelper.opacity_blurry),
@@ -394,6 +405,11 @@ class App extends StatelessWidget {
             // navigatorKey: rootNavKey,
             debugShowCheckedModeBanner: false,
             theme: _getCurrentTheme(settingsBox),
+            themeAnimationDuration: AppMotion.slow,
+            themeAnimationStyle:
+                MediaQueryData.fromView(View.of(context)).disableAnimations
+                ? AnimationStyle.noAnimation
+                : null,
             initialRoute:
                 settingsBox.get(
                   SettingsKeys.HasUserSeenIntro202208.name,

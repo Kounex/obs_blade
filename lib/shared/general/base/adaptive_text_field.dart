@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/animator/fader.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 class CustomValidationTextEditingController extends TextEditingController {
@@ -239,11 +240,10 @@ class BaseAdaptiveTextFieldState extends State<BaseAdaptiveTextField> {
                   child: Text(
                     _validationText ?? '',
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: CupertinoColors.destructiveRed,
+                      color: Theme.of(
+                        context,
+                      ).extension<AppStatusColors>()!.destructiveText,
                     ),
-                    // style: const TextStyle(
-                    //   color: CupertinoColors.destructiveRed,
-                    // ),
                   ),
                 ),
               ),
