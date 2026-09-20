@@ -242,14 +242,14 @@ class ConnectionBox extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (this.connection.lastConnectedMs != null) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'Last used ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}',
-                            style: Theme.of(context).textTheme.labelSmall!
-                                .copyWith(color: textColors.textTertiary),
-                          ),
-                        ],
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          this.connection.lastConnectedMs != null
+                              ? 'Last used ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}'
+                              : 'Never used',
+                          style: Theme.of(context).textTheme.labelSmall!
+                              .copyWith(color: textColors.textTertiary),
+                        ),
                       ],
                     ),
                   ),
