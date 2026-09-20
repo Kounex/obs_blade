@@ -9,10 +9,13 @@ import 'package:obs_blade/utils/overlay_handler.dart';
 import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/design/design.dart';
+import '../../../../shared/dialogs/confirmation.dart';
+import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../utils/modal_handler.dart';
+import '../../../../utils/relative_time.dart';
 import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
@@ -46,6 +49,12 @@ class ConnectionBox extends StatelessWidget {
 
     FocusScope.of(context).unfocus();
     networkStore.setOBSWebSocket(this.connection).then((closeCode) {
+      /// "Last used" stamps on a fully established session only (DontClose
+      /// is the handshake's success sentinel) - not on attempts
+      if (closeCode == WebSocketCloseCode.DontClose) {
+        this.connection.lastConnectedMs = DateTime.now().millisecondsSinceEpoch;
+        this.connection.save();
+      }
       if (closeCode == WebSocketCloseCode.AuthenticationFailed &&
           context.mounted) {
         OverlayHandler.showStatusOverlay(
@@ -66,6 +75,19 @@ class ConnectionBox extends StatelessWidget {
     );
   }
 
+  void _delete(BuildContext context) {
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: ConfirmationDialog(
+        title: 'Delete Connection',
+        body:
+            'Are you sure you want to delete this connection? This action can\'t be undone!',
+        isYesDestructive: true,
+        onOk: (_) => this.connection.delete(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppStatusColors statusColors = Theme.of(
@@ -75,11 +97,11 @@ class ConnectionBox extends StatelessWidget {
       context,
     ).extension<AppTextColors>()!;
 
-    /// Reachability badge (grammar rule 7 + mock token notes): "Online" is
-    /// NEUTRAL (white-50% dot, dim label, 8% white pill) - green is
-    /// reserved for streaming-live. "Offline" keeps the red signal: dot in
-    /// [AppStatusColors.unreachable], label in [AppStatusColors.recordingText]
-    /// on a 13% same-hue tint
+    /// Reachability badge (user directive 2026-09-20, supersedes the v12
+    /// "online stays neutral, green is reserved for streaming-live"
+    /// grammar note): "Online" is GREEN - dot and label in
+    /// [AppStatusColors.reachable] on a 13% same-hue tint, the exact mirror
+    /// of the Offline treatment. "Checking" stays neutral.
     final Color reachabilityDotColor;
     final Color reachabilityLabelColor;
     final Color reachabilityFillColor;
@@ -88,9 +110,9 @@ class ConnectionBox extends StatelessWidget {
       reachabilityLabelColor = textColors.textTertiary;
       reachabilityFillColor = Colors.white.withValues(alpha: 0.08);
     } else if (this.connection.reachable!) {
-      reachabilityDotColor = Colors.white.withValues(alpha: 0.5);
-      reachabilityLabelColor = textColors.textSecondary;
-      reachabilityFillColor = Colors.white.withValues(alpha: 0.08);
+      reachabilityDotColor = statusColors.reachable;
+      reachabilityLabelColor = statusColors.reachable;
+      reachabilityFillColor = statusColors.reachable.withValues(alpha: 0.13);
     } else {
       reachabilityDotColor = statusColors.unreachable;
       reachabilityLabelColor = statusColors.recordingText;
@@ -141,32 +163,23 @@ class ConnectionBox extends StatelessWidget {
                       fillColor: reachabilityFillColor,
                       label: reachabilityLabel,
                     ),
-                    Pressable(
-                      onTap: () => this._edit(context),
 
-                      /// 44x44 hit area (token-delta §5) - visual glyph
-                      /// stays small, transparent expansion carries the
-                      /// floor
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          minWidth: 44.0,
-                          minHeight: 44.0,
+                    /// Ellipsis menu (Edit / Delete) via the app's adaptive
+                    /// action-sheet idiom - replaces the pencil glyph
+                    AppBarActions(
+                      actions: [
+                        AppBarActionEntry(
+                          title: 'Edit',
+                          leadingIcon: CupertinoIcons.pencil,
+                          onAction: () => this._edit(context),
                         ),
-                        child: Center(
-                          widthFactor: 1.0,
-                          heightFactor: 1.0,
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppSpacing.sm),
-                            child: Icon(
-                              CupertinoIcons.pencil,
-                              size: 18.0,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
-                            ),
-                          ),
+                        AppBarActionEntry(
+                          title: 'Delete',
+                          leadingIcon: CupertinoIcons.trash,
+                          isDestructive: true,
+                          onAction: () => this._delete(context),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -174,31 +187,47 @@ class ConnectionBox extends StatelessWidget {
                 Expanded(
                   child: Align(
                     alignment: Alignment.topLeft,
-                    child: Row(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 1.0),
-                          child: Icon(
-                            this._hasPassword
-                                ? CupertinoIcons.lock_fill
-                                : CupertinoIcons.lock_slash,
-                            size: 14.0,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 1.0),
+                              child: Icon(
+                                this._hasPassword
+                                    ? CupertinoIcons.lock_fill
+                                    : CupertinoIcons.lock_slash,
+                                size: 14.0,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                this._endpoint,
+                                style: Theme.of(context).textTheme.bodySmall!
+                                    .copyWith(
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: Text(
-                            this._endpoint,
-                            style: Theme.of(context).textTheme.bodySmall!
-                                .copyWith(
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
+                        if (this.connection.lastConnectedMs != null) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'Last used ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}',
+                            style: Theme.of(context).textTheme.labelSmall!
+                                .copyWith(color: textColors.textTertiary),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -208,11 +237,13 @@ class ConnectionBox extends StatelessWidget {
                     final bool connecting =
                         GetIt.instance<NetworkStore>().connectionInProgress;
 
-                    /// Ghost Connect (mock token notes: saved-card buttons
-                    /// are demoted to ghosts - the filled Connect CTA in
-                    /// the connect card is the screen's one accent moment)
+                    /// Connect prominence follows reachability (user
+                    /// directive 2026-09-20): online cards get the filled
+                    /// accent CTA, checking/offline keep the ghost.
+                    /// Supersedes the v12 note that demoted all saved-card
+                    /// buttons to ghosts.
                     return BaseButton(
-                      secondary: true,
+                      secondary: this.connection.reachable != true,
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
                         vertical: AppSpacing.sm,
