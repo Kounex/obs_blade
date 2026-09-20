@@ -141,10 +141,25 @@ List<Widget> _buildStandalone(DashboardElement element) {
       return const [];
     case DashboardElement.OBSStats:
       return const [
-        BaseCard(
-          title: 'Stats',
-          paddingChild: EdgeInsets.all(0),
-          child: SizedBox(height: 650.0, child: Stats()),
+        /// Phone: no wrapping card - the inner stat containers are cards
+        /// already, so an outer one doubled the chrome. The dots get bottom
+        /// spacing so they don't sit on the first card. Tablet keeps the
+        /// titled full-width card.
+        ResponsiveWidgetWrapper(
+          mobileWidget: SizedBox(
+            height: 650.0,
+            child: Stats(
+              pageIndicatorPadding: EdgeInsets.only(
+                top: AppSpacing.md,
+                bottom: AppSpacing.md,
+              ),
+            ),
+          ),
+          tabletWidget: BaseCard(
+            title: 'Stats',
+            paddingChild: EdgeInsets.all(0),
+            child: SizedBox(height: 650.0, child: Stats()),
+          ),
         ),
         SizedBox(height: AppSpacing.xl),
       ];

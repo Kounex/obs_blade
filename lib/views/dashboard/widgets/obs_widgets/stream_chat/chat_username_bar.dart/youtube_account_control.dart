@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -141,8 +142,10 @@ class _ConnectPill extends StatelessWidget {
               Theme.of(context).colorScheme.secondary,
           borderRadius: AppRadius.pill,
         ),
-        child: Text(
+        child: AutoSizeText(
           'Connect YouTube',
+          maxLines: 1,
+          minFontSize: 10.0,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: Colors.white),

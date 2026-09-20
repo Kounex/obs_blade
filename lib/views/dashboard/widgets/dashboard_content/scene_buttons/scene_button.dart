@@ -102,9 +102,15 @@ class SceneButton extends StatelessWidget {
                     /// Program tile: 10% program tint fill + solid program ring
                     /// (token-delta §2.2) - the fill also carries the OBS
                     /// transition progress via [SelectableBox.boxAnimation].
-                    /// A preview-only tile gets a neutral ring instead so red
-                    /// stays exclusive to program (rule 7)
-                    colorSelected: statusColors.program.withValues(alpha: 0.10),
+                    /// The fill is pre-composited onto the card fill
+                    /// (opaque): AnimatedContainer's color lerp between the
+                    /// raw 10% tint and the opaque card color dipped through
+                    /// a semi-transparent mid-state that flashed brighter
+                    /// than either end
+                    colorSelected: Color.alphaBlend(
+                      statusColors.program.withValues(alpha: 0.10),
+                      Theme.of(context).cardColor,
+                    ),
                     colorSelectedBorder: isProgram
                         ? statusColors.program
                         : Colors.white.withValues(alpha: 0.55),

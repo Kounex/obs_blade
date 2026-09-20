@@ -11,6 +11,11 @@ import '../dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 /// the GetIt chat stores; the stores connect on login restore / channel
 /// select regardless of any surface). The dashboard chat pane is untouched
 /// and remains the live co-display surface.
+/// The fixed height of the stock Cupertino tab bar (its internal
+/// `_kTabBarHeight`) - the tab base wraps it in a GlassBar which adds
+/// no vertical extent, so this is what the chat content must clear
+const double _kTabBarExtent = 50.0;
+
 class ChatView extends StatelessWidget {
   const ChatView({super.key});
 
@@ -28,7 +33,7 @@ class ChatView extends StatelessWidget {
             /// [AppSpacing.md] above the tab bar (bar height + safe-area
             /// inset), scaling with the screen
             bottom:
-                kBottomNavigationBarHeight +
+                _kTabBarExtent +
                 MediaQuery.paddingOf(context).bottom +
                 AppSpacing.md,
           ),

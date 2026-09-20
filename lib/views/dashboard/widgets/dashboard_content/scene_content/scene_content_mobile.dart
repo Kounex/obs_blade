@@ -24,44 +24,52 @@ class SceneContentMobile extends StatelessWidget {
 
     return DefaultTabController(
       length: 2,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Material(
-            color: theme.cupertinoOverrideTheme!.barBackgroundColor,
-            child: TabBar(
-              /// Active tab ink = accent, spent as text ([AppTextColors
-              /// .accentText]) - token-delta rule 2 + §2.3
-              labelColor: theme.extension<AppTextColors>()!.accentText,
-              unselectedLabelColor: theme.textTheme.bodySmall!.color,
-              labelStyle: theme.textTheme.titleSmall!.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: theme.textTheme.titleSmall,
-              indicator: UnderlineTabIndicator(
-                borderSide: BorderSide(
-                  width: 3.0,
-                  color: theme.extension<AppTextColors>()!.accentText,
-                ),
-                insets: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-              ),
-              indicatorSize: TabBarIndicatorSize.label,
-              dividerColor: Colors.transparent,
-              tabs: tabs,
-            ),
-          ),
 
-          /// Grown from 300 to 400 (the tablet card extent) so resting rows
-          /// aren't clipped mid-glyph - taller content still scrolls inside
-          /// via [NestedScrollManager]
-          SizedBox(
-            height: 400,
-            child: TabBarView(
-              physics: const NeverScrollableScrollPhysics(),
-              children: views,
+      /// Card fill behind the whole block (tab strip + content) so the
+      /// fixed 400px content height reads as intentional container room
+      /// instead of a void against the scaffold - the mobile counterpart
+      /// of the tablet's titled BaseCards
+      child: Container(
+        color: theme.cardColor,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: TabBar(
+                /// Active tab ink = accent, spent as text ([AppTextColors
+                /// .accentText]) - token-delta rule 2 + §2.3
+                labelColor: theme.extension<AppTextColors>()!.accentText,
+                unselectedLabelColor: theme.textTheme.bodySmall!.color,
+                labelStyle: theme.textTheme.titleSmall!.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: theme.textTheme.titleSmall,
+                indicator: UnderlineTabIndicator(
+                  borderSide: BorderSide(
+                    width: 3.0,
+                    color: theme.extension<AppTextColors>()!.accentText,
+                  ),
+                  insets: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                ),
+                indicatorSize: TabBarIndicatorSize.label,
+                dividerColor: Colors.transparent,
+                tabs: tabs,
+              ),
             ),
-          ),
-        ],
+
+            /// Grown from 300 to 400 (the tablet card extent) so resting rows
+            /// aren't clipped mid-glyph - taller content still scrolls inside
+            /// via [NestedScrollManager]
+            SizedBox(
+              height: 400,
+              child: TabBarView(
+                physics: const NeverScrollableScrollPhysics(),
+                children: views,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
