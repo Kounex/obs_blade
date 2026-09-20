@@ -166,8 +166,10 @@ class _TabBaseState extends State<TabBase> {
                     _tabScrollController[tappedTab]!.offset > 0) {
                   _tabScrollController[tappedTab]!.animateTo(
                     0.0,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeIn,
+                    duration: AppMotion.reduce(context)
+                        ? AppMotion.fast
+                        : AppMotion.medium,
+                    curve: AppMotion.standard,
                   );
                 }
               } else {
@@ -189,8 +191,9 @@ class _TabBaseState extends State<TabBase> {
   }
 }
 
-/// "On Air" tab switch transition: 200ms fade + subtle scale of the tab
-/// body whenever the active tab changes.
+/// "On Air" tab switch transition: medium fade + 12px rise + subtle scale
+/// of the tab body whenever the active tab changes (reduced motion:
+/// fade-only).
 ///
 /// Implemented as a one-shot entrance animation around the persistent
 /// [IndexedStack] rather than an [AnimatedSwitcher] keyed by tab: during a
@@ -212,7 +215,7 @@ class _TabSwitchTransition extends StatefulWidget {
 class _TabSwitchTransitionState extends State<_TabSwitchTransition>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _opacity;
+  late final CurvedAnimation _curved;
   late final Animation<double> _scale;
 
   @override
@@ -220,18 +223,11 @@ class _TabSwitchTransitionState extends State<_TabSwitchTransition>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-
-      /// Design system mandates 200ms for tab switches
-      /// (`docs/redesign/design-system.md` - motion language)
-      duration: const Duration(milliseconds: 200),
+      duration: AppMotion.medium,
       value: 1.0,
     );
-    CurvedAnimation curved = CurvedAnimation(
-      parent: _controller,
-      curve: AppMotion.standard,
-    );
-    _opacity = curved;
-    _scale = Tween<double>(begin: 0.98, end: 1.0).animate(curved);
+    _curved = CurvedAnimation(parent: _controller, curve: AppMotion.emphasized);
+    _scale = Tween<double>(begin: 0.98, end: 1.0).animate(_curved);
   }
 
   @override
@@ -250,9 +246,17 @@ class _TabSwitchTransitionState extends State<_TabSwitchTransition>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _opacity,
-      child: ScaleTransition(scale: _scale, child: widget.child),
-    );
+    Widget current = FadeTransition(opacity: _curved, child: widget.child);
+    if (!AppMotion.reduce(context)) {
+      current = AnimatedBuilder(
+        animation: _curved,
+        child: current,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(0.0, (1.0 - _curved.value) * 12.0),
+          child: ScaleTransition(scale: _scale, child: child),
+        ),
+      );
+    }
+    return current;
   }
 }
