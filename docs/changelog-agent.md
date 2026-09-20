@@ -2,6 +2,44 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-20 — Chat independence: dedicated Chat tab (astra port) on `4.0-liquid-glass`
+
+Chat was reachable only inside the dashboard route, which itself only exists
+after a successful OBS connect — no session, no chat. The dependency was
+purely navigational: chat state lives in the global settings box and the
+GetIt chat stores, whose connections never touch the OBS socket. Per the
+ratified design (`superpowers/specs/2026-09-20-chat-independence-design.md`,
+plan `superpowers/plans/2026-09-20-chat-independence.md`; astra's "chat
+first-class" idea translated into our routing idiom — its no-routes shell
+was explicitly not adopted):
+
+- **New `Tabs.Chat`** (Home · Chat · Statistics · Settings,
+  `CupertinoIcons.chat_bubble_2_fill`) with `ChatTabRoutingKeys`
+  (`/tabs/chat` + `/tabs/chat/pro`) — the tab scaffold auto-generates the
+  navigator; the IndexedStack keeps chat warm (scroll position + composer
+  text survive tab switches).
+- **`ChatView`** (`lib/views/chat/chat_view.dart`): the landing-view idiom
+  (`TransculentCupertinoNavBarWrapper` `customBody`), `StreamChat`
+  full-bleed on phone, 640-capped centered column on larger screens,
+  tab-bar bottom clearance reusing the `CustomSliverList` formula.
+- **`StreamChat` seams** (defaults = today's dashboard behavior):
+  `scrollArbitration: false` skips the pointer-band `Listener` and the
+  `DashboardStore` lookup (audit defect #4 simply doesn't apply — no parent
+  scroll view); `proRoute` lets the Pro upsell resolve on the host tab's
+  navigator (`/tabs/chat/pro` → same `ProPaywallView`).
+- **Untouched:** dashboard chat pane (live co-display + tablet
+  side-by-side), chat stores, WebView engine.
+
+S-tier wave, 2 production commits + docs (`8fb519fa` seams, `94a70d74` tab).
+Gates: full chat suite **663 green** (6 new: 3 seams + 3 tab), analyze at the
+472 baseline. Test harness notes: the translucent nav bar wrapper's non-Apple
+branch force-unwraps `appBarTheme.backgroundColor` (test themes must set it,
+mirroring `lib/app.dart`), and route-push assertions need a second pump for
+the Cupertino transition to build the incoming page. Follow-ups (ratified):
+conversation-owned drafts wave; optional live-session strip (program pill +
+quick mic — the astra focus-swap translation). **Pending: user dogfood** —
+pre-connect chat reachability, Dashboard↔Chat tab switching, tablet column.
+
 ## 2026-09-20 — Stale-state honesty (astra phase 3, wave 2) on `4.0-liquid-glass`
 
 Second interaction port per the ratified progressive-adoption verdict:

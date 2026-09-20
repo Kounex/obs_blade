@@ -190,7 +190,7 @@ tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
 — approved.** The wave's follow-up is FIXED
 (2026-09-18, `9d6619b2`): `makeBatchRequest` never sends an empty batch, so
 `fetchSceneItemsFilters` can no longer hit the `batchRequestType` "No
-element" crash (scene with no items / profile with no inputs). **Next:** the remaining interaction ports (chat independence; syncOffset
+element" crash (scene with no items / profile with no inputs). **Next:** the remaining interaction ports (chat independence LANDED 2026-09-20 — see below; syncOffset
 gating follow-up). **Confirmed-state ordering (astra phase 3, wave 1) MERGED
 into `4.0-liquid-glass` (2026-09-20, fast-forward to `191f1f13`) after user
 dogfood — approved.** Pure `EventOrdering` (epochs + per-key event journals)
@@ -208,9 +208,21 @@ through the fake peer). **Stale-state honesty (wave 2) LANDED on
 resync/toast), per-pane "LAST KNOWN STATE" badges (Scenes/Scene Items/
 Audio), `StaleGuard` lockout on every mutation control, honest toast copy.
 Gates: 803 tests green, analyze 472. **Pending: user dogfood** (quit OBS
-mid-session → badges + lockout; restart → snap back). Chat independence
-still needs the user to run the astra labs (`lib/main_redesign*.dart`)
-first to feel the focus-swap trade-off. **inspect-vs-command + Take bar will NOT be ported
+mid-session → badges + lockout; restart → snap back). **Chat independence
+(dedicated Chat tab) LANDED (2026-09-20, `8fb519fa` + `94a70d74`):** new
+`Tabs.Chat` (Home · Chat · Statistics · Settings) hosting `StreamChat`
+standalone — chat is now reachable before/without an OBS session (the
+dependency was purely navigational; chat stores + config were already
+OBS-free). Two `StreamChat` seams (defaults = dashboard behavior):
+`scrollArbitration: false` skips the dashboard-only WebView pointer band +
+`DashboardStore` lookup; `proRoute` resolves the Pro upsell on the chat
+tab's navigator (`/tabs/chat/pro`). Dashboard chat pane untouched. Design:
+`superpowers/specs/2026-09-20-chat-independence-design.md`; plan:
+`superpowers/plans/2026-09-20-chat-independence.md`. Gates: chat suite 663
+green, analyze 472. **Pending: user dogfood** (pre-connect chat
+reachability, Dashboard↔Chat tab switching, tablet 640 column). Follow-ups:
+conversation-owned drafts wave; optional live-session strip (program pill +
+quick mic — the astra focus-swap translation). **inspect-vs-command + Take bar will NOT be ported
 (2026-09-18, user-ratified):** OBS itself already ships the inspect-first
 concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
 → scene tap sends `SetCurrentPreviewScene`, transition button sends a real
@@ -218,8 +230,6 @@ concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
 An always-on inspect layer would double up with Studio Mode and diverge from
 OBS behavior. This also dissolves the Take-dock side of the deferred
 preference-translation work (audit open threads).
-User to run the astra labs (`lib/main_redesign*.dart`) to feel the
-chat-independence (focus-swap) trade-off before that port.
 
 **Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
 the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
