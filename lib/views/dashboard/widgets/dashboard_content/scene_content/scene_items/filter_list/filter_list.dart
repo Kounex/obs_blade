@@ -68,7 +68,9 @@ class _FilterListState extends State<FilterList> {
         late SceneItem sceneItem;
         try {
           sceneItem = dashboardStore.currentSceneItems.firstWhere(
-            (sceneItem) => sceneItem.sceneItemId == sceneItem.sceneItemId,
+            (currentSceneItem) =>
+                currentSceneItem.sceneItemId ==
+                this.widget.sceneItem.sceneItemId,
           );
         } catch (_) {
           Navigator.of(context).pop();
