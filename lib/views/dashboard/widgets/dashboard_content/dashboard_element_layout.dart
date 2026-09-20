@@ -111,7 +111,16 @@ List<Widget> buildOrderedDashboardSlivers(
     );
   }
 
-  return [Column(children: columnChildren)];
+  /// Leading md so the first element never sits directly on the app bar -
+  /// the same rhythm as the inter-block gaps
+  return [
+    Column(
+      children: [
+        const SizedBox(height: AppSpacing.md),
+        ...columnChildren,
+      ],
+    ),
+  ];
 }
 
 List<Widget> _buildStandalone(
@@ -189,18 +198,17 @@ List<Widget> _buildStandalone(
       return const [];
     case DashboardElement.OBSStats:
       return const [
-        /// Phone: no wrapping card - the inner stat containers are cards
-        /// already, so an outer one doubled the chrome. The dots get bottom
-        /// spacing so they don't sit on the first card. Tablet keeps the
-        /// titled full-width card.
+        /// Phone: no wrapping card (the inner stat containers are cards
+        /// already) and no fixed frame - the section measures its pages and
+        /// takes the tallest one's height, so shorter pages leave no dead
+        /// space. The dots get bottom spacing so they don't sit on the
+        /// first card. Tablet keeps the titled full-width card.
         ResponsiveWidgetWrapper(
-          mobileWidget: SizedBox(
-            height: 650.0,
-            child: Stats(
-              pageIndicatorPadding: EdgeInsets.only(
-                top: AppSpacing.md,
-                bottom: AppSpacing.md,
-              ),
+          mobileWidget: Stats(
+            autoHeight: true,
+            pageIndicatorPadding: EdgeInsets.only(
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
             ),
           ),
           tabletWidget: DashboardElementCard(
