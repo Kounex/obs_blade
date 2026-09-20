@@ -82,11 +82,25 @@ class StreamChat extends StatefulWidget {
   final bool usernameRowExpandable;
   final bool usernameRowBeneath;
 
+  /// WebView scroll arbitration with the surrounding dashboard scroll view
+  /// (the pointer band + `DashboardStore.setPointerOnChat` in
+  /// [_buildLegacyChatStack]). Standalone hosts without a parent scroll
+  /// view (the Chat tab) pass false: the WebView then owns its touches
+  /// directly and no [DashboardStore] is looked up.
+  final bool scrollArbitration;
+
+  /// Route the locked-Pro upsell pill pushes. Null = the Home tab's
+  /// paywall route (the dashboard context); other tab hosts pass their own
+  /// paywall route so the push resolves on their navigator.
+  final String? proRoute;
+
   const StreamChat({
     super.key,
     this.usernameRowPadding = false,
     this.usernameRowExpandable = false,
     this.usernameRowBeneath = false,
+    this.scrollArbitration = true,
+    this.proRoute,
   });
 
   @override
@@ -235,7 +249,9 @@ class _StreamChatState extends State<StreamChat>
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
+    DashboardStore? dashboardStore = this.widget.scrollArbitration
+        ? GetIt.instance<DashboardStore>()
+        : null;
 
     Widget usernameBar = Padding(
       padding: EdgeInsets.only(
@@ -307,7 +323,12 @@ class _StreamChatState extends State<StreamChat>
                       ? this._buildNativeChatSlot(context, chatType)
                       : StaggeredEntrance(
                           scaleFrom: 0.985,
-                          child: _ChatProUpsell(chatType: chatType),
+                          child: _ChatProUpsell(
+                            chatType: chatType,
+                            proRoute:
+                                this.widget.proRoute ??
+                                HomeTabRoutingKeys.Pro.route,
+                          ),
                         ),
                 );
               }
@@ -505,7 +526,7 @@ class _StreamChatState extends State<StreamChat>
     Box<dynamic> settingsBox,
     ChatType chatType,
     bool chatActive,
-    DashboardStore dashboardStore,
+    DashboardStore? dashboardStore,
   ) {
     return Stack(
       alignment: Alignment.center,
@@ -514,20 +535,41 @@ class _StreamChatState extends State<StreamChat>
         /// actual chat to display because otherwise the [WebView]
         /// will still eat up performance
         if (chatActive && _webController != null) ...[
-          /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
-          /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
-          /// in the region where the Twitch chat is. The Listener is used to determine
-          /// where the user is trying to scroll and if it's where the Twitch chat is,
-          /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
-          /// the scroll
-          Listener(
-            onPointerDown: (onPointerDown) => dashboardStore.setPointerOnChat(
-              onPointerDown.localPosition.dy > 150.0 &&
-                  onPointerDown.localPosition.dy < 450.0,
-            ),
-            onPointerUp: (_) => dashboardStore.setPointerOnChat(false),
-            onPointerCancel: (_) => dashboardStore.setPointerOnChat(false),
-            child: WebViewWidget(
+          if (this.widget.scrollArbitration)
+            /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
+            /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
+            /// in the region where the Twitch chat is. The Listener is used to determine
+            /// where the user is trying to scroll and if it's where the Twitch chat is,
+            /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
+            /// the scroll
+            Listener(
+              onPointerDown: (onPointerDown) =>
+                  dashboardStore!.setPointerOnChat(
+                    onPointerDown.localPosition.dy > 150.0 &&
+                        onPointerDown.localPosition.dy < 450.0,
+                  ),
+              onPointerUp: (_) => dashboardStore!.setPointerOnChat(false),
+              onPointerCancel: (_) => dashboardStore!.setPointerOnChat(false),
+              child: WebViewWidget(
+                key: Key(
+                  chatType.toString() +
+                      settingsBox
+                          .get(SettingsKeys.SelectedTwitchUsername.name)
+                          .toString() +
+                      settingsBox
+                          .get(SettingsKeys.SelectedYouTubeUsername.name)
+                          .toString() +
+                      settingsBox
+                          .get(SettingsKeys.SelectedOwncastUsername.name)
+                          .toString(),
+                ),
+                controller: _webController!,
+              ),
+            )
+          else
+            /// Standalone host (no parent scroll view): the WebView owns
+            /// its touches directly
+            WebViewWidget(
               key: Key(
                 chatType.toString() +
                     settingsBox
@@ -542,7 +584,6 @@ class _StreamChatState extends State<StreamChat>
               ),
               controller: _webController!,
             ),
-          ),
 
           /// Crossfading branded surface hiding the flash of the
           /// keyed [WebView] reload until the page has loaded -
@@ -680,7 +721,10 @@ class _ChatEmptyState extends StatelessWidget {
 class _ChatProUpsell extends StatelessWidget {
   final ChatType chatType;
 
-  const _ChatProUpsell({required this.chatType});
+  /// Paywall route on the host tab's navigator
+  final String proRoute;
+
+  const _ChatProUpsell({required this.chatType, required this.proRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -739,8 +783,7 @@ class _ChatProUpsell extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Pressable(
               haptic: true,
-              onTap: () =>
-                  Navigator.of(context).pushNamed(HomeTabRoutingKeys.Pro.route),
+              onTap: () => Navigator.of(context).pushNamed(this.proRoute),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.lg,
