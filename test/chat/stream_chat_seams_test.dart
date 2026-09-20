@@ -54,33 +54,17 @@ void main() {
     }
   });
 
-  testWidgets(
-    'standalone mode renders chat without any OBS stores registered',
-    (tester) async {
-      await tester.pumpWidget(wrap(const StreamChat(scrollArbitration: false)));
-      await tester.pump();
-
-      /// Empty state = no username selected: the whole surface rendered
-      /// with no DashboardStore/NetworkStore in GetIt
-      expect(find.text('Twitch Chat'), findsOneWidget);
-      expect(
-        find.textContaining('No Twitch username selected'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets('default mode still consults DashboardStore (dashboard behavior '
-      'unchanged)', (tester) async {
+  testWidgets('renders the empty state without any OBS stores registered', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap(const StreamChat()));
     await tester.pump();
 
-    /// DashboardStore is not registered in this harness, so the
-    /// default (dashboard) path must still look it up and fail here
-    final exception = tester.takeException();
-    expect(exception, isNotNull);
-    expect(exception.toString(), contains('DashboardStore'));
+    /// Empty state = no username selected: the whole surface rendered
+    /// with no DashboardStore/NetworkStore in GetIt
+    expect(find.text('Twitch Chat'), findsOneWidget);
+    expect(find.textContaining('No Twitch username selected'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('upsell pill pushes the host-provided pro route', (tester) async {
@@ -101,9 +85,7 @@ void main() {
           cupertinoOverrideTheme: const CupertinoThemeData(),
           extensions: const [AppStatusColors.standard, AppTextColors.standard],
         ),
-        home: const Scaffold(
-          body: StreamChat(scrollArbitration: false, proRoute: '/test/pro'),
-        ),
+        home: const Scaffold(body: StreamChat(proRoute: '/test/pro')),
         onGenerateRoute: (settings) {
           pushed = settings.name;
           return CupertinoPageRoute(

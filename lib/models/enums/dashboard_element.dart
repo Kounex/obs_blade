@@ -30,6 +30,9 @@ enum DashboardElement {
   @HiveField(7)
   SceneItemsAudio,
 
+  /// Retired from the dashboard UI — chat lives in its own tab now and this
+  /// value is filtered from the stored order at read time. Kept so persisted
+  /// `DashboardElementsOrder` boxes stay decodable.
   @HiveField(8)
   StreamChat,
 

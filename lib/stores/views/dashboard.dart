@@ -213,13 +213,6 @@ abstract class _DashboardStore with Store {
   @observable
   Uint8List? manualScreenshotImageBytes;
 
-  /// Checks whether the user is trying to scroll while the pointer (finger) is
-  /// on the chat - this means the user probably wants to scroll the chat.
-  /// If the user wants to scroll inside the app, the pointer (finger) may not
-  /// be on the chat but above or underneath (UI wise)
-  @observable
-  bool isPointerOnChat = false;
-
   /// Indicator (which is used in [_checkOBSConnection]) whether we attempt a
   /// reconnect since the WebSocket connection closed. Can and is currently listened
   /// to in [ReconnectToast] to show the user that a reconnect attempt is ongoing
@@ -1112,10 +1105,6 @@ abstract class _DashboardStore with Store {
       _requestPreviewImage();
     }
   }
-
-  @action
-  void setPointerOnChat(bool isPointerOnChat) =>
-      this.isPointerOnChat = isPointerOnChat;
 
   @action
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {

@@ -15,7 +15,6 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/pro_store.dart';
-import '../../../../../stores/views/dashboard.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -82,13 +81,6 @@ class StreamChat extends StatefulWidget {
   final bool usernameRowExpandable;
   final bool usernameRowBeneath;
 
-  /// WebView scroll arbitration with the surrounding dashboard scroll view
-  /// (the pointer band + `DashboardStore.setPointerOnChat` in
-  /// [_buildLegacyChatStack]). Standalone hosts without a parent scroll
-  /// view (the Chat tab) pass false: the WebView then owns its touches
-  /// directly and no [DashboardStore] is looked up.
-  final bool scrollArbitration;
-
   /// Route the locked-Pro upsell pill pushes. Null = the Home tab's
   /// paywall route (the dashboard context); other tab hosts pass their own
   /// paywall route so the push resolves on their navigator.
@@ -99,7 +91,6 @@ class StreamChat extends StatefulWidget {
     this.usernameRowPadding = false,
     this.usernameRowExpandable = false,
     this.usernameRowBeneath = false,
-    this.scrollArbitration = true,
     this.proRoute,
   });
 
@@ -249,10 +240,6 @@ class _StreamChatState extends State<StreamChat>
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore? dashboardStore = this.widget.scrollArbitration
-        ? GetIt.instance<DashboardStore>()
-        : null;
-
     Widget usernameBar = Padding(
       padding: EdgeInsets.only(
         top: 0,
@@ -338,7 +325,6 @@ class _StreamChatState extends State<StreamChat>
                 settingsBox,
                 chatType,
                 chatActive,
-                dashboardStore,
               );
             },
           ),
@@ -526,7 +512,6 @@ class _StreamChatState extends State<StreamChat>
     Box<dynamic> settingsBox,
     ChatType chatType,
     bool chatActive,
-    DashboardStore? dashboardStore,
   ) {
     return Stack(
       alignment: Alignment.center,
@@ -535,61 +520,27 @@ class _StreamChatState extends State<StreamChat>
         /// actual chat to display because otherwise the [WebView]
         /// will still eat up performance
         if (chatActive && _webController != null) ...[
-          if (this.widget.scrollArbitration)
-            /// To enable scrolling in the Twitch chat, we need to disabe scrolling for
-            /// the main Scroll (the [CustomScrollView] of this view) while trying to scroll
-            /// in the region where the Twitch chat is. The Listener is used to determine
-            /// where the user is trying to scroll and if it's where the Twitch chat is,
-            /// we change to [NeverScrollableScrollPhysics] so the WebView can consume
-            /// the scroll
-            Listener(
-              onPointerDown: (onPointerDown) =>
-                  dashboardStore!.setPointerOnChat(
-                    onPointerDown.localPosition.dy > 150.0 &&
-                        onPointerDown.localPosition.dy < 450.0,
-                  ),
-              onPointerUp: (_) => dashboardStore!.setPointerOnChat(false),
-              onPointerCancel: (_) => dashboardStore!.setPointerOnChat(false),
-              child: WebViewWidget(
-                key: Key(
-                  chatType.toString() +
-                      settingsBox
-                          .get(SettingsKeys.SelectedTwitchUsername.name)
-                          .toString() +
-                      settingsBox
-                          .get(SettingsKeys.SelectedYouTubeUsername.name)
-                          .toString() +
-                      settingsBox
-                          .get(SettingsKeys.SelectedOwncastUsername.name)
-                          .toString(),
-                ),
-                controller: _webController!,
-              ),
-            )
-          else
-            /// Standalone host (no parent scroll view): the WebView owns
-            /// its touches directly
-            WebViewWidget(
-              key: Key(
-                chatType.toString() +
-                    settingsBox
-                        .get(SettingsKeys.SelectedTwitchUsername.name)
-                        .toString() +
-                    settingsBox
-                        .get(SettingsKeys.SelectedYouTubeUsername.name)
-                        .toString() +
-                    settingsBox
-                        .get(SettingsKeys.SelectedOwncastUsername.name)
-                        .toString(),
-              ),
-              controller: _webController!,
+          WebViewWidget(
+            key: Key(
+              chatType.toString() +
+                  settingsBox
+                      .get(SettingsKeys.SelectedTwitchUsername.name)
+                      .toString() +
+                  settingsBox
+                      .get(SettingsKeys.SelectedYouTubeUsername.name)
+                      .toString() +
+                  settingsBox
+                      .get(SettingsKeys.SelectedOwncastUsername.name)
+                      .toString(),
             ),
+            controller: _webController!,
+          ),
 
           /// Crossfading branded surface hiding the flash of the
           /// keyed [WebView] reload until the page has loaded -
           /// purely visual: IgnorePointer makes touches always fall
-          /// through to the [WebView] (and its pointer band) as before -
-          /// opacity alone does not exempt a widget from hit testing
+          /// through to the [WebView] as before - opacity alone does
+          /// not exempt a widget from hit testing
           IgnorePointer(
             child: AnimatedOpacity(
               opacity: _isChatLoading ? 1.0 : 0.0,

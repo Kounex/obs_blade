@@ -3,12 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../models/enums/dashboard_element.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
-import '../../../../shared/general/base/divider.dart';
 import '../../../../shared/general/responsive_widget_wrapper.dart';
-import '../obs_widgets/obs_widgets.dart';
-import '../obs_widgets/obs_widgets_mobile.dart';
 import '../obs_widgets/stats/stats.dart';
-import '../obs_widgets/stream_chat/stream_chat.dart';
 import 'exposed_controls/exposed_controls.dart';
 import 'profile_scene_collection/profile_scene_collection.dart';
 import 'scene_buttons/scene_buttons.dart';
@@ -26,14 +22,9 @@ const Set<DashboardElement> _kScenePair = {
   DashboardElement.SceneItemsAudio,
 };
 
-const Set<DashboardElement> _kWidgetsPair = {
-  DashboardElement.StreamChat,
-  DashboardElement.OBSStats,
-};
-
 /// Builds the regular (non-streaming) dashboard body from
-/// [DashboardElementsOrder], composing adjacent Scene Items/Audio and
-/// Chat/Stats into the existing mobile-tab / tablet-row layouts.
+/// [DashboardElementsOrder], composing adjacent Scene Items/Audio into the
+/// existing mobile-tab / tablet-row layouts.
 List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
   final List<Widget> columnChildren = [];
   final Set<DashboardElement> consumed = {};
@@ -59,37 +50,6 @@ List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
         ),
       );
       columnChildren.add(const SizedBox(height: AppSpacing.xl));
-      continue;
-    }
-
-    if (next != null &&
-        _kWidgetsPair.contains(current) &&
-        _kWidgetsPair.contains(next) &&
-        current != next) {
-      consumed.add(next);
-      final bool statsFirst = current == DashboardElement.OBSStats;
-      columnChildren.add(
-        ResponsiveWidgetWrapper(
-          mobileWidget: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: AppSpacing.sm),
-                child: BaseDivider(),
-              ),
-              OBSWidgetsMobile(statsFirst: statsFirst),
-            ],
-          ),
-          tabletWidget: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: AppSpacing.sm),
-                child: BaseDivider(),
-              ),
-              OBSWidgets(statsFirst: statsFirst),
-            ],
-          ),
-        ),
-      );
       continue;
     }
 
@@ -176,17 +136,9 @@ List<Widget> _buildStandalone(DashboardElement element) {
         SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.StreamChat:
-      return const [
-        BaseCard(
-          title: 'Chat',
-          paddingChild: EdgeInsets.all(0),
-          child: SizedBox(
-            height: 720.0,
-            child: StreamChat(usernameRowPadding: true),
-          ),
-        ),
-        SizedBox(height: AppSpacing.xl),
-      ];
+      // Retired — chat is a dedicated tab now; the element is filtered from
+      // the order at read time. Case kept so the switch stays exhaustive.
+      return const [];
     case DashboardElement.OBSStats:
       return const [
         BaseCard(

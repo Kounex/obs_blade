@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/chat_preview.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/profiles_preview.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_audio_preview.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/scene_buttons_preview.dart';
@@ -110,12 +109,6 @@ class ElementList extends StatelessWidget {
       visible: true,
     ),
     PreviewConfig(
-      element: DashboardElement.StreamChat,
-      widget: const ChatPreview(),
-      canBeNotVisible: false,
-      visible: true,
-    ),
-    PreviewConfig(
       element: DashboardElement.OBSStats,
       widget: const StatsPreview(),
       canBeNotVisible: false,
@@ -130,12 +123,17 @@ class ElementList extends StatelessWidget {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
       builder: (context, settingsBox, child) {
-        List<DashboardElement> elements = [
-          ...settingsBox.get(
-            SettingsKeys.DashboardElementsOrder.name,
-            defaultValue: DashboardElement.values,
-          ),
-        ];
+        List<DashboardElement> elements =
+            [
+                ...settingsBox.get(
+                  SettingsKeys.DashboardElementsOrder.name,
+                  defaultValue: DashboardElement.values,
+                ),
+              ]
+              /// Chat is a dedicated tab now - not a dashboard element anymore.
+              /// Filtered at read so legacy saved orders silently drop it (and
+              /// a re-save from this screen migrates the order for good)
+              ..remove(DashboardElement.StreamChat);
         return ReorderableListView.builder(
           shrinkWrap: true,
           padding: const EdgeInsets.only(

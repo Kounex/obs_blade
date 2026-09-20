@@ -559,24 +559,6 @@ mixin _$DashboardStore on _DashboardStore, Store {
     );
   }
 
-  late final _$isPointerOnChatAtom = Atom(
-    name: '_DashboardStore.isPointerOnChat',
-    context: context,
-  );
-
-  @override
-  bool get isPointerOnChat {
-    _$isPointerOnChatAtom.reportRead();
-    return super.isPointerOnChat;
-  }
-
-  @override
-  set isPointerOnChat(bool value) {
-    _$isPointerOnChatAtom.reportWrite(value, super.isPointerOnChat, () {
-      super.isPointerOnChat = value;
-    });
-  }
-
   late final _$reconnectingAtom = Atom(
     name: '_DashboardStore.reconnecting',
     context: context,
@@ -795,18 +777,6 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
-  void setPointerOnChat(bool isPointerOnChat) {
-    final _$actionInfo = _$_DashboardStoreActionController.startAction(
-      name: '_DashboardStore.setPointerOnChat',
-    );
-    try {
-      return super.setPointerOnChat(isPointerOnChat);
-    } finally {
-      _$_DashboardStoreActionController.endAction(_$actionInfo);
-    }
-  }
-
-  @override
   void toggleSceneItemGroupVisibility(SceneItem sceneItem) {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
       name: '_DashboardStore.toggleSceneItemGroupVisibility',
@@ -920,7 +890,6 @@ availableTransitions: ${availableTransitions},
 shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
 manualScreenshotImageBytes: ${manualScreenshotImageBytes},
-isPointerOnChat: ${isPointerOnChat},
 reconnecting: ${reconnecting},
 commandFailureNotice: ${commandFailureNotice},
 editSceneItemVisibility: ${editSceneItemVisibility},

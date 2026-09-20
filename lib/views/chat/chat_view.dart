@@ -36,7 +36,6 @@ class ChatView extends StatelessWidget {
             child: BaseConstrainedBox(
               child: StreamChat(
                 usernameRowPadding: true,
-                scrollArbitration: false,
                 proRoute: ChatTabRoutingKeys.Pro.route,
               ),
             ),

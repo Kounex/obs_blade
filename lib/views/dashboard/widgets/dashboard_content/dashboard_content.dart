@@ -16,12 +16,17 @@ class DashboardContent extends StatelessWidget {
       hiveKey: HiveKeys.Settings,
       rebuildKeys: const [SettingsKeys.DashboardElementsOrder],
       builder: (context, settingsBox, child) {
-        final List<DashboardElement> order = [
-          ...settingsBox.get(
-            SettingsKeys.DashboardElementsOrder.name,
-            defaultValue: DashboardElement.values,
-          ),
-        ];
+        final List<DashboardElement> order =
+            [
+                ...settingsBox.get(
+                  SettingsKeys.DashboardElementsOrder.name,
+                  defaultValue: DashboardElement.values,
+                ),
+              ]
+              /// Chat is a dedicated tab now - never rendered as a dashboard
+              /// element. Filtered at read so legacy saved orders (the enum
+              /// value stays persisted-data-safe) silently drop it.
+              ..remove(DashboardElement.StreamChat);
 
         return CustomSliverList(children: buildOrderedDashboardSlivers(order));
       },

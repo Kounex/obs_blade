@@ -153,8 +153,6 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   Widget build(BuildContext context) {
-    final DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
-
     return ThemedCupertinoScaffold(
       body: Stack(
         alignment: Alignment.topCenter,
@@ -166,10 +164,9 @@ class _DashboardViewState extends State<DashboardView> {
               builder: (context) => CustomScrollView(
                 physics:
                     settingsBox.get(
-                          SettingsKeys.StreamingMode.name,
-                          defaultValue: false,
-                        ) ||
-                        dashboardStore.isPointerOnChat
+                      SettingsKeys.StreamingMode.name,
+                      defaultValue: false,
+                    )
                     ? const NeverScrollableScrollPhysics()
                     : const ClampingScrollPhysics(),
                 controller:
