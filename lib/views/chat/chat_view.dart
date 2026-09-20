@@ -24,13 +24,13 @@ class ChatView extends StatelessWidget {
             /// Breathing room between the nav bar and the chat chrome
             top: AppSpacing.md,
 
-            /// The tab scaffold extends bodies behind the translucent tab
-            /// bar (extendBody) - same bottom clearance CustomSliverList
-            /// gives the sliver-based tab views, so the chat input rests
-            /// above the bar
+            /// The chat uses the full available height and rests
+            /// [AppSpacing.md] above the tab bar (bar height + safe-area
+            /// inset), scaling with the screen
             bottom:
-                2 * kBottomNavigationBarHeight +
-                MediaQuery.paddingOf(context).bottom / 2,
+                kBottomNavigationBarHeight +
+                MediaQuery.paddingOf(context).bottom +
+                AppSpacing.md,
           ),
           child: Center(
             child: BaseConstrainedBox(
