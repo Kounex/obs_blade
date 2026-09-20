@@ -117,7 +117,7 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
 
   @override
   String get route =>
-      '$AppRoutingKeys.Tabs.route/settings${{SettingsTabRoutingKeys.Landing: '', SettingsTabRoutingKeys.PrivacyPolicy: '/privacy-policy', SettingsTabRoutingKeys.About: '/about', SettingsTabRoutingKeys.CustomTheme: '/custom-theme', SettingsTabRoutingKeys.FAQ: '/faq', SettingsTabRoutingKeys.DataManagement: '/data-management', SettingsTabRoutingKeys.Logs: '/logs', SettingsTabRoutingKeys.LogDetail: '/logs/detail', SettingsTabRoutingKeys.DashboardCustomisation: '/dashboard-customisation', SettingsTabRoutingKeys.DashboardCustomisationOrder: '/dashboard-customisation/order', SettingsTabRoutingKeys.Pro: '/pro'}[this]!}';
+      '${AppRoutingKeys.Tabs.route}/settings${{SettingsTabRoutingKeys.Landing: '', SettingsTabRoutingKeys.PrivacyPolicy: '/privacy-policy', SettingsTabRoutingKeys.About: '/about', SettingsTabRoutingKeys.CustomTheme: '/custom-theme', SettingsTabRoutingKeys.FAQ: '/faq', SettingsTabRoutingKeys.DataManagement: '/data-management', SettingsTabRoutingKeys.Logs: '/logs', SettingsTabRoutingKeys.LogDetail: '/logs/detail', SettingsTabRoutingKeys.DashboardCustomisation: '/dashboard-customisation', SettingsTabRoutingKeys.DashboardCustomisationOrder: '/dashboard-customisation/order', SettingsTabRoutingKeys.Pro: '/pro'}[this]!}';
 }
 
 /// Used to summarize routing tasks and information at one point
