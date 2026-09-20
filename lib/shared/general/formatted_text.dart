@@ -17,13 +17,16 @@ class FormattedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    /// Mirrors the look of the previously used disabled [TextField]:
-    /// floating label above a disabled-grey value with tabular figures.
-    /// The value tweens between numeric changes (1s stats cadence) via
-    /// [CountUpText] and snaps for non-numeric values.
+    /// Values read at [AppTextColors.textPrimary], the floating label a step
+    /// below at textSecondary. The value tweens between numeric changes
+    /// (1s stats cadence) via [CountUpText] and snaps for non-numeric
+    /// values.
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
     final TextStyle valueStyle = Theme.of(context).textTheme.bodyMedium!
         .copyWith(
-          color: Theme.of(context).disabledColor,
+          color: textColors.textPrimary,
           fontFeatures: const [FontFeature.tabularFigures()],
         );
 
@@ -36,9 +39,10 @@ class FormattedText extends StatelessWidget {
           isDense: true,
           enabled: false,
           labelText: this.label,
-          labelStyle: Theme.of(
-            context,
-          ).textTheme.bodyMedium!.copyWith(height: 0.75),
+          labelStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
+            height: 0.75,
+            color: textColors.textSecondary,
+          ),
         ),
         child: ClipRect(
           child: Row(
