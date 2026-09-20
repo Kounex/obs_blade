@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/design/design.dart';
 import '../../shared/general/base/constrained_box.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../utils/routing_helper.dart';
@@ -20,6 +21,9 @@ class ChatView extends StatelessWidget {
         title: 'Chat',
         customBody: Padding(
           padding: EdgeInsets.only(
+            /// Breathing room between the nav bar and the chat chrome
+            top: AppSpacing.md,
+
             /// The tab scaffold extends bodies behind the translucent tab
             /// bar (extendBody) - same bottom clearance CustomSliverList
             /// gives the sliver-based tab views, so the chat input rests

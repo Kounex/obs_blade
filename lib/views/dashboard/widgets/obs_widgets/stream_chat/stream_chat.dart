@@ -587,13 +587,16 @@ class _StreamChatState extends State<StreamChat>
 
           /// Crossfading branded surface hiding the flash of the
           /// keyed [WebView] reload until the page has loaded -
-          /// purely visual, touches always fall through to the
-          /// [WebView] (and its pointer band) as before
-          AnimatedOpacity(
-            opacity: _isChatLoading ? 1.0 : 0.0,
-            duration: AppMotion.medium,
-            curve: AppMotion.standard,
-            child: _ChatLoadingState(chatType: chatType),
+          /// purely visual: IgnorePointer makes touches always fall
+          /// through to the [WebView] (and its pointer band) as before -
+          /// opacity alone does not exempt a widget from hit testing
+          IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: _isChatLoading ? 1.0 : 0.0,
+              duration: AppMotion.medium,
+              curve: AppMotion.standard,
+              child: _ChatLoadingState(chatType: chatType),
+            ),
           ),
         ],
         if (!chatActive)
