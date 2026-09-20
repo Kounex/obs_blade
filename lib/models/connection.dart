@@ -24,6 +24,11 @@ class Connection extends HiveObject {
   @HiveField(5)
   bool? isDomain;
 
+  /// Epoch ms of the last successful connect from a saved-connection card
+  /// (drives the "Last used" stamp). Additive - legacy boxes decode as null.
+  @HiveField(6)
+  int? lastConnectedMs;
+
   String? challenge;
   String? salt;
   bool? reachable;
