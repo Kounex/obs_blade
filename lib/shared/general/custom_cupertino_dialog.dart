@@ -65,10 +65,10 @@ class CustomCupertinoDialog extends StatelessWidget {
                                   EdgeInsets.only(
                                     top: this.paddingTop ?? _kDialogEdgePadding,
                                     left:
+                                        this.paddingLeft ?? _kDialogEdgePadding,
+                                    right:
                                         this.paddingRight ??
                                         _kDialogEdgePadding,
-                                    right:
-                                        this.paddingLeft ?? _kDialogEdgePadding,
                                     bottom:
                                         this.paddingBottom ??
                                         _kDialogEdgePadding,
