@@ -2,6 +2,35 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-20 — Ordering wave MERGED into `4.0-liquid-glass` + dead-transport tag wipe (D1 fix)
+
+User dogfood approved the confirmed-state ordering wave → merged
+fast-forward (`191f1f13`, pushed; branch `confirmed-state-ordering` kept at
+the same tip). Same commit fixed the wave's one tracked residual (D1):
+dead-socket reconnects left stale read tags queued, so the first
+post-reconnect responses per read target popped them FIFO, failed the epoch
+check and were discarded — gated state converged one read late, or never for
+reads only re-driven by events (e.g. `GetSceneList` on a static OBS). Fix:
+`_wipeOrderingQueues()` at the `initialRequests()` seam, which only ever runs
+on a provably fresh socket (`init()` runs on a brand-new store via
+`resetLazySingleton<DashboardStore>()` in the dashboard view's `initState`;
+the only other caller is the `_checkOBSConnection` reconnect-success branch).
+Live-socket `_resetOrdering()` callers (collection change) keep their FIFO
+tags — clearing there would let a stale response pop a fresh send's tag and
+apply ungated (the original plan defect). Regression test drives a real
+socket swap through the fake peer (`closeSockets()` + reconnect — the
+socket-swap support the wave review had scoped): tag queued on the dying
+socket, reconnect, fresh burst response must apply immediately (RED pre-fix:
+epoch-gated, timed out). The synthetic Test C (initialRequests on a live
+socket — a premise production can never reach) was replaced by this
+transport-real version. Gates on the merged tree: full suite 800 green
+(chat 657 / websocket 46 / persistence+pro+statistics+settings+utils 97),
+analyze at the 472 baseline. Flake note: 3 `twitch_chat_store_test.dart`
+tests flaked once under machine load (timeout cascade — the file took 4+
+min); green standalone and in a quiet full-file re-run. Pre-existing timing
+sensitivity in the multi-channel/lifecycle tests, unrelated to this change —
+watch it.
+
 ## 2026-09-18 — Confirmed-state ordering (astra phase 3, wave 1) built on `confirmed-state-ordering`
 
 First interaction port per the ratified progressive-adoption verdict
