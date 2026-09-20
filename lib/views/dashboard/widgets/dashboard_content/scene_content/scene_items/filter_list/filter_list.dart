@@ -115,65 +115,70 @@ class _FilterListState extends State<FilterList> {
                             vertical: 12.0,
                           ),
                           titleStyle: Theme.of(context).textTheme.bodyLarge,
-                          trailingTitleWidget: Pressable(
-                            haptic: true,
-                            onTap: () =>
-                                GetIt.instance<DashboardStore>().sendMutation(
-                                  RequestType.SetSourceFilterEnabled,
-                                  fields: {
-                                    'sourceName': sceneItem.sourceName,
-                                    'filterName': filter.filterName,
-                                    'filterEnabled': !filter.filterEnabled,
-                                  },
-                                  label: 'Filter toggle',
+                          trailingTitleWidget: StaleGuard(
+                            child: Pressable(
+                              haptic: true,
+                              onTap: () =>
+                                  GetIt.instance<DashboardStore>().sendMutation(
+                                    RequestType.SetSourceFilterEnabled,
+                                    fields: {
+                                      'sourceName': sceneItem.sourceName,
+                                      'filterName': filter.filterName,
+                                      'filterEnabled': !filter.filterEnabled,
+                                    },
+                                    label: 'Filter toggle',
+                                  ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(AppSpacing.sm),
+                                child: AnimatedToggleIcon(
+                                  icon: filter.filterEnabled
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: filter.filterEnabled
+                                      ? Theme.of(
+                                          context,
+                                        ).buttonTheme.colorScheme!.primary
+                                      : Theme.of(context)
+                                            .extension<AppStatusColors>()!
+                                            .recording,
                                 ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(AppSpacing.sm),
-                              child: AnimatedToggleIcon(
-                                icon: filter.filterEnabled
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: filter.filterEnabled
-                                    ? Theme.of(
-                                        context,
-                                      ).buttonTheme.colorScheme!.primary
-                                    : Theme.of(
-                                        context,
-                                      ).extension<AppStatusColors>()!.recording,
                               ),
                             ),
                           ),
                           child: Column(
                             children: filter.filterSettings.entries
                                 .map(
-                                  (filterSetting) => Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: AppSpacing.sm,
-                                    ),
-                                    child: DynamicInput(
-                                      label: filterSetting.key,
-                                      value: filterSetting.value,
-                                      onUpdate: (updatedValue) {
-                                        GetIt.instance<DashboardStore>()
-                                            .sendMutation(
-                                              RequestType
-                                                  .SetSourceFilterSettings,
-                                              fields: {
-                                                'sourceName':
-                                                    sceneItem.sourceName,
-                                                'filterName': filter.filterName,
-                                                'filterSettings': {}
-                                                  ..addAll(
-                                                    filter.filterSettings,
-                                                  )
-                                                  ..update(
-                                                    filterSetting.key,
-                                                    (value) => updatedValue,
-                                                  ),
-                                              },
-                                              label: 'Filter settings',
-                                            );
-                                      },
+                                  (filterSetting) => StaleGuard(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: AppSpacing.sm,
+                                      ),
+                                      child: DynamicInput(
+                                        label: filterSetting.key,
+                                        value: filterSetting.value,
+                                        onUpdate: (updatedValue) {
+                                          GetIt.instance<DashboardStore>()
+                                              .sendMutation(
+                                                RequestType
+                                                    .SetSourceFilterSettings,
+                                                fields: {
+                                                  'sourceName':
+                                                      sceneItem.sourceName,
+                                                  'filterName':
+                                                      filter.filterName,
+                                                  'filterSettings': {}
+                                                    ..addAll(
+                                                      filter.filterSettings,
+                                                    )
+                                                    ..update(
+                                                      filterSetting.key,
+                                                      (value) => updatedValue,
+                                                    ),
+                                                },
+                                                label: 'Filter settings',
+                                              );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 )

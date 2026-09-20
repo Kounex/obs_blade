@@ -30,59 +30,71 @@ class _AudioInputsState extends State<AudioInputs>
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
     return Observer(
-      builder: (context) => NestedScrollManager(
-        parentScrollController:
-            ModalRoute.of(context)!.settings.arguments as ScrollController,
-        child: Scrollbar(
-          controller: _controller,
-          thumbVisibility: true,
-          child: ListView(
-            controller: _controller,
-            physics: const ClampingScrollPhysics(),
-            padding: const EdgeInsets.only(top: AppSpacing.xl),
-            children: [
-              const _AudioSectionHeader(label: 'Global'),
-              Column(
-                children: dashboardStore.globalInputs.isNotEmpty
-                    ? dashboardStore.globalInputs
-                          .map(
-                            (globalInput) => VisibilitySlideWrapper(
-                              input: globalInput,
-                              child: AudioSlider(input: globalInput),
-                            ),
-                          )
-                          .toList()
-                    : [
-                        const PlaceholderSceneItem(
-                          text: 'No Global Audio source available...',
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                      ],
+      builder: (context) => Column(
+        children: [
+          const StaleStateBadge(),
+          Expanded(
+            child: NestedScrollManager(
+              parentScrollController:
+                  ModalRoute.of(context)!.settings.arguments
+                      as ScrollController,
+              child: Scrollbar(
+                controller: _controller,
+                thumbVisibility: true,
+                child: ListView(
+                  controller: _controller,
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.only(top: AppSpacing.xl),
+                  children: [
+                    const _AudioSectionHeader(label: 'Global'),
+                    Column(
+                      children: dashboardStore.globalInputs.isNotEmpty
+                          ? dashboardStore.globalInputs
+                                .map(
+                                  (globalInput) => StaleGuard(
+                                    child: VisibilitySlideWrapper(
+                                      input: globalInput,
+                                      child: AudioSlider(input: globalInput),
+                                    ),
+                                  ),
+                                )
+                                .toList()
+                          : [
+                              const PlaceholderSceneItem(
+                                text: 'No Global Audio source available...',
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                            ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      child: BaseDivider(),
+                    ),
+                    const _AudioSectionHeader(label: 'Scene'),
+                    Column(
+                      children: dashboardStore.currentInputs.isNotEmpty
+                          ? dashboardStore.currentInputs
+                                .map(
+                                  (input) => StaleGuard(
+                                    child: VisibilitySlideWrapper(
+                                      input: input,
+                                      child: AudioSlider(input: input),
+                                    ),
+                                  ),
+                                )
+                                .toList()
+                          : [
+                              const PlaceholderSceneItem(
+                                text: 'No Audio source in this scene...',
+                              ),
+                            ],
+                    ),
+                  ],
+                ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: BaseDivider(),
-              ),
-              const _AudioSectionHeader(label: 'Scene'),
-              Column(
-                children: dashboardStore.currentInputs.isNotEmpty
-                    ? dashboardStore.currentInputs
-                          .map(
-                            (input) => VisibilitySlideWrapper(
-                              input: input,
-                              child: AudioSlider(input: input),
-                            ),
-                          )
-                          .toList()
-                    : [
-                        const PlaceholderSceneItem(
-                          text: 'No Audio source in this scene...',
-                        ),
-                      ],
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

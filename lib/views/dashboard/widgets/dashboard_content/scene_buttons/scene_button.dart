@@ -67,133 +67,139 @@ class SceneButton extends StatelessWidget {
             }
           }
 
-          return Pressable(
-            haptic: true,
-            onTap: () {
-              if (dashboardStore.editSceneVisibility) {
-                this.onVisibilityTap();
-              } else {
-                if (studioMode) {
-                  dashboardStore.setStudioModePreviewSceneName(
-                    this.scene.sceneName,
-                  );
-                  dashboardStore.sendMutation(
-                    RequestType.SetCurrentPreviewScene,
-                    fields: {'sceneName': this.scene.sceneName},
-                    label: 'Preview scene switch',
-                  );
+          return StaleGuard(
+            child: Pressable(
+              haptic: true,
+              onTap: () {
+                if (dashboardStore.editSceneVisibility) {
+                  this.onVisibilityTap();
                 } else {
-                  dashboardStore.setActiveSceneName(this.scene.sceneName);
-                  dashboardStore.sendMutation(
-                    RequestType.SetCurrentProgramScene,
-                    fields: {'sceneName': this.scene.sceneName},
-                    label: 'Scene switch',
-                  );
+                  if (studioMode) {
+                    dashboardStore.setStudioModePreviewSceneName(
+                      this.scene.sceneName,
+                    );
+                    dashboardStore.sendMutation(
+                      RequestType.SetCurrentPreviewScene,
+                      fields: {'sceneName': this.scene.sceneName},
+                      label: 'Preview scene switch',
+                    );
+                  } else {
+                    dashboardStore.setActiveSceneName(this.scene.sceneName);
+                    dashboardStore.sendMutation(
+                      RequestType.SetCurrentProgramScene,
+                      fields: {'sceneName': this.scene.sceneName},
+                      label: 'Scene switch',
+                    );
+                  }
                 }
-              }
-            },
-            child: Stack(
-              children: [
-                SelectableBox(
-                  selected: isProgram,
-                  selectedStateBoxBorder: isProgram || isPreview,
+              },
+              child: Stack(
+                children: [
+                  SelectableBox(
+                    selected: isProgram,
+                    selectedStateBoxBorder: isProgram || isPreview,
 
-                  /// Program tile: 10% program tint fill + solid program ring
-                  /// (token-delta §2.2) - the fill also carries the OBS
-                  /// transition progress via [SelectableBox.boxAnimation].
-                  /// A preview-only tile gets a neutral ring instead so red
-                  /// stays exclusive to program (rule 7)
-                  colorSelected: statusColors.program.withValues(alpha: 0.10),
-                  colorSelectedBorder: isProgram
-                      ? statusColors.program
-                      : Colors.white.withValues(alpha: 0.55),
-                  colorUnselected: Theme.of(context).cardColor,
-                  boxAnimation: Duration(
-                    milliseconds:
-                        dashboardStore.currentTransition?.transitionDuration !=
-                                null &&
-                            dashboardStore
-                                    .currentTransition!
-                                    .transitionDuration! >=
-                                0
-                        ? dashboardStore.currentTransition!.transitionDuration!
-                        : 0,
+                    /// Program tile: 10% program tint fill + solid program ring
+                    /// (token-delta §2.2) - the fill also carries the OBS
+                    /// transition progress via [SelectableBox.boxAnimation].
+                    /// A preview-only tile gets a neutral ring instead so red
+                    /// stays exclusive to program (rule 7)
+                    colorSelected: statusColors.program.withValues(alpha: 0.10),
+                    colorSelectedBorder: isProgram
+                        ? statusColors.program
+                        : Colors.white.withValues(alpha: 0.55),
+                    colorUnselected: Theme.of(context).cardColor,
+                    boxAnimation: Duration(
+                      milliseconds:
+                          dashboardStore
+                                      .currentTransition
+                                      ?.transitionDuration !=
+                                  null &&
+                              dashboardStore
+                                      .currentTransition!
+                                      .transitionDuration! >=
+                                  0
+                          ? dashboardStore
+                                .currentTransition!
+                                .transitionDuration!
+                          : 0,
+                    ),
+                    height: this.height,
+                    width: this.width,
+                    text: this.scene.sceneName,
                   ),
-                  height: this.height,
-                  width: this.width,
-                  text: this.scene.sceneName,
-                ),
-                Positioned(
-                  left: 6.0,
-                  bottom: 6.0,
-                  child: AnimatedSwitcher(
-                    duration: AppMotion.fast,
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: animation,
-                        alignment: Alignment.bottomLeft,
-                        child: child,
+                  Positioned(
+                    left: 6.0,
+                    bottom: 6.0,
+                    child: AnimatedSwitcher(
+                      duration: AppMotion.fast,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: animation,
+                          alignment: Alignment.bottomLeft,
+                          child: child,
+                        ),
                       ),
+                      child: tally != null
+                          ? _TallyChip(
+                              key: ValueKey(tally),
+                              label: tally,
+                              isProgram: tally == 'PGM',
+                            )
+                          : const SizedBox(key: ValueKey('no-tally')),
                     ),
-                    child: tally != null
-                        ? _TallyChip(
-                            key: ValueKey(tally),
-                            label: tally,
-                            isProgram: tally == 'PGM',
-                          )
-                        : const SizedBox(key: ValueKey('no-tally')),
                   ),
-                ),
-                Positioned(
-                  top: 6.0,
-                  right: 6.0,
-                  child: AnimatedSwitcher(
-                    duration: AppMotion.medium,
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(scale: animation, child: child),
-                    ),
-                    child: dashboardStore.editSceneVisibility
-                        ? Container(
-                            key: const ValueKey('visibility-badge'),
-                            height: 28.0,
-                            width: 28.0,
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).cardColor.withValues(alpha: 0.92),
-                              shape: BoxShape.circle,
-                              border: Border.all(
+                  Positioned(
+                    top: 6.0,
+                    right: 6.0,
+                    child: AnimatedSwitcher(
+                      duration: AppMotion.medium,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(scale: animation, child: child),
+                      ),
+                      child: dashboardStore.editSceneVisibility
+                          ? Container(
+                              key: const ValueKey('visibility-badge'),
+                              height: 28.0,
+                              width: 28.0,
+                              decoration: BoxDecoration(
                                 color: Theme.of(
                                   context,
-                                ).dividerColor.withValues(alpha: 0.4),
+                                ).cardColor.withValues(alpha: 0.92),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).dividerColor.withValues(alpha: 0.4),
+                                ),
                               ),
-                            ),
-                            child: AnimatedSwitcher(
-                              duration: AppMotion.fast,
-                              child: Icon(
-                                this.visible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                key: ValueKey(this.visible),
-                                size: 16.0,
+                              child: AnimatedSwitcher(
+                                duration: AppMotion.fast,
+                                child: Icon(
+                                  this.visible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  key: ValueKey(this.visible),
+                                  size: 16.0,
 
-                                /// Hidden scene = dim glyph (neutral) - red
-                                /// stays exclusive to recording/program
-                                /// (rule 7)
-                                color: this.visible
-                                    ? null
-                                    : Theme.of(context)
-                                          .extension<AppTextColors>()!
-                                          .textTertiary,
+                                  /// Hidden scene = dim glyph (neutral) - red
+                                  /// stays exclusive to recording/program
+                                  /// (rule 7)
+                                  color: this.visible
+                                      ? null
+                                      : Theme.of(context)
+                                            .extension<AppTextColors>()!
+                                            .textTertiary,
+                                ),
                               ),
-                            ),
-                          )
-                        : const SizedBox(key: ValueKey('no-badge')),
+                            )
+                          : const SizedBox(key: ValueKey('no-badge')),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },

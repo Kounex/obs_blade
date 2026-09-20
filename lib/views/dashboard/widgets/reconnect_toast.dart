@@ -6,7 +6,6 @@ import '../../../shared/general/base/card.dart';
 import '../../../shared/overlay/base_progress_indicator.dart';
 import '../../../shared/overlay/base_result.dart';
 import '../../../stores/views/dashboard.dart';
-import '../../../utils/general_helper.dart';
 
 class ReconnectToast extends StatefulWidget {
   const ReconnectToast({super.key});
@@ -70,7 +69,6 @@ class _ReconnectToastState extends State<ReconnectToast>
       reaction((_) => GetIt.instance<DashboardStore>().reconnecting, (
         bool reconnecting,
       ) {
-        GeneralHelper.advLog('RECONNECTING!!!!! - $reconnecting');
         if (reconnecting && _controllerReconnecting.isDismissed) {
           _controllerReconnecting.forward();
         } else if (!reconnecting && !_controllerReconnecting.isDismissed) {
@@ -113,7 +111,8 @@ class _ReconnectToastState extends State<ReconnectToast>
               constrained: false,
               borderColor: CupertinoColors.destructiveRed,
               child: BaseProgressIndicator(
-                text: 'OBS connection lost\nReconnecting...',
+                text:
+                    'OBS connection lost - values shown are\nthe last known state\nReconnecting...',
               ),
             ),
             builder: (context, child) => FadeTransition(

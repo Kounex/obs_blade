@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
@@ -85,7 +86,10 @@ class ExposedControls extends StatelessWidget {
 
         exposedControls = List.from(
           exposedControls.expand(
-            (control) => [control, const SizedBox(height: 18.0)],
+            (control) => [
+              StaleGuard(child: control),
+              const SizedBox(height: 18.0),
+            ],
           ),
         );
 

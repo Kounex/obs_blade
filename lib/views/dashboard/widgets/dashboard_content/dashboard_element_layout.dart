@@ -114,6 +114,7 @@ List<Widget> _buildStandalone(DashboardElement element) {
       return const [ExposedControls(), SizedBox(height: AppSpacing.xl)];
     case DashboardElement.SceneButtons:
       return const [
+        StaleStateBadge(),
         Center(
           child: Padding(
             padding: EdgeInsets.only(
@@ -128,25 +129,29 @@ List<Widget> _buildStandalone(DashboardElement element) {
       ];
     case DashboardElement.StudioModeTransition:
       return const [
-        StudioModeTransitionButton(),
+        StaleGuard(child: StudioModeTransitionButton()),
         SizedBox(height: AppSpacing.xl),
       ];
     case DashboardElement.StudioModeConfig:
       return const [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            StudioModeCheckbox(),
-            SizedBox(width: AppSpacing.xl),
-          ],
+        StaleGuard(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              StudioModeCheckbox(),
+              SizedBox(width: AppSpacing.xl),
+            ],
+          ),
         ),
         SizedBox(height: AppSpacing.xl),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TransitionControls(),
-            SizedBox(width: AppSpacing.xl),
-          ],
+        StaleGuard(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TransitionControls(),
+              SizedBox(width: AppSpacing.xl),
+            ],
+          ),
         ),
         SizedBox(height: AppSpacing.xl),
       ];

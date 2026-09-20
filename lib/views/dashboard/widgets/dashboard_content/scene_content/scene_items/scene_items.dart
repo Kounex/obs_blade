@@ -30,52 +30,64 @@ class _SceneItemsState extends State<SceneItems>
 
     return Observer(
       builder: (context) {
-        return NestedScrollManager(
-          parentScrollController:
-              ModalRoute.of(context)!.settings.arguments as ScrollController,
-          child: Scrollbar(
-            controller: _controller,
-            thumbVisibility: true,
-            child: ListView(
-              controller: _controller,
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.only(top: AppSpacing.md),
-              children: [
-                ...dashboardStore.currentSceneItems.isNotEmpty
-                    ? dashboardStore.currentSceneItems.map((sceneItem) {
-                        if (sceneItem.parentGroupName == null) {
-                          return VisibilitySlideWrapper(
-                            sceneItem: sceneItem,
-                            child: SceneItemTile(sceneItem: sceneItem),
-                          );
-                        }
+        return Column(
+          children: [
+            const StaleStateBadge(),
+            Expanded(
+              child: NestedScrollManager(
+                parentScrollController:
+                    ModalRoute.of(context)!.settings.arguments
+                        as ScrollController,
+                child: Scrollbar(
+                  controller: _controller,
+                  thumbVisibility: true,
+                  child: ListView(
+                    controller: _controller,
+                    physics: const ClampingScrollPhysics(),
+                    padding: const EdgeInsets.only(top: AppSpacing.md),
+                    children: [
+                      ...dashboardStore.currentSceneItems.isNotEmpty
+                          ? dashboardStore.currentSceneItems.map((sceneItem) {
+                              if (sceneItem.parentGroupName == null) {
+                                return StaleGuard(
+                                  child: VisibilitySlideWrapper(
+                                    sceneItem: sceneItem,
+                                    child: SceneItemTile(sceneItem: sceneItem),
+                                  ),
+                                );
+                              }
 
-                        /// Children of groups stay in the tree so collapsing
-                        /// / expanding the group animates - visibility is
-                        /// still driven by the parents [SceneItem.displayGroup]
-                        return _AnimatedGroupChild(
-                          visible: dashboardStore.currentSceneItems
-                              .firstWhere(
-                                (parentSceneItem) =>
-                                    parentSceneItem.sourceName ==
-                                    sceneItem.parentGroupName,
-                              )
-                              .displayGroup,
-                          child: VisibilitySlideWrapper(
-                            sceneItem: sceneItem,
-                            child: SceneItemTile(sceneItem: sceneItem),
-                          ),
-                        );
-                      })
-                    : [
-                        const SizedBox(height: AppSpacing.md),
-                        const PlaceholderSceneItem(
-                          text: 'No Scene Items available...',
-                        ),
-                      ],
-              ],
+                              /// Children of groups stay in the tree so collapsing
+                              /// / expanding the group animates - visibility is
+                              /// still driven by the parents [SceneItem.displayGroup]
+                              return _AnimatedGroupChild(
+                                visible: dashboardStore.currentSceneItems
+                                    .firstWhere(
+                                      (parentSceneItem) =>
+                                          parentSceneItem.sourceName ==
+                                          sceneItem.parentGroupName,
+                                    )
+                                    .displayGroup,
+                                child: StaleGuard(
+                                  child: VisibilitySlideWrapper(
+                                    sceneItem: sceneItem,
+                                    child: SceneItemTile(sceneItem: sceneItem),
+                                  ),
+                                ),
+                              );
+                            })
+                          : [
+                              const SizedBox(height: AppSpacing.md),
+                              const PlaceholderSceneItem(
+                                text: 'No Scene Items available...',
+                              ),
+                            ],
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         );
       },
     );
