@@ -226,6 +226,14 @@ abstract class _DashboardStore with Store {
   @observable
   bool reconnecting = false;
 
+  /// Displayed OBS values may not reflect OBS's actual state and mutations
+  /// cannot be delivered - the confirmation channel (the socket) is down.
+  /// Single driver today: reconnect loop active. Future drivers (collection-
+  /// changing window, terminated-but-still-mounted) plug in here without
+  /// touching widgets. Deliberately a plain getter, NOT @computed: reactions
+  /// track the `reconnecting` read through it identically, no codegen needed
+  bool get obsStateStale => this.reconnecting;
+
   /// Latest definitively failed OBS command (command-ack layer) - consumed by
   /// the command failure toast in the dashboard. A new instance is set for
   /// every surfaced failure (deduped, see [_surfaceCommandFailure]) so
@@ -540,6 +548,14 @@ abstract class _DashboardStore with Store {
     Map<String, dynamic>? fields,
     String? label,
   }) async {
+    /// Stale-state honesty: while the confirmation channel is down the
+    /// mutation could never be confirmed - refuse the send instead of
+    /// losing the intent silently. No resync read, no failure surface (the
+    /// controls are disabled and the reconnect burst re-reads everything)
+    if (this.obsStateStale) {
+      return ObsRequestAck.notSent(request);
+    }
+
     final session = GetIt.instance<NetworkStore>().activeSession;
     final ack = session == null
         ? ObsRequestAck.connectionLost(request)
@@ -700,6 +716,11 @@ abstract class _DashboardStore with Store {
           '$what failed - OBS did not answer in time',
         ObsRequestFailureKind.connectionLost =>
           '$what failed - connection to OBS was lost',
+
+        /// Unreachable: the stale-state guard in [sendMutation] refuses the
+        /// send before any failure surfacing - case kept for exhaustiveness
+        ObsRequestFailureKind.notSent =>
+          '$what was not sent - no connection to OBS',
         null => '$what failed',
       },
       ack: ack,

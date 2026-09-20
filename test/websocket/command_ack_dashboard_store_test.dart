@@ -425,4 +425,56 @@ void main() {
       isEmpty,
     );
   });
+
+  /// Stale-state honesty (wave 2): while the reconnect loop is active the
+  /// confirmation channel is dead - mutations must be refused locally
+  /// instead of being lost in the dead socket
+  group('stale-state guard', () {
+    test('obsStateStale tracks the reconnecting flag', () {
+      expect(dashboardStore.obsStateStale, isFalse);
+      dashboardStore.reconnecting = true;
+      expect(dashboardStore.obsStateStale, isTrue);
+      dashboardStore.reconnecting = false;
+      expect(dashboardStore.obsStateStale, isFalse);
+    });
+
+    test(
+      'stale guard refuses mutations: nothing on the wire, notSent ack, no resync, no notice',
+      () async {
+        await connect();
+        dashboardStore.handleStream();
+        dashboardStore.reconnecting = true;
+
+        final wireBaseline = peer.requests.length;
+        final ack = await dashboardStore.sendMutation(
+          RequestType.SetCurrentProgramScene,
+          fields: {'sceneName': 'Nope'},
+          label: 'Scene switch',
+        );
+
+        expect(ack.success, isFalse);
+        expect(ack.failureKind, ObsRequestFailureKind.notSent);
+        expect(peer.requests.length, wireBaseline);
+
+        /// No resync read and no failure toast may fire for a refused send
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        expect(requestsOf('GetSceneList'), isEmpty);
+        expect(dashboardStore.commandFailureNotice, isNull);
+      },
+    );
+
+    test('guard is inert while not stale', () async {
+      await connect();
+      dashboardStore.handleStream();
+
+      final ack = await dashboardStore.sendMutation(
+        RequestType.SetCurrentProgramScene,
+        fields: {'sceneName': 'Camera'},
+        label: 'Scene switch',
+      );
+
+      expect(ack.success, isTrue);
+      expect(requestsOf('SetCurrentProgramScene'), isNotEmpty);
+    });
+  });
 }

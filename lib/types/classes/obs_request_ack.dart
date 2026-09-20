@@ -12,6 +12,11 @@ enum ObsRequestFailureKind {
 
   /// The connection dropped / was closed before an answer arrived
   connectionLost,
+
+  /// Never reached the wire: refused locally because the OBS connection is
+  /// down (stale-state guard in DashboardStore.sendMutation). Not an OBS
+  /// failure - no resync read, no failure surface
+  notSent,
 }
 
 /// Typed outcome of an OBS request sent through the command-ack layer.
@@ -61,6 +66,9 @@ class ObsRequestAck {
   const ObsRequestAck.connectionLost(RequestType? requestType)
     : this._(requestType, ObsRequestFailureKind.connectionLost, null, null);
 
+  const ObsRequestAck.notSent(RequestType? requestType)
+    : this._(requestType, ObsRequestFailureKind.notSent, null, null);
+
   bool get success => this.failureKind == null;
 
   /// The resolved [RequestStatus] for rejected requests (null for unknown /
@@ -85,6 +93,8 @@ class ObsRequestAck {
         return '${this.requestType} timed out waiting for the OBS ack';
       case ObsRequestFailureKind.connectionLost:
         return '${this.requestType} failed - connection to OBS was lost';
+      case ObsRequestFailureKind.notSent:
+        return '${this.requestType} not sent - OBS connection is down';
     }
   }
 }
