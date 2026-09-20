@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/dashboard_customisation.dart';
 
 import '../tab_base.dart';
+import '../views/chat/chat_view.dart';
 import '../views/dashboard/dashboard.dart';
 import '../views/home/home.dart';
 import '../views/intro/intro.dart';
@@ -40,7 +41,7 @@ enum AppRoutingKeys implements RoutingKeys {
 /// of our application (view wise) since the main navigation is realised
 /// with a tab bar - this enum is used to iterate over available tabs and
 /// automate adding tabs (see extension functions for this enum)
-enum Tabs { Home, Statistics, Settings }
+enum Tabs { Home, Chat, Statistics, Settings }
 
 /// Extension functions for the [Tabs] enum which has some convinient functions
 /// which automates the generation of the [Navigator] instances with the
@@ -49,18 +50,21 @@ enum Tabs { Home, Statistics, Settings }
 extension TabsFunctions on Tabs {
   String get name => const {
     Tabs.Home: 'Home',
+    Tabs.Chat: 'Chat',
     Tabs.Statistics: 'Statistics',
     Tabs.Settings: 'Settings',
   }[this]!;
 
   IconData get icon => const {
     Tabs.Home: CupertinoIcons.house_alt,
+    Tabs.Chat: CupertinoIcons.chat_bubble_2_fill,
     Tabs.Statistics: CupertinoIcons.chart_bar_alt_fill,
     Tabs.Settings: CupertinoIcons.settings,
   }[this]!;
 
   Map<String, Widget Function(BuildContext)> get routes => {
     Tabs.Home: RoutingHelper.homeTabRoutes,
+    Tabs.Chat: RoutingHelper.chatTabRoutes,
     Tabs.Statistics: RoutingHelper.statisticsTabRoutes,
     Tabs.Settings: RoutingHelper.settingsTabRoutes,
   }[this]!;
@@ -75,6 +79,16 @@ enum HomeTabRoutingKeys implements RoutingKeys {
   @override
   String get route =>
       '${AppRoutingKeys.Tabs.route}/home${{HomeTabRoutingKeys.Landing: '', HomeTabRoutingKeys.Dashboard: '/dashboard', HomeTabRoutingKeys.Pro: '/pro'}[this]!}';
+}
+
+/// Routing keys for the chat tab
+enum ChatTabRoutingKeys implements RoutingKeys {
+  Landing,
+  Pro;
+
+  @override
+  String get route =>
+      '${AppRoutingKeys.Tabs.route}/chat${{ChatTabRoutingKeys.Landing: '', ChatTabRoutingKeys.Pro: '/pro'}[this]!}';
 }
 
 /// Routing keys for the statistics tab
@@ -114,6 +128,11 @@ class RoutingHelper {
     HomeTabRoutingKeys.Landing.route: (_) => const HomeView(),
     HomeTabRoutingKeys.Dashboard.route: (_) => const DashboardView(),
     HomeTabRoutingKeys.Pro.route: (_) => const ProPaywallView(),
+  };
+
+  static Map<String, Widget Function(BuildContext)> chatTabRoutes = {
+    ChatTabRoutingKeys.Landing.route: (_) => const ChatView(),
+    ChatTabRoutingKeys.Pro.route: (_) => const ProPaywallView(),
   };
 
   static Map<String, Widget Function(BuildContext)> statisticsTabRoutes = {
