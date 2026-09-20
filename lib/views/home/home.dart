@@ -231,17 +231,8 @@ class _HomeViewState extends State<HomeView> {
           // physics: StylingHelper.platformAwareScrollPhysics,
           slivers: [
             const RefresherAppBar(expandedHeight: 192.0),
-            CustomSliverList(
-              /// Bottom rest position must clear the translucent tab bar:
-              /// keeps the shared default clearance (2x bar height) and
-              /// adds the full safe-area inset + margin instead of half
-              /// the inset, so the last card never rests behind the bar's
-              /// blur. Top side (pull-to-refresh) is untouched.
-              customBottomPadding:
-                  2 * kBottomNavigationBarHeight +
-                  MediaQuery.paddingOf(context).bottom +
-                  AppSpacing.xl,
-              children: const [
+            const CustomSliverList(
+              children: [
                 StaggeredEntrance(
                   index: 0,
                   scaleFrom: 0.985,

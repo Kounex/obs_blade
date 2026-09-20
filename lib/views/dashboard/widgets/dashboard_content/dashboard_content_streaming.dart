@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/resizeable_scene_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_buttons/scene_buttons.dart';
 
@@ -15,7 +16,7 @@ class DashboardContentStreaming extends StatelessWidget {
         children: [
           const ResizeableScenePreview(resizeable: false),
           const SceneButtons(size: 64, mode: SceneButtonsMode.horizontalScroll),
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
+          SizedBox(height: tabBarBottomPadding(context)),
         ],
       ),
     );

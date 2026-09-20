@@ -18,3 +18,4 @@ export 'pressable.dart';
 export 'staggered_entrance.dart';
 export 'stale_guard.dart';
 export 'stale_state_badge.dart';
+export 'tab_bar_metrics.dart';

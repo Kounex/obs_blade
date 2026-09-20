@@ -56,9 +56,7 @@ class ProSalesView extends StatelessWidget {
         top:
             MediaQuery.paddingOf(context).top +
             kMinInteractiveDimensionCupertino,
-        bottom:
-            2 * kBottomNavigationBarHeight +
-            MediaQuery.paddingOf(context).bottom / 2,
+        bottom: tabBarBottomPadding(context),
       ),
       child: Center(
         child: BaseConstrainedBox(

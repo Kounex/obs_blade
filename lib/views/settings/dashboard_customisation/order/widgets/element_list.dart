@@ -136,9 +136,9 @@ class ElementList extends StatelessWidget {
               ..remove(DashboardElement.StreamChat);
         return ReorderableListView.builder(
           shrinkWrap: true,
-          padding: const EdgeInsets.only(
+          padding: EdgeInsets.only(
             top: 18.0,
-            bottom: kBottomNavigationBarHeight,
+            bottom: tabBarBottomPadding(context),
           ),
           buildDefaultDragHandles: false,
           itemCount: elements.length,
