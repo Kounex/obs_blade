@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce/hive.dart';
 
 import '../../../../models/enums/dashboard_element.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/responsive_widget_wrapper.dart';
+import '../../../../types/enums/settings_keys.dart';
 import '../obs_widgets/stats/stats.dart';
 import 'dashboard_element_card.dart';
 import 'exposed_controls/exposed_controls.dart';
@@ -22,13 +24,47 @@ const Set<DashboardElement> _kScenePair = {
   DashboardElement.SceneItemsAudio,
 };
 
+bool _settingsFlag(Box<dynamic> settingsBox, SettingsKeys key) =>
+    settingsBox.get(key.name, defaultValue: false) as bool;
+
 /// Builds the regular (non-streaming) dashboard body from
 /// [DashboardElementsOrder], composing adjacent Scene Items/Audio into the
 /// existing mobile-card / tablet-row layouts.
 ///
 /// Vertical rhythm lives here and nowhere else: [AppSpacing.md] between
 /// element blocks; the cards/bare rows carry no vertical outer margin.
-List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
+///
+/// The layout is visibility-aware: elements the user can toggle off
+/// (exposed controls, profiles, studio-mode widgets) are skipped entirely
+/// when their settings/runtime predicate hides them, so a collapsed
+/// element never leaves stray gaps behind. The predicates mirror the
+/// widgets' own internal hide conditions.
+List<Widget> buildOrderedDashboardSlivers(
+  List<DashboardElement> order, {
+  required Box<dynamic> settingsBox,
+  required bool studioModeActive,
+}) {
+  final bool exposeProfile =
+      _settingsFlag(settingsBox, SettingsKeys.ExposeProfile) ||
+      _settingsFlag(settingsBox, SettingsKeys.ExposeSceneCollection);
+  final bool exposeControls =
+      _settingsFlag(settingsBox, SettingsKeys.ExposeStreamingControls) ||
+      _settingsFlag(settingsBox, SettingsKeys.ExposeRecordingControls) ||
+      _settingsFlag(settingsBox, SettingsKeys.ExposeReplayBufferControls) ||
+      _settingsFlag(settingsBox, SettingsKeys.ExposeHotkeys);
+  final bool exposeStudioControls = _settingsFlag(
+    settingsBox,
+    SettingsKeys.ExposeStudioControls,
+  );
+
+  bool isVisible(DashboardElement element) => switch (element) {
+    DashboardElement.ExposedProfile => exposeProfile,
+    DashboardElement.ExposedControls => exposeControls,
+    DashboardElement.StudioModeTransition =>
+      exposeStudioControls && studioModeActive,
+    _ => true,
+  };
+
   final List<Widget> columnChildren = [];
   final Set<DashboardElement> consumed = {};
 
@@ -44,11 +80,14 @@ List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
 
   for (int i = 0; i < order.length; i++) {
     final DashboardElement current = order[i];
-    if (consumed.contains(current)) {
+    if (consumed.contains(current) || !isVisible(current)) {
       continue;
     }
 
-    final DashboardElement? next = i + 1 < order.length ? order[i + 1] : null;
+    DashboardElement? next = i + 1 < order.length ? order[i + 1] : null;
+    if (next != null && !isVisible(next)) {
+      next = null;
+    }
 
     if (next != null &&
         _kScenePair.contains(current) &&
@@ -67,13 +106,18 @@ List<Widget> buildOrderedDashboardSlivers(List<DashboardElement> order) {
       continue;
     }
 
-    addBlock(_buildStandalone(current));
+    addBlock(
+      _buildStandalone(current, exposeStudioControls: exposeStudioControls),
+    );
   }
 
   return [Column(children: columnChildren)];
 }
 
-List<Widget> _buildStandalone(DashboardElement element) {
+List<Widget> _buildStandalone(
+  DashboardElement element, {
+  required bool exposeStudioControls,
+}) {
   switch (element) {
     case DashboardElement.ExposedProfile:
       return const [ProfileSceneCollection()];
@@ -96,18 +140,24 @@ List<Widget> _buildStandalone(DashboardElement element) {
     case DashboardElement.StudioModeTransition:
       return const [StaleGuard(child: StudioModeTransitionButton())];
     case DashboardElement.StudioModeConfig:
-      return const [
-        StaleGuard(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              StudioModeCheckbox(),
-              SizedBox(width: AppSpacing.md),
-            ],
+
+      /// The checkbox row hides with the ExposeStudioControls flag (the
+      /// widget's own condition); the transition row always renders - the
+      /// gap only exists when both rows do
+      return [
+        if (exposeStudioControls) ...[
+          const StaleGuard(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                StudioModeCheckbox(),
+                SizedBox(width: AppSpacing.md),
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: AppSpacing.md),
-        StaleGuard(
+          const SizedBox(height: AppSpacing.md),
+        ],
+        const StaleGuard(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
