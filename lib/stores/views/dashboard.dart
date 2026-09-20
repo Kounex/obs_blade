@@ -327,19 +327,38 @@ abstract class _DashboardStore with Store {
   /// are deliberately NOT cleared: on a live socket each in-flight response
   /// still pops its own send's tag (FIFO) and fails the epoch check, while
   /// clearing would let a stale response pop a fresh send's tag and apply
-  /// ungated.
+  /// ungated. See [_wipeOrderingQueues] for the dead-transport complement.
   void _resetOrdering() {
     _sceneOrdering.newEpoch();
     _sceneItemOrdering.newEpoch();
     _audioOrdering.newEpoch();
   }
 
+  /// Drop every queued read tag. Only safe at a provably dead-transport seam
+  /// (fresh socket attach: first connect or the reconnect-success branch of
+  /// [_checkOBSConnection]) - the old socket's responses can never arrive to
+  /// pop its tags, and keeping them would epoch-gate the fresh burst's
+  /// responses so the post-reconnect state lands one read late (or never,
+  /// without an event driving a re-read). NEVER call on a live socket: see
+  /// [_resetOrdering] for why in-flight FIFO tags must survive there.
+  void _wipeOrderingQueues() {
+    _sceneListTags.clear();
+    _studioModeTags.clear();
+    _sceneItemListTags.clear();
+    _groupSceneItemListTags.clear();
+    _inputBatchTags.clear();
+    _inputReadTags.clear();
+  }
+
   /// Set of initial requests to call in order to get all the basic
   /// information / configuration for the OBS session
   void initialRequests() {
     /// Session (re-)attach: reads sent before this burst belong to the old
-    /// session/state base and must not apply
+    /// session/state base and must not apply. initialRequests only ever runs
+    /// on a fresh socket (init / reconnect success), so the old transport's
+    /// leftover tags are dead weight - wipe them (see [_wipeOrderingQueues])
     _resetOrdering();
+    _wipeOrderingQueues();
     NetworkHelper.makeRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetVersion,

@@ -640,7 +640,7 @@ void main() {
     );
 
     test(
-      'session re-attach (initialRequests) invalidates an in-flight GetSceneList re-read',
+      'reconnect on a fresh socket wipes dead-transport tags - the burst applies',
       () async {
         peer.responseData['GetSceneList'] = {
           'scenes': [
@@ -659,21 +659,14 @@ void main() {
           () => dashboardStore.activeSceneName == 'Camera',
           'initial burst applied the program scene',
         );
-        final itemReadBaseline = requestsOf('GetSceneItemList').length;
 
-        /// Optimistic write the stale re-read would roll back - makes a
-        /// stale application observable in the recording
-        dashboardStore.setActiveSceneName('Nope');
-        final recordedNames = <String?>[];
-        final disposeRecording = autorun((_) {
-          recordedNames.add(dashboardStore.activeSceneName);
-        });
-        addTearDown(() => disposeRecording());
-
+        /// A re-read goes out (tag queued) but the socket dies before its
+        /// delayed response arrives - the peer discards the pending ack via
+        /// its closeCode check
         peer.rejections['SetCurrentProgramScene'] =
             RequestStatus.InvalidResourceType.identifier;
         peer.ackDelay = const Duration(milliseconds: 300);
-        final ackFuture = dashboardStore.sendMutation(
+        await dashboardStore.sendMutation(
           RequestType.SetCurrentProgramScene,
           fields: {'sceneName': 'Nope'},
           label: 'Scene switch',
@@ -682,33 +675,24 @@ void main() {
           () => requestsOf('GetSceneList').length == 2,
           'GetSceneList re-read in flight',
         );
+        await peer.closeSockets();
 
-        /// Re-attach while the re-read is in flight (delayed so the burst's
-        /// fresh GetSceneList acks well after the stale one - the
-        /// responseData swap below must land between the two acks)
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-        dashboardStore.initialRequests();
-        await ackFuture;
-
-        /// The stale response still carries 'Camera'; once it has been
-        /// processed (its item-refresh chain request is the signal), swap
-        /// the map so the burst's fresh response carries 'Break'
-        await waitFor(
-          () => requestsOf('GetSceneItemList').length > itemReadBaseline,
-          'stale GetSceneList response processed',
-        );
+        /// Reconnect on a fresh socket (the _checkOBSConnection success seam:
+        /// handleStream + initialRequests). The confirmed value differs so a
+        /// gated burst response is observable.
+        peer.ackDelay = null;
         peer.responseData['GetSceneList']!['currentProgramSceneName'] = 'Break';
+        await connect();
+        dashboardStore.handleStream();
+        dashboardStore.initialRequests();
 
+        /// Without the dead-transport wipe the burst's fresh GetSceneList
+        /// response pops the old socket's stale tag, fails the epoch check
+        /// and is discarded - the post-reconnect state never lands
         await waitFor(
           () => dashboardStore.activeSceneName == 'Break',
-          're-attach burst re-read applies the fresh state',
+          'reconnect burst applies the fresh state',
         );
-        await Future<void>.delayed(const Duration(milliseconds: 400));
-
-        /// The epoch reset gated the stale response: 'Camera' must never
-        /// have landed after the re-attach
-        expect(recordedNames, isNot(contains('Camera')));
-        expect(dashboardStore.activeSceneName, 'Break');
       },
     );
   });
