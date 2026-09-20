@@ -29,7 +29,7 @@ class _TextFieldDateState extends State<TextFieldDate> {
   late final TextEditingController _controller;
 
   String _format(DateTime? date) =>
-      date != null ? DateFormat.yMd('de_DE').format(date) : '';
+      date != null ? DateFormat.yMd().format(date) : '';
 
   @override
   void initState() {

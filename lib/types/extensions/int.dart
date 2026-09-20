@@ -9,11 +9,12 @@ extension IntStuff on int {
   }
 
   String millisecondsToFormattedDateString() =>
-      DateFormat.yMd('de_DE').format(DateTime.fromMillisecondsSinceEpoch(this));
+      DateFormat.yMd().format(DateTime.fromMillisecondsSinceEpoch(this));
 
   String millisecondsToFormattedTimeString([bool withoutSeconds = false]) =>
-      (withoutSeconds ? DateFormat.Hm('de_DE') : DateFormat.Hms('de_DE'))
-          .format(DateTime.fromMillisecondsSinceEpoch(this));
+      (withoutSeconds ? DateFormat.Hm() : DateFormat.Hms()).format(
+        DateTime.fromMillisecondsSinceEpoch(this),
+      );
 
   String millisecondsToFileNameDate({
     String separator = '',

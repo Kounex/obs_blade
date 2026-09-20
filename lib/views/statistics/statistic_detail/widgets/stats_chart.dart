@@ -208,7 +208,7 @@ class _StatsChartState extends State<StatsChart>
                               tooltipTextStyle,
                               children: [
                                 TextSpan(
-                                  text: DateFormat.Hms('de_DE').format(
+                                  text: DateFormat.Hms().format(
                                     DateTime.fromMillisecondsSinceEpoch(
                                       touchSpot.x.round(),
                                     ),
@@ -249,7 +249,7 @@ class _StatsChartState extends State<StatsChart>
                           return Padding(
                             padding: const EdgeInsets.only(top: AppSpacing.sm),
                             child: Text(
-                              DateFormat.Hm('de_DE').format(
+                              DateFormat.Hm().format(
                                 DateTime.fromMillisecondsSinceEpoch(
                                   interval.round(),
                                 ),
