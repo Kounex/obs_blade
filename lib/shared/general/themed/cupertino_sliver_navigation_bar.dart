@@ -66,8 +66,7 @@ class _GlassSliverNavigationBarDelegate extends SliverPersistentHeaderDelegate {
     /// `_wrapWithBackground`: derived from the bar surface luminance, which
     /// is now the glass token
     final bool barIsDark =
-        Theme.of(context).extension<AppGlass>()!.barColor.computeLuminance() <
-        0.179;
+        appGlassOf(context).barColor.computeLuminance() < 0.179;
     final SystemUiOverlayStyle overlayStyle = barIsDark
         ? SystemUiOverlayStyle.light
         : SystemUiOverlayStyle.dark;

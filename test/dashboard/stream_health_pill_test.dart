@@ -70,8 +70,15 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('6120 kbit/s'), findsOneWidget);
-    expect(find.text('Dropped 12 (0.33%)'), findsOneWidget);
-    expect(find.text('CPU 3.4%'), findsOneWidget);
+    /// Value and unit are separate widgets now - the value rides a
+    /// CountUpText so the 1s cadence tweens instead of popping
+    expect(find.text('6120'), findsOneWidget);
+    expect(find.text(' kbit/s'), findsOneWidget);
+    expect(find.text('Dropped '), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
+    expect(find.text(' (0.33%)'), findsOneWidget);
+    expect(find.text('CPU '), findsOneWidget);
+    expect(find.text('3.4'), findsOneWidget);
+    expect(find.text('%'), findsOneWidget);
   });
 }

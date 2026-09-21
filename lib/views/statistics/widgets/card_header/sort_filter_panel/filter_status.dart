@@ -28,6 +28,10 @@ class FilterStatus extends StatelessWidget {
         return TagBox(
           color: pillColor,
           label: active ? 'ON' : 'OFF',
+
+          /// No fixed width - the chip shrink-wraps the label, so the
+          /// Expanded inside TagBox's Row has nothing to flex against
+          expand: false,
           labelStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
             color: active
                 ? Theme.of(context).extension<AppTextColors>()!.highlightText

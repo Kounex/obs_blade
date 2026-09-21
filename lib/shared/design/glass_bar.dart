@@ -9,6 +9,16 @@ import 'app_glass.dart';
 /// specular gradient line sits on that edge (token-delta §3)
 enum GlassBarEdge { top, bottom }
 
+/// Resolves the [AppGlass] tokens, deriving them from the theme's bar slot
+/// when the extension isn't registered (bare test themes)
+AppGlass appGlassOf(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  return theme.extension<AppGlass>() ??
+      AppGlass.forBar(
+        theme.appBarTheme.backgroundColor ?? theme.colorScheme.surface,
+      );
+}
+
 /// The single surface every floating bar (nav bars, tab bar) goes through,
 /// driven by the [AppGlass] theme extension: backdrop blur (sigma) + bar
 /// slot color at glass alpha + the specular edge line.
@@ -54,7 +64,7 @@ class GlassBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppGlass glass = Theme.of(context).extension<AppGlass>()!;
+    final AppGlass glass = appGlassOf(context);
     final bool apple = StylingHelper.isApple(context);
     final bool trueDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;

@@ -56,8 +56,7 @@ class TransculentCupertinoNavBarWrapper extends StatelessWidget {
     /// transparent (painted by [GlassBar]), so hand it the luminance of
     /// the glass token instead
     final bool barIsDark =
-        Theme.of(context).extension<AppGlass>()!.barColor.computeLuminance() <
-        0.179;
+        appGlassOf(context).barColor.computeLuminance() < 0.179;
 
     Widget customScrollView = CustomScrollView(
       controller: this.scrollController,
