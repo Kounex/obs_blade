@@ -69,7 +69,11 @@ class SelectableBox extends StatelessWidget {
                 ),
           ),
           AnimatedContainer(
-            duration: AppMotion.instant,
+            /// The ring rides the same duration as the fill ([boxAnimation]
+            /// = the OBS transition duration on scene tiles) so program
+            /// state morphs coherently instead of the ring snapping while
+            /// the fill is still lerping
+            duration: this.boxAnimation,
             height: this.height,
             width: this.width,
             decoration: BoxDecoration(
