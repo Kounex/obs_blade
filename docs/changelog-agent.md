@@ -2,6 +2,46 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-21 — 4.0 full-app UI polish wave on `4.0-liquid-glass`
+
+Whole-app UI consistency audit (10 parallel area audits over all 274 files in
+`lib/views/` + `lib/shared/`, ~120 verified findings) followed by one fix wave
+the user approved wholesale. **79 commits**, findings→fixes map + leftovers in
+[`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md).
+Highlights:
+
+- **Functional bugs:** filter-list self-comparison, routing-helper braces,
+  dialog padding swap, settings switcher key collision, theme-name validation
+  never rendering, `press_flash` dispose-after-deactivate crash,
+  `cupertinoOverrideTheme.primaryColor` wrong accent.
+- **New status slots:** `destructive` / `destructiveText` / `info` on
+  `AppStatusColors`; error reds unified off `colorScheme.error`/raw
+  `Colors.red*`; `unreachable` is reachability-only again.
+- **Chrome:** both sub-page nav-bar wrappers on `GlassBar` (55pt + specular);
+  `AppGlass` in `ModalHandler` sheets; toasts anchor below the full status
+  app bar.
+- **Chat:** sheet chrome family (drag handles, pane transitions, accent CTA
+  grammar), neutral Mod chip, LIVE viewer count on `CountUpText`,
+  `highlightText` link/CTA grammar, device-code dialog polish.
+- **Motion/press grammar:** press springs from tokens, invisible 44pt hit
+  floors (never visual bloat — ratified), reduced-motion gates (confetti,
+  chart draw-in, `chatImageFadeIn`, theme crossfade), staggered entrances,
+  Connect morph, tap-to-copy version stamp.
+- **Ratified calibrations:** green stays for online/reachable/connected;
+  hit-target fixes must be visually invisible; paywall hero keeps bolt +
+  "OBS Blade Pro" headline; chat brand-fill strategy deferred to Phase-4
+  chat-bar frame.
+
+Gates: full suite green, analyze at baseline. Three extension-call sites now
+fall back when a bare test theme doesn't register the extensions
+(`appGlassOf`, `AdaptiveDialogAction`). Machine note: `/tmp` tmpfs filling up
+makes `flutter test` hang silently in the kernel compiler — clean
+`/tmp/flutter_tools.*` if a run wedges. Known flake (pre-existing, from the
+2026-09-20 confirmed-state ordering wave — unrelated to this wave):
+`test/websocket/state_ordering_test.dart` intermittently fails one of its
+ack-timeout ordering tests ("Batch request timed out waiting for ack"); it
+passes on re-run, sometimes standalone-only.
+
 ## 2026-09-20 — Chat independence: dedicated Chat tab (astra port) on `4.0-liquid-glass`
 
 Chat was reachable only inside the dashboard route, which itself only exists

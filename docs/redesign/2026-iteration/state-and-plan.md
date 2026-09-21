@@ -3,9 +3,9 @@
 **Purpose of this doc:** cold-start briefing. A fresh agent (evaluator, reviewer,
 or implementer) should be able to read only this file and know what exists, what is
 ratified, what is open, and where every artifact lives. Keep it current — update it
-whenever state moves. Last updated: 2026-09-09 (v12 mock — user-directed
-polish batch on top of Gate 2b's v10 + token delta v3; implementation route
-changed to live-app branch; branch landed with unbuilt-items section).
+whenever state moves. Last updated: 2026-09-21 (full-app UI polish wave —
+10-area audit → 79 commits on `4.0-liquid-glass`; see item 11 +
+ui-polish-audit-2026-09-21.md).
 
 ## The goal
 
@@ -54,7 +54,21 @@ aurora/glow, ≤1 specular line per floating surface, one accent moment per scre
     Statistics, Paywall — 31 commits on `4.0-liquid-glass`, pushed. Gate green
     (analyze = baseline, all test suites). Known unbuilt items — each with
     what/why/what's-needed — in **"Known unbuilt items" below** (Gate-3 input).
-11. **Next:** user dogfoods the branch (phone + tablet) → tablet connected-view
+11. **Full-app UI polish wave landed (2026-09-21):** 10-area audit over all
+    274 UI files (~120 verified findings) → 79 commits on the branch, user
+    approved the fix list wholesale. Waves: A shell/theme wiring + shared-kit
+    hygiene (incl. `destructive`/`destructiveText`/`info` slots on
+    `AppStatusColors`); B per-area polish (GlassBar on **both** sub-page
+    nav-bar wrappers — the item-10 "all floating bars" claim is now literally
+    true; chat sheet chrome + color grammar incl. neutral Mod chip and
+    CountUpText LIVE counts; streaming-cockpit chrome; home Connect morph;
+    pro paywall entrances; statistics filter/chart polish; settings incl.
+    tap-to-copy version stamp); C review follow-ups. Findings→fixes map +
+    leftovers: [`ui-polish-audit-2026-09-21.md`](ui-polish-audit-2026-09-21.md).
+    Gate green (full test suite + analyze baseline). Two ratified
+    calibrations live there: green stays for online/reachable, and
+    hit-target fixes must be visually invisible.
+12. **Next:** user dogfoods the branch (phone + tablet) → tablet connected-view
     frame decision → Gate 3 (fresh review of the branch diff + on-device feel +
     tokens; findings to user first) → Phase 4 spec → merge.
 
@@ -157,6 +171,7 @@ absorb, or open decisions that were never ratified for build.
 | Current-state audit (the app as it ships) | `docs/redesign/2026-iteration-audit.md` — ⚠️ its direction paragraph is pre-restraint (historical); raw inputs: `docs/redesign/2026-iteration/{motion-audit,token-discipline,animation-opportunities}.md` |
 | Existing design system (code) | `lib/shared/design/` (`app_motion.dart`, `app_status_colors.dart`, `pressable.dart`, `staggered_entrance.dart`, …) |
 | Existing design system (docs) | `docs/redesign/design-system.md` |
+| 4.0 UI polish wave audit (findings→fixes map, Gate-3 input) | `docs/redesign/2026-iteration/ui-polish-audit-2026-09-21.md` |
 | Mock build/polish changelog | `.superpowers/sdd/mockup-dashboard-v1-report.md` (local) |
 | Mock tooling gotchas | `docs/superpowers/visual-companion-gotchas.md` — **read before serving or screenshotting mocks** (server start, port/key discovery, background-tab screenshot recipe) |
 

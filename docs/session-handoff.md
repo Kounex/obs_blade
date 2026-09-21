@@ -2,12 +2,10 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-20** (branch
-`4.0-liquid-glass`: chat independence incl. dashboard-pane removal,
-streaming-mode cockpit with floating chrome, saved-connection card
-refresh — all dogfood-approved; details below + `changelog-agent.md`
-2026-09-20. Store products + RevenueCat wired; next: 4.0 Gate 3 branch
-review → merge).
+Read this first after `AGENTS.md`. Last reset: **2026-09-21** (branch
+`4.0-liquid-glass`: full-app UI polish wave landed — 10-area audit → 79
+commits, gates green, pushed; next: user dogfoods the branch → Gate 3 →
+merge. Details below + `changelog-agent.md` 2026-09-21).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -40,7 +38,7 @@ review → merge).
 | | |
 |---|---|
 | Remote | `Kounex/obs_blade` (**public**) |
-| Branch | **`master`** (includes "On Air" redesign; `redesign` branch retained as history) |
+| Branch | **`4.0-liquid-glass`** (all 4.0 work; `master` untouched; `redesign` kept as history) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 | Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
 
@@ -58,240 +56,88 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Goal: ship 4.0.** Store products exist on both stores with locked,
-fully regionalized pricing **$4.99/mo, $49.99/yr, $99.99 lifetime**
-(2026-09-08): ASC 175/175 territories (equalized-tier fallback), Play
-173/173 regions — Play is driven by Apple's equalized tier table per
-currency by default (`tool/provisioning`: `play-products
---price-source apple`; details in `changelog-agent.md` 2026-09-08).
-Tool suite: 49 tests.
+**Goal: ship 4.0.** All code lives on `4.0-liquid-glass` (pushed; checked
+out on the workstation clone — `flutter run` there shows it). Read
+[`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
+first — cold-start briefing (ratified grammar, what shipped, known unbuilt
+items, Gate-3 input).
 
-**ASC products SUBMITTED for review (2026-09-08)** — review screenshots
-uploaded for all three (spec gotcha + how-to in
-[`revenuecat-setup.md`](revenuecat-setup.md) → Notes). Play products are
-ACTIVE; their review rides the next app release. Watch ASC for approval
-(24–48h typical).
+**Store/Pro state:** products exist on both stores with locked regionalized
+pricing **$4.99/mo, $49.99/yr, $99.99 lifetime** (ASC 175/175 territories,
+Play 173/173 regions). ASC products SUBMITTED for review 2026-09-08
+(review screenshots uploaded) — watch for approval; Play products ACTIVE.
+RevenueCat path is live (`pro` entitlement; keys pasted). Open: verify Play
+RTDN test notification (Pub/Sub perms — service account admin again, retry);
+sandbox dogfood per `revenuecat-setup.md` §5; enroll Apple Small Business
+Program. Google developer verification DONE (`com.kounex.obsBlade`
+Registered); upload key A6:24:44 still "in review" — after it resolves:
+delete `android/app/src/main/assets/adi-registration.properties` and
+discard Play internal-track draft `3.3.0 (2026090701)`.
 
-**Google developer verification DONE:** `com.kounex.obsBlade` is
-**Registered**. The upload key (A6:24:44, `android-release.jks`) is still
-"in review" (justification route) — additive, blocks nothing. **After it
-resolves (either way):** delete
-`android/app/src/main/assets/adi-registration.properties` (one-time
-registration token — **now gitignored** so it can't be committed
-accidentally; still delete it after resolution) and discard the Play
-internal-track draft
-release `3.3.0 (2026090701)`. Pubspec build number stays `2026090701`.
+**4.0 UI polish wave LANDED (2026-09-21, 79 commits):** full-app audit
+(10 parallel area audits, all 274 UI files, ~120 verified findings) → one
+fix wave, user-approved wholesale ("trust you on all"). Findings→fixes map,
+ratified calibrations (green stays for online/reachable; hit-target fixes
+must be visually invisible; paywall hero keeps bolt + headline), and known
+leftovers (Gate-3 input):
+[`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md).
+Waves: A shell/theme wiring + shared kit (incl. `destructive`/
+`destructiveText`/`info` status slots); B per-area (GlassBar on both
+sub-page nav-bar wrappers, chat sheet chrome + color grammar, streaming
+cockpit, home Connect morph, pro paywall entrances, statistics + settings
+polish); C follow-ups. Gates: full suite green, analyze baseline.
 
-**RevenueCat wired (2026-09-08):** products + entitlement `pro` +
-offering exist dashboard-side, and the public SDK keys are pasted in
-`lib/utils/revenuecat_config.dart` — the app now runs the RevenueCat
-path by default on iOS/Android/macOS (`test/pro/` green, incl. the
-reworked backend-selection fixture). Open:
-1. Verify Play RTDN: test notification in Play Console was failing on
-   Pub/Sub permissions (topic `projects/obs-blade/topics/Play-Store-Notifications`);
-   service account is admin again — retry, allow propagation time.
-2. Sandbox dogfood per [`revenuecat-setup.md`](revenuecat-setup.md) §5
-   (live prices, buy → entitlement, reinstall restore, lapse revokes).
-3. Apple Small Business Program: enroll on the Apple developer site
-   (15% commission) if not yet done; Play's tiers are automatic.
+**What to look at while dogfooding (user, phone + tablet — Settings →
+Force Tablet Mode for phone-width):** sub-page nav bars (55pt + specular),
+chat chrome (sheet handles, neutral Mod chip, count-up LIVE viewers,
+device-code dialogs), streaming-mode cockpit (floating chrome, stale-aware
+health pill, peak-hold meters), statistics (filter chips, chart draw-in,
+count-up detail grid), settings (version stamp tap-to-copy, theme editor
+captions), pro paywall (staged entrances, squircle hero). Then Gate 3:
+fresh review of branch diff + on-device feel, **findings triaged to the
+user BEFORE applying — standing rule** → merge or iterate.
 
-**4.0 UI iteration (2026-09-09):** workflow spec ratified
-([`superpowers/specs/2026-09-08-ui-iteration-4.0-design.md`](superpowers/specs/2026-09-08-ui-iteration-4.0-design.md))
-— system-wide via tokens, **restrained Liquid Glass** direction.
-**Phase 1 audit COMPLETE**: digest at
-[`redesign/2026-iteration-audit.md`](redesign/2026-iteration-audit.md).
-**Phase 2 mockups COMPLETE: `all-views-v12.html`** (local, gitignored)
-with token delta v3 as the mock→code contract.
-**Phase 3 branch implementation LANDED on `4.0-liquid-glass`** (pushed,
-checked out on the workstation clone — `flutter run` there shows it):
-token layer additive-first (`AppTextColors`, `AppGlass`, extended
-`AppStatusColors`, `AppMotion`, `Pressable`, `StaggeredEntrance`),
-color-group wiring in `lib/app.dart` (highlight = `colorScheme.primary`,
-accent = `buttonTheme.colorScheme!.secondary`; app-bar buttons, switches,
-checkboxes, sliders, mute/visibility all resolve the **highlight** group
-on both platforms — token-delta §1 rule 8; this IS the future per-group
-CustomTheme surface), `GlassBar` on floating bars, per-view migration of
-Connect / Scenes / Settings / Statistics / Paywall, one unit per commit
-(32 commits). Gates: `flutter analyze` at baseline, all four test suites
-green; visual-QA phone + tablet walks verified on the workstation.
-**Read [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
-first** — cold-start briefing (ratified grammar, what shipped, known
-unbuilt items). Detail history: `changelog-agent.md` 2026-09-09 branch
-entry. **Post-review drift-fix batch LANDED (2026-09-09, 5 commits,
-pushed):** user ran the branch, found drift vs the v12 mock (bluish
-cards, scale-press on settings rows, paywall logo/title redundancy) and
-ratified fixes: neutral white-alpha-over-scaffold surfaces for the
-default theme (custom themes keep card-slot identity; new themes also
-start neutral), press-flash instead of scale on settings/stats rows,
-neutral slider theme, highlight-tinted Close pill, paywall = back-only
-bar + accent bolt-squircle logo. **Round 2 (same day):** paywall body
-extends behind the bar (blur visible again, `extendBodyBehindBar` opt-in
-on the wrapper), hero = 96px scene-tile-idiom squircle (accent ring +
-tint fill) + 'OBS Blade Pro' brand line, and the native-chat Pro gate
-moved into the stores (`connectChat`/`selectChannel` refuse without the
-entitlement via an `isProResolver` seam) so the chat-bar engine switch
-can switch freely — not-Pro lands on the locked upsell pane instead of a
-paywall intercept. **2026-09-10:** one-time tall-style `dart format`
-pass over `lib`/`test`/`integration_test` (404 files, mechanical — root
-cause + numbers in `changelog-agent.md`), so **`dart format` on changed
-files is now expected, not churn** — the old never-format gotcha is
-retired. **Workflow change (user directive):** no agent-side simulator
-verification anymore — best-effort code + analyze/test gates, the user
-sims the branch. Gates: 762 tests green, analyze at the pre-format
-baseline. Details:
-`changelog-agent.md` 2026-09-09 drift-fix entries. **Next:** user runs the
-updated branch (phone + tablet, incl. **Force
-Tablet Mode** check) → Gate 3 (fresh review of branch diff + on-device
-feel, findings triaged to the user BEFORE applying — standing rule) →
-merge or iterate. Doc debt: mock/contract docs still describe the paywall
-wordmark logo + a §2.5 surface wording that contradicts the ratified
-"neutral over scaffold" — amend with a v13 note if the changes stick.
-Pre-existing bugs fixed on the branch during
-verification: `text_field_date.dart` LateInitializationError (crashed
-the tablet walk; now a proper StatefulWidget). Still open from the
-Phase-2 walk: duplicate GlobalKey in the date range; Tip Jar
-settings-row hit-test miss. Runner scheme no longer has the StoreKit
-config attached (real sandbox dogfood); re-attach temporarily for
-ASC-style paywall shots.
-
-**Astra redesign audited + verdict ratified (2026-09-14):** full audit of the
-sibling first-principles redesign (branch `redesign-astra` — session
-workspace, first-class chat) landed in
-[`redesign-astra-audit.md`](redesign-astra-audit.md), incl. six verified
-master defects (none fixed by 4.0) and a tested harvest list on the astra
-branch. User ratified **progressive adoption**: keep the On Air/4.0 visual
-identity; harvest astra's production fixes first; after the 4.0 merge, port
-confirmed-state projection, scene inspect-vs-command + Take bar, chat
-independence, stale-state honesty into the dashboard; astra stays a design
-lab — its shell roadmap is parked unless the workspace becomes a live
-candidate (5.0 decision with usage evidence). **Harvest phase 1 LANDED on
-`4.0-liquid-glass` (2026-09-14, 5 commits):** send-race ownership fixes
-(Twitch + YouTube), YouTube buffer retirement on video replacement,
-`TriggerStudioModeTransition` request type, network-helper custom-envelope
-guard, shared chat-row DI seams — each with astra's tests, gates green
-(details: `changelog-agent.md`). The emote-picker unit was never committed
-on astra (tip still `54141fe1`) — excluded. **Low-risk defect fixes LANDED
-too (2026-09-14, 2 commits):** Statistics filter state survives rebuilds
-(reset moved out of `build`), dead `DurationFilter.Between` removed, and
-delete-all-data now clears `PastRecordData`/`Hotkey`/`PurchasedTip`.
-Flagged leftovers then fixed too (2 more commits): logs-view reset moved out
-of `build` (intro/dashboard were already clean), and the Statistics category
-entry in data management now clears recordings as well. **Command-ack layer
-(astra phase 2) BUILT on branch `command-ack-layer` (2026-09-14, 7 commits):**
-awaitable per-UUID acks for every OBS request/batch
-(`NetworkHelper` → typed `ObsRequestAck`/`ObsBatchAck`), all DashboardStore
-mutations routed through the ack policy (self-healing `Get*` re-read + deduped
-failure toast, settings kill-switch default ON), studio-mode button now sends a
-real `TriggerStudioModeTransition`. Reviewer SHIP-WITH-FIXES applied; fake-peer
-tests + real-OBS smoke (`tool/obs_local/ack_smoke.dart`) green; design:
-`superpowers/specs/2026-09-14-command-ack-layer-design.md`. **MERGED into
-`4.0-liquid-glass` (2026-09-18, fast-forward to `c295c218`) after user dogfood
-— approved.** The wave's follow-up is FIXED
-(2026-09-18, `9d6619b2`): `makeBatchRequest` never sends an empty batch, so
-`fetchSceneItemsFilters` can no longer hit the `batchRequestType` "No
-element" crash (scene with no items / profile with no inputs). **Next:** the remaining interaction ports (chat independence LANDED 2026-09-20 — see below; syncOffset
-gating follow-up). **Confirmed-state ordering (astra phase 3, wave 1) MERGED
-into `4.0-liquid-glass` (2026-09-20, fast-forward to `191f1f13`) after user
-dogfood — approved.** Pure `EventOrdering` (epochs + per-key event journals)
-+ DashboardStore FIFO tag seams gate stale read responses across scenes /
-scene-item visibility / audio volume+mute; epoch resets on session re-attach,
-collection change, `SceneListChanged`, `InputNameChanged`, and a new typed
-`SceneNameChanged` (protocol-verified). The wave's one tracked residual is
-FIXED in the merge commit: dead-transport read tags are wiped at the
-`initialRequests()` fresh-socket seam (`_wipeOrderingQueues()`), so
-post-reconnect bursts apply immediately (regression test = real socket swap
-through the fake peer). **Stale-state honesty (wave 2) LANDED on
-`4.0-liquid-glass` (2026-09-20, `f7e2833a` + `407acf31`):**
-`obsStateStale` predicate (= `reconnecting`, seam for future drivers),
-`sendMutation` refuses sends while stale (`ObsRequestAck.notSent`, no
-resync/toast), per-pane "LAST KNOWN STATE" badges (Scenes/Scene Items/
-Audio), `StaleGuard` lockout on every mutation control, honest toast copy.
-Gates: 803 tests green, analyze 472. **Pending: user dogfood** (quit OBS
-mid-session → badges + lockout; restart → snap back). **Chat independence
-(dedicated Chat tab) LANDED (2026-09-20, `8fb519fa` + `94a70d74`):** new
-`Tabs.Chat` (Home · Chat · Statistics · Settings) hosting `StreamChat`
-standalone — chat is now reachable before/without an OBS session (the
-dependency was purely navigational; chat stores + config were already
-OBS-free). Two `StreamChat` seams (defaults = dashboard behavior):
-`scrollArbitration: false` skips the dashboard-only WebView pointer band +
-`DashboardStore` lookup; `proRoute` resolves the Pro upsell on the chat
-tab's navigator (`/tabs/chat/pro`). The dashboard chat pane was removed in
-the same-day follow-through (`d63e9bdc`) — see the follow-up paragraph
-below. Design:
-`superpowers/specs/2026-09-20-chat-independence-design.md`; plan:
-`superpowers/plans/2026-09-20-chat-independence.md`. Gates: chat suite 663
-green, analyze 472. **Dogfooded + approved (2026-09-20).** Follow-ups:
-conversation-owned drafts wave; optional live-session strip (program pill +
-quick mic — the astra focus-swap translation). **inspect-vs-command + Take bar will NOT be ported
-(2026-09-18, user-ratified):** OBS itself already ships the inspect-first
-concept as Studio Mode, and the app mirrors OBS's semantics — studio mode on
-→ scene tap sends `SetCurrentPreviewScene`, transition button sends a real
-`TriggerStudioModeTransition`; opt-in via `SettingsKeys.ExposeStudioControls`.
-An always-on inspect layer would double up with Studio Mode and diverge from
-OBS behavior. This also dissolves the Take-dock side of the deferred
-preference-translation work (audit open threads).
-
-**Chat follow-through + streaming-mode cockpit + saved-connection refresh
-LANDED (2026-09-20, 13 commits, all dogfood-approved):** dashboard chat pane
-removed + `pointerOnChat` arbitration retired (fixes the reconnect tap-dead
-bug at the root); unified tab-bar bottom clearance `tabBarBottomPadding()`
-(`lib/shared/design/tab_bar_metrics.dart`); dashboard content-card grid —
-composer-owned 12px sides/gaps, content=card / actions=bare,
-visibility-aware (no stray gaps from toggled-off elements), phone stats =
-auto-height measured pages, tablet stats still fixed 650 (follow-up
-candidate); element ordering verified sound (no reachable missing-element
-case — enum born complete); streaming mode rebuilt as the live cockpit —
-drag-resizable full-bleed preview (18pt handle), floating stats pill over
-the preview + floating draggable chat-header toggle over the chat (both
-persisted via new `StreamingMode*` settings keys), tablet side-by-side;
-saved-connection cards — green Online pill (supersedes neutral-online
-grammar), ellipsis Edit/Delete sheet (`AppBarActions.showActions` extracted
-as a reusable static), filled-accent Connect when reachable, "Last used:" /
-"Never used" stamp (additive `@HiveField(6) lastConnectedMs` — legacy boxes
-decode null). Details + hashes: `changelog-agent.md` 2026-09-20. Gates:
-analyze 472 baseline, suites green.
-
-**Paywall bottom-clearance fix** (31e9dfb): sales scroll view now uses
-the `CustomSliverList` tab-bar clearance formula — pattern to reuse for
-any future non-sliver full-screen tab route.
+**Astra ports status:** progressive adoption ratified; harvest phases
+landed incl. command-ack layer, confirmed-state ordering, stale-state
+honesty, chat independence (dedicated Chat tab; dashboard chat pane
+removed), streaming cockpit, saved-connection refresh — all merged +
+dogfood-approved (history: `changelog-agent.md` 2026-09-14→20).
+inspect-vs-command/Take bar will NOT be ported (Studio Mode covers it).
+Open follow-ups: conversation-owned drafts wave; optional live-session
+strip; syncOffset gating.
 
 **Immediate next threads (4.0):**
 
-1. **Finish RevenueCat** (above) → sandbox dogfood per
-   `revenuecat-setup.md` §5.
-2. **4.0 branch review** (see the 4.0 paragraph): user runs branch
-   `4.0-liquid-glass` on the workstation — phone AND tablet (Settings →
-   **Force Tablet Mode** for a phone-width device) — then Gate 3 (fresh
-   review of the branch diff + on-device feel; findings triaged to the
-   user before applying — standing rule), then merge or iterate. Color
-   groups resolve uniformly across elements AND platforms (token-delta
-   §1 rule 8) — the future per-group CustomTheme surface.
-3. **Dogfood the Pro gate** on the workstation via the debug override
-   (long-press paywall hero): gate flip mid-session, legacy persisted
-   `SelectedChatEngine=native` boot path, settings row states.
+1. **User dogfood of the polish wave** (above) → Gate 3 → merge.
+2. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
+3. **Dogfood the Pro gate** via debug override (long-press paywall hero):
+   gate flip mid-session, legacy persisted `SelectedChatEngine=native`
+   boot path, settings row states.
 4. **Android runtime smoke** (emulator/device) — toolchain builds since
-   2026-09-07 (Gradle 8.14 / AGP 8.11.1 / KGP 2.2.20); runtime testing
-   still open. Confirm release AABs sign with the upload key
+   2026-09-07; confirm release AABs sign with the upload key
    (`android/key.properties` → `android-release.jks`, A6:24:44).
 5. Release mechanics: version/changelog, store metadata
    (`fastlane/metadata`), visual-QA pass
    (`tool/visual_qa/capture_screenshots.sh`).
-6. YouTube (post-4.0 ok): GCP key exists
-   (`~/.config/obs-blade/youtube-api-key.txt`); run the spike
-   (`tool/youtube_spike/`, ≥30 min busy chat, record units into
-   `youtube-native-chat-audit.md`). OAuth consent screen + TV client stay
-   console-only. The `private/backend-architecture.md` OAuth note is
-   **still deferred — sync private docs first**.
+6. YouTube (post-4.0 ok): run the spike (`tool/youtube_spike/`, ≥30 min
+   busy chat) with the GCP key; the `private/backend-architecture.md`
+   OAuth note stays deferred — **sync private docs first**.
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in
 `changelog-agent.md`. `test/pro/` is the purchase/entitlement suite home.
+Machine note (this box): **`/tmp` is a 3.8G tmpfs** — if it fills with
+`flutter_tools.*` dirs, `flutter test` hangs silently in the kernel
+compiler ("Free up space"); `rm -rf /tmp/flutter_tools.*` and re-run.
+Always `flutter test -j 1` here; `flutter pub get` if a restored
+`pubspec.lock` makes the tool re-resolve.
 
 ## Verify quickly
 
 ```bash
 git checkout 4.0-liquid-glass && git pull   # 4.0 work lives here; master is untouched
-flutter test test/chat/ test/websocket/ test/persistence/ test/pro/
+flutter test -j 1                            # serial on this box
+dart analyze                                 # expect baseline infos, 0 errors
 ```
 
 Maintainer: machine-specific verify, simulator, and visual-QA commands are
@@ -303,6 +149,8 @@ in `docs/private/maintainer-workflow.md`.
 |---|---|
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
+| [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md) | 4.0 cold-start briefing (read first) |
+| [`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, Gate-3 leftovers |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
 | [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 |
@@ -310,4 +158,5 @@ in `docs/private/maintainer-workflow.md`.
 | [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
 | [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |
 | [`chat-webview-audit.md`](chat-webview-audit.md) | Chat strategy |
+| [`revenuecat-setup.md`](revenuecat-setup.md) | Pro subscription wiring + sandbox dogfood |
 | [`private/`](private/) | Gitignored — monetization / backend / maintainer workflow |

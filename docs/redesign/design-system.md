@@ -87,11 +87,13 @@ When editing dashboard layout or the order feature, route through `ResponsiveWid
   MobX-rebuild-safe (plays once per list identity, not on every Observer rebuild).
 - **Transitions**: `pageTransitionsTheme` (keep Cupertino slide everywhere — it IS the
   app's feel; add subtle parallax via `CupertinoPageTransition` defaults — no change
-  needed, just don't regress). Tab switches get a 200ms fade+scale via AnimatedSwitcher
-  around the IndexedStack body (keeps per-tab navigators alive).
-- **Theme change**: whole-app re-skin crossfades ~400ms (`AnimatedTheme` already
-  implicit; ensure the MaterialApp subtree isn't rebuilt by key changes so the fade
-  actually plays).
+  needed, just don't regress). Tab switches ride the motion tokens
+  (`AppMotion.medium` + `AppMotion.emphasized`, 12px rise — token-delta §4.4 wins
+  over the older fixed-200ms note here) via AnimatedSwitcher around the
+  IndexedStack body (keeps per-tab navigators alive).
+- **Theme change**: whole-app re-skin crossfades on `AppMotion.slow` with a
+  reduced-motion gate (`AnimatedTheme` already implicit; ensure the MaterialApp
+  subtree isn't rebuilt by key changes so the fade actually plays).
 - **Signature moments**:
   1. `BaseResult` animated stroke-draw check/cross (caps every connect/purchase flow).
   2. Scene-button fill synced to OBS transition (existing — polish border + press).
