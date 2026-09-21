@@ -13,6 +13,7 @@ import '../../../../../models/enums/chat_type.dart';
 import '../../../../../models/enums/chat_engine.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
+import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/pro_store.dart';
 import '../../../../../stores/views/twitch_chat.dart';
@@ -27,6 +28,9 @@ import '../../../../pro/widgets/pro_benefits.dart';
 import '../../../../settings/widgets/accent_icon_tile.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
+import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
+import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
+import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'chat_emote_picker.dart';
 import 'native_chat_input.dart';
 import 'native_chat_chrome.dart';
@@ -561,7 +565,10 @@ class _StreamChatState extends State<StreamChat>
         if (!chatActive)
           StaggeredEntrance(
             scaleFrom: 0.985,
-            child: _ChatEmptyState(chatType: chatType),
+            child: _ChatEmptyState(
+              chatType: chatType,
+              settingsBox: settingsBox,
+            ),
           ),
       ],
     );
@@ -595,12 +602,17 @@ class _ChatBrandIcon extends StatelessWidget {
 /// prerequisite is missing (Twitch: no account connected, YouTube: no API
 /// key configured - the pill then opens the setup sheet). [promptBody],
 /// [connectLabel] and [onConnectTap] override the Twitch defaults.
+///
+/// The WebView-engine state ([settingsBox] set) offers a ghost "Add
+/// username…" opening the same add dialog the chat bar uses - the dead end
+/// gets an action.
 class _ChatEmptyState extends StatelessWidget {
   final ChatType chatType;
   final bool nativeConnectPrompt;
   final String? promptBody;
   final String? connectLabel;
   final VoidCallback? onConnectTap;
+  final Box<dynamic>? settingsBox;
 
   const _ChatEmptyState({
     required this.chatType,
@@ -608,7 +620,26 @@ class _ChatEmptyState extends StatelessWidget {
     this.promptBody,
     this.connectLabel,
     this.onConnectTap,
+    this.settingsBox,
   });
+
+  void _addUsername(BuildContext context) {
+    final Box<dynamic> settingsBox = this.settingsBox!;
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: switch (this.chatType) {
+        ChatType.Twitch => AddEditTwitchUsernameDialog(
+          settingsBox: settingsBox,
+        ),
+        ChatType.YouTube => AddEditYouTubeUsernameDialog(
+          settingsBox: settingsBox,
+        ),
+        ChatType.Owncast => AddEditOwncastUsernameDialog(
+          settingsBox: settingsBox,
+        ),
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -646,25 +677,17 @@ class _ChatEmptyState extends StatelessWidget {
             ),
             if (this.nativeConnectPrompt) ...[
               const SizedBox(height: AppSpacing.lg),
-              Pressable(
-                haptic: true,
-                onTap: this.onConnectTap ?? () => startTwitchLogin(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                    vertical: AppSpacing.md,
-                  ),
-                  decoration: BoxDecoration(
-                    color: brandColor,
-                    borderRadius: AppRadius.pill,
-                  ),
-                  child: Text(
-                    this.connectLabel ?? 'Connect Twitch',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.white),
-                  ),
-                ),
+              BaseButton(
+                text: this.connectLabel ?? 'Connect Twitch',
+                color: brandColor,
+                onPressed: this.onConnectTap ?? () => startTwitchLogin(context),
+              ),
+            ] else if (this.settingsBox != null) ...[
+              const SizedBox(height: AppSpacing.lg),
+              BaseButton(
+                secondary: true,
+                text: 'Add username…',
+                onPressed: () => this._addUsername(context),
               ),
             ],
           ],
@@ -690,8 +713,6 @@ class _ChatProUpsell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color accent = Theme.of(context).colorScheme.secondary;
-
     /// Top-aligned (like [_ChatEmptyState]) so the pane sits inside the
     /// actually visible area of the dashboard scroll view
     return Align(
@@ -724,14 +745,22 @@ class _ChatProUpsell extends StatelessWidget {
             const SizedBox(height: AppSpacing.lg),
 
             /// Compact benefit taste - titles only; the paywall carries
-            /// the full copy
+            /// the full copy. Icons stay neutral (rule 5 - the padlock
+            /// tile is the pane's one accent moment, paywall precedent).
             for (final ProBenefit benefit in kProBenefits.take(3))
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(benefit.icon, size: 16.0, color: accent),
+                    Icon(
+                      benefit.icon,
+                      size: 16.0,
+                      color:
+                          (Theme.of(context).extension<AppTextColors>() ??
+                                  AppTextColors.standard)
+                              .textSecondary,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Flexible(
                       child: Text(
@@ -743,25 +772,9 @@ class _ChatProUpsell extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: AppSpacing.md),
-            Pressable(
-              haptic: true,
-              onTap: () => Navigator.of(context).pushNamed(this.proRoute),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
-                ),
-                decoration: BoxDecoration(
-                  color: accent,
-                  borderRadius: AppRadius.pill,
-                ),
-                child: Text(
-                  'Explore Pro',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white),
-                ),
-              ),
+            BaseButton(
+              text: 'Explore Pro',
+              onPressed: () => Navigator.of(context).pushNamed(this.proRoute),
             ),
           ],
         ),

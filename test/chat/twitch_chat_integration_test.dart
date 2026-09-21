@@ -9,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
@@ -35,7 +36,10 @@ import 'support/fake_twitch_services.dart';
 import 'support/fake_youtube_services.dart';
 
 Widget wrap(Widget child, {bool withProRoute = false}) => MaterialApp(
-  theme: ThemeData(cupertinoOverrideTheme: const CupertinoThemeData()),
+  theme: ThemeData(
+    cupertinoOverrideTheme: const CupertinoThemeData(),
+    extensions: const [AppStatusColors.standard, AppTextColors.standard],
+  ),
 
   /// The Pro gate entry points push the paywall route - register it so
   /// the not-Pro tests can assert the push
