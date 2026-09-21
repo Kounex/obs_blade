@@ -44,7 +44,7 @@ class StatsContainer extends StatelessWidget {
             this.titleLeading!,
             const SizedBox(width: AppSpacing.sm),
           ],
-          Text(this.title, style: Theme.of(context).textTheme.titleLarge),
+          Text(this.title, style: Theme.of(context).textTheme.headlineSmall),
         ],
       ),
       trailingTitleWidget: this.trailing,
