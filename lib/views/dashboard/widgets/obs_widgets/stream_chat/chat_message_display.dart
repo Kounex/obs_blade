@@ -5,8 +5,9 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 /// streamer's name color).
 const Color kChatBroadcasterMentionColor = Color(0xFFE91916);
 
-/// LIVE viewer count / user-card LIVE label — clearer red than salmon,
-/// still a touch softer than broadcaster-mention [kChatBroadcasterMentionColor].
+/// LIVE chip viewer count ([NativeChatStatusChip]) — clearer red than
+/// salmon, still a touch softer than broadcaster-mention
+/// [kChatBroadcasterMentionColor].
 const Color kChatViewerCountColor = Color(0xFFFF5252);
 
 /// Fragments to render in the message body. When this is a threaded
