@@ -68,7 +68,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
-              const SizedBox(width: 10.0),
+              const SizedBox(width: AppSpacing.md),
               const QuestionMarkTooltip(
                 message:
                     'Usually 4455. Can be seen and changed in the WebSocket Plugin settings in OBS:\n\nTools -> WebSocket Server Settings',
@@ -86,9 +86,7 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
               child: TextFormField(
                 focusNode: _portFocusNode,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFeatures: [FontFeature.tabularFigures()],
-                ),
+                style: const TextStyle(fontFeatures: kTabularFigures),
                 controller: TextEditingController(
                   text: homeStore.autodiscoverPort,
                 ),

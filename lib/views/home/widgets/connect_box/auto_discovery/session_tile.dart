@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
 import '../../../../../models/connection.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../connect_form/connect_form.dart';
@@ -16,8 +17,8 @@ class SessionTile extends StatelessWidget {
       leadingIcon: CupertinoIcons.desktopcomputer,
       headerText: this.connection.host,
       headerPadding: const EdgeInsets.symmetric(
-        horizontal: 24.0,
-        vertical: 18.0,
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.lg,
       ),
       expandedBody: Column(
         children: [

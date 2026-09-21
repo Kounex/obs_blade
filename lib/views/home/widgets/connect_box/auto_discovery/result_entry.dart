@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../shared/animator/fader.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/themed/rich_text.dart';
 
 class ResultEntry extends StatelessWidget {
@@ -28,7 +29,9 @@ class ResultEntry extends StatelessWidget {
               text: '\n\nPull down to try again!',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.secondary,
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.highlightText,
               ),
             ),
           ],
