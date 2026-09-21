@@ -38,7 +38,6 @@ class ChatTypeDropdown extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: DropdownButton<ChatType>(
-            // isExpanded: true,
             value: this.settingsBox.get(
               SettingsKeys.SelectedChatType.name,
               defaultValue: ChatType.Twitch,
@@ -54,25 +53,33 @@ class ChatTypeDropdown extends StatelessWidget {
                       children: [
                         Icon(chatType.icon, color: chatType.brandColor),
                         const SizedBox(width: AppSpacing.md),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(chatType.text),
-                            if (chatType == ChatType.YouTube)
-                              Text(
-                                '\u1d47\u1d49\u1d57\u1d43',
-                                style: TextStyle(
-                                  color:
-                                      (Theme.of(
-                                                context,
-                                              ).extension<AppTextColors>() ??
-                                              AppTextColors.standard)
-                                          .textTertiary,
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  chatType.text,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                          ],
+                              if (chatType == ChatType.YouTube)
+                                Text(
+                                  '\u1d47\u1d49\u1d57\u1d43',
+                                  style: TextStyle(
+                                    fontSize: 10.0,
+                                    color:
+                                        (Theme.of(
+                                                  context,
+                                                ).extension<AppTextColors>() ??
+                                                AppTextColors.standard)
+                                            .textTertiary,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: AppSpacing.sm),
                       ],
                     ),
                   ),

@@ -178,8 +178,10 @@ class _SetupPill extends StatelessWidget {
               Theme.of(context).colorScheme.secondary,
           borderRadius: AppRadius.pill,
         ),
-        child: Text(
+        child: AutoSizeText(
           'Set up YouTube',
+          maxLines: 1,
+          minFontSize: 10.0,
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: Colors.white),
