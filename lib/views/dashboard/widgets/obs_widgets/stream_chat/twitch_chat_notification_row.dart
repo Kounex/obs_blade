@@ -205,9 +205,15 @@ class TwitchChatNotificationRow extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: spacing),
-      child: row,
+    /// Subs/raids are chat's celebration moment — one-shot rise + fade
+    /// entrance (StaggeredEntrance is reduce-motion aware).
+    return StaggeredEntrance(
+      duration: AppMotion.medium,
+      curve: AppMotion.emphasized,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: spacing),
+        child: row,
+      ),
     );
   }
 
