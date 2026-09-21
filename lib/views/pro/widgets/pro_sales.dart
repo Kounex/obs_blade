@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show kMinInteractiveDimensionCupertino;
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,9 +52,7 @@ class ProSalesView extends StatelessWidget {
       /// clearance CustomSliverList gives the sliver-based tab views, so
       /// the legal row scrolls fully above the bar
       padding: EdgeInsets.only(
-        top:
-            MediaQuery.paddingOf(context).top +
-            kMinInteractiveDimensionCupertino,
+        top: MediaQuery.paddingOf(context).top + GlassBar.minContentHeight,
         bottom: tabBarBottomPadding(context),
       ),
       child: Center(
@@ -95,13 +92,13 @@ class ProSalesView extends StatelessWidget {
                 child: ProBenefitsBrowser(),
               ),
               const SizedBox(height: AppSpacing.xl),
-              StaggeredEntrance(
-                index: 3,
-                scaleFrom: 0.985,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  StaggeredEntrance(
+                    index: 3,
+                    scaleFrom: 0.985,
+                    child: Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: Text(
                         'CHOOSE YOUR PRO',
@@ -112,13 +109,16 @@ class ProSalesView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    ProPricing(store: this.store),
-                  ],
-                ),
+                  ),
+
+                  /// The cards stagger per card (indexes 4-6) instead of
+                  /// entering as one block
+                  ProPricing(store: this.store, entranceIndexBase: 4),
+                ],
               ),
               const SizedBox(height: AppSpacing.xl),
               StaggeredEntrance(
-                index: 4,
+                index: 7,
                 scaleFrom: 0.985,
                 child: Column(
                   children: [
@@ -183,15 +183,25 @@ class _LegalLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// Small glyph target - no spring (rule 6); the 44pt hit floor is a
+    /// transparent band, the link text itself keeps its visual size
     return Pressable(
       onTap: this.onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        child: Text(
-          this.text,
-          style: Theme.of(context).textTheme.bodySmall!.copyWith(
-            /// Links are highlight-as-text (token-delta §2.3), not accent
-            color: Theme.of(context).extension<AppTextColors>()!.highlightText,
+      springy: false,
+      child: SizedBox(
+        height: 44.0,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Text(
+              this.text,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                /// Links are highlight-as-text (token-delta §2.3), not accent
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.highlightText,
+              ),
+            ),
           ),
         ),
       ),

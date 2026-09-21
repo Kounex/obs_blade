@@ -53,9 +53,10 @@ class _ProPaywallViewState extends State<ProPaywallView> {
     }
 
     /// Celebrate only on the unlock edge (a long-time Pro opening this
-    /// page gets the calm thank-you state, not confetti)
+    /// page gets the calm thank-you state, not confetti) - and not at all
+    /// under reduced motion
     this._proReaction = reaction((_) => this._store.isPro, (bool isPro) {
-      if (isPro) {
+      if (isPro && !AppMotion.reduce(this.context)) {
         this._confettiController.play();
       }
     });

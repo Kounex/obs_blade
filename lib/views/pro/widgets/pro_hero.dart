@@ -50,11 +50,15 @@ class ProHero extends StatelessWidget {
           child: Container(
             width: 96.0,
             height: 96.0,
-            decoration: BoxDecoration(
-              /// Scene-button idiom: weak tint fill, full-color ring
+            decoration: ShapeDecoration(
+              /// Scene-button idiom: weak tint fill, full-color ring -
+              /// squircle (same ContinuousRectangleBorder contract as the
+              /// decorative icon tiles, size x 0.38)
               color: accent.withValues(alpha: 0.12),
-              border: Border.all(color: accent, width: 1.5),
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              shape: ContinuousRectangleBorder(
+                borderRadius: BorderRadius.circular(96.0 * 0.38),
+                side: BorderSide(color: accent, width: 1.5),
+              ),
             ),
             child: Icon(CupertinoIcons.bolt_fill, color: accent, size: 48.0),
           ),

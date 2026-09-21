@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:confetti/confetti.dart';
-import 'package:flutter/cupertino.dart' show kMinInteractiveDimensionCupertino;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -61,9 +60,8 @@ class ProUnlockedView extends StatelessWidget {
           /// (`extendBodyBehindBar` on the wrapper) - the scroll view
           /// owns the bar's top inset
           padding: EdgeInsets.only(
-            top:
-                MediaQuery.paddingOf(context).top +
-                kMinInteractiveDimensionCupertino,
+            top: MediaQuery.paddingOf(context).top + GlassBar.minContentHeight,
+            bottom: tabBarBottomPadding(context),
           ),
           child: Center(
             child: BaseConstrainedBox(
@@ -71,40 +69,59 @@ class ProUnlockedView extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: AppSpacing.xxl * 2),
-                  AnimatedResultIcon(
-                    type: AnimatedResultType.positive,
-                    size: 96.0,
-                    color: accent,
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  Text(
-                    'Welcome to Pro',
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Thanks for supporting OBS Blade — native chat and '
-                    'moderation are unlocked. And everything you already '
-                    'used stays free, forever.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: textColors.textSecondary,
+                  StaggeredEntrance(
+                    index: 0,
+                    scaleFrom: 0.985,
+                    child: AnimatedResultIcon(
+                      type: AnimatedResultType.positive,
+                      size: 96.0,
+                      color: accent,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  BaseButton(
-                    text: 'Manage subscription',
-                    onPressed: () => this._manageSubscription(context),
+                  StaggeredEntrance(
+                    index: 1,
+                    scaleFrom: 0.985,
+                    child: Text(
+                      'Welcome to Pro',
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    'Manage or cancel anytime in your store account — '
-                    'no hoops, no dark patterns.',
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: AppSpacing.sm),
+                  StaggeredEntrance(
+                    index: 2,
+                    scaleFrom: 0.985,
+                    child: Text(
+                      'Thanks for supporting OBS Blade — native chat and '
+                      'moderation are unlocked. And everything you already '
+                      'used stays free, forever.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: textColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  StaggeredEntrance(
+                    index: 3,
+                    scaleFrom: 0.985,
+                    child: Column(
+                      children: [
+                        BaseButton(
+                          text: 'Manage subscription',
+                          onPressed: () => this._manageSubscription(context),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'Manage or cancel anytime in your store account — '
+                          'no hoops, no dark patterns.',
+                          textAlign: TextAlign.center,
 
-                    /// Reassurance footnote (token-delta §2.1)
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: textColors.textTertiary,
+                          /// Reassurance footnote (token-delta §2.1)
+                          style: Theme.of(context).textTheme.bodySmall!
+                              .copyWith(color: textColors.textTertiary),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -112,20 +129,21 @@ class ProUnlockedView extends StatelessWidget {
             ),
           ),
         ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: this.confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            numberOfParticles: 24,
-            colors: [
-              accent,
-              Theme.of(context).colorScheme.secondary,
-              Colors.white,
-            ],
+        if (!AppMotion.reduce(context))
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: this.confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              numberOfParticles: 24,
+              colors: [
+                accent,
+                Theme.of(context).colorScheme.secondary,
+                Colors.white,
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

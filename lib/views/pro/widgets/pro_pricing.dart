@@ -21,7 +21,15 @@ import '../../settings/widgets/support_dialog/support_skeleton.dart';
 class ProPricing extends StatelessWidget {
   final ProStore store;
 
-  const ProPricing({super.key, required this.store});
+  /// First stagger index for the per-card entrances - the paywall sections
+  /// above own the lower indexes
+  final int entranceIndexBase;
+
+  const ProPricing({
+    super.key,
+    required this.store,
+    this.entranceIndexBase = 0,
+  });
 
   static const List<_ProOffer> _offers = [
     _ProOffer(
@@ -79,12 +87,16 @@ class ProPricing extends StatelessWidget {
         }
 
         final List<Widget> cards = [
-          for (final _ProOffer offer in _offers)
-            _ProPriceCard(
-              offer: offer,
-              product: this._productFor(offer.productId),
-              pending: this.store.pending,
-              onBuy: (product) => this._buy(context, offer, product),
+          for (final (int index, _ProOffer offer) in _offers.indexed)
+            StaggeredEntrance(
+              index: this.entranceIndexBase + index,
+              scaleFrom: 0.985,
+              child: _ProPriceCard(
+                offer: offer,
+                product: this._productFor(offer.productId),
+                pending: this.store.pending,
+                onBuy: (product) => this._buy(context, offer, product),
+              ),
             ),
         ];
 

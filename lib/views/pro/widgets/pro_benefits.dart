@@ -93,14 +93,19 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
           SmoothPageIndicator(
             controller: this._pageController,
             count: kProBenefits.length,
+
+            /// Unified page-dot grammar (same as the intro slides): worm
+            /// effect, neutral active/inactive levels
             effect: WormEffect(
               dotHeight: 8.0,
               dotWidth: 8.0,
               spacing: AppSpacing.sm,
-              dotColor: Theme.of(context).dividerColor.withValues(alpha: 0.35),
+              dotColor: Theme.of(
+                context,
+              ).extension<AppTextColors>()!.textOrnament,
               activeDotColor: Theme.of(
                 context,
-              ).buttonTheme.colorScheme!.secondary,
+              ).extension<AppTextColors>()!.textPrimary,
             ),
           ),
         ],
