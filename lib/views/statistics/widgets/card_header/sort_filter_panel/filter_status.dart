@@ -33,7 +33,6 @@ class FilterStatus extends StatelessWidget {
                 ? Theme.of(context).extension<AppTextColors>()!.highlightText
                 : Theme.of(context).extension<AppTextColors>()!.textSecondary,
           ),
-          width: 32.0,
         );
       },
     );
