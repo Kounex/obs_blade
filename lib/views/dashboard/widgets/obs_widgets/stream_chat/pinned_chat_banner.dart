@@ -70,12 +70,32 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
     final store = GetIt.instance<TwitchChatStore>();
     final theme = Theme.of(context);
     final mutedColor = theme.textTheme.bodySmall?.color;
-    final activeColor = this._expanded
-        ? theme.textTheme.bodyMedium?.color
-        : mutedColor;
-    final accentColor = this._expanded
-        ? theme.colorScheme.secondary
-        : mutedColor;
+    final highlightText =
+        (theme.extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
+
+    Widget messageText(bool expanded) => Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: '${this.widget.pinned.senderUserName}: ',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: expanded ? highlightText : mutedColor,
+            ),
+          ),
+          TextSpan(
+            text: this.widget.pinned.message.text,
+            style: TextStyle(
+              color: expanded ? theme.textTheme.bodyMedium?.color : mutedColor,
+            ),
+          ),
+        ],
+      ),
+      style: theme.textTheme.bodySmall,
+      maxLines: expanded ? null : 1,
+      overflow: expanded ? null : TextOverflow.ellipsis,
+    );
 
     return Pressable(
       haptic: true,
@@ -101,29 +121,30 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
         ),
         child: Row(
           children: [
-            Icon(CupertinoIcons.pin_fill, size: 14.0, color: accentColor),
+            Icon(
+              CupertinoIcons.pin_fill,
+              size: 14.0,
+              color: this._expanded ? highlightText : mutedColor,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '${this.widget.pinned.senderUserName}: ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
+              child: AppMotion.reduce(context)
+                  ? AnimatedSwitcher(
+                      duration: AppMotion.medium,
+                      child: KeyedSubtree(
+                        key: ValueKey(this._expanded),
+                        child: messageText(this._expanded),
                       ),
+                    )
+                  : AnimatedCrossFade(
+                      firstChild: messageText(false),
+                      secondChild: messageText(true),
+                      crossFadeState: this._expanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      duration: AppMotion.medium,
+                      sizeCurve: AppMotion.emphasized,
                     ),
-                    TextSpan(
-                      text: this.widget.pinned.message.text,
-                      style: TextStyle(color: activeColor),
-                    ),
-                  ],
-                ),
-                style: theme.textTheme.bodySmall,
-                maxLines: this._expanded ? null : 1,
-                overflow: this._expanded ? null : TextOverflow.ellipsis,
-              ),
             ),
             const SizedBox(width: AppSpacing.sm),
             Icon(
@@ -138,8 +159,13 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
               Pressable(
                 haptic: true,
                 onTap: () => this._confirmUnpin(context),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xs),
+                child: Container(
+                  /// Invisible hit widening to 44pt - the banner's height
+                  /// must not grow, so the glyph keeps its spot
+                  constraints: const BoxConstraints(
+                    minWidth: kMinInteractiveDimensionCupertino,
+                  ),
+                  alignment: Alignment.centerRight,
                   child: Icon(
                     CupertinoIcons.xmark,
                     size: 14.0,

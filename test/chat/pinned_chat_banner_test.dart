@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
@@ -110,8 +111,10 @@ void main() {
   ) async {
     await pumpBanner(tester);
 
-    expect(find.textContaining('Chatter:'), findsOneWidget);
-    expect(find.textContaining('remember the giveaway'), findsOneWidget);
+    /// AnimatedCrossFade keeps the collapsed and expanded texts in the
+    /// tree — assertions pin the first (collapsed) copy.
+    expect(find.textContaining('Chatter:').first, findsOneWidget);
+    expect(find.textContaining('remember the giveaway').first, findsOneWidget);
     expect(find.byIcon(CupertinoIcons.pin_fill), findsOneWidget);
     expect(find.byIcon(CupertinoIcons.xmark), findsOneWidget);
   });
@@ -160,35 +163,43 @@ void main() {
 
     final context = tester.element(find.byType(PinnedChatBanner));
     final theme = Theme.of(context);
-    RichText bannerText() => tester
+
+    /// AnimatedCrossFade keeps both states in the tree — the line cap
+    /// distinguishes the collapsed copy from the expanded one.
+    RichText bannerText(int? maxLines) => tester
         .widgetList<RichText>(find.byType(RichText))
-        .firstWhere((rich) => rich.text.toPlainText().contains('Chatter:'));
+        .firstWhere(
+          (rich) =>
+              rich.text.toPlainText().contains('Chatter:') &&
+              rich.maxLines == maxLines,
+        );
 
     /// Text.rich wraps the given span in a root span carrying the merged
     /// default style — the banner's name/body spans live two levels down.
-    TextSpan outerSpan() =>
-        (bannerText().text as TextSpan).children!.first as TextSpan;
-    TextSpan nameSpan() => outerSpan().children!.first as TextSpan;
-    TextSpan bodySpan() => outerSpan().children!.last as TextSpan;
+    TextSpan outerSpan(int? maxLines) =>
+        (bannerText(maxLines).text as TextSpan).children!.first as TextSpan;
+    TextSpan nameSpan(int? maxLines) =>
+        outerSpan(maxLines).children!.first as TextSpan;
+    TextSpan bodySpan(int? maxLines) =>
+        outerSpan(maxLines).children!.last as TextSpan;
 
-    /// Collapsed: one line, muted name and body.
-    expect(bannerText().maxLines, 1);
-    expect(nameSpan().style?.color, theme.textTheme.bodySmall?.color);
-    expect(bodySpan().style?.color, theme.textTheme.bodySmall?.color);
+    /// Collapsed copy: one line, muted name and body.
+    expect(nameSpan(1).style?.color, theme.textTheme.bodySmall?.color);
+    expect(bodySpan(1).style?.color, theme.textTheme.bodySmall?.color);
 
-    await tester.tap(find.textContaining('remember the giveaway'));
+    /// Expanded copy: no line cap, highlight name, normal-contrast body.
+    expect(nameSpan(null).style?.color, AppTextColors.standard.highlightText);
+    expect(bodySpan(null).style?.color, theme.textTheme.bodyMedium?.color);
+
+    /// The tap toggles which copy the crossfade shows (chevron mirrors it).
+    expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
+    await tester.tap(find.textContaining('remember the giveaway').first);
     await tester.pump();
+    expect(find.byIcon(CupertinoIcons.chevron_up), findsOneWidget);
 
-    /// Expanded: no line cap, accent name, normal-contrast body.
-    expect(bannerText().maxLines, isNull);
-    expect(nameSpan().style?.color, theme.colorScheme.secondary);
-    expect(bodySpan().style?.color, theme.textTheme.bodyMedium?.color);
-
-    await tester.tap(find.textContaining('remember the giveaway'));
+    await tester.tap(find.textContaining('remember the giveaway').first);
     await tester.pump();
-
-    expect(bannerText().maxLines, 1);
-    expect(nameSpan().style?.color, theme.textTheme.bodySmall?.color);
+    expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
   });
 
   testWidgets('non-mods get no unpin button', (tester) async {
@@ -196,7 +207,7 @@ void main() {
 
     await pumpBanner(tester);
 
-    expect(find.textContaining('remember the giveaway'), findsOneWidget);
+    expect(find.textContaining('remember the giveaway').first, findsOneWidget);
     expect(find.byIcon(CupertinoIcons.xmark), findsNothing);
   });
 
@@ -211,7 +222,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(PinnedChatBanner), findsOneWidget);
-    expect(find.textContaining('remember the giveaway'), findsOneWidget);
+    expect(find.textContaining('remember the giveaway').first, findsOneWidget);
     expect(find.textContaining('text m1'), findsOneWidget);
   });
 
