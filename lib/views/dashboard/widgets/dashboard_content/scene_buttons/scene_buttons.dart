@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -33,7 +34,8 @@ class SceneButtons extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         double size = this.size;
-        double buttonSizeToFitThree = (constraints.maxWidth - 4 * 18.0) / 3;
+        double buttonSizeToFitThree =
+            (constraints.maxWidth - 4 * AppSpacing.lg) / 3;
 
         size = buttonSizeToFitThree < size ? buttonSizeToFitThree : size;
 
@@ -125,13 +127,35 @@ class SceneButtons extends StatelessWidget {
               }).toList();
 
               if (sceneButtons == null || sceneButtons.isEmpty) {
-                return const Center(child: Text('No Scenes available'));
+                final AppTextColors textColors = Theme.of(
+                  context,
+                ).extension<AppTextColors>()!;
+                return StaggeredEntrance(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.photo_on_rectangle,
+                          size: 28.0,
+                          color: textColors.textOrnament,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'No Scenes available',
+                          style: Theme.of(context).textTheme.bodySmall!
+                              .copyWith(color: textColors.textTertiary),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               }
 
               return switch (this.mode) {
                 SceneButtonsMode.wrap => Wrap(
-                  runSpacing: 18.0,
-                  spacing: 18.0,
+                  runSpacing: AppSpacing.lg,
+                  spacing: AppSpacing.lg,
                   children: sceneButtons,
                 ),
                 SceneButtonsMode.horizontalScroll => SizedBox(
