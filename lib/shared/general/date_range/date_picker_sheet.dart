@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
+import '../../design/design.dart';
 import '../base/divider.dart';
 
 class DatePickerSheet extends StatefulWidget {
@@ -52,9 +54,13 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             CupertinoButton(
-              child: const Text(
+              child: Text(
                 'Clear',
-                style: TextStyle(color: CupertinoColors.destructiveRed),
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).extension<AppStatusColors>()!.destructiveText,
+                ),
               ),
               onPressed: () {
                 this.widget.updateDateTime?.call(null);
