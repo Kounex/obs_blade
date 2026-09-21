@@ -223,13 +223,17 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
       );
     }
     if (this._keyValid == true) {
+      final liveColor =
+          (Theme.of(context).extension<AppStatusColors>() ??
+                  AppStatusColors.standard)
+              .live;
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             CupertinoIcons.checkmark_circle_fill,
             size: 14.0,
-            color: CupertinoColors.activeGreen,
+            color: liveColor,
           ),
           const SizedBox(width: AppSpacing.xs / 2),
           Text(
@@ -237,7 +241,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             key: const Key('youtube-setup-key-valid'),
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: CupertinoColors.activeGreen),
+            ).textTheme.bodySmall?.copyWith(color: liveColor),
           ),
         ],
       );
@@ -246,7 +250,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
       final errorColor =
           (Theme.of(context).extension<AppStatusColors>() ??
                   AppStatusColors.standard)
-              .unreachable;
+              .destructive;
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -281,7 +285,8 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     final effectiveColor =
         color ??
         ChatType.YouTube.brandColor ??
-        Theme.of(context).colorScheme.secondary;
+        Theme.of(context).buttonTheme.colorScheme?.secondary ??
+        StylingHelper.accent_color;
     return Pressable(
       key: key,
       haptic: true,
@@ -299,9 +304,11 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
         ),
         child: Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.white,
+            fontSize: 17.0,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -310,7 +317,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
   @override
   Widget build(BuildContext context) {
     final accent =
-        ChatType.YouTube.brandColor ?? Theme.of(context).colorScheme.secondary;
+        ChatType.YouTube.brandColor ??
+        Theme.of(context).buttonTheme.colorScheme?.secondary ??
+        StylingHelper.accent_color;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -370,13 +379,19 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                     Icon(
                       CupertinoIcons.link,
                       size: 14.0,
-                      color: Theme.of(context).colorScheme.primary,
+                      color:
+                          (Theme.of(context).extension<AppTextColors>() ??
+                                  AppTextColors.standard)
+                              .highlightText,
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Open console.cloud.google.com',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                        color:
+                            (Theme.of(context).extension<AppTextColors>() ??
+                                    AppTextColors.standard)
+                                .highlightText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -475,7 +490,11 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                             key: const Key('youtube-setup-sign-in'),
                             label: 'Connect YouTube',
                             onTap: this._signIn,
-                            color: Theme.of(context).colorScheme.secondary,
+                            color:
+                                Theme.of(
+                                  context,
+                                ).buttonTheme.colorScheme?.secondary ??
+                                StylingHelper.accent_color,
                           ),
                   ),
               ],
