@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/flutter_modified/translucent_sliver_app_bar.dart';
@@ -12,6 +13,11 @@ import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import 'general_actions.dart';
 import 'on_air_status_cluster.dart';
+
+/// Height of the LIVE/REC pills row pinned as the app bar's `bottom` -
+/// the dashboard's toast anchor needs the exact number to sit below the
+/// cluster
+const double kStatusClusterHeight = 44.0;
 
 class StatusAppBar extends StatelessWidget {
   const StatusAppBar({super.key});
@@ -35,7 +41,7 @@ class StatusAppBar extends StatelessWidget {
       /// if an action slot ends up empty
       toolbarHeight: GlassBar.minContentHeight,
       bottom: const PreferredSize(
-        preferredSize: Size.fromHeight(44.0),
+        preferredSize: Size.fromHeight(kStatusClusterHeight),
         child: Column(
           children: [
             BaseDivider(),
@@ -70,20 +76,28 @@ class StatusAppBar extends StatelessWidget {
                     },
                   ),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: AppRadius.pill,
-                    color: pillText.withValues(alpha: 0.15),
-                  ),
-                  child: Text(
-                    'Close',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.labelMedium!.copyWith(color: pillText),
+
+                /// Compact pill visual; the transparent 44pt column around
+                /// it carries the hit-area floor
+                child: SizedBox(
+                  height: kBaseIconButtonMinHitArea,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: AppRadius.pill,
+                        color: pillText.withValues(alpha: 0.15),
+                      ),
+                      child: Text(
+                        'Close',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.labelMedium!.copyWith(color: pillText),
+                      ),
+                    ),
                   ),
                 ),
               ),
