@@ -44,7 +44,7 @@ class NativeChatInput extends StatefulWidget {
   /// [errorText] row.
   final Widget? contextStrip;
 
-  /// Brand accent (send button, hint action)
+  /// Brand accent (send button fill)
   final Color accentColor;
 
   /// Delivers the trimmed message; the field clears when it completes
@@ -102,6 +102,10 @@ class _NativeChatInputState extends State<NativeChatInput> {
 
   @override
   Widget build(BuildContext context) {
+    final Color highlightText =
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
+
     if (!this.widget.canSend) {
       return Padding(
         padding: const EdgeInsets.symmetric(
@@ -110,11 +114,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
         ),
         child: Row(
           children: [
-            Icon(
-              CupertinoIcons.lock_fill,
-              size: 14.0,
-              color: this.widget.accentColor,
-            ),
+            Icon(CupertinoIcons.lock_fill, size: 14.0, color: highlightText),
             const SizedBox(width: AppSpacing.xs),
             Text(
               this.widget.lockedHintText,
@@ -132,7 +132,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                 child: Text(
                   this.widget.lockedActionText,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: this.widget.accentColor,
+                    color: highlightText,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -146,7 +146,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
     final Color errorColor =
         (Theme.of(context).extension<AppStatusColors>() ??
                 AppStatusColors.standard)
-            .unreachable;
+            .destructiveText;
 
     return Padding(
       /// Extra bottom so the gap under the row matches the gap above to
@@ -203,7 +203,6 @@ class _NativeChatInputState extends State<NativeChatInput> {
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => this._submit(),
                   hintText: 'Send a message…',
-                  focusBorderColor: this.widget.accentColor,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),

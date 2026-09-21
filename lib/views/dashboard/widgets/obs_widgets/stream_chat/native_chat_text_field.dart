@@ -68,10 +68,8 @@ class NativeChatTextField extends StatelessWidget {
     final focusedBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
       borderSide: BorderSide(
-        color:
-            this.focusBorderColor ??
-            Theme.of(context).dividerColor.withValues(alpha: 0.4),
-        width: this.focusBorderColor == null ? 0.0 : 1.0,
+        color: this.focusBorderColor ?? Theme.of(context).colorScheme.primary,
+        width: 1.0,
       ),
     );
 
