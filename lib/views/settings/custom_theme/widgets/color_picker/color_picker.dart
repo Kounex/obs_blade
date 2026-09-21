@@ -6,6 +6,7 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/base/icon_button.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../types/extensions/color.dart';
 import '../../../../../types/extensions/string.dart';
@@ -19,6 +20,13 @@ enum PickerType { RGB, HSL }
 extension PickerTypeFunctions on PickerType {
   String get name => {PickerType.RGB: 'RGB', PickerType.HSL: 'HSL'}[this]!;
 }
+
+/// RGB/A slider channel identity - tool language naming the channel
+/// itself (values deliberately stay the stock swatches)
+const Color _kChannelR = CupertinoColors.destructiveRed;
+const Color _kChannelG = Colors.green;
+const Color _kChannelB = Colors.blue;
+const Color _kChannelA = Colors.white;
 
 class ColorPicker extends StatefulWidget {
   final String title;
@@ -373,20 +381,30 @@ class _ColorPickerState extends State<ColorPicker> {
                   child: Text(
                     'FROM CURRENT THEME',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      color: Theme.of(
+                        context,
+                      ).extension<AppTextColors>()!.textTertiary,
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Wrap(
-                    spacing: AppSpacing.md,
-                    runSpacing: AppSpacing.md,
+                    /// 32pt swatch glyphs ride centered in abutting 44pt
+                    /// boxes - glyph pitch stays 44pt (32 + old 12 gap)
+                    /// while the transparent expansion carries the hit floor
                     children: [
                       for (final Color swatch in _themeSwatches(context))
                         Pressable(
+                          springy: false,
                           onTap: () => _applySwatch(swatch),
-                          child: ColorBubble(color: swatch, size: 32.0),
+                          child: SizedBox(
+                            width: kBaseIconButtonMinHitArea,
+                            height: kBaseIconButtonMinHitArea,
+                            child: Center(
+                              child: ColorBubble(color: swatch, size: 32.0),
+                            ),
+                          ),
                         ),
                     ],
                   ),
@@ -512,7 +530,7 @@ class _ColorPickerState extends State<ColorPicker> {
                               pickerType: _pickerType,
                               colorType: ColorType.R,
                               value: _getColorSliderValue(ColorType.R),
-                              activeColor: CupertinoColors.destructiveRed,
+                              activeColor: _kChannelR,
                               onChanged: (colorVal) =>
                                   _onColorSlideChange(colorVal, ColorType.R),
                             ),
@@ -524,7 +542,7 @@ class _ColorPickerState extends State<ColorPicker> {
                               pickerType: _pickerType,
                               colorType: ColorType.G,
                               value: _getColorSliderValue(ColorType.G),
-                              activeColor: Colors.green,
+                              activeColor: _kChannelG,
                               onChanged: (colorVal) =>
                                   _onColorSlideChange(colorVal, ColorType.G),
                             ),
@@ -536,7 +554,7 @@ class _ColorPickerState extends State<ColorPicker> {
                               pickerType: _pickerType,
                               colorType: ColorType.B,
                               value: _getColorSliderValue(ColorType.B),
-                              activeColor: Colors.blue,
+                              activeColor: _kChannelB,
                               onChanged: (colorVal) =>
                                   _onColorSlideChange(colorVal, ColorType.B),
                             ),
@@ -599,7 +617,7 @@ class _ColorPickerState extends State<ColorPicker> {
                       pickerType: _pickerType,
                       colorType: ColorType.A,
                       value: _getColorSliderValue(ColorType.A),
-                      activeColor: Colors.white,
+                      activeColor: _kChannelA,
                       onChanged: (colorVal) =>
                           _onColorSlideChange(colorVal, ColorType.A),
                     ),
