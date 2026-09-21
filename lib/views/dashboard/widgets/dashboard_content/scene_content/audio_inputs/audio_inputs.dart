@@ -44,21 +44,24 @@ class _AudioInputsState extends State<AudioInputs>
                 child: ListView(
                   controller: _controller,
                   physics: const ClampingScrollPhysics(),
-                  padding: const EdgeInsets.only(top: AppSpacing.xl),
+                  padding: const EdgeInsets.only(top: AppSpacing.md),
                   children: [
                     const _AudioSectionHeader(label: 'Global'),
                     Column(
                       children: dashboardStore.globalInputs.isNotEmpty
-                          ? dashboardStore.globalInputs
-                                .map(
-                                  (globalInput) => StaleGuard(
-                                    child: VisibilitySlideWrapper(
-                                      input: globalInput,
-                                      child: AudioSlider(input: globalInput),
-                                    ),
+                          ? dashboardStore.globalInputs.indexed.map((entry) {
+                              final int index = entry.$1;
+                              final globalInput = entry.$2;
+                              return StaggeredEntrance(
+                                index: index,
+                                child: StaleGuard(
+                                  child: VisibilitySlideWrapper(
+                                    input: globalInput,
+                                    child: AudioSlider(input: globalInput),
                                   ),
-                                )
-                                .toList()
+                                ),
+                              );
+                            }).toList()
                           : [
                               const PlaceholderSceneItem(
                                 text: 'No Global Audio source available...',
@@ -73,16 +76,19 @@ class _AudioInputsState extends State<AudioInputs>
                     const _AudioSectionHeader(label: 'Scene'),
                     Column(
                       children: dashboardStore.currentInputs.isNotEmpty
-                          ? dashboardStore.currentInputs
-                                .map(
-                                  (input) => StaleGuard(
-                                    child: VisibilitySlideWrapper(
-                                      input: input,
-                                      child: AudioSlider(input: input),
-                                    ),
+                          ? dashboardStore.currentInputs.indexed.map((entry) {
+                              final int index = entry.$1;
+                              final input = entry.$2;
+                              return StaggeredEntrance(
+                                index: index,
+                                child: StaleGuard(
+                                  child: VisibilitySlideWrapper(
+                                    input: input,
+                                    child: AudioSlider(input: input),
                                   ),
-                                )
-                                .toList()
+                                ),
+                              );
+                            }).toList()
                           : [
                               const PlaceholderSceneItem(
                                 text: 'No Audio source in this scene...',
@@ -100,8 +106,9 @@ class _AudioInputsState extends State<AudioInputs>
   }
 }
 
-/// Caption-style section header (uppercase, letterspaced, theme-aware grey)
-/// replacing the old bold + underlined centered labels
+/// Caption section header (labelSmall uppercase, letterspaced, textTertiary)
+/// with the [AppSpacing.lg] top rhythm - replacing the old bold + underlined
+/// centered labels
 class _AudioSectionHeader extends StatelessWidget {
   final String label;
 
@@ -113,6 +120,7 @@ class _AudioSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(
         left: AppSpacing.md,
         right: AppSpacing.md,
+        top: AppSpacing.lg,
         bottom: AppSpacing.sm,
       ),
       child: Align(
@@ -120,7 +128,8 @@ class _AudioSectionHeader extends StatelessWidget {
         child: Text(
           this.label.toUpperCase(),
           style: Theme.of(context).textTheme.labelSmall!.copyWith(
-            color: Theme.of(context).textTheme.bodySmall!.color,
+            color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+            letterSpacing: 0.8,
           ),
         ),
       ),
