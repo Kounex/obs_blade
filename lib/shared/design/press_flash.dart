@@ -28,12 +28,18 @@ class PressFlash extends StatefulWidget {
 
 class _PressFlashState extends State<PressFlash>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppMotion.instant,
-  );
+  /// Eagerly created in [initState]: a lazy `late final` initializer would
+  /// first run inside [dispose] for a [PressFlash] that stayed disabled its
+  /// whole life, spinning up a ticker mid-unmount
+  late final AnimationController _controller;
 
   bool get _enabled => this.widget.onTap != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: AppMotion.instant);
+  }
 
   @override
   void dispose() {
