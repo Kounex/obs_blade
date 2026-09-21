@@ -9,8 +9,10 @@ import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
 import 'package:obs_blade/utils/youtube_video_id.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../../../models/app_log.dart';
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../models/enums/chat_engine.dart';
+import '../../../../../models/enums/log_level.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/button.dart';
@@ -119,6 +121,10 @@ class _StreamChatState extends State<StreamChat>
   /// reaches 100% progress (long polling chat pages)
   Timer? _loadingFallback;
 
+  /// True while the chat page sits on a Google consent / sign-in host
+  /// (drives the hint overlay - the page itself stays fully interactive)
+  bool _webAuthWalled = false;
+
   /// Dock controller/focus for the native input — owned here so the emote
   /// picker (the dock's leading slot) can insert codes at the cursor and
   /// refocus after its sheet closes.
@@ -164,9 +170,39 @@ class _StreamChatState extends State<StreamChat>
             _finishChatLoading();
           }
         },
+        onUrlChange: (change) => _syncWebAuthWall(change.url),
       ),
     );
     return controller;
+  }
+
+  /// Hosts YouTube bounces the chat embed onto when it wants something from
+  /// the viewer (GDPR consent regions, bot heuristics)
+  static const _webAuthWallHosts = [
+    'consent.youtube.com',
+    'accounts.google.com',
+  ];
+
+  /// YouTube can redirect the chat embed onto a consent / sign-in page
+  /// (per-region, per-IP-reputation, A/B - not predictable). That page is
+  /// fully usable inside the [WebView] and cookies persist (the app never
+  /// clears them), so the user taps through it once and it sticks - surface
+  /// a hint instead of letting it look like chat broke.
+  void _syncWebAuthWall(String? url) {
+    final walled =
+        url != null &&
+        _webAuthWallHosts.any((host) => url.contains(host)) == true;
+    if (walled == _webAuthWalled || !this.mounted) return;
+    setState(() => _webAuthWalled = walled);
+    if (walled) {
+      Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+        AppLog(
+          DateTime.now().millisecondsSinceEpoch,
+          LogLevel.Info,
+          'WebView chat bounced onto a Google consent/sign-in host ($url)',
+        ),
+      );
+    }
   }
 
   void _finishChatLoading() {
@@ -187,6 +223,7 @@ class _StreamChatState extends State<StreamChat>
     /// Plain assignment - called from `build` before the loading overlay is
     /// constructed, so it is reflected in the current frame already
     _isChatLoading = true;
+    _webAuthWalled = false;
     _loadingFallback?.cancel();
     _loadingFallback = Timer(const Duration(seconds: 8), () {
       if (this.mounted && _isChatLoading) {
@@ -563,6 +600,23 @@ class _StreamChatState extends State<StreamChat>
               child: _ChatLoadingState(chatType: chatType),
             ),
           ),
+
+          /// YouTube consent / sign-in hint - same purely-visual idiom:
+          /// the page below stays fully tappable (that's the point -
+          /// the user taps through the wall once and cookies persist)
+          Positioned(
+            top: AppSpacing.md,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _webAuthWalled ? 1.0 : 0.0,
+                duration: AppMotion.medium,
+                curve: AppMotion.standard,
+                child: const _WebAuthWallHint(),
+              ),
+            ),
+          ),
         ],
         if (!chatActive)
           StaggeredEntrance(
@@ -573,6 +627,51 @@ class _StreamChatState extends State<StreamChat>
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Floating hint shown when the chat [WebView] lands on a Google consent /
+/// sign-in page - the page below is the user's to tap through once (cookies
+/// persist, the app never clears them) instead of looking like chat broke
+class _WebAuthWallHint extends StatelessWidget {
+  const _WebAuthWallHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final infoColor =
+        (Theme.of(context).extension<AppStatusColors>() ??
+                AppStatusColors.standard)
+            .info;
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+          borderRadius: AppRadius.pill,
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+            width: 0.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(CupertinoIcons.info_circle_fill, size: 16.0, color: infoColor),
+            const SizedBox(width: AppSpacing.sm),
+            Flexible(
+              child: Text(
+                'YouTube asks for a one-time consent or sign-in - tap through it below',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

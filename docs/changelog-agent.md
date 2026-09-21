@@ -19,6 +19,13 @@ would break every user at once. User-ratified fixes:
   probed and rejected — mobile UAs don't resolve, EU consent redirects break
   the chain without cookies; reliable resolution = native engine's API-key
   territory. Dialog copy now says any watch/live/share/pop-out link works.
+- **Consent-wall detection**: `onUrlChange` watches for bounces onto
+  `consent.youtube.com` / `accounts.google.com` (GDPR regions, bot
+  heuristics — per-IP/session, not per-country) and floats a hint pill over
+  the chat ("tap through it below") instead of looking broken; the wall page
+  stays fully interactive and WebView cookies persist (verified: nothing in
+  the app clears them), so it's a one-time tap. Detection is AppLog'd for
+  support traces.
 
 ## 2026-09-22 — `4.0-liquid-glass` merged into `master` (branch closed)
 
