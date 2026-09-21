@@ -2,10 +2,9 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-21** (branch
-`4.0-liquid-glass`: full-app UI polish wave landed — 10-area audit → 79
-commits, gates green, pushed; next: user dogfoods the branch → Gate 3 →
-merge. Details below + `changelog-agent.md` 2026-09-21).
+Read this first after `AGENTS.md`. Last reset: **2026-09-22** (`4.0-liquid-glass`
+**merged into `master`** — fast-forward, 211 commits — and closed; all
+clones track `master` now. Details: `changelog-agent.md` 2026-09-22).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -38,7 +37,7 @@ merge. Details below + `changelog-agent.md` 2026-09-21).
 | | |
 |---|---|
 | Remote | `Kounex/obs_blade` (**public**) |
-| Branch | **`4.0-liquid-glass`** (all 4.0 work; `master` untouched; `redesign` kept as history) |
+| Branch | **`master`** (4.0 UI rework merged 2026-09-22; `redesign` kept as history) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 | Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
 
@@ -56,11 +55,13 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Goal: ship 4.0.** All code lives on `4.0-liquid-glass` (pushed; checked
-out on the workstation clone — `flutter run` there shows it). Read
-[`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md)
-first — cold-start briefing (ratified grammar, what shipped, known unbuilt
-items, Gate-3 input).
+**Goal: ship 4.0 from `master`.** The 4.0 UI rework (full-app polish wave
++ custom-theme cleanup + dogfood-fix batches) is merged and
+dogfood-approved. Cold-start briefing on the ratified grammar + what
+shipped:
+[`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md);
+findings→fixes map + known leftovers:
+[`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md).
 
 **Store/Pro state:** products exist on both stores with locked regionalized
 pricing **$4.99/mo, $49.99/yr, $99.99 lifetime** (ASC 175/175 territories,
@@ -74,58 +75,31 @@ Registered); upload key A6:24:44 still "in review" — after it resolves:
 delete `android/app/src/main/assets/adi-registration.properties` and
 discard Play internal-track draft `3.3.0 (2026090701)`.
 
-**4.0 UI polish wave LANDED (2026-09-21, 79 commits):** full-app audit
-(10 parallel area audits, all 274 UI files, ~120 verified findings) → one
-fix wave, user-approved wholesale ("trust you on all"). Findings→fixes map,
-ratified calibrations (green stays for online/reachable; hit-target fixes
-must be visually invisible; paywall hero keeps bolt + headline), and known
-leftovers (Gate-3 input):
-[`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md).
-Waves: A shell/theme wiring + shared kit (incl. `destructive`/
-`destructiveText`/`info` status slots); B per-area (GlassBar on both
-sub-page nav-bar wrappers, chat sheet chrome + color grammar, streaming
-cockpit, home Connect morph, pro paywall entrances, statistics + settings
-polish); C follow-ups. Gates: full suite green, analyze baseline.
+**Immediate next threads:**
 
-**What to look at while dogfooding (user, phone + tablet — Settings →
-Force Tablet Mode for phone-width):** sub-page nav bars (55pt + specular),
-chat chrome (sheet handles, neutral Mod chip, count-up LIVE viewers,
-device-code dialogs), streaming-mode cockpit (floating chrome, stale-aware
-health pill, peak-hold meters), statistics (filter chips, chart draw-in,
-count-up detail grid), settings (version stamp tap-to-copy, theme editor
-captions), pro paywall (staged entrances, squircle hero). Then Gate 3:
-fresh review of branch diff + on-device feel, **findings triaged to the
-user BEFORE applying — standing rule** → merge or iterate.
-
-**Astra ports status:** progressive adoption ratified; harvest phases
-landed incl. command-ack layer, confirmed-state ordering, stale-state
-honesty, chat independence (dedicated Chat tab; dashboard chat pane
-removed), streaming cockpit, saved-connection refresh — all merged +
-dogfood-approved (history: `changelog-agent.md` 2026-09-14→20).
-inspect-vs-command/Take bar will NOT be ported (Studio Mode covers it).
-Open follow-ups: conversation-owned drafts wave; optional live-session
-strip; syncOffset gating.
-
-**Immediate next threads (4.0):**
-
-1. **User dogfood of the polish wave** (above) → Gate 3 → merge.
-2. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
-3. **Dogfood the Pro gate** via debug override (long-press paywall hero):
+1. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
+2. **Dogfood the Pro gate** via debug override (long-press paywall hero):
    gate flip mid-session, legacy persisted `SelectedChatEngine=native`
    boot path, settings row states.
-4. **Android runtime smoke** (emulator/device) — toolchain builds since
+3. **Android runtime smoke** (emulator/device) — toolchain builds since
    2026-09-07; confirm release AABs sign with the upload key
    (`android/key.properties` → `android-release.jks`, A6:24:44).
-5. Release mechanics: version/changelog, store metadata
+4. Release mechanics: version/changelog, store metadata
    (`fastlane/metadata`), visual-QA pass
    (`tool/visual_qa/capture_screenshots.sh`).
-6. YouTube (post-4.0 ok): run the spike (`tool/youtube_spike/`, ≥30 min
+5. YouTube (post-4.0 ok): run the spike (`tool/youtube_spike/`, ≥30 min
    busy chat) with the GCP key; the `private/backend-architecture.md`
    OAuth note stays deferred — **sync private docs first**.
+6. Astra open follow-ups (post-4.0 ok): conversation-owned drafts wave;
+   optional live-session strip; syncOffset gating. inspect-vs-command/Take
+   bar will NOT be ported (Studio Mode covers it).
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in
-`changelog-agent.md`. `test/pro/` is the purchase/entitlement suite home.
+`changelog-agent.md` — incl. the known pre-existing
+`test/websocket/state_ordering_test.dart` flake (intermittent, passes on
+re-run; don't chase it as a regression). `test/pro/` is the
+purchase/entitlement suite home.
 Machine note (this box): **`/tmp` is a 3.8G tmpfs** — if it fills with
 `flutter_tools.*` dirs, `flutter test` hangs silently in the kernel
 compiler ("Free up space"); `rm -rf /tmp/flutter_tools.*` and re-run.
@@ -135,7 +109,7 @@ Always `flutter test -j 1` here; `flutter pub get` if a restored
 ## Verify quickly
 
 ```bash
-git checkout 4.0-liquid-glass && git pull   # 4.0 work lives here; master is untouched
+git checkout master && git pull               # all work lands here now
 flutter test -j 1                            # serial on this box
 dart analyze                                 # expect baseline infos, 0 errors
 ```
@@ -150,7 +124,7 @@ in `docs/private/maintainer-workflow.md`.
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
 | [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md) | 4.0 cold-start briefing (read first) |
-| [`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, Gate-3 leftovers |
+| [`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, leftovers |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
 | [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 |

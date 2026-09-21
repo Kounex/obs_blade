@@ -2,6 +2,37 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-22 — `4.0-liquid-glass` merged into `master` (branch closed)
+
+User dogfood-approved the 4.0 UI rework ("happy with the ui rework") →
+fast-forward merge `23070815..df1437d9` (**211 commits**, 474 files,
++34k/−18.5k), branch deleted locally/remotely/on the workstation clone —
+all clones now track `master`. Pre-merge gate: full suite + analyze; only
+failure was the documented pre-existing `state_ordering_test.dart` flake
+(passes on re-run, passes on the workstation clone). Dogfood-fix batches
+that landed between the polish wave and the merge:
+
+- **Settings/home/dashboard** (`f3dbc40f`…`892159a8`): "Command Failure
+  Alerts" shortened to "Failure Alerts" (ellipsis on phones — standing
+  rule: settings labels stay short); saved-connection card header
+  realigned on one line via the OverflowBox idiom (44pt hit target kept
+  invisible, row not inflated); connect-mode switcher (autodiscover /
+  scan / manual) is a clean crossfade now — translate animation removed
+  per user direction; scene-tile selection ring animates with the fill
+  (`boxAnimation`) instead of snapping off instantly.
+- **Chat bar YouTube side** (`07a81c4a`): "Set up YouTube" pill uses
+  AutoSizeText mirroring the Connect pill (was wrapping to two lines);
+  ChatType dropdown overflow fixed — label is Flexible + ellipsizes, the
+  superscript beta marker pinned to 10pt (was inheriting body size),
+  dead trailing spacer removed (was a 6px paint overflow).
+- **Chat header alignment** (`df1437d9`): the username bar stacked three
+  horizontal insets (page `md` + `usernameRowPadding` `xs` + the bar's
+  own `sm`) over the chat window's single page margin — controls sat
+  visibly inboard of the chat card. Bar is inset-agnostic now (hosts own
+  the margin), `usernameRowPadding` removed with both call sites;
+  streaming-mode floating header keeps uniform panel padding (was
+  doubled horizontally).
+
 ## 2026-09-22 — Custom theme cleanup on `4.0-liquid-glass`
 
 Theme-system audit against the now-stable token layer (full map: model
