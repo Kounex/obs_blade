@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/design/design.dart';
+import '../../../../shared/general/base/icon_button.dart';
 import '../../../../utils/styling_helper.dart';
 
 class PaginationControl extends StatelessWidget {
@@ -91,24 +92,33 @@ class _PaginationButton extends StatelessWidget {
 
     return Pressable(
       onTap: this.onTap,
-      child: Container(
-        width: 40.0,
-        height: 40.0,
-        decoration: BoxDecoration(
-          color: enabled
-              ? StylingHelper.lightenDarkenColor(
-                  Theme.of(context).cardColor,
-                  10,
-                )
-              : Colors.transparent,
-          borderRadius: AppRadius.pill,
-        ),
-        child: Icon(
-          this.icon,
-          size: 20.0,
-          color: IconTheme.of(
-            context,
-          ).color?.withValues(alpha: enabled ? 1.0 : 0.3),
+
+      /// 40pt visual pill, transparent expansion carries the 44pt hit floor
+      /// (Pressable hit-tests translucent)
+      child: SizedBox(
+        width: kBaseIconButtonMinHitArea,
+        height: kBaseIconButtonMinHitArea,
+        child: Center(
+          child: Container(
+            width: 40.0,
+            height: 40.0,
+            decoration: BoxDecoration(
+              color: enabled
+                  ? StylingHelper.lightenDarkenColor(
+                      Theme.of(context).cardColor,
+                      10,
+                    )
+                  : Colors.transparent,
+              borderRadius: AppRadius.pill,
+            ),
+            child: Icon(
+              this.icon,
+              size: 20.0,
+              color: IconTheme.of(
+                context,
+              ).color?.withValues(alpha: enabled ? 1.0 : 0.3),
+            ),
+          ),
         ),
       ),
     );

@@ -13,8 +13,8 @@ const List<FilterType> kActiveFilterTypes = [
   FilterType.TotalTime,
 ];
 
-/// Shared slot height so the dropdown and the [OrderButton] read as one
-/// control row (the dropdown keeps its intrinsic field height, centered)
+/// Slot height for the dropdown so it reads as one control row with the
+/// [OrderButton] (which keeps its own 44pt hit floor)
 const double _kControlHeight = 40.0;
 
 class OrderRow extends StatelessWidget {
@@ -53,13 +53,9 @@ class OrderRow extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(left: AppSpacing.lg),
-              child: SizedBox(
-                height: _kControlHeight,
-                width: _kControlHeight,
-                child: OrderButton(
-                  order: statisticsStore.filterOrder,
-                  toggle: statisticsStore.toggleFilterOrder,
-                ),
+              child: OrderButton(
+                order: statisticsStore.filterOrder,
+                toggle: statisticsStore.toggleFilterOrder,
               ),
             ),
           ],
