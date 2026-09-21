@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/settings/dashboard_customisation/order/widgets/element_list.dart';
 
@@ -19,20 +20,38 @@ class ElementBody extends StatelessWidget {
       duration: AppMotion.medium,
       curve: AppMotion.standard,
       child: BaseCard(
-        titleWidget: Row(
+        titleWidget: Stack(
+          alignment: Alignment.centerLeft,
           children: [
-            ReorderableDragStartListener(
-              index: this.index,
-              child: Icon(
-                CupertinoIcons.circle_grid_3x3_fill,
-                color: Theme.of(context).disabledColor,
-              ),
-            ),
-            const SizedBox(width: 12.0),
-            Expanded(
+            Padding(
+              /// Keeps the title at its pre-hit-floor x (24pt glyph +
+              /// 12 gap) - the drag target's transparent tail slides
+              /// underneath it
+              padding: const EdgeInsets.only(left: 24.0 + AppSpacing.md),
               child: Text(
                 this.config.element.name,
                 style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            ReorderableDragStartListener(
+              index: this.index,
+
+              /// Invisible hit expansion: the 24pt glyph keeps its exact
+              /// spot, the transparent tail reaches 44pt wide into the old
+              /// gap (a 44pt-tall box would grow the cards without a
+              /// trailing control - doctrine: hit fixes stay invisible)
+              child: SizedBox(
+                width: kBaseIconButtonMinHitArea,
+                height: 24.0,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Icon(
+                    CupertinoIcons.circle_grid_3x3_fill,
+                    color: Theme.of(
+                      context,
+                    ).extension<AppTextColors>()!.textTertiary,
+                  ),
+                ),
               ),
             ),
           ],
@@ -54,7 +73,7 @@ class ElementBody extends StatelessWidget {
             : null,
         paddingChild: const EdgeInsets.all(0),
         topPadding: 0,
-        bottomPadding: 18.0,
+        bottomPadding: AppSpacing.lg,
         child: BaseCard(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           child: Align(child: this.config.widget),

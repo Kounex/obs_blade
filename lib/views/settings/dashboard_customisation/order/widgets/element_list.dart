@@ -137,7 +137,7 @@ class ElementList extends StatelessWidget {
         return ReorderableListView.builder(
           shrinkWrap: true,
           padding: EdgeInsets.only(
-            top: 18.0,
+            top: AppSpacing.lg,
             bottom: tabBarBottomPadding(context),
           ),
           buildDefaultDragHandles: false,
