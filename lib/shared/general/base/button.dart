@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
@@ -44,6 +43,9 @@ class BaseButton extends StatelessWidget {
     final AppTextColors textColors = Theme.of(
       context,
     ).extension<AppTextColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
 
     final bool darkSurface =
         Theme.of(context).cardColor.computeLuminance() <= 0.2;
@@ -52,12 +54,12 @@ class BaseButton extends StatelessWidget {
       padding: this.padding,
       elevation: 0,
       backgroundColor: this.isDestructive
-          ? CupertinoColors.destructiveRed
+          ? statusColors.destructive
           : this.secondary
           ? Colors.transparent
           : this.color ?? Theme.of(context).buttonTheme.colorScheme!.secondary,
       minimumSize: this.shrinkWidth
-          ? const Size(0, 36)
+          ? const Size(0, 44)
           : const Size(64.0, 44.0),
       side: !this.isDestructive && this.secondary
           /// Ghost border (token-delta §2.6): white 35% - neutral, the accent
@@ -70,10 +72,10 @@ class BaseButton extends StatelessWidget {
             )
           : null,
       foregroundColor: this.secondary
-          ? textColors.accentText
+          ? this.color ?? textColors.accentText
           : StylingHelper.surroundingAwareAccent(
               surroundingColor: this.isDestructive
-                  ? CupertinoColors.destructiveRed
+                  ? statusColors.destructive
                   : this.color ??
                         Theme.of(context).buttonTheme.colorScheme!.secondary,
             ),
