@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../stores/views/statistics.dart';
+import '../../../../../utils/styling_helper.dart';
 
 class FilterName extends StatefulWidget {
   const FilterName({super.key});
@@ -41,6 +44,14 @@ class _FilterNameState extends State<FilterName> {
     return CupertinoTextField(
       controller: _controller,
       placeholder: 'Filter by name...',
+
+      /// Raised-card fill + divider hairline (same explicit decoration as
+      /// [CupertinoDropdown]) - the stock one renders pure black in dark mode
+      decoration: BoxDecoration(
+        color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor, 8),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
       clearButtonMode: OverlayVisibilityMode.always,
       onChanged: (name) => GetIt.instance<StatisticsStore>().setFilterName(
         name.trim().toLowerCase(),

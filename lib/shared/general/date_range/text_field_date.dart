@@ -2,7 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../../shared/design/design.dart';
 import '../../../../../../utils/modal_handler.dart';
+import '../../../../../../utils/styling_helper.dart';
 import 'date_picker_sheet.dart';
 
 class TextFieldDate extends StatefulWidget {
@@ -62,6 +64,14 @@ class _TextFieldDateState extends State<TextFieldDate> {
           : OverlayVisibilityMode.never,
       placeholder: widget.placeholder,
       style: Theme.of(context).textTheme.bodyMedium,
+
+      /// Raised-card fill + divider hairline (same explicit decoration as
+      /// [CupertinoDropdown]) - the stock one renders pure black in dark mode
+      decoration: BoxDecoration(
+        color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor, 8),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,

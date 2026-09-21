@@ -6,8 +6,10 @@ import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/general/keyboard_number_header.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/cupertino_dropdown.dart';
 import '../../../../../stores/views/statistics.dart';
+import '../../../../../utils/styling_helper.dart';
 
 const List<DurationFilter?> kActiveDurationFilters = [
   null,
@@ -89,7 +91,7 @@ class _FilterDurationState extends State<FilterDuration> {
                   statisticsStore.setDurationFilter(durationFilter),
             ),
           ),
-          const SizedBox(width: 12.0),
+          const SizedBox(width: AppSpacing.md),
           Flexible(
             child: KeyboardNumberHeader(
               focusNode: _focusNode,
@@ -97,6 +99,21 @@ class _FilterDurationState extends State<FilterDuration> {
                 controller: _controller,
                 focusNode: _focusNode,
                 enabled: statisticsStore.durationFilter != null,
+
+                /// Raised-card fill + divider hairline (same explicit
+                /// decoration as [CupertinoDropdown]) - the stock one
+                /// renders pure black in dark mode
+                decoration: BoxDecoration(
+                  color: StylingHelper.lightenDarkenColor(
+                    Theme.of(context).cardColor,
+                    8,
+                  ),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                    width: 0.5,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
                 style: TextStyle(
                   color: statisticsStore.durationFilter == null
                       ? Colors.white38
@@ -112,7 +129,7 @@ class _FilterDurationState extends State<FilterDuration> {
               ),
             ),
           ),
-          const SizedBox(width: 12.0),
+          const SizedBox(width: AppSpacing.md),
           SizedBox(
             width: 98.0,
             child: CupertinoDropdown<TimeUnit>(
