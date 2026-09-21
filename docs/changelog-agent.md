@@ -2,6 +2,46 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-22 — Custom theme cleanup on `4.0-liquid-glass`
+
+Theme-system audit against the now-stable token layer (full map: model
+fields, presets, editor knobs, wiring) + user-ratified direction (rebuild
+the preset lineup, merge the bar knobs, rename labels to the token grammar,
+status colors stay fixed). 3 commits:
+
+- **Preset lineup retuned** (`built_in_themes.dart`): Bright Star's accent
+  was a 7-char typo (`34bafff` → decoded to a wrong, 95%-alpha sky since it
+  shipped) — now `0284c7`; Red Underdog was semantically inverted under the
+  two-group grammar (brand blue, controls red) — now brand red `cc0000` +
+  blue controls `0a84ff` (YouTube's actual grammar); Pure Indigo gets a
+  differentiated readable control violet `a78bfa` (was accent=highlight);
+  Snowstorm's accent deepened `7391d1`→`4a6fd1` for filled-CTA contrast;
+  highlight pins the correct variant per brightness (`0a84ff` dark /
+  `007aff` light — the token layer assumes the dark variant on dark
+  themes). UUIDs/createdMS pinned, so active selections survive.
+- **Editor** (`add_edit_theme.dart` + `theme_colors_row.dart`): AppBar +
+  TabBar merged into one **Navigation Bars** knob (writes both Hive fields;
+  presets now ship equal bar values); labels renamed — App Background,
+  Cards & Sheets, Navigation Bars, Brand Accent, Controls & Links; "kinda
+  the primary color" legacy copy gone; color-dot strip matches the new
+  slots/order.
+- **Wiring fixes** (`app.dart`): Material slots' highlight fallback is now
+  the dark-variant `#0A84FF` the token layer assumes — the default dark
+  theme no longer ships two blues (slots baked `#007AFF` from
+  `CupertinoColors.systemBlue` while `highlightText` derived from
+  `#0A84FF`; the Cupertino override keeps the dynamic color); `surface`
+  unifies on the card wash for light themes too (was hardcoded white);
+  `hightlightColor` typo renamed; dead `StylingHelper.primary_color`
+  removed. `CustomTheme.basic()` seeds new themes with `0a84ff`; dead Hive
+  fields (`starred`, `textColorHex`, write-only `dateUpdatedMS`) documented
+  as reserved — never reused (field-number stability).
+
+Gates: analyze at baseline, settings + persistence + design suites green.
+Known leftovers: the color picker's `useAlpha`/`editableColorValues` paths
+are unreachable (no caller enables them) — candidate for removal; user
+themes saved with divergent appBar/tabBar values collapse to one value on
+next edit (intended merge behavior).
+
 ## 2026-09-21 — 4.0 full-app UI polish wave on `4.0-liquid-glass`
 
 Whole-app UI consistency audit (10 parallel area audits over all 274 files in
