@@ -18,11 +18,26 @@ class _SupportSkeletonState extends State<SupportSkeleton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
+  bool _started = false;
+
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: AppMotion.dramatic)
-      ..repeat(reverse: true);
+    _controller = AnimationController(vsync: this, duration: AppMotion.ambient);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    /// Reduced motion: no breathing loop - static mid-state bars
+    if (AppMotion.reduce(context)) {
+      _controller.value = 0.5;
+      return;
+    }
+    _controller.repeat(reverse: true);
   }
 
   @override
