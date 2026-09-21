@@ -17,7 +17,7 @@ class LogTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
 
-    return Pressable(
+    return PressFlash(
       onTap: () => Navigator.of(context).pushNamed(
         SettingsTabRoutingKeys.LogDetail.route,
         arguments: this.dateMS,
@@ -69,7 +69,10 @@ class LogTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: textTheme.bodySmall?.color),
+            Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
+            ),
           ],
         ),
       ),

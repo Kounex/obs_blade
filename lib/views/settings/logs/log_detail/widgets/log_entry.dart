@@ -182,8 +182,8 @@ class _StackTraceState extends State<_StackTrace> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
+        Pressable(
+          springy: false,
           onTap: () => setState(() => _expanded = !_expanded),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -197,7 +197,9 @@ class _StackTraceState extends State<_StackTrace> {
                   child: Icon(
                     Icons.chevron_right,
                     size: 14.0,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
+                    color: Theme.of(
+                      context,
+                    ).extension<AppTextColors>()!.textTertiary,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.xs),
