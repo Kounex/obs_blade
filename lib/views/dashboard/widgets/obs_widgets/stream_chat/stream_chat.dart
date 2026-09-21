@@ -81,7 +81,6 @@ NativeChatConnectionStatus youTubeChatWindowStatus(
 }
 
 class StreamChat extends StatefulWidget {
-  final bool usernameRowPadding;
   final bool usernameRowExpandable;
   final bool usernameRowBeneath;
 
@@ -97,7 +96,6 @@ class StreamChat extends StatefulWidget {
 
   const StreamChat({
     super.key,
-    this.usernameRowPadding = false,
     this.usernameRowExpandable = false,
     this.usernameRowBeneath = false,
     this.hideUsernameBar = false,
@@ -250,14 +248,11 @@ class _StreamChatState extends State<StreamChat>
 
   @override
   Widget build(BuildContext context) {
-    Widget usernameBar = Padding(
-      padding: EdgeInsets.only(
-        top: 0,
-        left: this.widget.usernameRowPadding ? AppSpacing.xs : 0.0,
-        right: this.widget.usernameRowPadding ? AppSpacing.xs : 0.0,
-        bottom: AppSpacing.md,
-      ),
-      child: const ChatUsernameBar(),
+    /// No horizontal inset — hosts own the page margin, so the bar's
+    /// controls align edge-to-edge with the chat window below.
+    Widget usernameBar = const Padding(
+      padding: EdgeInsets.only(bottom: AppSpacing.md),
+      child: ChatUsernameBar(),
     );
 
     if (this.widget.usernameRowExpandable) {

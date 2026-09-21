@@ -32,10 +32,7 @@ class ChatView extends StatelessWidget {
           child: Center(
             child: BaseConstrainedBox(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: StreamChat(
-                usernameRowPadding: true,
-                proRoute: ChatTabRoutingKeys.Pro.route,
-              ),
+              child: StreamChat(proRoute: ChatTabRoutingKeys.Pro.route),
             ),
           ),
         ),

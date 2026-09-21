@@ -146,7 +146,7 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
       return Stack(
         fit: StackFit.expand,
         children: [
-          const StreamChat(usernameRowPadding: true, hideUsernameBar: true),
+          const StreamChat(hideUsernameBar: true),
           Positioned(
             top: dy,
             right: AppSpacing.sm,

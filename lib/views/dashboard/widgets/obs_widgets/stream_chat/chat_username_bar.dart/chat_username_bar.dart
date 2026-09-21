@@ -71,103 +71,100 @@ class ChatUsernameBar extends StatelessWidget {
         final bool nativeMode =
             nativeChatAvailableFor(chatType) && engine == ChatEngine.native;
 
-        return Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.sm,
-            right: AppSpacing.sm,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        /// No horizontal inset of its own — the host owns the page margin,
+        /// so the bar's controls align edge-to-edge with the chat window
+        /// below (Chat tab: [BaseConstrainedBox] padding; streaming mode:
+        /// the floating header panel's uniform padding).
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
-            /// Top-aligned so the platform dropdown (and the engine switch)
-            /// keep their position when the mode swap adds/removes the
-            /// controls below them
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Flexible(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 256.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ChatTypeDropdown(settingsBox: settingsBox),
-                      if (!nativeMode) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        UsernameDropdown(settingsBox: settingsBox),
-                      ] else
-                        /// Native-mode channel dropdown slot — per
-                        /// platform. Twitch gates on login; YouTube reads
-                        /// work signed-out, so it gates on configuration.
-                        /// Both gate on the Pro entitlement: without it
-                        /// the slot stays empty (no dead-end controls).
-                        Observer(
-                          builder: (_) {
-                            if (!GetIt.instance<ProStore>().isPro) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final showDropdown = switch (chatType) {
-                              ChatType.Twitch =>
-                                GetIt.instance<TwitchChatStore>().isLoggedIn,
-                              ChatType.YouTube =>
-                                GetIt.instance<YouTubeChatStore>().authState !=
-                                    YouTubeAuthState.unconfigured,
-                              _ => false,
-                            };
-
-                            /// Inner Column: the channel dropdowns root
-                            /// in a Flexible (like [UsernameDropdown]), so
-                            /// they need a direct Flex ancestor
-                            return showDropdown
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const SizedBox(height: AppSpacing.sm),
-                                      if (chatType == ChatType.YouTube)
-                                        const YouTubeNativeChannelDropdown()
-                                      else
-                                        const NativeChannelDropdown(),
-                                    ],
-                                  )
-                                : const SizedBox.shrink();
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Flexible(
+          /// Top-aligned so the platform dropdown (and the engine switch)
+          /// keep their position when the mode swap adds/removes the
+          /// controls below them
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 256.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (nativeChatAvailableFor(chatType)) ...[
-                      ChatEngineSwitch(
-                        settingsBox: settingsBox,
-                        chatType: chatType,
-                      ),
+                    ChatTypeDropdown(settingsBox: settingsBox),
+                    if (!nativeMode) ...[
                       const SizedBox(height: AppSpacing.sm),
-                    ],
-                    if (nativeMode)
-                      /// Native cluster hidden without the entitlement -
-                      /// login pills / options would be dead ends while
-                      /// the pane shows the Pro upsell
+                      UsernameDropdown(settingsBox: settingsBox),
+                    ] else
+                      /// Native-mode channel dropdown slot — per
+                      /// platform. Twitch gates on login; YouTube reads
+                      /// work signed-out, so it gates on configuration.
+                      /// Both gate on the Pro entitlement: without it
+                      /// the slot stays empty (no dead-end controls).
                       Observer(
-                        builder: (_) => GetIt.instance<ProStore>().isPro
-                            ? _NativeRightCluster(chatType: chatType)
-                            : const SizedBox.shrink(),
-                      )
-                    else
-                      UsernameActionRow(settingsBox: settingsBox),
+                        builder: (_) {
+                          if (!GetIt.instance<ProStore>().isPro) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final showDropdown = switch (chatType) {
+                            ChatType.Twitch =>
+                              GetIt.instance<TwitchChatStore>().isLoggedIn,
+                            ChatType.YouTube =>
+                              GetIt.instance<YouTubeChatStore>().authState !=
+                                  YouTubeAuthState.unconfigured,
+                            _ => false,
+                          };
+
+                          /// Inner Column: the channel dropdowns root
+                          /// in a Flexible (like [UsernameDropdown]), so
+                          /// they need a direct Flex ancestor
+                          return showDropdown
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const SizedBox(height: AppSpacing.sm),
+                                    if (chatType == ChatType.YouTube)
+                                      const YouTubeNativeChannelDropdown()
+                                    else
+                                      const NativeChannelDropdown(),
+                                  ],
+                                )
+                              : const SizedBox.shrink();
+                        },
+                      ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (nativeChatAvailableFor(chatType)) ...[
+                    ChatEngineSwitch(
+                      settingsBox: settingsBox,
+                      chatType: chatType,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                  if (nativeMode)
+                    /// Native cluster hidden without the entitlement -
+                    /// login pills / options would be dead ends while
+                    /// the pane shows the Pro upsell
+                    Observer(
+                      builder: (_) => GetIt.instance<ProStore>().isPro
+                          ? _NativeRightCluster(chatType: chatType)
+                          : const SizedBox.shrink(),
+                    )
+                  else
+                    UsernameActionRow(settingsBox: settingsBox),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
