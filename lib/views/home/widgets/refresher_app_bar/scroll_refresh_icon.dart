@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
@@ -29,6 +31,12 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
 
+  /// [HomeStore.doRefresh] token captured when the pull arms the refresh -
+  /// a release that fires `initiateRefresh` flips it (a scroll-back cancel
+  /// doesn't), which is how the pill knows to spin
+  bool _armedDoRefresh = false;
+  bool _refreshing = false;
+
   @override
   initState() {
     super.initState();
@@ -37,7 +45,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
       duration: AppMotion.fast,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(curve: AppMotion.spring, parent: _animController),
+      CurvedAnimation(curve: AppMotion.standard, parent: _animController),
     );
   }
 
@@ -76,13 +84,37 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
         !homeStore.refreshable) {
       HapticFeedback.lightImpact();
       homeStore.setRefreshable(true);
-      _animController.forward().then((_) => _animController.animateTo(0.5));
+      _armedDoRefresh = homeStore.doRefresh;
+
+      /// Pulse on arm - skipped under reduced motion (the arrow stays put)
+      if (!AppMotion.reduce(context)) {
+        _animController.forward().then((_) => _animController.animateTo(0.5));
+      }
     }
     if (this.widget.currentBarHeight - this.widget.expandedBarHeight <
             barStretchOffset &&
         homeStore.refreshable) {
       homeStore.setRefreshable(false);
       _animController.animateTo(0.0);
+
+      /// Release while armed = the refresh actually fired - spin the pill
+      /// until the new autodiscovery future settles (a scroll-back cancel
+      /// leaves the token untouched, so no spinner)
+      if (homeStore.doRefresh != _armedDoRefresh) {
+        final refresh = homeStore.autodiscoverConnections;
+        if (refresh != null) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            if (!this.mounted) return;
+            setState(() => _refreshing = true);
+            refresh.whenComplete(() {
+              if (this.mounted &&
+                  identical(refresh, homeStore.autodiscoverConnections)) {
+                setState(() => _refreshing = false);
+              }
+            });
+          });
+        }
+      }
     }
     return Transform.translate(
       /// [FlexibleSpaceBar] parks the title at the bottom — lift the
@@ -104,11 +136,26 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
             animation: _animController,
             builder: (context, child) =>
                 ScaleTransition(scale: _scaleAnimation, child: child),
-            child: Icon(
-              Icons.arrow_downward,
-              color: StylingHelper.surroundingAwareAccent(
-                surroundingColor: indicatorColor,
-              ),
+
+            /// Arrow <-> spinner crossfade inside the same highlight pill
+            /// while the refresh runs
+            child: AnimatedSwitcher(
+              duration: AppMotion.fast,
+              child: _refreshing
+                  ? CupertinoActivityIndicator(
+                      key: const ValueKey('refreshing'),
+                      radius: 8.0,
+                      color: StylingHelper.surroundingAwareAccent(
+                        surroundingColor: indicatorColor,
+                      ),
+                    )
+                  : Icon(
+                      key: const ValueKey('idle'),
+                      Icons.arrow_downward,
+                      color: StylingHelper.surroundingAwareAccent(
+                        surroundingColor: indicatorColor,
+                      ),
+                    ),
             ),
           ),
         ),
