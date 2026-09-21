@@ -770,14 +770,14 @@ List<InlineSpan> dimmedChatContentSpans(
 }
 
 /// Frame fade for inline chat images (badges, emotes, GIFs) — softens
-/// the network pop-in. The implicit duration honors reduced motion.
+/// the network pop-in. Reduced motion renders the first frame directly.
 Widget chatImageFadeIn(
   BuildContext context,
   Widget child,
   int? frame,
   bool wasSynchronouslyLoaded,
 ) {
-  if (wasSynchronouslyLoaded) return child;
+  if (wasSynchronouslyLoaded || AppMotion.reduce(context)) return child;
   return AnimatedOpacity(
     opacity: frame == null ? 0.0 : 1.0,
     duration: AppMotion.fast,

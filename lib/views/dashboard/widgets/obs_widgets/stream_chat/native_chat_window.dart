@@ -296,7 +296,7 @@ class _NativeChatConnectionSheet extends StatelessWidget {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
                   AppStatusColors.standard)
-              .unreachable
+              .destructiveText
         : Theme.of(context).textTheme.bodyMedium?.color ??
               (Theme.of(context).extension<AppTextColors>() ??
                       AppTextColors.standard)

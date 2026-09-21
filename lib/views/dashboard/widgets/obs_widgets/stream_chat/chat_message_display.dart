@@ -5,11 +5,6 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 /// streamer's name color).
 const Color kChatBroadcasterMentionColor = Color(0xFFE91916);
 
-/// LIVE chip viewer count ([NativeChatStatusChip]) — clearer red than
-/// salmon, still a touch softer than broadcaster-mention
-/// [kChatBroadcasterMentionColor].
-const Color kChatViewerCountColor = Color(0xFFFF5252);
-
 /// Fragments to render in the message body. When this is a threaded
 /// reply, Twitch still includes a leading `@parent` mention fragment —
 /// Desktop hides it because the "Replying to" header already names them.

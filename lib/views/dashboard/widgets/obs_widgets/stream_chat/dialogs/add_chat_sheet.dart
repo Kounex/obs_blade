@@ -323,7 +323,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
                 Icon(
                   CupertinoIcons.lock_fill,
                   size: 14.0,
-                  color: Theme.of(context).colorScheme.primary,
+                  color:
+                      (Theme.of(context).extension<AppTextColors>() ??
+                              AppTextColors.standard)
+                          .highlightText,
                 ),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
@@ -642,7 +645,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
                     ? Icon(
                         Icons.check,
                         size: 18.0,
-                        color: Theme.of(context).colorScheme.primary,
+                        color:
+                            (Theme.of(context).extension<AppTextColors>() ??
+                                    AppTextColors.standard)
+                                .highlightText,
                       )
                     : null,
               ),

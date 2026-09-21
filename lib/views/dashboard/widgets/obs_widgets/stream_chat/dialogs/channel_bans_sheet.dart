@@ -203,7 +203,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
                 color:
                     (Theme.of(context).extension<AppStatusColors>() ??
                             AppStatusColors.standard)
-                        .unreachable,
+                        .destructive,
               ),
             ),
           ),
