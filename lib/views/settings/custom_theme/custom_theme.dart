@@ -119,33 +119,65 @@ class _CustomThemeViewState extends State<CustomThemeView> {
                     ),
                   ),
                 ),
-                const StaggeredEntrance(
+                StaggeredEntrance(
                   scaleFrom: 0.985,
                   index: 1,
                   child: BaseCard(
-                    title: 'Predefined Themes',
+                    above: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl,
+                      ),
+                      child: Text(
+                        'Predefined Themes'.toUpperCase(),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).extension<AppTextColors>()!.textTertiary,
+                        ),
+                      ),
+                    ),
+                    topPadding: 8.0,
                     bottomPadding: 12.0,
-                    paddingChild: EdgeInsets.all(0),
-                    child: CustomThemeList(predefinedThemes: true),
+                    paddingChild: const EdgeInsets.all(0),
+                    child: const CustomThemeList(predefinedThemes: true),
                   ),
                 ),
                 StaggeredEntrance(
                   scaleFrom: 0.985,
                   index: 2,
                   child: BaseCard(
-                    title: 'Your Themes',
-                    trailingTitleWidget: ThemedCupertinoButton(
-                      text: 'Add Theme',
-                      padding: const EdgeInsets.all(0),
+                    above: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Your Themes'.toUpperCase(),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).extension<AppTextColors>()!.textTertiary,
+                                ),
+                          ),
+                          ThemedCupertinoButton(
+                            text: 'Add Theme',
+                            padding: const EdgeInsets.all(0),
 
-                      /// Evaluated at tap time (not at build), so the gate
-                      /// picks up a mid-session Pro purchase / blacksmith
-                      /// restore without a rebuild.
-                      onPressed: () => _openAddTheme(
-                        context,
-                        unlocked: customThemesUnlocked(settingsBox),
+                            /// Evaluated at tap time (not at build), so the gate
+                            /// picks up a mid-session Pro purchase / blacksmith
+                            /// restore without a rebuild.
+                            onPressed: () => _openAddTheme(
+                              context,
+                              unlocked: customThemesUnlocked(settingsBox),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    topPadding: 8.0,
                     bottomPadding: 12.0,
                     paddingChild: const EdgeInsets.all(0),
                     child: const CustomThemeList(),

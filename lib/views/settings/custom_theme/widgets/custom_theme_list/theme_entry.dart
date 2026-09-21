@@ -73,7 +73,7 @@ class ThemeEntry extends StatelessWidget {
                                       child: ScaleTransition(
                                         scale: CurvedAnimation(
                                           parent: animation,
-                                          curve: AppMotion.spring,
+                                          curve: AppMotion.standard,
                                           reverseCurve: AppMotion.exit,
                                         ),
                                         child: child,
@@ -213,7 +213,7 @@ class _ThemePreview extends StatelessWidget {
                   height: 18.0,
                   decoration: BoxDecoration(
                     color: this.customTheme.cardColorHex.hexToColor(),
-                    borderRadius: BorderRadius.circular(AppSpacing.xs),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: cardBorder != null
                         ? Border.all(color: cardBorder.withValues(alpha: 0.6))
                         : null,

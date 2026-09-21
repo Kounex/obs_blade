@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../color_picker/color_bubble.dart';
@@ -20,12 +21,12 @@ class ThemeColorsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    /// 20pt bubbles with 6pt gaps need 202pt for all 8 slots - fits the
+    /// 20pt bubbles with 8pt gaps need 216pt for all 8 slots - fits the
     /// text column next to the preview thumbnail in one row (24pt bubbles
     /// with 8pt gaps needed 248pt and wrapped raggedly 7+1).
     return Wrap(
-      spacing: 6.0,
-      runSpacing: 6.0,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
       children: [
         _bubble('Card', customTheme.cardColorHex.hexToColor()),
         _bubble('App Bar', customTheme.appBarColorHex.hexToColor()),

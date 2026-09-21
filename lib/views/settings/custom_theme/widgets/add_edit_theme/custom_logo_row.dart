@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../../models/custom_theme.dart';
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
@@ -42,7 +43,7 @@ class CustomLogoRow extends StatelessWidget {
                         color: Theme.of(context).textTheme.bodySmall!.color!,
                       )
                     : null,
-                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: this.customTheme.customLogo != null
                   ? Image.memory(
@@ -67,10 +68,7 @@ class CustomLogoRow extends StatelessWidget {
                         Text(
                           '- None -',
                           style: Theme.of(context).textTheme.bodySmall!
-                              .copyWith(
-                                fontSize: 14.0,
-                                fontStyle: FontStyle.italic,
-                              ),
+                              .copyWith(fontStyle: FontStyle.italic),
                         ),
                       ],
                     ),
