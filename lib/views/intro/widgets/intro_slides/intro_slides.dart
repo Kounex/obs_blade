@@ -11,6 +11,7 @@ import 'package:obs_blade/shared/general/base/divider.dart';
 import '../../../../shared/general/themed/rich_text.dart';
 import '../../../../stores/views/intro.dart';
 import '../../../../utils/styling_helper.dart';
+import '../../../settings/widgets/decorative_icon_tile.dart';
 import '../../intro.dart';
 import 'intro_slide.dart';
 import 'slide_controls.dart';
@@ -69,20 +70,6 @@ class _IntroSlidesState extends State<IntroSlides> {
     super.dispose();
   }
 
-  Widget _tourIcon(BuildContext context, IconData icon) {
-    final Color accent = Theme.of(context).colorScheme.secondary;
-    return Container(
-      width: 88.0,
-      height: 88.0,
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-      ),
-      child: Icon(icon, size: 40.0, color: accent),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final TextStyle bodyStyle = Theme.of(context).textTheme.bodyLarge!;
@@ -117,8 +104,10 @@ class _IntroSlidesState extends State<IntroSlides> {
               text:
                   'You\'ll enter those same details when connecting from this app.',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).extension<AppStatusColors>()!.warning,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.textPrimary,
               ),
             ),
           ],
@@ -127,7 +116,11 @@ class _IntroSlidesState extends State<IntroSlides> {
         ),
       ),
       IntroSlide(
-        leading: _tourIcon(context, CupertinoIcons.house_fill),
+        leading: const DecorativeIconTile(
+          icon: CupertinoIcons.house_fill,
+          size: 88.0,
+          iconSize: 40.0,
+        ),
         child: ThemedRichText(
           textSpans: const [
             TextSpan(
@@ -140,7 +133,11 @@ class _IntroSlidesState extends State<IntroSlides> {
         ),
       ),
       IntroSlide(
-        leading: _tourIcon(context, CupertinoIcons.square_grid_2x2_fill),
+        leading: const DecorativeIconTile(
+          icon: CupertinoIcons.square_grid_2x2_fill,
+          size: 88.0,
+          iconSize: 40.0,
+        ),
         child: ThemedRichText(
           textSpans: const [
             TextSpan(
@@ -160,7 +157,11 @@ class _IntroSlidesState extends State<IntroSlides> {
               child: Image.asset(StylingHelper.brightnessAwareOBSLogo(context)),
             ),
             const SizedBox(height: AppSpacing.lg),
-            _tourIcon(context, CupertinoIcons.chart_bar_alt_fill),
+            const DecorativeIconTile(
+              icon: CupertinoIcons.chart_bar_alt_fill,
+              size: 88.0,
+              iconSize: 40.0,
+            ),
           ],
         ),
         child: ThemedRichText(

@@ -1,10 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
@@ -36,38 +33,6 @@ class SlideControls extends StatefulWidget {
 }
 
 class _SlideControlsState extends State<SlideControls> {
-  Timer? _lockTimer;
-
-  final List<ReactionDisposer> _disposers = [];
-
-  @override
-  void initState() {
-    super.initState();
-
-    _disposers.add(
-      reaction<bool>((_) => GetIt.instance<IntroStore>().lockedOnSlide, (
-        lockedOnSlide,
-      ) {
-        if (lockedOnSlide && _lockTimer == null) {
-          // _lockTimer = Timer.periodic(duration, (timer) { })
-        }
-        if (!lockedOnSlide) {
-          _lockTimer?.cancel();
-          _lockTimer = null;
-        }
-      }),
-    );
-  }
-
-  @override
-  void dispose() {
-    for (final d in _disposers) {
-      d();
-    }
-
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     IntroStore introStore = GetIt.instance<IntroStore>();
@@ -99,12 +64,19 @@ class _SlideControlsState extends State<SlideControls> {
         ),
         SmoothPageIndicator(
           controller: this.widget.pageController,
-          effect: ExpandingDotsEffect(
-            dotColor: Theme.of(context).dividerColor,
-            activeDotColor: Theme.of(context).colorScheme.secondary,
+
+          /// Unified page-dot grammar (same as the paywall benefits): worm
+          /// effect, neutral active/inactive levels
+          effect: WormEffect(
+            dotColor: Theme.of(
+              context,
+            ).extension<AppTextColors>()!.textOrnament,
+            activeDotColor: Theme.of(
+              context,
+            ).extension<AppTextColors>()!.textPrimary,
             dotHeight: 8.0,
             dotWidth: 8.0,
-            expansionFactor: 3.0,
+            spacing: AppSpacing.sm,
           ),
           count: this.widget.amountChildren,
         ),
