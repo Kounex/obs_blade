@@ -12,8 +12,10 @@ enum AnimatedResultType { positive, negative, missing }
 /// connect/purchase/action flows - the "On Air" signature moment for
 /// `BaseResult`.
 ///
-/// Draws a circle and the glyph over ~450ms with [AppMotion.emphasized]
-/// plus an optional subtle scale settle. Plays once per widget lifecycle.
+/// Draws a circle and the glyph over [AppMotion.slow] with
+/// [AppMotion.emphasized] plus an optional subtle scale settle. Plays once
+/// per widget lifecycle. Reduced-motion settings render the final frame
+/// instantly.
 class AnimatedResultIcon extends StatefulWidget {
   final AnimatedResultType type;
 
@@ -41,8 +43,6 @@ class AnimatedResultIcon extends StatefulWidget {
 
 class _AnimatedResultIconState extends State<AnimatedResultIcon>
     with SingleTickerProviderStateMixin {
-  static const Duration _kDrawDuration = Duration(milliseconds: 450);
-
   late final AnimationController _controller;
   late final Animation<double> _draw;
   late final Animation<double> _scale;
@@ -50,7 +50,7 @@ class _AnimatedResultIconState extends State<AnimatedResultIcon>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: _kDrawDuration);
+    _controller = AnimationController(vsync: this, duration: AppMotion.slow);
     _draw = CurvedAnimation(parent: _controller, curve: AppMotion.emphasized);
     _scale = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(
@@ -58,7 +58,16 @@ class _AnimatedResultIconState extends State<AnimatedResultIcon>
         curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
       ),
     );
-    _controller.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduce(this.context)) {
+      _controller.value = 1.0;
+    } else {
+      _controller.forward();
+    }
   }
 
   @override
