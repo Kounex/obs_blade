@@ -7,7 +7,7 @@ import '../../../../../models/enums/chat_type.dart';
 extension ChatTypeBrand on ChatType {
   Color? get brandColor => switch (this) {
     ChatType.Twitch => const Color(0xFF6441a5),
-    ChatType.YouTube => Colors.red,
+    ChatType.YouTube => const Color(0xFFFF0000),
     ChatType.Owncast => null,
   };
 }
