@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../../shared/design/design.dart';
 import '../../widgets/subpage_header.dart';
+import '../../widgets/version_stamp.dart';
 
 class AboutHeader extends StatelessWidget {
   const AboutHeader({super.key});
@@ -31,21 +31,7 @@ class AboutHeader extends StatelessWidget {
       title: 'OBS Blade',
       bylines: [
         Text('by Kounex (René Schramowski)', style: descriptionStyle),
-        FutureBuilder<PackageInfo>(
-          future: PackageInfo.fromPlatform(),
-          builder: (context, snapshot) {
-            return Row(
-              children: [
-                Text('Version ', style: descriptionStyle),
-                if (snapshot.hasData)
-                  Text(
-                    '${snapshot.data!.version} (${snapshot.data!.buildNumber})',
-                    style: descriptionStyle,
-                  ),
-              ],
-            );
-          },
-        ),
+        VersionStamp(style: descriptionStyle, showBuildNumber: true),
       ],
     );
   }

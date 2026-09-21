@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../shared/design/design.dart';
@@ -18,6 +17,7 @@ import '../../utils/styling_helper.dart';
 import 'widgets/action_block.dart/action_block.dart';
 import 'widgets/action_block.dart/block_entry.dart';
 import 'widgets/support_dialog/support_dialog.dart';
+import 'widgets/version_stamp.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -327,26 +327,14 @@ class SettingsView extends StatelessWidget {
                   index: 4,
                   child: ActionBlock(
                     title: 'Support',
-                    descriptionWidget: FutureBuilder<PackageInfo>(
-                      future: PackageInfo.fromPlatform(),
-                      builder: (context, snapshot) {
-                        final TextStyle versionStyle = Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(
-                              color: Theme.of(
-                                context,
-                              ).extension<AppTextColors>()!.textTertiary,
-                            );
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Version ', style: versionStyle),
-                            if (snapshot.hasData)
-                              Text(snapshot.data!.version, style: versionStyle),
-                          ],
-                        );
-                      },
+                    descriptionWidget: Center(
+                      child: VersionStamp(
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).extension<AppTextColors>()!.textTertiary,
+                        ),
+                      ),
                     ),
                     blockEntries: [
                       BlockEntry(

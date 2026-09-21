@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/button.dart';
@@ -42,11 +43,11 @@ class AboutView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: AppSpacing.lg),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                           child: Text(
                             'Greetings!',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.headlineSmall,
                           ),
                         ),
                         const ThemedRichText(
