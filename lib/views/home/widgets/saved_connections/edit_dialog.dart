@@ -102,11 +102,15 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
         children: [
           const Text('Edit Connection'),
           CupertinoButton(
-            padding: const EdgeInsets.only(right: 4.0),
+            padding: const EdgeInsets.only(right: AppSpacing.xs),
             minSize: 0,
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(color: CupertinoColors.destructiveRed),
+              style: TextStyle(
+                color: Theme.of(
+                  context,
+                ).extension<AppStatusColors>()!.destructiveText,
+              ),
             ),
             onPressed: () {
               ModalHandler.showBaseDialog(
@@ -128,12 +132,13 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
       ),
       bodyWidget: Column(
         children: [
-          if (StylingHelper.isApple(context)) const SizedBox(height: 12.0),
+          if (StylingHelper.isApple(context))
+            const SizedBox(height: AppSpacing.md),
           const Text(
             'Change the following information to change your saved connection',
             textAlign: TextAlign.left,
           ),
-          const SizedBox(height: 12.0),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
@@ -143,7 +148,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                   placeholder: 'Name',
                 ),
               ),
-              const SizedBox(width: 8.0),
+              const SizedBox(width: AppSpacing.sm),
               SizedBox(
                 width: 64.0,
                 child: KeyboardNumberHeader(
@@ -152,9 +157,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     controller: _port,
                     focusNode: _portFocusNode,
                     errorPaddingAlways: true,
-                    style: const TextStyle(
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
+                    style: const TextStyle(fontFeatures: kTabularFigures),
                     placeholder: 'Port',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -183,13 +186,15 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
             suffixIcon: StylingHelper.isApple(context)
                 ? Container(
                     decoration: BoxDecoration(
+                      /// Neutral fill (same idiom as the decorative icon
+                      /// tiles) instead of a hardcoded grey swatch
                       color:
-                          Colors.grey[Theme.of(context).brightness ==
-                                  Brightness.light
-                              ? 300
-                              : 900],
+                          (Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black)
+                              .withValues(alpha: 0.07),
                       borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(5.0),
+                        right: Radius.circular(AppRadius.sm),
                       ),
                     ),
 
@@ -198,7 +203,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                     child: Pressable(
                       onTap: () => setState(() => _obscurePW = !_obscurePW),
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
                         child: Icon(
                           _obscurePW ? Icons.visibility_off : Icons.visibility,
                           size: 20.0,
