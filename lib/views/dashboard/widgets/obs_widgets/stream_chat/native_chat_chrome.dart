@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../shared/design/design.dart';
-import 'chat_message_display.dart';
+import '../../../../../../utils/styling_helper.dart';
 
 /// Compact LIVE / Mod chip used in the add-chat picker and the native
 /// chat header — same visual language in both places.
 class NativeChatStatusChip extends StatelessWidget {
   final String label;
-  final Color color;
 
-  /// When set (LIVE chip only), rendered after ` · ` in the status red.
+  /// Tint color (LIVE chip). Null renders the neutral contained variant —
+  /// static role badges don't spend the highlight.
+  final Color? color;
+
+  /// When set (LIVE chip only), rendered after ` · ` in white, tweened via
+  /// [CountUpText] (the count updates on poll).
   final String? viewerCountLabel;
 
   const NativeChatStatusChip({
     super.key,
     required this.label,
-    required this.color,
+    this.color,
     this.viewerCountLabel,
   });
 
-  /// [viewerCount] when known → `LIVE · 1.2k` with the count in red;
+  /// [viewerCount] when known → `LIVE · 1.2k` with the count in white;
   /// omit for a plain LIVE chip.
   factory NativeChatStatusChip.live({
     Key? key,
@@ -34,13 +38,45 @@ class NativeChatStatusChip extends StatelessWidget {
     color: color,
   );
 
-  factory NativeChatStatusChip.mod({Key? key, required Color color}) =>
-      NativeChatStatusChip(key: key, label: 'Mod', color: color);
+  factory NativeChatStatusChip.mod({Key? key}) =>
+      NativeChatStatusChip(key: key, label: 'Mod');
 
   @override
   Widget build(BuildContext context) {
+    final Color? color = this.color;
+
+    /// Static role badge (Mod): neutral contained chip in the bar-control
+    /// idiom — lightened card fill, hairline, secondary label.
+    if (color == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 2.0,
+        ),
+        decoration: BoxDecoration(
+          color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+            width: 0.0,
+          ),
+        ),
+        child: Text(
+          this.label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color:
+                (Theme.of(context).extension<AppTextColors>() ??
+                        AppTextColors.standard)
+                    .textSecondary,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+          ),
+        ),
+      );
+    }
+
     final baseStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: this.color,
+      color: color,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.2,
     );
@@ -50,27 +86,21 @@ class NativeChatStatusChip extends StatelessWidget {
         vertical: 2.0,
       ),
       decoration: BoxDecoration(
-        color: this.color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: this.color.withValues(alpha: 0.55),
-          width: 1.0,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.55), width: 1.0),
       ),
       child: this.viewerCountLabel == null
           ? Text(this.label, style: baseStyle)
-          : Text.rich(
-              TextSpan(
-                style: baseStyle,
-                children: [
-                  TextSpan(text: this.label),
-                  const TextSpan(text: ' · '),
-                  TextSpan(
-                    text: this.viewerCountLabel,
-                    style: baseStyle?.copyWith(color: kChatViewerCountColor),
-                  ),
-                ],
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${this.label} · ', style: baseStyle),
+                CountUpText(
+                  value: this.viewerCountLabel!,
+                  style: baseStyle?.copyWith(color: Colors.white),
+                ),
+              ],
             ),
     );
   }
@@ -98,10 +128,34 @@ TextStyle? nativeChatSheetTitleStyle(BuildContext context) => Theme.of(context)
     .titleLarge
     ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3);
 
-/// Section labels inside a sheet (Emotes, Badges groups, etc.).
-TextStyle? nativeChatSheetSectionStyle(BuildContext context) => Theme.of(
-  context,
-).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700);
+/// Section labels inside a sheet (Emotes, Badges groups, etc.) — the
+/// app-wide caption contract (`labelSmall` 11/w600/0.8 on the tertiary text
+/// level); apply `.toUpperCase()` at the use site.
+TextStyle? nativeChatSheetSectionStyle(BuildContext context) =>
+    Theme.of(context).textTheme.labelSmall;
+
+/// Swap transition for small in-place morphs (status label, pause chip):
+/// fade + slight rise at [AppMotion.emphasized], fade-only under reduced
+/// motion — mirrors `switcher_card.dart`'s title swap.
+Widget nativeChatSwapTransition(
+  BuildContext context,
+  Widget child,
+  Animation<double> animation,
+) {
+  final CurvedAnimation curved = CurvedAnimation(
+    parent: animation,
+    curve: AppMotion.emphasized,
+  );
+  final Widget faded = FadeTransition(opacity: curved, child: child);
+  if (AppMotion.reduce(context)) return faded;
+  return SlideTransition(
+    position: Tween<Offset>(
+      begin: const Offset(0.0, 0.25),
+      end: Offset.zero,
+    ).animate(curved),
+    child: faded,
+  );
+}
 
 /// Thin hairline matching native chat message separators.
 Widget nativeChatHairline(BuildContext context) => Divider(

@@ -120,7 +120,9 @@ class NativeChatWindow extends StatelessWidget {
         Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     final Color muted =
-        Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
+        Theme.of(context).textTheme.bodySmall?.color ??
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .textSecondary;
     return switch (this.status) {
       NativeChatConnectionStatus.live => ('connected', statusColors.live),
       NativeChatConnectionStatus.connecting => (
@@ -205,9 +207,7 @@ class NativeChatWindow extends StatelessWidget {
                 children: [
                   Text(
                     'Stream Chat',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   if (this.channelIsLive) ...[
                     const SizedBox(width: AppSpacing.sm),
@@ -222,26 +222,22 @@ class NativeChatWindow extends StatelessWidget {
                   ],
                   if (this.channelIsMod) ...[
                     const SizedBox(width: AppSpacing.xs),
-                    NativeChatStatusChip.mod(
-                      key: const Key('chat-header-mod'),
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    NativeChatStatusChip.mod(key: const Key('chat-header-mod')),
                   ],
                   const Spacer(),
-                  Container(
-                    width: 8.0,
-                    height: 8.0,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+                  _StatusDot(status: this.status, color: statusColor),
                   const SizedBox(width: AppSpacing.xs),
-                  Text(
-                    statusLabel,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: statusColor),
+                  AnimatedSwitcher(
+                    duration: AppMotion.medium,
+                    transitionBuilder: (child, animation) =>
+                        nativeChatSwapTransition(context, child, animation),
+                    child: Text(
+                      statusLabel,
+                      key: ValueKey(statusLabel),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: statusColor),
+                    ),
                   ),
                 ],
               ),
@@ -302,7 +298,9 @@ class _NativeChatConnectionSheet extends StatelessWidget {
                   AppStatusColors.standard)
               .unreachable
         : Theme.of(context).textTheme.bodyMedium?.color ??
-              CupertinoColors.label;
+              (Theme.of(context).extension<AppTextColors>() ??
+                      AppTextColors.standard)
+                  .textPrimary;
     return Pressable(
       haptic: true,
       onTap: onTap == null ? null : () => this._popThen(context, onTap),
@@ -432,6 +430,72 @@ class _NativeChatConnectionSheet extends StatelessWidget {
   }
 }
 
+/// Header status dot: pulses once (300ms scale bloom) when the connection
+/// state CHANGES - a single accent of attention, never a loop. The dot
+/// itself keeps the status color (green 'connected' included).
+class _StatusDot extends StatefulWidget {
+  final NativeChatConnectionStatus status;
+  final Color color;
+
+  const _StatusDot({required this.status, required this.color});
+
+  @override
+  State<_StatusDot> createState() => _StatusDotState();
+}
+
+class _StatusDotState extends State<_StatusDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+  );
+
+  late final Animation<double> _scale = this._pulse.drive(
+    TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.5),
+        weight: 35.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.5, end: 1.0),
+        weight: 65.0,
+      ),
+    ]),
+  );
+
+  @override
+  void didUpdateWidget(covariant _StatusDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.status != this.widget.status &&
+        !AppMotion.reduce(this.context)) {
+      this._pulse.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    this._pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: this._scale,
+      builder: (context, child) =>
+          Transform.scale(scale: this._scale.value, child: child),
+      child: Container(
+        width: 8.0,
+        height: 8.0,
+        decoration: BoxDecoration(
+          color: this.widget.color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
 /// Ticking "Connected for m:ss" line for the live sheet — recomputes the
 /// uptime once per second while the sheet is open.
 class _UptimeLine extends StatefulWidget {
@@ -472,6 +536,8 @@ class _UptimeLineState extends State<_UptimeLine> {
   @override
   Widget build(BuildContext context) => Text(
     'Connected for ${formatChatUptime(this._uptime)}',
-    style: Theme.of(context).textTheme.bodySmall,
+    style: Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(fontFeatures: kTabularFigures),
   );
 }

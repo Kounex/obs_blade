@@ -12,7 +12,7 @@ import '../../../../../stores/views/twitch_chat.dart';
 /// reply preview line of [TwitchChatMessageRow] so composing and sent
 /// replies read the same.
 class NativeReplyStrip extends StatelessWidget {
-  /// Brand accent — the reply icon and the parent @name.
+  /// Brand accent — the reply icon.
   final Color accentColor;
 
   const NativeReplyStrip({super.key, required this.accentColor});
@@ -37,7 +37,10 @@ class NativeReplyStrip extends StatelessWidget {
                     TextSpan(
                       text: '@${target.chatterUserName}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: this.accentColor,
+                        color:
+                            (Theme.of(context).extension<AppTextColors>() ??
+                                    AppTextColors.standard)
+                                .highlightText,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
