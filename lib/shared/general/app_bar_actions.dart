@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 class AppBarActionEntry {
   final String title;
@@ -45,90 +46,102 @@ class AppBarActions extends StatelessWidget {
     BuildContext context, {
     String? actionSheetTitle,
     required List<AppBarActionEntry> actions,
-  }) => switch (Theme.of(context).platform) {
-    TargetPlatform.iOS || TargetPlatform.macOS => showCupertinoModalPopup(
-      context: context,
-      builder: (context) {
-        return CupertinoActionSheet(
-          title: actionSheetTitle != null ? Text(actionSheetTitle) : null,
-          actions: actions
-              .map(
-                (action) => CupertinoActionSheetAction(
-                  isDestructiveAction: action.isDestructive,
-                  onPressed: () {
+  }) {
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
+
+    switch (Theme.of(context).platform) {
+      case TargetPlatform.iOS || TargetPlatform.macOS:
+        showCupertinoModalPopup(
+          context: context,
+          builder: (context) {
+            return CupertinoActionSheet(
+              title: actionSheetTitle != null ? Text(actionSheetTitle) : null,
+              actions: actions
+                  .map(
+                    (action) => CupertinoActionSheetAction(
+                      isDestructiveAction: action.isDestructive,
+                      onPressed: () {
+                        if (action.onAction != null) {
+                          Navigator.of(context).pop();
+                          action.onAction!.call();
+                        }
+                      },
+                      child: Text(
+                        action.title,
+                        style: action.onAction == null
+                            ? TextStyle(color: textColors.textTertiary)
+                            : null,
+                      ),
+                    ),
+                  )
+                  .toList(),
+              cancelButton: CupertinoActionSheetAction(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            );
+          },
+        );
+      case _:
+        ModalHandler.showBaseBottomSheet(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (actionSheetTitle != null) ...[
+                Text(actionSheetTitle),
+                const BaseDivider(),
+              ],
+              ...actions.map(
+                (action) => ListTile(
+                  onTap: () {
                     if (action.onAction != null) {
                       Navigator.of(context).pop();
                       action.onAction!.call();
                     }
                   },
-                  child: Text(
-                    action.title,
-                    style: action.onAction == null
-                        ? const TextStyle(color: CupertinoColors.inactiveGray)
-                        : null,
-                  ),
+                  enabled: action.onAction != null,
+                  title: Text(action.title),
+                  leading:
+                      action.leading ??
+                      (action.leadingIcon != null
+                          ? Icon(action.leadingIcon, size: 24.0)
+                          : null),
+                  trailing: action.trailing,
+                  visualDensity: VisualDensity.comfortable,
+                  textColor: action.isDestructive
+                      ? statusColors.destructiveText
+                      : null,
+                  iconColor: action.isDestructive
+                      ? statusColors.destructiveText
+                      : null,
                 ),
-              )
-              .toList(),
-          cancelButton: CupertinoActionSheetAction(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+              ),
+            ],
           ),
         );
-      },
-    ),
-    _ => ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (actionSheetTitle != null) ...[
-            Text(actionSheetTitle),
-            const BaseDivider(),
-          ],
-          ...ListTile.divideTiles(
-            context: context,
-            color: StylingHelper.light_divider_color.withOpacity(0.0),
-            tiles: actions.map(
-              (action) => ListTile(
-                onTap: () {
-                  if (action.onAction != null) {
-                    Navigator.of(context).pop();
-                    action.onAction!.call();
-                  }
-                },
-                enabled: action.onAction != null,
-                title: Text(action.title),
-                leading:
-                    action.leading ??
-                    (action.leadingIcon != null
-                        ? Icon(action.leadingIcon, size: 24.0)
-                        : null),
-                trailing: action.trailing,
-                visualDensity: VisualDensity.comfortable,
-                textColor: action.isDestructive
-                    ? CupertinoColors.destructiveRed
-                    : null,
-                iconColor: action.isDestructive
-                    ? CupertinoColors.destructiveRed
-                    : null,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  };
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      icon: const Icon(CupertinoIcons.ellipsis),
-      onPressed: () => AppBarActions.showActions(
+    return Pressable(
+      springy: false,
+      onTap: () => AppBarActions.showActions(
         context,
         actionSheetTitle: this.actionSheetTitle,
         actions: this.actions,
+      ),
+      child: const SizedBox(
+        width: kBaseIconButtonMinHitArea,
+        height: kBaseIconButtonMinHitArea,
+        child: Center(child: Icon(CupertinoIcons.ellipsis)),
       ),
     );
   }
