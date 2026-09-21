@@ -13,7 +13,6 @@ import '../../../../../types/enums/settings_keys.dart';
 import 'recording_controls.dart';
 import 'streaming_controls.dart';
 
-const double kExposedButtonsMaxWidth = 92.0;
 const double kExposedControlsSpace = 12.0;
 
 class ExposedControls extends StatelessWidget {
@@ -88,7 +87,7 @@ class ExposedControls extends StatelessWidget {
           exposedControls.expand(
             (control) => [
               StaleGuard(child: control),
-              const SizedBox(height: 18.0),
+              const SizedBox(height: AppSpacing.lg),
             ],
           ),
         );
@@ -103,17 +102,23 @@ class ExposedControls extends StatelessWidget {
                 rightPadding: AppSpacing.md,
                 bottomPadding: 0.0,
                 leftPadding: AppSpacing.md,
-                paddingChild: const EdgeInsets.symmetric(vertical: 18.0),
+                paddingChild: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.lg,
+                ),
                 child: CustomExpansionTile(
                   headerText: 'Exposed Controls',
-                  headerPadding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  headerPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                  ),
                   expandedBody: Column(
                     children: [
-                      const SizedBox(height: 18.0),
+                      const SizedBox(height: AppSpacing.lg),
                       const BaseDivider(),
-                      const SizedBox(height: 24.0),
+                      const SizedBox(height: AppSpacing.xl),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                        ),
                         child: Column(children: exposedControls),
                       ),
                     ],

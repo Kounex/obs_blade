@@ -42,6 +42,7 @@ class HotkeysControl extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: BaseButton(
+                secondary: true,
                 onPressed: () {
                   !Hive.box<dynamic>(HiveKeys.Settings.name).get(
                         SettingsKeys
@@ -83,6 +84,7 @@ class HotkeysControl extends StatelessWidget {
                 children: hotkeyBox.values
                     .map(
                       (hotkey) => BaseButton(
+                        secondary: true,
                         child: Text(hotkey.name),
                         onPressed: () =>
                             GetIt.instance<DashboardStore>().sendMutation(
