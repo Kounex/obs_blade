@@ -56,6 +56,12 @@ class BaseIconButton extends StatelessWidget {
       );
     }
 
-    return Pressable(onTap: this.onTap, child: button);
+    /// Rule 6 (token-delta §1.6): overshoot release only on targets >= 44pt
+    /// - small glyphs get the standard curve. Derived from the visual size
+    /// (the hit-area floor must not re-enable spring on a small glyph)
+    final bool springy =
+        (this.buttonSize ?? this.iconSize ?? 24.0) >= kBaseIconButtonMinHitArea;
+
+    return Pressable(onTap: this.onTap, springy: springy, child: button);
   }
 }

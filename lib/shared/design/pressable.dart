@@ -24,7 +24,9 @@ class Pressable extends StatefulWidget {
   final double scale;
 
   /// Spring (overshoot) release. Grammar rule 1.6: only targets >= 44pt get
-  /// the spring - small-icon callers pass false for the standard curve
+  /// the spring - small glyphs get the standard curve (`BaseIconButton`
+  /// derives this from its visual size, other small-glyph callers pass
+  /// false themselves)
   final bool springy;
 
   const Pressable({
