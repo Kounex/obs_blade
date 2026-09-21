@@ -114,7 +114,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.showTimestamp = false,
   });
 
-  static const double _badgeSize = 18.0;
+  static const double _badgeSize = 16.0;
 
   /// GIF picker attachments render larger than emotes (Twitch shows them
   /// at roughly 3 lines of chat) and scale with the emote size setting.
@@ -154,7 +154,9 @@ class TwitchChatMessageRow extends StatelessWidget {
         return Color(0xFF000000 | value);
       }
     }
-    return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
+    return Theme.of(context).textTheme.bodyMedium?.color ??
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .textOrnament;
   }
 
   /// Badges before the author name, in payload order. Unknown badges
@@ -182,7 +184,8 @@ class TwitchChatMessageRow extends StatelessWidget {
                 height: _badgeSize,
                 width: _badgeSize,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                frameBuilder: chatImageFadeIn,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
     ];
@@ -244,7 +247,8 @@ class TwitchChatMessageRow extends StatelessWidget {
               height: emoteHeight,
               width: emoteHeight,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Text(fragment.text),
+              frameBuilder: chatImageFadeIn,
+              errorBuilder: (_, _, _) => Text(fragment.text),
             ),
           )
         else if (fragment.type == 'mention' && fragment.mention != null)
@@ -256,7 +260,8 @@ class TwitchChatMessageRow extends StatelessWidget {
               fragment.gif!.url,
               height: _emoteSize * _gifSizeFactor,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Text(fragment.text),
+              frameBuilder: chatImageFadeIn,
+              errorBuilder: (_, _, _) => Text(fragment.text),
             ),
           )
         else
@@ -274,7 +279,9 @@ class TwitchChatMessageRow extends StatelessWidget {
             broadcasterUserId: this.event.broadcasterUserId,
             chatterHex: this.mentionHexFor?.call(mention.userId),
           ) ??
-          Colors.white,
+          (Theme.of(context).extension<AppTextColors>() ??
+                  AppTextColors.standard)
+              .highlightText,
     );
     if (this.onMentionTap == null) {
       return TextSpan(text: fragment.text, style: style);
@@ -290,30 +297,9 @@ class TwitchChatMessageRow extends StatelessWidget {
   }
 
   /// Body spans for a deleted message — the content stays (Twitch mod
-  /// view) but dims hard: text recolors to half the marker's opacity and
-  /// emote images get a matching [Opacity]. Structure, spacing and error
-  /// builders are preserved. Assumes [_messageSpans] results are flat
-  /// (plain TextSpans + emote/mention WidgetSpans).
-  List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
-    final color = Theme.of(
-      context,
-    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5);
-    return [
-      for (final span in this._messageSpans(context))
-        if (span is TextSpan)
-          TextSpan(
-            text: span.text,
-            style: TextStyle(color: color),
-          )
-        else if (span is WidgetSpan)
-          WidgetSpan(
-            alignment: span.alignment,
-            child: Opacity(opacity: 0.5, child: span.child),
-          )
-        else
-          span,
-    ];
-  }
+  /// view) but dims; see [dimmedChatContentSpans].
+  List<InlineSpan> _dimmedMessageSpans(BuildContext context) =>
+      dimmedChatContentSpans(context, this._messageSpans(context));
 
   /// Third-party emotes (7TV/BTTV) arrive as plain text — split on
   /// spaces and swap known tokens for inline images, preserving spacing
@@ -343,7 +329,8 @@ class TwitchChatMessageRow extends StatelessWidget {
               height: _emoteSize,
               width: _emoteSize,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Text(tokens[i]),
+              frameBuilder: chatImageFadeIn,
+              errorBuilder: (_, _, _) => Text(tokens[i]),
             ),
           )
         else
@@ -358,10 +345,13 @@ class TwitchChatMessageRow extends StatelessWidget {
     final matches = chatUrlMatches(text).toList();
     if (matches.isEmpty) return [TextSpan(text: text)];
 
+    final linkColor =
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
     final linkStyle = TextStyle(
-      color: Theme.of(context).colorScheme.primary,
+      color: linkColor,
       decoration: TextDecoration.underline,
-      decorationColor: Theme.of(context).colorScheme.primary,
+      decorationColor: linkColor,
     );
     final spans = <InlineSpan>[];
     var cursor = 0;
@@ -395,9 +385,12 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// toggle changes come from the HiveBuilder above the list).
   @override
   Widget build(BuildContext context) {
-    final Widget line = this.event.badges.isEmpty
+    Widget line = this.event.badges.isEmpty
         ? this._richText(context)
         : Observer(builder: this._richText);
+    if (this.isDeleted) {
+      line = ChatTombstoneFade(child: line);
+    }
     final bool revealable = this.isDeleted && this.deletedActor != null;
     final reply = this.event.reply;
     final Widget body = Column(
@@ -744,4 +737,97 @@ class ChatRowLongPressListenerState extends State<ChatRowLongPressListener> {
       ),
     );
   }
+}
+
+/// Tombstone body spans (Twitch mod view), shared by the Twitch and
+/// YouTube rows: the content stays visible but text recolors to
+/// [AppTextColors.textTertiary] and emote/image widget spans get a
+/// matching [Opacity]. Structure, spacing and error builders are
+/// preserved. Assumes [spans] are flat (plain TextSpans + emote/mention
+/// WidgetSpans).
+List<InlineSpan> dimmedChatContentSpans(
+  BuildContext context,
+  List<InlineSpan> spans,
+) {
+  final color =
+      (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+          .textTertiary;
+  return [
+    for (final span in spans)
+      if (span is TextSpan)
+        TextSpan(
+          text: span.text,
+          style: TextStyle(color: color),
+        )
+      else if (span is WidgetSpan)
+        WidgetSpan(
+          alignment: span.alignment,
+          child: Opacity(opacity: 0.5, child: span.child),
+        )
+      else
+        span,
+  ];
+}
+
+/// Frame fade for inline chat images (badges, emotes, GIFs) — softens
+/// the network pop-in. The implicit duration honors reduced motion.
+Widget chatImageFadeIn(
+  BuildContext context,
+  Widget child,
+  int? frame,
+  bool wasSynchronouslyLoaded,
+) {
+  if (wasSynchronouslyLoaded) return child;
+  return AnimatedOpacity(
+    opacity: frame == null ? 0.0 : 1.0,
+    duration: AppMotion.fast,
+    child: child,
+  );
+}
+
+/// One-shot fade played when a row lands in its tombstoned state — the
+/// flat span structure (dimmed content + marker) is preserved; only the
+/// line's arrival animates. Reduced motion renders it settled. Shared by
+/// the Twitch and YouTube message rows.
+class ChatTombstoneFade extends StatefulWidget {
+  final Widget child;
+
+  const ChatTombstoneFade({super.key, required this.child});
+
+  @override
+  State<ChatTombstoneFade> createState() => _ChatTombstoneFadeState();
+}
+
+class _ChatTombstoneFadeState extends State<ChatTombstoneFade>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: AppMotion.fast);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (this._started) return;
+    this._started = true;
+    if (AppMotion.reduce(this.context)) {
+      _controller.value = 1.0;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      FadeTransition(opacity: _controller, child: this.widget.child);
 }

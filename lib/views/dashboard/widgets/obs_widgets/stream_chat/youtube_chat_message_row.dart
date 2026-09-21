@@ -31,7 +31,9 @@ Color youTubeSuperChatTierColor(int tier) => switch (tier) {
 Color youTubeAuthorColor(BuildContext context, String? authorChannelId) {
   final id = authorChannelId;
   if (id == null || id.isEmpty) {
-    return Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey;
+    return Theme.of(context).textTheme.bodyMedium?.color ??
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .textOrnament;
   }
   var hash = 0;
   for (final unit in id.codeUnits) {
@@ -74,6 +76,15 @@ class YouTubeChatMessageRow extends StatelessWidget {
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
   double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
 
+  /// Role badge glyph size — matches the Twitch row's badge artwork.
+  static const double _badgeSize = 16.0;
+
+  /// Owner badge gold.
+  static const Color _ownerBadgeColor = Color(0xFFFFB300);
+
+  /// Mod + verified badges share YouTube's neutral blue-grey.
+  static const Color _neutralBadgeColor = Color(0xFF78909C);
+
   /// Role badges as inline icons, in YouTube's own order (owner, mod,
   /// member, verified).
   List<Widget> _badgeWidgets() {
@@ -82,13 +93,13 @@ class YouTubeChatMessageRow extends StatelessWidget {
         this._badge(
           key: const Key('yt-badge-owner'),
           icon: JamIcons.crown_f,
-          color: const Color(0xFFFFB300),
+          color: _ownerBadgeColor,
         ),
       if (this.message.isModerator)
         this._badge(
           key: const Key('yt-badge-mod'),
           icon: JamIcons.wrench_f,
-          color: const Color(0xFF78909C),
+          color: _neutralBadgeColor,
         ),
       if (this.message.isSponsor)
         this._badge(
@@ -100,7 +111,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
         this._badge(
           key: const Key('yt-badge-verified'),
           icon: CupertinoIcons.checkmark_seal_fill,
-          color: const Color(0xFF78909C),
+          color: _neutralBadgeColor,
         ),
     ];
   }
@@ -109,7 +120,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
       Padding(
         key: key,
         padding: const EdgeInsets.only(right: AppSpacing.xs / 2),
-        child: Icon(icon, size: 14.0, color: color),
+        child: Icon(icon, size: _badgeSize, color: color),
       );
 
   List<InlineSpan> _badgeSpans() => [
@@ -131,10 +142,13 @@ class YouTubeChatMessageRow extends StatelessWidget {
     final matches = chatUrlMatches(text).toList();
     if (matches.isEmpty) return [TextSpan(text: text)];
 
+    final linkColor =
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
     final linkStyle = TextStyle(
-      color: Theme.of(context).colorScheme.primary,
+      color: linkColor,
       decoration: TextDecoration.underline,
-      decorationColor: Theme.of(context).colorScheme.primary,
+      decorationColor: linkColor,
     );
     final spans = <InlineSpan>[];
     var cursor = 0;
@@ -170,28 +184,10 @@ class YouTubeChatMessageRow extends StatelessWidget {
             '',
       );
 
-  /// Tombstone treatment — the content stays visible but dims hard, with
-  /// the italic marker appended (same UX as the Twitch row).
-  List<InlineSpan> _dimmedMessageSpans(BuildContext context) {
-    final color = Theme.of(
-      context,
-    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5);
-    return [
-      for (final span in this._messageSpans(context))
-        if (span is TextSpan)
-          TextSpan(
-            text: span.text,
-            style: TextStyle(color: color),
-          )
-        else if (span is WidgetSpan)
-          WidgetSpan(
-            alignment: span.alignment,
-            child: Opacity(opacity: 0.5, child: span.child),
-          )
-        else
-          span,
-    ];
-  }
+  /// Tombstone treatment — the content stays visible but dims (same UX
+  /// as the Twitch row), with the italic marker appended.
+  List<InlineSpan> _dimmedMessageSpans(BuildContext context) =>
+      dimmedChatContentSpans(context, this._messageSpans(context));
 
   TextSpan _deletedMarkerSpan(BuildContext context) => TextSpan(
     text: ' —Deleted',
@@ -202,23 +198,26 @@ class YouTubeChatMessageRow extends StatelessWidget {
   );
 
   /// The plain chat line: badges + colored author + body.
-  Widget _textRow(BuildContext context) => Text.rich(
-    TextSpan(
-      style: Theme.of(
-        context,
-      ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
-      children: [
-        ...this._badgeSpans(),
-        this._authorSpan(context),
-        const TextSpan(text: ': '),
-        if (this.message.isTombstoned) ...[
-          ...this._dimmedMessageSpans(context),
-          this._deletedMarkerSpan(context),
-        ] else
-          ...this._messageSpans(context),
-      ],
-    ),
-  );
+  Widget _textRow(BuildContext context) {
+    final Widget row = Text.rich(
+      TextSpan(
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
+        children: [
+          ...this._badgeSpans(),
+          this._authorSpan(context),
+          const TextSpan(text: ': '),
+          if (this.message.isTombstoned) ...[
+            ...this._dimmedMessageSpans(context),
+            this._deletedMarkerSpan(context),
+          ] else
+            ...this._messageSpans(context),
+        ],
+      ),
+    );
+    return this.message.isTombstoned ? ChatTombstoneFade(child: row) : row;
+  }
 
   /// Tier-colored money card (Super Chat with comment / Super Sticker).
   Widget _tierCard(
@@ -268,7 +267,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
               style: baseStyle,
               children: [
                 if (this.message.isTombstoned) ...[
-                  ...this._dimmedSpans(context, bodySpans),
+                  ...dimmedChatContentSpans(context, bodySpans),
                   this._deletedMarkerSpan(context),
                 ] else
                   ...bodySpans,
@@ -288,7 +287,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: tierColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: tierColor.withValues(alpha: 0.55),
           width: 1.0,
@@ -302,22 +301,6 @@ class YouTubeChatMessageRow extends StatelessWidget {
     return this.message.isTombstoned
         ? Opacity(opacity: 0.6, child: card)
         : card;
-  }
-
-  List<InlineSpan> _dimmedSpans(BuildContext context, List<InlineSpan> spans) {
-    final color = Theme.of(
-      context,
-    ).textTheme.bodySmall?.color?.withValues(alpha: 0.5);
-    return [
-      for (final span in spans)
-        if (span is TextSpan)
-          TextSpan(
-            text: span.text,
-            style: TextStyle(color: color),
-          )
-        else
-          span,
-    ];
   }
 
   /// Member/system notice: small icon + author + one-line notice, with an
@@ -391,7 +374,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
           width: 1.0,
@@ -406,7 +389,10 @@ class YouTubeChatMessageRow extends StatelessWidget {
               Icon(
                 CupertinoIcons.chart_bar,
                 size: 14.0,
-                color: Theme.of(context).colorScheme.primary,
+                color:
+                    (Theme.of(context).extension<AppTextColors>() ??
+                            AppTextColors.standard)
+                        .textTertiary,
               ),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
@@ -534,14 +520,20 @@ class YouTubeChatMessageRow extends StatelessWidget {
         return this._noticeRow(
           context,
           icon: JamIcons.shield,
-          accent: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+          accent:
+              (Theme.of(context).extension<AppTextColors>() ??
+                      AppTextColors.standard)
+                  .textOrnament,
           notice: 'turned off members-only mode',
         );
       case YouTubeChatMessageType.chatEnded:
         return this._noticeRow(
           context,
           icon: CupertinoIcons.stop_circle,
-          accent: Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey,
+          accent:
+              (Theme.of(context).extension<AppTextColors>() ??
+                      AppTextColors.standard)
+                  .textOrnament,
           notice: 'Live chat has ended',
           showAuthor: false,
         );
