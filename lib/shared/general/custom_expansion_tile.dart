@@ -97,8 +97,7 @@ class _CustomExpansionTileState extends State<CustomExpansionTile>
           tapBodyToCollapse: false,
           tapHeaderToExpand: false,
         ),
-        header: GestureDetector(
-          behavior: HitTestBehavior.opaque,
+        header: PressFlash(
           onTap: () {
             if (!_animController.isAnimating) {
               if (this.widget.manualExpand != null) {
