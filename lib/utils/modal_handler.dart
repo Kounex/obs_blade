@@ -6,18 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import '../shared/animator/fader.dart';
+import '../shared/design/design.dart';
 import '../shared/general/base/card.dart';
+import '../shared/general/base/icon_button.dart';
 import 'styling_helper.dart';
-
-// A translucent color that is painted on top of the blurred backdrop as the
-// dialog's background color
-// Extracted from https://developer.apple.com/design/resources/.
-const Color kDialogColor = CupertinoDynamicColor.withBrightness(
-  color: Color(0xCCF2F2F2),
-  darkColor: Color(0xBF1E1E1E),
-);
-
-const double kDialogBlurAmount = 20.0;
 
 class ModalHandler {
   static Duration transitionDelayDuration = const Duration(milliseconds: 350);
@@ -39,12 +31,13 @@ class ModalHandler {
             Positioned(
               top: 12.0 + MediaQuery.paddingOf(context).top,
               right: 12.0 + MediaQuery.paddingOf(context).right,
-              child: IconButton(
-                onPressed: () {
+              child: BaseIconButton(
+                backgroundColor: Colors.transparent,
+                onTap: () {
                   onClose?.call();
                   Navigator.of(context).pop();
                 },
-                icon: const Icon(CupertinoIcons.clear),
+                icon: CupertinoIcons.clear,
               ),
             ),
           ],
@@ -142,10 +135,12 @@ class ModalHandler {
     bool includeCloseButton = false,
     double additionalBottomViewInsets = 0,
   }) {
+    final AppGlass? glass = Theme.of(context).extension<AppGlass>();
+
     Widget child = Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(
-          blurryBackground ? StylingHelper.opacity_blurry : 1,
+        color: Theme.of(context).cardColor.withValues(
+          alpha: blurryBackground ? AppGlass.barAlpha : 1.0,
         ),
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(kBaseCardBorderRadius),
@@ -160,9 +155,10 @@ class ModalHandler {
               child: Container(
                 padding: const EdgeInsets.only(right: 4.0),
                 alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(CupertinoIcons.clear_circled_solid),
-                  onPressed: () => Navigator.of(context).pop(),
+                child: BaseIconButton(
+                  backgroundColor: Colors.transparent,
+                  icon: CupertinoIcons.clear_circled_solid,
+                  onTap: () => Navigator.of(context).pop(),
                 ),
               ),
             ),
@@ -178,8 +174,8 @@ class ModalHandler {
       child = ClipRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: StylingHelper.sigma_blurry,
-            sigmaY: StylingHelper.sigma_blurry,
+            sigmaX: glass?.sigma ?? StylingHelper.sigma_blurry,
+            sigmaY: glass?.sigma ?? StylingHelper.sigma_blurry,
           ),
           child: child,
         ),
