@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class AdaptiveDialogAction extends StatelessWidget {
   final Widget child;
@@ -30,11 +31,16 @@ class AdaptiveDialogAction extends StatelessWidget {
         onPressed: this.onPressed,
         style: this.isDestructiveAction
             ? ButtonStyle(
-                foregroundColor: const MaterialStatePropertyAll(
-                  CupertinoColors.destructiveRed,
+                foregroundColor: MaterialStatePropertyAll(
+                  Theme.of(
+                    context,
+                  ).extension<AppStatusColors>()!.destructiveText,
                 ),
                 overlayColor: MaterialStatePropertyAll(
-                  CupertinoColors.destructiveRed.withOpacity(0.1),
+                  Theme.of(context)
+                      .extension<AppStatusColors>()!
+                      .destructiveText
+                      .withValues(alpha: 0.1),
                 ),
               )
             : null,

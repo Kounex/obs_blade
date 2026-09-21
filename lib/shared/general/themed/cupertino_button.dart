@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 
 class ThemedCupertinoButton extends StatelessWidget {
   final String? text;
@@ -30,8 +31,12 @@ class ThemedCupertinoButton extends StatelessWidget {
         style: TextStyle(
           color: this.onPressed != null
               ? this.isDestructive
-                    ? CupertinoColors.destructiveRed
-                    : Theme.of(context).cupertinoOverrideTheme!.primaryColor
+                    ? Theme.of(
+                        context,
+                      ).extension<AppStatusColors>()!.destructiveText
+                    : Theme.of(
+                        context,
+                      ).extension<AppTextColors>()!.highlightText
               : null,
         ),
         child: this.child ?? Text(this.text ?? ''),

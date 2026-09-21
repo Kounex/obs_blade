@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/dialogs/input.dart';
 
 void main() {
@@ -8,6 +9,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          extensions: const [AppStatusColors.standard],
+        ),
         home: Builder(
           builder: (context) => Scaffold(
             body: TextButton(
