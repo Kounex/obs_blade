@@ -32,13 +32,13 @@ class AdaptiveDialogAction extends StatelessWidget {
         style: this.isDestructiveAction
             ? ButtonStyle(
                 foregroundColor: MaterialStatePropertyAll(
-                  Theme.of(
-                    context,
-                  ).extension<AppStatusColors>()!.destructiveText,
+                  (Theme.of(context).extension<AppStatusColors>() ??
+                          AppStatusColors.standard)
+                      .destructiveText,
                 ),
                 overlayColor: MaterialStatePropertyAll(
-                  Theme.of(context)
-                      .extension<AppStatusColors>()!
+                  (Theme.of(context).extension<AppStatusColors>() ??
+                          AppStatusColors.standard)
                       .destructiveText
                       .withValues(alpha: 0.1),
                 ),

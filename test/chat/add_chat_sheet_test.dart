@@ -179,7 +179,23 @@ void main() {
       ['Channel mod-live', 'Channel mod-offline'],
     );
     expect(find.byKey(const Key('add-chat-live-mod-mod-live')), findsOneWidget);
-    expect(find.text('LIVE · 1.2k', findRichText: true), findsWidgets);
+
+    /// Viewer count rides a CountUpText next to the `LIVE · ` label inside
+    /// the keyed chip (no single RichText anymore).
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('add-chat-live-mod-mod-live')),
+        matching: find.text('LIVE · '),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('add-chat-live-mod-mod-live')),
+        matching: find.text('1.2k'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('add-chat-mod-mod-mod-live')), findsNothing);
 
     /// Followed: live → mod → rest; LIVE + Mod chips as applicable.
@@ -191,7 +207,13 @@ void main() {
       ['Channel fol-live', 'Channel fol-mod', 'Channel fol-offline'],
     );
     expect(find.byKey(const Key('add-chat-live-fol-fol-live')), findsOneWidget);
-    expect(find.text('LIVE · 42', findRichText: true), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('add-chat-live-fol-fol-live')),
+        matching: find.text('42'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('add-chat-mod-fol-fol-live')), findsOneWidget);
     expect(find.byKey(const Key('add-chat-mod-fol-fol-mod')), findsOneWidget);
     expect(find.byKey(const Key('add-chat-mod-fol-fol-offline')), findsNothing);
@@ -224,7 +246,13 @@ void main() {
     expect(find.textContaining('@login-s-2'), findsOneWidget);
     expect(find.textContaining('followers'), findsNothing);
     expect(find.byKey(const Key('add-chat-live-search-s-1')), findsOneWidget);
-    expect(find.text('LIVE · 3.4k', findRichText: true), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('add-chat-live-search-s-1')),
+        matching: find.text('3.4k'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('add-chat-live-search-s-2')), findsNothing);
 
     /// An active query replaces the quick-pick sections.
