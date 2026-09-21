@@ -48,7 +48,10 @@ class SceneContentMobile extends StatelessWidget {
                 indicator: UnderlineTabIndicator(
                   borderSide: BorderSide(
                     width: 3.0,
-                    color: theme.extension<AppTextColors>()!.accentText,
+
+                    /// Painted ink spends the raw accent slot (selection,
+                    /// token-delta rule 2) - the text derivative is for text
+                    color: theme.buttonTheme.colorScheme!.secondary,
                   ),
                   insets: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 ),
