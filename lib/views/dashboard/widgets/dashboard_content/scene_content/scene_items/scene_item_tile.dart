@@ -5,6 +5,7 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/filter_list/filter_list.dart';
 
 import '../../../../../../shared/design/design.dart';
+import '../../../../../../shared/general/base/icon_button.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/scene_item.dart';
@@ -106,15 +107,18 @@ class SceneItemTile extends StatelessWidget {
                   },
                   label: 'Source visibility',
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: AnimatedToggleIcon(
-                    icon: this.sceneItem.sceneItemEnabled!
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: this.sceneItem.sceneItemEnabled!
-                        ? theme.colorScheme.secondary
-                        : theme.disabledColor,
+                child: SizedBox(
+                  width: kBaseIconButtonMinHitArea,
+                  height: kBaseIconButtonMinHitArea,
+                  child: Center(
+                    child: AnimatedToggleIcon(
+                      icon: this.sceneItem.sceneItemEnabled!
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: this.sceneItem.sceneItemEnabled!
+                          ? theme.colorScheme.secondary
+                          : theme.disabledColor,
+                    ),
                   ),
                 ),
               ),
@@ -127,13 +131,16 @@ class SceneItemTile extends StatelessWidget {
                           FilterList(sceneItem: this.sceneItem),
                     )
                   : null,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Icon(
-                  CupertinoIcons.color_filter,
-                  color: this.sceneItem.filters.isNotEmpty
-                      ? null
-                      : theme.disabledColor,
+              child: SizedBox(
+                width: kBaseIconButtonMinHitArea,
+                height: kBaseIconButtonMinHitArea,
+                child: Center(
+                  child: Icon(
+                    CupertinoIcons.color_filter,
+                    color: this.sceneItem.filters.isNotEmpty
+                        ? null
+                        : theme.disabledColor,
+                  ),
                 ),
               ),
             ),

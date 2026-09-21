@@ -7,6 +7,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
@@ -130,19 +131,20 @@ class _FilterListState extends State<FilterList> {
                                     },
                                     label: 'Filter toggle',
                                   ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(AppSpacing.sm),
-                                child: AnimatedToggleIcon(
-                                  icon: filter.filterEnabled
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  color: filter.filterEnabled
-                                      ? Theme.of(
-                                          context,
-                                        ).buttonTheme.colorScheme!.primary
-                                      : Theme.of(context)
-                                            .extension<AppStatusColors>()!
-                                            .recording,
+                              child: SizedBox(
+                                width: kBaseIconButtonMinHitArea,
+                                height: kBaseIconButtonMinHitArea,
+                                child: Center(
+                                  child: AnimatedToggleIcon(
+                                    icon: filter.filterEnabled
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    color: filter.filterEnabled
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.secondary
+                                        : Theme.of(context).disabledColor,
+                                  ),
                                 ),
                               ),
                             ),
