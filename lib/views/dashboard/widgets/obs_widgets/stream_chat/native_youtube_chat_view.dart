@@ -12,6 +12,7 @@ import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'dialogs/youtube_mod_action_sheet.dart';
 import 'native_chat_appearance.dart';
+import 'native_chat_chrome.dart';
 import 'youtube_chat_message_row.dart';
 
 /// Native YouTube chat timeline, driven by [YouTubeChatStore]'s message
@@ -165,9 +166,11 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     ),
                     child: Text(
                       'Retry',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        fontSize: 17.0,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -269,26 +272,55 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                         haptic: true,
                         onTap: this._resumePinnedToBottom,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.xs,
+                          /// Invisible 44pt hit expansion — the chip's
+                          /// visual bottom edge stays put
+                          constraints: const BoxConstraints(
+                            minWidth: kMinInteractiveDimensionCupertino,
+                            minHeight: kMinInteractiveDimensionCupertino,
                           ),
-                          decoration: BoxDecoration(
-                            color: this._unreadWhileScrolledUp
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerHighest,
-                            borderRadius: AppRadius.pill,
-                          ),
-                          child: Text(
-                            this._unreadWhileScrolledUp
-                                ? 'New messages ↓'
-                                : 'Paused ↓',
-                            style: this._unreadWhileScrolledUp
-                                ? Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(color: Colors.white)
-                                : Theme.of(context).textTheme.bodySmall,
+                          alignment: Alignment.bottomCenter,
+                          child: AnimatedSwitcher(
+                            duration: AppMotion.medium,
+                            transitionBuilder: (child, animation) =>
+                                nativeChatSwapTransition(
+                                  context,
+                                  child,
+                                  animation,
+                                ),
+                            child: Container(
+                              key: ValueKey(this._unreadWhileScrolledUp),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: this._unreadWhileScrolledUp
+                                    ? Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.15)
+                                    : StylingHelper.lightenDarkenColor(
+                                        Theme.of(context).cardColor,
+                                      ),
+                                borderRadius: AppRadius.pill,
+                              ),
+                              child: Text(
+                                this._unreadWhileScrolledUp
+                                    ? 'New messages ↓'
+                                    : 'Paused ↓',
+                                style: this._unreadWhileScrolledUp
+                                    ? Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall?.copyWith(
+                                        color:
+                                            (Theme.of(context)
+                                                        .extension<
+                                                          AppTextColors
+                                                        >() ??
+                                                    AppTextColors.standard)
+                                                .highlightText,
+                                      )
+                                    : Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
                           ),
                         ),
                       ),

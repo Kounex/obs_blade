@@ -1033,6 +1033,10 @@ void main() {
         store.appendChatMessageForTest(textEvent('50', 'Late', 'new one'));
         await tester.pump();
         await tester.pump();
+
+        /// The paused<->unread morph is an AnimatedSwitcher — let the
+        /// outgoing chip finish before asserting
+        await tester.pump(const Duration(milliseconds: 300));
         expect(find.text('New messages ↓'), findsOneWidget);
         expect(find.text('Paused ↓'), findsNothing);
       },
