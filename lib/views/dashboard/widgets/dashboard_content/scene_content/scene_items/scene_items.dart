@@ -47,12 +47,22 @@ class _SceneItemsState extends State<SceneItems>
                     padding: const EdgeInsets.only(top: AppSpacing.md),
                     children: [
                       ...dashboardStore.currentSceneItems.isNotEmpty
-                          ? dashboardStore.currentSceneItems.map((sceneItem) {
+                          ? dashboardStore.currentSceneItems.indexed.map((
+                              entry,
+                            ) {
+                              final int index = entry.$1;
+                              final sceneItem = entry.$2;
+
                               if (sceneItem.parentGroupName == null) {
-                                return StaleGuard(
-                                  child: VisibilitySlideWrapper(
-                                    sceneItem: sceneItem,
-                                    child: SceneItemTile(sceneItem: sceneItem),
+                                return StaggeredEntrance(
+                                  index: index,
+                                  child: StaleGuard(
+                                    child: VisibilitySlideWrapper(
+                                      sceneItem: sceneItem,
+                                      child: SceneItemTile(
+                                        sceneItem: sceneItem,
+                                      ),
+                                    ),
                                   ),
                                 );
                               }
@@ -60,18 +70,23 @@ class _SceneItemsState extends State<SceneItems>
                               /// Children of groups stay in the tree so collapsing
                               /// / expanding the group animates - visibility is
                               /// still driven by the parents [SceneItem.displayGroup]
-                              return _AnimatedGroupChild(
-                                visible: dashboardStore.currentSceneItems
-                                    .firstWhere(
-                                      (parentSceneItem) =>
-                                          parentSceneItem.sourceName ==
-                                          sceneItem.parentGroupName,
-                                    )
-                                    .displayGroup,
-                                child: StaleGuard(
-                                  child: VisibilitySlideWrapper(
-                                    sceneItem: sceneItem,
-                                    child: SceneItemTile(sceneItem: sceneItem),
+                              return StaggeredEntrance(
+                                index: index,
+                                child: _AnimatedGroupChild(
+                                  visible: dashboardStore.currentSceneItems
+                                      .firstWhere(
+                                        (parentSceneItem) =>
+                                            parentSceneItem.sourceName ==
+                                            sceneItem.parentGroupName,
+                                      )
+                                      .displayGroup,
+                                  child: StaleGuard(
+                                    child: VisibilitySlideWrapper(
+                                      sceneItem: sceneItem,
+                                      child: SceneItemTile(
+                                        sceneItem: sceneItem,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               );
@@ -94,8 +109,9 @@ class _SceneItemsState extends State<SceneItems>
   }
 }
 
-/// Animates a group child row in and out (size + fade) when the parent
-/// group's `displayGroup` flag toggles
+/// Animates a group child row in and out (size + fade via the crossfade -
+/// no `AnimatedSize`, a jank risk inside the dashboard's slivers) when the
+/// parent group's `displayGroup` flag toggles
 class _AnimatedGroupChild extends StatelessWidget {
   final bool visible;
   final Widget child;
@@ -104,24 +120,16 @@ class _AnimatedGroupChild extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
+    return AnimatedCrossFade(
       duration: AppMotion.medium,
-      curve: AppMotion.standard,
-      alignment: Alignment.topCenter,
-      child: ClipRect(
-        child: IgnorePointer(
-          ignoring: !this.visible,
-          child: AnimatedOpacity(
-            duration: AppMotion.medium,
-            opacity: this.visible ? 1.0 : 0.0,
-            child: SizedBox(
-              width: double.infinity,
-              height: this.visible ? null : 0.0,
-              child: this.child,
-            ),
-          ),
-        ),
-      ),
+      firstCurve: AppMotion.standard,
+      secondCurve: AppMotion.standard,
+      sizeCurve: AppMotion.standard,
+      crossFadeState: this.visible
+          ? CrossFadeState.showFirst
+          : CrossFadeState.showSecond,
+      firstChild: SizedBox(width: double.infinity, child: this.child),
+      secondChild: const SizedBox(width: double.infinity, height: 0.0),
     );
   }
 }
