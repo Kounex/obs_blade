@@ -47,14 +47,40 @@ class YouTubeDeviceCodeDialog extends StatelessWidget {
 
         return BaseAdaptiveDialog(
           title: 'Connect YouTube',
-          bodyWidget: switch (store.authState) {
-            YouTubeAuthState.awaitingAuthorization => _CodeEntryState(
-              store: store,
+          bodyWidget: AnimatedSwitcher(
+            duration: AppMotion.medium,
+            transitionBuilder: (child, animation) {
+              final CurvedAnimation curved = CurvedAnimation(
+                parent: animation,
+                curve: AppMotion.emphasized,
+              );
+              Widget current = FadeTransition(opacity: curved, child: child);
+              if (!AppMotion.reduce(context)) {
+                current = AnimatedBuilder(
+                  animation: curved,
+                  child: current,
+                  builder: (context, child) => Transform.translate(
+                    offset: Offset(0.0, (1.0 - curved.value) * 12.0),
+                    child: child,
+                  ),
+                );
+              }
+              return current;
+            },
+            child: KeyedSubtree(
+              key: ValueKey(store.authState),
+              child: switch (store.authState) {
+                YouTubeAuthState.awaitingAuthorization => _CodeEntryState(
+                  store: store,
+                ),
+                YouTubeAuthState.signingIn => const _ProgressState(
+                  'Finishing up…',
+                ),
+                YouTubeAuthState.error => _ErrorState(store: store),
+                _ => const _ProgressState('Contacting Google…'),
+              },
             ),
-            YouTubeAuthState.signingIn => const _ProgressState('Finishing up…'),
-            YouTubeAuthState.error => _ErrorState(store: store),
-            _ => const _ProgressState('Contacting Google…'),
-          },
+          ),
           actions: [
             if (store.authState == YouTubeAuthState.error)
               DialogActionConfig(
@@ -119,6 +145,9 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
       this.widget.store.pendingVerificationUrl ??
           'https://www.google.com/device',
     );
+    final statusColors =
+        Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -129,23 +158,28 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.md),
-        Pressable(
-          haptic: true,
-          onTap: () => this._copyCode(code),
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Text(
-              code,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(letterSpacing: 2.0),
+        StaggeredEntrance(
+          scaleFrom: 0.985,
+          child: Pressable(
+            haptic: true,
+            onTap: () => this._copyCode(code),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: StylingHelper.lightenDarkenColor(
+                  Theme.of(context).cardColor,
+                ),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Text(
+                code,
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(letterSpacing: 2.0),
+              ),
             ),
           ),
         ),
@@ -154,17 +188,17 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 CupertinoIcons.checkmark_circle_fill,
                 size: 14.0,
-                color: CupertinoColors.activeGreen,
+                color: statusColors.live,
               ),
               const SizedBox(width: AppSpacing.xs / 2),
               Text(
                 'Copied to clipboard',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: CupertinoColors.activeGreen,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: statusColors.live),
               ),
             ],
           )
@@ -187,14 +221,18 @@ class _CodeEntryStateState extends State<_CodeEntryState> {
               vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary,
+              color:
+                  Theme.of(context).buttonTheme.colorScheme?.secondary ??
+                  StylingHelper.accent_color,
               borderRadius: AppRadius.pill,
             ),
             child: Text(
               'Open Google',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.white),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.white,
+                fontSize: 17.0,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
