@@ -113,94 +113,118 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
     final name = this.widget.message.authorName ?? 'this user';
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          nativeChatSheetDragHandle(context),
           this._titleRow(context, name),
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (this._timeoutStep) ...[
-                    for (final preset in kYouTubeTimeoutPresets)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                        child: this._actionRow(
-                          context,
-                          icon: CupertinoIcons.timer,
-                          label: preset.$1,
-                          onTap: () => this._confirmThenRun(
-                            title: 'Timeout $name?',
-                            body:
-                                'Timeout $name for ${preset.$1}? They can\'t '
-                                'chat until it expires.',
-                            okText: 'Timeout',
-                            action: () => this._store.banUser(
-                              this.widget.message.authorChannelId ?? '',
-                              durationSeconds: preset.$2,
-                            ),
-                            failureText: 'Could not time out the user',
-                          ),
-                        ),
-                      ),
-                  ] else ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                      child: this._actionRow(
-                        context,
-                        icon: CupertinoIcons.trash,
-                        label: 'Delete message',
-                        onTap: () => this._confirmThenRun(
-                          title: 'Delete message?',
-                          body:
-                              'Remove this message from $name in chat? '
-                              'This can\'t be undone.',
-                          okText: 'Delete',
-                          action: () =>
-                              this._store.deleteMessage(this.widget.message.id),
-                          failureText: 'Could not delete the message',
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                      child: this._actionRow(
-                        context,
-                        icon: CupertinoIcons.timer,
-                        label: 'Timeout…',
-                        onTap: () =>
-                            this.setState(() => this._timeoutStep = true),
-                      ),
-                    ),
-                    this._actionRow(
-                      context,
-                      icon: CupertinoIcons.hand_raised,
-                      label: 'Ban',
-                      destructive: true,
-                      onTap: () => this._confirmThenRun(
-                        title: 'Ban $name?',
-                        body:
-                            'Ban $name from this live chat? They won\'t be '
-                            'able to chat until unbanned.',
-                        okText: 'Ban',
-                        action: () => this._store.banUser(
-                          this.widget.message.authorChannelId ?? '',
-                        ),
-                        failureText: 'Could not ban the user',
-                      ),
-                    ),
-                  ],
-                ],
+              child: AnimatedSwitcher(
+                duration: AppMotion.medium,
+                transitionBuilder: (child, animation) =>
+                    chatSheetPaneTransition(context, child, animation),
+                child: KeyedSubtree(
+                  key: ValueKey<bool>(this._timeoutStep),
+                  child: this._timeoutStep
+                      ? this._buildTimeoutPresets(context)
+                      : this._buildRootActions(context),
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimeoutPresets(BuildContext context) {
+    final name = this.widget.message.authorName ?? 'this user';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final preset in kYouTubeTimeoutPresets)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: this._actionRow(
+              context,
+              icon: CupertinoIcons.timer,
+              label: preset.$1,
+              onTap: () => this._confirmThenRun(
+                title: 'Timeout $name?',
+                body:
+                    'Timeout $name for ${preset.$1}? They can\'t '
+                    'chat until it expires.',
+                okText: 'Timeout',
+                action: () => this._store.banUser(
+                  this.widget.message.authorChannelId ?? '',
+                  durationSeconds: preset.$2,
+                ),
+                failureText: 'Could not time out the user',
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRootActions(BuildContext context) {
+    final name = this.widget.message.authorName ?? 'this user';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: this._actionRow(
+            context,
+            icon: CupertinoIcons.trash,
+            label: 'Delete message',
+            onTap: () => this._confirmThenRun(
+              title: 'Delete message?',
+              body:
+                  'Remove this message from $name in chat? '
+                  'This can\'t be undone.',
+              okText: 'Delete',
+              action: () => this._store.deleteMessage(this.widget.message.id),
+              failureText: 'Could not delete the message',
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: this._actionRow(
+            context,
+            icon: CupertinoIcons.timer,
+            label: 'Timeout…',
+            onTap: () => this.setState(() => this._timeoutStep = true),
+          ),
+        ),
+        this._actionRow(
+          context,
+          icon: CupertinoIcons.hand_raised,
+          label: 'Ban',
+          destructive: true,
+          onTap: () => this._confirmThenRun(
+            title: 'Ban $name?',
+            body:
+                'Ban $name from this live chat? They won\'t be '
+                'able to chat until unbanned.',
+            okText: 'Ban',
+            action: () =>
+                this._store.banUser(this.widget.message.authorChannelId ?? ''),
+            failureText: 'Could not ban the user',
+          ),
+        ),
+      ],
     );
   }
 
@@ -220,9 +244,20 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
           onTap: this._running
               ? null
               : () => this.setState(() => this._timeoutStep = false),
-          child: const Padding(
-            padding: EdgeInsets.only(right: AppSpacing.sm),
-            child: Icon(CupertinoIcons.chevron_back, size: 20.0),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: AppSpacing.sm,
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
+            ),
+            child: Icon(
+              CupertinoIcons.chevron_back,
+              size: 20.0,
+              color:
+                  (Theme.of(context).extension<AppTextColors>() ??
+                          AppTextColors.standard)
+                      .highlightText,
+            ),
           ),
         ),
         Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),

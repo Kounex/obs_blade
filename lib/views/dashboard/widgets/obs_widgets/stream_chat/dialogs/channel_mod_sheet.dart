@@ -17,6 +17,7 @@ import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
 import 'automod_queue_sheet.dart';
 import 'channel_bans_sheet.dart';
+import 'mod_action_sheet.dart';
 
 /// Opens the channel-level Mod actions sheet (clear / modes / shield /
 /// announce). Failures surface as a snackbar on the caller's [context].
@@ -205,16 +206,24 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: switch (this._step) {
-                _ChannelModStep.root => this._buildRoot(context),
-                _ChannelModStep.followerPresets => this._buildFollowerPresets(
-                  context,
+              child: AnimatedSwitcher(
+                duration: AppMotion.medium,
+                transitionBuilder: (child, animation) =>
+                    chatSheetPaneTransition(context, child, animation),
+                child: KeyedSubtree(
+                  key: ValueKey(this._step),
+                  child: switch (this._step) {
+                    _ChannelModStep.root => this._buildRoot(context),
+                    _ChannelModStep.followerPresets =>
+                      this._buildFollowerPresets(context),
+                    _ChannelModStep.slowPresets => this._buildSlowPresets(
+                      context,
+                    ),
+                    _ChannelModStep.announceCompose =>
+                      this._buildAnnounceCompose(context),
+                  },
                 ),
-                _ChannelModStep.slowPresets => this._buildSlowPresets(context),
-                _ChannelModStep.announceCompose => this._buildAnnounceCompose(
-                  context,
-                ),
-              },
+              ),
             ),
           ),
         ],
@@ -240,9 +249,20 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           onTap: this._running
               ? null
               : () => this.setState(() => this._step = _ChannelModStep.root),
-          child: const Padding(
-            padding: EdgeInsets.only(right: AppSpacing.sm),
-            child: Icon(CupertinoIcons.chevron_back, size: 20.0),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: AppSpacing.sm,
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
+            ),
+            child: Icon(
+              CupertinoIcons.chevron_back,
+              size: 20.0,
+              color:
+                  (Theme.of(context).extension<AppTextColors>() ??
+                          AppTextColors.standard)
+                      .highlightText,
+            ),
           ),
         ),
         Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
@@ -430,6 +450,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
               label: this._store.autoModQueue.isEmpty
                   ? 'AutoMod queue…'
                   : 'AutoMod queue (${this._store.autoModQueue.length})…',
+              animateLabel: true,
               onTap: () => showAutoModQueueSheet(context),
             ),
           ),
@@ -616,18 +637,28 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: selected ? chipColor : chipColor.withValues(alpha: 0.18),
+          color: chipColor.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: chipColor.withValues(alpha: selected ? 1.0 : 0.55),
+            width: selected ? 1.5 : 1.0,
           ),
         ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: selected ? Colors.white : chipColor,
-            fontWeight: selected ? FontWeight.w600 : null,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              Icon(CupertinoIcons.checkmark, size: 12.0, color: chipColor),
+              const SizedBox(width: AppSpacing.xs / 2),
+            ],
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: chipColor,
+                fontWeight: selected ? FontWeight.w700 : null,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -674,13 +705,17 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
     required VoidCallback onTap,
     bool destructive = false,
     bool enabled = true,
+    bool animateLabel = false,
   }) {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
                   AppStatusColors.standard)
-              .unreachable
+              .destructive
         : Theme.of(context).textTheme.bodyMedium?.color ??
               CupertinoColors.label;
+    final TextStyle? labelStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: color);
     return Pressable(
       haptic: true,
       onTap: this._running || !enabled ? null : onTap,
@@ -702,12 +737,9 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
             Icon(icon, size: 18.0, color: color),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Text(
-                label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: color),
-              ),
+              child: animateLabel
+                  ? CountUpText(value: label, style: labelStyle)
+                  : Text(label, style: labelStyle),
             ),
           ],
         ),

@@ -171,121 +171,153 @@ class _ModActionSheetState extends State<ModActionSheet> {
     final name = event.chatterUserName;
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          nativeChatSheetDragHandle(context),
           this._titleRow(context, name),
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (this._timeoutStep) ...[
-                    for (final preset in kModTimeoutPresets)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                        child: this._actionRow(
-                          context,
-                          icon: CupertinoIcons.timer,
-                          label: preset.$1,
-                          onTap: () => this._confirmThenRun(
-                            title: 'Timeout $name?',
-                            body:
-                                'Timeout $name for ${preset.$1}? They can\'t '
-                                'chat until it expires.',
-                            okText: 'Timeout',
-                            action: () => this._store.timeoutUser(
-                              event.chatterUserId,
-                              preset.$2,
-                            ),
-                            failureText: 'Could not time out the user',
-                          ),
-                        ),
-                      ),
-                  ] else if (this._warnStep) ...[
-                    this._buildWarnCompose(context),
-                  ] else ...[
-                    if (this.widget.onReply != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                        child: chatActionRowCard(
-                          context,
-                          icon: CupertinoIcons.reply,
-                          label: 'Reply',
-                          onTap: this._running
-                              ? null
-                              : () {
-                                  Navigator.of(context).pop();
-                                  this.widget.onReply!();
-                                },
-                        ),
-                      ),
-                    this._pinRow(context, event),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                      child: this._actionRow(
-                        context,
-                        icon: CupertinoIcons.trash,
-                        label: 'Delete message',
-                        onTap: () => this._confirmThenRun(
-                          title: 'Delete message?',
-                          body:
-                              'Remove this message from $name in chat? '
-                              'This can\'t be undone.',
-                          okText: 'Delete',
-                          action: () => this._store.deleteMessage(event),
-                          failureText: 'Could not delete the message',
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                      child: this._actionRow(
-                        context,
-                        icon: CupertinoIcons.timer,
-                        label: 'Timeout…',
-                        onTap: () =>
-                            this.setState(() => this._timeoutStep = true),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                      child: this._actionRow(
-                        context,
-                        icon: CupertinoIcons.exclamationmark_bubble,
-                        label: 'Warn…',
-                        onTap: () => this._requireScopeOr(
-                          this._store.canWarnUsers,
-                          () => this.setState(() => this._warnStep = true),
-                        ),
-                      ),
-                    ),
-                    this._actionRow(
-                      context,
-                      icon: CupertinoIcons.hand_raised,
-                      label: 'Ban',
-                      destructive: true,
-                      onTap: () => this._confirmThenRun(
-                        title: 'Ban $name?',
-                        body:
-                            'Ban $name from this channel? They won\'t be able '
-                            'to chat until unbanned.',
-                        okText: 'Ban',
-                        action: () => this._store.banUser(event.chatterUserId),
-                        failureText: 'Could not ban the user',
-                      ),
-                    ),
-                  ],
-                ],
+              child: AnimatedSwitcher(
+                duration: AppMotion.medium,
+                transitionBuilder: (child, animation) =>
+                    chatSheetPaneTransition(context, child, animation),
+                child: KeyedSubtree(
+                  key: ValueKey<String>(
+                    this._timeoutStep
+                        ? 'timeout'
+                        : this._warnStep
+                        ? 'warn'
+                        : 'root',
+                  ),
+                  child: this._timeoutStep
+                      ? this._buildTimeoutPresets(context)
+                      : this._warnStep
+                      ? this._buildWarnCompose(context)
+                      : this._buildRootActions(context),
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTimeoutPresets(BuildContext context) {
+    final event = this.widget.event;
+    final name = event.chatterUserName;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final preset in kModTimeoutPresets)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: this._actionRow(
+              context,
+              icon: CupertinoIcons.timer,
+              label: preset.$1,
+              onTap: () => this._confirmThenRun(
+                title: 'Timeout $name?',
+                body:
+                    'Timeout $name for ${preset.$1}? They can\'t '
+                    'chat until it expires.',
+                okText: 'Timeout',
+                action: () =>
+                    this._store.timeoutUser(event.chatterUserId, preset.$2),
+                failureText: 'Could not time out the user',
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRootActions(BuildContext context) {
+    final event = this.widget.event;
+    final name = event.chatterUserName;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (this.widget.onReply != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: chatActionRowCard(
+              context,
+              icon: CupertinoIcons.reply,
+              label: 'Reply',
+              onTap: this._running
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      this.widget.onReply!();
+                    },
+            ),
+          ),
+        this._pinRow(context, event),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: this._actionRow(
+            context,
+            icon: CupertinoIcons.trash,
+            label: 'Delete message',
+            onTap: () => this._confirmThenRun(
+              title: 'Delete message?',
+              body:
+                  'Remove this message from $name in chat? '
+                  'This can\'t be undone.',
+              okText: 'Delete',
+              action: () => this._store.deleteMessage(event),
+              failureText: 'Could not delete the message',
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: this._actionRow(
+            context,
+            icon: CupertinoIcons.timer,
+            label: 'Timeout…',
+            onTap: () => this.setState(() => this._timeoutStep = true),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: this._actionRow(
+            context,
+            icon: CupertinoIcons.exclamationmark_bubble,
+            label: 'Warn…',
+            onTap: () => this._requireScopeOr(
+              this._store.canWarnUsers,
+              () => this.setState(() => this._warnStep = true),
+            ),
+          ),
+        ),
+        this._actionRow(
+          context,
+          icon: CupertinoIcons.hand_raised,
+          label: 'Ban',
+          destructive: true,
+          onTap: () => this._confirmThenRun(
+            title: 'Ban $name?',
+            body:
+                'Ban $name from this channel? They won\'t be able '
+                'to chat until unbanned.',
+            okText: 'Ban',
+            action: () => this._store.banUser(event.chatterUserId),
+            failureText: 'Could not ban the user',
+          ),
+        ),
+      ],
     );
   }
 
@@ -355,9 +387,20 @@ class _ModActionSheetState extends State<ModActionSheet> {
                   this._timeoutStep = false;
                   this._warnStep = false;
                 }),
-          child: const Padding(
-            padding: EdgeInsets.only(right: AppSpacing.sm),
-            child: Icon(CupertinoIcons.chevron_back, size: 20.0),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: AppSpacing.sm,
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
+            ),
+            child: Icon(
+              CupertinoIcons.chevron_back,
+              size: 20.0,
+              color:
+                  (Theme.of(context).extension<AppTextColors>() ??
+                          AppTextColors.standard)
+                      .highlightText,
+            ),
           ),
         ),
         Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
@@ -446,7 +489,7 @@ class _ModActionSheetState extends State<ModActionSheet> {
   }
 
   /// Same idiom as the connection sheet's action rows (container card,
-  /// 44pt target, destructive in the unreachable red).
+  /// 44pt target, destructive in the destructive-status red).
   Widget _actionRow(
     BuildContext context, {
     required IconData icon,
@@ -463,8 +506,8 @@ class _ModActionSheetState extends State<ModActionSheet> {
 }
 
 /// Shared action-row card idiom (connection sheet / mod sheet): container
-/// card, 44pt target, destructive in the unreachable red. Null [onTap]
-/// renders it disabled.
+/// card, 44pt target, destructive in the destructive-status red. Null
+/// [onTap] renders it disabled.
 Widget chatActionRowCard(
   BuildContext context, {
   required IconData icon,
@@ -475,7 +518,7 @@ Widget chatActionRowCard(
   final Color color = destructive
       ? (Theme.of(context).extension<AppStatusColors>() ??
                 AppStatusColors.standard)
-            .unreachable
+            .destructive
       : Theme.of(context).textTheme.bodyMedium?.color ?? CupertinoColors.label;
   return Pressable(
     haptic: true,
@@ -527,11 +570,17 @@ class MessageActionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          nativeChatSheetDragHandle(context),
           Text(
             'Message from @${this.authorName}',
             style: nativeChatSheetTitleStyle(context),
@@ -550,4 +599,32 @@ class MessageActionSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Pane-switch idiom for chat sheet step swaps (token-delta §4 delta 4,
+/// mirrored from `switcher_card.dart`): 12px rise + fade at
+/// [AppMotion.medium] + [AppMotion.emphasized]; reduced motion =
+/// fade-only. Use as an [AnimatedSwitcher.transitionBuilder] with the
+/// pane keyed by step.
+Widget chatSheetPaneTransition(
+  BuildContext context,
+  Widget child,
+  Animation<double> animation,
+) {
+  final CurvedAnimation curved = CurvedAnimation(
+    parent: animation,
+    curve: AppMotion.emphasized,
+  );
+  Widget current = FadeTransition(opacity: curved, child: child);
+  if (!AppMotion.reduce(context)) {
+    current = AnimatedBuilder(
+      animation: curved,
+      child: current,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0.0, (1.0 - curved.value) * 12.0),
+        child: child,
+      ),
+    );
+  }
+  return current;
 }

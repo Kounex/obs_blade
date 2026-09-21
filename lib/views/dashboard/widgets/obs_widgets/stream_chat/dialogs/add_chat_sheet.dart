@@ -13,6 +13,7 @@ import '../../../../../../types/classes/twitch/twitch_channel_ref.dart';
 import '../../../../../../types/classes/twitch/twitch_channel_search_result.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
+import '../../../../../../utils/styling_helper.dart';
 import '../../../../../../utils/twitch/twitch_channel_service.dart';
 import '../native_chat_chrome.dart';
 import '../native_chat_text_field.dart';
@@ -342,7 +343,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
                     child: Text(
                       'Re-login',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                        color:
+                            (Theme.of(context).extension<AppTextColors>() ??
+                                    AppTextColors.standard)
+                                .highlightText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -408,9 +412,13 @@ class _AddChatSheetState extends State<AddChatSheet> {
     String? ownId,
   ) {
     if (this._searching) {
-      return const Padding(
-        padding: EdgeInsets.all(AppSpacing.lg),
-        child: Center(child: CupertinoActivityIndicator()),
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Center(
+          child: StylingHelper.isApple(context)
+              ? const CupertinoActivityIndicator()
+              : const CircularProgressIndicator(),
+        ),
       );
     }
     if (this._searchError != null) {
@@ -420,12 +428,27 @@ class _AddChatSheetState extends State<AddChatSheet> {
       );
     }
     if (this._results.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Center(
-          child: Text(
-            'No channels found',
-            style: Theme.of(context).textTheme.bodySmall,
+      final textColors =
+          Theme.of(context).extension<AppTextColors>() ??
+          AppTextColors.standard;
+      return StaggeredEntrance(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              Icon(
+                CupertinoIcons.search,
+                size: 28.0,
+                color: textColors.textOrnament,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'No channels found',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: textColors.textTertiary),
+              ),
+            ],
           ),
         ),
       );
@@ -477,9 +500,13 @@ class _AddChatSheetState extends State<AddChatSheet> {
     required String? ownId,
   }) {
     if (loading) {
-      return const Padding(
-        padding: EdgeInsets.all(AppSpacing.sm),
-        child: Center(child: CupertinoActivityIndicator()),
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Center(
+          child: StylingHelper.isApple(context)
+              ? const CupertinoActivityIndicator()
+              : const CircularProgressIndicator(),
+        ),
       );
     }
     if (error != null) return this._errorRow(context, onRetry: onRetry);
@@ -516,7 +543,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
           Icon(
             CupertinoIcons.exclamationmark_triangle,
             size: 14.0,
-            color: Theme.of(context).colorScheme.error,
+            color:
+                (Theme.of(context).extension<AppStatusColors>() ??
+                        AppStatusColors.standard)
+                    .destructive,
           ),
           const SizedBox(width: AppSpacing.xs),
           Expanded(
@@ -536,7 +566,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
               child: Text(
                 'Retry',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+                  color:
+                      (Theme.of(context).extension<AppTextColors>() ??
+                              AppTextColors.standard)
+                          .highlightText,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -624,7 +657,6 @@ class _AddChatSheetState extends State<AddChatSheet> {
                 const SizedBox(width: AppSpacing.xs),
                 NativeChatStatusChip.mod(
                   key: Key('add-chat-mod-$chipScope-$id'),
-                  color: Theme.of(context).colorScheme.primary,
                 ),
               ],
             ],

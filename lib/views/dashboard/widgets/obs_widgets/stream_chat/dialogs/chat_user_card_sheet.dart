@@ -18,7 +18,6 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_user_service.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_message_display.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
@@ -203,7 +202,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
       final value = int.tryParse(hex.substring(1), radix: 16);
       if (value != null) return Color(0xFF000000 | value);
     }
-    return Theme.of(context).colorScheme.primary;
+    return (Theme.of(context).extension<AppTextColors>() ??
+            AppTextColors.standard)
+        .highlightText;
   }
 
   String _displayName() =>
@@ -293,9 +294,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
       children: [
         CircleAvatar(
           radius: 28.0,
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest,
+          backgroundColor: StylingHelper.lightenDarkenColor(
+            Theme.of(context).cardColor,
+          ),
           backgroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl),
           child: avatarUrl == null
               ? Icon(
@@ -354,7 +355,8 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             height: 18.0,
             width: 18.0,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            frameBuilder: chatImageFadeIn,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
         ),
       );
@@ -373,14 +375,16 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
 
   Widget _factsBlock(BuildContext context) {
     if (this._loadingFacts) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: Center(
-          child: SizedBox(
-            width: 20.0,
-            height: 20.0,
-            child: CircularProgressIndicator(strokeWidth: 2.0),
-          ),
+          child: StylingHelper.isApple(context)
+              ? const CupertinoActivityIndicator()
+              : const SizedBox(
+                  width: 20.0,
+                  height: 20.0,
+                  child: CircularProgressIndicator(strokeWidth: 2.0),
+                ),
         ),
       );
     }
@@ -415,12 +419,17 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
       );
     }
     if (this._warnings case final warnings?) {
+      final warningColor =
+          (Theme.of(context).extension<AppStatusColors>() ??
+                  AppStatusColors.standard)
+              .warning;
       for (final warning in warnings.take(3)) {
         final when = warning.warnedAt;
         rows.add(
           this._factRow(
             context,
             icon: CupertinoIcons.exclamationmark_triangle,
+            iconColor: warningColor,
             label:
                 'Warned'
                 '${when != null ? ' ${this._formatFactDate(when)}' : ''}'
@@ -447,9 +456,18 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     BuildContext context, {
     required IconData icon,
     required String label,
+    Color? iconColor,
   }) => Row(
     children: [
-      Icon(icon, size: 16.0, color: Theme.of(context).colorScheme.primary),
+      Icon(
+        icon,
+        size: 16.0,
+        color:
+            iconColor ??
+            (Theme.of(context).extension<AppTextColors>() ??
+                    AppTextColors.standard)
+                .textTertiary,
+      ),
       const SizedBox(width: AppSpacing.sm),
       Expanded(
         child: Text(label, style: Theme.of(context).textTheme.bodySmall),
@@ -465,7 +483,10 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
         child: Text(
           'LIVE',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: kChatViewerCountColor,
+            color:
+                (Theme.of(context).extension<AppStatusColors>() ??
+                        AppStatusColors.standard)
+                    .live,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.6,
           ),
@@ -569,7 +590,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     final Color color = destructive
         ? (Theme.of(context).extension<AppStatusColors>() ??
                   AppStatusColors.standard)
-              .unreachable
+              .destructive
         : Theme.of(context).textTheme.bodyMedium?.color ??
               CupertinoColors.label;
     return Pressable(

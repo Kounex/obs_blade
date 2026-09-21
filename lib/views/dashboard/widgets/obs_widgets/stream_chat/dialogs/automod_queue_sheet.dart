@@ -112,18 +112,41 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
   Widget _buildBody(BuildContext context) {
     final queue = this._store.autoModQueue;
     if (queue.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-        child: Text(
-          'No held messages',
-          style: Theme.of(context).textTheme.bodySmall,
+      final textColors =
+          Theme.of(context).extension<AppTextColors>() ??
+          AppTextColors.standard;
+      return StaggeredEntrance(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Column(
+            children: [
+              Icon(
+                CupertinoIcons.checkmark_shield,
+                size: 28.0,
+                color: textColors.textOrnament,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'No held messages',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: textColors.textTertiary),
+              ),
+            ],
+          ),
         ),
       );
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [for (final held in queue) this._heldRow(context, held)],
+      children: [
+        for (final held in queue)
+          _HeldRowEntrance(
+            key: ValueKey(held.messageId),
+            child: this._heldRow(context, held),
+          ),
+      ],
     );
   }
 
@@ -181,10 +204,7 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
                     : const SizedBox(
                         width: 14.0,
                         height: 14.0,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
-                          color: Colors.white,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2.0),
                       ),
               )
             else ...[
@@ -228,15 +248,19 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
     return parts.join(' · ');
   }
 
-  /// Trailing pill button — same idiom as the bans sheet (filled = accent
-  /// primary action, bordered = neutral).
+  /// Trailing pill button — filled = accent fill with a 17/700 white
+  /// label (filled-CTA contract, §2.4); the ghost is the Deny action
+  /// (destructiveText label).
   Widget _pill(
     BuildContext context, {
     required String label,
     required bool filled,
     required VoidCallback? onTap,
   }) {
-    final accent = Theme.of(context).colorScheme.secondary;
+    final accent =
+        Theme.of(context).buttonTheme.colorScheme?.secondary ??
+        StylingHelper.accent_color;
+    final baseStyle = Theme.of(context).textTheme.bodySmall;
     return Pressable(
       haptic: true,
       onTap: onTap,
@@ -256,13 +280,67 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
         ),
         child: Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: filled
-                ? Colors.white
-                : Theme.of(context).textTheme.bodySmall?.color,
-          ),
+          style: filled
+              ? baseStyle?.copyWith(
+                  fontSize: 17.0,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                )
+              : baseStyle?.copyWith(
+                  color:
+                      (Theme.of(context).extension<AppStatusColors>() ??
+                              AppStatusColors.standard)
+                          .destructiveText,
+                ),
         ),
       ),
     );
   }
+}
+
+/// Held-row arrival — a live `automod.message.hold` inserts the row with
+/// an opacity fade (not AnimatedSize, which janks inside the sheet's
+/// scroll view). Keyed by message id so resolves/reorders don't replay
+/// it. Reduced motion renders it settled.
+class _HeldRowEntrance extends StatefulWidget {
+  final Widget child;
+
+  const _HeldRowEntrance({super.key, required this.child});
+
+  @override
+  State<_HeldRowEntrance> createState() => _HeldRowEntranceState();
+}
+
+class _HeldRowEntranceState extends State<_HeldRowEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: AppMotion.medium);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (this._started) return;
+    this._started = true;
+    if (AppMotion.reduce(this.context)) {
+      _controller.value = 1.0;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      FadeTransition(opacity: _controller, child: this.widget.child);
 }
