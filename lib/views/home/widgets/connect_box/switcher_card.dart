@@ -48,22 +48,8 @@ class SwitcherCard extends StatelessWidget {
       topPadding: AppSpacing.xxl,
       titleWidget: AnimatedSwitcher(
         duration: AppMotion.medium,
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position:
-                Tween<Offset>(
-                  begin: const Offset(0.0, 0.25),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: AppMotion.emphasized,
-                  ),
-                ),
-            child: child,
-          ),
-        ),
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
         child: Align(
           key: ValueKey(this.title),
           alignment: Alignment.centerLeft,
@@ -105,9 +91,9 @@ class SwitcherCard extends StatelessWidget {
           AnimatedSwitcher(
             duration: AppMotion.medium,
 
-            /// Pane switches (token-delta §4 delta 4): 12px rise + fade at
-            /// medium + emphasized - the size reveal is kept so content
-            /// below doesn't jump; reduced motion = fade-only
+            /// Pane switches (user-ratified 2026-09-22): clean crossfade
+            /// only - no translate. The size reveal stays so content
+            /// below the card doesn't jump; reduced motion = fade-only
             transitionBuilder: (child, animation) {
               final CurvedAnimation curved = CurvedAnimation(
                 parent: animation,
@@ -115,14 +101,6 @@ class SwitcherCard extends StatelessWidget {
               );
               Widget current = FadeTransition(opacity: curved, child: child);
               if (!AppMotion.reduce(context)) {
-                current = AnimatedBuilder(
-                  animation: curved,
-                  child: current,
-                  builder: (context, child) => Transform.translate(
-                    offset: Offset(0.0, (1.0 - curved.value) * 12.0),
-                    child: child,
-                  ),
-                );
                 current = SizeTransition(
                   sizeFactor: animation.drive(
                     Tween(
