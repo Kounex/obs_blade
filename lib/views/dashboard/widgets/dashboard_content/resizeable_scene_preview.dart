@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'scene_preview/scene_preview.dart';
 
@@ -59,29 +58,31 @@ class _ResizeableScenePreviewState extends State<ResizeableScenePreview> {
               color: Theme.of(context).cardColor,
               border: Border.symmetric(
                 horizontal: BorderSide(
-                  color: StylingHelper.light_divider_color.withValues(
-                    alpha: 0.4,
-                  ),
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
                 ),
               ),
             ),
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onVerticalDragUpdate: (dragUpdate) {
                 double update = _currentHeight + dragUpdate.delta.dy;
                 if (update >= _minHeight && update <= _maxHeight) {
                   setState((() => _currentHeight = update));
                 }
               },
-              child: Container(
-                width: 64.0,
 
-                /// Hack: without the color attribute, the container
-                /// is not correctly ioncreasing the tap size for the
-                /// [GestureDetector]
-                color: Colors.transparent,
-                child: const RotatedBox(
-                  quarterTurns: 1,
-                  child: Icon(Icons.drag_indicator, size: 14.0),
+              /// Full-strip hit area (was: the centered 64px icon only) -
+              /// the 18pt visual band is layout-critical
+              /// ([dragHandleHeight]), so the hit grows across the strip,
+              /// not its height
+              child: const SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: Center(
+                  child: RotatedBox(
+                    quarterTurns: 1,
+                    child: Icon(Icons.drag_indicator, size: 14.0),
+                  ),
                 ),
               ),
             ),
