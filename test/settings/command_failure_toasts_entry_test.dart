@@ -40,13 +40,13 @@ void main() {
   );
 
   Finder alertRow() => find.ancestor(
-    of: find.text('Command Failure Alerts'),
+    of: find.text('Failure Alerts'),
     matching: find.byType(BlockEntry),
   );
 
   Future<void> scrollToAlertRow(WidgetTester tester) async {
     await tester.scrollUntilVisible(
-      find.text('Command Failure Alerts'),
+      find.text('Failure Alerts'),
       200.0,
       scrollable: find.byType(Scrollable).first,
     );

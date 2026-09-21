@@ -94,7 +94,7 @@ class SettingsView extends StatelessWidget {
                       ),
                       BlockEntry(
                         leading: CupertinoIcons.exclamationmark_bubble_fill,
-                        title: 'Command Failure Alerts',
+                        title: 'Failure Alerts',
                         help:
                             'Shows a toast in the dashboard when a command sent to OBS (like switching scenes or muting a source) gets rejected or times out. The affected state is always re-synced from OBS either way - turn this off to only write such failures to the logs.',
                         trailing: BaseAdaptiveSwitch(
