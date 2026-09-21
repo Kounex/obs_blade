@@ -12,7 +12,10 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart'
+    show chatImageFadeIn;
 
 /// Dock toggle for [ChatEmotePickerSheet] — styled like the chat bar's
 /// control containers, 44pt touch target. Refocuses the dock's field when
@@ -26,7 +29,7 @@ class ChatEmotePickerButton extends StatelessWidget {
   /// shows a re-login CTA instead of first-party sections when false.
   final bool canReadEmotes;
 
-  /// Brand accent (CTA text), same value the dock gets.
+  /// Brand accent (Done pill fill), same value the dock gets.
   final Color accentColor;
 
   /// Starts the re-login flow from the sheet's pre-upgrade CTA.
@@ -56,6 +59,7 @@ class ChatEmotePickerButton extends StatelessWidget {
           final applied = await ModalHandler.showBaseBottomSheet<bool>(
             context: context,
             barrierDismissible: true,
+            enableDrag: true,
             maxHeightFraction: 0.85,
             builder: (context) => ChatEmotePickerSheet(
               controller: this.controller,
@@ -185,13 +189,22 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final AppTextColors textColors =
+        Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
+
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Emotes', style: Theme.of(context).textTheme.titleMedium),
+          nativeChatSheetDragHandle(context),
+          Text('Emotes', style: nativeChatSheetTitleStyle(context)),
           const SizedBox(height: AppSpacing.sm),
           NativeChatTextField(
             onChanged: (value) => this.setState(() => this._query = value),
@@ -271,7 +284,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                               Icon(
                                 CupertinoIcons.lock_fill,
                                 size: 14.0,
-                                color: this.widget.accentColor,
+                                color: textColors.highlightText,
                               ),
                               const SizedBox(width: AppSpacing.xs),
                               Expanded(
@@ -296,7 +309,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                                     'Re-login',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: this.widget.accentColor,
+                                          color: textColors.highlightText,
                                           fontWeight: FontWeight.w600,
                                         ),
                                   ),
@@ -325,40 +338,64 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                             ),
                           )
                         else if (sections.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(AppSpacing.xl),
-                            child: Center(
-                              child: Text(
-                                'No emotes available',
-                                style: Theme.of(context).textTheme.bodySmall,
+                          StaggeredEntrance(
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.xl),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.smiley,
+                                    size: 28.0,
+                                    color: textColors.textOrnament,
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Text(
+                                    query.isEmpty
+                                        ? 'No emotes available'
+                                        : 'No emotes match your search',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                ],
                               ),
                             ),
                           )
                         else
-                          for (final section in sections) ...[
-                            Text(
-                              section.$1,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            GridView(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 56.0,
-                                    mainAxisSpacing: AppSpacing.xs,
-                                    crossAxisSpacing: AppSpacing.xs,
+                          for (final (index, section) in sections.indexed) ...[
+                            StaggeredEntrance(
+                              index: index,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    section.$1.toUpperCase(),
+                                    style: nativeChatSheetSectionStyle(context),
                                   ),
-                              children: [
-                                for (final emote in section.$2)
-                                  _EmoteCell(
-                                    code: emote.$1,
-                                    imageUrl: emote.$2,
-                                    onTap: () => this._insert(emote.$1),
+                                  const SizedBox(height: AppSpacing.xs),
+                                  GridView(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    gridDelegate:
+                                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                                          maxCrossAxisExtent: 56.0,
+                                          mainAxisSpacing: AppSpacing.xs,
+                                          crossAxisSpacing: AppSpacing.xs,
+                                        ),
+                                    children: [
+                                      for (final emote in section.$2)
+                                        _EmoteCell(
+                                          code: emote.$1,
+                                          imageUrl: emote.$2,
+                                          onTap: () => this._insert(emote.$1),
+                                        ),
+                                    ],
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
                             const SizedBox(height: AppSpacing.md),
                           ],
@@ -385,7 +422,6 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => this._done(),
                     hintText: 'Add emotes…',
-                    focusBorderColor: this.widget.accentColor,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -409,6 +445,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                       'Done',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: Colors.white,
+                        fontSize: 17.0,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -450,7 +487,8 @@ class _EmoteCell extends StatelessWidget {
             height: 32.0,
             width: 32.0,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Text(
+            frameBuilder: chatImageFadeIn,
+            errorBuilder: (_, _, _) => Text(
               this.code,
               style: Theme.of(context).textTheme.bodySmall,
               overflow: TextOverflow.ellipsis,
