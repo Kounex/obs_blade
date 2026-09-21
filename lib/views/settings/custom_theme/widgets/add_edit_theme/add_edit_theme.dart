@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
@@ -34,7 +33,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
   late CustomTheme _customTheme;
 
   late CustomValidationTextEditingController _name;
-  late TextEditingController _description;
+  late CustomValidationTextEditingController _description;
 
   @override
   void initState() {
@@ -49,7 +48,9 @@ class _AddEditThemeState extends State<AddEditTheme> {
       check: _nameValidation,
     );
 
-    _description = TextEditingController(text: _customTheme.description);
+    _description = CustomValidationTextEditingController(
+      text: _customTheme.description,
+    );
     super.initState();
   }
 
@@ -175,12 +176,12 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _sectionHeader('General'),
-                        CupertinoTextField(
+                        BaseAdaptiveTextField(
                           controller: _name,
                           placeholder: 'Name',
                         ),
                         const SizedBox(height: AppSpacing.md),
-                        CupertinoTextField(
+                        BaseAdaptiveTextField(
                           controller: _description,
                           placeholder: 'Description (Optional)',
                           minLines: 3,
@@ -329,7 +330,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                         ThemeRow(
                           title: 'Highlight Color',
                           description:
-                              'Active state is being displayed with this color like active scene, active tab, etc.',
+                              'Switches, sliders, links and control states',
                           colorHex: _customTheme.highlightColorHex,
                           onReset: () => setState(
                             () => _customTheme.highlightColorHex =
@@ -343,7 +344,7 @@ class _AddEditThemeState extends State<AddEditTheme> {
                         ThemeRow(
                           title: 'Accent Color',
                           description:
-                              'Is being used by action / toggle elements like Switch, Button, etc.',
+                              'Brand moments, filled buttons and selection',
                           colorHex: _customTheme.accentColorHex,
                           onReset: () => setState(
                             () => _customTheme.accentColorHex =
