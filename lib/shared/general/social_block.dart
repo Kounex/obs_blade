@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../utils/modal_handler.dart';
+import '../design/design.dart';
 import '../dialogs/info.dart';
 
 const double kSocialEntryDefaultIconSize = 28.0;
@@ -85,7 +86,8 @@ class SocialBlock extends StatelessWidget {
 
     for (var social in this.socialInfos) {
       socialEntries.add(
-        GestureDetector(
+        Pressable(
+          springy: false,
           onTap: () => _handleSocialTap(context, social),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -124,7 +126,9 @@ class SocialBlock extends StatelessWidget {
                       (social.textStyle ??
                               Theme.of(context).textTheme.bodyMedium!)
                           .copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
+                            color: Theme.of(
+                              context,
+                            ).extension<AppTextColors>()!.highlightText,
                             // decoration: TextDecoration.underline,
                           ),
                 ),
