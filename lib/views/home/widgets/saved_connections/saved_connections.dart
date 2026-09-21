@@ -4,8 +4,10 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/design/design.dart';
+import '../../../../shared/general/base/constrained_box.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../types/enums/hive_keys.dart';
+import '../../../../utils/styling_helper.dart';
 import 'connection_box.dart';
 import 'placeholder_connection.dart';
 
@@ -17,84 +19,94 @@ class SavedConnections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          /// Aligns with the card content edge above (16 card margin +
-          /// 24 title inset = 40). The bottom spacing carries the
-          /// separation now - the divider underline under section headers
-          /// is retired (hierarchy via type/spacing, v12 direction)
-          padding: const EdgeInsets.only(
-            top: AppSpacing.md,
-            bottom: AppSpacing.sm,
-            left: AppSpacing.xl + AppSpacing.lg,
-          ),
+    /// Same 640 content column the ConnectBox card centers itself in -
+    /// aligns the section (header + cards) on large screens instead of
+    /// hugging the left edge
+    return Center(
+      child: BaseConstrainedBox(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              /// Aligns with the card content edge above (16 card margin +
+              /// 24 title inset = 40, relative to the capped column). The
+              /// bottom spacing carries the separation now - the divider
+              /// underline under section headers is retired (hierarchy via
+              /// type/spacing, v12 direction)
+              padding: const EdgeInsets.only(
+                top: AppSpacing.md,
+                bottom: AppSpacing.sm,
+                left: AppSpacing.xl + AppSpacing.lg,
+              ),
 
-          /// Section header: caption scale, uppercase, textTertiary
-          child: Text(
-            'Saved Connections'.toUpperCase(),
-            style: Theme.of(context).textTheme.labelMedium!.copyWith(
-              color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.6,
+              /// Section header: caption scale, uppercase, textTertiary
+              child: Text(
+                'Saved Connections'.toUpperCase(),
+                style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).extension<AppTextColors>()!.textTertiary,
+                ),
+              ),
             ),
-          ),
-        ),
 
-        Flexible(
-          fit: FlexFit.loose,
-          child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.lg),
-            child: HiveBuilder<Connection>(
-              hiveKey: HiveKeys.SavedConnections,
-              builder: (context, savedConnectionsBox, child) {
-                if (savedConnectionsBox.values.isEmpty) {
-                  return const PlaceholderConnection(
-                    height: _cardHeight,
-                    width: _cardWidth,
-                  );
-                }
-
-                return ReachableBuilder(
-                  savedConnectionsBuilder: (savedConnections) {
-                    final useCarousel =
-                        MediaQuery.sizeOf(context).width < _cardWidth * 2.5;
-
-                    if (useCarousel) {
-                      return _ConnectionCarousel(
-                        connections: savedConnections,
+            Flexible(
+              fit: FlexFit.loose,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.lg),
+                child: HiveBuilder<Connection>(
+                  hiveKey: HiveKeys.SavedConnections,
+                  builder: (context, savedConnectionsBox, child) {
+                    if (savedConnectionsBox.values.isEmpty) {
+                      return const PlaceholderConnection(
                         height: _cardHeight,
                         width: _cardWidth,
                       );
                     }
 
-                    return SizedBox(
-                      height: _cardHeight,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                        ),
-                        itemCount: savedConnections.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(width: AppSpacing.lg),
-                        itemBuilder: (context, index) => _animatedConnectionBox(
-                          savedConnections[index],
-                          index,
-                          width: _cardWidth,
+                    return ReachableBuilder(
+                      savedConnectionsBuilder: (savedConnections) {
+                        final useCarousel =
+                            MediaQuery.sizeOf(context).width <
+                            StylingHelper.max_width_mobile;
+
+                        if (useCarousel) {
+                          return _ConnectionCarousel(
+                            connections: savedConnections,
+                            height: _cardHeight,
+                            width: _cardWidth,
+                          );
+                        }
+
+                        return SizedBox(
                           height: _cardHeight,
-                        ),
-                      ),
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.lg,
+                            ),
+                            itemCount: savedConnections.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: AppSpacing.lg),
+                            itemBuilder: (context, index) =>
+                                _animatedConnectionBox(
+                                  savedConnections[index],
+                                  index,
+                                  width: _cardWidth,
+                                  height: _cardHeight,
+                                ),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -132,7 +144,6 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
   @override
   Widget build(BuildContext context) {
     final count = this.widget.connections.length;
-    final muted = Theme.of(context).textTheme.bodySmall?.color;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -190,11 +201,14 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
                 spacing: 6.0,
 
                 /// Active page dot = selection -> accent (grammar rule 2;
-                /// the accent group lives on the buttonTheme colorScheme)
+                /// the accent group lives on the buttonTheme colorScheme),
+                /// inactive = ornament level
                 activeDotColor: Theme.of(
                   context,
                 ).buttonTheme.colorScheme!.secondary,
-                dotColor: (muted ?? Colors.grey).withValues(alpha: 0.35),
+                dotColor: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.textOrnament,
               ),
             ),
           ),
