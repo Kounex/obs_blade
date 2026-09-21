@@ -67,7 +67,12 @@ class _SupportDialogState extends State<SupportDialog> {
           return DefaultTextStyle(
             style: Theme.of(context).textTheme.bodyMedium!,
             child: SingleChildScrollView(
-              child: TipsContent(tipsDetails: inAppPurchasesDetails),
+              child: TipsContent(
+                tipsDetails: inAppPurchasesDetails,
+                onRetry: () => setState(
+                  () => _inAppPurchases = _getAvailableInAppPurchases(),
+                ),
+              ),
             ),
           );
         },
