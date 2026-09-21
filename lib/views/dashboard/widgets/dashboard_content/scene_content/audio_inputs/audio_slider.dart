@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/shared/general/cupertino_number_text_field.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -28,6 +30,17 @@ class _AudioSliderState extends State<AudioSlider> {
   late final TextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
 
+  /// Peak-hold tick (meter): pins to the latest level rise, holds for
+  /// [_peakHoldFor], then steps back down to the live level - the tick's
+  /// AnimatedPositioned smooths each step
+  double _peakLevel = 0.0;
+  double _lastLevel = 0.0;
+  Timer? _peakHoldTimer;
+  Timer? _peakDecayTimer;
+
+  static const Duration _peakHoldFor = Duration(milliseconds: 500);
+  static const double _peakDecayStep = 0.12;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +57,36 @@ class _AudioSliderState extends State<AudioSlider> {
         this.widget.input.syncOffset.toString() != _controller.text) {
       _controller.text = this.widget.input.syncOffset.toString();
     }
+    _trackPeak(_currentLevel());
+  }
+
+  @override
+  void dispose() {
+    _peakHoldTimer?.cancel();
+    _peakDecayTimer?.cancel();
+    super.dispose();
+  }
+
+  void _trackPeak(double level) {
+    if (level >= _peakLevel) {
+      _peakLevel = level;
+      _peakHoldTimer?.cancel();
+      _peakDecayTimer?.cancel();
+      _peakHoldTimer = Timer(_peakHoldFor, () {
+        _peakDecayTimer = Timer.periodic(AppMotion.instant, (timer) {
+          if (!this.mounted) {
+            timer.cancel();
+            return;
+          }
+          setState(() {
+            _peakLevel = max(_lastLevel, _peakLevel - _peakDecayStep);
+          });
+          if (_peakLevel <= _lastLevel) {
+            timer.cancel();
+          }
+        });
+      });
+    }
   }
 
   double _transformMulToLevel(double mul) {
@@ -55,6 +98,13 @@ class _AudioSliderState extends State<AudioSlider> {
         : level;
   }
 
+  double _currentLevel() =>
+      (this.widget.input.inputLevelsMul != null &&
+          this.widget.input.inputLevelsMul!.isNotEmpty &&
+          this.widget.input.inputLevelsMul!.first.current! > 0)
+      ? _transformMulToLevel(this.widget.input.inputLevelsMul!.first.current!)
+      : 0.0;
+
   @override
   Widget build(BuildContext context) {
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
@@ -64,12 +114,8 @@ class _AudioSliderState extends State<AudioSlider> {
     /// Highlight (control slot) for the mute affordance
     Color highlight = theme.colorScheme.secondary;
 
-    final double currentLevel =
-        (this.widget.input.inputLevelsMul != null &&
-            this.widget.input.inputLevelsMul!.isNotEmpty &&
-            this.widget.input.inputLevelsMul!.first.current! > 0)
-        ? _transformMulToLevel(this.widget.input.inputLevelsMul!.first.current!)
-        : 0.0;
+    final double currentLevel = _currentLevel();
+    _lastLevel = currentLevel;
 
     /// Near-clip (~-6dBFS and up) tips the meter into the warning-red `.hot`
     /// zone - the meter is the ratified rule-7 exception: semantic live
@@ -149,7 +195,7 @@ class _AudioSliderState extends State<AudioSlider> {
                     ),
                     if (currentLevel > 0)
                       AnimatedContainer(
-                        duration: const Duration(milliseconds: 50),
+                        duration: AppMotion.instant,
                         height: 6.0,
                         width: constraints.maxWidth * currentLevel,
                         decoration: BoxDecoration(
@@ -171,16 +217,10 @@ class _AudioSliderState extends State<AudioSlider> {
                           ),
                         ),
                       ),
-                    if (this.widget.input.inputLevelsMul != null &&
-                        this.widget.input.inputLevelsMul!.isNotEmpty &&
-                        this.widget.input.inputLevelsMul!.first.average! > 0)
+                    if (_peakLevel > 0)
                       AnimatedPositioned(
-                        duration: const Duration(milliseconds: 200),
-                        left:
-                            constraints.maxWidth *
-                            _transformMulToLevel(
-                              this.widget.input.inputLevelsMul!.first.average!,
-                            ),
+                        duration: AppMotion.fast,
+                        left: constraints.maxWidth * _peakLevel,
                         child: Container(
                           height: 12.0,
                           width: 2.0,
@@ -207,19 +247,22 @@ class _AudioSliderState extends State<AudioSlider> {
                   },
                   label: 'Audio mute',
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: AnimatedToggleIcon(
-                    icon: this.widget.input.inputMuted
-                        ? Icons.volume_off
-                        : Icons.volume_up,
+                child: SizedBox(
+                  width: kBaseIconButtonMinHitArea,
+                  height: kBaseIconButtonMinHitArea,
+                  child: Center(
+                    child: AnimatedToggleIcon(
+                      icon: this.widget.input.inputMuted
+                          ? Icons.volume_off
+                          : Icons.volume_up,
 
-                    /// Control on-state = highlight; the muted off-state
-                    /// drops to faint text (mock .mute.muted) - red is
-                    /// reserved for recording/program status
-                    color: this.widget.input.inputMuted
-                        ? theme.extension<AppTextColors>()!.textTertiary
-                        : highlight,
+                      /// Control on-state = highlight; the muted off-state
+                      /// drops to faint text (mock .mute.muted) - red is
+                      /// reserved for recording/program status
+                      color: this.widget.input.inputMuted
+                          ? theme.extension<AppTextColors>()!.textTertiary
+                          : highlight,
+                    ),
                   ),
                 ),
               ),
