@@ -1,9 +1,12 @@
 import '../models/custom_theme.dart';
-import 'styling_helper.dart';
-
-import '../types/extensions/color.dart';
 
 class BuiltInThemes {
+  /// The curated lineup, tuned to the token grammar (token-delta §1 rule 8):
+  /// **accent** = brand / selection / filled CTAs, **highlight** = control
+  /// states + links. Dark presets use control colors that stay readable on
+  /// near-black (iOS dark variants); light presets use the light variants.
+  /// UUIDs + creation stamps are pinned - users may have a preset active
+  /// (persisted as `ActiveCustomThemeUUID`).
   static Iterable<CustomTheme> get themes => [
     CustomTheme(
       'Pure Indigo',
@@ -13,9 +16,9 @@ class BuiltInThemes {
       '212121',
       '212121',
       '6f29d6',
-      '6f29d6',
+      'a78bfa',
       '131313',
-      'ffffff',
+      null,
       false,
       'a3d48049-f41d-45ad-beca-c9bf76835ef1',
       1600249329020,
@@ -26,11 +29,11 @@ class BuiltInThemes {
       false,
       'ffffff',
       'e4e4e4',
-      'f0f0f0',
-      '34bafff',
-      StylingHelper.highlight_color.toHex(),
       'e4e4e4',
-      'ffffff',
+      '0284c7',
+      '007aff',
+      'e4e4e4',
+      null,
       true,
       '4c6b99aa-4d4d-45a6-ba25-53dd181c36cd',
       1600249329020,
@@ -42,25 +45,25 @@ class BuiltInThemes {
       '212121',
       '212121',
       '212121',
-      StylingHelper.highlight_color.toHex(),
       'cc0000',
+      '0a84ff',
       '181818',
-      'ffffff',
+      null,
       false,
       '0c85f35d-be62-485c-9169-6a00526101c0',
       1600249329020,
     ),
     CustomTheme(
       'Snowstorm',
-      'An eye friendly light theme in icey colors.',
+      'An eye friendly light theme in icy colors.',
       false,
-      'DAE9FF',
-      'CCE0FC',
-      'CCE0FC',
-      '7391D1',
-      StylingHelper.highlight_color.toHex(),
-      'EBEFF5',
-      'ffffff',
+      'dae9ff',
+      'cce0fc',
+      'cce0fc',
+      '4a6fd1',
+      '007aff',
+      'ebeff5',
+      null,
       true,
       'd5ee18fd-9078-4342-94d8-b8239689b84a',
       1600249329020,

@@ -18,6 +18,8 @@ class CustomTheme extends HiveObject {
   @HiveField(2)
   String? description;
 
+  /// Dead slot (nothing reads it for themes) - field number stays reserved
+  /// (Hive compat); do not reuse.
   @HiveField(3)
   bool? starred;
 
@@ -39,6 +41,9 @@ class CustomTheme extends HiveObject {
   @HiveField(9)
   String backgroundColorHex;
 
+  /// Dead slot (never read anywhere) - text emphasis rides the
+  /// `AppTextColors` token derivation, not a per-theme override. Field
+  /// number stays reserved (Hive compat); do not reuse.
   @HiveField(10)
   String? textColorHex;
 
@@ -48,6 +53,8 @@ class CustomTheme extends HiveObject {
   @HiveField(12)
   int dateCreatedMS;
 
+  /// Written on save but never displayed/read - kept for Hive field-number
+  /// stability, candidate for a "last edited" stamp if we ever want one
   @HiveField(13)
   int? dateUpdatedMS;
 
@@ -93,7 +100,11 @@ class CustomTheme extends HiveObject {
       this.appBarColorHex = StylingHelper.liquid_bar_color.toHex(),
       this.tabBarColorHex = StylingHelper.liquid_bar_color.toHex(),
       this.accentColorHex = StylingHelper.accent_color.toHex(),
-      this.highlightColorHex = StylingHelper.highlight_color.toHex(),
+
+      /// The dark-variant control blue (#0A84FF) - the token layer
+      /// (`AppTextColors`) assumes it for dark themes; the light variant
+      /// #007AFF belongs to light themes only
+      this.highlightColorHex = '0a84ff',
       this.backgroundColorHex = StylingHelper.background_color.toHex(),
       this.useLightBrightness = false;
 
