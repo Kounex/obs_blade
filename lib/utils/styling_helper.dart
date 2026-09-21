@@ -16,7 +16,6 @@ class StylingHelper {
   static const double max_width_mobile = 700.0;
 
   /// Main colors (primarly used for Themeing)
-  static const Color primary_color = Color(0xff101823);
   static const Color accent_color = Color(0xffff4654);
   static const Color highlight_color = CupertinoColors.systemBlue;
   static const Color background_color = Colors.black;
@@ -25,9 +24,9 @@ class StylingHelper {
   static const Color scaffold_color = Color(0xff212123);
 
   /// Liquid glass bar base for the default theme (token-delta §3 - the
-  /// mock's rgba(27,27,31,0.72) glass tone), neutral; replaces the legacy
-  /// blue-navy [primary_color] as the default bar base. Custom themes
-  /// keep their appBar/tabBar slots
+  /// mock's rgba(27,27,31,0.72) glass tone), neutral; replaced the legacy
+  /// blue-navy #101823 as the default bar base. Custom themes keep their
+  /// appBar/tabBar slots
   static const Color liquid_bar_color = Color(0xff1b1b1f);
 
   static const Color background_reduced_smearing_color = Color.fromRGBO(

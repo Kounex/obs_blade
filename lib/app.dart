@@ -24,7 +24,7 @@ class App extends StatelessWidget {
     Brightness? brightness;
     Color? scaffoldBackgroundColor;
     Color? accentColor;
-    Color? hightlightColor;
+    Color? highlightColor;
     Color? backgroundColor;
     Color? canvasColor;
     Color? cardColor;
@@ -58,7 +58,7 @@ class App extends StatelessWidget {
         scaffoldBackgroundColor = activeCustomTheme.backgroundColorHex
             .hexToColor();
         accentColor = activeCustomTheme.accentColorHex.hexToColor();
-        hightlightColor = activeCustomTheme.highlightColorHex.hexToColor();
+        highlightColor = activeCustomTheme.highlightColorHex.hexToColor();
         backgroundColor = activeCustomTheme.cardColorHex.hexToColor();
         canvasColor = activeCustomTheme.cardColorHex.hexToColor();
         cardColor = activeCustomTheme.cardColorHex.hexToColor();
@@ -79,13 +79,21 @@ class App extends StatelessWidget {
     /// affordances. Every colored element resolves one of these (or a
     /// status/text extension) - never a framework default.
     final Color accent = accentColor ?? StylingHelper.accent_color;
-    final Color highlight = hightlightColor ?? StylingHelper.highlight_color;
+
+    /// The fallback is the dark-variant control blue (#0A84FF the token
+    /// layer assumes), NOT [StylingHelper.highlight_color]:
+    /// CupertinoColors.systemBlue bakes its *light* variant (#007AFF) into
+    /// Material slots, which made the default dark theme ship two different
+    /// blues (slots vs `AppTextColors.standard.highlightText`). The
+    /// Cupertino override below keeps the dynamic color so it still
+    /// resolves per-context there.
+    final Color highlight = highlightColor ?? const Color(0xFF0A84FF);
 
     final AppTextColors appTextColors =
-        accentColor != null && hightlightColor != null
+        accentColor != null && highlightColor != null
         ? AppTextColors.derive(
             accent: accentColor,
-            highlight: hightlightColor,
+            highlight: highlightColor,
             brightness: brightness ?? Brightness.dark,
           )
         : AppTextColors.standard;
@@ -141,7 +149,7 @@ class App extends StatelessWidget {
       onPrimary: onGroup(highlight),
       secondary: highlight,
       onSecondary: onGroup(highlight),
-      surface: dark ? liquidCard : Colors.white,
+      surface: liquidCard,
       onSurface: dark ? Colors.white : Colors.black,
       error: AppStatusColors.standard.destructive,
       onError: dark ? Colors.black : Colors.white,
@@ -162,7 +170,7 @@ class App extends StatelessWidget {
           }
           if (states.contains(WidgetState.focused)) {
             return base.copyWith(
-              color: hightlightColor ?? StylingHelper.highlight_color,
+              color: highlight,
             );
           }
           return base;
@@ -172,12 +180,12 @@ class App extends StatelessWidget {
       scaffoldBackgroundColor: scaffold,
       canvasColor: canvasColor ?? scaffold,
       cardColor: liquidCard,
-      indicatorColor: indicatorColor ?? StylingHelper.highlight_color,
+      indicatorColor: indicatorColor ?? highlight,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
 
       textSelectionTheme: TextSelectionThemeData(
-        selectionColor: hightlightColor ?? StylingHelper.highlight_color,
+        selectionColor: highlight,
       ),
 
       dividerTheme: DividerThemeData(
@@ -266,7 +274,7 @@ class App extends StatelessWidget {
               ? Colors.black
               : Colors.white,
         ),
-        actionTextColor: hightlightColor ?? StylingHelper.highlight_color,
+        actionTextColor: highlight,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -274,9 +282,8 @@ class App extends StatelessWidget {
       ),
       chipTheme: baseThemeData.chipTheme.copyWith(
         backgroundColor: StylingHelper.lightenDarkenColor(liquidCard, 8),
-        selectedColor: (hightlightColor ?? StylingHelper.highlight_color)
-            .withValues(alpha: 0.24),
-        checkmarkColor: hightlightColor ?? StylingHelper.highlight_color,
+        selectedColor: highlight.withValues(alpha: 0.24),
+        checkmarkColor: highlight,
         side: BorderSide.none,
       ),
 
@@ -324,7 +331,7 @@ class App extends StatelessWidget {
 
       cupertinoOverrideTheme: CupertinoThemeData(
         scaffoldBackgroundColor: scaffold,
-        primaryColor: hightlightColor ?? StylingHelper.highlight_color,
+        primaryColor: highlightColor ?? StylingHelper.highlight_color,
         textTheme: CupertinoTextThemeData(
           primaryColor: appTextColors.highlightText,
         ),
