@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/general/responsive_widget_wrapper.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -40,7 +41,8 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
   /// [SceneButtons] renders its horizontal-scroll row at size + 24
   static const double _sceneButtonsHeight = 64.0 + 24.0;
 
-  /// Overlay toggle hit target; the chat panel docks directly beside it
+  /// Overlay toggle visual size (the hit floor around it is larger); the
+  /// chat panel docks directly beside it
   static const double _toggleSize = 32.0;
 
   /// Top clamp for the draggable chat toggle - keeps it clear of the native
@@ -173,7 +175,7 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
             /// SizedBox.shrink keeps the AnimatedSwitcher's layout stable
             /// while the panel is gone
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
+              duration: AppMotion.fast,
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
                 child: SlideTransition(
@@ -187,9 +189,16 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
               child: this._headerOpen
                   ? Material(
                       key: const ValueKey('chat-header-panel'),
-                      elevation: 8.0,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      color: Theme.of(context).cardColor,
+                      elevation: 0.0,
+                      color: Colors.black.withValues(alpha: 0.55),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withValues(alpha: 0.4),
+                        ),
+                      ),
                       child: const Padding(
                         padding: EdgeInsets.all(AppSpacing.sm),
                         child: ChatUsernameBar(),
@@ -261,10 +270,14 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
 }
 
 /// Small translucent circular button floating over video / chat content -
-/// white when its overlay is on, dimmed when off. [badgeColor] paints a
-/// status dot on the top-right edge (chat-header toggle: is a chat
+/// highlight when its overlay is on, dimmed white when off. [badgeColor]
+/// paints a status dot on the top-right edge (chat-header toggle: is a chat
 /// channel/username selected at all). Optional vertical-drag callbacks turn
 /// it into an edge-docked draggable (tap still fires on a clean touch).
+///
+/// Hit-slop contract: the visual stays 32px, the transparent 44x44 floor
+/// around it (top-right anchored, so the circle never moves) carries the
+/// hit area.
 class _OverlayToggleButton extends StatelessWidget {
   final IconData icon;
   final bool active;
@@ -285,38 +298,55 @@ class _OverlayToggleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: this.onTap,
       onVerticalDragUpdate: this.onVerticalDragUpdate,
       onVerticalDragEnd: this.onVerticalDragEnd,
-      child: Container(
-        width: 32.0,
-        height: 32.0,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          shape: BoxShape.circle,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(
-              this.icon,
-              size: 18.0,
-              color: this.active ? Colors.white : Colors.white60,
-            ),
-            if (this.badgeColor != null)
-              Positioned(
-                top: 5.0,
-                right: 5.0,
-                child: Container(
-                  width: 7.0,
-                  height: 7.0,
-                  decoration: BoxDecoration(
-                    color: this.badgeColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
+      child: Pressable(
+        onTap: this.onTap,
+
+        /// 32px visual glyph - standard release, no overshoot (rule 6)
+        springy: false,
+        child: SizedBox(
+          width: kBaseIconButtonMinHitArea,
+          height: kBaseIconButtonMinHitArea,
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              width: 32.0,
+              height: 32.0,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                shape: BoxShape.circle,
               ),
-          ],
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(
+                      end: this.active
+                          ? Theme.of(context).colorScheme.secondary
+                          : Colors.white60,
+                    ),
+                    duration: AppMotion.fast,
+                    builder: (context, color, child) =>
+                        Icon(this.icon, size: 18.0, color: color),
+                  ),
+                  if (this.badgeColor != null)
+                    Positioned(
+                      top: 5.0,
+                      right: 5.0,
+                      child: Container(
+                        width: 7.0,
+                        height: 7.0,
+                        decoration: BoxDecoration(
+                          color: this.badgeColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -367,7 +397,9 @@ class _ChatHeaderToggleButton extends StatelessWidget {
           icon: Icons.tune,
           active: this.active,
           onTap: this.onTap,
-          badgeColor: chatActive ? Colors.greenAccent : Colors.white38,
+          badgeColor: chatActive
+              ? Theme.of(context).extension<AppStatusColors>()!.reachable
+              : Theme.of(context).extension<AppTextColors>()!.textOrnament,
           onVerticalDragUpdate: this.onVerticalDragUpdate,
           onVerticalDragEnd: this.onVerticalDragEnd,
         );
