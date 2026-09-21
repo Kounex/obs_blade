@@ -256,9 +256,23 @@ class _AddEditThemeState extends State<AddEditTheme> {
                       children: [
                         _sectionHeader('Colors'),
                         ThemeRow(
-                          title: 'Card Color',
+                          title: 'App Background',
                           description:
-                              'Most UI elements are inside Cards so this is kinda the primary color of the app',
+                              'The canvas behind all UI elements - everything else sits on top of it',
+                          colorHex: _customTheme.backgroundColorHex,
+                          onReset: () => setState(
+                            () => _customTheme.backgroundColorHex =
+                                _initialTheme.backgroundColorHex,
+                          ),
+                          onSave: (colorHex) => setState(
+                            () => _customTheme.backgroundColorHex = colorHex,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        ThemeRow(
+                          title: 'Cards & Sheets',
+                          description:
+                              'The surface tone of cards, bottom sheets and dialogs - most UI elements live on these',
                           colorHex: _customTheme.cardColorHex,
                           onReset: () => setState(
                             () => _customTheme.cardColorHex =
@@ -266,6 +280,51 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           ),
                           onSave: (colorHex) => setState(
                             () => _customTheme.cardColorHex = colorHex,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        ThemeRow(
+                          title: 'Navigation Bars',
+                          description:
+                              'The floating bars at the top (title, back navigation) and bottom (tabs) of the app',
+                          colorHex: _customTheme.appBarColorHex,
+                          onReset: () => setState(() {
+                            _customTheme.appBarColorHex =
+                                _initialTheme.appBarColorHex;
+                            _customTheme.tabBarColorHex =
+                                _initialTheme.tabBarColorHex;
+                          }),
+                          onSave: (colorHex) => setState(() {
+                            _customTheme.appBarColorHex = colorHex;
+                            _customTheme.tabBarColorHex = colorHex;
+                          }),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        ThemeRow(
+                          title: 'Brand Accent',
+                          description:
+                              'Brand moments, filled buttons and selection',
+                          colorHex: _customTheme.accentColorHex,
+                          onReset: () => setState(
+                            () => _customTheme.accentColorHex =
+                                _initialTheme.accentColorHex,
+                          ),
+                          onSave: (colorHex) => setState(
+                            () => _customTheme.accentColorHex = colorHex,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        ThemeRow(
+                          title: 'Controls & Links',
+                          description:
+                              'Switches, sliders, links and control states',
+                          colorHex: _customTheme.highlightColorHex,
+                          onReset: () => setState(
+                            () => _customTheme.highlightColorHex =
+                                _initialTheme.highlightColorHex,
+                          ),
+                          onSave: (colorHex) => setState(
+                            () => _customTheme.highlightColorHex = colorHex,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
@@ -296,76 +355,6 @@ class _AddEditThemeState extends State<AddEditTheme> {
                           ),
                           onSave: (colorHex) => setState(
                             () => _customTheme.dividerColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'AppBar Color',
-                          description:
-                              'The top UI element which contains the title of the current view, back navigation etc.',
-                          colorHex: _customTheme.appBarColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.appBarColorHex =
-                                _initialTheme.appBarColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.appBarColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'TabBar Color',
-                          description:
-                              'The bottom navigation bar containing the tabs for this app',
-                          colorHex: _customTheme.tabBarColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.tabBarColorHex =
-                                _initialTheme.tabBarColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.tabBarColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Highlight Color',
-                          description:
-                              'Switches, sliders, links and control states',
-                          colorHex: _customTheme.highlightColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.highlightColorHex =
-                                _initialTheme.highlightColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.highlightColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Accent Color',
-                          description:
-                              'Brand moments, filled buttons and selection',
-                          colorHex: _customTheme.accentColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.accentColorHex =
-                                _initialTheme.accentColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.accentColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Background Color',
-                          description:
-                              'Color for the typical background which behind all the UI elements',
-                          colorHex: _customTheme.backgroundColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.backgroundColorHex =
-                                _initialTheme.backgroundColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.backgroundColorHex = colorHex,
                           ),
                         ),
                       ],

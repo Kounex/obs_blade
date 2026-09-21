@@ -6,9 +6,10 @@ import '../../../../../types/extensions/string.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../color_picker/color_bubble.dart';
 
-/// Strip of [ColorBubble]s - one per color slot of the theme (8 in total,
-/// `textColorHex` stays dead). Bubbles carry a tooltip naming their slot
-/// so the order is not the only thing telling them apart.
+/// Strip of [ColorBubble]s - one per editable color slot of the theme,
+/// in the editor's order (Navigation Bars is the merged appBar/tabBar
+/// slot). Bubbles carry a tooltip naming their slot so the order is not
+/// the only thing telling them apart.
 class ThemeColorsRow extends StatelessWidget {
   final CustomTheme customTheme;
 
@@ -21,17 +22,18 @@ class ThemeColorsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    /// 20pt bubbles with 8pt gaps need 216pt for all 8 slots - fits the
-    /// text column next to the preview thumbnail in one row (24pt bubbles
-    /// with 8pt gaps needed 248pt and wrapped raggedly 7+1).
+    /// 20pt bubbles with 8pt gaps fit the text column next to the preview
+    /// thumbnail in one row (24pt bubbles with 8pt gaps needed 248pt and
+    /// wrapped raggedly).
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _bubble('Card', customTheme.cardColorHex.hexToColor()),
-        _bubble('App Bar', customTheme.appBarColorHex.hexToColor()),
-        _bubble('Tab Bar', customTheme.tabBarColorHex.hexToColor()),
-        _bubble('Background', customTheme.backgroundColorHex.hexToColor()),
+        _bubble('App Background', customTheme.backgroundColorHex.hexToColor()),
+        _bubble('Cards & Sheets', customTheme.cardColorHex.hexToColor()),
+        _bubble('Navigation Bars', customTheme.appBarColorHex.hexToColor()),
+        _bubble('Brand Accent', customTheme.accentColorHex.hexToColor()),
+        _bubble('Controls & Links', customTheme.highlightColorHex.hexToColor()),
         _bubble(
           'Card Border',
           customTheme.cardBorderColorHex?.hexToColor() ?? Colors.transparent,
@@ -41,9 +43,6 @@ class ThemeColorsRow extends StatelessWidget {
           customTheme.dividerColorHex?.hexToColor() ??
               StylingHelper.light_divider_color,
         ),
-        _bubble('Accent', customTheme.accentColorHex.hexToColor()),
-        _bubble('Highlight', customTheme.highlightColorHex.hexToColor()),
-        // _bubble('Text', customTheme.textColorHex.hexToColor()),
       ],
     );
   }
