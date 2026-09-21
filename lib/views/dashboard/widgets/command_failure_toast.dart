@@ -35,20 +35,17 @@ class _CommandFailureToastState extends State<CommandFailureToast>
 
   @override
   void initState() {
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
+    _controller = AnimationController(vsync: this, duration: AppMotion.medium);
 
     _opacity = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _controller, curve: AppMotion.standard));
 
     _offset = Tween<Offset>(
       begin: const Offset(0, -0.1),
       end: const Offset(0, 0),
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _controller, curve: AppMotion.standard));
 
     _disposers.add(
       reaction((_) => GetIt.instance<DashboardStore>().commandFailureNotice, (
@@ -90,13 +87,17 @@ class _CommandFailureToastState extends State<CommandFailureToast>
               return BaseCard(
                 paintBorder: true,
                 constrained: false,
-                borderColor: CupertinoColors.destructiveRed,
+                borderColor: Theme.of(
+                  context,
+                ).extension<AppStatusColors>()!.destructive,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       CupertinoIcons.exclamationmark_triangle_fill,
-                      color: CupertinoColors.destructiveRed,
+                      color: Theme.of(
+                        context,
+                      ).extension<AppStatusColors>()!.destructiveText,
                       size: 20.0,
                     ),
                     const SizedBox(width: AppSpacing.sm),
