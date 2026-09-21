@@ -46,11 +46,11 @@ class FullOverlayState extends State<FullOverlay>
     _blur = Tween<double>(
       begin: 0.0,
       end: 9.0,
-    ).animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+    ).animate(CurvedAnimation(curve: AppMotion.standard, parent: _controller));
     _opacity = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(curve: Curves.easeIn, parent: _controller));
+    ).animate(CurvedAnimation(curve: AppMotion.standard, parent: _controller));
     _scale = Tween<double>(
       begin: 0.96,
       end: 1.0,
@@ -80,6 +80,9 @@ class FullOverlayState extends State<FullOverlay>
       MediaQuery.sizeOf(context).width - (AppSpacing.xl * 2),
     );
 
+    /// Reduced motion: no spring scale, fade only
+    final bool reduce = AppMotion.reduce(context);
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -88,7 +91,10 @@ class FullOverlayState extends State<FullOverlay>
           child: const AbsorbPointer(),
           builder: (context, child) => FadeTransition(
             opacity: _opacity,
-            child: ColoredBox(color: Colors.black26, child: child),
+
+            /// Same scrim the sheets use
+            /// (`ModalHandler.showBaseCupertinoBottomSheet` barrierColor)
+            child: ColoredBox(color: Colors.black54, child: child),
           ),
         ),
         Center(
@@ -96,50 +102,48 @@ class FullOverlayState extends State<FullOverlay>
             animation: _controller,
             child: this.widget.content,
             builder: (context, child) {
-              return FadeTransition(
-                opacity: _opacity,
-                child: ScaleTransition(
-                  scale: _scale,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: _blur.value,
-                      sigmaY: _blur.value,
+              Widget surface = BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: _blur.value,
+                  sigmaY: _blur.value,
+                ),
+                // Fixed width + shrink-wrapped height (min 150).
+                // heightFactor/widthFactor keep Center from filling the screen.
+                child: SizedBox(
+                  width: width,
+                  child: Material(
+                    /// Near-opaque card slot (token-delta §4 toast rule) -
+                    /// the alpha keeps the animated backdrop blur visible
+                    color: Theme.of(context).cardColor.withValues(alpha: 0.87),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppRadius.md),
                     ),
-                    // Fixed width + shrink-wrapped height (min 150).
-                    // heightFactor/widthFactor keep Center from filling the screen.
-                    child: SizedBox(
-                      width: width,
-                      child: Material(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.black87
-                            : Colors.white70,
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(AppRadius.md),
+                    clipBehavior: Clip.antiAlias,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: _kMinSize),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          AppSpacing.md,
+                          AppSpacing.lg,
+                          AppSpacing.lg,
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            minHeight: _kMinSize,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.lg,
-                              AppSpacing.md,
-                              AppSpacing.lg,
-                              AppSpacing.lg,
-                            ),
-                            child: Center(
-                              widthFactor: 1.0,
-                              heightFactor: 1.0,
-                              child: child,
-                            ),
-                          ),
+                        child: Center(
+                          widthFactor: 1.0,
+                          heightFactor: 1.0,
+                          child: child,
                         ),
                       ),
                     ),
                   ),
                 ),
               );
+
+              if (!reduce) {
+                surface = ScaleTransition(scale: _scale, child: surface);
+              }
+
+              return FadeTransition(opacity: _opacity, child: surface);
             },
           ),
         ),
