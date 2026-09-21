@@ -19,9 +19,9 @@ class KeyboardNumberHeader extends StatelessWidget {
     return KeyboardActions(
       config: KeyboardActionsConfig(
         keyboardActionsPlatform: KeyboardActionsPlatform.IOS,
-        keyboardBarColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color.fromRGBO(45, 45, 45, 1.0)
-            : const Color.fromRGBO(245, 245, 245, 1.0),
+        keyboardBarColor:
+            Theme.of(context).appBarTheme.backgroundColor ??
+            Theme.of(context).cardColor,
         nextFocus: false,
         actions: [
           KeyboardActionsItem(

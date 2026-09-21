@@ -4,7 +4,6 @@ import 'package:obs_blade/shared/design/design.dart';
 
 class SelectableBox extends StatelessWidget {
   final Duration boxAnimation;
-  final Duration boxBorderAnimation;
 
   final double height;
   final double width;
@@ -26,8 +25,7 @@ class SelectableBox extends StatelessWidget {
 
   const SelectableBox({
     super.key,
-    this.boxAnimation = const Duration(milliseconds: 300),
-    this.boxBorderAnimation = const Duration(milliseconds: 50),
+    this.boxAnimation = AppMotion.medium,
     this.height = 100,
     this.width = 100,
     required this.selected,
@@ -71,7 +69,7 @@ class SelectableBox extends StatelessWidget {
                 ),
           ),
           AnimatedContainer(
-            duration: const Duration(milliseconds: 50),
+            duration: AppMotion.instant,
             height: this.height,
             width: this.width,
             decoration: BoxDecoration(

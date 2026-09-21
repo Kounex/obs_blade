@@ -4,7 +4,10 @@ import 'package:obs_blade/utils/styling_helper.dart';
 
 class TagBox extends StatelessWidget {
   final Color? color;
-  final double borderRadius;
+
+  /// Status-pill lineage (LIVE/REC chips, statistics chips) - fully
+  /// rounded by default
+  final BorderRadiusGeometry borderRadius;
   final Icon? icon;
   final String? label;
   final TextStyle? labelStyle;
@@ -20,7 +23,7 @@ class TagBox extends StatelessWidget {
   const TagBox({
     super.key,
     this.color,
-    this.borderRadius = 6.0,
+    this.borderRadius = AppRadius.pill,
     this.icon,
     this.label,
     this.labelStyle,
@@ -54,7 +57,7 @@ class TagBox extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
         color: this.color,
-        borderRadius: BorderRadius.all(Radius.circular(this.borderRadius)),
+        borderRadius: this.borderRadius,
       ),
       child: SizedBox(
         height: this.height,
@@ -66,7 +69,7 @@ class TagBox extends StatelessWidget {
               children: [
                 if (this.icon != null) ...[
                   this.icon!,
-                  const SizedBox(width: 6.0),
+                  const SizedBox(width: AppSpacing.xs),
                 ],
                 this.expand ? Expanded(child: text) : text,
               ],

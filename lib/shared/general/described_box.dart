@@ -33,7 +33,7 @@ class DescribedBox extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
-              color: this.borderColor ?? Theme.of(context).primaryColor,
+              color: this.borderColor ?? Theme.of(context).dividerColor,
             ),
           ),
           child: this.child,
@@ -46,9 +46,7 @@ class DescribedBox extends StatelessWidget {
               color: labelBackgroundColor ?? Theme.of(context).cardColor,
               child: Text(
                 this.label!,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall!.copyWith(fontSize: 10.0),
+                style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
           ),

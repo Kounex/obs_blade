@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../design/app_motion.dart';
+
 class Fader extends StatefulWidget {
   final Widget child;
   final Duration duration;
@@ -12,9 +14,9 @@ class Fader extends StatefulWidget {
   const Fader({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 200),
+    this.duration = AppMotion.fast,
     this.delay = const Duration(milliseconds: 0),
-    this.curve = Curves.linear,
+    this.curve = AppMotion.standard,
     this.showDuration,
   });
 
@@ -43,16 +45,25 @@ class _FaderState extends State<Fader> with SingleTickerProviderStateMixin {
 
     /// Timers start here (not in [build]) so rebuilds can't reschedule the
     /// animation - it plays exactly once per widget lifecycle and is
-    /// properly canceled (mounted-guarded) on dispose
+    /// properly canceled (mounted-guarded) on dispose. Reduced-motion
+    /// settings snap straight to the end state
     _forwardTimer = Timer(this.widget.delay, () {
       if (this.mounted) {
-        _controller.forward();
+        if (AppMotion.reduce(this.context)) {
+          _controller.value = 1.0;
+        } else {
+          _controller.forward();
+        }
       }
     });
     if (this.widget.showDuration != null) {
       _reverseTimer = Timer(this.widget.showDuration!, () {
         if (this.mounted) {
-          _controller.reverse();
+          if (AppMotion.reduce(this.context)) {
+            _controller.value = 0.0;
+          } else {
+            _controller.reverse();
+          }
         }
       });
     }

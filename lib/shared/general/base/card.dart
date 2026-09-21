@@ -7,8 +7,8 @@ import '../../../types/extensions/string.dart';
 import '../../../utils/styling_helper.dart';
 import 'divider.dart';
 
-const double kBaseCardMaxWidth = 640.0;
-const double kBaseCardBorderRadius = 12.0;
+const double kBaseCardMaxWidth = kBaseConstrainedMaxWidth;
+const double kBaseCardBorderRadius = AppRadius.md;
 
 /// Liquid card (token-delta §2.5): [ThemeData.cardColor] already carries
 /// the composed liquid fill (5% white/black wash over the theme's card
@@ -68,10 +68,10 @@ class BaseCard extends StatelessWidget {
     this.bottomPadding = AppSpacing.lg,
     this.leftPadding = AppSpacing.lg,
     this.titlePadding = const EdgeInsets.only(
-      left: 24.0,
-      right: 24.0,
-      top: 12.0,
-      bottom: 12.0,
+      left: AppSpacing.xl,
+      right: AppSpacing.xl,
+      top: AppSpacing.md,
+      bottom: AppSpacing.md,
     ),
     this.titleCrossAlignment = CrossAxisAlignment.center,
     this.elevation = 0,
@@ -110,17 +110,13 @@ class BaseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(kBaseCardBorderRadius),
           side: this.paintBorder
               ? BorderSide(
-                  color:
-                      this.borderColor ??
-                      (cardColor.computeLuminance() <= 0.2
-                          ? Colors.white
-                          : Colors.black),
+                  color: this.borderColor ?? Theme.of(context).dividerColor,
                 )
               : customTheme?.cardBorderColorHex != null
               ? BorderSide(
                   color: customTheme!.cardBorderColorHex!
                       .hexToColor()
-                      .withOpacity(0.6),
+                      .withValues(alpha: 0.6),
                 )
               /// Derived hairline (token-delta §2.5: 7% white over the
               /// composed card fill) so raised surfaces separate from

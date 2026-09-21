@@ -53,7 +53,7 @@ class BaseResult extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.sm,
-              14.0,
+              AppSpacing.lg,
               AppSpacing.sm,
               AppSpacing.sm,
             ),

@@ -10,7 +10,6 @@ class ColumnSeparated extends StatelessWidget {
 
   final EdgeInsets paddingSeparator;
   final EdgeInsets additionalPaddingSeparator;
-  final bool lightDivider;
 
   final Widget? customSeparator;
 
@@ -21,7 +20,6 @@ class ColumnSeparated extends StatelessWidget {
     this.useSymmetricOutsidePadding = false,
     this.paddingSeparator = const EdgeInsets.symmetric(vertical: 12.0),
     this.additionalPaddingSeparator = const EdgeInsets.all(0.0),
-    this.lightDivider = true,
     this.customSeparator,
   });
 
@@ -36,7 +34,7 @@ class ColumnSeparated extends StatelessWidget {
       itemCount: this.children.length,
       separatorBuilder: (context, index) => Padding(
         padding: this.paddingSeparator + this.additionalPaddingSeparator,
-        child: this.lightDivider ? const BaseDivider() : const BaseDivider(),
+        child: const BaseDivider(),
       ),
       itemBuilder: (context, index) => this.children.elementAt(index),
     );

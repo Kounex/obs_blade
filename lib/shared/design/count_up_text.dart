@@ -104,7 +104,12 @@ class _CountUpTextState extends State<CountUpText>
         String text = this.widget.value;
         final double? from = _from;
         final double? to = _to;
-        if (from != null && to != null && _controller.value < 1.0) {
+
+        /// Reduced-motion settings snap straight to the new value
+        if (from != null &&
+            to != null &&
+            _controller.value < 1.0 &&
+            !AppMotion.reduce(context)) {
           text = (from + (to - from) * _curved.value).toStringAsFixed(
             _fractionDigits,
           );
