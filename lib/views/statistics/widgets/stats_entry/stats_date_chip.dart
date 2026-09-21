@@ -24,9 +24,7 @@ class StatsDateChip extends StatelessWidget {
           Theme.of(context).cardColor,
           10,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(64.0),
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.pill),
         side: BorderSide.none,
         visualDensity: VisualDensity.compact,
         label: Row(
@@ -34,8 +32,8 @@ class StatsDateChip extends StatelessWidget {
             SizedBox(
               height: 32.0,
               child: Chip(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(64.0),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.pill,
                 ),
                 side: BorderSide.none,
                 padding: const EdgeInsets.all(0),

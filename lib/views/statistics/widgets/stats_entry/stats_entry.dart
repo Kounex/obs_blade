@@ -26,15 +26,17 @@ class StatsEntry extends StatelessWidget {
         this.pastStatsData.starred != null && this.pastStatsData.starred!;
 
     Widget entry = Padding(
-      padding: EdgeInsets.symmetric(vertical: !this.usedInDetail ? 8.0 : 0),
+      padding: EdgeInsets.symmetric(
+        vertical: !this.usedInDetail ? AppSpacing.sm : 0,
+      ),
       child: Stack(
         children: [
           Positioned(
-            top: 4,
-            right: 12,
+            top: AppSpacing.xs,
+            right: AppSpacing.md,
             child: AnimatedSwitcher(
               duration: AppMotion.medium,
-              switchInCurve: AppMotion.spring,
+              switchInCurve: AppMotion.standard,
               switchOutCurve: AppMotion.exit,
               transitionBuilder: (child, animation) => FadeTransition(
                 opacity: animation,
@@ -57,15 +59,14 @@ class StatsEntry extends StatelessWidget {
               Expanded(
                 child: ListTile(
                   title: Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           this.pastStatsData.name ?? 'Unnamed entry',
-                          style: Theme.of(context).textTheme.labelLarge!
+                          style: Theme.of(context).textTheme.headlineSmall!
                               .copyWith(
-                                fontSize: 18.0,
                                 color: this.pastStatsData.name == null
                                     ? Theme.of(context)
                                           .extension<AppTextColors>()!
@@ -76,7 +77,7 @@ class StatsEntry extends StatelessWidget {
                           softWrap: true,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8.0),
+                        const SizedBox(height: AppSpacing.sm),
                         Padding(
                           padding: const EdgeInsets.only(left: 0.0),
                           child: Builder(
@@ -138,7 +139,7 @@ class StatsEntry extends StatelessWidget {
                     ),
                   ),
                   subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -150,7 +151,7 @@ class StatsEntry extends StatelessWidget {
                                 '${(this.pastStatsData.listEntryDateMS.last - this.pastStatsData.totalTime! * 1000).millisecondsToFormattedDateString()} - ${(this.pastStatsData.listEntryDateMS.last - this.pastStatsData.totalTime! * 1000).millisecondsToFormattedTimeString()}',
                           ),
                         ),
-                        const SizedBox(height: 12.0),
+                        const SizedBox(height: AppSpacing.md),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 250.0),
                           child: StatsDateChip(
@@ -166,7 +167,7 @@ class StatsEntry extends StatelessWidget {
               ),
               !this.usedInDetail
                   ? Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
                       child: Icon(
                         Icons.chevron_right,
                         color: Theme.of(
