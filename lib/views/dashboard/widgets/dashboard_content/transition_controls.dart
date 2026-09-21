@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/general/base/dropdown.dart';
 import 'package:obs_blade/shared/general/cupertino_number_text_field.dart';
 
 import '../../../../../stores/views/dashboard.dart';
@@ -44,21 +45,18 @@ class TransitionControls extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              DropdownButton<String?>(
+              BaseDropdown<String>(
                 value: dashboardStore.currentTransition?.transitionName,
-                disabledHint: const Text('Empty...'),
-                isDense: true,
-                items: dashboardStore.availableTransitions
-                    ?.map(
-                      (transition) => DropdownMenuItem<String>(
-                        value: transition.transitionName,
-                        child: Text(
-                          transition.transitionName,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
+                items:
+                    dashboardStore.availableTransitions
+                        ?.map(
+                          (transition) => BaseDropdownItem(
+                            value: transition.transitionName,
+                            text: transition.transitionName,
+                          ),
+                        )
+                        .toList() ??
+                    [],
                 onChanged: (selectedTransition) => dashboardStore.sendMutation(
                   RequestType.SetCurrentSceneTransition,
                   fields: {'transitionName': selectedTransition},
