@@ -37,7 +37,7 @@ class DataEntry extends StatelessWidget {
       trailing: BaseButton(
         text: 'Clear',
         secondary: !this.danger,
-        color: Theme.of(context).extension<AppStatusColors>()!.recording,
+        color: Theme.of(context).extension<AppStatusColors>()!.destructive,
         onPressed: () => ModalHandler.showBaseDialog(
           context: context,
           dialogWidget: ConfirmationDialog(
