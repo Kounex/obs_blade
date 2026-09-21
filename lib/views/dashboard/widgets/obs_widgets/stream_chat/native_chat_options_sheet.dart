@@ -260,9 +260,9 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
         if (!store.canModerateSelectedChannel) {
           return const SizedBox.shrink();
         }
-        final scheme = Theme.of(context).colorScheme;
-        final tint = scheme.secondary.withValues(alpha: 0.14);
-        final border = scheme.secondary.withValues(alpha: 0.45);
+        final textColors =
+            Theme.of(context).extension<AppTextColors>() ??
+            AppTextColors.standard;
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: Pressable(
@@ -272,9 +272,14 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: tint,
+                color: StylingHelper.lightenDarkenColor(
+                  Theme.of(context).cardColor,
+                ),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: border),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+                  width: 0.0,
+                ),
               ),
               child: Row(
                 children: [
@@ -283,13 +288,15 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                     height: 36.0,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: scheme.secondary.withValues(alpha: 0.22),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.07),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Icon(
                       CupertinoIcons.shield,
                       size: 18.0,
-                      color: scheme.secondary,
+                      color: textColors.textTertiary,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -302,7 +309,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 2.0),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           'Clear · modes · Shield · announce',
                           style: Theme.of(context).textTheme.bodySmall,
@@ -330,8 +337,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    return Pressable(
-      haptic: true,
+    return PressFlash(
       onTap: onTap,
       child: ListTile(
         contentPadding: EdgeInsets.zero,
@@ -365,6 +371,8 @@ class _PageScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColors =
+        Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,9 +382,17 @@ class _PageScaffold extends StatelessWidget {
             Pressable(
               haptic: true,
               onTap: this.onBack,
-              child: const Padding(
-                padding: EdgeInsets.only(right: AppSpacing.sm),
-                child: Icon(CupertinoIcons.chevron_back, size: 20.0),
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  right: AppSpacing.sm,
+                  top: AppSpacing.md,
+                  bottom: AppSpacing.md,
+                ),
+                child: Icon(
+                  CupertinoIcons.chevron_back,
+                  size: 20.0,
+                  color: textColors.highlightText,
+                ),
               ),
             ),
             Expanded(
@@ -394,12 +410,12 @@ class _PageScaffold extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.xs,
-                      vertical: AppSpacing.xs,
+                      vertical: AppSpacing.md,
                     ),
                     child: Text(
                       'Reset',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: textColors.highlightText,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -527,9 +543,8 @@ class _AppearancePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColors =
-        Theme.of(context).extension<AppStatusColors>() ??
-        AppStatusColors.standard;
+    final textColors =
+        Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
     return Container(
       key: const Key('appearance-preview'),
       width: double.infinity,
@@ -554,7 +569,7 @@ class _AppearancePreview extends StatelessWidget {
                 text: 'Streamer',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: textColors.highlightText,
                 ),
               ),
               const TextSpan(text: ': Nice stream '),
@@ -565,7 +580,9 @@ class _AppearancePreview extends StatelessWidget {
                   width: this.emoteSize,
                   height: this.emoteSize,
                   decoration: BoxDecoration(
-                    color: statusColors.live.withValues(alpha: 0.35),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.55),
                     borderRadius: BorderRadius.circular(AppRadius.sm / 2),
                   ),
                 ),
@@ -595,8 +612,8 @@ class _AppearanceSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final track = scheme.onSurface.withValues(alpha: 0.22);
+    final textColors =
+        Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -612,26 +629,19 @@ class _AppearanceSlider extends StatelessWidget {
               this.value.round().toString(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: scheme.primary,
+                color: textColors.highlightText,
               ),
             ),
           ],
         ),
+
+        /// The global slider grammar (neutral knob, 55% highlight track)
+        /// comes from the theme — only the slimmer track and the
+        /// suppressed value bubble are local.
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 3.0,
-            activeTrackColor: scheme.primary,
-            inactiveTrackColor: track,
-            thumbColor: scheme.primary,
-            overlayColor: scheme.primary.withValues(alpha: 0.12),
-            valueIndicatorColor: scheme.primary,
             showValueIndicator: ShowValueIndicator.never,
-            thumbShape: const RoundSliderThumbShape(
-              enabledThumbRadius: 8.0,
-              elevation: 1.0,
-            ),
-            trackShape: const RoundedRectSliderTrackShape(),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
           ),
           child: Slider(
             value: this.value.clamp(this.min, this.max),
@@ -794,19 +804,21 @@ class _DebugSamplesPage extends StatelessWidget {
       children: [
         for (var i = 0; i < samples.length; i++) ...[
           if (i > 0) nativeChatHairline(context),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(samples[i].label),
-            subtitle: Text(
-              samples[i].description,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+          PressFlash(
             onTap: () {
               GetIt.instance<TwitchChatStore>().debugInjectMessage(
                 samples[i].event,
               );
               Navigator.of(context).pop();
             },
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(samples[i].label),
+              subtitle: Text(
+                samples[i].description,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
           ),
         ],
       ],
