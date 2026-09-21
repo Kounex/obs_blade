@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
@@ -185,7 +186,13 @@ class _DashboardViewState extends State<DashboardView> {
             ),
           ),
           Positioned(
-            top: kToolbarHeight + MediaQuery.paddingOf(context).top,
+            /// Anchored below the status app bar's full occupied height
+            /// (55pt bar + LIVE/REC status cluster + safe-area top) so the
+            /// toasts never cover the pills row
+            top:
+                MediaQuery.paddingOf(context).top +
+                GlassBar.minContentHeight +
+                kStatusClusterHeight,
             child: Align(
               alignment: Alignment.center,
               child: FittedBox(
@@ -194,7 +201,7 @@ class _DashboardViewState extends State<DashboardView> {
                   mainAxisSize: MainAxisSize.min,
                   children: const [
                     ReconnectToast(),
-                    SizedBox(height: 8.0),
+                    SizedBox(height: AppSpacing.sm),
                     CommandFailureToast(),
                   ],
                 ),
