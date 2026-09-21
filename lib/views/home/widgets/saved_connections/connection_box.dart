@@ -147,7 +147,7 @@ class ConnectionBox extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: Text(
@@ -167,32 +167,40 @@ class ConnectionBox extends StatelessWidget {
                     ),
 
                     /// Ellipsis menu (Edit / Delete) via the app's adaptive
-                    /// action-sheet idiom - replaces the pencil glyph. The
-                    /// 20px glyph rides [BaseIconButton]'s transparent 44pt
-                    /// hit floor (an app-bar IconButton's chrome landed the
-                    /// glyph off-line)
-                    BaseIconButton(
-                      icon: CupertinoIcons.ellipsis,
-                      iconSize: 20.0,
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.color,
-                      onTap: () => AppBarActions.showActions(
-                        context,
-                        actions: [
-                          AppBarActionEntry(
-                            title: 'Edit',
-                            leadingIcon: CupertinoIcons.pencil,
-                            onAction: () => this._edit(context),
+                    /// action-sheet idiom. The OverflowBox keeps the
+                    /// transparent 44pt hit floor without letting it
+                    /// inflate the row - title, pill and glyph share one
+                    /// optical centerline
+                    SizedBox(
+                      height: 28.0,
+                      width: kBaseIconButtonMinHitArea,
+                      child: OverflowBox(
+                        minHeight: kBaseIconButtonMinHitArea,
+                        maxHeight: kBaseIconButtonMinHitArea,
+                        child: BaseIconButton(
+                          icon: CupertinoIcons.ellipsis,
+                          iconSize: 20.0,
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.color,
+                          onTap: () => AppBarActions.showActions(
+                            context,
+                            actions: [
+                              AppBarActionEntry(
+                                title: 'Edit',
+                                leadingIcon: CupertinoIcons.pencil,
+                                onAction: () => this._edit(context),
+                              ),
+                              AppBarActionEntry(
+                                title: 'Delete',
+                                leadingIcon: CupertinoIcons.trash,
+                                isDestructive: true,
+                                onAction: () => this._delete(context),
+                              ),
+                            ],
                           ),
-                          AppBarActionEntry(
-                            title: 'Delete',
-                            leadingIcon: CupertinoIcons.trash,
-                            isDestructive: true,
-                            onAction: () => this._delete(context),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
@@ -323,7 +331,6 @@ class _ReachabilityPill extends StatelessWidget {
       builder: (context, fillColor, child) {
         final Color fill = fillColor ?? this.fillColor;
         return Container(
-          margin: const EdgeInsets.only(top: AppSpacing.xs),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.sm,
             vertical: AppSpacing.xs,
