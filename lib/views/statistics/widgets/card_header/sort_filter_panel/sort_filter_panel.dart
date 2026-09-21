@@ -28,7 +28,7 @@ class SortFilterPanel extends StatelessWidget {
         CustomExpansionTile(
           headerText: 'Sort and filter panel',
           trailing: const Padding(
-            padding: EdgeInsets.only(right: 12.0),
+            padding: EdgeInsets.only(right: AppSpacing.md),
             child: FilterStatus(),
           ),
           headerPadding: const EdgeInsets.all(AppSpacing.md),
@@ -94,6 +94,7 @@ class SortFilterPanel extends StatelessWidget {
                             const Expanded(child: ExcludeUnnamedCheckbox()),
                             BaseButton(
                               text: 'Default',
+                              secondary: true,
                               onPressed: () => GetIt.instance<StatisticsStore>()
                                   .setDefaults(),
                             ),
