@@ -124,8 +124,11 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
           hiddenSceneItem = null;
         }
 
+        /// Hidden state is neutral (red stays exclusive to recording /
+        /// program); the "mark visible" affordance keeps the highlight
+        /// control color
         final Color actionColor = hiddenSceneItem != null
-            ? Theme.of(context).extension<AppStatusColors>()!.recording
+            ? Theme.of(context).extension<AppTextColors>()!.textTertiary
             : Theme.of(context).colorScheme.secondary;
 
         return Observer(
