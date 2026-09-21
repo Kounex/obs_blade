@@ -12,8 +12,27 @@ each platform’s own chat page / embed:
 
 | Platform | URL loaded | Official? |
 |---|---|---|
-| Twitch | `https://www.twitch.tv/popout/{username}/chat` | Unofficial embed (Twitch may change DOM / login / cookies) |
-| YouTube | `https://www.youtube.com/live_chat?v={id}` | Unofficial embed of live chat UI |
+| Twitch | `https://www.twitch.tv/popout/{username}/chat?darkpopout` | Unofficial embed (Twitch may change DOM / login / cookies) |
+| YouTube | `https://www.youtube.com/live_chat?is_popout=1&v={id}&embed_domain=localhost` | Unofficial embed of live chat UI |
+
+2026-09-22 hardening pass (live-probed from an EU IP, mobile-Safari UA — all
+variants serve the chat bootstrap HTTP 200 today):
+
+- **YouTube URL switched to the popout form** (`is_popout=1` + `embed_domain`).
+  The bare `live_chat?v=` worked top-level by luck; Google's docs say chat
+  embedding is desktop-web-only and requires a matching `embed_domain`. Loaded
+  top-level in a WebView there is no parent frame, so the value is
+  unverifiable — `localhost` is the conventional placeholder. If YouTube ever
+  enforces the check on top-level loads, this form survives.
+- **Twitch gains `?darkpopout`** — Twitch's own dark-theme variant; the bare
+  popout rendered light inside the dark app.
+- **Per-video entries stay** (new stream = new video id = re-edit). The
+  alternative — storing a channel `@handle` and auto-resolving the current
+  live video via `/@handle/live` — was probed and rejected: mobile UAs land
+  on the channel page without resolving, and EU IPs bounce through a
+  `consent.youtube.com` redirect that breaks the chain without cookie state.
+  Reliable handle→live resolution needs the Data API key, i.e. the native
+  engine's territory.
 | Owncast | `{server}/embed/chat/readwrite` | **Official** Owncast embed |
 
 Extra “hack” layers:

@@ -209,7 +209,9 @@ class _StreamChatState extends State<StreamChat>
   String _urlForChatType(ChatType chatType, Box<dynamic> settingsBox) {
     if (chatType == ChatType.Twitch &&
         (settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)) != null) {
-      return 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat';
+      /// darkpopout: Twitch's own dark-theme variant of the popout chat -
+      /// without it the embed renders light inside the dark app
+      return 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat?darkpopout';
     }
     if (chatType == ChatType.YouTube &&
         (settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)) != null) {
@@ -218,7 +220,12 @@ class _StreamChatState extends State<StreamChat>
       )[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)];
       final videoId = extractYouTubeVideoId(stored is String ? stored : null);
       if (videoId == null) return 'about:blank';
-      return 'https://www.youtube.com/live_chat?v=$videoId';
+
+      /// YouTube's own popout-chat form: chat-only chrome, and carrying
+      /// embed_domain keeps the embed check satisfied if YouTube ever
+      /// enforces it on top-level WebView loads (docs require it for
+      /// iframe embeds; the value is unverifiable without a parent frame)
+      return 'https://www.youtube.com/live_chat?is_popout=1&v=$videoId&embed_domain=localhost';
     }
     if (chatType == ChatType.Owncast &&
         (settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)) != null) {

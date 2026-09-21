@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-22 — WebView chat URL hardening (Twitch darkpopout, YouTube popout form)
+
+Audit of the legacy WebView chat path (verdict + probes in
+`chat-webview-audit.md`): it still works today (live-probed, EU IP), but the
+YouTube URL rode the bare embed form without `embed_domain` — Google's docs
+require one and call mobile-web embedding unsupported, so an enforcement flip
+would break every user at once. User-ratified fixes:
+
+- **YouTube** WebView URL → YouTube's own popout form
+  `live_chat?is_popout=1&v={id}&embed_domain=localhost` (chat-only chrome;
+  `embed_domain` present but unverifiable without a parent frame).
+- **Twitch** popout URL gains `?darkpopout` — the bare popout rendered as a
+  white card inside the dark app.
+- **Per-video YouTube entries stay** (ratified): `@handle/live` auto-resolution
+  probed and rejected — mobile UAs don't resolve, EU consent redirects break
+  the chain without cookies; reliable resolution = native engine's API-key
+  territory. Dialog copy now says any watch/live/share/pop-out link works.
+
 ## 2026-09-22 — `4.0-liquid-glass` merged into `master` (branch closed)
 
 User dogfood-approved the 4.0 UI rework ("happy with the ui rework") →

@@ -114,7 +114,7 @@ class _AddEditYouTubeUsernameDialogState
           ),
           const SizedBox(height: 8.0),
           const Text(
-            'For YouTube, provide the livestream video ID or a full watch / live / live_chat link. Example ID:\n\nm-i_0DcfF1s',
+            'Paste the video ID or any stream link - watch, live, share or pop-out chat links all work. Example ID:\n\nm-i_0DcfF1s',
           ),
           const SizedBox(height: 12.0),
           BaseAdaptiveTextField(
