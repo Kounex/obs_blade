@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 
+import '../../../../../shared/general/base/icon_button.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
@@ -278,20 +279,10 @@ class _ScenePreviewFullscreen extends StatelessWidget {
           Positioned(
             top: 12.0 + MediaQuery.paddingOf(context).top,
             right: 12.0 + MediaQuery.paddingOf(context).right,
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  CupertinoIcons.clear,
-                  color: Colors.white,
-                  size: 20.0,
-                ),
-              ),
+            child: BaseIconButton(
+              backgroundColor: Colors.transparent,
+              onTap: () => Navigator.of(context).pop(),
+              icon: CupertinoIcons.clear,
             ),
           ),
         ],
