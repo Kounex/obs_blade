@@ -162,6 +162,7 @@ class ConnectionBox extends StatelessWidget {
                       labelColor: reachabilityLabelColor,
                       fillColor: reachabilityFillColor,
                       label: reachabilityLabel,
+                      pulsing: this.connection.reachable == null,
                     ),
 
                     /// Ellipsis menu (Edit / Delete) via the app's adaptive
@@ -306,11 +307,16 @@ class _ReachabilityPill extends StatelessWidget {
   final Color fillColor;
   final String label;
 
+  /// The dot pulses only while the reachability check is in flight -
+  /// settled Online/Offline states render the static dot
+  final bool pulsing;
+
   const _ReachabilityPill({
     required this.dotColor,
     required this.labelColor,
     required this.fillColor,
     required this.label,
+    required this.pulsing,
   });
 
   @override
@@ -331,7 +337,7 @@ class _ReachabilityPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              StatusDot(size: 6.0, color: this.dotColor),
+              StatusDot(size: 6.0, color: this.dotColor, pulsing: this.pulsing),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 this.label,

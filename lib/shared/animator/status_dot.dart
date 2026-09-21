@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../design/app_motion.dart';
+
 class StatusDot extends StatefulWidget {
   final double size;
   final double horizontalSpacing;
@@ -9,6 +11,11 @@ class StatusDot extends StatefulWidget {
   final String? text;
   final Axis direction;
   final TextStyle? style;
+
+  /// Whether the dot runs its ambient pulse loop ([AppMotion.ambient]) -
+  /// false renders the static dot (e.g. settled Online/Offline states).
+  /// Reduced-motion settings always render the static dot
+  final bool pulsing;
 
   const StatusDot({
     super.key,
@@ -19,6 +26,7 @@ class StatusDot extends StatefulWidget {
     this.text,
     this.direction = Axis.horizontal,
     this.style,
+    this.pulsing = true,
   });
 
   @override
@@ -34,10 +42,7 @@ class _StatusDotState extends State<StatusDot>
 
   @override
   void initState() {
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 4000),
-      vsync: this,
-    );
+    _controller = AnimationController(duration: AppMotion.ambient, vsync: this);
 
     _opacity = Tween<double>(begin: 0.5, end: 0.0).animate(
       CurvedAnimation(
@@ -53,9 +58,34 @@ class _StatusDotState extends State<StatusDot>
       ),
     );
 
-    _controller.repeat();
-
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncPulse();
+  }
+
+  @override
+  void didUpdateWidget(StatusDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pulsing != this.widget.pulsing) {
+      _syncPulse();
+    }
+  }
+
+  bool get _pulsing => this.widget.pulsing && !AppMotion.reduce(this.context);
+
+  void _syncPulse() {
+    if (_pulsing) {
+      if (!_controller.isAnimating) _controller.repeat();
+    } else {
+      _controller.stop();
+
+      /// Parked at the loop end so the halo sits at opacity 0 (scale 2.0)
+      _controller.value = 1.0;
+    }
   }
 
   @override
@@ -78,13 +108,14 @@ class _StatusDotState extends State<StatusDot>
     List<Widget> children = [
       Stack(
         children: [
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) => ScaleTransition(
-              scale: _scale,
-              child: FadeTransition(opacity: _opacity, child: dot),
+          if (_pulsing)
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) => ScaleTransition(
+                scale: _scale,
+                child: FadeTransition(opacity: _opacity, child: dot),
+              ),
             ),
-          ),
           dot,
         ],
       ),
