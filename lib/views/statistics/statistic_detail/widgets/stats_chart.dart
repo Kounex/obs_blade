@@ -61,6 +61,8 @@ class _StatsChartState extends State<StatsChart>
   late final AnimationController _drawController;
   late final Animation<double> _draw;
 
+  bool _started = false;
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +74,19 @@ class _StatsChartState extends State<StatsChart>
       parent: _drawController,
       curve: AppMotion.emphasized,
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    /// Reduced motion: suppress the draw-in, render the final frame
+    if (AppMotion.reduce(context)) {
+      _drawController.value = 1.0;
+      return;
+    }
     _drawController.forward();
   }
 
@@ -193,6 +208,32 @@ class _StatsChartState extends State<StatsChart>
                     ),
                   ),
                   lineTouchData: LineTouchData(
+                    /// Scrub guide: 1px hairline (divider language, same
+                    /// strength as the tooltip border) + a solid metric dot
+                    /// punched off the line by a surface ring - replaces the
+                    /// stock 4px/10px fuzzy indicator
+                    getTouchedSpotIndicator: (barData, spotIndexes) =>
+                        spotIndexes
+                            .map(
+                              (index) => TouchedSpotIndicatorData(
+                                FlLine(
+                                  color: dividerColor.withValues(alpha: 0.4),
+                                  strokeWidth: 1,
+                                ),
+                                FlDotData(
+                                  getDotPainter: (spot, percent, bar, index) =>
+                                      FlDotCirclePainter(
+                                        radius: 4,
+                                        color: this.widget.chartColor,
+                                        strokeWidth: 2,
+                                        strokeColor: Theme.of(
+                                          context,
+                                        ).cardColor,
+                                      ),
+                                ),
+                              ),
+                            )
+                            .toList(),
                     touchTooltipData: LineTouchTooltipData(
                       getTooltipColor: (touchedSpot) =>
                           Theme.of(context).cardColor,
