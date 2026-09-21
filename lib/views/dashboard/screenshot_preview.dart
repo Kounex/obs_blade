@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 
@@ -39,7 +40,7 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
       fit: StackFit.expand,
       children: [
         Positioned(
-          top: MediaQuery.paddingOf(context).top + 24,
+          top: MediaQuery.paddingOf(context).top + AppSpacing.xl,
           left: 0,
           right: 0,
           child: Text(
@@ -49,35 +50,41 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
           ),
         ),
         Positioned(
-          bottom: MediaQuery.paddingOf(context).bottom + 24,
-          left: 24.0,
-          right: 24.0,
+          bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
+          left: AppSpacing.xl,
+          right: AppSpacing.xl,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const BaseDivider(),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: AppSpacing.md),
               const Text(
                 'Screenshot has been saved on your device running OBS.',
               ),
-              const SizedBox(height: 12.0),
+              const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
-                  const SizedBox(width: 52.0, child: Text('Path:')),
+                  const SizedBox(
+                    width: AppSpacing.xl * 2,
+                    child: Text('Path:'),
+                  ),
                   Text(
                     GetIt.instance<DashboardStore>().recordDirectory!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
               ),
               Row(
                 children: [
-                  const SizedBox(width: 52.0, child: Text('Name:')),
+                  const SizedBox(
+                    width: AppSpacing.xl * 2,
+                    child: Text('Name:'),
+                  ),
                   Text(
                     this.widget.screenshotPath.split('/').removeLast(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
               ),
@@ -87,7 +94,6 @@ class _ScreenshotPreviewState extends State<ScreenshotPreview> {
         InteractiveViewer(
           // clipBehavior: Clip.none,
           // boundaryMargin: const EdgeInsets.all(double.infinity),
-
           child: Image.memory(
             this.widget.screenshot,
             // fit: BoxFit.contain,
