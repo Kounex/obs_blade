@@ -152,9 +152,7 @@ class _ConnectFormState extends State<ConnectForm> {
                     focusNode: _portFocusNode,
                     readOnly: !this.widget.manual,
                     enabled: this.widget.manual,
-                    style: const TextStyle(
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
+                    style: const TextStyle(fontFeatures: kTabularFigures),
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -230,38 +228,29 @@ class _ConnectFormState extends State<ConnectForm> {
                         final bool connecting =
                             networkStore.connectionInProgress;
 
-                        /// Physical press feedback (ripples are disabled
-                        /// app-wide); the button keeps owning the tap so
-                        /// [Pressable.onTap] never double-fires. The child
-                        /// morphs to an in-button progress state (visual
-                        /// only - driven by [NetworkStore.connectionInProgress])
-                        return Pressable(
-                          onTap: _connect,
-                          child: BaseButton(
-                            onPressed: _connect,
-                            child: AnimatedSwitcher(
-                              duration: AppMotion.fast,
-                              child: connecting
-                                  ? SizedBox(
-                                      key: const ValueKey('connecting'),
-                                      width: 20.0,
-                                      height: 20.0,
-                                      child: CupertinoActivityIndicator(
-                                        color:
-                                            StylingHelper.surroundingAwareAccent(
-                                              surroundingColor:
-                                                  Theme.of(context)
-                                                      .buttonTheme
-                                                      .colorScheme!
-                                                      .secondary,
-                                            ),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Connect',
-                                      key: ValueKey('idle'),
+                        /// In-button progress state (visual only - driven by
+                        /// [NetworkStore.connectionInProgress]); the button
+                        /// disables like the saved-card Connect does
+                        return BaseButton(
+                          onPressed: connecting ? null : _connect,
+                          child: AnimatedSwitcher(
+                            duration: AppMotion.fast,
+                            child: connecting
+                                ? SizedBox(
+                                    key: const ValueKey('connecting'),
+                                    width: 20.0,
+                                    height: 20.0,
+                                    child: CupertinoActivityIndicator(
+                                      color:
+                                          StylingHelper.surroundingAwareAccent(
+                                            surroundingColor: Theme.of(context)
+                                                .buttonTheme
+                                                .colorScheme!
+                                                .secondary,
+                                          ),
                                     ),
-                            ),
+                                  )
+                                : const Text('Connect', key: ValueKey('idle')),
                           ),
                         );
                       },

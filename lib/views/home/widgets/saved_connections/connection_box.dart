@@ -13,6 +13,7 @@ import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/card.dart';
+import '../../../../shared/general/base/icon_button.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/relative_time.dart';
@@ -166,42 +167,32 @@ class ConnectionBox extends StatelessWidget {
                     ),
 
                     /// Ellipsis menu (Edit / Delete) via the app's adaptive
-                    /// action-sheet idiom - replaces the pencil glyph. Slim
-                    /// trigger vertically centered on the reachability pill
-                    /// (same top margin, same height band) - an app-bar
-                    /// IconButton's chrome landed the glyph off-line
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: Pressable(
-                        onTap: () => AppBarActions.showActions(
-                          context,
-                          actions: [
-                            AppBarActionEntry(
-                              title: 'Edit',
-                              leadingIcon: CupertinoIcons.pencil,
-                              onAction: () => this._edit(context),
-                            ),
-                            AppBarActionEntry(
-                              title: 'Delete',
-                              leadingIcon: CupertinoIcons.trash,
-                              isDestructive: true,
-                              onAction: () => this._delete(context),
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          height: 26.0,
-                          constraints: const BoxConstraints(minWidth: 40.0),
-                          alignment: Alignment.center,
-
-                          /// Transparent fill so the full box stays hittable
-                          color: Colors.transparent,
-                          child: Icon(
-                            CupertinoIcons.ellipsis,
-                            size: 20.0,
-                            color: Theme.of(context).textTheme.bodySmall?.color,
+                    /// action-sheet idiom - replaces the pencil glyph. The
+                    /// 20px glyph rides [BaseIconButton]'s transparent 44pt
+                    /// hit floor (an app-bar IconButton's chrome landed the
+                    /// glyph off-line)
+                    BaseIconButton(
+                      icon: CupertinoIcons.ellipsis,
+                      iconSize: 20.0,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.color,
+                      onTap: () => AppBarActions.showActions(
+                        context,
+                        actions: [
+                          AppBarActionEntry(
+                            title: 'Edit',
+                            leadingIcon: CupertinoIcons.pencil,
+                            onAction: () => this._edit(context),
                           ),
-                        ),
+                          AppBarActionEntry(
+                            title: 'Delete',
+                            leadingIcon: CupertinoIcons.trash,
+                            isDestructive: true,
+                            onAction: () => this._delete(context),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -234,11 +225,7 @@ class ConnectionBox extends StatelessWidget {
                               child: Text(
                                 this._endpoint,
                                 style: Theme.of(context).textTheme.bodySmall!
-                                    .copyWith(
-                                      fontFeatures: const [
-                                        FontFeature.tabularFigures(),
-                                      ],
-                                    ),
+                                    .copyWith(fontFeatures: kTabularFigures),
                               ),
                             ),
                           ],
@@ -264,30 +251,38 @@ class ConnectionBox extends StatelessWidget {
                     /// directive 2026-09-20): online cards get the filled
                     /// accent CTA, checking/offline keep the ghost.
                     /// Supersedes the v12 note that demoted all saved-card
-                    /// buttons to ghosts.
-                    return BaseButton(
-                      secondary: this.connection.reachable != true,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      onPressed: connecting
-                          ? null
-                          : () => this._connect(context),
-                      child: AnimatedSwitcher(
-                        duration: AppMotion.fast,
-                        child: connecting
-                            ? SizedBox(
-                                key: const ValueKey('connecting'),
-                                width: 20.0,
-                                height: 20.0,
-                                child: CupertinoActivityIndicator(
-                                  color: Theme.of(
-                                    context,
-                                  ).extension<AppTextColors>()!.accentText,
-                                ),
-                              )
-                            : const Text(key: ValueKey('idle'), 'Connect'),
+                    /// buttons to ghosts. The ghost <-> filled swap
+                    /// crossfades so a card coming online morphs instead
+                    /// of snapping
+                    return AnimatedSwitcher(
+                      duration: AppMotion.medium,
+                      switchInCurve: AppMotion.emphasized,
+                      switchOutCurve: AppMotion.emphasized,
+                      child: BaseButton(
+                        key: ValueKey(this.connection.reachable == true),
+                        secondary: this.connection.reachable != true,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        onPressed: connecting
+                            ? null
+                            : () => this._connect(context),
+                        child: AnimatedSwitcher(
+                          duration: AppMotion.fast,
+                          child: connecting
+                              ? SizedBox(
+                                  key: const ValueKey('connecting'),
+                                  width: 20.0,
+                                  height: 20.0,
+                                  child: CupertinoActivityIndicator(
+                                    color: Theme.of(
+                                      context,
+                                    ).extension<AppTextColors>()!.accentText,
+                                  ),
+                                )
+                              : const Text(key: ValueKey('idle'), 'Connect'),
+                        ),
                       ),
                     );
                   },
@@ -339,11 +334,20 @@ class _ReachabilityPill extends StatelessWidget {
             children: [
               StatusDot(size: 6.0, color: this.dotColor, pulsing: this.pulsing),
               const SizedBox(width: AppSpacing.xs),
-              Text(
-                this.label,
-                style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                  color: this.labelColor,
-                  fontWeight: FontWeight.w600,
+
+              /// Label morph (medium/emphasized crossfade) - a card coming
+              /// online reads as a transition, not a snap
+              AnimatedSwitcher(
+                duration: AppMotion.medium,
+                switchInCurve: AppMotion.emphasized,
+                switchOutCurve: AppMotion.emphasized,
+                child: Text(
+                  this.label,
+                  key: ValueKey(this.label),
+                  style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                    color: this.labelColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
