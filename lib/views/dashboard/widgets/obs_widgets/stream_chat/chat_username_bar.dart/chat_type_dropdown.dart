@@ -61,7 +61,14 @@ class ChatTypeDropdown extends StatelessWidget {
                             if (chatType == ChatType.YouTube)
                               Text(
                                 '\u1d47\u1d49\u1d57\u1d43',
-                                style: TextStyle(color: Colors.grey[500]),
+                                style: TextStyle(
+                                  color:
+                                      (Theme.of(
+                                                context,
+                                              ).extension<AppTextColors>() ??
+                                              AppTextColors.standard)
+                                          .textTertiary,
+                                ),
                               ),
                           ],
                         ),

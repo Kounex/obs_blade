@@ -77,14 +77,11 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
     required String label,
     String? subtitle,
     required VoidCallback onTap,
-    bool destructive = false,
   }) {
-    final Color color = destructive
-        ? (Theme.of(context).extension<AppStatusColors>() ??
-                  AppStatusColors.standard)
-              .unreachable
-        : Theme.of(context).textTheme.bodyMedium?.color ??
-              CupertinoColors.label;
+    final Color color =
+        Theme.of(context).textTheme.bodyMedium?.color ??
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .textPrimary;
     return Pressable(
       haptic: true,
       onTap: onTap,
@@ -102,6 +99,50 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
             ? null
             : Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16.0),
+      ),
+    );
+  }
+
+  /// Contained destructive action in the connection sheet's "Log out"
+  /// idiom (`native_chat_window.dart`) — lightened card fill + hairline.
+  Widget _destructiveActionRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final Color color =
+        (Theme.of(context).extension<AppStatusColors>() ??
+                AppStatusColors.standard)
+            .destructive;
+    return Pressable(
+      haptic: true,
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(
+          minHeight: kMinInteractiveDimensionCupertino,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: StylingHelper.lightenDarkenColor(Theme.of(context).cardColor),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+            width: 0.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18.0, color: color),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -130,25 +171,30 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
               final store = GetIt.instance<YouTubeChatStore>();
               switch (store.authState) {
                 case YouTubeAuthState.signedIn:
-                  return this._navRow(
-                    context,
-                    icon: CupertinoIcons.square_arrow_right,
-                    label: 'Sign out ${store.selfChannelTitle ?? 'YouTube'}',
-                    destructive: true,
-                    onTap: () => this._popThen(
-                      context,
-                      () => ModalHandler.showBaseDialog(
-                        context: this.hostContext,
-                        dialogWidget: ConfirmationDialog(
-                          title: 'Disconnect YouTube?',
-                          body:
-                              'Connected as ${store.selfChannelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
-                          okText: 'Disconnect',
-                          isYesDestructive: true,
-                          onOk: (_) => store.logout(),
+                  return Column(
+                    children: [
+                      this._destructiveActionRow(
+                        context,
+                        icon: CupertinoIcons.square_arrow_right,
+                        label:
+                            'Sign out ${store.selfChannelTitle ?? 'YouTube'}',
+                        onTap: () => this._popThen(
+                          context,
+                          () => ModalHandler.showBaseDialog(
+                            context: this.hostContext,
+                            dialogWidget: ConfirmationDialog(
+                              title: 'Disconnect YouTube?',
+                              body:
+                                  'Connected as ${store.selfChannelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
+                              okText: 'Disconnect',
+                              isYesDestructive: true,
+                              onOk: (_) => store.logout(),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
                   );
                 case YouTubeAuthState.unconfigured:
                   return const SizedBox.shrink();

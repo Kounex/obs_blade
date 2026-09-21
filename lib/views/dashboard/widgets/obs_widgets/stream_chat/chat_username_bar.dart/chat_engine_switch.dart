@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -47,24 +48,51 @@ class ChatEngineSwitch extends StatelessWidget {
       builder: (context) {
         final bool isPro = GetIt.instance<ProStore>().isPro;
 
+        final AppTextColors textColors =
+            Theme.of(context).extension<AppTextColors>() ??
+            AppTextColors.standard;
+        final bool darkSurface =
+            Theme.of(context).cardColor.computeLuminance() <= 0.2;
+
+        /// Deliberately NEUTRAL chrome (mirrors `switcher_card.dart`):
+        /// white 6% track / 13% thumb, selection carried by the thumb fill
+        /// + primary-text label alone (iOS-style)
+        final Color segBackground = (darkSurface ? Colors.white : Colors.black)
+            .withValues(alpha: 0.06);
+        final Color segThumb = darkSurface
+            ? Colors.white.withValues(alpha: 0.13)
+            : Colors.white;
+
+        Color segLabelColor(ChatEngine segment) => engine == segment
+            ? textColors.textPrimary
+            : textColors.textSecondary;
+
         return SizedBox(
           width: double.infinity,
           child: CupertinoSlidingSegmentedControl<ChatEngine>(
             groupValue: engine,
+            backgroundColor: segBackground,
+            thumbColor: segThumb,
 
             /// Vertical segment padding brings the control near the 44pt
             /// touch target of the neighboring bar controls
             children: {
-              ChatEngine.webView: const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Text('WebView'),
+              ChatEngine.webView: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Text(
+                  'WebView',
+                  style: TextStyle(color: segLabelColor(ChatEngine.webView)),
+                ),
               ),
               ChatEngine.native: Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Native'),
+                    Text(
+                      'Native',
+                      style: TextStyle(color: segLabelColor(ChatEngine.native)),
+                    ),
                     if (!isPro) ...[
                       const SizedBox(width: AppSpacing.xs),
                       const Icon(JamIcons.padlock, size: 13.0),

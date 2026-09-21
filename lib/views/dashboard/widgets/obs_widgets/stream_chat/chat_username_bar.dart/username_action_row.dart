@@ -140,8 +140,12 @@ class _UsernameAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabledColor = this.isDestructive
-        ? CupertinoColors.destructiveRed
-        : Theme.of(context).cupertinoOverrideTheme!.primaryColor;
+        ? (Theme.of(context).extension<AppStatusColors>() ??
+                  AppStatusColors.standard)
+              .destructive
+        : (Theme.of(context).extension<AppTextColors>() ??
+                  AppTextColors.standard)
+              .highlightText;
 
     return Tooltip(
       message: this.tooltip,

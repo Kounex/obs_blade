@@ -51,7 +51,9 @@ class _AccountChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabledColor = Theme.of(context).cupertinoOverrideTheme!.primaryColor;
+    final enabledColor =
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
 
     return LayoutBuilder(
       builder: (context, constraints) {

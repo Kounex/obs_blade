@@ -118,7 +118,6 @@ class NativeChannelDropdown extends StatelessWidget {
         if (mod)
           NativeChatStatusChip.mod(
             key: Key('channel-dropdown-mod-${channelId ?? 'own'}'),
-            color: Theme.of(context).colorScheme.primary,
           ),
       ],
     );
