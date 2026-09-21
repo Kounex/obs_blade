@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/dialogs/info.dart';
 import 'package:obs_blade/shared/general/question_mark_tooltip.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
@@ -61,6 +62,7 @@ class _QRScanState extends State<QRScan> {
             _qrScanState = result;
             if (_qrScanState!) {
               _scanLocked = true;
+              HapticFeedback.lightImpact();
               Future.delayed(const Duration(seconds: 1), () {
                 if (!mounted) return;
                 Navigator.of(context).pop(_connectionFromQR(scanData.code!));
@@ -142,12 +144,9 @@ class _QRScanState extends State<QRScan> {
     }
 
     return TransculentCupertinoNavBarWrapper(
-      leading: Transform.scale(
-        scale: 0.8,
-        child: const QuestionMarkTooltip(
-          message:
-              'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info',
-        ),
+      leading: const QuestionMarkTooltip(
+        message:
+            'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info',
       ),
       title: 'Quick Connect',
       actions: ThemedCupertinoButton(
