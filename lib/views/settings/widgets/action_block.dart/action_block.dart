@@ -12,7 +12,7 @@ class ActionBlock extends StatelessWidget {
   final List<BlockEntry> blockEntries;
   final bool dense;
 
-  final double generalizedPadding = 14.0;
+  final double generalizedPadding = AppSpacing.lg;
   final double iconSize = 32.0;
 
   const ActionBlock({
@@ -70,9 +70,9 @@ class ActionBlock extends StatelessWidget {
       child: BaseCard(
         above: this.title != null && this.title!.isNotEmpty
             ? Padding(
-                padding: EdgeInsets.only(
-                  left: this.generalizedPadding + 18,
-                  right: this.generalizedPadding + 18,
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.xxl,
+                  right: AppSpacing.xxl,
                 ),
                 child: Text(
                   this.title!.toUpperCase(),
@@ -86,10 +86,10 @@ class ActionBlock extends StatelessWidget {
             : null,
         below: this.descriptionWidget != null || this.description != null
             ? Padding(
-                padding: EdgeInsets.only(
-                  left: this.generalizedPadding + 18,
-                  right: this.generalizedPadding + 18,
-                  bottom: 12.0,
+                padding: const EdgeInsets.only(
+                  left: AppSpacing.xxl,
+                  right: AppSpacing.xxl,
+                  bottom: AppSpacing.md,
                 ),
                 child:
                     this.descriptionWidget ??

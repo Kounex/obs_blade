@@ -5,7 +5,7 @@ import '../../../../shared/design/design.dart';
 import '../../../../shared/general/question_mark_tooltip.dart';
 import '../decorative_icon_tile.dart';
 
-const double kblockEntryPadding = 14.0;
+const double kblockEntryPadding = AppSpacing.lg;
 const double kblockEntryIconSize = 32.0;
 const double kblockEntryHeight = 44.0;
 
@@ -119,12 +119,10 @@ class BlockEntry extends StatelessWidget {
                               right: AppSpacing.xs,
                             ),
                             child: DefaultTextStyle(
+                              /// Settings row values sit one emphasis
+                              /// level down (token-delta §2.1)
                               style: Theme.of(context).textTheme.bodySmall!
                                   .copyWith(
-                                    fontSize: 14.0,
-
-                                    /// Settings row values sit one emphasis
-                                    /// level down (token-delta §2.1)
                                     color: Theme.of(
                                       context,
                                     ).extension<AppTextColors>()!.textSecondary,
