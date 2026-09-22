@@ -264,12 +264,20 @@ class _StreamChatState extends State<StreamChat>
   @override
   bool get wantKeepAlive => true;
 
-  String _urlForChatType(ChatType chatType, Box<dynamic> settingsBox) {
+  String _urlForChatType(
+    ChatType chatType,
+    Box<dynamic> settingsBox,
+    Brightness brightness,
+  ) {
+    final dark = brightness == Brightness.dark;
     if (chatType == ChatType.Twitch &&
         (settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)) != null) {
       /// darkpopout: Twitch's own dark-theme variant of the popout chat -
-      /// without it the embed renders light inside the dark app
-      return 'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat?darkpopout';
+      /// follows the app's brightness so a light app theme gets Twitch's
+      /// light popout instead of a forced dark one.
+      final popout =
+          'https://www.twitch.tv/popout/${settingsBox.get(SettingsKeys.SelectedTwitchUsername.name)}/chat';
+      return dark ? '$popout?darkpopout' : popout;
     }
     if (chatType == ChatType.YouTube &&
         (settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)) != null) {
@@ -284,9 +292,11 @@ class _StreamChatState extends State<StreamChat>
       /// enforces it on top-level WebView loads (docs require it for
       /// iframe embeds; the value is unverifiable without a parent frame).
       /// dark_theme is undocumented but long-standing (same shape as
-      /// Twitch's darkpopout above) - without it the embed renders light
-      /// inside the dark app.
-      return 'https://www.youtube.com/live_chat?is_popout=1&v=$videoId&embed_domain=localhost&dark_theme=1';
+      /// Twitch's darkpopout above) - follows the app's brightness instead
+      /// of being forced on.
+      final popout =
+          'https://www.youtube.com/live_chat?is_popout=1&v=$videoId&embed_domain=localhost';
+      return dark ? '$popout&dark_theme=1' : popout;
     }
     if (chatType == ChatType.Owncast &&
         (settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)) != null) {
@@ -380,7 +390,13 @@ class _StreamChatState extends State<StreamChat>
 
               /// No WebView warm-up while the native engine owns the slot
               if (chatActive && !nativeEngine) {
-                _syncWebController(_urlForChatType(chatType, settingsBox));
+                _syncWebController(
+                  _urlForChatType(
+                    chatType,
+                    settingsBox,
+                    Theme.of(context).brightness,
+                  ),
+                );
               }
 
               if (nativeEngine) {
