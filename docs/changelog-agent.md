@@ -2,6 +2,14 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 — Kick native read: don't spoof a browser User-Agent
+
+`GET kick.com/api/v2/channels/{slug}` from dart:io with a Safari/Chrome
+User-Agent is rejected by Cloudflare ("Request blocked by security policy")
+even on a home network — the same call with a plain `OBSBlade` agent
+returns 200. The native pane was showing "Could not resolve the Kick
+channel" for slugs the WebView opened fine. Reads now send `OBSBlade`.
+
 ## 2026-09-23 — Native Kick chat write/mod (W3)
 
 Follows the read engine (`bc29c40f`). Optional sign-in is manual-paste
