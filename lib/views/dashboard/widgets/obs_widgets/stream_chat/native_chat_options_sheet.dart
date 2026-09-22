@@ -115,8 +115,9 @@ enum _OptionsPage {
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
-/// Appearance + Emotes + Badges + Event messages; other chat types only
-/// Appearance.
+/// Appearance + Emotes + Badges + Event messages; Kick gets Appearance +
+/// Emotes + Event messages (no per-badge-category toggle — Kick's
+/// `badge_type` values are unverified); other chat types only Appearance.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
@@ -196,7 +197,19 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             switch (this._page) {
               _OptionsPage.root => this._buildRoot(context),
               _OptionsPage.appearance => _AppearancePage(onBack: this._back),
-              _OptionsPage.emotes => _EmotesPage(onBack: this._back),
+              _OptionsPage.emotes => _EmotesPage(
+                onBack: this._back,
+                settingsKey: this._isKick
+                    ? SettingsKeys.KickChatThirdPartyEmotes
+                    : SettingsKeys.TwitchChatThirdPartyEmotes,
+                rowLabel: this._isKick
+                    ? 'Third-party emotes (7TV)'
+                    : 'Third-party emotes (7TV/BTTV)',
+                description: this._isKick
+                    ? 'Choose whether 7TV emotes render inline in chat.'
+                    : 'Choose whether 7TV and BTTV emotes render inline in '
+                          'chat.',
+              ),
               _OptionsPage.badges => _BadgesPage(onBack: this._back),
               _OptionsPage.eventMessages => _EventMessagesPage(
                 onBack: this._back,
@@ -256,13 +269,20 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
               onTap: () => this._open(_OptionsPage.debugSamples),
             ),
         ],
-        if (this._isKick)
+        if (this._isKick) ...[
+          this._navRow(
+            context,
+            label: 'Emotes',
+            subtitle: 'Third-party (7TV) emotes in chat',
+            onTap: () => this._open(_OptionsPage.emotes),
+          ),
           this._navRow(
             context,
             label: 'Event messages',
             subtitle: 'Subs, gifts, and host notices',
             onTap: () => this._open(_OptionsPage.eventMessages),
           ),
+        ],
       ],
     );
   }
@@ -679,34 +699,35 @@ class _AppearanceSlider extends StatelessWidget {
 
 class _EmotesPage extends StatelessWidget {
   final VoidCallback onBack;
+  final SettingsKeys settingsKey;
+  final String rowLabel;
+  final String description;
 
-  const _EmotesPage({required this.onBack});
+  const _EmotesPage({
+    required this.onBack,
+    required this.settingsKey,
+    required this.rowLabel,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
+      rebuildKeys: [this.settingsKey],
       builder: (context, settingsBox, child) => _PageScaffold(
         title: 'Emotes',
-        description:
-            'Choose whether 7TV and BTTV emotes render inline in chat.',
+        description: this.description,
         onBack: this.onBack,
-        onReset: () =>
-            settingsBox.put(SettingsKeys.TwitchChatThirdPartyEmotes.name, true),
+        onReset: () => settingsBox.put(this.settingsKey.name, true),
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Third-party emotes (7TV/BTTV)'),
+            title: Text(this.rowLabel),
             trailing: BaseAdaptiveSwitch(
-              value: settingsBox.get(
-                SettingsKeys.TwitchChatThirdPartyEmotes.name,
-                defaultValue: true,
-              ),
-              onChanged: (value) => settingsBox.put(
-                SettingsKeys.TwitchChatThirdPartyEmotes.name,
-                value,
-              ),
+              value: settingsBox.get(this.settingsKey.name, defaultValue: true),
+              onChanged: (value) =>
+                  settingsBox.put(this.settingsKey.name, value),
             ),
           ),
         ],

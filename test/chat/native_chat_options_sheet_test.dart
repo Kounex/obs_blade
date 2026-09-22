@@ -215,18 +215,51 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Kick root only lists Appearance + Event messages', (
+  testWidgets('Kick root lists Appearance + Emotes + Event messages, no '
+      'Badges', (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
+    );
+
+    expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('Emotes'), findsOneWidget);
+    expect(find.text('Third-party (7TV) emotes in chat'), findsOneWidget);
+    expect(find.text('Event messages'), findsOneWidget);
+    expect(find.text('Subs, gifts, and host notices'), findsOneWidget);
+    expect(find.text('Badges'), findsNothing);
+  });
+
+  testWidgets('Kick Emotes page toggles KickChatThirdPartyEmotes', (
     tester,
   ) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
     );
 
-    expect(find.text('Appearance'), findsOneWidget);
-    expect(find.text('Event messages'), findsOneWidget);
-    expect(find.text('Subs, gifts, and host notices'), findsOneWidget);
-    expect(find.text('Emotes'), findsNothing);
-    expect(find.text('Badges'), findsNothing);
+    await tester.tap(find.text('Emotes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Third-party emotes (7TV)'), findsOneWidget);
+    expect(find.text('Third-party emotes (7TV/BTTV)'), findsNothing);
+
+    final emoteSwitch = find.descendant(
+      of: find.widgetWithText(ListTile, 'Third-party emotes (7TV)'),
+      matching: find.byType(BaseAdaptiveSwitch),
+    );
+    await tester.tap(emoteSwitch);
+    await tester.pump();
+    expect(
+      settingsBox().get(SettingsKeys.KickChatThirdPartyEmotes.name),
+      isFalse,
+    );
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(
+      settingsBox().get(SettingsKeys.KickChatThirdPartyEmotes.name),
+      isTrue,
+    );
+
+    await closeHiveInZone(tester);
   });
 
   testWidgets('Kick Event messages page shows the smaller row set and '
