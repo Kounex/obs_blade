@@ -288,61 +288,9 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                     right: 0,
                     bottom: AppSpacing.sm,
                     child: Center(
-                      child: Pressable(
-                        haptic: true,
+                      child: NativeChatScrollPill(
+                        hasNewMessages: this._unreadWhileScrolledUp,
                         onTap: this._resumePinnedToBottom,
-                        child: Container(
-                          /// Invisible 44pt hit expansion — the chip's
-                          /// visual bottom edge stays put
-                          constraints: const BoxConstraints(
-                            minWidth: kMinInteractiveDimensionCupertino,
-                            minHeight: kMinInteractiveDimensionCupertino,
-                          ),
-                          alignment: Alignment.bottomCenter,
-                          child: AnimatedSwitcher(
-                            duration: AppMotion.medium,
-                            transitionBuilder: (child, animation) =>
-                                nativeChatSwapTransition(
-                                  context,
-                                  child,
-                                  animation,
-                                ),
-                            child: Container(
-                              key: ValueKey(this._unreadWhileScrolledUp),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.xs,
-                              ),
-                              decoration: BoxDecoration(
-                                color: this._unreadWhileScrolledUp
-                                    ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha: 0.15)
-                                    : StylingHelper.lightenDarkenColor(
-                                        Theme.of(context).cardColor,
-                                      ),
-                                borderRadius: AppRadius.pill,
-                              ),
-                              child: Text(
-                                this._unreadWhileScrolledUp
-                                    ? 'New messages ↓'
-                                    : 'Paused ↓',
-                                style: this._unreadWhileScrolledUp
-                                    ? Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.copyWith(
-                                        color:
-                                            (Theme.of(context)
-                                                        .extension<
-                                                          AppTextColors
-                                                        >() ??
-                                                    AppTextColors.standard)
-                                                .highlightText,
-                                      )
-                                    : Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                   ),

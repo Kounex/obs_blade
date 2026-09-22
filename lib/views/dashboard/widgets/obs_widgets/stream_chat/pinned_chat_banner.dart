@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../utils/modal_handler.dart';
-import '../../../../../utils/styling_helper.dart';
 
 /// Slim banner above a native chat timeline for the channel's single
 /// pinned message. Platform-neutral: the caller supplies the visible
@@ -14,11 +13,12 @@ import '../../../../../utils/styling_helper.dart';
 /// there passively and shouldn't draw focus. Tapping the message or the
 /// chevron toggles the expanded state (even for one-liners): full
 /// message, active colors (accent name, normal-contrast text). The ✕
-/// tucks the banner into a pin button at the top-right of [child];
-/// tapping that pin brings the banner back. That close is local — the
-/// channel pin stays up. The unpin affordance only renders when
-/// [onUnpin] is set and confirms first — pinning affects the whole
-/// room; a failed unpin surfaces as a snackbar.
+/// tucks the banner into a pin button at the top-right. Both float over
+/// [child] — they are not a row in the message list — and use the same
+/// glass surface as the nav bars. Tapping the pin brings the banner
+/// back. That close is local — the channel pin stays up. The unpin
+/// affordance only renders when [onUnpin] is set and confirms first —
+/// pinning affects the whole room; a failed unpin surfaces as a snackbar.
 class PinnedChatBanner extends StatefulWidget {
   final String messageId;
   final String senderName;
@@ -28,9 +28,9 @@ class PinnedChatBanner extends StatefulWidget {
   /// unpin). Distinct from the ✕, which only tucks the banner.
   final Future<bool> Function()? onUnpin;
 
-  /// Timeline under the banner. When set, the tucked pin floats at the
-  /// top-right of this child. When null, the banner is the whole widget
-  /// (tests and any caller that only wants the card).
+  /// Timeline under the overlays. When set, the banner and the tucked
+  /// pin both float on top of this child. When null, the banner is the
+  /// whole widget (tests and any caller that only wants the card).
   final Widget? child;
 
   const PinnedChatBanner({
@@ -115,15 +115,15 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
     );
   }
 
-  BoxDecoration _card(ThemeData theme, {bool circle = false}) => BoxDecoration(
-    color: StylingHelper.lightenDarkenColor(theme.cardColor),
-    borderRadius: circle ? null : BorderRadius.circular(AppRadius.md),
-    shape: circle ? BoxShape.circle : BoxShape.rectangle,
-    border: Border.all(
-      color: theme.dividerColor.withValues(alpha: 0.4),
-      width: 0.0,
-    ),
-  );
+  /// Same surface as the nav bars, clipped to [radius]. A null radius
+  /// is the tucked pin (a circle).
+  Widget _glass({required Widget child, BorderRadius? radius}) {
+    final clipped = GlassBar(contentEdge: GlassBarEdge.bottom, child: child);
+    if (radius == null) {
+      return ClipOval(child: clipped);
+    }
+    return ClipRRect(borderRadius: radius, child: clipped);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,56 +197,52 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
       );
     }
 
-    final banner = Container(
-      margin: const EdgeInsets.fromLTRB(
-        AppSpacing.sm,
-        AppSpacing.xs,
-        AppSpacing.sm,
-        0.0,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: this._card(theme),
-      child: Row(
-        children: [
-          Expanded(
-            child: Pressable(
-              haptic: true,
-              onTap: () => setState(() => this._expanded = !this._expanded),
-              child: Row(
-                children: [
-                  Icon(CupertinoIcons.pin_fill, size: 14.0, color: pinColor),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(child: message),
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(
-                    this._expanded
-                        ? CupertinoIcons.chevron_up
-                        : CupertinoIcons.chevron_down,
-                    size: 12.0,
-                    color: mutedColor,
-                  ),
-                ],
+    final banner = this._glass(
+      radius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Pressable(
+                haptic: true,
+                onTap: () => setState(() => this._expanded = !this._expanded),
+                child: Row(
+                  children: [
+                    Icon(CupertinoIcons.pin_fill, size: 14.0, color: pinColor),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(child: message),
+                    const SizedBox(width: AppSpacing.sm),
+                    Icon(
+                      this._expanded
+                          ? CupertinoIcons.chevron_up
+                          : CupertinoIcons.chevron_down,
+                      size: 12.0,
+                      color: mutedColor,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (this.widget.onUnpin != null) ...[
+            if (this.widget.onUnpin != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              glyphButton(
+                label: 'Unpin message',
+                icon: CupertinoIcons.pin_slash,
+                onTap: () => this._confirmUnpin(context),
+              ),
+            ],
             const SizedBox(width: AppSpacing.sm),
             glyphButton(
-              label: 'Unpin message',
-              icon: CupertinoIcons.pin_slash,
-              onTap: () => this._confirmUnpin(context),
+              label: 'Hide pinned message',
+              icon: CupertinoIcons.xmark,
+              onTap: this._tuckAway,
             ),
           ],
-          const SizedBox(width: AppSpacing.sm),
-          glyphButton(
-            label: 'Hide pinned message',
-            icon: CupertinoIcons.xmark,
-            onTap: this._tuckAway,
-          ),
-        ],
+        ),
       ),
     );
 
@@ -256,12 +252,12 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
       child: Pressable(
         haptic: true,
         onTap: this._restore,
-        child: Container(
-          width: 40.0,
-          height: 40.0,
-          alignment: Alignment.center,
-          decoration: this._card(theme, circle: true),
-          child: Icon(CupertinoIcons.pin_fill, size: 16.0, color: pinColor),
+        child: this._glass(
+          child: SizedBox(
+            width: 40.0,
+            height: 40.0,
+            child: Icon(CupertinoIcons.pin_fill, size: 16.0, color: pinColor),
+          ),
         ),
       ),
     );
@@ -275,32 +271,33 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
           return tucked ? dock : banner;
         }
 
-        /// Collapse stays inside the banner's own slot, toward its
-        /// top-right corner. The pin rests there — not mid-chat.
+        /// Both states float over the timeline. The open banner
+        /// collapses toward the top-right, where the pin rests.
         final reveal = (1 - t).clamp(0.0, 1.0);
         return Stack(
           fit: StackFit.expand,
           children: [
-            Column(
-              children: [
-                if (!tucked)
-                  SizedBox(
-                    width: double.infinity,
-                    child: Align(
-                      alignment: Alignment.topRight,
-                      child: ClipRect(
-                        child: Align(
-                          alignment: Alignment.topRight,
-                          heightFactor: reveal,
-                          widthFactor: reveal,
-                          child: Opacity(opacity: reveal, child: banner),
-                        ),
+            this.widget.child!,
+            if (!tucked)
+              Positioned(
+                top: AppSpacing.xs,
+                left: AppSpacing.sm,
+                right: AppSpacing.sm,
+                child: IgnorePointer(
+                  ignoring: t > 0.05,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: ClipRect(
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        heightFactor: reveal,
+                        widthFactor: reveal,
+                        child: Opacity(opacity: reveal, child: banner),
                       ),
                     ),
                   ),
-                Expanded(child: this.widget.child!),
-              ],
-            ),
+                ),
+              ),
             if (t > 0)
               Positioned(
                 top: AppSpacing.xs,

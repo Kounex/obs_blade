@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../../shared/design/design.dart';
@@ -133,6 +134,75 @@ TextStyle? nativeChatSheetTitleStyle(BuildContext context) => Theme.of(context)
 /// level); apply `.toUpperCase()` at the use site.
 TextStyle? nativeChatSheetSectionStyle(BuildContext context) =>
     Theme.of(context).textTheme.labelSmall;
+
+/// Bottom overlay chip: "Paused" while scrolled up, "New messages" once
+/// something arrives. Glass, same surface as the nav bars — it floats
+/// over the timeline instead of pushing it.
+class NativeChatScrollPill extends StatelessWidget {
+  final bool hasNewMessages;
+  final VoidCallback onTap;
+
+  const NativeChatScrollPill({
+    super.key,
+    required this.hasNewMessages,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool unread = this.hasNewMessages;
+    final AppGlass glass = appGlassOf(context);
+    final Color? tint = unread
+        ? Color.alphaBlend(
+            theme.colorScheme.primary.withValues(alpha: 0.18),
+            glass.barColor,
+          )
+        : null;
+    final Color? highlight =
+        (theme.extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
+
+    return Pressable(
+      haptic: true,
+      onTap: this.onTap,
+      child: Container(
+        /// Invisible 44pt hit expansion — the chip's visual bottom
+        /// edge stays put
+        constraints: const BoxConstraints(
+          minWidth: kMinInteractiveDimensionCupertino,
+          minHeight: kMinInteractiveDimensionCupertino,
+        ),
+        alignment: Alignment.bottomCenter,
+        child: AnimatedSwitcher(
+          duration: AppMotion.medium,
+          transitionBuilder: (child, animation) =>
+              nativeChatSwapTransition(context, child, animation),
+          child: ClipRRect(
+            key: ValueKey(unread),
+            borderRadius: AppRadius.pill,
+            child: GlassBar(
+              contentEdge: GlassBarEdge.top,
+              color: tint,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.xs,
+                ),
+                child: Text(
+                  unread ? 'New messages ↓' : 'Paused ↓',
+                  style: unread
+                      ? theme.textTheme.bodySmall?.copyWith(color: highlight)
+                      : theme.textTheme.bodySmall,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Swap transition for small in-place morphs (status label, pause chip):
 /// fade + slight rise at [AppMotion.emphasized], fade-only under reduced
