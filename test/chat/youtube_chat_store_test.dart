@@ -859,9 +859,7 @@ void main() {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
       chatService.pollResponses.add(
-        page([
-          for (var i = 0; i < 25; i++) ytMessage('m$i', author: 'chan-7'),
-        ]),
+        page([for (var i = 0; i < 25; i++) ytMessage('m$i', author: 'chan-7')]),
       );
       await store.init();
       await until(() => store.messages.length == 25);
