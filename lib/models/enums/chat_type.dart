@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/icons/custom_flutter_icons.dart';
@@ -37,9 +36,6 @@ extension ChatTypeFunctions on ChatType {
     ChatType.Twitch: JamIcons.twitch,
     ChatType.YouTube: JamIcons.youtube,
     ChatType.Owncast: CustomFlutterIcons.owncast_logo,
-
-    /// No Kick glyph in either icon font (fluttericon font regen is a
-    /// manual flow) - bolt matches Kick's lightning wordmark
-    ChatType.Kick: Icons.bolt,
+    ChatType.Kick: CustomFlutterIcons.kick,
   }[this]!;
 }
