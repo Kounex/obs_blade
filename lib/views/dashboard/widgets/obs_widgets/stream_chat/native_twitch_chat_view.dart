@@ -553,19 +553,17 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             );
           },
         );
-        return Column(
-          children: [
-            if (pinned != null)
-              PinnedChatBanner(
-                messageId: pinned.messageId,
-                senderName: pinned.senderUserName,
-                text: pinned.message.text,
-                onUnpin: this._store.canModerateSelectedChannel
-                    ? this._store.unpinMessage
-                    : null,
-              ),
-            Expanded(child: timeline),
-          ],
+        if (pinned == null) {
+          return Column(children: [Expanded(child: timeline)]);
+        }
+        return PinnedChatBanner(
+          messageId: pinned.messageId,
+          senderName: pinned.senderUserName,
+          text: pinned.message.text,
+          onUnpin: this._store.canModerateSelectedChannel
+              ? this._store.unpinMessage
+              : null,
+          child: timeline,
         );
       },
     );

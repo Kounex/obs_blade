@@ -124,6 +124,7 @@ void main() {
     expect(find.textContaining('remember the giveaway').first, findsOneWidget);
     expect(find.byIcon(CupertinoIcons.pin_fill), findsOneWidget);
     expect(find.byIcon(CupertinoIcons.xmark), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.pin_slash), findsOneWidget);
   });
 
   testWidgets('the unpin button confirms, then unpins via the store', (
@@ -134,7 +135,7 @@ void main() {
     expect(store.pinnedMessage?.messageId, 'msg-pinned');
 
     await pumpBanner(tester);
-    await tester.tap(find.byIcon(CupertinoIcons.xmark));
+    await tester.tap(find.byIcon(CupertinoIcons.pin_slash));
     await tester.pumpAndSettle();
 
     expect(find.text('Unpin this message?'), findsOneWidget);
@@ -152,7 +153,7 @@ void main() {
     tester,
   ) async {
     await pumpBanner(tester);
-    await tester.tap(find.byIcon(CupertinoIcons.xmark));
+    await tester.tap(find.byIcon(CupertinoIcons.pin_slash));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Cancel'));
@@ -215,7 +216,8 @@ void main() {
     await pumpBanner(tester);
 
     expect(find.textContaining('remember the giveaway').first, findsOneWidget);
-    expect(find.byIcon(CupertinoIcons.xmark), findsNothing);
+    expect(find.byIcon(CupertinoIcons.pin_slash), findsNothing);
+    expect(find.byIcon(CupertinoIcons.xmark), findsOneWidget);
   });
 
   testWidgets('the chat view shows the banner above the timeline', (
@@ -231,6 +233,33 @@ void main() {
     expect(find.byType(PinnedChatBanner), findsOneWidget);
     expect(find.textContaining('remember the giveaway').first, findsOneWidget);
     expect(find.textContaining('text m1'), findsOneWidget);
+  });
+
+  testWidgets('closing the banner tucks it to a pin on the right', (
+    tester,
+  ) async {
+    store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(CupertinoIcons.xmark));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('remember the giveaway'), findsNothing);
+    expect(find.textContaining('text m1'), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.pin_fill), findsOneWidget);
+
+    final pin = tester.getCenter(find.byIcon(CupertinoIcons.pin_fill));
+    final message = tester.getCenter(find.textContaining('text m1'));
+    expect(pin.dx, greaterThan(message.dx));
+
+    await tester.tap(find.byIcon(CupertinoIcons.pin_fill));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('remember the giveaway').first, findsOneWidget);
   });
 
   testWidgets('the chat view hides the banner when nothing is pinned', (

@@ -348,16 +348,14 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                   ),
               ],
             );
-            return Column(
-              children: [
-                if (pinned != null)
-                  PinnedChatBanner(
-                    messageId: pinned.id,
-                    senderName: pinned.authorName,
-                    text: pinned.content,
-                  ),
-                Expanded(child: timeline),
-              ],
+            if (pinned == null) {
+              return Column(children: [Expanded(child: timeline)]);
+            }
+            return PinnedChatBanner(
+              messageId: pinned.id,
+              senderName: pinned.authorName,
+              text: pinned.content,
+              child: timeline,
             );
           },
         );
