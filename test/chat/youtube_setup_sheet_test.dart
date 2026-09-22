@@ -26,12 +26,7 @@ void main() {
   Widget wrap() => MaterialApp(
     home: Builder(
       builder: (context) => Scaffold(
-        body: SingleChildScrollView(
-          child: YouTubeSetupSheet(
-            hostContext: context,
-            chatService: chatService,
-          ),
-        ),
+        body: YouTubeSetupSheet(hostContext: context, chatService: chatService),
       ),
     ),
   );
@@ -79,19 +74,11 @@ void main() {
           builder: (context) => Scaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.sizeOf(context).height * 0.86,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    YouTubeSetupSheet(
-                      hostContext: context,
-                      chatService: chatService,
-                    ),
-                    SizedBox(height: MediaQuery.paddingOf(context).bottom),
-                  ],
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.86,
+                child: YouTubeSetupSheet(
+                  hostContext: context,
+                  chatService: chatService,
                 ),
               ),
             ),

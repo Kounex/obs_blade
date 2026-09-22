@@ -36,4 +36,70 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('sheet body'), findsNothing);
   });
+
+  Widget scrollingSheet(BuildContext context) => TextButton(
+    onPressed: () => ModalHandler.showBaseBottomSheet(
+      context: context,
+      barrierDismissible: true,
+      enableDrag: true,
+      maxHeightFraction: 0.86,
+      builder: (_) => ListView(
+        primary: false,
+        children: [
+          for (var i = 0; i < 30; i++)
+            const SizedBox(height: 48, child: Text('sheet row')),
+        ],
+      ),
+    ),
+    child: const Text('open'),
+  );
+
+  testWidgets('overscroll on any scrolling sheet dismisses it', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: Builder(builder: scrollingSheet)),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('sheet row'), findsWidgets);
+
+    await tester.fling(
+      find.text('sheet row').first,
+      const Offset(0, 400),
+      2000,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('sheet row'), findsNothing);
+  });
+
+  testWidgets('a short overscroll springs any scrolling sheet back', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: Builder(builder: scrollingSheet)),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final before = tester.getTopLeft(find.text('sheet row').first);
+    final gesture = await tester.startGesture(before + const Offset(40, 12));
+    await gesture.moveBy(const Offset(0, 24));
+    await gesture.moveBy(const Offset(0, 80));
+    await tester.pump();
+    expect(
+      tester.getTopLeft(find.text('sheet row').first).dy,
+      greaterThan(before.dy + 60),
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('sheet row'), findsWidgets);
+    expect(
+      (tester.getTopLeft(find.text('sheet row').first).dy - before.dy).abs(),
+      lessThan(2),
+    );
+  });
 }

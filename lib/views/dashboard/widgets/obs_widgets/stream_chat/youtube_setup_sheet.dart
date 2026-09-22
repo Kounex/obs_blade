@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -35,10 +33,6 @@ Future<void> showYouTubeSetupSheet(BuildContext context) =>
       barrierDismissible: true,
       enableDrag: true,
       maxHeightFraction: 0.86,
-      sheetAnimationStyle: const AnimationStyle(
-        curve: Curves.linear,
-        reverseCurve: Curves.linear,
-      ),
       builder: (sheetContext) => YouTubeSetupSheet(hostContext: context),
     );
 
@@ -73,9 +67,6 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
   late final YouTubeLiveChatService _chatService;
 
   bool _testing = false;
-
-  /// Measures the whole sheet so an overscroll moves it 1:1 with the finger.
-  final GlobalKey _sheetKey = GlobalKey();
 
   /// Tri-state probe result: null = untested / edited since last test.
   bool? _keyValid;
@@ -330,376 +321,217 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
         Theme.of(context).buttonTheme.colorScheme?.secondary ??
         StylingHelper.accent_color;
 
-    /// The modal column does not pass its max height down, so this
-    /// scroll view would otherwise grow with the advanced section and
-    /// overflow the sheet. Cap it to the same fraction the sheet uses,
-    /// and to the space left above the keyboard.
-    final media = MediaQuery.of(context);
-    final available =
-        media.size.height - media.viewInsets.bottom - media.padding.bottom;
-    final cap = math
-        .min(media.size.height * 0.86 - media.padding.bottom, available)
-        .clamp(0.0, double.infinity);
-
-    return ConstrainedBox(
-      key: this._sheetKey,
-      constraints: BoxConstraints(maxHeight: cap),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
+    /// Handle and title stay outside the scroll. The shared modal body
+    /// caps the height and turns a pull past the top into a sheet drag.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            0.0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              nativeChatSheetDragHandle(context),
+              Text(
+                'YouTube chat setup',
+                style: nativeChatSheetTitleStyle(context),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
+        ),
+        Flexible(
+          child: SingleChildScrollView(
+            primary: false,
+            physics: const ClampingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
-              AppSpacing.sm,
-              AppSpacing.lg,
               0.0,
+              AppSpacing.lg,
+              AppSpacing.lg,
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                nativeChatSheetDragHandle(context),
                 Text(
-                  'YouTube chat setup',
-                  style: nativeChatSheetTitleStyle(context),
+                  'Native YouTube chat reads through the official YouTube Data '
+                  'API, which needs a free Google Cloud API key:',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                this._stepRow(
+                  context,
+                  '1',
+                  'Open the Google Cloud Console and create (or select) a project',
+                ),
+                this._stepRow(
+                  context,
+                  '2',
+                  'Enable the "YouTube Data API v3" for that project',
+                ),
+                this._stepRow(
+                  context,
+                  '3',
+                  'Create an API key (Credentials → Create credentials) and paste it below',
+                ),
+                Pressable(
+                  haptic: true,
+                  onTap: () async {
+                    final uri = Uri.parse('https://console.cloud.google.com');
+                    if (await launcher.canLaunchUrl(uri)) {
+                      await launcher.launchUrl(
+                        uri,
+                        mode: launcher.LaunchMode.externalApplication,
+                      );
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.link,
+                          size: 14.0,
+                          color:
+                              (Theme.of(context).extension<AppTextColors>() ??
+                                      AppTextColors.standard)
+                                  .highlightText,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          'Open console.cloud.google.com',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color:
+                                    (Theme.of(
+                                              context,
+                                            ).extension<AppTextColors>() ??
+                                            AppTextColors.standard)
+                                        .highlightText,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Heads up: chat entries are tied to a single video. When a '
+                  'streamer starts their next stream, its video id changes — '
+                  'update the entry (channel list → Add chat…, or edit the '
+                  'YouTube username) to reconnect.',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: AppSpacing.md),
+                Text(
+                  'API key',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                NativeChatTextField(
+                  controller: this._apiKeyController,
+                  hintText: 'YouTube Data API key',
+                  focusBorderColor: accent,
+                  onChanged: (_) => this.setState(() => this._keyValid = null),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    this._pillButton(
+                      context,
+                      key: const Key('youtube-setup-test-key'),
+                      label: 'Test key',
+                      onTap:
+                          this._apiKeyController.text.trim().isEmpty ||
+                              this._testing
+                          ? null
+                          : this._testKey,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(child: this._testStatus(context)),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                CustomExpansionTile(
+                  headerText: 'Advanced: sign-in (optional)',
+                  headerTextStyle: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  expandedBody: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Reading chat works with the API key alone. Sending '
+                        'messages and moderating need a Google OAuth "TVs and '
+                        'Limited Input" client — create one in the same console '
+                        '(Credentials → Create credentials → OAuth client ID) '
+                        'and paste its credentials here.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      NativeChatTextField(
+                        controller: this._clientIdController,
+                        hintText: 'OAuth client id',
+                        focusBorderColor: accent,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      NativeChatTextField(
+                        controller: this._clientSecretController,
+                        hintText: 'OAuth client secret',
+                        focusBorderColor: accent,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    this._pillButton(
+                      context,
+                      key: const Key('youtube-setup-save'),
+                      label: 'Save',
+                      onTap: this._save,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    if (this._keyValid == true && this._storeRegistered)
+                      Observer(
+                        builder: (_) =>
+                            this._store!.authState == YouTubeAuthState.signedIn
+                            ? const SizedBox.shrink()
+                            : this._pillButton(
+                                context,
+                                key: const Key('youtube-setup-sign-in'),
+                                label: 'Connect YouTube',
+                                onTap: this._signIn,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).buttonTheme.colorScheme?.secondary ??
+                                    StylingHelper.accent_color,
+                              ),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
-          Flexible(
-            child: _SheetOverscroll(
-              sheetKey: this._sheetKey,
-              child: SingleChildScrollView(
-                primary: false,
-                physics: const ClampingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  0.0,
-                  AppSpacing.lg,
-                  AppSpacing.lg,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Native YouTube chat reads through the official YouTube Data '
-                      'API, which needs a free Google Cloud API key:',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    this._stepRow(
-                      context,
-                      '1',
-                      'Open the Google Cloud Console and create (or select) a project',
-                    ),
-                    this._stepRow(
-                      context,
-                      '2',
-                      'Enable the "YouTube Data API v3" for that project',
-                    ),
-                    this._stepRow(
-                      context,
-                      '3',
-                      'Create an API key (Credentials → Create credentials) and paste it below',
-                    ),
-                    Pressable(
-                      haptic: true,
-                      onTap: () async {
-                        final uri = Uri.parse(
-                          'https://console.cloud.google.com',
-                        );
-                        if (await launcher.canLaunchUrl(uri)) {
-                          await launcher.launchUrl(
-                            uri,
-                            mode: launcher.LaunchMode.externalApplication,
-                          );
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              CupertinoIcons.link,
-                              size: 14.0,
-                              color:
-                                  (Theme.of(
-                                            context,
-                                          ).extension<AppTextColors>() ??
-                                          AppTextColors.standard)
-                                      .highlightText,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Text(
-                              'Open console.cloud.google.com',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color:
-                                        (Theme.of(
-                                                  context,
-                                                ).extension<AppTextColors>() ??
-                                                AppTextColors.standard)
-                                            .highlightText,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Heads up: chat entries are tied to a single video. When a '
-                      'streamer starts their next stream, its video id changes — '
-                      'update the entry (channel list → Add chat…, or edit the '
-                      'YouTube username) to reconnect.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'API key',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    NativeChatTextField(
-                      controller: this._apiKeyController,
-                      hintText: 'YouTube Data API key',
-                      focusBorderColor: accent,
-                      onChanged: (_) =>
-                          this.setState(() => this._keyValid = null),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      children: [
-                        this._pillButton(
-                          context,
-                          key: const Key('youtube-setup-test-key'),
-                          label: 'Test key',
-                          onTap:
-                              this._apiKeyController.text.trim().isEmpty ||
-                                  this._testing
-                              ? null
-                              : this._testKey,
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Expanded(child: this._testStatus(context)),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    CustomExpansionTile(
-                      headerText: 'Advanced: sign-in (optional)',
-                      headerTextStyle: Theme.of(context).textTheme.bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                      expandedBody: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Reading chat works with the API key alone. Sending '
-                            'messages and moderating need a Google OAuth "TVs and '
-                            'Limited Input" client — create one in the same console '
-                            '(Credentials → Create credentials → OAuth client ID) '
-                            'and paste its credentials here.',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          NativeChatTextField(
-                            controller: this._clientIdController,
-                            hintText: 'OAuth client id',
-                            focusBorderColor: accent,
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          NativeChatTextField(
-                            controller: this._clientSecretController,
-                            hintText: 'OAuth client secret',
-                            focusBorderColor: accent,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      children: [
-                        this._pillButton(
-                          context,
-                          key: const Key('youtube-setup-save'),
-                          label: 'Save',
-                          onTap: this._save,
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        if (this._keyValid == true && this._storeRegistered)
-                          Observer(
-                            builder: (_) =>
-                                this._store!.authState ==
-                                    YouTubeAuthState.signedIn
-                                ? const SizedBox.shrink()
-                                : this._pillButton(
-                                    context,
-                                    key: const Key('youtube-setup-sign-in'),
-                                    label: 'Connect YouTube',
-                                    onTap: this._signIn,
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).buttonTheme.colorScheme?.secondary ??
-                                        StylingHelper.accent_color,
-                                  ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Pulling past the top of a scrolling sheet moves the sheet 1:1 with the
-/// finger. Releasing springs it shut or back open.
-///
-/// Same decision iOS interactive dismiss uses: a downward flick closes even
-/// when the drag was short, and a slower drag closes once it has passed
-/// half the sheet — unless that release is flicking back upward. Otherwise
-/// a critically damped spring (SwiftUI `spring(bounce: 0)`) returns it.
-class _SheetOverscroll extends StatefulWidget {
-  final Widget child;
-  final GlobalKey sheetKey;
-
-  const _SheetOverscroll({required this.child, required this.sheetKey});
-
-  @override
-  State<_SheetOverscroll> createState() => _SheetOverscrollState();
-}
-
-class _SheetOverscrollState extends State<_SheetOverscroll> {
-  /// Points per second. A flick at least this fast dismisses regardless of
-  /// how far the sheet travelled. From the usual UIKit interactive-dismiss
-  /// split (fast flick, or past halfway without flicking back).
-  static const double _flickVelocity = 300.0;
-
-  static const double _distanceThreshold = 0.5;
-
-  /// Critically damped, so the release settles once and does not bounce.
-  static final SpringDescription _spring =
-      SpringDescription.withDurationAndBounce(
-        duration: const Duration(milliseconds: 350),
-        bounce: 0.0,
-      );
-
-  bool _pulled = false;
-  bool _settled = true;
-
-  double _sheetHeight(ScrollMetrics metrics) {
-    final box =
-        this.widget.sheetKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize && box.size.height > 0) {
-      return box.size.height;
-    }
-    return metrics.viewportDimension;
-  }
-
-  void _track(BuildContext context, OverscrollNotification notification) {
-    final controller = ModalRoute.of(context)?.controller;
-    if (controller == null) return;
-    final height = this._sheetHeight(notification.metrics);
-    if (height <= 0) return;
-
-    /// Raw finger delta. The scroll view's own overscroll is friction-damped,
-    /// which made the sheet lag the finger.
-    final fingerDown = notification.dragDetails?.primaryDelta;
-    final pixels = (fingerDown != null && fingerDown > 0)
-        ? fingerDown
-        : -notification.overscroll;
-    if (pixels <= 0) return;
-
-    this._pulled = true;
-    this._settled = false;
-    controller.stop();
-    controller.value = (controller.value - pixels / height).clamp(0.0, 1.0);
-  }
-
-  void _settle(BuildContext context, double velocity) {
-    if (this._settled || !this._pulled) return;
-    final controller = ModalRoute.of(context)?.controller;
-    if (controller == null || controller.value >= 1.0) {
-      this._settled = true;
-      this._pulled = false;
-      return;
-    }
-    this._settled = true;
-    this._pulled = false;
-
-    final height = () {
-      final box =
-          this.widget.sheetKey.currentContext?.findRenderObject() as RenderBox?;
-      if (box != null && box.hasSize && box.size.height > 0) {
-        return box.size.height;
-      }
-      return 1.0;
-    }();
-    final travelled = 1.0 - controller.value;
-
-    /// Fast downward flick closes on its own. A slower drag closes only
-    /// after half the sheet, and not if the finger flicks back up.
-    final dismiss =
-        velocity > _flickVelocity ||
-        (travelled > _distanceThreshold && velocity > -_flickVelocity);
-    final target = dismiss ? 0.0 : 1.0;
-
-    /// Spring velocity is in animation units per second (1 = one sheet
-    /// height). Downward finger velocity continues the dismiss direction.
-    final animationVelocity = -velocity / height;
-    final simulation = SpringSimulation(
-      _spring,
-      controller.value,
-      target,
-      animationVelocity,
-    );
-    final done = controller.animateWith(simulation);
-    if (dismiss) {
-      done.whenComplete(() {
-        if (!context.mounted) return;
-        if (controller.value <= 0.01) Navigator.of(context).maybePop();
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification.metrics.axis != Axis.vertical) return false;
-        final atTop =
-            notification.metrics.pixels <= notification.metrics.minScrollExtent;
-        if (notification is OverscrollNotification &&
-            notification.overscroll < 0 &&
-            atTop) {
-          this._track(context, notification);
-          return false;
-        }
-        if (notification is ScrollEndNotification) {
-          final velocity = notification.dragDetails?.primaryVelocity ?? 0.0;
-          this._settle(context, velocity);
-        }
-        return false;
-      },
-      child: Listener(
-        onPointerUp: (_) => this._settle(context, 0.0),
-        onPointerCancel: (_) => this._settle(context, 0.0),
-        child: this.widget.child,
-      ),
+        ),
+      ],
     );
   }
 }
