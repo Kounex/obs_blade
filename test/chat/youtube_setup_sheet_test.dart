@@ -101,6 +101,14 @@ void main() {
     );
     await tester.pump();
 
+    expect(
+      find.descendant(
+        of: find.byType(SingleChildScrollView),
+        matching: find.text('YouTube chat setup'),
+      ),
+      findsNothing,
+    );
+
     await tester.ensureVisible(find.text('Advanced: sign-in (optional)'));
     await tester.pump();
     await tester.tap(find.text('Advanced: sign-in (optional)'));
@@ -111,6 +119,29 @@ void main() {
     await tester.ensureVisible(find.text('OAuth client secret'));
     await tester.pump();
     expect(find.text('OAuth client secret'), findsOneWidget);
+  });
+
+  testWidgets('pulling down from the top dismisses the sheet', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showYouTubeSetupSheet(context),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('YouTube chat setup'), findsOneWidget);
+
+    await tester.fling(find.text('API key'), const Offset(0, 400), 2000);
+    await tester.pumpAndSettle();
+
+    expect(find.text('YouTube chat setup'), findsNothing);
   });
 
   testWidgets('prefills the fields from settings', (tester) async {
