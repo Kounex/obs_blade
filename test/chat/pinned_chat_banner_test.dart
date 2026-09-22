@@ -210,6 +210,30 @@ void main() {
     expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
   });
 
+  testWidgets('a link in the pinned text confirms before opening', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: PinnedChatBanner(
+            messageId: 'link-1',
+            senderName: 'Chatter',
+            text: 'join https://example.com/room',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('https://example.com/room').hitTestable());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open link?'), findsOneWidget);
+    expect(find.text('https://example.com/room'), findsWidgets);
+    expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
+  });
+
   testWidgets('the gap before the close button does not tuck the banner', (
     tester,
   ) async {

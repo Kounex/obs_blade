@@ -228,7 +228,7 @@ class TwitchChatMessageRow extends StatelessWidget {
       if (this.event.reply != null && this.event.message.fragments.isNotEmpty) {
         return const [];
       }
-      return this._linkAwareTextSpans(context, this.event.message.text);
+      return chatLinkTextSpans(context, this.event.message.text);
     }
 
     /// Power-up messages: `power_ups_gigantified_emote` blows the emote up
@@ -309,7 +309,7 @@ class TwitchChatMessageRow extends StatelessWidget {
       SettingsKeys.TwitchChatThirdPartyEmotes.name,
       defaultValue: true,
     )) {
-      return this._linkAwareTextSpans(context, text);
+      return chatLinkTextSpans(context, text);
     }
     final emoteStore =
         this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>();
@@ -334,49 +334,9 @@ class TwitchChatMessageRow extends StatelessWidget {
             ),
           )
         else
-          ...this._linkAwareTextSpans(context, tokens[i]),
+          ...chatLinkTextSpans(context, tokens[i]),
       ],
     ];
-  }
-
-  /// Split [text] into plain runs and tappable links (http(s) + bare domains).
-  List<InlineSpan> _linkAwareTextSpans(BuildContext context, String text) {
-    if (text.isEmpty) return const [];
-    final matches = chatUrlMatches(text).toList();
-    if (matches.isEmpty) return [TextSpan(text: text)];
-
-    final linkColor =
-        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
-            .highlightText;
-    final linkStyle = TextStyle(
-      color: linkColor,
-      decoration: TextDecoration.underline,
-      decorationColor: linkColor,
-    );
-    final spans = <InlineSpan>[];
-    var cursor = 0;
-    for (final match in matches) {
-      if (match.start > cursor) {
-        spans.add(TextSpan(text: text.substring(cursor, match.start)));
-      }
-      final url = match.group(0)!;
-      spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.baseline,
-          baseline: TextBaseline.alphabetic,
-          child: Pressable(
-            haptic: true,
-            onTap: () => confirmAndOpenChatLink(context, url),
-            child: Text(url, style: linkStyle),
-          ),
-        ),
-      );
-      cursor = match.end;
-    }
-    if (cursor < text.length) {
-      spans.add(TextSpan(text: text.substring(cursor)));
-    }
-    return spans;
   }
 
   /// Badge-less rows never change — an Observer that tracks nothing

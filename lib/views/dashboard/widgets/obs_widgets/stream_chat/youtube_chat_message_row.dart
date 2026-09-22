@@ -136,53 +136,12 @@ class YouTubeChatMessageRow extends StatelessWidget {
     ),
   );
 
-  /// Body text with tappable links — same split idiom as the Twitch row.
-  List<InlineSpan> _linkAwareTextSpans(BuildContext context, String text) {
-    if (text.isEmpty) return const [];
-    final matches = chatUrlMatches(text).toList();
-    if (matches.isEmpty) return [TextSpan(text: text)];
-
-    final linkColor =
-        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
-            .highlightText;
-    final linkStyle = TextStyle(
-      color: linkColor,
-      decoration: TextDecoration.underline,
-      decorationColor: linkColor,
-    );
-    final spans = <InlineSpan>[];
-    var cursor = 0;
-    for (final match in matches) {
-      if (match.start > cursor) {
-        spans.add(TextSpan(text: text.substring(cursor, match.start)));
-      }
-      final url = match.group(0)!;
-      spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.baseline,
-          baseline: TextBaseline.alphabetic,
-          child: Pressable(
-            haptic: true,
-            onTap: () => confirmAndOpenChatLink(context, url),
-            child: Text(url, style: linkStyle),
-          ),
-        ),
-      );
-      cursor = match.end;
-    }
-    if (cursor < text.length) {
-      spans.add(TextSpan(text: text.substring(cursor)));
-    }
-    return spans;
-  }
-
-  List<InlineSpan> _messageSpans(BuildContext context) =>
-      this._linkAwareTextSpans(
-        context,
-        this.message.snippet.textMessageDetails?.messageText ??
-            this.message.displayText ??
-            '',
-      );
+  List<InlineSpan> _messageSpans(BuildContext context) => chatLinkTextSpans(
+    context,
+    this.message.snippet.textMessageDetails?.messageText ??
+        this.message.displayText ??
+        '',
+  );
 
   /// Tombstone treatment — the content stays visible but dims (same UX
   /// as the Twitch row), with the italic marker appended.
@@ -349,7 +308,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
                 Text.rich(
                   TextSpan(
                     style: baseStyle,
-                    children: this._linkAwareTextSpans(context, comment),
+                    children: chatLinkTextSpans(context, comment),
                   ),
                 ),
               ],
@@ -438,7 +397,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
           amountDisplayString: details?.amountDisplayString,
           bodySpans: comment == null
               ? const []
-              : this._linkAwareTextSpans(context, comment),
+              : chatLinkTextSpans(context, comment),
         );
       case YouTubeChatMessageType.superSticker:
 

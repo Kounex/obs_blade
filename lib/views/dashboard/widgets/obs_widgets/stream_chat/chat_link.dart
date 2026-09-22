@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -89,6 +90,56 @@ String? normalizeChatLinkUrl(String rawUrl) {
     return null;
   }
   return withScheme;
+}
+
+/// Split [text] into plain runs and tappable links (http(s) + bare domains).
+///
+/// [style] is the surrounding body style. Links stay the highlight color
+/// with an underline, on top of that style's size and weight. Omit it
+/// when the parent [Text.rich] already supplies the body style.
+List<InlineSpan> chatLinkTextSpans(
+  BuildContext context,
+  String text, {
+  TextStyle? style,
+}) {
+  if (text.isEmpty) return const [];
+  final matches = chatUrlMatches(text).toList();
+  if (matches.isEmpty) return [TextSpan(text: text, style: style)];
+
+  final linkColor =
+      (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+          .highlightText;
+  final linkStyle = (style ?? const TextStyle()).copyWith(
+    color: linkColor,
+    decoration: TextDecoration.underline,
+    decorationColor: linkColor,
+  );
+  final spans = <InlineSpan>[];
+  var cursor = 0;
+  for (final match in matches) {
+    if (match.start > cursor) {
+      spans.add(
+        TextSpan(text: text.substring(cursor, match.start), style: style),
+      );
+    }
+    final url = match.group(0)!;
+    spans.add(
+      WidgetSpan(
+        alignment: PlaceholderAlignment.baseline,
+        baseline: TextBaseline.alphabetic,
+        child: Pressable(
+          haptic: true,
+          onTap: () => confirmAndOpenChatLink(context, url),
+          child: Text(url, style: linkStyle),
+        ),
+      ),
+    );
+    cursor = match.end;
+  }
+  if (cursor < text.length) {
+    spans.add(TextSpan(text: text.substring(cursor), style: style));
+  }
+  return spans;
 }
 
 /// Confirm, then open [rawUrl] in an external browser. Trailing sentence

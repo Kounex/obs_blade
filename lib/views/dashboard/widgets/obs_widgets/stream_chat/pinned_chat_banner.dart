@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../utils/modal_handler.dart';
+import 'chat_link.dart';
 
 /// Slim banner above a native chat timeline for the channel's single
 /// pinned message. Platform-neutral: the caller supplies the visible
@@ -134,28 +135,28 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
             .highlightText;
     final pinColor = this._expanded ? highlightText : mutedColor;
 
-    Widget messageText(bool expanded) => Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: '${this.widget.senderName}: ',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: expanded ? highlightText : mutedColor,
+    Widget messageText(bool expanded) {
+      final bodyStyle = TextStyle(
+        color: expanded ? theme.textTheme.bodyMedium?.color : mutedColor,
+      );
+      return Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '${this.widget.senderName}: ',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: expanded ? highlightText : mutedColor,
+              ),
             ),
-          ),
-          TextSpan(
-            text: this.widget.text,
-            style: TextStyle(
-              color: expanded ? theme.textTheme.bodyMedium?.color : mutedColor,
-            ),
-          ),
-        ],
-      ),
-      style: theme.textTheme.bodySmall,
-      maxLines: expanded ? null : 1,
-      overflow: expanded ? null : TextOverflow.ellipsis,
-    );
+            ...chatLinkTextSpans(context, this.widget.text, style: bodyStyle),
+          ],
+        ),
+        style: theme.textTheme.bodySmall,
+        maxLines: expanded ? null : 1,
+        overflow: expanded ? null : TextOverflow.ellipsis,
+      );
+    }
 
     final reduce = AppMotion.reduce(context);
     final message = reduce

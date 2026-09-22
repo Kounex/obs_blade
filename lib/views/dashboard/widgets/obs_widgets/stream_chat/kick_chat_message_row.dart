@@ -110,46 +110,6 @@ class KickChatMessageRow extends StatelessWidget {
     ),
   );
 
-  /// Body text with tappable links — same split idiom as the Twitch row.
-  List<InlineSpan> _linkAwareTextSpans(BuildContext context, String text) {
-    if (text.isEmpty) return const [];
-    final matches = chatUrlMatches(text).toList();
-    if (matches.isEmpty) return [TextSpan(text: text)];
-
-    final linkColor =
-        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
-            .highlightText;
-    final linkStyle = TextStyle(
-      color: linkColor,
-      decoration: TextDecoration.underline,
-      decorationColor: linkColor,
-    );
-    final spans = <InlineSpan>[];
-    var cursor = 0;
-    for (final match in matches) {
-      if (match.start > cursor) {
-        spans.add(TextSpan(text: text.substring(cursor, match.start)));
-      }
-      final url = match.group(0)!;
-      spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.baseline,
-          baseline: TextBaseline.alphabetic,
-          child: Pressable(
-            haptic: true,
-            onTap: () => confirmAndOpenChatLink(context, url),
-            child: Text(url, style: linkStyle),
-          ),
-        ),
-      );
-      cursor = match.end;
-    }
-    if (cursor < text.length) {
-      spans.add(TextSpan(text: text.substring(cursor)));
-    }
-    return spans;
-  }
-
   /// Content with emote tokens swapped to inline images at the app's
   /// emote sizing (same rendering contract as the Twitch row).
   List<InlineSpan> _messageSpans(BuildContext context) {
@@ -170,7 +130,7 @@ class KickChatMessageRow extends StatelessWidget {
           ),
         );
       } else {
-        spans.addAll(this._linkAwareTextSpans(context, fragment.text));
+        spans.addAll(chatLinkTextSpans(context, fragment.text));
       }
     }
     return spans;
