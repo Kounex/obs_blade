@@ -30,6 +30,7 @@ import '../../../../pro/widgets/pro_benefits.dart';
 import '../../../../settings/widgets/accent_icon_tile.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
+import 'chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
@@ -273,6 +274,12 @@ class _StreamChatState extends State<StreamChat>
               as String;
       return '${base.replaceAll(RegExp(r'/+$'), '')}/embed/chat/readwrite';
     }
+    if (chatType == ChatType.Kick &&
+        (settingsBox.get(SettingsKeys.SelectedKickUsername.name)) != null) {
+      /// Kick's own documented chat-dock URL (their OBS help article) -
+      /// dark-only UI, readable logged out, no frame restrictions
+      return 'https://kick.com/popout/${settingsBox.get(SettingsKeys.SelectedKickUsername.name)}/chat';
+    }
     return 'about:blank';
   }
 
@@ -286,8 +293,11 @@ class _StreamChatState extends State<StreamChat>
     bool owncastActive =
         chatType == ChatType.Owncast &&
         settingsBox.get(SettingsKeys.SelectedOwncastUsername.name) != null;
+    bool kickActive =
+        chatType == ChatType.Kick &&
+        settingsBox.get(SettingsKeys.SelectedKickUsername.name) != null;
 
-    return twitchActive || youtubeActive || owncastActive;
+    return twitchActive || youtubeActive || owncastActive || kickActive;
   }
 
   @override
@@ -321,8 +331,10 @@ class _StreamChatState extends State<StreamChat>
               SettingsKeys.SelectedTwitchUsername,
               SettingsKeys.SelectedYouTubeUsername,
               SettingsKeys.SelectedOwncastUsername,
+              SettingsKeys.SelectedKickUsername,
               SettingsKeys.YouTubeUsernames,
               SettingsKeys.OwncastUsernames,
+              SettingsKeys.KickUsernames,
               SettingsKeys.YouTubeApiKey,
             ],
             builder: (context, settingsBox, child) {
@@ -582,6 +594,9 @@ class _StreamChatState extends State<StreamChat>
                       .toString() +
                   settingsBox
                       .get(SettingsKeys.SelectedOwncastUsername.name)
+                      .toString() +
+                  settingsBox
+                      .get(SettingsKeys.SelectedKickUsername.name)
                       .toString(),
             ),
             controller: _webController!,
@@ -738,6 +753,7 @@ class _ChatEmptyState extends StatelessWidget {
         ChatType.Owncast => AddEditOwncastUsernameDialog(
           settingsBox: settingsBox,
         ),
+        ChatType.Kick => AddEditKickUsernameDialog(settingsBox: settingsBox),
       },
     );
   }

@@ -39,6 +39,10 @@ class UsernameDropdown extends StatelessWidget {
                       defaultValue: <String, String>{},
                     )
                     .keys,
+              ChatType.Kick => settingsBox.get(
+                SettingsKeys.KickUsernames.name,
+                defaultValue: <String>[],
+              ),
             }
             .map<DropdownMenuItem<String>>(
               (chatUsername) => DropdownMenuItem<String>(
@@ -88,6 +92,9 @@ class UsernameDropdown extends StatelessWidget {
                   ChatType.Owncast => settingsBox.get(
                     SettingsKeys.SelectedOwncastUsername.name,
                   ),
+                  ChatType.Kick => settingsBox.get(
+                    SettingsKeys.SelectedKickUsername.name,
+                  ),
                 },
                 isExpanded: true,
                 isDense: true,
@@ -111,6 +118,7 @@ class UsernameDropdown extends StatelessWidget {
                       SettingsKeys.SelectedYouTubeUsername.name,
                     ChatType.Owncast =>
                       SettingsKeys.SelectedOwncastUsername.name,
+                    ChatType.Kick => SettingsKeys.SelectedKickUsername.name,
                   }, chatUsername);
                 },
               ),

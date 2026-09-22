@@ -58,6 +58,8 @@ class ChatUsernameBar extends StatelessWidget {
         SettingsKeys.SelectedYouTubeUsername,
         SettingsKeys.OwncastUsernames,
         SettingsKeys.SelectedOwncastUsername,
+        SettingsKeys.KickUsernames,
+        SettingsKeys.SelectedKickUsername,
       ],
       builder: (context, settingsBox, child) {
         final ChatType chatType = settingsBox.get(

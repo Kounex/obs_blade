@@ -9,5 +9,6 @@ extension ChatTypeBrand on ChatType {
     ChatType.Twitch => const Color(0xFF6441a5),
     ChatType.YouTube => const Color(0xFFFF0000),
     ChatType.Owncast => null,
+    ChatType.Kick => const Color(0xFF53FC18),
   };
 }

@@ -98,6 +98,13 @@ enum SettingsKeys {
   /// [String]: The currently selected owncast username to use for the owncast chat
   SelectedOwncastUsername,
 
+  /// [List<String>]: All entered kick channel slugs by the user
+  KickUsernames,
+
+  /// [String]: The currently selected kick channel slug to use for the
+  /// kick chat
+  SelectedKickUsername,
+
   /// [bool]: Show the broadcaster badge in the native Twitch chat.
   /// Active by default
   TwitchChatBadgeBroadcaster,
@@ -353,6 +360,8 @@ enum SettingsKeys {
         'selected-youtube-native-channel-id',
     SettingsKeys.OwncastUsernames: 'owncast-usernames',
     SettingsKeys.SelectedOwncastUsername: 'selected-owncast-username',
+    SettingsKeys.KickUsernames: 'kick-usernames',
+    SettingsKeys.SelectedKickUsername: 'selected-kick-username',
     SettingsKeys.TwitchChatBadgeBroadcaster: 'twitch-chat-badge-broadcaster',
     SettingsKeys.TwitchChatBadgeModerator: 'twitch-chat-badge-moderator',
     SettingsKeys.TwitchChatBadgeVip: 'twitch-chat-badge-vip',

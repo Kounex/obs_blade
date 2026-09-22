@@ -379,6 +379,7 @@ class _ChatHeaderToggleButton extends StatelessWidget {
         SettingsKeys.SelectedTwitchUsername,
         SettingsKeys.SelectedYouTubeUsername,
         SettingsKeys.SelectedOwncastUsername,
+        SettingsKeys.SelectedKickUsername,
       ],
       builder: (context, settingsBox, child) {
         final ChatType chatType = settingsBox.get(
@@ -392,6 +393,8 @@ class _ChatHeaderToggleButton extends StatelessWidget {
             settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name) != null,
           ChatType.Owncast =>
             settingsBox.get(SettingsKeys.SelectedOwncastUsername.name) != null,
+          ChatType.Kick =>
+            settingsBox.get(SettingsKeys.SelectedKickUsername.name) != null,
         };
         return _OverlayToggleButton(
           icon: Icons.tune,

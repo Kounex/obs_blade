@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 
@@ -36,6 +37,9 @@ class UsernameActionRow extends StatelessWidget {
       ChatType.Owncast => this.settingsBox.get(
         SettingsKeys.SelectedOwncastUsername.name,
       ),
+      ChatType.Kick => this.settingsBox.get(
+        SettingsKeys.SelectedKickUsername.name,
+      ),
     };
 
     return Container(
@@ -66,6 +70,9 @@ class UsernameActionRow extends StatelessWidget {
                 ChatType.Owncast => AddEditOwncastUsernameDialog(
                   settingsBox: this.settingsBox,
                 ),
+                ChatType.Kick => AddEditKickUsernameDialog(
+                  settingsBox: this.settingsBox,
+                ),
               },
             ),
           ),
@@ -89,6 +96,10 @@ class UsernameActionRow extends StatelessWidget {
                         username: selectedChatUsername,
                       ),
                       ChatType.Owncast => AddEditOwncastUsernameDialog(
+                        settingsBox: this.settingsBox,
+                        username: selectedChatUsername,
+                      ),
+                      ChatType.Kick => AddEditKickUsernameDialog(
                         settingsBox: this.settingsBox,
                         username: selectedChatUsername,
                       ),

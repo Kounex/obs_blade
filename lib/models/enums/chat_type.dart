@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter/widgets.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/icons/custom_flutter_icons.dart';
@@ -16,6 +17,12 @@ enum ChatType {
 
   @HiveField(2)
   Owncast,
+
+  /// Append-only: Hive serializes the field index byte - never reorder,
+  /// never reuse. Old builds decode an unknown index as Twitch (adapter
+  /// default), a downgrade footgun we accept over a crash.
+  @HiveField(3)
+  Kick,
 }
 
 extension ChatTypeFunctions on ChatType {
@@ -23,11 +30,16 @@ extension ChatTypeFunctions on ChatType {
     ChatType.Twitch: 'Twitch',
     ChatType.YouTube: 'YouTube',
     ChatType.Owncast: 'Owncast',
+    ChatType.Kick: 'Kick',
   }[this]!;
 
   IconData get icon => const {
     ChatType.Twitch: JamIcons.twitch,
     ChatType.YouTube: JamIcons.youtube,
     ChatType.Owncast: CustomFlutterIcons.owncast_logo,
+
+    /// No Kick glyph in either icon font (fluttericon font regen is a
+    /// manual flow) - bolt matches Kick's lightning wordmark
+    ChatType.Kick: Icons.bolt,
   }[this]!;
 }

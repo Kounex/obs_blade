@@ -78,6 +78,17 @@ class DeleteUsernameDialog extends StatelessWidget {
                 ? owncastUsernames[owncastUsernames.keys.last]
                 : null,
           );
+        } else if (chatType == ChatType.Kick) {
+          List<String> kickUsernames = this.settingsBox.get(
+            SettingsKeys.KickUsernames.name,
+            defaultValue: <String>[],
+          );
+          kickUsernames.removeAt(kickUsernames.indexOf(this.username));
+          this.settingsBox.put(SettingsKeys.KickUsernames.name, kickUsernames);
+          this.settingsBox.put(
+            SettingsKeys.SelectedKickUsername.name,
+            kickUsernames.isNotEmpty ? kickUsernames.last : null,
+          );
         }
       },
     );
