@@ -347,7 +347,15 @@ enum SettingsKeys {
 
   /// [bool]: If the user saw the message regarding the technical preview state of
   /// the hotkey feature and doesn't want to see this warning again
-  DontShowHotkeysTechnicalPreviewWarning;
+  DontShowHotkeysTechnicalPreviewWarning,
+
+  /// [bool]: Show sub / gift-sub chat notifications in native Kick chat.
+  /// Active by default
+  KickChatNoticeSubs,
+
+  /// [bool]: Show host chat notifications in native Kick chat.
+  /// Active by default
+  KickChatNoticeHosts;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -436,5 +444,7 @@ enum SettingsKeys {
         'dont-show-consider-blacksmith-before-tip',
     SettingsKeys.DontShowHotkeysTechnicalPreviewWarning:
         'dont-show-hotkeys-technical-preview-warning',
+    SettingsKeys.KickChatNoticeSubs: 'kick-chat-notice-subs',
+    SettingsKeys.KickChatNoticeHosts: 'kick-chat-notice-hosts',
   }[this]!;
 }

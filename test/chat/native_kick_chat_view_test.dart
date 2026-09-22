@@ -9,6 +9,7 @@ import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_mod_action_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_user_card_sheet.dart';
@@ -171,6 +172,48 @@ void main() {
 
     expect(find.text('Chat was cleared by a moderator'), findsOneWidget);
   });
+
+  testWidgets('a sub notice renders its content', (tester) async {
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.add(
+      KickChatMessage(
+        id: 'system-sub-1',
+        type: KickChatMessageType.system,
+        content: 'Loyal subscribed — 6 months',
+        createdAt: DateTime.utc(2026, 9, 22, 12),
+      ),
+    );
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(find.text('Loyal subscribed — 6 months'), findsOneWidget);
+  });
+
+  testWidgets(
+    'hiding sub/gift notices via settings drops them from the timeline',
+    (tester) async {
+      await tester.runAsync(
+        () => Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.KickChatNoticeSubs.name, false),
+      );
+      store.chatConnection = KickChatConnectionState.connected;
+      store.messages.addAll([
+        kickMessage('m1'),
+        KickChatMessage(
+          id: 'system-sub-1',
+          type: KickChatMessageType.system,
+          content: 'Loyal subscribed',
+          createdAt: DateTime.utc(2026, 9, 22, 12),
+        ),
+      ]);
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+
+      expect(find.text('Loyal subscribed'), findsNothing);
+      expect(renderedRichText(tester), contains('text m1'));
+    },
+  );
 
   testWidgets('emote tokens fall back to their bracketed name when the '
       'image cannot load', (tester) async {

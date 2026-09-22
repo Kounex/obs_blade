@@ -154,6 +154,15 @@ class NativeChatOptionsSheet extends StatefulWidget {
     ('First message', SettingsKeys.TwitchChatNoticeFirstMessage),
   ];
 
+  /// In-chat system-line category toggles for the smaller Kick notice
+  /// surface (no streaks/raids/announcements/bits/charity — Kick's
+  /// Pusher catalog has no such events; `/clear` is not listed here,
+  /// same as Twitch).
+  static const List<(String, SettingsKeys)> kickNoticeRows = [
+    ('Subs & gifts', SettingsKeys.KickChatNoticeSubs),
+    ('Hosts', SettingsKeys.KickChatNoticeHosts),
+  ];
+
   @override
   State<NativeChatOptionsSheet> createState() => _NativeChatOptionsSheetState();
 }
@@ -162,6 +171,8 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   _OptionsPage _page = _OptionsPage.root;
 
   bool get _isTwitch => this.widget.chatType == ChatType.Twitch;
+
+  bool get _isKick => this.widget.chatType == ChatType.Kick;
 
   void _open(_OptionsPage page) => this.setState(() => this._page = page);
 
@@ -189,6 +200,9 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
               _OptionsPage.badges => _BadgesPage(onBack: this._back),
               _OptionsPage.eventMessages => _EventMessagesPage(
                 onBack: this._back,
+                rows: this._isKick
+                    ? NativeChatOptionsSheet.kickNoticeRows
+                    : NativeChatOptionsSheet.twitchNoticeRows,
               ),
               _OptionsPage.debugSamples => _DebugSamplesPage(
                 onBack: this._back,
@@ -242,6 +256,13 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
               onTap: () => this._open(_OptionsPage.debugSamples),
             ),
         ],
+        if (this._isKick)
+          this._navRow(
+            context,
+            label: 'Event messages',
+            subtitle: 'Subs, gifts, and host notices',
+            onTap: () => this._open(_OptionsPage.eventMessages),
+          ),
       ],
     );
   }
@@ -740,11 +761,12 @@ class _BadgesPage extends StatelessWidget {
 
 class _EventMessagesPage extends StatelessWidget {
   final VoidCallback onBack;
+  final List<(String, SettingsKeys)> rows;
 
-  const _EventMessagesPage({required this.onBack});
+  const _EventMessagesPage({required this.onBack, required this.rows});
 
   void _reset(Box settingsBox) {
-    for (final row in NativeChatOptionsSheet.twitchNoticeRows) {
+    for (final row in this.rows) {
       settingsBox.put(row.$2.name, true);
     }
   }
@@ -753,11 +775,9 @@ class _EventMessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: NativeChatOptionsSheet.twitchNoticeRows
-          .map((row) => row.$2)
-          .toList(),
+      rebuildKeys: this.rows.map((row) => row.$2).toList(),
       builder: (context, settingsBox, child) {
-        final rows = NativeChatOptionsSheet.twitchNoticeRows;
+        final rows = this.rows;
         return _PageScaffold(
           title: 'Event messages',
           description:

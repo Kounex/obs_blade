@@ -215,6 +215,49 @@ void main() {
     await closeHiveInZone(tester);
   });
 
+  testWidgets('Kick root only lists Appearance + Event messages', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
+    );
+
+    expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('Event messages'), findsOneWidget);
+    expect(find.text('Subs, gifts, and host notices'), findsOneWidget);
+    expect(find.text('Emotes'), findsNothing);
+    expect(find.text('Badges'), findsNothing);
+  });
+
+  testWidgets('Kick Event messages page shows the smaller row set and '
+      'writes Kick-prefixed keys', (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
+    );
+
+    await tester.tap(find.text('Event messages'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Subs & gifts'), findsOneWidget);
+    expect(find.text('Hosts'), findsOneWidget);
+    expect(find.text('First message'), findsNothing);
+    expect(find.text('Raids'), findsNothing);
+
+    final subsSwitch = find.descendant(
+      of: find.widgetWithText(ListTile, 'Subs & gifts'),
+      matching: find.byType(BaseAdaptiveSwitch),
+    );
+    await tester.tap(subsSwitch);
+    await tester.pump();
+    expect(settingsBox().get(SettingsKeys.KickChatNoticeSubs.name), isFalse);
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(settingsBox().get(SettingsKeys.KickChatNoticeSubs.name), isTrue);
+
+    await closeHiveInZone(tester);
+  });
+
   testWidgets('the button opens the sheet', (tester) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsButton(chatType: ChatType.Twitch)),

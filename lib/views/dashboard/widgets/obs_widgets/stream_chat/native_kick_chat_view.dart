@@ -12,6 +12,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'kick_chat_message_row.dart';
+import 'kick_chat_notice_visibility.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 
@@ -258,9 +259,16 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
             SettingsKeys.TwitchChatTextSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.KickChatNoticeSubs,
+            SettingsKeys.KickChatNoticeHosts,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
+            final visibleItems = items
+                .where(
+                  (message) => isKickChatNoticeVisible(settingsBox, message.id),
+                )
+                .toList();
             final timeline = Stack(
               children: [
                 ListView.separated(
@@ -269,7 +277,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                     horizontal: AppSpacing.sm,
                     vertical: AppSpacing.xs,
                   ),
-                  itemCount: items.length,
+                  itemCount: visibleItems.length,
                   separatorBuilder: (context, index) => separators
                       ? Divider(
                           height: 1.0,
@@ -280,7 +288,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                         )
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
-                    final message = items[index];
+                    final message = visibleItems[index];
                     final authorId = message.authorId;
                     return KickChatMessageRow(
                       key: ValueKey(message.id),
