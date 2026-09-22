@@ -128,6 +128,8 @@ Numeric rate limits are unpublished; handle 429.
   copies the address-bar URL back). Custom scheme / loopback stay
   available as a later UX upgrade.
 - Pusher key longevity (uncontractual) — single constant + fallback comment.
-- `api/v2/*` is Cloudflare-fronted; datacenter IPs can 403 — fine on device.
+- `api/v2/*` is Cloudflare-fronted. A browser User-Agent from dart:io is
+  blocked by the security policy (home networks included); reads send
+  `User-Agent: OBSBlade`. Datacenter IPs can still 403.
 - Kick Developer Terms are gated behind app creation — review before store
   submission of the write path.

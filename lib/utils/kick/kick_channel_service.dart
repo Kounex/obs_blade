@@ -6,12 +6,11 @@ import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 
 const String _kApiBase = 'https://kick.com/api/v2';
 
-/// kick.com sits behind Cloudflare — without a browser-ish User-Agent the
-/// public API answers 403 even though it needs no auth.
-const String kKickUserAgent =
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
-    'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 '
-    'Mobile/15E148 Safari/604.1';
+/// kick.com sits behind Cloudflare. A browser User-Agent on dart:io's TLS
+/// fingerprint is rejected ("Request blocked by security policy", verified
+/// 2026-09-23 — the same request with no browser agent returns 200). Reads
+/// send this plain app agent instead. Do not spoof Safari or Chrome here.
+const String kKickUserAgent = 'OBSBlade';
 
 /// Failure of a kick.com API call the UI can surface via [message].
 class KickApiException implements Exception {
