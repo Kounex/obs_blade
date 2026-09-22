@@ -478,6 +478,57 @@ void main() {
     });
   });
 
+  group('selectedChannelViewerCount', () {
+    test(
+      'picks up concurrentViewers resolved alongside the live chat id',
+      () async {
+        configure();
+        chatService.liveChatIds['video-a-001'] = 'chat-a';
+        chatService.viewerCounts['video-a-001'] = 42;
+        chatService.pollResponses.add(page(const []));
+
+        await store.init();
+        await until(() => store.selectedChannelViewerCount != null);
+
+        expect(store.selectedChannelViewerCount, 42);
+      },
+    );
+
+    test('null when the video has no active chat (not live)', () async {
+      configure();
+      // No liveChatIds entry for video-a-001 → resolves to not-live.
+      chatService.viewerCounts['video-a-001'] = 999;
+
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.offline,
+      );
+
+      expect(store.selectedChannelViewerCount, isNull);
+    });
+
+    test(
+      'is restored from the buffer on switch-back, not re-resolved',
+      () async {
+        configure();
+        chatService.liveChatIds['video-a-001'] = 'chat-a';
+        chatService.viewerCounts['video-a-001'] = 10;
+        chatService.liveChatIds['video-b-002'] = 'chat-b';
+        chatService.viewerCounts['video-b-002'] = 20;
+        chatService.pollResponses.add(page(const []));
+
+        await store.init();
+        await until(() => store.selectedChannelViewerCount == 10);
+
+        await store.selectChannel('B');
+        await until(() => store.selectedChannelViewerCount == 20);
+
+        await store.selectChannel('A');
+        expect(store.selectedChannelViewerCount, 10);
+      },
+    );
+  });
+
   group('sendChatMessage', () {
     test('signed out → read-only no-op', () async {
       configure();

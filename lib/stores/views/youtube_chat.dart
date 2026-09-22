@@ -62,10 +62,15 @@ class _ChannelBuffer {
   String? liveChatId;
   String? nextPageToken;
 
+  /// Snapshot taken when [liveChatId] was resolved — not re-polled
+  /// afterward (see [YouTubeLiveStreamingDetails]).
+  int? viewerCount;
+
   _ChannelBuffer({
     List<YouTubeChatMessage>? messages,
     this.liveChatId,
     this.nextPageToken,
+    this.viewerCount,
   }) : messages = messages ?? <YouTubeChatMessage>[];
 }
 
@@ -136,6 +141,12 @@ abstract class _YouTubeChatStore with Store {
 
   @observable
   YouTubeChatConnectionState chatConnection = YouTubeChatConnectionState.idle;
+
+  /// Concurrent-viewer snapshot for [selectedChannelLabel] — resolved
+  /// once alongside `activeLiveChatId` (see [_ChannelBuffer.viewerCount]);
+  /// not re-polled while connected.
+  @observable
+  int? selectedChannelViewerCount;
 
   @observable
   String? chatError;
@@ -486,10 +497,12 @@ abstract class _YouTubeChatStore with Store {
         return;
       }
       try {
-        buffer.liveChatId = await this._chatService.getActiveLiveChatId(
+        final resolved = await this._chatService.resolveLiveStreamingDetails(
           videoId,
           apiKey: apiKey,
         );
+        buffer.liveChatId = resolved.liveChatId;
+        buffer.viewerCount = resolved.concurrentViewers;
       } on YouTubeQuotaExceededException {
         if (superseded()) return;
         runInAction(() {
@@ -511,12 +524,14 @@ abstract class _YouTubeChatStore with Store {
       if (superseded()) return;
       if (buffer.liveChatId == null) {
         /// Video is not live (or has chat disabled) — a normal state,
-        /// not an error.
+        /// not an error. Also clears any stale viewer count.
         runInAction(() {
+          this.selectedChannelViewerCount = null;
           this.chatConnection = YouTubeChatConnectionState.offline;
         });
         return;
       }
+      runInAction(() => this.selectedChannelViewerCount = buffer.viewerCount);
     }
 
     int lastIntervalMillis = 5000;
@@ -699,6 +714,7 @@ abstract class _YouTubeChatStore with Store {
         _ChannelBuffer.new,
       );
       this.messages.addAll(buffer.messages);
+      this.selectedChannelViewerCount = buffer.viewerCount;
       if (this._isProResolver()) {
         this.chatConnection = YouTubeChatConnectionState.connecting;
         this.chatError = null;
@@ -711,6 +727,7 @@ abstract class _YouTubeChatStore with Store {
         this.chatConnection = YouTubeChatConnectionState.idle;
       }
     } else {
+      this.selectedChannelViewerCount = null;
       this.chatConnection = YouTubeChatConnectionState.idle;
     }
   }

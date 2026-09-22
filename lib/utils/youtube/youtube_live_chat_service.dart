@@ -33,6 +33,18 @@ class YouTubeLiveChatPage {
   });
 }
 
+/// Result of a `videos.list?part=liveStreamingDetails` lookup — both
+/// fields ride the same 1-quota-unit call. [concurrentViewers] is a
+/// point-in-time snapshot taken when the chat connects; nothing re-polls
+/// it afterward (kept intentionally simple — see [YouTubeLiveChatService
+/// .resolveLiveStreamingDetails]).
+class YouTubeLiveStreamingDetails {
+  final String? liveChatId;
+  final int? concurrentViewers;
+
+  const YouTubeLiveStreamingDetails({this.liveChatId, this.concurrentViewers});
+}
+
 /// Public channel facts for the user card (`channels.list?part=snippet`,
 /// 1 quota unit) — a plain API-key read, no sign-in required.
 class YouTubeChannelInfo {
@@ -256,9 +268,11 @@ class YouTubeLiveChatService {
     }
   }
 
-  /// `videos.list?part=liveStreamingDetails` — resolves a video id to its
-  /// `activeLiveChatId` (1 quota unit). Null = not live / no active chat.
-  Future<String?> getActiveLiveChatId(
+  /// `videos.list?part=liveStreamingDetails` — resolves a video id's
+  /// `activeLiveChatId` and `concurrentViewers` (1 quota unit total,
+  /// both fields ride the same call). Empty details = not live / no
+  /// active chat (both fields null).
+  Future<YouTubeLiveStreamingDetails> resolveLiveStreamingDetails(
     String videoId, {
     String? apiKey,
     String? accessToken,
@@ -275,12 +289,38 @@ class YouTubeLiveChatService {
     }
     final body = json.decode(response.body) as Map<String, dynamic>;
     final items = body['items'];
-    if (items is! List || items.isEmpty) return null;
+    if (items is! List || items.isEmpty) {
+      return const YouTubeLiveStreamingDetails();
+    }
     final details =
         (items.first as Map<String, dynamic>)['liveStreamingDetails'];
-    if (details is! Map<String, dynamic>) return null;
-    return details['activeLiveChatId'] as String?;
+    if (details is! Map<String, dynamic>) {
+      return const YouTubeLiveStreamingDetails();
+    }
+
+    /// `concurrentViewers` is a YouTube `uint64`, serialized as a JSON
+    /// string (same reason `id`/`activeLiveChatId` are strings) — parse
+    /// defensively in case it ever arrives as a raw number instead.
+    final rawViewers = details['concurrentViewers'];
+    return YouTubeLiveStreamingDetails(
+      liveChatId: details['activeLiveChatId'] as String?,
+      concurrentViewers: rawViewers == null
+          ? null
+          : int.tryParse(rawViewers.toString()),
+    );
   }
+
+  /// Back-compat convenience over [resolveLiveStreamingDetails] for
+  /// callers that only need the chat id.
+  Future<String?> getActiveLiveChatId(
+    String videoId, {
+    String? apiKey,
+    String? accessToken,
+  }) async => (await this.resolveLiveStreamingDetails(
+    videoId,
+    apiKey: apiKey,
+    accessToken: accessToken,
+  )).liveChatId;
 
   /// `channels.list?part=snippet` — public channel facts for the user
   /// card (1 quota unit; a plain API-key read, no bearer token needed).

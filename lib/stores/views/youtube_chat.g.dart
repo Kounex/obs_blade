@@ -111,6 +111,28 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     });
   }
 
+  late final _$selectedChannelViewerCountAtom = Atom(
+    name: '_YouTubeChatStore.selectedChannelViewerCount',
+    context: context,
+  );
+
+  @override
+  int? get selectedChannelViewerCount {
+    _$selectedChannelViewerCountAtom.reportRead();
+    return super.selectedChannelViewerCount;
+  }
+
+  @override
+  set selectedChannelViewerCount(int? value) {
+    _$selectedChannelViewerCountAtom.reportWrite(
+      value,
+      super.selectedChannelViewerCount,
+      () {
+        super.selectedChannelViewerCount = value;
+      },
+    );
+  }
+
   late final _$chatErrorAtom = Atom(
     name: '_YouTubeChatStore.chatError',
     context: context,
@@ -378,6 +400,7 @@ authError: ${authError},
 pendingUserCode: ${pendingUserCode},
 pendingVerificationUrl: ${pendingVerificationUrl},
 chatConnection: ${chatConnection},
+selectedChannelViewerCount: ${selectedChannelViewerCount},
 chatError: ${chatError},
 chatQuotaExhausted: ${chatQuotaExhausted},
 sendingChat: ${sendingChat},

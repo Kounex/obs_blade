@@ -352,6 +352,92 @@ void main() {
     });
   });
 
+  group('resolveLiveStreamingDetails', () {
+    test('parses both activeLiveChatId and concurrentViewers', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          json.encode({
+            'items': [
+              {
+                'id': 'video-1',
+                'liveStreamingDetails': {
+                  'activeLiveChatId': 'chat-1',
+                  'concurrentViewers': '1234',
+                },
+              },
+            ],
+          }),
+          200,
+        ),
+      );
+
+      final result = await serviceWith(
+        client,
+      ).resolveLiveStreamingDetails('video-1', apiKey: 'api-key-1');
+
+      expect(result.liveChatId, 'chat-1');
+      expect(result.concurrentViewers, 1234);
+    });
+
+    test('concurrentViewers null when the video is not live', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          json.encode({
+            'items': [
+              {'id': 'video-2'},
+            ],
+          }),
+          200,
+        ),
+      );
+
+      final result = await serviceWith(
+        client,
+      ).resolveLiveStreamingDetails('video-2', apiKey: 'api-key-1');
+
+      expect(result.liveChatId, isNull);
+      expect(result.concurrentViewers, isNull);
+    });
+
+    test('tolerates concurrentViewers arriving as a raw number', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          json.encode({
+            'items': [
+              {
+                'id': 'video-3',
+                'liveStreamingDetails': {
+                  'activeLiveChatId': 'chat-3',
+                  'concurrentViewers': 42,
+                },
+              },
+            ],
+          }),
+          200,
+        ),
+      );
+
+      final result = await serviceWith(
+        client,
+      ).resolveLiveStreamingDetails('video-3', apiKey: 'api-key-1');
+
+      expect(result.concurrentViewers, 42);
+    });
+
+    test('empty items returns an empty result, not an error', () async {
+      final client = MockClient(
+        (request) async => http.Response(json.encode({'items': []}), 200),
+      );
+
+      final result = await serviceWith(
+        client,
+      ).resolveLiveStreamingDetails('missing', apiKey: 'api-key-1');
+
+      expect(result.liveChatId, isNull);
+      expect(result.concurrentViewers, isNull);
+    });
+  });
+
   group('fetchChannel', () {
     test('parses the snippet: title, thumbnail, publishedAt', () async {
       final client = MockClient((request) async {

@@ -72,6 +72,9 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   /// videoId → activeLiveChatId; a missing key resolves to null (not
   /// live / no active chat).
   final Map<String, String?> liveChatIds = <String, String>{};
+
+  /// videoId → concurrentViewers; a missing key resolves to null.
+  final Map<String, int?> viewerCounts = <String, int?>{};
   int resolveCalls = 0;
   Object? resolveThrows;
 
@@ -136,6 +139,20 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
     this.resolveCalls++;
     if (this.resolveThrows != null) throw this.resolveThrows!;
     return this.liveChatIds[videoId];
+  }
+
+  @override
+  Future<YouTubeLiveStreamingDetails> resolveLiveStreamingDetails(
+    String videoId, {
+    String? apiKey,
+    String? accessToken,
+  }) async {
+    this.resolveCalls++;
+    if (this.resolveThrows != null) throw this.resolveThrows!;
+    return YouTubeLiveStreamingDetails(
+      liveChatId: this.liveChatIds[videoId],
+      concurrentViewers: this.viewerCounts[videoId],
+    );
   }
 
   @override

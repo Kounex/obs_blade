@@ -554,6 +554,11 @@ class _StreamChatState extends State<StreamChat>
             channelIsLive:
                 youTubeStore.chatConnection ==
                 YouTubeChatConnectionState.connected,
+            channelViewerCount:
+                youTubeStore.chatConnection ==
+                    YouTubeChatConnectionState.connected
+                ? youTubeStore.selectedChannelViewerCount
+                : null,
             onRetry: youTubeStore.connectChat,
             onConnect: () => configured
                 ? startYouTubeLogin(context)
