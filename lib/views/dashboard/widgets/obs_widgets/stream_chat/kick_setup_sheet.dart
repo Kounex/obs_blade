@@ -57,6 +57,11 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
 
   bool _openingBrowser = false;
   bool _connecting = false;
+  bool _pollInFlight = false;
+  Timer? _poll;
+
+  bool get _usesProxy =>
+      kKickOAuthClientId.isNotEmpty && kKickOAuthClientSecret.isEmpty;
 
   bool get _storeRegistered => GetIt.instance.isRegistered<KickChatStore>();
 
@@ -84,6 +89,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
 
   @override
   void dispose() {
+    this._poll?.cancel();
     this._clientIdController.dispose();
     this._clientSecretController.dispose();
     this._redirectController.dispose();
@@ -116,7 +122,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
     final store = this._store;
     if (store == null || this._openingBrowser) return;
     if (kKickOAuthClientId.isEmpty) this._persist();
-    final uri = store.beginLogin();
+    final uri = await store.beginLogin();
     if (uri == null || !this.mounted) return;
     this.setState(() => this._openingBrowser = true);
     try {
@@ -124,9 +130,30 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
         uri,
         mode: launcher.LaunchMode.externalApplication,
       );
+      if (this._usesProxy && this.mounted) this._startPoll();
     } finally {
       if (this.mounted) this.setState(() => this._openingBrowser = false);
     }
+  }
+
+  void _startPoll() {
+    this._poll?.cancel();
+    this._poll = Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (this._pollInFlight) return;
+      this._pollInFlight = true;
+      try {
+        final result = await this._store?.pollProxyLogin();
+        if (!this.mounted) return;
+        if (result == true) {
+          this._poll?.cancel();
+          Navigator.of(this.context).pop();
+        } else if (result == false) {
+          this._poll?.cancel();
+        }
+      } finally {
+        this._pollInFlight = false;
+      }
+    });
   }
 
   /// "Connect" — the pasted redirect URL completes the login; on success
@@ -328,8 +355,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                         appClient
                             ? 'Reading Kick chat needs no account. Sending '
                                   'messages and moderating sign you in with '
-                                  'OBS Blade\'s Kick app. Kick has no device '
-                                  'login, so the last step is pasting a URL.'
+                                  'OBS Blade\'s Kick app.'
                             : 'Reading Kick chat needs no account. Sending '
                                   'messages and moderating need a Kick '
                                   'sign-in — and Kick has no device login, '
@@ -346,8 +372,16 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                         this._stepRow(
                           context,
                           '2',
-                          'Paste the URL your browser lands on (it won\'t load — that\'s expected)',
+                          'Come back here. Sign-in finishes on its own.',
                         ),
+                        if (store.authState == KickAuthState.awaitingRedirect)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.sm),
+                            child: Text(
+                              'Waiting for approval in the browser…',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
                       ] else ...[
                         this._stepRow(
                           context,
@@ -487,9 +521,10 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                         label: 'Open Kick login',
                         onTap: this._openingBrowser ? null : this._openLogin,
                       ),
-                      if (store.authState == KickAuthState.awaitingRedirect ||
-                          store.authState == KickAuthState.signingIn ||
-                          store.authState == KickAuthState.error) ...[
+                      if (!appClient &&
+                          (store.authState == KickAuthState.awaitingRedirect ||
+                              store.authState == KickAuthState.signingIn ||
+                              store.authState == KickAuthState.error)) ...[
                         const SizedBox(height: AppSpacing.md),
                         NativeChatTextField(
                           controller: this._redirectController,

@@ -674,13 +674,13 @@ void main() {
       expect(authBox().get(KickAuth.kBoxKey), isNotNull);
     });
 
-    test('beginLogin without a client id surfaces authError', () async {
-      final uri = store.beginLogin();
+    test('beginLogin returns the authorize URL for the app client', () async {
+      final uri = await store.beginLogin();
 
-      expect(uri, isNull);
-      expect(store.authState, KickAuthState.error);
-      expect(store.authError, isNotNull);
-      expect(authService.beginSessionCalls, 0);
+      expect(uri, isNotNull);
+      expect(uri!.queryParameters['redirect_uri'], kKickOAuthRedirectUri);
+      expect(store.authState, KickAuthState.awaitingRedirect);
+      expect(authService.beginSessionCalls, 1);
     });
 
     test(
@@ -688,7 +688,7 @@ void main() {
       () async {
         settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
 
-        final uri = store.beginLogin();
+        final uri = await store.beginLogin();
         expect(uri, isNotNull);
         expect(store.authState, KickAuthState.awaitingRedirect);
         expect(authService.beginSessionCalls, 1);
@@ -714,7 +714,7 @@ void main() {
       'completeLogin rejects a state mismatch and persists nothing',
       () async {
         settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
-        store.beginLogin();
+        await store.beginLogin();
 
         final ok = await store.completeLogin(
           'https://localhost/kick-callback?code=code-1&state=wrong',
@@ -730,7 +730,7 @@ void main() {
 
     test('completeLogin surfaces an exchange failure', () async {
       settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
-      store.beginLogin();
+      await store.beginLogin();
       authService.exchangeThrows = const KickAuthException(
         'Token exchange failed (400)',
         statusCode: 400,

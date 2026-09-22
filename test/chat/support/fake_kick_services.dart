@@ -115,6 +115,12 @@ class FakeKickAuthService extends KickAuthService {
   final List<String> revokedTokens = <String>[];
 
   @override
+  Future<void> registerProxyLogin(KickPkceSession session) async {}
+
+  @override
+  Future<KickToken?> pollProxyLogin(KickPkceSession session) async => null;
+
+  @override
   KickPkceSession beginSession() {
     this.beginSessionCalls++;
     return kSession;
@@ -122,7 +128,9 @@ class FakeKickAuthService extends KickAuthService {
 
   @override
   Uri authorizeUrl(KickPkceSession session) => Uri.parse(
-    'https://id.kick.com/oauth/authorize?state=${session.state}&code_challenge=${session.codeChallenge}',
+    'https://id.kick.com/oauth/authorize?state=${session.state}'
+    '&code_challenge=${session.codeChallenge}'
+    '&redirect_uri=$kKickOAuthRedirectUri',
   );
 
   @override

@@ -12,6 +12,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/kick/kick_api_service.dart';
+import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
@@ -314,20 +315,51 @@ abstract class _KickChatStore with Store {
     this.authState = KickAuthState.signedIn;
   }
 
-  /// Step 1 of the manual-paste PKCE login: create the PKCE session and
-  /// return the authorize URL for the sheet to open in the browser. Null
-  /// (with [authError] set) when no OAuth client id is configured.
+  /// Step 1 of login: create the PKCE session, register it with the
+  /// exchange host when this build uses the app-owned client, and return
+  /// the authorize URL. Null (with [authError] set) when no client id is
+  /// configured or the host rejects the registration.
   @action
-  Uri? beginLogin() {
+  Future<Uri?> beginLogin() async {
     if (!this.isConfigured) {
       this.authState = KickAuthState.error;
       this.authError = 'Add your Kick app\'s client id below first';
       return null;
     }
     this._pendingLogin = this._authService.beginSession();
+    if (kKickOAuthClientId.isNotEmpty && kKickOAuthClientSecret.isEmpty) {
+      try {
+        await this._authService.registerProxyLogin(this._pendingLogin!);
+      } on KickAuthException catch (e) {
+        this._pendingLogin = null;
+        this.authState = KickAuthState.error;
+        this.authError = e.message;
+        return null;
+      }
+    }
     this.authError = null;
     this.authState = KickAuthState.awaitingRedirect;
     return this._authService.authorizeUrl(this._pendingLogin!);
+  }
+
+  /// While the browser is approving: null means still waiting, true means
+  /// the exchange host finished and the session is stored, false means
+  /// the login failed ([authError] is set).
+  @action
+  Future<bool?> pollProxyLogin() async {
+    final session = this._pendingLogin;
+    if (session == null) return false;
+    final KickToken token;
+    try {
+      final polled = await this._authService.pollProxyLogin(session);
+      if (polled == null) return null;
+      token = polled;
+    } on KickAuthException catch (e) {
+      this.authState = KickAuthState.error;
+      this.authError = e.message;
+      return false;
+    }
+    return this._storeToken(token);
   }
 
   /// Step 2: the pasted redirect URL → state-checked code → token
@@ -360,32 +392,7 @@ abstract class _KickChatStore with Store {
         code: code,
         session: session,
       );
-
-      /// Identity feeds the account chip and the echo-dedup marker — a
-      /// fetch failure must not fail the sign-in.
-      KickUserIdentity? identity;
-      try {
-        identity = await this._authService.fetchOwnUser(token.accessToken);
-      } catch (e) {
-        GeneralHelper.advLog('Kick user fetch failed — $e');
-      }
-      await this._authBox.put(
-        KickAuth.kBoxKey,
-        KickAuth(
-          accessToken: token.accessToken,
-          refreshToken: token.refreshToken ?? '',
-          expiresAtMs:
-              DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000,
-          scopes: token.scope,
-          userId: identity?.userId,
-          username: identity?.name,
-          profilePicture: identity?.profilePicture,
-        ),
-      );
-      this._pendingLogin = null;
-      this.authError = null;
-      this.authState = KickAuthState.signedIn;
-      return true;
+      return this._storeToken(token);
     } on KickAuthException catch (e) {
       this.authState = KickAuthState.error;
       this.authError = e.message;
@@ -396,6 +403,36 @@ abstract class _KickChatStore with Store {
       this.authError = 'Unexpected login error';
       return false;
     }
+  }
+
+  /// Persist [token] and the account identity. Shared by the paste path
+  /// and the exchange-host poll.
+  Future<bool> _storeToken(KickToken token) async {
+    /// Identity feeds the account chip and the echo-dedup marker — a
+    /// fetch failure must not fail the sign-in.
+    KickUserIdentity? identity;
+    try {
+      identity = await this._authService.fetchOwnUser(token.accessToken);
+    } catch (e) {
+      GeneralHelper.advLog('Kick user fetch failed — $e');
+    }
+    await this._authBox.put(
+      KickAuth.kBoxKey,
+      KickAuth(
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken ?? '',
+        expiresAtMs:
+            DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000,
+        scopes: token.scope,
+        userId: identity?.userId,
+        username: identity?.name,
+        profilePicture: identity?.profilePicture,
+      ),
+    );
+    this._pendingLogin = null;
+    this.authError = null;
+    this.authState = KickAuthState.signedIn;
+    return true;
   }
 
   /// Abandon a pending login (sheet dismissed without pasting).

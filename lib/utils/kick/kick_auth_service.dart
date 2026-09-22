@@ -33,11 +33,12 @@ const List<String> kKickChatScopes = <String>[
   'moderation:chat_message:manage',
 ];
 
-/// Redirect target registered on the Kick app (app-owned or bring-your-own).
-/// The app has no deep-link infra and Kick has no device flow, so the flow
-/// is manual-paste: the browser lands on this (dead) URL after consent and
-/// the user copies the full `?code=…&state=…` URL back into the setup sheet.
-const String kKickOAuthRedirectUri = 'https://localhost/kick-callback';
+/// Redirect registered on the OBS Blade Kick app. Kick sends the browser
+/// here after consent; the exchange host consumes the code and the app
+/// picks up the tokens. A bring-your-own app that still uses the paste
+/// flow registers `https://localhost/kick-callback` instead.
+const String kKickOAuthRedirectUri =
+    'https://kick-auth.kounex.com/oauth/callback';
 
 const String _kAuthorizeUrl = 'https://id.kick.com/oauth/authorize';
 const String _kTokenUrl = 'https://id.kick.com/oauth/token';
@@ -84,10 +85,15 @@ class KickPkceSession {
   /// `base64url(sha256(verifier))` without padding.
   final String codeChallenge;
 
+  /// Proves the polling phone is the one that started this login. Never
+  /// sent to Kick and never present on the redirect URL.
+  final String pollToken;
+
   const KickPkceSession({
     required this.verifier,
     required this.state,
     required this.codeChallenge,
+    this.pollToken = '',
   });
 }
 
@@ -179,6 +185,58 @@ class KickAuthService {
       verifier: verifier,
       state: this._randomBase64Url(32),
       codeChallenge: challenge,
+      pollToken: this._randomBase64Url(32),
+    );
+  }
+
+  Uri _proxyUri(String path) {
+    final base = Uri.parse(kKickTokenProxyUrl);
+    return base.replace(path: path);
+  }
+
+  /// Tell the exchange host which PKCE verifier belongs to [session],
+  /// before the browser is opened. The host exchanges the code when Kick
+  /// redirects the browser, and only hands the tokens to this poll token.
+  Future<void> registerProxyLogin(KickPkceSession session) async {
+    final response = await this._client.post(
+      this._proxyUri('/oauth/session'),
+      headers: const {'Content-Type': 'application/json'},
+      body: json.encode(<String, String>{
+        'state': session.state,
+        'code_verifier': session.verifier,
+        'poll_token': session.pollToken,
+      }),
+    );
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      throw KickAuthException(
+        'Could not start the Kick login (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+  }
+
+  /// Null while the browser has not returned yet. The token once the
+  /// exchange host has finished. Throws if Kick denied the login.
+  Future<KickToken?> pollProxyLogin(KickPkceSession session) async {
+    final response = await this._client.post(
+      this._proxyUri('/oauth/session/result'),
+      headers: const {'Content-Type': 'application/json'},
+      body: json.encode(<String, String>{
+        'state': session.state,
+        'poll_token': session.pollToken,
+      }),
+    );
+    if (response.statusCode == 202) return null;
+    if (response.statusCode != 200) {
+      throw KickAuthException(
+        'Kick login failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    return KickToken.fromJson(
+      (json.decode(response.body) as Map).cast<String, Object?>(),
     );
   }
 

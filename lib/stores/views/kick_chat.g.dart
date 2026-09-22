@@ -296,16 +296,24 @@ mixin _$KickChatStore on _KickChatStore, Store {
     context: context,
   );
 
+  late final _$beginLoginAsyncAction = AsyncAction(
+    '_KickChatStore.beginLogin',
+    context: context,
+  );
+
   @override
-  Uri? beginLogin() {
-    final _$actionInfo = _$_KickChatStoreActionController.startAction(
-      name: '_KickChatStore.beginLogin',
-    );
-    try {
-      return super.beginLogin();
-    } finally {
-      _$_KickChatStoreActionController.endAction(_$actionInfo);
-    }
+  Future<Uri?> beginLogin() {
+    return _$beginLoginAsyncAction.run(() => super.beginLogin());
+  }
+
+  late final _$pollProxyLoginAsyncAction = AsyncAction(
+    '_KickChatStore.pollProxyLogin',
+    context: context,
+  );
+
+  @override
+  Future<bool?> pollProxyLogin() {
+    return _$pollProxyLoginAsyncAction.run(() => super.pollProxyLogin());
   }
 
   @override
