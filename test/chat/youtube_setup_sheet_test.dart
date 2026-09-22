@@ -144,6 +144,74 @@ void main() {
     expect(find.text('YouTube chat setup'), findsNothing);
   });
 
+  testWidgets('a slow pull past halfway dismisses the sheet', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showYouTubeSetupSheet(context),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('API key')),
+    );
+    for (var i = 0; i < 12; i++) {
+      await gesture.moveBy(const Offset(0, 30));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('YouTube chat setup'), findsNothing);
+  });
+
+  testWidgets('a short pull springs the sheet back open', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showYouTubeSetupSheet(context),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final before = tester.getTopLeft(find.text('YouTube chat setup'));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('API key')),
+    );
+
+    /// First move clears the touch slop; the rest should track the finger.
+    await gesture.moveBy(const Offset(0, 24));
+    await gesture.moveBy(const Offset(0, 80));
+    await tester.pump();
+    expect(
+      tester.getTopLeft(find.text('YouTube chat setup')).dy,
+      greaterThan(before.dy + 60),
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('YouTube chat setup'), findsOneWidget);
+    expect(
+      (tester.getTopLeft(find.text('YouTube chat setup')).dy - before.dy).abs(),
+      lessThan(2),
+    );
+  });
+
   testWidgets('prefills the fields from settings', (tester) async {
     /// runAsync: awaited Hive writes never complete in the fake-async zone.
     await tester.runAsync(() async {

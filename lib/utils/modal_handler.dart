@@ -70,6 +70,11 @@ class ModalHandler {
     /// top gap for barrier taps pass ~0.72.
     double maxHeightFraction = 1.0,
     double additionalBottomViewInsets = 0,
+
+    /// Linear while a scroll-driven drag is tracking the finger. The
+    /// default decelerate curve makes the open sheet barely move until
+    /// the controller has travelled a long way.
+    AnimationStyle? sheetAnimationStyle,
   }) async => showModalBottomSheet(
     context: context,
     useRootNavigator: useRootNavigator,
@@ -77,6 +82,7 @@ class ModalHandler {
     enableDrag: enableDrag,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    sheetAnimationStyle: sheetAnimationStyle,
     builder: (context) => _bottomSheetWrapper(
       context: context,
       additionalBottomViewInsets: additionalBottomViewInsets,

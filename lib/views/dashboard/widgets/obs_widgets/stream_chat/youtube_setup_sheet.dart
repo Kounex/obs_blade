@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -34,6 +35,10 @@ Future<void> showYouTubeSetupSheet(BuildContext context) =>
       barrierDismissible: true,
       enableDrag: true,
       maxHeightFraction: 0.86,
+      sheetAnimationStyle: const AnimationStyle(
+        curve: Curves.linear,
+        reverseCurve: Curves.linear,
+      ),
       builder: (sheetContext) => YouTubeSetupSheet(hostContext: context),
     );
 
@@ -561,61 +566,140 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
   }
 }
 
-/// Pulling past the top of a scrolling sheet moves the sheet itself, the
-/// way iOS does: the overscroll is applied to the modal route, and
-/// releasing past halfway (or with a downward fling) dismisses it.
-class _SheetOverscroll extends StatelessWidget {
+/// Pulling past the top of a scrolling sheet moves the sheet 1:1 with the
+/// finger. Releasing springs it shut or back open.
+///
+/// Same decision iOS interactive dismiss uses: a downward flick closes even
+/// when the drag was short, and a slower drag closes once it has passed
+/// half the sheet — unless that release is flicking back upward. Otherwise
+/// a critically damped spring (SwiftUI `spring(bounce: 0)`) returns it.
+class _SheetOverscroll extends StatefulWidget {
   final Widget child;
   final GlobalKey sheetKey;
 
   const _SheetOverscroll({required this.child, required this.sheetKey});
 
-  static const double _closeThreshold = 0.5;
-  static const double _flingVelocity = 700.0;
+  @override
+  State<_SheetOverscroll> createState() => _SheetOverscrollState();
+}
+
+class _SheetOverscrollState extends State<_SheetOverscroll> {
+  /// Points per second. A flick at least this fast dismisses regardless of
+  /// how far the sheet travelled. From the usual UIKit interactive-dismiss
+  /// split (fast flick, or past halfway without flicking back).
+  static const double _flickVelocity = 300.0;
+
+  static const double _distanceThreshold = 0.5;
+
+  /// Critically damped, so the release settles once and does not bounce.
+  static final SpringDescription _spring =
+      SpringDescription.withDurationAndBounce(
+        duration: const Duration(milliseconds: 350),
+        bounce: 0.0,
+      );
+
+  bool _pulled = false;
+  bool _settled = true;
+
+  double _sheetHeight(ScrollMetrics metrics) {
+    final box =
+        this.widget.sheetKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize && box.size.height > 0) {
+      return box.size.height;
+    }
+    return metrics.viewportDimension;
+  }
+
+  void _track(BuildContext context, OverscrollNotification notification) {
+    final controller = ModalRoute.of(context)?.controller;
+    if (controller == null) return;
+    final height = this._sheetHeight(notification.metrics);
+    if (height <= 0) return;
+
+    /// Raw finger delta. The scroll view's own overscroll is friction-damped,
+    /// which made the sheet lag the finger.
+    final fingerDown = notification.dragDetails?.primaryDelta;
+    final pixels = (fingerDown != null && fingerDown > 0)
+        ? fingerDown
+        : -notification.overscroll;
+    if (pixels <= 0) return;
+
+    this._pulled = true;
+    this._settled = false;
+    controller.stop();
+    controller.value = (controller.value - pixels / height).clamp(0.0, 1.0);
+  }
+
+  void _settle(BuildContext context, double velocity) {
+    if (this._settled || !this._pulled) return;
+    final controller = ModalRoute.of(context)?.controller;
+    if (controller == null || controller.value >= 1.0) {
+      this._settled = true;
+      this._pulled = false;
+      return;
+    }
+    this._settled = true;
+    this._pulled = false;
+
+    final height = () {
+      final box =
+          this.widget.sheetKey.currentContext?.findRenderObject() as RenderBox?;
+      if (box != null && box.hasSize && box.size.height > 0) {
+        return box.size.height;
+      }
+      return 1.0;
+    }();
+    final travelled = 1.0 - controller.value;
+
+    /// Fast downward flick closes on its own. A slower drag closes only
+    /// after half the sheet, and not if the finger flicks back up.
+    final dismiss =
+        velocity > _flickVelocity ||
+        (travelled > _distanceThreshold && velocity > -_flickVelocity);
+    final target = dismiss ? 0.0 : 1.0;
+
+    /// Spring velocity is in animation units per second (1 = one sheet
+    /// height). Downward finger velocity continues the dismiss direction.
+    final animationVelocity = -velocity / height;
+    final simulation = SpringSimulation(
+      _spring,
+      controller.value,
+      target,
+      animationVelocity,
+    );
+    final done = controller.animateWith(simulation);
+    if (dismiss) {
+      done.whenComplete(() {
+        if (!context.mounted) return;
+        if (controller.value <= 0.01) Navigator.of(context).maybePop();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification.metrics.axis != Axis.vertical) return false;
-        final controller = ModalRoute.of(context)?.controller;
-        if (controller == null) return false;
-        final box =
-            this.sheetKey.currentContext?.findRenderObject() as RenderBox?;
-        final height = (box != null && box.hasSize)
-            ? box.size.height
-            : notification.metrics.viewportDimension;
-        if (height <= 0) return false;
-
+        final atTop =
+            notification.metrics.pixels <= notification.metrics.minScrollExtent;
         if (notification is OverscrollNotification &&
             notification.overscroll < 0 &&
-            notification.metrics.pixels <=
-                notification.metrics.minScrollExtent) {
-          final next = (controller.value + notification.overscroll / height)
-              .clamp(0.0, 1.0);
-          controller.value = next;
-          if (next == 0.0) Navigator.of(context).maybePop();
+            atTop) {
+          this._track(context, notification);
           return false;
         }
-
-        if (notification is ScrollEndNotification && controller.value < 1.0) {
+        if (notification is ScrollEndNotification) {
           final velocity = notification.dragDetails?.primaryVelocity ?? 0.0;
-          var closing = false;
-          if (velocity > _flingVelocity) {
-            final fling = -velocity / height;
-            if (controller.value > 0.0) controller.fling(velocity: fling);
-            closing = fling < 0.0;
-          } else if (controller.value < _closeThreshold) {
-            if (controller.value > 0.0) controller.fling(velocity: -1.0);
-            closing = true;
-          } else {
-            controller.forward();
-          }
-          if (closing) Navigator.of(context).maybePop();
+          this._settle(context, velocity);
         }
         return false;
       },
-      child: this.child,
+      child: Listener(
+        onPointerUp: (_) => this._settle(context, 0.0),
+        onPointerCancel: (_) => this._settle(context, 0.0),
+        child: this.widget.child,
+      ),
     );
   }
 }
