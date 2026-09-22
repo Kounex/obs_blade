@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
@@ -15,6 +16,7 @@ import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
+import 'support/fake_twitch_services.dart' show FakeThirdPartyEmoteService;
 
 KickChannelInfo channelInfo(
   String slug, {
@@ -106,6 +108,8 @@ void main() {
   late FakeKickApiService apiService;
   late List<FakeKickPusherService> pushers;
   late bool isPro;
+  late FakeThirdPartyEmoteService emoteService;
+  late ThirdPartyEmoteStore emoteStore;
   late KickChatStore store;
 
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
@@ -128,6 +132,7 @@ void main() {
       return created;
     },
     isProResolver: () => isPro,
+    emoteStoreResolver: () => emoteStore,
   );
 
   /// A valid, unexpired, fully-scoped stored session (user id 9001
@@ -178,6 +183,8 @@ void main() {
     apiService = FakeKickApiService();
     pushers = <FakeKickPusherService>[];
     isPro = true;
+    emoteService = FakeThirdPartyEmoteService();
+    emoteStore = ThirdPartyEmoteStore(service: emoteService);
     store = newStore();
   });
 
@@ -399,6 +406,52 @@ void main() {
         () => store.chatConnection == KickChatConnectionState.connected,
       );
     });
+  });
+
+  group('third-party emotes', () {
+    test('connecting refetches the 7TV catalog for the channel\'s Kick '
+        'user id', () async {
+      configure();
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      /// 'aaa' resolves to channel id 101 → userId 1101 (see the
+      /// channelInfo() fixture's default userId = id + 1000).
+      expect(emoteService.lastKickUserId, '1101');
+      expect(emoteService.sevenTvKickChannelCalls, 1);
+      expect(emoteService.bttvChannelCalls, 0);
+    });
+
+    test('disabling the setting skips the fetch entirely', () async {
+      settingsBox().put(SettingsKeys.KickChatThirdPartyEmotes.name, false);
+      configure();
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(emoteService.sevenTvKickChannelCalls, 0);
+    });
+
+    test(
+      'a fetch failure never blocks or errors the chat connection',
+      () async {
+        configure();
+        emoteService.sevenTvGlobalThrows = Exception('boom');
+        await store.init();
+        await until(
+          () => store.chatConnection == KickChatConnectionState.connected,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(store.chatConnection, KickChatConnectionState.connected);
+        expect(store.chatError, isNull);
+      },
+    );
   });
 
   group('lifecycle', () {

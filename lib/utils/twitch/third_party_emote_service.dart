@@ -39,9 +39,25 @@ class ThirdPartyEmoteService {
   /// 7TV emote set of the channel with [broadcasterId] (its active set).
   Future<Map<String, ThirdPartyEmote>> fetchSevenTvChannel(
     String broadcasterId,
-  ) async {
+  ) => this._fetchSevenTvChannel(platform: 'twitch', id: broadcasterId);
+
+  /// 7TV emote set of the Kick channel with [kickUserId] (its active
+  /// set) — 7TV's `kick` platform is keyed by Kick's numeric USER id,
+  /// not the channel/chatroom id (verified live: `/v3/users/kick/{id}`
+  /// 404s for a channel id but resolves for the linked user id). BTTV
+  /// has no Kick platform at all (`/3/cached/users/kick/{id}` 404s
+  /// unconditionally, even for a real linked user) — there is no Kick
+  /// counterpart to [fetchBttvChannel].
+  Future<Map<String, ThirdPartyEmote>> fetchSevenTvKickChannel(
+    String kickUserId,
+  ) => this._fetchSevenTvChannel(platform: 'kick', id: kickUserId);
+
+  Future<Map<String, ThirdPartyEmote>> _fetchSevenTvChannel({
+    required String platform,
+    required String id,
+  }) async {
     final body = await this._get(
-      Uri.parse('https://7tv.io/v3/users/twitch/$broadcasterId'),
+      Uri.parse('https://7tv.io/v3/users/$platform/$id'),
     );
     if (body is! Map<String, Object?>) return const {};
     final emoteSet = body['emote_set'];

@@ -52,20 +52,32 @@ abstract class _ThirdPartyEmoteStore with Store {
     ...?this.channelEmotes[broadcasterId],
   }.values.toList();
 
+  /// [isKick]: [broadcasterId] is the Kick USER id — only 7TV's `kick`
+  /// platform is queried for the channel scope (BTTV has no Kick
+  /// platform at all; see [ThirdPartyEmoteService.fetchSevenTvKickChannel]).
+  /// The global scope (both catalogs) is unaffected — 7TV/BTTV global
+  /// sets aren't platform-gated, so they're shared across engines.
   @action
-  Future<void> fetch({required String broadcasterId}) async {
+  Future<void> fetch({
+    required String broadcasterId,
+    bool isKick = false,
+  }) async {
     final generation = ++this._fetchGeneration;
 
     final results = await Future.wait([
       this._tryFetch(this._service.fetchBttvGlobal(), 'bttv-global'),
       this._tryFetch(this._service.fetchSevenTvGlobal(), '7tv-global'),
+      isKick
+          ? Future.value(const <String, ThirdPartyEmote>{})
+          : this._tryFetch(
+              this._service.fetchBttvChannel(broadcasterId),
+              'bttv-channel',
+            ),
       this._tryFetch(
-        this._service.fetchBttvChannel(broadcasterId),
-        'bttv-channel',
-      ),
-      this._tryFetch(
-        this._service.fetchSevenTvChannel(broadcasterId),
-        '7tv-channel',
+        isKick
+            ? this._service.fetchSevenTvKickChannel(broadcasterId)
+            : this._service.fetchSevenTvChannel(broadcasterId),
+        isKick ? '7tv-kick-channel' : '7tv-channel',
       ),
     ]);
 

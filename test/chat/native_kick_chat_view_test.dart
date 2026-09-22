@@ -7,7 +7,10 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
@@ -19,6 +22,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
+import 'support/fake_twitch_services.dart' show FakeThirdPartyEmoteService;
 
 KickChatMessage kickMessage(
   String id, {
@@ -45,6 +49,8 @@ void main() {
   late HiveTestHarness harness;
   late FakeKickApiService apiService;
   late KickChatStore store;
+  late FakeThirdPartyEmoteService emoteService;
+  late ThirdPartyEmoteStore emoteStore;
 
   Widget wrap() =>
       const MaterialApp(home: Scaffold(body: NativeKickChatView()));
@@ -90,6 +96,9 @@ void main() {
       isProResolver: () => true,
     );
     GetIt.instance.registerSingleton<KickChatStore>(store);
+    emoteService = FakeThirdPartyEmoteService();
+    emoteStore = ThirdPartyEmoteStore(service: emoteService);
+    GetIt.instance.registerSingleton<ThirdPartyEmoteStore>(emoteStore);
   });
 
   tearDown(() async {
@@ -187,6 +196,40 @@ void main() {
     await tester.pump();
 
     expect(find.text('Loyal subscribed — 6 months'), findsOneWidget);
+  });
+
+  testWidgets('a third-party (7TV) emote token in plain text renders inline', (
+    tester,
+  ) async {
+    emoteService.sevenTvKickChannel = {
+      'Kappa': const ThirdPartyEmote(
+        name: 'Kappa',
+        imageUrl: 'https://cdn.7tv.app/emote/kappa/2x.webp',
+      ),
+    };
+    await emoteStore.fetch(broadcasterId: '1101', isKick: true);
+    store.channelInfo = const KickChannelInfo(
+      id: 5,
+      userId: 1101,
+      slug: 'streamer',
+      chatroom: KickChatroom(id: 42),
+    );
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.add(kickMessage('m1', content: 'hello Kappa'));
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    /// flutter_test 400s every image request, so the third-party
+    /// emote's Image.network falls back to its raw token text via
+    /// errorBuilder (its own nested Text/RichText, hence a separate
+    /// line here) — same rendering contract as Twitch's row. The
+    /// Image widget itself still mounts, which is what proves the
+    /// catalog lookup actually matched (an unknown token never
+    /// creates one).
+    expect(find.byType(Image), findsOneWidget);
+    final rendered = renderedRichText(tester);
+    expect(rendered, contains('hello'));
+    expect(rendered, contains('Kappa'));
   });
 
   testWidgets(

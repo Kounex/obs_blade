@@ -103,6 +103,34 @@ void main() {
     });
   });
 
+  group('fetchSevenTvKickChannel', () {
+    test('reads the active emote set at the kick platform path', () async {
+      final client = MockClient((request) async {
+        expect(request.url.toString(), 'https://7tv.io/v3/users/kick/676');
+        return http.Response(
+          json.encode({'emote_set': _kSevenTvEmotesBody}),
+          200,
+        );
+      });
+
+      final emotes = await ThirdPartyEmoteService(
+        client: client,
+      ).fetchSevenTvKickChannel('676');
+
+      expect(emotes['RainTime'], isNotNull);
+    });
+
+    test('404 returns an empty map (channel without 7TV presence)', () async {
+      final client = MockClient((request) async => http.Response('', 404));
+
+      final emotes = await ThirdPartyEmoteService(
+        client: client,
+      ).fetchSevenTvKickChannel('676');
+
+      expect(emotes, isEmpty);
+    });
+  });
+
   group('fetchBttvGlobal', () {
     test('parses the flat id/code array into cdn urls', () async {
       final client = MockClient((request) async {

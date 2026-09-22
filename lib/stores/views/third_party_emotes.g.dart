@@ -33,9 +33,9 @@ mixin _$ThirdPartyEmoteStore on _ThirdPartyEmoteStore, Store {
   );
 
   @override
-  Future<void> fetch({required String broadcasterId}) {
+  Future<void> fetch({required String broadcasterId, bool isKick = false}) {
     return _$fetchAsyncAction.run(
-      () => super.fetch(broadcasterId: broadcasterId),
+      () => super.fetch(broadcasterId: broadcasterId, isKick: isKick),
     );
   }
 

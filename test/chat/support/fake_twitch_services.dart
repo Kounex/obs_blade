@@ -284,6 +284,7 @@ class FakeTwitchMessageService extends TwitchMessageService {
 class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
   Map<String, ThirdPartyEmote> sevenTvGlobal = const {};
   Map<String, ThirdPartyEmote> sevenTvChannel = const {};
+  Map<String, ThirdPartyEmote> sevenTvKickChannel = const {};
   Map<String, ThirdPartyEmote> bttvGlobal = const {};
   Map<String, ThirdPartyEmote> bttvChannel = const {};
 
@@ -296,8 +297,10 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
   Completer<Map<String, ThirdPartyEmote>>? sevenTvGlobalGate;
 
   String? lastBroadcasterId;
+  String? lastKickUserId;
   int sevenTvGlobalCalls = 0;
   int sevenTvChannelCalls = 0;
+  int sevenTvKickChannelCalls = 0;
   int bttvGlobalCalls = 0;
   int bttvChannelCalls = 0;
 
@@ -338,6 +341,15 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
     this.sevenTvChannelCalls++;
     this.lastBroadcasterId = broadcasterId;
     return this.sevenTvChannel;
+  }
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchSevenTvKickChannel(
+    String kickUserId,
+  ) async {
+    this.sevenTvKickChannelCalls++;
+    this.lastKickUserId = kickUserId;
+    return this.sevenTvKickChannel;
   }
 
   @override

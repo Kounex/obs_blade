@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -136,6 +137,14 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
       builder: (_) {
         final connection = this._store.chatConnection;
 
+        /// Tracked so the visible list rebuilds once when the 7TV
+        /// catalog lands (pop-in) — the row resolves tokens
+        /// non-reactively at build time, so this read is the only
+        /// rebuild trigger (mirrors the Twitch view's equivalent read).
+        // ignore: unused_local_variable
+        final emoteCatalogVersion =
+            GetIt.instance<ThirdPartyEmoteStore>().catalogVersion;
+
         /// Reading the observable list tracks it — tombstones mutate
         /// entries in place, so also read the length for the pin logic.
         final items = this._store.messages.toList();
@@ -261,6 +270,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
             SettingsKeys.TwitchChatMessageSeparators,
             SettingsKeys.KickChatNoticeSubs,
             SettingsKeys.KickChatNoticeHosts,
+            SettingsKeys.KickChatThirdPartyEmotes,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
@@ -294,6 +304,8 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                       key: ValueKey(message.id),
                       message: message,
                       settingsBox: settingsBox,
+                      broadcasterId: this._store.channelInfo?.userId
+                          ?.toString(),
                       highlighted: this._modTargetMessageId == message.id,
                       onMessageLongPress:
                           message.isTombstoned ||

@@ -5,6 +5,7 @@ import 'package:mobx/mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
@@ -124,12 +125,19 @@ abstract class _KickChatStore with Store {
   /// locked pane.
   final bool Function() _isProResolver;
 
+  /// Third-party (7TV) emote catalog fetch — shared singleton with the
+  /// Twitch engine (7TV's global set is platform-agnostic; only the
+  /// per-channel scope differs, see [ThirdPartyEmoteStore.fetch]'s
+  /// `isKick` param).
+  final ThirdPartyEmoteStore Function() _emoteStoreResolver;
+
   _KickChatStore({
     KickChannelService? channelService,
     KickPusherFactory? pusherFactory,
     KickAuthService? authService,
     KickApiService? apiService,
     bool Function()? isProResolver,
+    ThirdPartyEmoteStore Function()? emoteStoreResolver,
   }) : _channelService = channelService ?? KickChannelService(),
        _pusherFactory =
            pusherFactory ??
@@ -139,7 +147,10 @@ abstract class _KickChatStore with Store {
            )),
        _authService = authService ?? KickAuthService(),
        _isProResolver =
-           isProResolver ?? (() => GetIt.instance<ProStore>().isPro) {
+           isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
+       _emoteStoreResolver =
+           emoteStoreResolver ??
+           (() => GetIt.instance<ThirdPartyEmoteStore>()) {
     /// The default API service rides this store's token lifecycle
     /// (refresh + persist); tests inject a fake instead.
     this._apiService =
@@ -537,6 +548,7 @@ abstract class _KickChatStore with Store {
       buffer.channelInfo = info;
     }
     runInAction(() => this.channelInfo = info);
+    this._refetchThirdPartyEmotes(info.userId);
 
     if (buffer.messages.isEmpty) {
       try {
@@ -646,6 +658,33 @@ abstract class _KickChatStore with Store {
   void _trimMessages() {
     while (this.messages.length > kMaxMessages) {
       this.messages.removeAt(0);
+    }
+  }
+
+  /// Fire-and-forget 7TV catalog refetch for the resolved channel's Kick
+  /// user id — skipped entirely when the user disabled third-party
+  /// emotes, or when the channel has no user id (junk/partial resolve).
+  /// Nice-to-have: any failure is logged, never surfaced (same contract
+  /// as the Twitch engine's `_refetchCatalogs`).
+  void _refetchThirdPartyEmotes(int? kickUserId) {
+    if (kickUserId == null) return;
+    try {
+      if (Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.KickChatThirdPartyEmotes.name, defaultValue: true)) {
+        unawaited(
+          this
+              ._emoteStoreResolver()
+              .fetch(broadcasterId: kickUserId.toString(), isKick: true)
+              .catchError((Object e) {
+                GeneralHelper.advLog(
+                  'Kick third-party emote fetch failed — $e',
+                );
+              }),
+        );
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Kick third-party emote fetch could not start — $e');
     }
   }
 

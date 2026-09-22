@@ -355,7 +355,11 @@ enum SettingsKeys {
 
   /// [bool]: Show host chat notifications in native Kick chat.
   /// Active by default
-  KickChatNoticeHosts;
+  KickChatNoticeHosts,
+
+  /// [bool]: Render third-party (7TV) emotes inline in native Kick chat.
+  /// Active by default
+  KickChatThirdPartyEmotes;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -446,5 +450,6 @@ enum SettingsKeys {
         'dont-show-hotkeys-technical-preview-warning',
     SettingsKeys.KickChatNoticeSubs: 'kick-chat-notice-subs',
     SettingsKeys.KickChatNoticeHosts: 'kick-chat-notice-hosts',
+    SettingsKeys.KickChatThirdPartyEmotes: 'kick-chat-third-party-emotes',
   }[this]!;
 }

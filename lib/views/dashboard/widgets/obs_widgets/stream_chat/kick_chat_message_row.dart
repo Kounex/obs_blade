@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
@@ -47,6 +50,15 @@ class KickChatMessageRow extends StatelessWidget {
   /// Light gray wash while this row is the open mod-sheet target.
   final bool highlighted;
 
+  /// The channel's Kick USER id (7TV's `kick` platform is keyed by user
+  /// id, not chatroom id) — null while the channel hasn't resolved yet,
+  /// which just means no third-party lookups can succeed.
+  final String? broadcasterId;
+
+  /// Injectable for tests — defaults to the shared GetIt singleton (same
+  /// instance the Twitch engine populates its global catalog into).
+  final ThirdPartyEmoteStore? emoteStore;
+
   const KickChatMessageRow({
     super.key,
     required this.message,
@@ -54,6 +66,8 @@ class KickChatMessageRow extends StatelessWidget {
     this.onMessageLongPress,
     this.onAuthorTap,
     this.highlighted = false,
+    this.broadcasterId,
+    this.emoteStore,
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
@@ -131,8 +145,9 @@ class KickChatMessageRow extends StatelessWidget {
     );
   }
 
-  /// Content with emote tokens swapped to inline images at the app's
-  /// emote sizing (same rendering contract as the Twitch row).
+  /// Content with first-party `[emote:id:name]` tokens and third-party
+  /// (7TV) plain-text tokens swapped to inline images at the app's emote
+  /// sizing (same rendering contract as the Twitch row).
   List<InlineSpan> _messageSpans(BuildContext context) {
     final spans = <InlineSpan>[];
     for (final fragment in parseKickChatContent(this.message.content)) {
@@ -151,10 +166,49 @@ class KickChatMessageRow extends StatelessWidget {
           ),
         );
       } else {
-        spans.addAll(chatLinkTextSpans(context, fragment.text));
+        spans.addAll(this._thirdPartyTextSpans(context, fragment.text));
       }
     }
     return spans;
+  }
+
+  /// Third-party (7TV) emotes arrive as plain text within a text
+  /// fragment — split on spaces and swap known tokens for inline images,
+  /// preserving spacing exactly. Unknown tokens (and the toggle-off /
+  /// unresolved-channel case) stay text / links — same contract as the
+  /// Twitch row's `_textSpans`.
+  List<InlineSpan> _thirdPartyTextSpans(BuildContext context, String text) {
+    final broadcasterId = this.broadcasterId;
+    if (broadcasterId == null ||
+        !this.settingsBox.get(
+          SettingsKeys.KickChatThirdPartyEmotes.name,
+          defaultValue: true,
+        )) {
+      return chatLinkTextSpans(context, text);
+    }
+    final emoteStore =
+        this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>();
+    final tokens = text.split(' ');
+    return [
+      for (var i = 0; i < tokens.length; i++) ...[
+        if (i > 0) const TextSpan(text: ' '),
+        if (emoteStore.emoteImageUrl(tokens[i], broadcasterId: broadcasterId)
+            case final imageUrl?)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Image.network(
+              imageUrl,
+              height: this._emoteSize,
+              width: this._emoteSize,
+              fit: BoxFit.contain,
+              frameBuilder: chatImageFadeIn,
+              errorBuilder: (_, _, _) => Text(tokens[i]),
+            ),
+          )
+        else
+          ...chatLinkTextSpans(context, tokens[i]),
+      ],
+    ];
   }
 
   /// Tombstone treatment — the content stays visible but dims (same UX

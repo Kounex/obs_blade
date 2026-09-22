@@ -54,6 +54,44 @@ void main() {
     );
   });
 
+  test('isKick queries the kick 7TV platform, skips BTTV channel '
+      'entirely', () async {
+    service.sevenTvKickChannel = {
+      FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
+    };
+
+    await store.fetch(broadcasterId: '676', isKick: true);
+
+    expect(service.lastKickUserId, '676');
+    expect(service.sevenTvKickChannelCalls, 1);
+    expect(service.sevenTvChannelCalls, 0);
+    expect(service.bttvChannelCalls, 0);
+    expect(
+      store.emoteImageUrl('peepoHappy', broadcasterId: '676'),
+      FakeThirdPartyEmoteService.peepo.imageUrl,
+    );
+  });
+
+  test(
+    'isKick still fetches both global catalogs (platform-agnostic)',
+    () async {
+      service.sevenTvGlobal = {
+        FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
+      };
+      service.bttvGlobal = {
+        FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
+      };
+
+      await store.fetch(broadcasterId: '676', isKick: true);
+
+      expect(
+        store.emoteImageUrl('peepoHappy', broadcasterId: '676'),
+        isNotNull,
+      );
+      expect(store.emoteImageUrl('monkaS', broadcasterId: '676'), isNotNull);
+    },
+  );
+
   test('7TV wins over BTTV within the same scope', () async {
     service.bttvGlobal = {
       FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
