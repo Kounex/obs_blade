@@ -27,7 +27,9 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
   const YouTubeNativeChannelDropdown({super.key});
 
   void _addChat(BuildContext context) {
-    Navigator.of(context).pop();
+    /// The dropdown route has already popped itself by the time
+    /// [onChanged] runs. Another pop here dismisses the page under the
+    /// dialog.
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: AddEditYouTubeUsernameDialog(

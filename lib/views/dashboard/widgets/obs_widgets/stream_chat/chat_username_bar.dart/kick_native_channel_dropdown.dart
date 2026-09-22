@@ -27,7 +27,9 @@ class KickNativeChannelDropdown extends StatelessWidget {
   const KickNativeChannelDropdown({super.key});
 
   void _addChat(BuildContext context) {
-    Navigator.of(context).pop();
+    /// The dropdown route has already popped itself by the time
+    /// [onChanged] runs. Another pop here dismisses the chat page and
+    /// leaves an empty view under the dialog.
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: AddEditKickUsernameDialog(

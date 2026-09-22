@@ -559,19 +559,21 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                 'Native Kick chat is not available in this build state.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-            const SizedBox(height: AppSpacing.md),
-            this._pillButton(
-              context,
-              key: const Key('kick-setup-save'),
-              label: 'Save',
-              onTap: () {
-                this._persist();
-                if (this.mounted) Navigator.of(this.context).pop();
-              },
-              color:
-                  Theme.of(context).buttonTheme.colorScheme?.secondary ??
-                  StylingHelper.accent_color,
-            ),
+            if (!this._usesProxy) ...[
+              const SizedBox(height: AppSpacing.md),
+              this._pillButton(
+                context,
+                key: const Key('kick-setup-save'),
+                label: 'Save',
+                onTap: () {
+                  this._persist();
+                  if (this.mounted) Navigator.of(this.context).pop();
+                },
+                color:
+                    Theme.of(context).buttonTheme.colorScheme?.secondary ??
+                    StylingHelper.accent_color,
+              ),
+            ],
           ],
         ),
       ),
