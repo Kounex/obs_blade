@@ -36,6 +36,7 @@ import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'chat_emote_picker.dart';
+import 'kick_chat_mode_strip.dart';
 import 'kick_reply_strip.dart';
 import 'kick_setup_sheet.dart';
 import 'native_chat_input.dart';
@@ -511,10 +512,20 @@ class _StreamChatState extends State<StreamChat>
                     canSend: kickStore.isSignedInState && kickStore.canWrite,
                     inFlight: kickStore.sendingChat,
                     errorText: kickStore.sendChatError,
-                    contextStrip: KickReplyStrip(
-                      accentColor:
-                          chatType.brandColor ??
-                          Theme.of(context).colorScheme.secondary,
+                    contextStrip: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        KickChatModeStrip(
+                          accentColor:
+                              chatType.brandColor ??
+                              Theme.of(context).colorScheme.secondary,
+                        ),
+                        KickReplyStrip(
+                          accentColor:
+                              chatType.brandColor ??
+                              Theme.of(context).colorScheme.secondary,
+                        ),
+                      ],
                     ),
                     accentColor:
                         chatType.brandColor ??
