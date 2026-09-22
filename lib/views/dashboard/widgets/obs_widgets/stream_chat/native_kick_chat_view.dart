@@ -45,6 +45,11 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
   bool _unreadWhileScrolledUp = false;
   int _lastRenderedCount = 0;
 
+  /// Messages that arrived since scrolling up — shown inline on the pill
+  /// (`"3 new messages ↓"`). Resets whenever [_unreadWhileScrolledUp]
+  /// clears.
+  int _unreadCount = 0;
+
   /// Message targeted by the open mod sheet (gray wash while sheet is up).
   String? _modTargetMessageId;
 
@@ -88,6 +93,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
       setState(() {
         this._pinnedToBottom = true;
         this._unreadWhileScrolledUp = false;
+        this._unreadCount = 0;
       });
     } else if (!atBottom && this._pinnedToBottom) {
       setState(() => this._pinnedToBottom = false);
@@ -109,6 +115,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
     setState(() {
       this._pinnedToBottom = true;
       this._unreadWhileScrolledUp = false;
+      this._unreadCount = 0;
     });
     this._jumpToBottomIfPossible();
     SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -218,15 +225,20 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
         final countChanged = items.length != this._lastRenderedCount;
         if (this._pinnedToBottom) {
           this._unreadWhileScrolledUp = false;
+          this._unreadCount = 0;
           if (countChanged) {
             SchedulerBinding.instance.addPostFrameCallback((_) {
               this._jumpToBottomIfPossible();
             });
           }
         } else if (countChanged) {
+          final added = items.length - this._lastRenderedCount;
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (this.mounted) {
-              setState(() => this._unreadWhileScrolledUp = true);
+              setState(() {
+                this._unreadWhileScrolledUp = true;
+                if (added > 0) this._unreadCount += added;
+              });
             }
           });
         }
@@ -301,6 +313,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                     child: Center(
                       child: NativeChatScrollPill(
                         hasNewMessages: this._unreadWhileScrolledUp,
+                        newMessageCount: this._unreadCount,
                         onTap: this._resumePinnedToBottom,
                       ),
                     ),

@@ -1037,8 +1037,38 @@ void main() {
         /// The paused<->unread morph is an AnimatedSwitcher — let the
         /// outgoing chip finish before asserting
         await tester.pump(const Duration(milliseconds: 300));
-        expect(find.text('New messages ↓'), findsOneWidget);
+        expect(find.text('1 new message ↓'), findsOneWidget);
         expect(find.text('Paused ↓'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'the unread count accumulates across multiple arrivals while paused',
+      (tester) async {
+        store.chatConnection = TwitchChatConnectionState.live;
+        for (var i = 0; i < 50; i++) {
+          store.appendChatMessageForTest(textEvent('$i', 'V$i', 'message $i'));
+        }
+
+        await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+        await tester.pump();
+        await tester.drag(find.byType(ListView), const Offset(0, 200));
+        await tester.pump();
+
+        store.appendChatMessageForTest(textEvent('50', 'Late', 'first'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('1 new message ↓'), findsOneWidget);
+
+        store.appendChatMessageForTest(textEvent('51', 'Late2', 'second'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('2 new messages ↓'), findsOneWidget);
+
+        await tester.tap(find.text('2 new messages ↓'));
+        await tester.pumpAndSettle();
+        expect(find.text('Paused ↓'), findsNothing);
+        expect(find.textContaining('new message'), findsNothing);
       },
     );
 

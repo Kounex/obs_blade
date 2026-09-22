@@ -142,11 +142,23 @@ class NativeChatScrollPill extends StatelessWidget {
   final bool hasNewMessages;
   final VoidCallback onTap;
 
+  /// Count of messages that arrived since scrolling up — shown inline
+  /// when known and positive (`"3 new messages ↓"`); falls back to the
+  /// plain copy when null/zero (count not tracked, or reset mid-flight).
+  final int? newMessageCount;
+
   const NativeChatScrollPill({
     super.key,
     required this.hasNewMessages,
     required this.onTap,
+    this.newMessageCount,
   });
+
+  String _unreadLabel() {
+    final count = this.newMessageCount;
+    if (count == null || count <= 0) return 'New messages ↓';
+    return '$count new message${count == 1 ? '' : 's'} ↓';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +202,7 @@ class NativeChatScrollPill extends StatelessWidget {
                   vertical: AppSpacing.xs,
                 ),
                 child: Text(
-                  unread ? 'New messages ↓' : 'Paused ↓',
+                  unread ? this._unreadLabel() : 'Paused ↓',
                   style: unread
                       ? theme.textTheme.bodySmall?.copyWith(color: highlight)
                       : theme.textTheme.bodySmall,

@@ -46,6 +46,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   bool _unreadWhileScrolledUp = false;
   int _lastRenderedCount = 0;
 
+  /// Messages that arrived since scrolling up — shown inline on the pill
+  /// (`"3 new messages ↓"`). Resets whenever [_unreadWhileScrolledUp]
+  /// clears.
+  int _unreadCount = 0;
+
   /// Ids of deleted messages whose actor reveal is expanded — toggled by
   /// tapping the row. Survives lifecycle rebuilds; dead ids (evicted,
   /// logged out) never render, so the set stays session-bounded.
@@ -111,6 +116,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
       setState(() {
         this._pinnedToBottom = true;
         this._unreadWhileScrolledUp = false;
+        this._unreadCount = 0;
       });
     } else if (!atBottom && this._pinnedToBottom) {
       setState(() => this._pinnedToBottom = false);
@@ -133,6 +139,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
     setState(() {
       this._pinnedToBottom = true;
       this._unreadWhileScrolledUp = false;
+      this._unreadCount = 0;
     });
     this._jumpToBottomIfPossible();
 
@@ -258,15 +265,20 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         final countChanged = items.length != this._lastRenderedCount;
         if (this._pinnedToBottom) {
           this._unreadWhileScrolledUp = false;
+          this._unreadCount = 0;
           if (countChanged) {
             SchedulerBinding.instance.addPostFrameCallback((_) {
               this._jumpToBottomIfPossible();
             });
           }
         } else if (countChanged) {
+          final added = items.length - this._lastRenderedCount;
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (this.mounted) {
-              setState(() => this._unreadWhileScrolledUp = true);
+              setState(() {
+                this._unreadWhileScrolledUp = true;
+                if (added > 0) this._unreadCount += added;
+              });
             }
           });
         }
@@ -493,6 +505,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     child: Center(
                       child: NativeChatScrollPill(
                         hasNewMessages: this._unreadWhileScrolledUp,
+                        newMessageCount: this._unreadCount,
                         onTap: this._resumePinnedToBottom,
                       ),
                     ),
