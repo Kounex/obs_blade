@@ -9,17 +9,17 @@ import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 
-/// App-owned Kick OAuth client id. Compiled in from
-/// `--dart-define-from-file=docs/private/kick_oauth.json` (gitignored —
-/// the secret must not land in this public repo). Empty in a normal
-/// checkout, which keeps the setup sheet's bring-your-own fields.
+/// App-owned Kick OAuth client id. Public — it is in the authorize URL.
+/// The matching secret is not in this repo; token exchange goes to
+/// [kKickTokenProxyUrl] unless [kKickOAuthClientSecret] is also compiled in.
 const String kKickOAuthClientId = String.fromEnvironment(
   'KICK_OAUTH_CLIENT_ID',
+  defaultValue: '01M356MAT9Z4YB9HBESV9ZQN6S',
 );
 
-/// App-owned Kick OAuth client secret paired with [kKickOAuthClientId].
-/// Same dart-define file. Kick's token endpoint requires it; it ships in
-/// the binary only, never in git.
+/// Optional override. Leave empty so the phone uses [kKickTokenProxyUrl]
+/// and the secret stays on that host. Compiling a secret in sends the
+/// exchange straight to Kick and puts the secret in the binary.
 const String kKickOAuthClientSecret = String.fromEnvironment(
   'KICK_OAUTH_CLIENT_SECRET',
 );
@@ -41,6 +41,15 @@ const String kKickOAuthRedirectUri = 'https://localhost/kick-callback';
 
 const String _kAuthorizeUrl = 'https://id.kick.com/oauth/authorize';
 const String _kTokenUrl = 'https://id.kick.com/oauth/token';
+
+/// Token exchange for the app-owned Kick client. The secret stays on this
+/// host; the phone posts the code and PKCE verifier here and the host adds
+/// the secret. Used only when [kKickOAuthClientId] is compiled in and
+/// [kKickOAuthClientSecret] is not.
+const String kKickTokenProxyUrl = String.fromEnvironment(
+  'KICK_TOKEN_PROXY_URL',
+  defaultValue: 'https://kick-auth.kounex.com/oauth/token',
+);
 const String _kRevokeUrl = 'https://id.kick.com/oauth/revoke';
 const String _kUsersUrl = 'https://api.kick.com/public/v1/users';
 
@@ -134,11 +143,25 @@ class KickAuthService {
     return KickAuthService._settingsValue(SettingsKeys.KickOAuthClientId) ?? '';
   }
 
-  /// OAuth client secret — `null` when none is configured. Same
-  /// precedence as [resolveClientId].
+  /// OAuth client secret — `null` when none is configured.
+  ///
+  /// An app-owned client id means the secret lives on
+  /// [kKickTokenProxyUrl], so a bring-your-own secret in settings is
+  /// ignored. Otherwise the settings secret is used for a direct call.
   String? resolveClientSecret() {
-    if (kKickOAuthClientSecret.isNotEmpty) return kKickOAuthClientSecret;
+    if (kKickOAuthClientId.isNotEmpty) {
+      return kKickOAuthClientSecret.isNotEmpty ? kKickOAuthClientSecret : null;
+    }
     return KickAuthService._settingsValue(SettingsKeys.KickOAuthClientSecret);
+  }
+
+  /// Kick's token URL when this install holds a secret. The proxy when
+  /// the app client id is compiled in and the secret is not.
+  Uri _tokenEndpoint() {
+    if (kKickOAuthClientId.isNotEmpty && kKickOAuthClientSecret.isEmpty) {
+      return Uri.parse(kKickTokenProxyUrl);
+    }
+    return Uri.parse(_kTokenUrl);
   }
 
   String _randomBase64Url(int byteCount) => base64Url
@@ -208,7 +231,7 @@ class KickAuthService {
     required KickPkceSession session,
   }) async {
     final response = await this._client.post(
-      Uri.parse(_kTokenUrl),
+      this._tokenEndpoint(),
       body: <String, String>{
         'grant_type': 'authorization_code',
         'code': code,
@@ -247,7 +270,7 @@ class KickAuthService {
 
   Future<KickToken> _refresh(String refreshToken) async {
     final response = await this._client.post(
-      Uri.parse(_kTokenUrl),
+      this._tokenEndpoint(),
       body: <String, String>{
         'grant_type': 'refresh_token',
         'refresh_token': refreshToken,

@@ -1,0 +1,21 @@
+[Unit]
+Description=Kick OAuth token exchange
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=localhost/kick-auth:latest
+ContainerName=kick-auth
+Network=host
+EnvironmentFile=/etc/kick-auth.env
+# curl's TLS fingerprint is what Kick's Cloudflare accepts. Python's is not.
+Exec=python3 /app/proxy.py
+
+[Service]
+Restart=on-failure
+MemoryMax=128M
+CPUQuota=50%
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

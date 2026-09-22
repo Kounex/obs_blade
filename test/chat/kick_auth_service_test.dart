@@ -132,7 +132,12 @@ void main() {
 
     test('posts the authorization_code exchange and parses the token', () async {
       final client = MockClient((request) async {
-        expect(request.url.toString(), 'https://id.kick.com/oauth/token');
+        expect(
+          request.url.toString(),
+          kKickOAuthClientId.isNotEmpty && kKickOAuthClientSecret.isEmpty
+              ? kKickTokenProxyUrl
+              : 'https://id.kick.com/oauth/token',
+        );
         expect(request.bodyFields['grant_type'], 'authorization_code');
         expect(request.bodyFields['code'], 'code-123');
         expect(request.bodyFields['client_id'], kKickOAuthClientId);
@@ -344,11 +349,19 @@ void main() {
         await settings.put(SettingsKeys.KickOAuthClientId.name, 'client-1');
         await settings.put(SettingsKeys.KickOAuthClientSecret.name, 'secret-1');
 
+        final appOwned =
+            kKickOAuthClientId.isNotEmpty && kKickOAuthClientSecret.isEmpty;
         var calls = 0;
         final client = MockClient((request) async {
           calls++;
-          expect(request.bodyFields['client_id'], 'client-1');
-          expect(request.bodyFields['client_secret'], 'secret-1');
+          if (appOwned) {
+            expect(request.url.toString(), kKickTokenProxyUrl);
+            expect(request.bodyFields['client_id'], kKickOAuthClientId);
+            expect(request.bodyFields.containsKey('client_secret'), isFalse);
+          } else {
+            expect(request.bodyFields['client_id'], 'client-1');
+            expect(request.bodyFields['client_secret'], 'secret-1');
+          }
           return http.Response(
             json.encode({
               'access_token': 'access-1',

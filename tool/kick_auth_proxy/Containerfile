@@ -1,0 +1,17 @@
+FROM python:3.12-alpine
+
+RUN apk add --no-cache curl \
+    && adduser -D -H -u 65532 exchanger
+
+WORKDIR /app
+COPY proxy.py .
+
+USER 65532:65532
+EXPOSE 8422
+
+# Listen address is overridden by the quadlet so the host loopback is used
+# (Network=host). The default stays loopback if the image is run alone.
+ENV KICK_AUTH_LISTEN=127.0.0.1
+ENV KICK_AUTH_PORT=8422
+
+CMD ["python3", "/app/proxy.py"]

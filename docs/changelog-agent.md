@@ -2,6 +2,15 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 — Kick token exchange proxy
+
+Kick requires a client secret and will not accept a public PKCE client
+(probed: omitting the secret is HTTP 400, a wrong secret is 401, including
+for client id `01M356MAT9Z4YB9HBESV9ZQN6S`). The phone now posts the code
+and PKCE verifier to `https://kick-auth.kounex.com/oauth/token`. The secret
+stays in `/etc/kick-auth.env` on the exchange host. `tool/kick_auth_proxy/`
+is the localhost-only forwarder.
+
 ## 2026-09-23 — Kick sign-in can use an app-owned OAuth client
 
 Pro users should not register their own Kick developer app. The client id
