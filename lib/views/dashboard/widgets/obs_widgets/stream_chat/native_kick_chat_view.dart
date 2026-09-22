@@ -16,6 +16,7 @@ import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 
 import 'dialogs/kick_mod_action_sheet.dart';
+import 'dialogs/kick_user_card_sheet.dart';
 import 'pinned_chat_banner.dart';
 
 /// Native Kick chat timeline, driven by [KickChatStore]'s message buffer
@@ -268,6 +269,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
                     final message = items[index];
+                    final authorId = message.authorId;
                     return KickChatMessageRow(
                       key: ValueKey(message.id),
                       message: message,
@@ -279,6 +281,15 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                               message.type == KickChatMessageType.system
                           ? null
                           : () => this._openModActions(message.id),
+                      onAuthorTap:
+                          authorId == null ||
+                              message.type == KickChatMessageType.system
+                          ? null
+                          : () => showKickUserCardSheet(
+                              context,
+                              userId: authorId,
+                              fallbackName: message.authorName,
+                            ),
                     );
                   },
                 ),

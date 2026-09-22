@@ -877,6 +877,37 @@ abstract class _KickChatStore with Store {
     }
   }
 
+  /// Max recent lines shown on the native chat user card.
+  static const int kUserCardMessageCap = 20;
+
+  /// Messages from [userId] in the current channel buffer, newest first
+  /// (capped at [kUserCardMessageCap]).
+  List<KickChatMessage> messagesForChatter(int userId) {
+    final matches = <KickChatMessage>[
+      for (final message in this.messages)
+        if (message.authorId == userId) message,
+    ];
+    final start = matches.length > kUserCardMessageCap
+        ? matches.length - kUserCardMessageCap
+        : 0;
+    return matches.sublist(start).reversed.toList();
+  }
+
+  /// Best-effort avatar/name lookup for the user card — Kick's official
+  /// API only allows looking up another user's profile with a
+  /// signed-in reader's token (`user:read`); anonymous readers get no
+  /// avatar and fall back to the message-buffer identity only. Null on
+  /// any failure, so the card can hide the avatar instead of erroring.
+  Future<KickUserIdentity?> fetchUserProfile(int userId) async {
+    if (!this.canWrite) return null;
+    try {
+      return await this._apiService.fetchUser(userId);
+    } catch (e) {
+      GeneralHelper.advLog('Kick user fetch failed — $e');
+      return null;
+    }
+  }
+
   /// A usable access token for the API service's token provider —
   /// refreshes (and persists the rotated pair) when due or forced (the
   /// 401 retry path).

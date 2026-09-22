@@ -40,6 +40,10 @@ class KickChatMessageRow extends StatelessWidget {
   /// (signed-in only — gated by the caller).
   final VoidCallback? onMessageLongPress;
 
+  /// Tap handler for badges + username → user card. The caller gates
+  /// this on `message.authorId != null` (system rows have no sender).
+  final VoidCallback? onAuthorTap;
+
   /// Light gray wash while this row is the open mod-sheet target.
   final bool highlighted;
 
@@ -48,6 +52,7 @@ class KickChatMessageRow extends StatelessWidget {
     required this.message,
     required this.settingsBox,
     this.onMessageLongPress,
+    this.onAuthorTap,
     this.highlighted = false,
   });
 
@@ -102,13 +107,29 @@ class KickChatMessageRow extends StatelessWidget {
       WidgetSpan(alignment: PlaceholderAlignment.middle, child: widget),
   ];
 
-  TextSpan _authorSpan(BuildContext context) => TextSpan(
-    text: this.message.authorName,
-    style: TextStyle(
+  InlineSpan _authorSpan(BuildContext context) {
+    final authorStyle = TextStyle(
       fontWeight: FontWeight.w600,
       color: kickAuthorColor(context, this.message.sender?.identity?.color),
-    ),
-  );
+    );
+    if (this.onAuthorTap == null) {
+      return TextSpan(text: this.message.authorName, style: authorStyle);
+    }
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Pressable(
+        haptic: true,
+        onTap: this.onAuthorTap,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...this._badgeWidgets(),
+            Text(this.message.authorName, style: authorStyle),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Content with emote tokens swapped to inline images at the app's
   /// emote sizing (same rendering contract as the Twitch row).
@@ -218,7 +239,7 @@ class KickChatMessageRow extends StatelessWidget {
           context,
         ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
         children: [
-          ...this._badgeSpans(),
+          if (this.onAuthorTap == null) ...this._badgeSpans(),
           this._authorSpan(context),
           const TextSpan(text: ': '),
           if (this.message.isTombstoned) ...[

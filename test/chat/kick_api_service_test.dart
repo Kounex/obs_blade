@@ -262,6 +262,99 @@ void main() {
     });
   });
 
+  group('fetchUser', () {
+    test('GETs the user and maps the profile', () async {
+      final client = MockClient((request) async {
+        expect(request.method, 'GET');
+        expect(
+          request.url.toString(),
+          'https://api.kick.com/public/v1/users?id=77',
+        );
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        return http.Response(
+          json.encode({
+            'data': [
+              {
+                'user_id': 77,
+                'name': 'chatterly',
+                'email': 'chatterly@example.com',
+                'profile_picture': 'https://example.com/avatar.png',
+              },
+            ],
+          }),
+          200,
+        );
+      });
+
+      final identity = await KickApiService(
+        client: client,
+        tokenProvider: _TokenProvider().call,
+      ).fetchUser(77);
+
+      expect(identity, isNotNull);
+      expect(identity!.userId, 77);
+      expect(identity.name, 'chatterly');
+      expect(identity.profilePicture, 'https://example.com/avatar.png');
+    });
+
+    test('returns null when the data array is empty', () async {
+      final client = MockClient(
+        (request) async => http.Response(json.encode({'data': []}), 200),
+      );
+
+      final identity = await KickApiService(
+        client: client,
+        tokenProvider: _TokenProvider().call,
+      ).fetchUser(77);
+
+      expect(identity, isNull);
+    });
+
+    test('401 refreshes once and retries once', () async {
+      final provider = _TokenProvider();
+      var calls = 0;
+      final client = MockClient((request) async {
+        calls++;
+        if (calls == 1) return http.Response('{}', 401);
+        return http.Response(
+          json.encode({
+            'data': [
+              {'user_id': 77, 'name': 'chatterly', 'profile_picture': null},
+            ],
+          }),
+          200,
+        );
+      });
+
+      final identity = await KickApiService(
+        client: client,
+        tokenProvider: provider.call,
+      ).fetchUser(77);
+
+      expect(identity!.userId, 77);
+      expect(calls, 2);
+      expect(provider.calls, [false, true]);
+    });
+
+    test('non-200 surfaces as a typed error', () {
+      final client = MockClient((request) async => http.Response('{}', 403));
+
+      expect(
+        KickApiService(
+          client: client,
+          tokenProvider: _TokenProvider().call,
+        ).fetchUser(77),
+        throwsA(
+          isA<KickApiException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            403,
+          ),
+        ),
+      );
+    });
+  });
+
   group('unbanUser', () {
     test('DELETEs with a JSON body', () async {
       final client = MockClient((request) async {

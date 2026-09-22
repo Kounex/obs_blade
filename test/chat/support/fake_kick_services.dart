@@ -228,6 +228,10 @@ class FakeKickApiService extends KickApiService {
   final List<KickBanCall> unbanCalls = <KickBanCall>[];
   Object? unbanThrows;
 
+  final List<int> fetchUserCalls = <int>[];
+  KickUserIdentity? fetchUserResult;
+  Object? fetchUserThrows;
+
   @override
   Future<String> sendMessage({
     required int broadcasterUserId,
@@ -278,5 +282,12 @@ class FakeKickApiService extends KickApiService {
       KickBanCall(broadcasterUserId: broadcasterUserId, userId: userId),
     );
     if (this.unbanThrows != null) throw this.unbanThrows!;
+  }
+
+  @override
+  Future<KickUserIdentity?> fetchUser(int userId) async {
+    this.fetchUserCalls.add(userId);
+    if (this.fetchUserThrows != null) throw this.fetchUserThrows!;
+    return this.fetchUserResult;
   }
 }

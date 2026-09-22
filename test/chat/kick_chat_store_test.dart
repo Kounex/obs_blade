@@ -992,4 +992,63 @@ void main() {
       expect(store.messages.single.id, 'm1');
     });
   });
+
+  group('user card', () {
+    test('messagesForChatter filters by sender and is newest-first', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageEvent('m1', senderId: 7, username: 'user-7'));
+      pusher().emitEvent(messageEvent('m2', senderId: 8, username: 'user-8'));
+      pusher().emitEvent(messageEvent('m3', senderId: 7, username: 'user-7'));
+      await until(() => store.messages.length == 3);
+
+      final matches = store.messagesForChatter(7);
+      expect(matches.map((m) => m.id).toList(), ['m3', 'm1']);
+    });
+
+    test('messagesForChatter caps at 20', () async {
+      await connectSignedIn();
+      for (var i = 0; i < 25; i++) {
+        pusher().emitEvent(messageEvent('m$i', senderId: 7));
+      }
+      await until(() => store.messages.length == 25);
+
+      final matches = store.messagesForChatter(7);
+      expect(matches.length, 20);
+      expect(matches.first.id, 'm24');
+    });
+
+    test('fetchUserProfile returns null when signed out', () async {
+      configure();
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+
+      expect(await store.fetchUserProfile(7), isNull);
+      expect(apiService.fetchUserCalls, isEmpty);
+    });
+
+    test('fetchUserProfile calls the API when signed in', () async {
+      await connectSignedIn();
+      apiService.fetchUserResult = const KickUserIdentity(
+        userId: 7,
+        name: 'chatterly',
+        profilePicture: 'https://example.com/avatar.png',
+      );
+
+      final identity = await store.fetchUserProfile(7);
+      expect(identity!.name, 'chatterly');
+      expect(apiService.fetchUserCalls, [7]);
+    });
+
+    test('fetchUserProfile returns null on failure', () async {
+      await connectSignedIn();
+      apiService.fetchUserThrows = const KickApiException(
+        'Could not fetch the user (500)',
+        statusCode: 500,
+      );
+
+      expect(await store.fetchUserProfile(7), isNull);
+    });
+  });
 }

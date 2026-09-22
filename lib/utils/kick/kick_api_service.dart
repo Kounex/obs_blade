@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:obs_blade/utils/kick/kick_auth_service.dart'
+    show KickUserIdentity;
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 
 /// Supplies a valid access token for authed calls — [forceRefresh] asks
@@ -143,6 +145,34 @@ class KickApiService {
         response.statusCode != 204) {
       throw this._error('Could not ban the user', response);
     }
+  }
+
+  /// `GET /users?id=` — best-effort profile lookup for the user card
+  /// (name + avatar only; Kick's public API has no account-age, follow
+  /// or subscription data for arbitrary users). Requires a signed-in
+  /// reader's token (`user:read`, in the always-held scope bundle) —
+  /// anonymous readers never call this.
+  Future<KickUserIdentity?> fetchUser(int userId) async {
+    final response = await this._authed(
+      (token) => this._client.get(
+        Uri.parse('$_kApiBase/users?id=$userId'),
+        headers: this._headers(token),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw this._error('Could not fetch the user', response);
+    }
+    final data = (json.decode(response.body) as Map)['data'];
+    if (data is! List || data.isEmpty) return null;
+    final user = data.first;
+    if (user is! Map) return null;
+    final id = user['user_id'];
+    if (id is! int) return null;
+    return KickUserIdentity(
+      userId: id,
+      name: user['name'] as String?,
+      profilePicture: user['profile_picture'] as String?,
+    );
   }
 
   /// `DELETE /moderation/bans` — lift a ban / remove a timeout. Note:

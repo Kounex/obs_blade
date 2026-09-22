@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -10,6 +11,7 @@ import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_mod_action_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/kick_chat_message_row.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_kick_chat_view.dart';
@@ -40,6 +42,7 @@ KickChatMessage kickMessage(
 void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
+  late FakeKickApiService apiService;
   late KickChatStore store;
 
   Widget wrap() =>
@@ -74,8 +77,10 @@ void main() {
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
     await Hive.openBox<KickAuth>(HiveKeys.KickAuth.name);
+    apiService = FakeKickApiService();
     store = KickChatStore(
       channelService: FakeKickChannelService(),
+      apiService: apiService,
       pusherFactory: ({required onEvent, required onStateChanged}) =>
           FakeKickPusherService(
             onEvent: onEvent,
@@ -251,5 +256,64 @@ void main() {
     expect(find.text('Chat is read-only'), findsOneWidget);
     await tester.tap(find.text('Sign in to chat'));
     expect(reloginTapped, isTrue);
+  });
+
+  testWidgets(
+    'signed out: author tap opens the user card with a placeholder avatar '
+    'and no fetch attempt',
+    (tester) async {
+      store.chatConnection = KickChatConnectionState.connected;
+      store.messages.add(kickMessage('m1', senderId: 7, username: 'Viewer1'));
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+
+      await tester.tap(find.text('Viewer1').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(KickUserCardSheet), findsOneWidget);
+      expect(apiService.fetchUserCalls, isEmpty);
+      expect(find.byIcon(CupertinoIcons.person_fill), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'signed in: author tap fetches the profile and renders the avatar',
+    (tester) async {
+      await signIn(tester);
+      apiService.fetchUserResult = const KickUserIdentity(
+        userId: 7,
+        name: 'Viewer1',
+        profilePicture: 'https://example.com/avatar.png',
+      );
+      store.chatConnection = KickChatConnectionState.connected;
+      store.messages.add(kickMessage('m1', senderId: 7, username: 'Viewer1'));
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+
+      await tester.tap(find.text('Viewer1').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(KickUserCardSheet), findsOneWidget);
+      expect(apiService.fetchUserCalls, [7]);
+      expect(find.byIcon(CupertinoIcons.person_fill), findsNothing);
+    },
+  );
+
+  testWidgets('the /clear system row has no author tap target', (tester) async {
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.add(
+      KickChatMessage(
+        id: 'system-clear-1',
+        type: KickChatMessageType.system,
+        createdAt: DateTime.utc(2026, 9, 22, 12),
+      ),
+    );
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.tap(find.text('Chat was cleared by a moderator'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KickUserCardSheet), findsNothing);
   });
 }
